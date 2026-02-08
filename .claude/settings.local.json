@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(git -C \"C:\\\\Users\\\\fbuir\\\\Workspace\\\\Freelance\\\\Ferran Buireu\\\\github-star-tracker\" log --oneline --all)",
+      "WebFetch(domain:github.com)",
+      "Bash(npx jest --coverage)",
+      "Bash(npx ncc build:*)",
+      "Bash(npx prettier --check src/ __tests__/)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(pnpm config set:*)",
+      "Bash(pnpm install:*)",
+      "Bash(npx vitest run)",
+      "Bash(npx prettier --write src/ __tests__/)",
+      "Bash(npx -y vitest run:*)",
+      "Bash(pnpm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}

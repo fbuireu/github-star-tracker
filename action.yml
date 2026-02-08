@@ -1,0 +1,115 @@
+name: 'GitHub Star Tracker'
+description: 'Track star count changes across your repositories with historical reports and badges'
+author: 'Ferran Buireu'
+
+branding:
+  icon: 'star'
+  color: 'yellow'
+
+inputs:
+  github-token:
+    description: 'GitHub token with repo access'
+    required: true
+
+  config-path:
+    description: 'Path to the configuration file (relative to repo root)'
+    required: false
+    default: 'star-tracker.yml'
+
+  visibility:
+    description: 'Repository visibility filter: public, private, or all (overrides config file)'
+    required: false
+    default: ''
+
+  include-archived:
+    description: 'Include archived repositories (overrides config file)'
+    required: false
+    default: ''
+
+  include-forks:
+    description: 'Include forked repositories (overrides config file)'
+    required: false
+    default: ''
+
+  exclude-repos:
+    description: 'Comma-separated list of repository names to exclude (overrides config file)'
+    required: false
+    default: ''
+
+  only-repos:
+    description: 'Comma-separated list of repository names to exclusively track (overrides config file)'
+    required: false
+    default: ''
+
+  min-stars:
+    description: 'Only track repos with at least this many stars (overrides config file)'
+    required: false
+    default: ''
+
+  data-branch:
+    description: 'Branch name for storing tracking data'
+    required: false
+    default: 'star-tracker-data'
+
+  max-history:
+    description: 'Maximum number of snapshots to keep in history'
+    required: false
+    default: '52'
+
+  smtp-host:
+    description: 'SMTP server host — providing this enables built-in email notifications'
+    required: false
+    default: ''
+
+  smtp-port:
+    description: 'SMTP server port'
+    required: false
+    default: '587'
+
+  smtp-username:
+    description: 'SMTP authentication username'
+    required: false
+    default: ''
+
+  smtp-password:
+    description: 'SMTP authentication password'
+    required: false
+    default: ''
+
+  email-to:
+    description: 'Email recipient address'
+    required: false
+    default: ''
+
+  email-from:
+    description: 'Email sender name or address'
+    required: false
+    default: 'GitHub Star Tracker'
+
+  send-on-no-changes:
+    description: 'Send email even when no star changes are detected'
+    required: false
+    default: 'false'
+
+outputs:
+  report:
+    description: 'Markdown report of star changes'
+
+  report-html:
+    description: 'HTML report of star changes (for email)'
+
+  total-stars:
+    description: 'Total star count across all tracked repositories'
+
+  stars-changed:
+    description: 'Whether any star counts changed since last run (true/false)'
+
+  new-stars:
+    description: 'Number of new stars gained since last run'
+
+  lost-stars:
+    description: 'Number of stars lost since last run'
+
+runs:
+  using: 'node24'
+  main: 'dist/index.js'

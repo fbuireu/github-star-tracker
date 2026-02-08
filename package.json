@@ -1,0 +1,41 @@
+{
+  "name": "github-star-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GitHub Action to track star count changes across your repositories",
+  "main": "src/index.ts",
+  "keywords": [
+    "github-action",
+    "github-stars",
+    "tracker",
+    "github",
+    "repository",
+    "typescript"
+  ],
+  "author": "Ferran Buireu <fbuireu@gmail.com>",
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "lint": "prettier --check src/ __tests__/",
+    "format": "prettier --write src/ __tests__/",
+    "typecheck": "tsc --noEmit",
+    "all": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.0",
+    "js-yaml": "^4.1.0",
+    "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/nodemailer": "^6.4.17",
+    "@vercel/ncc": "^0.38.3",
+    "@vitest/coverage-v8": "^3.0.5",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
