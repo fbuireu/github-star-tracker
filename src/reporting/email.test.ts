@@ -17,8 +17,8 @@ vi.mock('nodemailer', () => {
 
 import * as core from '@actions/core';
 import nodemailer from 'nodemailer';
-import { getEmailConfig, sendEmail } from '../src/reporting/email';
-import type { EmailConfig } from '../src/types';
+import type { EmailConfig } from '../types';
+import { getEmailConfig, sendEmail } from './email';
 
 beforeEach(() => {
   vi.clearAllMocks();

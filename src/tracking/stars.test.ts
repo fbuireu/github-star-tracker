@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { compareStars, createSnapshot } from '../src/tracking/stars';
-import type { RepoInfo, Snapshot } from '../src/types';
+import type { RepoInfo, Snapshot } from '../types';
+import { compareStars, createSnapshot } from './stars';
 
 function makeRepoData(name: string, stars: number): RepoInfo {
   return {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { generateBadge } from '../src/reporting/badge';
-import { formatCount } from '../src/utils';
+import { formatCount } from '../utils';
+import { generateBadge } from './badge';
 
 describe('formatCount', () => {
   it('returns raw number for values under 1000', () => {

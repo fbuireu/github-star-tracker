@@ -1,4 +1,7 @@
+import * as fs from 'node:fs';
+import * as core from '@actions/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULTS, loadConfig, loadConfigFile, parseBool, parseList, parseNumber } from './config';
 
 vi.mock('@actions/core', () => ({
   getInput: vi.fn().mockReturnValue(''),
@@ -13,17 +16,6 @@ vi.mock('fs', async (importOriginal) => {
     readFileSync: vi.fn().mockReturnValue(''),
   };
 });
-
-import * as fs from 'node:fs';
-import * as core from '@actions/core';
-import {
-  DEFAULTS,
-  loadConfig,
-  loadConfigFile,
-  parseBool,
-  parseList,
-  parseNumber,
-} from '../src/config';
 
 beforeEach(() => {
   vi.clearAllMocks();

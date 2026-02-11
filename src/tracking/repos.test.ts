@@ -4,9 +4,9 @@ vi.mock('@actions/core', () => ({
   info: vi.fn(),
 }));
 
-import type { GitHubRepo } from '../src/tracking/repos';
-import { filterRepos, mapRepos } from '../src/tracking/repos';
-import type { Config } from '../src/types';
+import type { Config } from '../types';
+import type { GitHubRepo } from './repos';
+import { filterRepos, mapRepos } from './repos';
 
 function makeRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
   return {

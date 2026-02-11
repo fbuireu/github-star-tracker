@@ -16,7 +16,7 @@
   "license": "AGPL-3.0-only",
   "scripts": {
     "prepare": "husky",
-    "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
+    "build": "tsx esbuild.config.ts",
     "test:ut": "vitest run",
     "test:ut:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -40,8 +40,8 @@
     "@commitlint/config-conventional": "^20.4.1",
     "@types/js-yaml": "^4.0.9",
     "@types/nodemailer": "^6.4.17",
-    "@vercel/ncc": "^0.38.3",
     "@vitest/coverage-v8": "^3.0.5",
+    "esbuild": "^0.27.3",
     "husky": "^9.1.7",
     "tsx": "^4.21.0",
     "typescript": "^5.7.3",
