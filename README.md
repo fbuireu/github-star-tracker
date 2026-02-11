@@ -17,16 +17,7 @@
 ---
 config:
   look: handDrawn
-  theme: base
-  themeVariables:
-    background: transparent
-    clusterBkg: "#e8e8e8"
-    clusterBorder: "#888"
-    nodeBkg: "#fffde7"
-    nodeBorder: "#ccc"
-    primaryTextColor: "#1a1a1a"
-    lineColor: "#999"
-    edgeLabelBackground: "#fffde7"
+  theme: neutral
 ---
 flowchart TD
     trigger(["Trigger: Scheduled/Manual"])
@@ -53,6 +44,22 @@ flowchart TD
     end
 
     trigger --> setup --> analysis --> artifacts --> persist
+
+    style trigger fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    style config fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style fetch fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style filter fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style init fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style read fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style compare fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style md fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style json fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style svg fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style html fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style commit fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    style setout fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    style email fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    style send fill:#fce4ec,stroke:#880e4f,stroke-width:2px
 ```
 
 1. On each scheduled run, the action fetches star counts for your repos via the GitHub API
@@ -130,16 +137,7 @@ Everything lives on a **separate orphan branch** (default: `star-tracker-data`).
 ---
 config:
   look: handDrawn
-  theme: base
-  themeVariables:
-    background: transparent
-    clusterBkg: "#e8e8e8"
-    clusterBorder: "#888"
-    nodeBkg: "#fffde7"
-    nodeBorder: "#ccc"
-    primaryTextColor: "#1a1a1a"
-    lineColor: "#999"
-    edgeLabelBackground: "#fffde7"
+  theme: neutral
 ---
 graph LR
     subgraph main ["main branch"]
@@ -155,6 +153,12 @@ graph LR
 
     wf -- "executes workflow" --> data
     main -.->|"isolated branches (no common ancestor)"| data
+
+    style src fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style wf fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style readme fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style json fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style badge fill:#fff3e0,stroke:#e65100,stroke-width:2px
 ```
 
 ### `README.md` — The Report
