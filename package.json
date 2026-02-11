@@ -15,7 +15,7 @@
   "author": "Ferran Buireu <fbuireu@gmail.com>",
   "license": "AGPL-3.0-only",
   "scripts": {
-    "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt && prettier --write --log-level=error dist/ && echo. >> dist/index.js.map",
+    "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt && prettier --write --log-level=error dist/ && echo >> dist/index.js.map",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "prettier --check src/ __tests__/",
