@@ -1,7 +1,7 @@
-import * as core from '@actions/core';
 import { execSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as core from '@actions/core';
 import type { History, Snapshot } from './types';
 
 export const DATA_DIR = '.star-tracker-data';
@@ -47,7 +47,7 @@ export function initDataBranch(dataBranch: string): string {
   } else {
     core.info(`Creating new orphan branch: ${dataBranch}`);
     exec(`git worktree add --detach ${DATA_DIR}`);
-    exec('git checkout --orphan ' + dataBranch, { cwd: path.resolve(DATA_DIR) });
+    exec(`git checkout --orphan ${dataBranch}`, { cwd: path.resolve(DATA_DIR) });
     exec('git rm -rf . || true', { cwd: path.resolve(DATA_DIR) });
     exec('git commit --allow-empty -m "Initialize star tracker data"', {
       cwd: path.resolve(DATA_DIR),

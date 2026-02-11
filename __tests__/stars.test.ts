@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { compareStars, createSnapshot } from '../src/stars';
 import type { RepoInfo, Snapshot } from '../src/types';
 
@@ -48,11 +48,11 @@ describe('compareStars', () => {
     expect(result.summary.lostStars).toBe(2);
     expect(result.summary.changed).toBe(true);
 
-    const repoA = result.repos.find((r) => r.name === 'repo-a')!;
-    expect(repoA.delta).toBe(5);
+    const repoA = result.repos.find((r) => r.name === 'repo-a');
+    expect(repoA?.delta).toBe(5);
 
-    const repoB = result.repos.find((r) => r.name === 'repo-b')!;
-    expect(repoB.delta).toBe(-2);
+    const repoB = result.repos.find((r) => r.name === 'repo-b');
+    expect(repoB?.delta).toBe(-2);
   });
 
   it('detects removed repositories', () => {
@@ -67,12 +67,12 @@ describe('compareStars', () => {
     };
 
     const result = compareStars({ currentRepos: repos, previousSnapshot: previous });
-    const removed = result.repos.find((r) => r.name === 'repo-b')!;
+    const removed = result.repos.find((r) => r.name === 'repo-b');
 
-    expect(removed.isRemoved).toBe(true);
-    expect(removed.current).toBe(0);
-    expect(removed.previous).toBe(20);
-    expect(removed.delta).toBe(-20);
+    expect(removed?.isRemoved).toBe(true);
+    expect(removed?.current).toBe(0);
+    expect(removed?.previous).toBe(20);
+    expect(removed?.delta).toBe(-20);
   });
 
   it('detects newly added repositories', () => {
@@ -84,10 +84,10 @@ describe('compareStars', () => {
     };
 
     const result = compareStars({ currentRepos: repos, previousSnapshot: previous });
-    const newRepo = result.repos.find((r) => r.name === 'new-repo')!;
+    const newRepo = result.repos.find((r) => r.name === 'new-repo');
 
-    expect(newRepo.isNew).toBe(true);
-    expect(newRepo.delta).toBe(0);
+    expect(newRepo?.isNew).toBe(true);
+    expect(newRepo?.delta).toBe(0);
     expect(result.summary.changed).toBe(true);
   });
 

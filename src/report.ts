@@ -1,5 +1,5 @@
-import type { ComparisonResults } from './types';
 import { getTranslations, type Locale } from './i18n';
+import type { ComparisonResults } from './types';
 
 const COLORS = {
   positive: '#28a745',
@@ -89,7 +89,10 @@ export function generateMarkdownReport({
       ? [
           `## ${t.report.removedRepositories}`,
           '',
-          ...removedRepos.map((repo) => `- ${repo.fullName} — ${t.report.was} ${repo.previous} ${t.report.stars.toLowerCase()}`),
+          ...removedRepos.map(
+            (repo) =>
+              `- ${repo.fullName} — ${t.report.was} ${repo.previous} ${t.report.stars.toLowerCase()}`,
+          ),
           '',
         ]
       : [];
@@ -122,7 +125,11 @@ export function generateMarkdownReport({
   ].join('\n');
 }
 
-export function generateHtmlReport({ results, previousTimestamp, locale = 'en' }: GenerateReportParams): string {
+export function generateHtmlReport({
+  results,
+  previousTimestamp,
+  locale = 'en',
+}: GenerateReportParams): string {
   const { repos, summary } = results;
   const t = getTranslations(locale);
   const now = new Date().toISOString().split('T')[0];

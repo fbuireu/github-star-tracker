@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@actions/core', () => ({
   getInput: vi.fn().mockReturnValue(''),
@@ -17,7 +17,7 @@ vi.mock('nodemailer', () => {
 
 import * as core from '@actions/core';
 import nodemailer from 'nodemailer';
-import { sendEmail, getEmailConfig } from '../src/email';
+import { getEmailConfig, sendEmail } from '../src/email';
 import type { EmailConfig } from '../src/types';
 
 beforeEach(() => {
@@ -61,8 +61,8 @@ describe('getEmailConfig', () => {
       return 'test';
     });
 
-    const config = getEmailConfig()!;
-    expect(config.from).toBe('GitHub Star Tracker');
+    const config = getEmailConfig();
+    expect(config?.from).toBe('GitHub Star Tracker');
   });
 });
 

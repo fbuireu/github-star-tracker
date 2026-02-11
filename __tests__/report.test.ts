@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  generateMarkdownReport,
-  generateHtmlReport,
   deltaIndicator,
+  generateHtmlReport,
+  generateMarkdownReport,
   trendIcon,
 } from '../src/report';
 import type { ComparisonResults } from '../src/types';

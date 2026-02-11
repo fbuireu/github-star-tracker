@@ -1,4 +1,4 @@
-import type { RepoInfo, Snapshot, ComparisonResults, RepoResult, Summary } from './types';
+import type { ComparisonResults, RepoInfo, RepoResult, Snapshot, Summary } from './types';
 
 interface CompareStarsParams {
   currentRepos: RepoInfo[];

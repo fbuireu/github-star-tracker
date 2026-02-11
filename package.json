@@ -15,14 +15,18 @@
   "author": "Ferran Buireu <fbuireu@gmail.com>",
   "license": "AGPL-3.0-only",
   "scripts": {
-    "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt && prettier --write --log-level error dist/",
-    "test": "vitest run --coverage",
-    "test:watch": "vitest",
-    "lint": "prettier --check src/ __tests__/",
-    "format": "prettier --write src/ __tests__/",
+    "prepare": "husky",
+    "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt",
+    "test:ut": "vitest run",
+    "test:ut:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test": "pnpm run test:coverage",
+    "format": "biome check --write --no-errors-on-unmatched .",
+    "lint": "biome lint --no-errors-on-unmatched .",
+    "lint:fix": "pnpm run lint --fix",
     "typecheck": "tsc --noEmit",
-    "all": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build",
-    "prepare": "husky"
+    "check": "biome check --no-errors-on-unmatched . && pnpm run typecheck",
+    "validate": "pnpm run check && pnpm run test && pnpm run build"
   },
   "dependencies": {
     "@actions/core": "^1.11.1",
@@ -31,6 +35,7 @@
     "nodemailer": "^7.0.11"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.14",
     "@commitlint/cli": "^20.4.1",
     "@commitlint/config-conventional": "^20.4.1",
     "@types/js-yaml": "^4.0.9",
@@ -38,7 +43,6 @@
     "@vercel/ncc": "^0.38.3",
     "@vitest/coverage-v8": "^3.0.5",
     "husky": "^9.1.7",
-    "prettier": "^3.4.2",
     "tsx": "^4.21.0",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"

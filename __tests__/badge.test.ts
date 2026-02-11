@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { generateBadge, formatCount } from '../src/badge';
+import { describe, expect, it } from 'vitest';
+import { formatCount, generateBadge } from '../src/badge';
 
 describe('formatCount', () => {
   it('returns raw number for values under 1000', () => {

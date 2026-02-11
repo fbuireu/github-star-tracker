@@ -1,9 +1,9 @@
-import * as core from '@actions/core';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import * as core from '@actions/core';
 import * as yaml from 'js-yaml';
-import type { Config } from './types';
 import { isValidLocale, type Locale } from './i18n';
+import type { Config } from './types';
 
 const VALID_VISIBILITIES = ['public', 'private', 'all'] as const;
 

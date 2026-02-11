@@ -109,7 +109,7 @@ const translations: Record<Locale, Translations> = {
       totalStars: 'estrelles totals',
     },
     report: {
-      title: 'Informe de Seguiment d\'Estrelles',
+      title: "Informe de Seguiment d'Estrelles",
       total: 'Total',
       change: 'Canvi',
       comparedTo: 'Comparat amb instantània del',
@@ -129,8 +129,8 @@ const translations: Record<Locale, Translations> = {
       },
     },
     email: {
-      subject: 'Informe de Seguiment d\'Estrelles a GitHub',
-      defaultFrom: 'Seguiment d\'Estrelles GitHub',
+      subject: "Informe de Seguiment d'Estrelles a GitHub",
+      defaultFrom: "Seguiment d'Estrelles GitHub",
     },
     trends: {
       up: 'pujant',

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@actions/core', () => ({
   getInput: vi.fn().mockReturnValue(''),
@@ -14,15 +14,15 @@ vi.mock('fs', async (importOriginal) => {
   };
 });
 
-import * as fs from 'fs';
+import * as fs from 'node:fs';
 import * as core from '@actions/core';
 import {
+  DEFAULTS,
   loadConfig,
   loadConfigFile,
-  parseList,
   parseBool,
+  parseList,
   parseNumber,
-  DEFAULTS,
 } from '../src/config';
 
 beforeEach(() => {

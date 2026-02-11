@@ -1,11 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@actions/core', () => ({
   info: vi.fn(),
 }));
 
-import { filterRepos, mapRepos } from '../src/repos';
 import type { GitHubRepo } from '../src/repos';
+import { filterRepos, mapRepos } from '../src/repos';
 import type { Config } from '../src/types';
 
 function makeRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {

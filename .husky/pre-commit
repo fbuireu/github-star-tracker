@@ -1,1 +1,1 @@
-pnpm run build && git add dist/
+pnpm run format && pnpm run check && pnpm run build && git add .

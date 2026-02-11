@@ -1,22 +1,22 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { loadConfig } from './config';
-import { getRepos } from './repos';
-import { compareStars, createSnapshot } from './stars';
-import { generateMarkdownReport, generateHtmlReport } from './report';
 import { generateBadge } from './badge';
-import { getEmailConfig, sendEmail } from './email';
-import { getTranslations } from './i18n';
+import { loadConfig } from './config';
 import {
+  cleanup,
+  commitAndPush,
+  getLastSnapshot,
   initDataBranch,
   readHistory,
-  getLastSnapshot,
+  writeBadge,
   writeHistory,
   writeReport,
-  writeBadge,
-  commitAndPush,
-  cleanup,
 } from './data-branch';
+import { getEmailConfig, sendEmail } from './email';
+import { getTranslations } from './i18n';
+import { generateHtmlReport, generateMarkdownReport } from './report';
+import { getRepos } from './repos';
+import { compareStars, createSnapshot } from './stars';
 
 let dataDir: string | null = null;
 
@@ -55,7 +55,11 @@ try {
       `Total: ${summary.totalStars} stars (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`,
     );
 
-    const markdownReport = generateMarkdownReport({ results, previousTimestamp, locale: config.locale });
+    const markdownReport = generateMarkdownReport({
+      results,
+      previousTimestamp,
+      locale: config.locale,
+    });
     const htmlReport = generateHtmlReport({ results, previousTimestamp, locale: config.locale });
     const badge = generateBadge(summary.totalStars, config.locale);
 
