@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-import { appendFileSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,7 +11,8 @@ readdirSync(distDir).forEach((file) => {
   if (statSync(filePath).isFile()) {
     const content = readFileSync(filePath);
     if (content.length > 0 && content[content.length - 1] !== 10) {
-      appendFileSync(filePath, '\n');
+      const newContent = Buffer.concat([content, Buffer.from('\n')]);
+      writeFileSync(filePath, newContent);
     }
   }
 });
