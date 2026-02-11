@@ -73,13 +73,19 @@ function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResu
 
 describe('generateMarkdownReport', () => {
   it('includes total star count and delta', () => {
-    const report = generateMarkdownReport({ results: makeResults(), previousTimestamp: '2026-01-01T00:00:00Z' });
+    const report = generateMarkdownReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+    });
     expect(report).toContain('**23**');
     expect(report).toContain('+3');
   });
 
   it('includes repository table rows', () => {
-    const report = generateMarkdownReport({ results: makeResults(), previousTimestamp: '2026-01-01T00:00:00Z' });
+    const report = generateMarkdownReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+    });
     expect(report).toContain('user/repo-a');
     expect(report).toContain('user/repo-b');
     expect(report).toContain('+5');
@@ -123,29 +129,44 @@ describe('generateMarkdownReport', () => {
 
 describe('generateHtmlReport', () => {
   it('generates valid HTML structure', () => {
-    const html = generateHtmlReport({ results: makeResults(), previousTimestamp: '2026-01-01T00:00:00Z' });
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+    });
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('</html>');
     expect(html).toContain('<table');
   });
 
   it('includes repo links', () => {
-    const html = generateHtmlReport({ results: makeResults(), previousTimestamp: '2026-01-01T00:00:00Z' });
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+    });
     expect(html).toContain('href="https://github.com/user/repo-a"');
   });
 
   it('uses green color for positive deltas', () => {
-    const html = generateHtmlReport({ results: makeResults(), previousTimestamp: '2026-01-01T00:00:00Z' });
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+    });
     expect(html).toContain('#28a745');
   });
 
   it('uses red color for negative deltas', () => {
-    const html = generateHtmlReport({ results: makeResults(), previousTimestamp: '2026-01-01T00:00:00Z' });
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+    });
     expect(html).toContain('#d73a49');
   });
 
   it('includes summary stats', () => {
-    const html = generateHtmlReport({ results: makeResults(), previousTimestamp: '2026-01-01T00:00:00Z' });
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+    });
     expect(html).toContain('23');
     expect(html).toContain('Total Stars');
     expect(html).toContain('Net Change');

@@ -77,19 +77,31 @@ describe('sendEmail', () => {
   };
 
   it('returns false when emailConfig is null', async () => {
-    const result = await sendEmail({ emailConfig: null, subject: 'Subject', htmlBody: '<p>Body</p>' });
+    const result = await sendEmail({
+      emailConfig: null,
+      subject: 'Subject',
+      htmlBody: '<p>Body</p>',
+    });
     expect(result).toBe(false);
     expect(nodemailer.createTransport).not.toHaveBeenCalled();
   });
 
   it('returns false when email-to is empty', async () => {
-    const result = await sendEmail({ emailConfig: { ...emailConfig, to: '' }, subject: 'Subject', htmlBody: '<p>Body</p>' });
+    const result = await sendEmail({
+      emailConfig: { ...emailConfig, to: '' },
+      subject: 'Subject',
+      htmlBody: '<p>Body</p>',
+    });
     expect(result).toBe(false);
     expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('no email-to'));
   });
 
   it('sends email with correct parameters', async () => {
-    const result = await sendEmail({ emailConfig, subject: 'Test Subject', htmlBody: '<p>Test</p>' });
+    const result = await sendEmail({
+      emailConfig,
+      subject: 'Test Subject',
+      htmlBody: '<p>Test</p>',
+    });
     const mockSendMail = vi.mocked(nodemailer.createTransport).mock.results[0]?.value?.sendMail;
 
     expect(result).toBe(true);
@@ -108,7 +120,11 @@ describe('sendEmail', () => {
   });
 
   it('uses secure=true for port 465', async () => {
-    await sendEmail({ emailConfig: { ...emailConfig, port: 465 }, subject: 'Subject', htmlBody: '<p>Body</p>' });
+    await sendEmail({
+      emailConfig: { ...emailConfig, port: 465 },
+      subject: 'Subject',
+      htmlBody: '<p>Body</p>',
+    });
 
     expect(nodemailer.createTransport).toHaveBeenCalledWith(
       expect.objectContaining({ secure: true }),
@@ -116,7 +132,11 @@ describe('sendEmail', () => {
   });
 
   it('omits auth when credentials are missing', async () => {
-    await sendEmail({ emailConfig: { ...emailConfig, username: '', password: '' }, subject: 'Subject', htmlBody: '<p>Body</p>' });
+    await sendEmail({
+      emailConfig: { ...emailConfig, username: '', password: '' },
+      subject: 'Subject',
+      htmlBody: '<p>Body</p>',
+    });
 
     expect(nodemailer.createTransport).toHaveBeenCalledWith(
       expect.objectContaining({ auth: undefined }),
