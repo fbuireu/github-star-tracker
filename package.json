@@ -15,7 +15,7 @@
   "author": "Ferran Buireu <fbuireu@gmail.com>",
   "license": "AGPL-3.0-only",
   "scripts": {
-    "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt && prettier --write --log-level error dist/ && tsx scripts/fix-newlines.ts",
+    "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt && prettier --write --log-level error dist/",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "prettier --check src/ __tests__/",
