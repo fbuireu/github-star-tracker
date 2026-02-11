@@ -2,9 +2,8 @@ import { execSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as core from '@actions/core';
-import type { History, Snapshot } from './types';
-
-export const DATA_DIR = '.star-tracker-data';
+import { DATA_DIR } from '../constants';
+import type { History, Snapshot } from '../types';
 
 function exec(cmd: string, options: Record<string, unknown> = {}): string {
   try {
@@ -70,7 +69,7 @@ export function getLastSnapshot(history: History): Snapshot | null {
   if (!history.snapshots || history.snapshots.length === 0) {
     return null;
   }
-  return history.snapshots[history.snapshots.length - 1];
+  return history.snapshots.at(-1) ?? null;
 }
 
 interface WriteHistoryParams {

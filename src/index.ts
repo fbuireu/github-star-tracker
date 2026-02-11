@@ -1,6 +1,5 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import { generateBadge } from './badge';
 import { loadConfig } from './config';
 import {
   cleanup,
@@ -11,12 +10,13 @@ import {
   writeBadge,
   writeHistory,
   writeReport,
-} from './data-branch';
-import { getEmailConfig, sendEmail } from './email';
+} from './data/data-branch';
 import { getTranslations } from './i18n';
-import { generateHtmlReport, generateMarkdownReport } from './report';
-import { getRepos } from './repos';
-import { compareStars, createSnapshot } from './stars';
+import { generateBadge } from './reporting/badge';
+import { getEmailConfig, sendEmail } from './reporting/email';
+import { generateHtmlReport, generateMarkdownReport } from './reporting/report';
+import { getRepos } from './tracking/repos';
+import { compareStars, createSnapshot } from './tracking/stars';
 
 let dataDir: string | null = null;
 

@@ -43664,64 +43664,6 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 5945:
-/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
-
-"use strict";
-/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   T: () => (/* binding */ generateBadge)
-/* harmony export */ });
-/* unused harmony export formatCount */
-/* harmony import */ var _i18n__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(3784);
-
-const BADGE_COLORS = {
-    labelBg: '#555',
-    valueBg: '#dfb317',
-    textFill: '#fff',
-    textShadow: '#010101',
-    gradientStart: '#bbb',
-    clipPathFill: '#fff',
-};
-function formatCount(n) {
-    if (n >= 1_000_000)
-        return `${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000)
-        return `${(n / 1_000).toFixed(1)}k`;
-    return String(n);
-}
-function generateBadge(totalStars, locale = 'en') {
-    const t = (0,_i18n__WEBPACK_IMPORTED_MODULE_0__/* .getTranslations */ .$)(locale);
-    const label = t.badge.totalStars;
-    const value = `\u2605 ${formatCount(totalStars)}`;
-    const labelWidth = label.length * 6.5 + 12;
-    const valueWidth = value.length * 7 + 12;
-    const totalWidth = labelWidth + valueWidth;
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="20" role="img" aria-label="${label}: ${value}">
-  <title>${label}: ${value}</title>
-  <linearGradient id="s" x2="0" y2="100%">
-    <stop offset="0" stop-color="${BADGE_COLORS.gradientStart}" stop-opacity=".1"/>
-    <stop offset="1" stop-opacity=".1"/>
-  </linearGradient>
-  <clipPath id="r">
-    <rect width="${totalWidth}" height="20" rx="3" fill="${BADGE_COLORS.clipPathFill}"/>
-  </clipPath>
-  <g clip-path="url(#r)">
-    <rect width="${labelWidth}" height="20" fill="${BADGE_COLORS.labelBg}"/>
-    <rect x="${labelWidth}" width="${valueWidth}" height="20" fill="${BADGE_COLORS.valueBg}"/>
-    <rect width="${totalWidth}" height="20" fill="url(#s)"/>
-  </g>
-  <g fill="${BADGE_COLORS.textFill}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
-    <text aria-hidden="true" x="${labelWidth / 2}" y="15" fill="${BADGE_COLORS.textShadow}" fill-opacity=".3">${label}</text>
-    <text x="${labelWidth / 2}" y="14">${label}</text>
-    <text aria-hidden="true" x="${labelWidth + valueWidth / 2}" y="15" fill="${BADGE_COLORS.textShadow}" fill-opacity=".3">${value}</text>
-    <text x="${labelWidth + valueWidth / 2}" y="14">${value}</text>
-  </g>
-</svg>`;
-}
-
-
-/***/ }),
-
 /***/ 8915:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
@@ -47598,27 +47540,19 @@ var jsYaml = {
 
 
 
-// EXTERNAL MODULE: ./src/i18n.ts
-var i18n = __nccwpck_require__(3784);
+// EXTERNAL MODULE: ./src/constants.ts
+var constants = __nccwpck_require__(5851);
+// EXTERNAL MODULE: ./src/i18n/index.ts + 4 modules
+var i18n = __nccwpck_require__(6090);
 ;// CONCATENATED MODULE: ./src/config.ts
 
 
 
 
 
+
 const VALID_VISIBILITIES = ['public', 'private', 'all'];
-const DEFAULTS = {
-    visibility: 'public',
-    includeArchived: false,
-    includeForks: false,
-    excludeRepos: [],
-    onlyRepos: [],
-    minStars: 0,
-    dataBranch: 'star-tracker-data',
-    maxHistory: 52,
-    sendOnNoChanges: false,
-    locale: 'en',
-};
+
 function parseList(value) {
     if (!value || value.trim() === '')
         return [];
@@ -47675,29 +47609,29 @@ function loadConfig() {
     const inputLocale = core.getInput('locale');
     const visibility = (inputVisibility ||
         fileConfig.visibility ||
-        DEFAULTS.visibility);
+        constants/* DEFAULTS */.zY.visibility);
     if (!VALID_VISIBILITIES.includes(visibility)) {
         throw new Error(`Invalid visibility "${visibility}". Must be one of: ${VALID_VISIBILITIES.join(', ')}`);
     }
-    const locale = (inputLocale || fileConfig.locale || DEFAULTS.locale);
+    const locale = (inputLocale || fileConfig.locale || constants/* DEFAULTS */.zY.locale);
     if (!(0,i18n/* isValidLocale */.J)(locale)) {
         core.warning(`Invalid locale "${locale}". Falling back to "en"`);
     }
     const config = {
         visibility,
-        includeArchived: parseBool(inputIncludeArchived) ?? fileConfig.includeArchived ?? DEFAULTS.includeArchived,
-        includeForks: parseBool(inputIncludeForks) ?? fileConfig.includeForks ?? DEFAULTS.includeForks,
+        includeArchived: parseBool(inputIncludeArchived) ?? fileConfig.includeArchived ?? constants/* DEFAULTS */.zY.includeArchived,
+        includeForks: parseBool(inputIncludeForks) ?? fileConfig.includeForks ?? constants/* DEFAULTS */.zY.includeForks,
         excludeRepos: inputExcludeRepos
             ? parseList(inputExcludeRepos)
-            : fileConfig.excludeRepos || DEFAULTS.excludeRepos,
+            : fileConfig.excludeRepos || constants/* DEFAULTS */.zY.excludeRepos,
         onlyRepos: inputOnlyRepos
             ? parseList(inputOnlyRepos)
-            : fileConfig.onlyRepos || DEFAULTS.onlyRepos,
-        minStars: parseNumber(inputMinStars) ?? fileConfig.minStars ?? DEFAULTS.minStars,
-        dataBranch: inputDataBranch || fileConfig.dataBranch || DEFAULTS.dataBranch,
-        maxHistory: parseNumber(inputMaxHistory) ?? fileConfig.maxHistory ?? DEFAULTS.maxHistory,
+            : fileConfig.onlyRepos || constants/* DEFAULTS */.zY.onlyRepos,
+        minStars: parseNumber(inputMinStars) ?? fileConfig.minStars ?? constants/* DEFAULTS */.zY.minStars,
+        dataBranch: inputDataBranch || fileConfig.dataBranch || constants/* DEFAULTS */.zY.dataBranch,
+        maxHistory: parseNumber(inputMaxHistory) ?? fileConfig.maxHistory ?? constants/* DEFAULTS */.zY.maxHistory,
         sendOnNoChanges: parseBool(core.getInput('send-on-no-changes')) ?? false,
-        locale: (0,i18n/* isValidLocale */.J)(locale) ? locale : DEFAULTS.locale,
+        locale: (0,i18n/* isValidLocale */.J)(locale) ? locale : constants/* DEFAULTS */.zY.locale,
     };
     core.info(`Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`);
     if (config.onlyRepos.length > 0) {
@@ -47712,7 +47646,48 @@ function loadConfig() {
 
 /***/ }),
 
-/***/ 3752:
+/***/ 5851:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   lm: () => (/* binding */ COLORS),
+/* harmony export */   nJ: () => (/* binding */ DATA_DIR),
+/* harmony export */   zY: () => (/* binding */ DEFAULTS)
+/* harmony export */ });
+const DATA_DIR = '.star-tracker-data';
+const DEFAULTS = {
+    visibility: 'public',
+    includeArchived: false,
+    includeForks: false,
+    excludeRepos: [],
+    onlyRepos: [],
+    minStars: 0,
+    dataBranch: 'star-tracker-data',
+    maxHistory: 52,
+    sendOnNoChanges: false,
+    locale: 'en',
+};
+const COLORS = {
+    accent: '#dfb317',
+    positive: '#28a745',
+    negative: '#d73a49',
+    neutral: '#6a737d',
+    link: '#0366d6',
+    text: '#24292e',
+    white: '#fff',
+    shadow: '#010101',
+    muted: '#555',
+    tableHeaderBg: '#f6f8fa',
+    tableHeaderBorder: '#e1e4e8',
+    cellBorder: '#eee',
+    gradientStart: '#bbb',
+};
+
+
+/***/ }),
+
+/***/ 3109:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
@@ -47729,8 +47704,6 @@ __nccwpck_require__.d(__webpack_exports__, {
   u5: () => (/* binding */ writeReport)
 });
 
-// UNUSED EXPORTS: DATA_DIR
-
 ;// CONCATENATED MODULE: external "node:child_process"
 const external_node_child_process_namespaceObject = require("node:child_process");
 // EXTERNAL MODULE: external "node:fs"
@@ -47739,12 +47712,14 @@ var external_node_fs_ = __nccwpck_require__(3024);
 var external_node_path_ = __nccwpck_require__(6760);
 // EXTERNAL MODULE: ./node_modules/.pnpm/@actions+core@1.11.1/node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(6966);
-;// CONCATENATED MODULE: ./src/data-branch.ts
+// EXTERNAL MODULE: ./src/constants.ts
+var constants = __nccwpck_require__(5851);
+;// CONCATENATED MODULE: ./src/data/data-branch.ts
 
 
 
 
-const DATA_DIR = '.star-tracker-data';
+
 function exec(cmd, options = {}) {
     try {
         return (0,external_node_child_process_namespaceObject.execSync)(cmd, {
@@ -47771,28 +47746,28 @@ function initDataBranch(dataBranch) {
     catch {
         core.info(`Branch "${dataBranch}" does not exist on remote, will create it`);
     }
-    if (external_node_fs_.existsSync(DATA_DIR)) {
+    if (external_node_fs_.existsSync(constants/* DATA_DIR */.nJ)) {
         try {
-            exec(`git worktree remove ${DATA_DIR} --force`);
+            exec(`git worktree remove ${constants/* DATA_DIR */.nJ} --force`);
         }
         catch {
-            core.debug(`Could not remove existing worktree at ${DATA_DIR}, proceeding anyway`);
+            core.debug(`Could not remove existing worktree at ${constants/* DATA_DIR */.nJ}, proceeding anyway`);
         }
     }
     if (branchExists) {
         exec(`git fetch origin ${dataBranch}`);
-        exec(`git worktree add ${DATA_DIR} origin/${dataBranch}`);
+        exec(`git worktree add ${constants/* DATA_DIR */.nJ} origin/${dataBranch}`);
     }
     else {
         core.info(`Creating new orphan branch: ${dataBranch}`);
-        exec(`git worktree add --detach ${DATA_DIR}`);
-        exec(`git checkout --orphan ${dataBranch}`, { cwd: external_node_path_.resolve(DATA_DIR) });
-        exec('git rm -rf . || true', { cwd: external_node_path_.resolve(DATA_DIR) });
+        exec(`git worktree add --detach ${constants/* DATA_DIR */.nJ}`);
+        exec(`git checkout --orphan ${dataBranch}`, { cwd: external_node_path_.resolve(constants/* DATA_DIR */.nJ) });
+        exec('git rm -rf . || true', { cwd: external_node_path_.resolve(constants/* DATA_DIR */.nJ) });
         exec('git commit --allow-empty -m "Initialize star tracker data"', {
-            cwd: external_node_path_.resolve(DATA_DIR),
+            cwd: external_node_path_.resolve(constants/* DATA_DIR */.nJ),
         });
     }
-    return DATA_DIR;
+    return constants/* DATA_DIR */.nJ;
 }
 function readHistory(dataDir) {
     const filePath = external_node_path_.join(dataDir, 'stars-data.json');
@@ -47806,7 +47781,7 @@ function getLastSnapshot(history) {
     if (!history.snapshots || history.snapshots.length === 0) {
         return null;
     }
-    return history.snapshots[history.snapshots.length - 1];
+    return history.snapshots.at(-1) ?? null;
 }
 function writeHistory({ dataDir, history, maxHistory }) {
     if (history.snapshots.length > maxHistory) {
@@ -47851,7 +47826,199 @@ function cleanup(dataDir) {
 
 /***/ }),
 
-/***/ 1294:
+/***/ 6090:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+
+// EXPORTS
+__nccwpck_require__.d(__webpack_exports__, {
+  $: () => (/* binding */ getTranslations),
+  J: () => (/* binding */ isValidLocale)
+});
+
+;// CONCATENATED MODULE: ./src/i18n/ca.json
+const ca_namespaceObject = /*#__PURE__*/JSON.parse('{"badge":{"totalStars":"estrelles totals"},"report":{"title":"Informe de Seguiment d\'Estrelles","total":"Total","change":"Canvi","comparedTo":"Comparat amb instantània del","firstRun":"primera execució","repositories":"Repositoris","stars":"Estrelles","trend":"Tendència","newRepositories":"Nous Repositoris","removedRepositories":"Repositoris Eliminats","was":"tenia","summary":"Resum","starsGained":"Estrelles guanyades","starsLost":"Estrelles perdudes","netChange":"Canvi net","badges":{"new":"NOU"}},"email":{"subject":"Informe de Seguiment d\'Estrelles a GitHub","defaultFrom":"Seguiment d\'Estrelles GitHub"},"trends":{"up":"pujant","down":"baixant","stable":"estable"}}');
+;// CONCATENATED MODULE: ./src/i18n/en.json
+const en_namespaceObject = /*#__PURE__*/JSON.parse('{"badge":{"totalStars":"total stars"},"report":{"title":"Star Tracker Report","total":"Total","change":"Change","comparedTo":"Compared to snapshot from","firstRun":"first run","repositories":"Repositories","stars":"Stars","trend":"Trend","newRepositories":"New Repositories","removedRepositories":"Removed Repositories","was":"was","summary":"Summary","starsGained":"Stars gained","starsLost":"Stars lost","netChange":"Net change","badges":{"new":"NEW"}},"email":{"subject":"GitHub Star Tracker Report","defaultFrom":"GitHub Star Tracker"},"trends":{"up":"up","down":"down","stable":"stable"}}');
+;// CONCATENATED MODULE: ./src/i18n/es.json
+const es_namespaceObject = /*#__PURE__*/JSON.parse('{"badge":{"totalStars":"estrellas totales"},"report":{"title":"Informe de Seguimiento de Estrellas","total":"Total","change":"Cambio","comparedTo":"Comparado con instantánea del","firstRun":"primera ejecución","repositories":"Repositorios","stars":"Estrellas","trend":"Tendencia","newRepositories":"Nuevos Repositorios","removedRepositories":"Repositorios Eliminados","was":"tenía","summary":"Resumen","starsGained":"Estrellas ganadas","starsLost":"Estrellas perdidas","netChange":"Cambio neto","badges":{"new":"NUEVO"}},"email":{"subject":"Informe de Seguimiento de Estrellas en GitHub","defaultFrom":"Seguimiento de Estrellas GitHub"},"trends":{"up":"subiendo","down":"bajando","stable":"estable"}}');
+;// CONCATENATED MODULE: ./src/i18n/it.json
+const it_namespaceObject = /*#__PURE__*/JSON.parse('{"badge":{"totalStars":"stelle totali"},"report":{"title":"Report Tracciamento Stelle","total":"Totale","change":"Variazione","comparedTo":"Confrontato con snapshot del","firstRun":"prima esecuzione","repositories":"Repository","stars":"Stelle","trend":"Tendenza","newRepositories":"Nuovi Repository","removedRepositories":"Repository Rimossi","was":"aveva","summary":"Riepilogo","starsGained":"Stelle guadagnate","starsLost":"Stelle perse","netChange":"Variazione netta","badges":{"new":"NUOVO"}},"email":{"subject":"Report Tracciamento Stelle GitHub","defaultFrom":"Tracciamento Stelle GitHub"},"trends":{"up":"in aumento","down":"in diminuzione","stable":"stabile"}}');
+;// CONCATENATED MODULE: ./src/i18n/index.ts
+
+
+
+
+const translations = { en: en_namespaceObject, es: es_namespaceObject, ca: ca_namespaceObject, it: it_namespaceObject };
+function getTranslations(locale = 'en') {
+    return translations[locale] || translations.en;
+}
+function isValidLocale(value) {
+    return ['en', 'es', 'ca', 'it'].includes(value);
+}
+
+
+/***/ }),
+
+/***/ 6866:
+/***/ ((module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+__nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
+__nccwpck_require__.r(__webpack_exports__);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(6966);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(4903);
+/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _config__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(8915);
+/* harmony import */ var _data_data_branch__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(3109);
+/* harmony import */ var _i18n__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(6090);
+/* harmony import */ var _reporting_badge__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(2452);
+/* harmony import */ var _reporting_email__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(8056);
+/* harmony import */ var _reporting_report__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(3621);
+/* harmony import */ var _tracking_repos__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(4351);
+/* harmony import */ var _tracking_stars__WEBPACK_IMPORTED_MODULE_9__ = __nccwpck_require__(1555);
+
+
+
+
+
+
+
+
+
+
+let dataDir = null;
+try {
+    const token = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('github-token', { required: true });
+    const octokit = _actions_github__WEBPACK_IMPORTED_MODULE_1__.getOctokit(token);
+    const config = (0,_config__WEBPACK_IMPORTED_MODULE_2__/* .loadConfig */ .Z9)();
+    const t = (0,_i18n__WEBPACK_IMPORTED_MODULE_4__/* .getTranslations */ .$)(config.locale);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Fetching repositories...');
+    const repos = await (0,_tracking_repos__WEBPACK_IMPORTED_MODULE_8__/* .getRepos */ .YN)({ octokit, config });
+    if (repos.length === 0) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.warning('No repositories matched the configured filters');
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('total-stars', '0');
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('stars-changed', 'false');
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('new-stars', '0');
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('lost-stars', '0');
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('report', 'No repositories matched the configured filters.');
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('report-html', '<p>No repositories matched the configured filters.</p>');
+    }
+    else {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Tracking ${repos.length} repositories...`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Initializing data branch...');
+        dataDir = (0,_data_data_branch__WEBPACK_IMPORTED_MODULE_3__/* .initDataBranch */ .jO)(config.dataBranch);
+        const history = (0,_data_data_branch__WEBPACK_IMPORTED_MODULE_3__/* .readHistory */ .Lu)(dataDir);
+        const lastSnapshot = (0,_data_data_branch__WEBPACK_IMPORTED_MODULE_3__/* .getLastSnapshot */ .vC)(history);
+        const previousTimestamp = lastSnapshot ? lastSnapshot.timestamp : null;
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Comparing star counts...');
+        const results = (0,_tracking_stars__WEBPACK_IMPORTED_MODULE_9__/* .compareStars */ .j)({ currentRepos: repos, previousSnapshot: lastSnapshot });
+        const { summary } = results;
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Total: ${summary.totalStars} stars (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`);
+        const markdownReport = (0,_reporting_report__WEBPACK_IMPORTED_MODULE_7__/* .generateMarkdownReport */ .N)({
+            results,
+            previousTimestamp,
+            locale: config.locale,
+        });
+        const htmlReport = (0,_reporting_report__WEBPACK_IMPORTED_MODULE_7__/* .generateHtmlReport */ .z)({ results, previousTimestamp, locale: config.locale });
+        const badge = (0,_reporting_badge__WEBPACK_IMPORTED_MODULE_5__/* .generateBadge */ .T)(summary.totalStars, config.locale);
+        const snapshot = (0,_tracking_stars__WEBPACK_IMPORTED_MODULE_9__/* .createSnapshot */ .$)({ currentRepos: repos, summary });
+        history.snapshots.push(snapshot);
+        (0,_data_data_branch__WEBPACK_IMPORTED_MODULE_3__/* .writeHistory */ .wn)({ dataDir, history, maxHistory: config.maxHistory });
+        (0,_data_data_branch__WEBPACK_IMPORTED_MODULE_3__/* .writeReport */ .u5)({ dataDir, markdown: markdownReport });
+        (0,_data_data_branch__WEBPACK_IMPORTED_MODULE_3__/* .writeBadge */ .fq)({ dataDir, svg: badge });
+        const commitMsg = `Update star data — ${summary.totalStars} total (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
+        (0,_data_data_branch__WEBPACK_IMPORTED_MODULE_3__/* .commitAndPush */ .tk)({ dataDir, dataBranch: config.dataBranch, message: commitMsg });
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('report', markdownReport);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('report-html', htmlReport);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('total-stars', String(summary.totalStars));
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('stars-changed', String(summary.changed));
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('new-stars', String(summary.newStars));
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('lost-stars', String(summary.lostStars));
+        const emailConfig = (0,_reporting_email__WEBPACK_IMPORTED_MODULE_6__/* .getEmailConfig */ .x)(config.locale);
+        if (emailConfig) {
+            if (summary.changed || config.sendOnNoChanges) {
+                const subject = `${t.email.subject}: ${summary.totalStars} (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
+                try {
+                    await (0,_reporting_email__WEBPACK_IMPORTED_MODULE_6__/* .sendEmail */ .Z)({ emailConfig, subject, htmlBody: htmlReport });
+                }
+                catch (error) {
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.warning(`Failed to send email: ${error.message}`);
+                }
+            }
+            else {
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('No star changes detected, skipping email');
+            }
+        }
+    }
+}
+catch (error) {
+    const err = error;
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(`Star Tracker failed: ${err.message}`);
+    if (err.stack) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(err.stack);
+    }
+}
+finally {
+    if (dataDir) {
+        (0,_data_data_branch__WEBPACK_IMPORTED_MODULE_3__/* .cleanup */ .tP)(dataDir);
+    }
+}
+
+__webpack_async_result__();
+} catch(e) { __webpack_async_result__(e); } }, 1);
+
+/***/ }),
+
+/***/ 2452:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   T: () => (/* binding */ generateBadge)
+/* harmony export */ });
+/* harmony import */ var _constants__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(5851);
+/* harmony import */ var _i18n__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(6090);
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(6087);
+
+
+
+function generateBadge(totalStars, locale = 'en') {
+    const t = (0,_i18n__WEBPACK_IMPORTED_MODULE_1__/* .getTranslations */ .$)(locale);
+    const label = t.badge.totalStars;
+    const value = `\u2605 ${(0,_utils__WEBPACK_IMPORTED_MODULE_2__/* .formatCount */ .B4)(totalStars)}`;
+    const labelWidth = label.length * 6.5 + 12;
+    const valueWidth = value.length * 7 + 12;
+    const totalWidth = labelWidth + valueWidth;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="20" role="img" aria-label="${label}: ${value}">
+  <title>${label}: ${value}</title>
+  <linearGradient id="s" x2="0" y2="100%">
+    <stop offset="0" stop-color="${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.gradientStart}" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <clipPath id="r">
+    <rect width="${totalWidth}" height="20" rx="3" fill="${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.white}"/>
+  </clipPath>
+  <g clip-path="url(#r)">
+    <rect width="${labelWidth}" height="20" fill="${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.muted}"/>
+    <rect x="${labelWidth}" width="${valueWidth}" height="20" fill="${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.accent}"/>
+    <rect width="${totalWidth}" height="20" fill="url(#s)"/>
+  </g>
+  <g fill="${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.white}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
+    <text aria-hidden="true" x="${labelWidth / 2}" y="15" fill="${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.shadow}" fill-opacity=".3">${label}</text>
+    <text x="${labelWidth / 2}" y="14">${label}</text>
+    <text aria-hidden="true" x="${labelWidth + valueWidth / 2}" y="15" fill="${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.shadow}" fill-opacity=".3">${value}</text>
+    <text x="${labelWidth + valueWidth / 2}" y="14">${value}</text>
+  </g>
+</svg>`;
+}
+
+
+/***/ }),
+
+/***/ 8056:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
@@ -47862,7 +48029,7 @@ function cleanup(dataDir) {
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(6966);
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var nodemailer__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(5606);
-/* harmony import */ var _i18n__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(3784);
+/* harmony import */ var _i18n__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(6090);
 
 
 
@@ -47911,313 +48078,23 @@ async function sendEmail({ emailConfig, subject, htmlBody, }) {
 
 /***/ }),
 
-/***/ 3784:
+/***/ 3621:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   $: () => (/* binding */ getTranslations),
-/* harmony export */   J: () => (/* binding */ isValidLocale)
+/* harmony export */   N: () => (/* binding */ generateMarkdownReport),
+/* harmony export */   z: () => (/* binding */ generateHtmlReport)
 /* harmony export */ });
-const translations = {
-    en: {
-        badge: {
-            totalStars: 'total stars',
-        },
-        report: {
-            title: 'Star Tracker Report',
-            total: 'Total',
-            change: 'Change',
-            comparedTo: 'Compared to snapshot from',
-            firstRun: 'first run',
-            repositories: 'Repositories',
-            stars: 'Stars',
-            trend: 'Trend',
-            newRepositories: 'New Repositories',
-            removedRepositories: 'Removed Repositories',
-            was: 'was',
-            summary: 'Summary',
-            starsGained: 'Stars gained',
-            starsLost: 'Stars lost',
-            netChange: 'Net change',
-            badges: {
-                new: 'NEW',
-            },
-        },
-        email: {
-            subject: 'GitHub Star Tracker Report',
-            defaultFrom: 'GitHub Star Tracker',
-        },
-        trends: {
-            up: 'up',
-            down: 'down',
-            stable: 'stable',
-        },
-    },
-    es: {
-        badge: {
-            totalStars: 'estrellas totales',
-        },
-        report: {
-            title: 'Informe de Seguimiento de Estrellas',
-            total: 'Total',
-            change: 'Cambio',
-            comparedTo: 'Comparado con instantánea del',
-            firstRun: 'primera ejecución',
-            repositories: 'Repositorios',
-            stars: 'Estrellas',
-            trend: 'Tendencia',
-            newRepositories: 'Nuevos Repositorios',
-            removedRepositories: 'Repositorios Eliminados',
-            was: 'tenía',
-            summary: 'Resumen',
-            starsGained: 'Estrellas ganadas',
-            starsLost: 'Estrellas perdidas',
-            netChange: 'Cambio neto',
-            badges: {
-                new: 'NUEVO',
-            },
-        },
-        email: {
-            subject: 'Informe de Seguimiento de Estrellas en GitHub',
-            defaultFrom: 'Seguimiento de Estrellas GitHub',
-        },
-        trends: {
-            up: 'subiendo',
-            down: 'bajando',
-            stable: 'estable',
-        },
-    },
-    ca: {
-        badge: {
-            totalStars: 'estrelles totals',
-        },
-        report: {
-            title: "Informe de Seguiment d'Estrelles",
-            total: 'Total',
-            change: 'Canvi',
-            comparedTo: 'Comparat amb instantània del',
-            firstRun: 'primera execució',
-            repositories: 'Repositoris',
-            stars: 'Estrelles',
-            trend: 'Tendència',
-            newRepositories: 'Nous Repositoris',
-            removedRepositories: 'Repositoris Eliminats',
-            was: 'tenia',
-            summary: 'Resum',
-            starsGained: 'Estrelles guanyades',
-            starsLost: 'Estrelles perdudes',
-            netChange: 'Canvi net',
-            badges: {
-                new: 'NOU',
-            },
-        },
-        email: {
-            subject: "Informe de Seguiment d'Estrelles a GitHub",
-            defaultFrom: "Seguiment d'Estrelles GitHub",
-        },
-        trends: {
-            up: 'pujant',
-            down: 'baixant',
-            stable: 'estable',
-        },
-    },
-    it: {
-        badge: {
-            totalStars: 'stelle totali',
-        },
-        report: {
-            title: 'Report Tracciamento Stelle',
-            total: 'Totale',
-            change: 'Variazione',
-            comparedTo: 'Confrontato con snapshot del',
-            firstRun: 'prima esecuzione',
-            repositories: 'Repository',
-            stars: 'Stelle',
-            trend: 'Tendenza',
-            newRepositories: 'Nuovi Repository',
-            removedRepositories: 'Repository Rimossi',
-            was: 'aveva',
-            summary: 'Riepilogo',
-            starsGained: 'Stelle guadagnate',
-            starsLost: 'Stelle perse',
-            netChange: 'Variazione netta',
-            badges: {
-                new: 'NUOVO',
-            },
-        },
-        email: {
-            subject: 'Report Tracciamento Stelle GitHub',
-            defaultFrom: 'Tracciamento Stelle GitHub',
-        },
-        trends: {
-            up: 'in aumento',
-            down: 'in diminuzione',
-            stable: 'stabile',
-        },
-    },
-};
-function getTranslations(locale = 'en') {
-    return translations[locale] || translations.en;
-}
-function isValidLocale(value) {
-    return ['en', 'es', 'ca', 'it'].includes(value);
-}
-
-
-/***/ }),
-
-/***/ 6866:
-/***/ ((module, __webpack_exports__, __nccwpck_require__) => {
-
-"use strict";
-__nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
-__nccwpck_require__.r(__webpack_exports__);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(6966);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(4903);
-/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _badge__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(5945);
-/* harmony import */ var _config__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(8915);
-/* harmony import */ var _data_branch__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(3752);
-/* harmony import */ var _email__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(1294);
-/* harmony import */ var _i18n__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(3784);
-/* harmony import */ var _report__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(1762);
-/* harmony import */ var _repos__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(339);
-/* harmony import */ var _stars__WEBPACK_IMPORTED_MODULE_9__ = __nccwpck_require__(4255);
+/* harmony import */ var _constants__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(5851);
+/* harmony import */ var _i18n__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(6090);
+/* harmony import */ var _utils__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(6087);
 
 
 
-
-
-
-
-
-
-
-let dataDir = null;
-try {
-    const token = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('github-token', { required: true });
-    const octokit = _actions_github__WEBPACK_IMPORTED_MODULE_1__.getOctokit(token);
-    const config = (0,_config__WEBPACK_IMPORTED_MODULE_3__/* .loadConfig */ .Z9)();
-    const t = (0,_i18n__WEBPACK_IMPORTED_MODULE_6__/* .getTranslations */ .$)(config.locale);
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Fetching repositories...');
-    const repos = await (0,_repos__WEBPACK_IMPORTED_MODULE_8__/* .getRepos */ .YN)({ octokit, config });
-    if (repos.length === 0) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.warning('No repositories matched the configured filters');
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('total-stars', '0');
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('stars-changed', 'false');
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('new-stars', '0');
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('lost-stars', '0');
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('report', 'No repositories matched the configured filters.');
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('report-html', '<p>No repositories matched the configured filters.</p>');
-    }
-    else {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Tracking ${repos.length} repositories...`);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Initializing data branch...');
-        dataDir = (0,_data_branch__WEBPACK_IMPORTED_MODULE_4__/* .initDataBranch */ .jO)(config.dataBranch);
-        const history = (0,_data_branch__WEBPACK_IMPORTED_MODULE_4__/* .readHistory */ .Lu)(dataDir);
-        const lastSnapshot = (0,_data_branch__WEBPACK_IMPORTED_MODULE_4__/* .getLastSnapshot */ .vC)(history);
-        const previousTimestamp = lastSnapshot ? lastSnapshot.timestamp : null;
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Comparing star counts...');
-        const results = (0,_stars__WEBPACK_IMPORTED_MODULE_9__/* .compareStars */ .j)({ currentRepos: repos, previousSnapshot: lastSnapshot });
-        const { summary } = results;
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Total: ${summary.totalStars} stars (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`);
-        const markdownReport = (0,_report__WEBPACK_IMPORTED_MODULE_7__/* .generateMarkdownReport */ .Ng)({
-            results,
-            previousTimestamp,
-            locale: config.locale,
-        });
-        const htmlReport = (0,_report__WEBPACK_IMPORTED_MODULE_7__/* .generateHtmlReport */ .zh)({ results, previousTimestamp, locale: config.locale });
-        const badge = (0,_badge__WEBPACK_IMPORTED_MODULE_2__/* .generateBadge */ .T)(summary.totalStars, config.locale);
-        const snapshot = (0,_stars__WEBPACK_IMPORTED_MODULE_9__/* .createSnapshot */ .$)({ currentRepos: repos, summary });
-        history.snapshots.push(snapshot);
-        (0,_data_branch__WEBPACK_IMPORTED_MODULE_4__/* .writeHistory */ .wn)({ dataDir, history, maxHistory: config.maxHistory });
-        (0,_data_branch__WEBPACK_IMPORTED_MODULE_4__/* .writeReport */ .u5)({ dataDir, markdown: markdownReport });
-        (0,_data_branch__WEBPACK_IMPORTED_MODULE_4__/* .writeBadge */ .fq)({ dataDir, svg: badge });
-        const commitMsg = `Update star data — ${summary.totalStars} total (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
-        (0,_data_branch__WEBPACK_IMPORTED_MODULE_4__/* .commitAndPush */ .tk)({ dataDir, dataBranch: config.dataBranch, message: commitMsg });
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('report', markdownReport);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('report-html', htmlReport);
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('total-stars', String(summary.totalStars));
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('stars-changed', String(summary.changed));
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('new-stars', String(summary.newStars));
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('lost-stars', String(summary.lostStars));
-        const emailConfig = (0,_email__WEBPACK_IMPORTED_MODULE_5__/* .getEmailConfig */ .x)(config.locale);
-        if (emailConfig) {
-            if (summary.changed || config.sendOnNoChanges) {
-                const subject = `${t.email.subject}: ${summary.totalStars} (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
-                try {
-                    await (0,_email__WEBPACK_IMPORTED_MODULE_5__/* .sendEmail */ .Z)({ emailConfig, subject, htmlBody: htmlReport });
-                }
-                catch (error) {
-                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.warning(`Failed to send email: ${error.message}`);
-                }
-            }
-            else {
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('No star changes detected, skipping email');
-            }
-        }
-    }
-}
-catch (error) {
-    const err = error;
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(`Star Tracker failed: ${err.message}`);
-    if (err.stack) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(err.stack);
-    }
-}
-finally {
-    if (dataDir) {
-        (0,_data_branch__WEBPACK_IMPORTED_MODULE_4__/* .cleanup */ .tP)(dataDir);
-    }
-}
-
-__webpack_async_result__();
-} catch(e) { __webpack_async_result__(e); } }, 1);
-
-/***/ }),
-
-/***/ 1762:
-/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
-
-"use strict";
-/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   Ng: () => (/* binding */ generateMarkdownReport),
-/* harmony export */   zh: () => (/* binding */ generateHtmlReport)
-/* harmony export */ });
-/* unused harmony exports deltaIndicator, trendIcon */
-/* harmony import */ var _i18n__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(3784);
-
-const COLORS = {
-    positive: '#28a745',
-    negative: '#d73a49',
-    neutral: '#6a737d',
-    link: '#0366d6',
-    text: '#24292e',
-    accent: '#dfb317',
-    tableHeaderBg: '#f6f8fa',
-    tableHeaderBorder: '#e1e4e8',
-    cellBorder: '#eee',
-    white: '#fff',
-};
-function deltaIndicator(delta) {
-    if (delta > 0)
-        return `+${delta}`;
-    if (delta < 0)
-        return `${delta}`;
-    return '0';
-}
-function trendIcon(delta) {
-    if (delta > 0)
-        return '\u2B06\uFE0F';
-    if (delta < 0)
-        return '\u2B07\uFE0F';
-    return '\u2796';
-}
 function generateMarkdownReport({ results, previousTimestamp, locale = 'en', }) {
     const { repos, summary } = results;
-    const t = (0,_i18n__WEBPACK_IMPORTED_MODULE_0__/* .getTranslations */ .$)(locale);
+    const t = (0,_i18n__WEBPACK_IMPORTED_MODULE_1__/* .getTranslations */ .$)(locale);
     const now = new Date().toISOString().split('T')[0];
     const prev = previousTimestamp ? previousTimestamp.split('T')[0] : t.report.firstRun;
     const activeRepos = repos.filter((repo) => !repo.isRemoved);
@@ -48227,7 +48104,7 @@ function generateMarkdownReport({ results, previousTimestamp, locale = 'en', }) 
     const header = [
         `# ${t.report.title}`,
         '',
-        `**${now}** | ${t.report.total}: **${summary.totalStars}** ${t.report.stars.toLowerCase()} | ${t.report.change}: **${deltaIndicator(summary.totalDelta)}**`,
+        `**${now}** | ${t.report.total}: **${summary.totalStars}** ${t.report.stars.toLowerCase()} | ${t.report.change}: **${(0,_utils__WEBPACK_IMPORTED_MODULE_2__/* .deltaIndicator */ .KR)(summary.totalDelta)}**`,
         '',
     ];
     const comparison = prev === t.report.firstRun ? [] : [`> ${t.report.comparedTo} ${prev}`, ''];
@@ -48239,7 +48116,7 @@ function generateMarkdownReport({ results, previousTimestamp, locale = 'en', }) 
             '|:-----------|------:|-------:|:-----:|',
             ...sorted.map((repo) => {
                 const badge = repo.isNew ? ` \`${t.report.badges.new}\`` : '';
-                return `| [${repo.fullName}](https://github.com/${repo.fullName})${badge} | ${repo.current} | ${deltaIndicator(repo.delta)} | ${trendIcon(repo.delta)} |`;
+                return `| [${repo.fullName}](https://github.com/${repo.fullName})${badge} | ${repo.current} | ${(0,_utils__WEBPACK_IMPORTED_MODULE_2__/* .deltaIndicator */ .KR)(repo.delta)} | ${(0,_utils__WEBPACK_IMPORTED_MODULE_2__/* .trendIcon */ .Be)(repo.delta)} |`;
             }),
             '',
         ]
@@ -48267,7 +48144,7 @@ function generateMarkdownReport({ results, previousTimestamp, locale = 'en', }) 
             '',
             `- **${t.report.starsGained}:** ${summary.newStars}`,
             `- **${t.report.starsLost}:** ${summary.lostStars}`,
-            `- **${t.report.netChange}:** ${deltaIndicator(summary.totalDelta)}`,
+            `- **${t.report.netChange}:** ${(0,_utils__WEBPACK_IMPORTED_MODULE_2__/* .deltaIndicator */ .KR)(summary.totalDelta)}`,
             '',
         ];
     const footer = [
@@ -48286,31 +48163,31 @@ function generateMarkdownReport({ results, previousTimestamp, locale = 'en', }) 
 }
 function generateHtmlReport({ results, previousTimestamp, locale = 'en', }) {
     const { repos, summary } = results;
-    const t = (0,_i18n__WEBPACK_IMPORTED_MODULE_0__/* .getTranslations */ .$)(locale);
+    const t = (0,_i18n__WEBPACK_IMPORTED_MODULE_1__/* .getTranslations */ .$)(locale);
     const now = new Date().toISOString().split('T')[0];
     const prev = previousTimestamp ? previousTimestamp.split('T')[0] : t.report.firstRun;
     const activeRepos = repos.filter((repo) => !repo.isRemoved);
     const sorted = [...activeRepos].sort((repoA, repoB) => repoB.current - repoA.current);
     const deltaColor = (delta) => {
         if (delta > 0)
-            return COLORS.positive;
+            return _constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.positive;
         if (delta < 0)
-            return COLORS.negative;
-        return COLORS.neutral;
+            return _constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.negative;
+        return _constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.neutral;
     };
     const rows = sorted
         .map((repo) => {
         const badge = repo.isNew
-            ? ` <span style="background:${COLORS.positive};color:${COLORS.white};padding:1px 6px;border-radius:3px;font-size:11px;">${t.report.badges.new}</span>`
+            ? ` <span style="background:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.positive};color:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.white};padding:1px 6px;border-radius:3px;font-size:11px;">${t.report.badges.new}</span>`
             : '';
         return `
       <tr>
-        <td style="padding:8px 12px;border-bottom:1px solid ${COLORS.cellBorder};">
-          <a href="https://github.com/${repo.fullName}" style="color:${COLORS.link};text-decoration:none;">${repo.fullName}</a>${badge}
+        <td style="padding:8px 12px;border-bottom:1px solid ${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.cellBorder};">
+          <a href="https://github.com/${repo.fullName}" style="color:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.link};text-decoration:none;">${repo.fullName}</a>${badge}
         </td>
-        <td style="padding:8px 12px;border-bottom:1px solid ${COLORS.cellBorder};text-align:right;">${repo.current}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid ${COLORS.cellBorder};text-align:right;color:${deltaColor(repo.delta)};font-weight:600;">
-          ${deltaIndicator(repo.delta)}
+        <td style="padding:8px 12px;border-bottom:1px solid ${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.cellBorder};text-align:right;">${repo.current}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid ${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.cellBorder};text-align:right;color:${deltaColor(repo.delta)};font-weight:600;">
+          ${(0,_utils__WEBPACK_IMPORTED_MODULE_2__/* .deltaIndicator */ .KR)(repo.delta)}
         </td>
       </tr>`;
     })
@@ -48319,44 +48196,44 @@ function generateHtmlReport({ results, previousTimestamp, locale = 'en', }) {
     const removedSection = removedRepos.length > 0
         ? `
       <div style="margin-top:16px;">
-        <h3 style="color:${COLORS.negative};font-size:14px;">${t.report.removedRepositories}</h3>
+        <h3 style="color:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.negative};font-size:14px;">${t.report.removedRepositories}</h3>
         <ul>${removedRepos.map((repo) => `<li>${repo.fullName} — ${t.report.was} ${repo.previous} ${t.report.stars.toLowerCase()}</li>`).join('')}</ul>
       </div>`
         : '';
     return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${COLORS.text};">
-  <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${COLORS.accent};">
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.text};">
+  <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.accent};">
     <h1 style="margin:0;font-size:24px;">${t.report.title}</h1>
-    <p style="color:${COLORS.neutral};margin:8px 0 0;">${now} ${prev === t.report.firstRun ? `| ${t.report.firstRun}` : `| ${t.report.comparedTo} ${prev}`}</p>
+    <p style="color:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.neutral};margin:8px 0 0;">${now} ${prev === t.report.firstRun ? `| ${t.report.firstRun}` : `| ${t.report.comparedTo} ${prev}`}</p>
   </div>
 
   <div style="display:flex;justify-content:space-around;padding:20px 0;text-align:center;">
     <div>
       <div style="font-size:28px;font-weight:700;">${summary.totalStars}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.total} ${t.report.stars}</div>
+      <div style="color:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.neutral};font-size:12px;">${t.report.total} ${t.report.stars}</div>
     </div>
     <div>
-      <div style="font-size:28px;font-weight:700;color:${deltaColor(summary.totalDelta)};">${deltaIndicator(summary.totalDelta)}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.netChange}</div>
+      <div style="font-size:28px;font-weight:700;color:${deltaColor(summary.totalDelta)};">${(0,_utils__WEBPACK_IMPORTED_MODULE_2__/* .deltaIndicator */ .KR)(summary.totalDelta)}</div>
+      <div style="color:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.neutral};font-size:12px;">${t.report.netChange}</div>
     </div>
     <div>
-      <div style="font-size:28px;font-weight:700;color:${COLORS.positive};">${summary.newStars}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.starsGained}</div>
+      <div style="font-size:28px;font-weight:700;color:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.positive};">${summary.newStars}</div>
+      <div style="color:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.neutral};font-size:12px;">${t.report.starsGained}</div>
     </div>
     <div>
-      <div style="font-size:28px;font-weight:700;color:${COLORS.negative};">${summary.lostStars}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.starsLost}</div>
+      <div style="font-size:28px;font-weight:700;color:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.negative};">${summary.lostStars}</div>
+      <div style="color:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.neutral};font-size:12px;">${t.report.starsLost}</div>
     </div>
   </div>
 
   <table style="width:100%;border-collapse:collapse;margin-top:16px;">
     <thead>
-      <tr style="background:${COLORS.tableHeaderBg};">
-        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid ${COLORS.tableHeaderBorder};">${t.report.repositories}</th>
-        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};">${t.report.stars}</th>
-        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};">${t.report.change}</th>
+      <tr style="background:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.tableHeaderBg};">
+        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid ${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.tableHeaderBorder};">${t.report.repositories}</th>
+        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.tableHeaderBorder};">${t.report.stars}</th>
+        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.tableHeaderBorder};">${t.report.change}</th>
       </tr>
     </thead>
     <tbody>
@@ -48366,8 +48243,8 @@ function generateHtmlReport({ results, previousTimestamp, locale = 'en', }) {
 
   ${removedSection}
 
-  <div style="margin-top:24px;padding-top:16px;border-top:1px solid ${COLORS.cellBorder};text-align:center;color:${COLORS.neutral};font-size:12px;">
-    Generated by <a href="https://github.com/fbuireu/github-star-tracker" style="color:${COLORS.link};">GitHub Star Tracker</a>
+  <div style="margin-top:24px;padding-top:16px;border-top:1px solid ${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.cellBorder};text-align:center;color:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.neutral};font-size:12px;">
+    Generated by <a href="https://github.com/fbuireu/github-star-tracker" style="color:${_constants__WEBPACK_IMPORTED_MODULE_0__/* .COLORS */ .lm.link};">GitHub Star Tracker</a>
   </div>
 </body>
 </html>`;
@@ -48376,7 +48253,7 @@ function generateHtmlReport({ results, previousTimestamp, locale = 'en', }) {
 
 /***/ }),
 
-/***/ 339:
+/***/ 4351:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
@@ -48458,7 +48335,7 @@ async function getRepos({ octokit, config, }) {
 
 /***/ }),
 
-/***/ 4255:
+/***/ 1555:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
@@ -48541,6 +48418,40 @@ function createSnapshot({ currentRepos, summary }) {
             stars: repo.stars,
         })),
     };
+}
+
+
+/***/ }),
+
+/***/ 6087:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   B4: () => (/* binding */ formatCount),
+/* harmony export */   Be: () => (/* binding */ trendIcon),
+/* harmony export */   KR: () => (/* binding */ deltaIndicator)
+/* harmony export */ });
+const compactFormatter = new Intl.NumberFormat('en', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+});
+function formatCount(n) {
+    return compactFormatter.format(n);
+}
+function deltaIndicator(delta) {
+    if (delta > 0)
+        return `+${delta}`;
+    if (delta < 0)
+        return `${delta}`;
+    return '0';
+}
+function trendIcon(delta) {
+    if (delta > 0)
+        return '\u2B06\uFE0F';
+    if (delta < 0)
+        return '\u2B07\uFE0F';
+    return '\u2796';
 }
 
 

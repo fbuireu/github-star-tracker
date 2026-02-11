@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import nodemailer from 'nodemailer';
-import { getTranslations, type Locale } from './i18n';
-import type { EmailConfig } from './types';
+import { getTranslations, type Locale } from '../i18n';
+import type { EmailConfig } from '../types';
 
 export function getEmailConfig(locale: Locale = 'en'): EmailConfig | null {
   const host = core.getInput('smtp-host');

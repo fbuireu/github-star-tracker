@@ -1,0 +1,34 @@
+{
+  "badge": {
+    "totalStars": "stelle totali"
+  },
+  "report": {
+    "title": "Report Tracciamento Stelle",
+    "total": "Totale",
+    "change": "Variazione",
+    "comparedTo": "Confrontato con snapshot del",
+    "firstRun": "prima esecuzione",
+    "repositories": "Repository",
+    "stars": "Stelle",
+    "trend": "Tendenza",
+    "newRepositories": "Nuovi Repository",
+    "removedRepositories": "Repository Rimossi",
+    "was": "aveva",
+    "summary": "Riepilogo",
+    "starsGained": "Stelle guadagnate",
+    "starsLost": "Stelle perse",
+    "netChange": "Variazione netta",
+    "badges": {
+      "new": "NUOVO"
+    }
+  },
+  "email": {
+    "subject": "Report Tracciamento Stelle GitHub",
+    "defaultFrom": "Tracciamento Stelle GitHub"
+  },
+  "trends": {
+    "up": "in aumento",
+    "down": "in diminuzione",
+    "stable": "stabile"
+  }
+}

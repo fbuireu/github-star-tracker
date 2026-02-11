@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import {
-  deltaIndicator,
-  generateHtmlReport,
-  generateMarkdownReport,
-  trendIcon,
-} from '../src/report';
+import { generateHtmlReport, generateMarkdownReport } from '../src/reporting/report';
 import type { ComparisonResults } from '../src/types';
+import { deltaIndicator, trendIcon } from '../src/utils';
 
 describe('deltaIndicator', () => {
   it('prefixes positive numbers with +', () => {

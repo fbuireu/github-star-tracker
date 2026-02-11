@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import type { GitHub } from '@actions/github/lib/utils';
-import type { Config, RepoInfo } from './types';
+import type { Config, RepoInfo } from '../types';
 
 type Octokit = InstanceType<typeof GitHub>;
 

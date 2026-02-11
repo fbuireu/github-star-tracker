@@ -2,23 +2,13 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as core from '@actions/core';
 import * as yaml from 'js-yaml';
+import { DEFAULTS } from './constants';
 import { isValidLocale, type Locale } from './i18n';
 import type { Config } from './types';
 
 const VALID_VISIBILITIES = ['public', 'private', 'all'] as const;
 
-export const DEFAULTS: Config = {
-  visibility: 'public',
-  includeArchived: false,
-  includeForks: false,
-  excludeRepos: [],
-  onlyRepos: [],
-  minStars: 0,
-  dataBranch: 'star-tracker-data',
-  maxHistory: 52,
-  sendOnNoChanges: false,
-  locale: 'en',
-};
+export { DEFAULTS };
 
 export function parseList(value: string | null | undefined): string[] {
   if (!value || value.trim() === '') return [];

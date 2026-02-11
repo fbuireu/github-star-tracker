@@ -1,30 +1,7 @@
-import { getTranslations, type Locale } from './i18n';
-import type { ComparisonResults } from './types';
-
-const COLORS = {
-  positive: '#28a745',
-  negative: '#d73a49',
-  neutral: '#6a737d',
-  link: '#0366d6',
-  text: '#24292e',
-  accent: '#dfb317',
-  tableHeaderBg: '#f6f8fa',
-  tableHeaderBorder: '#e1e4e8',
-  cellBorder: '#eee',
-  white: '#fff',
-} as const;
-
-export function deltaIndicator(delta: number): string {
-  if (delta > 0) return `+${delta}`;
-  if (delta < 0) return `${delta}`;
-  return '0';
-}
-
-export function trendIcon(delta: number): string {
-  if (delta > 0) return '\u2B06\uFE0F';
-  if (delta < 0) return '\u2B07\uFE0F';
-  return '\u2796';
-}
+import { COLORS } from '../constants';
+import { getTranslations, type Locale } from '../i18n';
+import type { ComparisonResults } from '../types';
+import { deltaIndicator, trendIcon } from '../utils';
 
 interface GenerateReportParams {
   results: ComparisonResults;

@@ -1,0 +1,34 @@
+{
+  "badge": {
+    "totalStars": "total stars"
+  },
+  "report": {
+    "title": "Star Tracker Report",
+    "total": "Total",
+    "change": "Change",
+    "comparedTo": "Compared to snapshot from",
+    "firstRun": "first run",
+    "repositories": "Repositories",
+    "stars": "Stars",
+    "trend": "Trend",
+    "newRepositories": "New Repositories",
+    "removedRepositories": "Removed Repositories",
+    "was": "was",
+    "summary": "Summary",
+    "starsGained": "Stars gained",
+    "starsLost": "Stars lost",
+    "netChange": "Net change",
+    "badges": {
+      "new": "NEW"
+    }
+  },
+  "email": {
+    "subject": "GitHub Star Tracker Report",
+    "defaultFrom": "GitHub Star Tracker"
+  },
+  "trends": {
+    "up": "up",
+    "down": "down",
+    "stable": "stable"
+  }
+}

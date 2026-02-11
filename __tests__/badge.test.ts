@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { formatCount, generateBadge } from '../src/badge';
+import { generateBadge } from '../src/reporting/badge';
+import { formatCount } from '../src/utils';
 
 describe('formatCount', () => {
   it('returns raw number for values under 1000', () => {
@@ -8,14 +9,14 @@ describe('formatCount', () => {
     expect(formatCount(999)).toBe('999');
   });
 
-  it('formats thousands with k suffix', () => {
-    expect(formatCount(1000)).toBe('1.0k');
-    expect(formatCount(1500)).toBe('1.5k');
-    expect(formatCount(99999)).toBe('100.0k');
+  it('formats thousands with K suffix', () => {
+    expect(formatCount(1000)).toBe('1K');
+    expect(formatCount(1500)).toBe('1.5K');
+    expect(formatCount(99999)).toBe('100K');
   });
 
   it('formats millions with M suffix', () => {
-    expect(formatCount(1000000)).toBe('1.0M');
+    expect(formatCount(1000000)).toBe('1M');
     expect(formatCount(2500000)).toBe('2.5M');
   });
 });
@@ -40,7 +41,7 @@ describe('generateBadge', () => {
 
   it('formats large numbers', () => {
     const svg = generateBadge(1500);
-    expect(svg).toContain('1.5k');
+    expect(svg).toContain('1.5K');
   });
 
   it('includes label text', () => {
