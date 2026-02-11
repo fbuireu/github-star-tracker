@@ -22,22 +22,22 @@ config:
 flowchart TD
     trigger(["Workflow Trigger"])
 
-    subgraph setup ["Initialization Phase"]
+    subgraph setup
         direction LR
         config["Parse configuration"] --> fetch["Query GitHub REST API(repositories endpoint)"] --> filter["Apply filter criteria"]
     end
 
-    subgraph analysis ["Data Analysis Phase"]
+    subgraph analysis
         direction LR
         init["Initialize orphan branch"] --> read["Deserialize previous  state snapshot"] --> compare["Compute delta metrics"]
     end
 
-    subgraph artifacts ["Artifact Generation"]
+    subgraph artifacts
         direction LR
         md["Markdown report"] ~~~ json["JSON dataset"] ~~~ svg["SVG badge"] ~~~ html["HTML digest"]
     end
 
-    subgraph persist ["Persistence Layer"]
+    subgraph persist
         direction LR
         commit["Git commit & push (data branch)"] --> setout["Export action outputs"] --> email{"SMTP configured?"}
         email -->|Yes| send["Dispatch notification"]
@@ -144,12 +144,12 @@ config:
   theme: neutral
 ---
 graph TD
-    subgraph main ["main branch"]
+    subgraph main
         src["src/Application source"]
         wf[".github/workflows/Workflow definition"]
     end
 
-    subgraph data ["data branch (orphan)"]
+    subgraph data
         readme["README.md Tabular report view"]
         json["stars-data.json Time-series dataset"]
         badge["stars-badge.svg Shields.io badge"]
