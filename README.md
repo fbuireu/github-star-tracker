@@ -17,30 +17,30 @@
 ---
 config:
   look: handDrawn
-  theme: neutral
+  theme: base
 ---
 flowchart TD
-    trigger(["Cron / workflow_dispatch"])
+    trigger(["Trigger: Scheduled/Manual"])
 
-    subgraph setup ["Setup"]
+    subgraph setup ["Initialization Phase"]
         direction LR
-        config["Load config"] --> fetch["Fetch repos\nvia GitHub API"] --> filter["Apply filters"]
+        config["Parse configuration"] --> fetch["Query GitHub REST API\n(repositories endpoint)"] --> filter["Apply filter criteria"]
     end
 
-    subgraph analysis ["Analysis"]
+    subgraph analysis ["Data Analysis Phase"]
         direction LR
-        init["Init data branch"] --> read["Read previous\nsnapshot"] --> compare["Compare\nstar counts"]
+        init["Initialize orphan branch"] --> read["Deserialize previous\nstate snapshot"] --> compare["Compute delta\nmetrics"]
     end
 
-    subgraph artifacts ["Generate"]
+    subgraph artifacts ["Artifact Generation"]
         direction LR
-        md["README.md"] ~~~ json["stars-data.json"] ~~~ svg["stars-badge.svg"] ~~~ html["HTML report"]
+        md["Markdown report"] ~~~ json["JSON dataset"] ~~~ svg["SVG badge"] ~~~ html["HTML digest"]
     end
 
-    subgraph persist ["Persist & Notify"]
+    subgraph persist ["Persistence Layer"]
         direction LR
-        commit["Commit & push\nto data branch"] --> setout["Set action\noutputs"] --> email{"SMTP?"}
-        email -->|Yes| send["Send email"]
+        commit["Git commit & push\n(data branch)"] --> setout["Export action\noutputs"] --> email{"SMTP configured?"}
+        email -->|Yes| send["Dispatch notification"]
     end
 
     trigger --> setup --> analysis --> artifacts --> persist
@@ -121,22 +121,22 @@ Everything lives on a **separate orphan branch** (default: `star-tracker-data`).
 ---
 config:
   look: handDrawn
-  theme: neutral
+  theme: base
 ---
 graph LR
     subgraph main ["main branch"]
-        src["src/\nYour source code"]
-        wf[".github/workflows/\nstar-tracker.yml"]
+        src["src/\nApplication source"]
+        wf[".github/workflows/\nWorkflow definition"]
     end
 
-    subgraph data ["star-tracker-data branch (orphan)"]
-        readme["README.md\nRendered report with table"]
-        json["stars-data.json\nTimestamped snapshots array"]
-        badge["stars-badge.svg\nShields.io-style badge"]
+    subgraph data ["star-tracker-data (orphan branch)"]
+        readme["README.md\nTabular report view"]
+        json["stars-data.json\nTime-series dataset"]
+        badge["stars-badge.svg\nShields.io badge"]
     end
 
-    wf -- "runs action" --> data
-    main -.->|"branches are independent\n(no shared history)"| data
+    wf -- "executes workflow" --> data
+    main -.->|"isolated branches\n(no common ancestor)"| data
 ```
 
 ### `README.md` — The Report
