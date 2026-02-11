@@ -17,16 +17,15 @@
   "scripts": {
     "prepare": "husky",
     "build": "tsx esbuild.config.ts",
-    "test:ut": "vitest run",
-    "test:ut:watch": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test": "pnpm run test:coverage",
     "format": "biome check --write --no-errors-on-unmatched .",
     "lint": "biome lint --no-errors-on-unmatched .",
     "lint:fix": "pnpm run lint --fix",
     "typecheck": "tsc --noEmit",
     "check": "biome check --no-errors-on-unmatched . && pnpm run typecheck",
-    "validate": "pnpm run check && pnpm run test && pnpm run build"
+    "validate": "pnpm run check && pnpm run test:coverage && pnpm run build"
   },
   "dependencies": {
     "@actions/core": "^1.11.1",
