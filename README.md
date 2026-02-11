@@ -21,29 +21,26 @@ config:
 ---
 flowchart TD
     trigger(["Workflow Trigger"])
+    config["Parse configuration"]
+    fetch["Query GitHub REST API(repositories endpoint)"]
+    filter["Apply filter criteria"]
+    init["Initialize orphan branch"]
+    read["Deserialize previous  state snapshot"]
+    compare["Compute delta metrics"]
+    md["Markdown report"]
+    json["JSON dataset"]
+    svg["SVG badge"]
+    html["HTML digest"]
+    commit["Git commit & push (data branch)"]
+    setout["Export action outputs"]
+    email{"SMTP configured?"}
+    send["Dispatch notification"]
 
-    subgraph setup
-        direction LR
-        config["Parse configuration"] --> fetch["Query GitHub REST API(repositories endpoint)"] --> filter["Apply filter criteria"]
-    end
-
-    subgraph analysis
-        direction LR
-        init["Initialize orphan branch"] --> read["Deserialize previous  state snapshot"] --> compare["Compute delta metrics"]
-    end
-
-    subgraph artifacts
-        direction LR
-        md["Markdown report"] ~~~ json["JSON dataset"] ~~~ svg["SVG badge"] ~~~ html["HTML digest"]
-    end
-
-    subgraph persist
-        direction LR
-        commit["Git commit & push (data branch)"] --> setout["Export action outputs"] --> email{"SMTP configured?"}
-        email -->|Yes| send["Dispatch notification"]
-    end
-
-    trigger --> setup --> analysis --> artifacts --> persist
+    trigger --> config --> fetch --> filter
+    filter --> init --> read --> compare
+    compare --> md & json & svg & html
+    md & json & svg & html --> commit --> setout --> email
+    email -->|Yes| send
 
     style trigger fill:#e1f5ff,stroke:#01579b,stroke-width:2px
     style config fill:#fff3e0,stroke:#e65100,stroke-width:2px
@@ -60,10 +57,6 @@ flowchart TD
     style setout fill:#fce4ec,stroke:#880e4f,stroke-width:2px
     style email fill:#fce4ec,stroke:#880e4f,stroke-width:2px
     style send fill:#fce4ec,stroke:#880e4f,stroke-width:2px
-    style setup fill:#fff8e1,stroke:#f57f17,stroke-width:2px
-    style analysis fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
-    style artifacts fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    style persist fill:#fce4ec,stroke:#ad1457,stroke-width:2px
 ```
 
 1. On each scheduled run, the action fetches star counts for your repos via the GitHub API
@@ -144,27 +137,19 @@ config:
   theme: neutral
 ---
 graph TD
-    subgraph main
-        src["src/Application source"]
-        wf[".github/workflows/Workflow definition"]
-    end
+    src["src/Application source"]
+    wf[".github/workflows/Workflow definition"]
+    readme["README.md Tabular report view"]
+    json["stars-data.json Time-series dataset"]
+    badge["stars-badge.svg Shields.io badge"]
 
-    subgraph data
-        readme["README.md Tabular report view"]
-        json["stars-data.json Time-series dataset"]
-        badge["stars-badge.svg Shields.io badge"]
-    end
-
-    wf -- "executes workflow" --> data
-    main -.->|"isolated branches (no common ancestor)"| data
+    wf --> readme & json & badge
 
     style src fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
     style wf fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
     style readme fill:#fff3e0,stroke:#e65100,stroke-width:2px
     style json fill:#fff3e0,stroke:#e65100,stroke-width:2px
     style badge fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style main fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
-    style data fill:#fff8e1,stroke:#f57f17,stroke-width:2px
 ```
 
 ### `README.md` — The Report
