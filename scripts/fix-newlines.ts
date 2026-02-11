@@ -1,6 +1,6 @@
-#!/usr/bin/env node
-const { readdirSync, readFileSync, appendFileSync, statSync } = require('fs');
-const { join } = require('path');
+#!/usr/bin/env tsx
+import { appendFileSync, readdirSync, readFileSync, statSync } from 'fs';
+import { join } from 'path';
 
 const distDir = join(__dirname, '..', 'dist');
 

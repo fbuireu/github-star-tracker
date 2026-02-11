@@ -15,7 +15,7 @@
   "author": "Ferran Buireu <fbuireu@gmail.com>",
   "license": "AGPL-3.0-only",
   "scripts": {
-    "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt && prettier --write --log-level error dist/ && node scripts/fix-newlines.js",
+    "build": "ncc build src/index.ts -o dist --source-map --license licenses.txt && prettier --write --log-level error dist/ && tsx scripts/fix-newlines.ts",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "prettier --check src/ __tests__/",
@@ -37,6 +37,7 @@
     "@vitest/coverage-v8": "^3.0.5",
     "husky": "^9.1.7",
     "prettier": "^3.4.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"
   }
