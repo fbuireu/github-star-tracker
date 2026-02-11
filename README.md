@@ -60,10 +60,10 @@ flowchart TD
     style setout fill:#fce4ec,stroke:#880e4f,stroke-width:2px
     style email fill:#fce4ec,stroke:#880e4f,stroke-width:2px
     style send fill:#fce4ec,stroke:#880e4f,stroke-width:2px
-    style setup fill:#fff8e1,stroke:#f57f17,stroke-width:2px
-    style analysis fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
-    style artifacts fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    style persist fill:#fce4ec,stroke:#ad1457,stroke-width:2px
+    style setup fill:#fff8e1,stroke:#f57f17,stroke-width:2px,color:#f57f17,font-weight:bold,font-size:15px
+    style analysis fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#6a1b9a,font-weight:bold,font-size:15px
+    style artifacts fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#2e7d32,font-weight:bold,font-size:15px
+    style persist fill:#fce4ec,stroke:#ad1457,stroke-width:2px,color:#ad1457,font-weight:bold,font-size:15px
 ```
 
 1. On each scheduled run, the action fetches star counts for your repos via the GitHub API
