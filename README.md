@@ -20,7 +20,7 @@ config:
   theme: neutral
 ---
 flowchart TD
-    trigger(["Trigger: Scheduled/Manual"])
+    trigger(["Workflow Trigger"])
 
     subgraph setup ["Initialization Phase"]
         direction LR
@@ -60,6 +60,10 @@ flowchart TD
     style setout fill:#fce4ec,stroke:#880e4f,stroke-width:2px
     style email fill:#fce4ec,stroke:#880e4f,stroke-width:2px
     style send fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    style setup fill:#fff8e1,stroke:#f57f17,stroke-width:2px
+    style analysis fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    style artifacts fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style persist fill:#fce4ec,stroke:#ad1457,stroke-width:2px
 ```
 
 1. On each scheduled run, the action fetches star counts for your repos via the GitHub API
@@ -159,6 +163,8 @@ graph LR
     style readme fill:#fff3e0,stroke:#e65100,stroke-width:2px
     style json fill:#fff3e0,stroke:#e65100,stroke-width:2px
     style badge fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style main fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    style data fill:#fff8e1,stroke:#f57f17,stroke-width:2px
 ```
 
 ### `README.md` — The Report
