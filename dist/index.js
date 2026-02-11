@@ -44753,6 +44753,14 @@ ${pendingInterceptorsFormatter.format(pending)}
         /* harmony export */
       });
       /* unused harmony export formatCount */
+      const BADGE_COLORS = {
+        labelBg: '#555',
+        valueBg: '#dfb317',
+        textFill: '#fff',
+        textShadow: '#010101',
+        gradientStart: '#bbb',
+        clipPathFill: '#fff',
+      };
       function formatCount(n) {
         if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
         if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
@@ -44767,21 +44775,21 @@ ${pendingInterceptorsFormatter.format(pending)}
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="20" role="img" aria-label="${label}: ${value}">
   <title>${label}: ${value}</title>
   <linearGradient id="s" x2="0" y2="100%">
-    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="0" stop-color="${BADGE_COLORS.gradientStart}" stop-opacity=".1"/>
     <stop offset="1" stop-opacity=".1"/>
   </linearGradient>
   <clipPath id="r">
-    <rect width="${totalWidth}" height="20" rx="3" fill="#fff"/>
+    <rect width="${totalWidth}" height="20" rx="3" fill="${BADGE_COLORS.clipPathFill}"/>
   </clipPath>
   <g clip-path="url(#r)">
-    <rect width="${labelWidth}" height="20" fill="#555"/>
-    <rect x="${labelWidth}" width="${valueWidth}" height="20" fill="#dfb317"/>
+    <rect width="${labelWidth}" height="20" fill="${BADGE_COLORS.labelBg}"/>
+    <rect x="${labelWidth}" width="${valueWidth}" height="20" fill="${BADGE_COLORS.valueBg}"/>
     <rect width="${totalWidth}" height="20" fill="url(#s)"/>
   </g>
-  <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
-    <text aria-hidden="true" x="${labelWidth / 2}" y="15" fill="#010101" fill-opacity=".3">${label}</text>
+  <g fill="${BADGE_COLORS.textFill}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
+    <text aria-hidden="true" x="${labelWidth / 2}" y="15" fill="${BADGE_COLORS.textShadow}" fill-opacity=".3">${label}</text>
     <text x="${labelWidth / 2}" y="14">${label}</text>
-    <text aria-hidden="true" x="${labelWidth + valueWidth / 2}" y="15" fill="#010101" fill-opacity=".3">${value}</text>
+    <text aria-hidden="true" x="${labelWidth + valueWidth / 2}" y="15" fill="${BADGE_COLORS.textShadow}" fill-opacity=".3">${value}</text>
     <text x="${labelWidth + valueWidth / 2}" y="14">${value}</text>
   </g>
 </svg>`;
@@ -44802,10 +44810,10 @@ ${pendingInterceptorsFormatter.format(pending)}
 
       // EXTERNAL MODULE: ./node_modules/.pnpm/@actions+core@1.11.1/node_modules/@actions/core/lib/core.js
       var core = __nccwpck_require__(6966);
-      // EXTERNAL MODULE: external "fs"
-      var external_fs_ = __nccwpck_require__(9896);
-      // EXTERNAL MODULE: external "path"
-      var external_path_ = __nccwpck_require__(6928); // CONCATENATED MODULE: ./node_modules/.pnpm/js-yaml@4.1.1/node_modules/js-yaml/dist/js-yaml.mjs
+      // EXTERNAL MODULE: external "node:fs"
+      var external_node_fs_ = __nccwpck_require__(3024);
+      // EXTERNAL MODULE: external "node:path"
+      var external_node_path_ = __nccwpck_require__(6760); // CONCATENATED MODULE: ./node_modules/.pnpm/js-yaml@4.1.1/node_modules/js-yaml/dist/js-yaml.mjs
       /*! js-yaml 4.1.1 https://github.com/nodeca/js-yaml @license MIT */
       function isNothing(subject) {
         return typeof subject === 'undefined' || subject === null;
@@ -48938,12 +48946,12 @@ ${pendingInterceptorsFormatter.format(pending)}
         return Number.isNaN(n) ? undefined : n;
       }
       function loadConfigFile(configPath) {
-        const fullPath = external_path_.resolve(configPath);
-        if (!external_fs_.existsSync(fullPath)) {
+        const fullPath = external_node_path_.resolve(configPath);
+        if (!external_node_fs_.existsSync(fullPath)) {
           core.info(`No config file found at ${configPath}, using defaults`);
           return {};
         }
-        const content = external_fs_.readFileSync(fullPath, 'utf8');
+        const content = external_node_fs_.readFileSync(fullPath, 'utf8');
         const parsed = load(content);
         if (!parsed || typeof parsed !== 'object') {
           return {};
@@ -49010,39 +49018,34 @@ ${pendingInterceptorsFormatter.format(pending)}
       /***/
     },
 
-    /***/ 7145: /***/ (__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+    /***/ 3752: /***/ (__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
       'use strict';
-      /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-        /* harmony export */ Lu: () => /* binding */ readHistory,
-        /* harmony export */ fq: () => /* binding */ writeBadge,
-        /* harmony export */ jO: () => /* binding */ initDataBranch,
-        /* harmony export */ tP: () => /* binding */ cleanup,
-        /* harmony export */ tk: () => /* binding */ commitAndPush,
-        /* harmony export */ u5: () => /* binding */ writeReport,
-        /* harmony export */ vC: () => /* binding */ getLastSnapshot,
-        /* harmony export */ wn: () => /* binding */ writeHistory,
-        /* harmony export */
-      });
-      /* unused harmony export DATA_DIR */
-      /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ =
-        __nccwpck_require__(6966);
-      /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default =
-        /*#__PURE__*/ __nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
-      /* harmony import */ var child_process__WEBPACK_IMPORTED_MODULE_1__ =
-        __nccwpck_require__(7698);
-      /* harmony import */ var child_process__WEBPACK_IMPORTED_MODULE_1___default =
-        /*#__PURE__*/ __nccwpck_require__.n(child_process__WEBPACK_IMPORTED_MODULE_1__);
-      /* harmony import */ var fs__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(9896);
-      /* harmony import */ var fs__WEBPACK_IMPORTED_MODULE_2___default =
-        /*#__PURE__*/ __nccwpck_require__.n(fs__WEBPACK_IMPORTED_MODULE_2__);
-      /* harmony import */ var path__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(6928);
-      /* harmony import */ var path__WEBPACK_IMPORTED_MODULE_3___default =
-        /*#__PURE__*/ __nccwpck_require__.n(path__WEBPACK_IMPORTED_MODULE_3__);
 
+      // EXPORTS
+      __nccwpck_require__.d(__webpack_exports__, {
+        tP: () => /* binding */ cleanup,
+        tk: () => /* binding */ commitAndPush,
+        vC: () => /* binding */ getLastSnapshot,
+        jO: () => /* binding */ initDataBranch,
+        Lu: () => /* binding */ readHistory,
+        fq: () => /* binding */ writeBadge,
+        wn: () => /* binding */ writeHistory,
+        u5: () => /* binding */ writeReport,
+      });
+
+      // UNUSED EXPORTS: DATA_DIR
+
+      // EXTERNAL MODULE: ./node_modules/.pnpm/@actions+core@1.11.1/node_modules/@actions/core/lib/core.js
+      var core = __nccwpck_require__(6966); // CONCATENATED MODULE: external "node:child_process"
+      const external_node_child_process_namespaceObject = require('node:child_process');
+      // EXTERNAL MODULE: external "node:fs"
+      var external_node_fs_ = __nccwpck_require__(3024);
+      // EXTERNAL MODULE: external "node:path"
+      var external_node_path_ = __nccwpck_require__(6760); // CONCATENATED MODULE: ./src/data-branch.ts
       const DATA_DIR = '.star-tracker-data';
       function exec(cmd, options = {}) {
         try {
-          return (0, child_process__WEBPACK_IMPORTED_MODULE_1__.execSync)(cmd, {
+          return (0, external_node_child_process_namespaceObject.execSync)(cmd, {
             encoding: 'utf8',
             stdio: ['pipe', 'pipe', 'pipe'],
             ...options,
@@ -49062,45 +49065,37 @@ ${pendingInterceptorsFormatter.format(pending)}
           exec(`git ls-remote --exit-code --heads origin ${dataBranch}`);
           branchExists = true;
         } catch {
-          _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(
-            `Branch "${dataBranch}" does not exist on remote, will create it`,
-          );
+          core.info(`Branch "${dataBranch}" does not exist on remote, will create it`);
         }
-        if (fs__WEBPACK_IMPORTED_MODULE_2__.existsSync(DATA_DIR)) {
+        if (external_node_fs_.existsSync(DATA_DIR)) {
           try {
             exec(`git worktree remove ${DATA_DIR} --force`);
           } catch {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(
-              `Could not remove existing worktree at ${DATA_DIR}, proceeding anyway`,
-            );
+            core.debug(`Could not remove existing worktree at ${DATA_DIR}, proceeding anyway`);
           }
         }
         if (branchExists) {
           exec(`git fetch origin ${dataBranch}`);
           exec(`git worktree add ${DATA_DIR} origin/${dataBranch}`);
         } else {
-          _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(
-            `Creating new orphan branch: ${dataBranch}`,
-          );
+          core.info(`Creating new orphan branch: ${dataBranch}`);
           exec(`git worktree add --detach ${DATA_DIR}`);
           exec('git checkout --orphan ' + dataBranch, {
-            cwd: path__WEBPACK_IMPORTED_MODULE_3__.resolve(DATA_DIR),
+            cwd: external_node_path_.resolve(DATA_DIR),
           });
-          exec('git rm -rf . || true', {
-            cwd: path__WEBPACK_IMPORTED_MODULE_3__.resolve(DATA_DIR),
-          });
+          exec('git rm -rf . || true', { cwd: external_node_path_.resolve(DATA_DIR) });
           exec('git commit --allow-empty -m "Initialize star tracker data"', {
-            cwd: path__WEBPACK_IMPORTED_MODULE_3__.resolve(DATA_DIR),
+            cwd: external_node_path_.resolve(DATA_DIR),
           });
         }
         return DATA_DIR;
       }
       function readHistory(dataDir) {
-        const filePath = path__WEBPACK_IMPORTED_MODULE_3__.join(dataDir, 'stars-data.json');
-        if (!fs__WEBPACK_IMPORTED_MODULE_2__.existsSync(filePath)) {
+        const filePath = external_node_path_.join(dataDir, 'stars-data.json');
+        if (!external_node_fs_.existsSync(filePath)) {
           return { snapshots: [] };
         }
-        const content = fs__WEBPACK_IMPORTED_MODULE_2__.readFileSync(filePath, 'utf8');
+        const content = external_node_fs_.readFileSync(filePath, 'utf8');
         return JSON.parse(content);
       }
       function getLastSnapshot(history) {
@@ -49113,43 +49108,37 @@ ${pendingInterceptorsFormatter.format(pending)}
         if (history.snapshots.length > maxHistory) {
           history.snapshots = history.snapshots.slice(-maxHistory);
         }
-        const filePath = path__WEBPACK_IMPORTED_MODULE_3__.join(dataDir, 'stars-data.json');
-        fs__WEBPACK_IMPORTED_MODULE_2__.writeFileSync(filePath, JSON.stringify(history, null, 2));
+        const filePath = external_node_path_.join(dataDir, 'stars-data.json');
+        external_node_fs_.writeFileSync(filePath, JSON.stringify(history, null, 2));
       }
       function writeReport({ dataDir, markdown }) {
-        const filePath = path__WEBPACK_IMPORTED_MODULE_3__.join(dataDir, 'README.md');
-        fs__WEBPACK_IMPORTED_MODULE_2__.writeFileSync(filePath, markdown);
+        const filePath = external_node_path_.join(dataDir, 'README.md');
+        external_node_fs_.writeFileSync(filePath, markdown);
       }
       function writeBadge({ dataDir, svg }) {
-        const filePath = path__WEBPACK_IMPORTED_MODULE_3__.join(dataDir, 'stars-badge.svg');
-        fs__WEBPACK_IMPORTED_MODULE_2__.writeFileSync(filePath, svg);
+        const filePath = external_node_path_.join(dataDir, 'stars-badge.svg');
+        external_node_fs_.writeFileSync(filePath, svg);
       }
       function commitAndPush({ dataDir, dataBranch, message }) {
-        const cwd = path__WEBPACK_IMPORTED_MODULE_3__.resolve(dataDir);
+        const cwd = external_node_path_.resolve(dataDir);
         exec('git add -A', { cwd });
         try {
           exec('git diff --cached --quiet', { cwd });
-          _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('No data changes to commit');
+          core.info('No data changes to commit');
           return false;
         } catch {
-          _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(
-            'Staged changes detected, proceeding with commit',
-          );
+          core.debug('Staged changes detected, proceeding with commit');
         }
         exec(`git commit -m "${message}"`, { cwd });
         exec(`git push origin HEAD:${dataBranch}`, { cwd });
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(
-          `Data committed and pushed to ${dataBranch}`,
-        );
+        core.info(`Data committed and pushed to ${dataBranch}`);
         return true;
       }
       function cleanup(dataDir) {
         try {
           exec(`git worktree remove ${dataDir} --force`);
         } catch {
-          _actions_core__WEBPACK_IMPORTED_MODULE_0__.debug(
-            `Worktree cleanup for "${dataDir}" failed, it may have already been removed`,
-          );
+          core.debug(`Worktree cleanup for "${dataDir}" failed, it may have already been removed`);
         }
       }
 
@@ -49240,16 +49229,16 @@ ${pendingInterceptorsFormatter.format(pending)}
             /* harmony import */ var _config__WEBPACK_IMPORTED_MODULE_2__ =
               __nccwpck_require__(8915);
             /* harmony import */ var _repos__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(339);
-            /* harmony import */ var _stars__WEBPACK_IMPORTED_MODULE_7__ =
+            /* harmony import */ var _stars__WEBPACK_IMPORTED_MODULE_8__ =
               __nccwpck_require__(4255);
             /* harmony import */ var _report__WEBPACK_IMPORTED_MODULE_4__ =
               __nccwpck_require__(1762);
-            /* harmony import */ var _badge__WEBPACK_IMPORTED_MODULE_8__ =
+            /* harmony import */ var _badge__WEBPACK_IMPORTED_MODULE_5__ =
               __nccwpck_require__(5945);
-            /* harmony import */ var _email__WEBPACK_IMPORTED_MODULE_5__ =
+            /* harmony import */ var _email__WEBPACK_IMPORTED_MODULE_6__ =
               __nccwpck_require__(1294);
-            /* harmony import */ var _data_branch__WEBPACK_IMPORTED_MODULE_6__ =
-              __nccwpck_require__(7145);
+            /* harmony import */ var _data_branch__WEBPACK_IMPORTED_MODULE_7__ =
+              __nccwpck_require__(3752);
 
             let dataDir = null;
             try {
@@ -49284,16 +49273,16 @@ ${pendingInterceptorsFormatter.format(pending)}
                   `Tracking ${repos.length} repositories...`,
                 );
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Initializing data branch...');
-                dataDir = (0, _data_branch__WEBPACK_IMPORTED_MODULE_6__ /* .initDataBranch */.jO)(
+                dataDir = (0, _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .initDataBranch */.jO)(
                   config.dataBranch,
                 );
                 const history = (0,
-                _data_branch__WEBPACK_IMPORTED_MODULE_6__ /* .readHistory */.Lu)(dataDir);
+                _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .readHistory */.Lu)(dataDir);
                 const lastSnapshot = (0,
-                _data_branch__WEBPACK_IMPORTED_MODULE_6__ /* .getLastSnapshot */.vC)(history);
+                _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .getLastSnapshot */.vC)(history);
                 const previousTimestamp = lastSnapshot ? lastSnapshot.timestamp : null;
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Comparing star counts...');
-                const results = (0, _stars__WEBPACK_IMPORTED_MODULE_7__ /* .compareStars */.j)({
+                const results = (0, _stars__WEBPACK_IMPORTED_MODULE_8__ /* .compareStars */.j)({
                   currentRepos: repos,
                   previousSnapshot: lastSnapshot,
                 });
@@ -49311,29 +49300,29 @@ ${pendingInterceptorsFormatter.format(pending)}
                   results,
                   previousTimestamp,
                 });
-                const badge = (0, _badge__WEBPACK_IMPORTED_MODULE_8__ /* .generateBadge */.T)(
+                const badge = (0, _badge__WEBPACK_IMPORTED_MODULE_5__ /* .generateBadge */.T)(
                   summary.totalStars,
                 );
-                const snapshot = (0, _stars__WEBPACK_IMPORTED_MODULE_7__ /* .createSnapshot */.$)({
+                const snapshot = (0, _stars__WEBPACK_IMPORTED_MODULE_8__ /* .createSnapshot */.$)({
                   currentRepos: repos,
                   summary,
                 });
                 history.snapshots.push(snapshot);
-                (0, _data_branch__WEBPACK_IMPORTED_MODULE_6__ /* .writeHistory */.wn)({
+                (0, _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .writeHistory */.wn)({
                   dataDir,
                   history,
                   maxHistory: config.maxHistory,
                 });
-                (0, _data_branch__WEBPACK_IMPORTED_MODULE_6__ /* .writeReport */.u5)({
+                (0, _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .writeReport */.u5)({
                   dataDir,
                   markdown: markdownReport,
                 });
-                (0, _data_branch__WEBPACK_IMPORTED_MODULE_6__ /* .writeBadge */.fq)({
+                (0, _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .writeBadge */.fq)({
                   dataDir,
                   svg: badge,
                 });
                 const commitMsg = `Update star data — ${summary.totalStars} total (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
-                (0, _data_branch__WEBPACK_IMPORTED_MODULE_6__ /* .commitAndPush */.tk)({
+                (0, _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .commitAndPush */.tk)({
                   dataDir,
                   dataBranch: config.dataBranch,
                   message: commitMsg,
@@ -49357,12 +49346,12 @@ ${pendingInterceptorsFormatter.format(pending)}
                   String(summary.lostStars),
                 );
                 const emailConfig = (0,
-                _email__WEBPACK_IMPORTED_MODULE_5__ /* .getEmailConfig */.x)();
+                _email__WEBPACK_IMPORTED_MODULE_6__ /* .getEmailConfig */.x)();
                 if (emailConfig) {
                   if (summary.changed || config.sendOnNoChanges) {
                     const subject = `Star Tracker: ${summary.totalStars} total stars (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
                     try {
-                      await (0, _email__WEBPACK_IMPORTED_MODULE_5__ /* .sendEmail */.Z)({
+                      await (0, _email__WEBPACK_IMPORTED_MODULE_6__ /* .sendEmail */.Z)({
                         emailConfig,
                         subject,
                         htmlBody: htmlReport,
@@ -49389,7 +49378,7 @@ ${pendingInterceptorsFormatter.format(pending)}
               }
             } finally {
               if (dataDir) {
-                (0, _data_branch__WEBPACK_IMPORTED_MODULE_6__ /* .cleanup */.tP)(dataDir);
+                (0, _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .cleanup */.tP)(dataDir);
               }
             }
 
@@ -49886,6 +49875,20 @@ ${pendingInterceptorsFormatter.format(pending)}
     /***/ 8474: /***/ (module) => {
       'use strict';
       module.exports = require('node:events');
+
+      /***/
+    },
+
+    /***/ 3024: /***/ (module) => {
+      'use strict';
+      module.exports = require('node:fs');
+
+      /***/
+    },
+
+    /***/ 6760: /***/ (module) => {
+      'use strict';
+      module.exports = require('node:path');
 
       /***/
     },

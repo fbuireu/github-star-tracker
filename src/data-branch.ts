@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
-import { execSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
+import { execSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import type { History, Snapshot } from './types';
 
 export const DATA_DIR = '.star-tracker-data';
