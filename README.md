@@ -18,18 +18,27 @@
 config:
   look: handDrawn
   theme: base
+  themeVariables:
+    background: transparent
+    clusterBkg: "#e8e8e8"
+    clusterBorder: "#888"
+    nodeBkg: "#fffde7"
+    nodeBorder: "#ccc"
+    primaryTextColor: "#1a1a1a"
+    lineColor: "#999"
+    edgeLabelBackground: "#fffde7"
 ---
 flowchart TD
     trigger(["Trigger: Scheduled/Manual"])
 
     subgraph setup ["Initialization Phase"]
         direction LR
-        config["Parse configuration"] --> fetch["Query GitHub REST API\n(repositories endpoint)"] --> filter["Apply filter criteria"]
+        config["Parse configuration"] --> fetch["Query GitHub REST API(repositories endpoint)"] --> filter["Apply filter criteria"]
     end
 
     subgraph analysis ["Data Analysis Phase"]
         direction LR
-        init["Initialize orphan branch"] --> read["Deserialize previous\nstate snapshot"] --> compare["Compute delta\nmetrics"]
+        init["Initialize orphan branch"] --> read["Deserialize previous  state snapshot"] --> compare["Compute delta metrics"]
     end
 
     subgraph artifacts ["Artifact Generation"]
@@ -39,7 +48,7 @@ flowchart TD
 
     subgraph persist ["Persistence Layer"]
         direction LR
-        commit["Git commit & push\n(data branch)"] --> setout["Export action\noutputs"] --> email{"SMTP configured?"}
+        commit["Git commit & push (data branch)"] --> setout["Export action outputs"] --> email{"SMTP configured?"}
         email -->|Yes| send["Dispatch notification"]
     end
 
@@ -122,21 +131,30 @@ Everything lives on a **separate orphan branch** (default: `star-tracker-data`).
 config:
   look: handDrawn
   theme: base
+  themeVariables:
+    background: transparent
+    clusterBkg: "#e8e8e8"
+    clusterBorder: "#888"
+    nodeBkg: "#fffde7"
+    nodeBorder: "#ccc"
+    primaryTextColor: "#1a1a1a"
+    lineColor: "#999"
+    edgeLabelBackground: "#fffde7"
 ---
 graph LR
     subgraph main ["main branch"]
-        src["src/\nApplication source"]
-        wf[".github/workflows/\nWorkflow definition"]
+        src["src/Application source"]
+        wf[".github/workflows/Workflow definition"]
     end
 
     subgraph data ["star-tracker-data (orphan branch)"]
-        readme["README.md\nTabular report view"]
-        json["stars-data.json\nTime-series dataset"]
-        badge["stars-badge.svg\nShields.io badge"]
+        readme["README.md Tabular report view"]
+        json["stars-data.json Time-series dataset"]
+        badge["stars-badge.svg Shields.io badge"]
     end
 
     wf -- "executes workflow" --> data
-    main -.->|"isolated branches\n(no common ancestor)"| data
+    main -.->|"isolated branches (no common ancestor)"| data
 ```
 
 ### `README.md` — The Report
