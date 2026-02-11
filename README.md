@@ -143,13 +143,13 @@ config:
   look: handDrawn
   theme: neutral
 ---
-graph LR
+graph TD
     subgraph main ["main branch"]
         src["src/Application source"]
         wf[".github/workflows/Workflow definition"]
     end
 
-    subgraph data ["star-tracker-data (orphan branch)"]
+    subgraph data ["data branch (orphan)"]
         readme["README.md Tabular report view"]
         json["stars-data.json Time-series dataset"]
         badge["stars-badge.svg Shields.io badge"]
