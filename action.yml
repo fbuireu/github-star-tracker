@@ -91,6 +91,11 @@ inputs:
     required: false
     default: 'false'
 
+  locale:
+    description: 'Language for reports and emails: en, es, ca, it'
+    required: false
+    default: 'en'
+
 outputs:
   report:
     description: 'Markdown report of star changes'

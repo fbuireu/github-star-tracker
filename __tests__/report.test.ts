@@ -169,7 +169,7 @@ describe('generateHtmlReport', () => {
     });
     expect(html).toContain('23');
     expect(html).toContain('Total Stars');
-    expect(html).toContain('Net Change');
+    expect(html).toContain('Net change');
   });
 
   it('shows removed repos section when applicable', () => {

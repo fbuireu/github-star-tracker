@@ -1,3 +1,5 @@
+import type { Locale } from './i18n';
+
 export interface Config {
   visibility: 'public' | 'private' | 'all';
   includeArchived: boolean;
@@ -8,6 +10,7 @@ export interface Config {
   dataBranch: string;
   maxHistory: number;
   sendOnNoChanges: boolean;
+  locale: Locale;
 }
 
 export interface RepoInfo {

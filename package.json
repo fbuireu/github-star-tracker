@@ -31,6 +31,8 @@
     "nodemailer": "^7.0.11"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.4.1",
+    "@commitlint/config-conventional": "^20.4.1",
     "@types/js-yaml": "^4.0.9",
     "@types/nodemailer": "^6.4.17",
     "@vercel/ncc": "^0.38.3",

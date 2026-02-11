@@ -1,10 +1,13 @@
 import * as core from '@actions/core';
 import nodemailer from 'nodemailer';
 import type { EmailConfig } from './types';
+import { getTranslations, type Locale } from './i18n';
 
-export function getEmailConfig(): EmailConfig | null {
+export function getEmailConfig(locale: Locale = 'en'): EmailConfig | null {
   const host = core.getInput('smtp-host');
   if (!host) return null;
+
+  const t = getTranslations(locale);
 
   return {
     host,
@@ -12,7 +15,7 @@ export function getEmailConfig(): EmailConfig | null {
     username: core.getInput('smtp-username'),
     password: core.getInput('smtp-password'),
     to: core.getInput('email-to'),
-    from: core.getInput('email-from') || 'GitHub Star Tracker',
+    from: core.getInput('email-from') || t.email.defaultFrom,
   };
 }
 

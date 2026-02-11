@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as yaml from 'js-yaml';
 import type { Config } from './types';
+import { isValidLocale, type Locale } from './i18n';
 
 const VALID_VISIBILITIES = ['public', 'private', 'all'] as const;
 
@@ -16,6 +17,7 @@ export const DEFAULTS: Config = {
   dataBranch: 'star-tracker-data',
   maxHistory: 52,
   sendOnNoChanges: false,
+  locale: 'en',
 };
 
 export function parseList(value: string | null | undefined): string[] {
@@ -46,6 +48,7 @@ interface FileConfig {
   minStars?: number;
   dataBranch?: string;
   maxHistory?: number;
+  locale?: string;
 }
 
 export function loadConfigFile(configPath: string): FileConfig {
@@ -72,6 +75,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     minStars: parsed.min_stars as number | undefined,
     dataBranch: parsed.data_branch as string | undefined,
     maxHistory: parsed.max_history as number | undefined,
+    locale: parsed.locale as string | undefined,
   };
 }
 
@@ -87,6 +91,7 @@ export function loadConfig(): Config {
   const inputMinStars = core.getInput('min-stars');
   const inputDataBranch = core.getInput('data-branch');
   const inputMaxHistory = core.getInput('max-history');
+  const inputLocale = core.getInput('locale');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -96,6 +101,11 @@ export function loadConfig(): Config {
     throw new Error(
       `Invalid visibility "${visibility}". Must be one of: ${VALID_VISIBILITIES.join(', ')}`,
     );
+  }
+
+  const locale = (inputLocale || fileConfig.locale || DEFAULTS.locale) as Locale;
+  if (!isValidLocale(locale)) {
+    core.warning(`Invalid locale "${locale}". Falling back to "en"`);
   }
 
   const config: Config = {
@@ -113,6 +123,7 @@ export function loadConfig(): Config {
     dataBranch: inputDataBranch || fileConfig.dataBranch || DEFAULTS.dataBranch,
     maxHistory: parseNumber(inputMaxHistory) ?? fileConfig.maxHistory ?? DEFAULTS.maxHistory,
     sendOnNoChanges: parseBool(core.getInput('send-on-no-changes')) ?? false,
+    locale: isValidLocale(locale) ? locale : DEFAULTS.locale,
   };
 
   core.info(

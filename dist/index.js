@@ -44753,6 +44753,8 @@ ${pendingInterceptorsFormatter.format(pending)}
         /* harmony export */
       });
       /* unused harmony export formatCount */
+      /* harmony import */ var _i18n__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(3784);
+
       const BADGE_COLORS = {
         labelBg: '#555',
         valueBg: '#dfb317',
@@ -44766,8 +44768,9 @@ ${pendingInterceptorsFormatter.format(pending)}
         if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
         return String(n);
       }
-      function generateBadge(totalStars) {
-        const label = 'total stars';
+      function generateBadge(totalStars, locale = 'en') {
+        const t = (0, _i18n__WEBPACK_IMPORTED_MODULE_0__ /* .getTranslations */.$)(locale);
+        const label = t.badge.totalStars;
         const value = `\u2605 ${formatCount(totalStars)}`;
         const labelWidth = label.length * 6.5 + 12;
         const valueWidth = value.length * 7 + 12;
@@ -48915,8 +48918,10 @@ ${pendingInterceptorsFormatter.format(pending)}
         safeLoad: safeLoad,
         safeLoadAll: safeLoadAll,
         safeDump: safeDump,
-      }; // CONCATENATED MODULE: ./src/config.ts
+      };
 
+      // EXTERNAL MODULE: ./src/i18n.ts
+      var i18n = __nccwpck_require__(3784); // CONCATENATED MODULE: ./src/config.ts
       const VALID_VISIBILITIES = ['public', 'private', 'all'];
       const DEFAULTS = {
         visibility: 'public',
@@ -48928,6 +48933,7 @@ ${pendingInterceptorsFormatter.format(pending)}
         dataBranch: 'star-tracker-data',
         maxHistory: 52,
         sendOnNoChanges: false,
+        locale: 'en',
       };
       function parseList(value) {
         if (!value || value.trim() === '') return [];
@@ -48965,6 +48971,7 @@ ${pendingInterceptorsFormatter.format(pending)}
           minStars: parsed.min_stars,
           dataBranch: parsed.data_branch,
           maxHistory: parsed.max_history,
+          locale: parsed.locale,
         };
       }
       function loadConfig() {
@@ -48978,11 +48985,16 @@ ${pendingInterceptorsFormatter.format(pending)}
         const inputMinStars = core.getInput('min-stars');
         const inputDataBranch = core.getInput('data-branch');
         const inputMaxHistory = core.getInput('max-history');
+        const inputLocale = core.getInput('locale');
         const visibility = inputVisibility || fileConfig.visibility || DEFAULTS.visibility;
         if (!VALID_VISIBILITIES.includes(visibility)) {
           throw new Error(
             `Invalid visibility "${visibility}". Must be one of: ${VALID_VISIBILITIES.join(', ')}`,
           );
+        }
+        const locale = inputLocale || fileConfig.locale || DEFAULTS.locale;
+        if (!(0, i18n /* isValidLocale */.J)(locale)) {
+          core.warning(`Invalid locale "${locale}". Falling back to "en"`);
         }
         const config = {
           visibility,
@@ -49002,6 +49014,7 @@ ${pendingInterceptorsFormatter.format(pending)}
           dataBranch: inputDataBranch || fileConfig.dataBranch || DEFAULTS.dataBranch,
           maxHistory: parseNumber(inputMaxHistory) ?? fileConfig.maxHistory ?? DEFAULTS.maxHistory,
           sendOnNoChanges: parseBool(core.getInput('send-on-no-changes')) ?? false,
+          locale: (0, i18n /* isValidLocale */.J)(locale) ? locale : DEFAULTS.locale,
         };
         core.info(
           `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`,
@@ -49157,10 +49170,12 @@ ${pendingInterceptorsFormatter.format(pending)}
       /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default =
         /*#__PURE__*/ __nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
       /* harmony import */ var nodemailer__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(5606);
+      /* harmony import */ var _i18n__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(3784);
 
-      function getEmailConfig() {
+      function getEmailConfig(locale = 'en') {
         const host = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('smtp-host');
         if (!host) return null;
+        const t = (0, _i18n__WEBPACK_IMPORTED_MODULE_2__ /* .getTranslations */.$)(locale);
         return {
           host,
           port: Number.parseInt(
@@ -49172,7 +49187,7 @@ ${pendingInterceptorsFormatter.format(pending)}
           to: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('email-to'),
           from:
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('email-from') ||
-            'GitHub Star Tracker',
+            t.email.defaultFrom,
         };
       }
       async function sendEmail({ emailConfig, subject, htmlBody }) {
@@ -49211,6 +49226,161 @@ ${pendingInterceptorsFormatter.format(pending)}
       /***/
     },
 
+    /***/ 3784: /***/ (__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+      'use strict';
+      /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+        /* harmony export */ $: () => /* binding */ getTranslations,
+        /* harmony export */ J: () => /* binding */ isValidLocale,
+        /* harmony export */
+      });
+      const translations = {
+        en: {
+          badge: {
+            totalStars: 'total stars',
+          },
+          report: {
+            title: 'Star Tracker Report',
+            total: 'Total',
+            change: 'Change',
+            comparedTo: 'Compared to snapshot from',
+            firstRun: 'first run',
+            repositories: 'Repositories',
+            stars: 'Stars',
+            trend: 'Trend',
+            newRepositories: 'New Repositories',
+            removedRepositories: 'Removed Repositories',
+            was: 'was',
+            summary: 'Summary',
+            starsGained: 'Stars gained',
+            starsLost: 'Stars lost',
+            netChange: 'Net change',
+            badges: {
+              new: 'NEW',
+            },
+          },
+          email: {
+            subject: 'GitHub Star Tracker Report',
+            defaultFrom: 'GitHub Star Tracker',
+          },
+          trends: {
+            up: 'up',
+            down: 'down',
+            stable: 'stable',
+          },
+        },
+        es: {
+          badge: {
+            totalStars: 'estrellas totales',
+          },
+          report: {
+            title: 'Informe de Seguimiento de Estrellas',
+            total: 'Total',
+            change: 'Cambio',
+            comparedTo: 'Comparado con instantánea del',
+            firstRun: 'primera ejecución',
+            repositories: 'Repositorios',
+            stars: 'Estrellas',
+            trend: 'Tendencia',
+            newRepositories: 'Nuevos Repositorios',
+            removedRepositories: 'Repositorios Eliminados',
+            was: 'tenía',
+            summary: 'Resumen',
+            starsGained: 'Estrellas ganadas',
+            starsLost: 'Estrellas perdidas',
+            netChange: 'Cambio neto',
+            badges: {
+              new: 'NUEVO',
+            },
+          },
+          email: {
+            subject: 'Informe de Seguimiento de Estrellas en GitHub',
+            defaultFrom: 'Seguimiento de Estrellas GitHub',
+          },
+          trends: {
+            up: 'subiendo',
+            down: 'bajando',
+            stable: 'estable',
+          },
+        },
+        ca: {
+          badge: {
+            totalStars: 'estrelles totals',
+          },
+          report: {
+            title: "Informe de Seguiment d'Estrelles",
+            total: 'Total',
+            change: 'Canvi',
+            comparedTo: 'Comparat amb instantània del',
+            firstRun: 'primera execució',
+            repositories: 'Repositoris',
+            stars: 'Estrelles',
+            trend: 'Tendència',
+            newRepositories: 'Nous Repositoris',
+            removedRepositories: 'Repositoris Eliminats',
+            was: 'tenia',
+            summary: 'Resum',
+            starsGained: 'Estrelles guanyades',
+            starsLost: 'Estrelles perdudes',
+            netChange: 'Canvi net',
+            badges: {
+              new: 'NOU',
+            },
+          },
+          email: {
+            subject: "Informe de Seguiment d'Estrelles a GitHub",
+            defaultFrom: "Seguiment d'Estrelles GitHub",
+          },
+          trends: {
+            up: 'pujant',
+            down: 'baixant',
+            stable: 'estable',
+          },
+        },
+        it: {
+          badge: {
+            totalStars: 'stelle totali',
+          },
+          report: {
+            title: 'Report Tracciamento Stelle',
+            total: 'Totale',
+            change: 'Variazione',
+            comparedTo: 'Confrontato con snapshot del',
+            firstRun: 'prima esecuzione',
+            repositories: 'Repository',
+            stars: 'Stelle',
+            trend: 'Tendenza',
+            newRepositories: 'Nuovi Repository',
+            removedRepositories: 'Repository Rimossi',
+            was: 'aveva',
+            summary: 'Riepilogo',
+            starsGained: 'Stelle guadagnate',
+            starsLost: 'Stelle perse',
+            netChange: 'Variazione netta',
+            badges: {
+              new: 'NUOVO',
+            },
+          },
+          email: {
+            subject: 'Report Tracciamento Stelle GitHub',
+            defaultFrom: 'Tracciamento Stelle GitHub',
+          },
+          trends: {
+            up: 'in aumento',
+            down: 'in diminuzione',
+            stable: 'stabile',
+          },
+        },
+      };
+      function getTranslations(locale = 'en') {
+        return translations[locale] || translations.en;
+      }
+      function isValidLocale(value) {
+        return ['en', 'es', 'ca', 'it'].includes(value);
+      }
+
+      /***/
+    },
+
     /***/ 6866: /***/ (module, __webpack_exports__, __nccwpck_require__) => {
       'use strict';
       __nccwpck_require__.a(
@@ -49229,7 +49399,7 @@ ${pendingInterceptorsFormatter.format(pending)}
             /* harmony import */ var _config__WEBPACK_IMPORTED_MODULE_2__ =
               __nccwpck_require__(8915);
             /* harmony import */ var _repos__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(339);
-            /* harmony import */ var _stars__WEBPACK_IMPORTED_MODULE_8__ =
+            /* harmony import */ var _stars__WEBPACK_IMPORTED_MODULE_9__ =
               __nccwpck_require__(4255);
             /* harmony import */ var _report__WEBPACK_IMPORTED_MODULE_4__ =
               __nccwpck_require__(1762);
@@ -49237,7 +49407,8 @@ ${pendingInterceptorsFormatter.format(pending)}
               __nccwpck_require__(5945);
             /* harmony import */ var _email__WEBPACK_IMPORTED_MODULE_6__ =
               __nccwpck_require__(1294);
-            /* harmony import */ var _data_branch__WEBPACK_IMPORTED_MODULE_7__ =
+            /* harmony import */ var _i18n__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(3784);
+            /* harmony import */ var _data_branch__WEBPACK_IMPORTED_MODULE_8__ =
               __nccwpck_require__(3752);
 
             let dataDir = null;
@@ -49247,6 +49418,9 @@ ${pendingInterceptorsFormatter.format(pending)}
               });
               const octokit = _actions_github__WEBPACK_IMPORTED_MODULE_1__.getOctokit(token);
               const config = (0, _config__WEBPACK_IMPORTED_MODULE_2__ /* .loadConfig */.Z9)();
+              const t = (0, _i18n__WEBPACK_IMPORTED_MODULE_7__ /* .getTranslations */.$)(
+                config.locale,
+              );
               _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Fetching repositories...');
               const repos = await (0, _repos__WEBPACK_IMPORTED_MODULE_3__ /* .getRepos */.YN)({
                 octokit,
@@ -49273,16 +49447,16 @@ ${pendingInterceptorsFormatter.format(pending)}
                   `Tracking ${repos.length} repositories...`,
                 );
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Initializing data branch...');
-                dataDir = (0, _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .initDataBranch */.jO)(
+                dataDir = (0, _data_branch__WEBPACK_IMPORTED_MODULE_8__ /* .initDataBranch */.jO)(
                   config.dataBranch,
                 );
                 const history = (0,
-                _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .readHistory */.Lu)(dataDir);
+                _data_branch__WEBPACK_IMPORTED_MODULE_8__ /* .readHistory */.Lu)(dataDir);
                 const lastSnapshot = (0,
-                _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .getLastSnapshot */.vC)(history);
+                _data_branch__WEBPACK_IMPORTED_MODULE_8__ /* .getLastSnapshot */.vC)(history);
                 const previousTimestamp = lastSnapshot ? lastSnapshot.timestamp : null;
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('Comparing star counts...');
-                const results = (0, _stars__WEBPACK_IMPORTED_MODULE_8__ /* .compareStars */.j)({
+                const results = (0, _stars__WEBPACK_IMPORTED_MODULE_9__ /* .compareStars */.j)({
                   currentRepos: repos,
                   previousSnapshot: lastSnapshot,
                 });
@@ -49294,35 +49468,38 @@ ${pendingInterceptorsFormatter.format(pending)}
                 _report__WEBPACK_IMPORTED_MODULE_4__ /* .generateMarkdownReport */.Ng)({
                   results,
                   previousTimestamp,
+                  locale: config.locale,
                 });
                 const htmlReport = (0,
                 _report__WEBPACK_IMPORTED_MODULE_4__ /* .generateHtmlReport */.zh)({
                   results,
                   previousTimestamp,
+                  locale: config.locale,
                 });
                 const badge = (0, _badge__WEBPACK_IMPORTED_MODULE_5__ /* .generateBadge */.T)(
                   summary.totalStars,
+                  config.locale,
                 );
-                const snapshot = (0, _stars__WEBPACK_IMPORTED_MODULE_8__ /* .createSnapshot */.$)({
+                const snapshot = (0, _stars__WEBPACK_IMPORTED_MODULE_9__ /* .createSnapshot */.$)({
                   currentRepos: repos,
                   summary,
                 });
                 history.snapshots.push(snapshot);
-                (0, _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .writeHistory */.wn)({
+                (0, _data_branch__WEBPACK_IMPORTED_MODULE_8__ /* .writeHistory */.wn)({
                   dataDir,
                   history,
                   maxHistory: config.maxHistory,
                 });
-                (0, _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .writeReport */.u5)({
+                (0, _data_branch__WEBPACK_IMPORTED_MODULE_8__ /* .writeReport */.u5)({
                   dataDir,
                   markdown: markdownReport,
                 });
-                (0, _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .writeBadge */.fq)({
+                (0, _data_branch__WEBPACK_IMPORTED_MODULE_8__ /* .writeBadge */.fq)({
                   dataDir,
                   svg: badge,
                 });
                 const commitMsg = `Update star data — ${summary.totalStars} total (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
-                (0, _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .commitAndPush */.tk)({
+                (0, _data_branch__WEBPACK_IMPORTED_MODULE_8__ /* .commitAndPush */.tk)({
                   dataDir,
                   dataBranch: config.dataBranch,
                   message: commitMsg,
@@ -49346,10 +49523,10 @@ ${pendingInterceptorsFormatter.format(pending)}
                   String(summary.lostStars),
                 );
                 const emailConfig = (0,
-                _email__WEBPACK_IMPORTED_MODULE_6__ /* .getEmailConfig */.x)();
+                _email__WEBPACK_IMPORTED_MODULE_6__ /* .getEmailConfig */.x)(config.locale);
                 if (emailConfig) {
                   if (summary.changed || config.sendOnNoChanges) {
-                    const subject = `Star Tracker: ${summary.totalStars} total stars (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
+                    const subject = `${t.email.subject}: ${summary.totalStars} (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
                     try {
                       await (0, _email__WEBPACK_IMPORTED_MODULE_6__ /* .sendEmail */.Z)({
                         emailConfig,
@@ -49378,7 +49555,7 @@ ${pendingInterceptorsFormatter.format(pending)}
               }
             } finally {
               if (dataDir) {
-                (0, _data_branch__WEBPACK_IMPORTED_MODULE_7__ /* .cleanup */.tP)(dataDir);
+                (0, _data_branch__WEBPACK_IMPORTED_MODULE_8__ /* .cleanup */.tP)(dataDir);
               }
             }
 
@@ -49401,6 +49578,8 @@ ${pendingInterceptorsFormatter.format(pending)}
         /* harmony export */
       });
       /* unused harmony exports deltaIndicator, trendIcon */
+      /* harmony import */ var _i18n__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(3784);
+
       const COLORS = {
         positive: '#28a745',
         negative: '#d73a49',
@@ -49423,30 +49602,32 @@ ${pendingInterceptorsFormatter.format(pending)}
         if (delta < 0) return '\u2B07\uFE0F';
         return '\u2796';
       }
-      function generateMarkdownReport({ results, previousTimestamp }) {
+      function generateMarkdownReport({ results, previousTimestamp, locale = 'en' }) {
         const { repos, summary } = results;
+        const t = (0, _i18n__WEBPACK_IMPORTED_MODULE_0__ /* .getTranslations */.$)(locale);
         const now = new Date().toISOString().split('T')[0];
-        const prev = previousTimestamp ? previousTimestamp.split('T')[0] : 'first run';
+        const prev = previousTimestamp ? previousTimestamp.split('T')[0] : t.report.firstRun;
         const activeRepos = repos.filter((repo) => !repo.isRemoved);
         const newRepos = repos.filter((repo) => repo.isNew);
         const removedRepos = repos.filter((repo) => repo.isRemoved);
         const sorted = [...activeRepos].sort((repoA, repoB) => repoB.current - repoA.current);
         const header = [
-          '# Star Tracker Report',
+          `# ${t.report.title}`,
           '',
-          `**${now}** | Total: **${summary.totalStars}** stars | Change: **${deltaIndicator(summary.totalDelta)}**`,
+          `**${now}** | ${t.report.total}: **${summary.totalStars}** ${t.report.stars.toLowerCase()} | ${t.report.change}: **${deltaIndicator(summary.totalDelta)}**`,
           '',
         ];
-        const comparison = prev === 'first run' ? [] : [`> Compared to snapshot from ${prev}`, ''];
+        const comparison =
+          prev === t.report.firstRun ? [] : [`> ${t.report.comparedTo} ${prev}`, ''];
         const repoTable =
           activeRepos.length > 0
             ? [
-                '## Repositories',
+                `## ${t.report.repositories}`,
                 '',
-                '| Repository | Stars | Change | Trend |',
+                `| ${t.report.repositories} | ${t.report.stars} | ${t.report.change} | ${t.report.trend} |`,
                 '|:-----------|------:|-------:|:-----:|',
                 ...sorted.map((repo) => {
-                  const badge = repo.isNew ? ' `NEW`' : '';
+                  const badge = repo.isNew ? ` \`${t.report.badges.new}\`` : '';
                   return `| [${repo.fullName}](https://github.com/${repo.fullName})${badge} | ${repo.current} | ${deltaIndicator(repo.delta)} | ${trendIcon(repo.delta)} |`;
                 }),
                 '',
@@ -49455,11 +49636,11 @@ ${pendingInterceptorsFormatter.format(pending)}
         const newSection =
           newRepos.length > 0
             ? [
-                '## New Repositories',
+                `## ${t.report.newRepositories}`,
                 '',
                 ...newRepos.map(
                   (repo) =>
-                    `- [${repo.fullName}](https://github.com/${repo.fullName}) — ${repo.current} stars`,
+                    `- [${repo.fullName}](https://github.com/${repo.fullName}) — ${repo.current} ${t.report.stars.toLowerCase()}`,
                 ),
                 '',
               ]
@@ -49467,9 +49648,12 @@ ${pendingInterceptorsFormatter.format(pending)}
         const removedSection =
           removedRepos.length > 0
             ? [
-                '## Removed Repositories',
+                `## ${t.report.removedRepositories}`,
                 '',
-                ...removedRepos.map((repo) => `- ${repo.fullName} — was ${repo.previous} stars`),
+                ...removedRepos.map(
+                  (repo) =>
+                    `- ${repo.fullName} — ${t.report.was} ${repo.previous} ${t.report.stars.toLowerCase()}`,
+                ),
                 '',
               ]
             : [];
@@ -49477,11 +49661,11 @@ ${pendingInterceptorsFormatter.format(pending)}
           summary.totalDelta === 0
             ? []
             : [
-                '## Summary',
+                `## ${t.report.summary}`,
                 '',
-                `- **Stars gained:** ${summary.newStars}`,
-                `- **Stars lost:** ${summary.lostStars}`,
-                `- **Net change:** ${deltaIndicator(summary.totalDelta)}`,
+                `- **${t.report.starsGained}:** ${summary.newStars}`,
+                `- **${t.report.starsLost}:** ${summary.lostStars}`,
+                `- **${t.report.netChange}:** ${deltaIndicator(summary.totalDelta)}`,
                 '',
               ];
         const footer = [
@@ -49498,10 +49682,11 @@ ${pendingInterceptorsFormatter.format(pending)}
           ...footer,
         ].join('\n');
       }
-      function generateHtmlReport({ results, previousTimestamp }) {
+      function generateHtmlReport({ results, previousTimestamp, locale = 'en' }) {
         const { repos, summary } = results;
+        const t = (0, _i18n__WEBPACK_IMPORTED_MODULE_0__ /* .getTranslations */.$)(locale);
         const now = new Date().toISOString().split('T')[0];
-        const prev = previousTimestamp ? previousTimestamp.split('T')[0] : 'first run';
+        const prev = previousTimestamp ? previousTimestamp.split('T')[0] : t.report.firstRun;
         const activeRepos = repos.filter((repo) => !repo.isRemoved);
         const sorted = [...activeRepos].sort((repoA, repoB) => repoB.current - repoA.current);
         const deltaColor = (delta) => {
@@ -49512,7 +49697,7 @@ ${pendingInterceptorsFormatter.format(pending)}
         const rows = sorted
           .map((repo) => {
             const badge = repo.isNew
-              ? ` <span style="background:${COLORS.positive};color:${COLORS.white};padding:1px 6px;border-radius:3px;font-size:11px;">NEW</span>`
+              ? ` <span style="background:${COLORS.positive};color:${COLORS.white};padding:1px 6px;border-radius:3px;font-size:11px;">${t.report.badges.new}</span>`
               : '';
             return `
       <tr>
@@ -49531,8 +49716,8 @@ ${pendingInterceptorsFormatter.format(pending)}
           removedRepos.length > 0
             ? `
       <div style="margin-top:16px;">
-        <h3 style="color:${COLORS.negative};font-size:14px;">Removed Repositories</h3>
-        <ul>${removedRepos.map((repo) => `<li>${repo.fullName} — was ${repo.previous} stars</li>`).join('')}</ul>
+        <h3 style="color:${COLORS.negative};font-size:14px;">${t.report.removedRepositories}</h3>
+        <ul>${removedRepos.map((repo) => `<li>${repo.fullName} — ${t.report.was} ${repo.previous} ${t.report.stars.toLowerCase()}</li>`).join('')}</ul>
       </div>`
             : '';
         return `<!DOCTYPE html>
@@ -49540,35 +49725,35 @@ ${pendingInterceptorsFormatter.format(pending)}
 <head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${COLORS.text};">
   <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${COLORS.accent};">
-    <h1 style="margin:0;font-size:24px;">Star Tracker Report</h1>
-    <p style="color:${COLORS.neutral};margin:8px 0 0;">${now} ${prev === 'first run' ? '| First snapshot' : `| vs ${prev}`}</p>
+    <h1 style="margin:0;font-size:24px;">${t.report.title}</h1>
+    <p style="color:${COLORS.neutral};margin:8px 0 0;">${now} ${prev === t.report.firstRun ? `| ${t.report.firstRun}` : `| ${t.report.comparedTo} ${prev}`}</p>
   </div>
 
   <div style="display:flex;justify-content:space-around;padding:20px 0;text-align:center;">
     <div>
       <div style="font-size:28px;font-weight:700;">${summary.totalStars}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">Total Stars</div>
+      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.total} ${t.report.stars}</div>
     </div>
     <div>
       <div style="font-size:28px;font-weight:700;color:${deltaColor(summary.totalDelta)};">${deltaIndicator(summary.totalDelta)}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">Net Change</div>
+      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.netChange}</div>
     </div>
     <div>
       <div style="font-size:28px;font-weight:700;color:${COLORS.positive};">${summary.newStars}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">Gained</div>
+      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.starsGained}</div>
     </div>
     <div>
       <div style="font-size:28px;font-weight:700;color:${COLORS.negative};">${summary.lostStars}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">Lost</div>
+      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.starsLost}</div>
     </div>
   </div>
 
   <table style="width:100%;border-collapse:collapse;margin-top:16px;">
     <thead>
       <tr style="background:${COLORS.tableHeaderBg};">
-        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid ${COLORS.tableHeaderBorder};">Repository</th>
-        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};">Stars</th>
-        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};">Change</th>
+        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid ${COLORS.tableHeaderBorder};">${t.report.repositories}</th>
+        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};">${t.report.stars}</th>
+        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};">${t.report.change}</th>
       </tr>
     </thead>
     <tbody>

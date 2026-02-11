@@ -6,6 +6,7 @@ import { compareStars, createSnapshot } from './stars';
 import { generateMarkdownReport, generateHtmlReport } from './report';
 import { generateBadge } from './badge';
 import { getEmailConfig, sendEmail } from './email';
+import { getTranslations } from './i18n';
 import {
   initDataBranch,
   readHistory,
@@ -23,6 +24,7 @@ try {
   const token = core.getInput('github-token', { required: true });
   const octokit = github.getOctokit(token);
   const config = loadConfig();
+  const t = getTranslations(config.locale);
 
   core.info('Fetching repositories...');
   const repos = await getRepos({ octokit, config });
@@ -53,9 +55,9 @@ try {
       `Total: ${summary.totalStars} stars (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`,
     );
 
-    const markdownReport = generateMarkdownReport({ results, previousTimestamp });
-    const htmlReport = generateHtmlReport({ results, previousTimestamp });
-    const badge = generateBadge(summary.totalStars);
+    const markdownReport = generateMarkdownReport({ results, previousTimestamp, locale: config.locale });
+    const htmlReport = generateHtmlReport({ results, previousTimestamp, locale: config.locale });
+    const badge = generateBadge(summary.totalStars, config.locale);
 
     const snapshot = createSnapshot({ currentRepos: repos, summary });
     history.snapshots.push(snapshot);
@@ -74,10 +76,10 @@ try {
     core.setOutput('new-stars', String(summary.newStars));
     core.setOutput('lost-stars', String(summary.lostStars));
 
-    const emailConfig = getEmailConfig();
+    const emailConfig = getEmailConfig(config.locale);
     if (emailConfig) {
       if (summary.changed || config.sendOnNoChanges) {
-        const subject = `Star Tracker: ${summary.totalStars} total stars (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
+        const subject = `${t.email.subject}: ${summary.totalStars} (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
         try {
           await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
         } catch (error) {

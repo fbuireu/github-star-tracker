@@ -1,3 +1,5 @@
+import { getTranslations, type Locale } from './i18n';
+
 const BADGE_COLORS = {
   labelBg: '#555',
   valueBg: '#dfb317',
@@ -13,8 +15,9 @@ export function formatCount(n: number): string {
   return String(n);
 }
 
-export function generateBadge(totalStars: number): string {
-  const label = 'total stars';
+export function generateBadge(totalStars: number, locale: Locale = 'en'): string {
+  const t = getTranslations(locale);
+  const label = t.badge.totalStars;
   const value = `\u2605 ${formatCount(totalStars)}`;
 
   const labelWidth = label.length * 6.5 + 12;

@@ -68,6 +68,19 @@ flowchart TD
 
 ---
 
+## Supported Languages
+
+Reports, badges, and email notifications are available in:
+
+- 🇬🇧 **English** (`en`) — default
+- 🇪🇸 **Spanish** (`es`) — Español
+- 🇪🇸 **Catalan** (`ca`) — Català
+- 🇮🇹 **Italian** (`it`) — Italiano
+
+Set the `locale` input to change the language.
+
+---
+
 ## Usage
 
 ### 1. Add the workflow
@@ -258,6 +271,7 @@ All inputs are passed via `with:` in your workflow file. Only `github-token` is 
 | `email-to`           | Email recipient address                                                           | `''`                  |
 | `email-from`         | Email sender name or address                                                      | `GitHub Star Tracker` |
 | `send-on-no-changes` | Send email even when no star changes are detected                                 | `false`               |
+| `locale`             | Language for reports and emails: `en`, `es`, `ca`, `it`                           | `en`                  |
 
 > [!NOTE]
 > Inputs override values from the config file. If both are set, the input wins.
@@ -305,6 +319,20 @@ Use these in subsequent workflow steps via `${{ steps.<id>.outputs.<name> }}`.
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     only-repos: 'my-awesome-lib, another-project'
+```
+
+### Spanish reports and emails
+
+```yaml
+- uses: fbuireu/github-star-tracker@v1
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    locale: 'es'
+    smtp-host: smtp.gmail.com
+    smtp-port: '465'
+    smtp-username: ${{ secrets.EMAIL_USERNAME }}
+    smtp-password: ${{ secrets.EMAIL_PASSWORD }}
+    email-to: ${{ secrets.EMAIL_TO }}
 ```
 
 ### Daily snapshots, weekly email digest

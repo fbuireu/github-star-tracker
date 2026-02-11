@@ -1,4 +1,5 @@
 import type { ComparisonResults } from './types';
+import { getTranslations, type Locale } from './i18n';
 
 const COLORS = {
   positive: '#28a745',
@@ -28,15 +29,18 @@ export function trendIcon(delta: number): string {
 interface GenerateReportParams {
   results: ComparisonResults;
   previousTimestamp: string | null;
+  locale?: Locale;
 }
 
 export function generateMarkdownReport({
   results,
   previousTimestamp,
+  locale = 'en',
 }: GenerateReportParams): string {
   const { repos, summary } = results;
+  const t = getTranslations(locale);
   const now = new Date().toISOString().split('T')[0];
-  const prev = previousTimestamp ? previousTimestamp.split('T')[0] : 'first run';
+  const prev = previousTimestamp ? previousTimestamp.split('T')[0] : t.report.firstRun;
 
   const activeRepos = repos.filter((repo) => !repo.isRemoved);
   const newRepos = repos.filter((repo) => repo.isNew);
@@ -44,23 +48,23 @@ export function generateMarkdownReport({
   const sorted = [...activeRepos].sort((repoA, repoB) => repoB.current - repoA.current);
 
   const header = [
-    '# Star Tracker Report',
+    `# ${t.report.title}`,
     '',
-    `**${now}** | Total: **${summary.totalStars}** stars | Change: **${deltaIndicator(summary.totalDelta)}**`,
+    `**${now}** | ${t.report.total}: **${summary.totalStars}** ${t.report.stars.toLowerCase()} | ${t.report.change}: **${deltaIndicator(summary.totalDelta)}**`,
     '',
   ];
 
-  const comparison = prev === 'first run' ? [] : [`> Compared to snapshot from ${prev}`, ''];
+  const comparison = prev === t.report.firstRun ? [] : [`> ${t.report.comparedTo} ${prev}`, ''];
 
   const repoTable =
     activeRepos.length > 0
       ? [
-          '## Repositories',
+          `## ${t.report.repositories}`,
           '',
-          '| Repository | Stars | Change | Trend |',
+          `| ${t.report.repositories} | ${t.report.stars} | ${t.report.change} | ${t.report.trend} |`,
           '|:-----------|------:|-------:|:-----:|',
           ...sorted.map((repo) => {
-            const badge = repo.isNew ? ' `NEW`' : '';
+            const badge = repo.isNew ? ` \`${t.report.badges.new}\`` : '';
             return `| [${repo.fullName}](https://github.com/${repo.fullName})${badge} | ${repo.current} | ${deltaIndicator(repo.delta)} | ${trendIcon(repo.delta)} |`;
           }),
           '',
@@ -70,11 +74,11 @@ export function generateMarkdownReport({
   const newSection =
     newRepos.length > 0
       ? [
-          '## New Repositories',
+          `## ${t.report.newRepositories}`,
           '',
           ...newRepos.map(
             (repo) =>
-              `- [${repo.fullName}](https://github.com/${repo.fullName}) — ${repo.current} stars`,
+              `- [${repo.fullName}](https://github.com/${repo.fullName}) — ${repo.current} ${t.report.stars.toLowerCase()}`,
           ),
           '',
         ]
@@ -83,9 +87,9 @@ export function generateMarkdownReport({
   const removedSection =
     removedRepos.length > 0
       ? [
-          '## Removed Repositories',
+          `## ${t.report.removedRepositories}`,
           '',
-          ...removedRepos.map((repo) => `- ${repo.fullName} — was ${repo.previous} stars`),
+          ...removedRepos.map((repo) => `- ${repo.fullName} — ${t.report.was} ${repo.previous} ${t.report.stars.toLowerCase()}`),
           '',
         ]
       : [];
@@ -94,11 +98,11 @@ export function generateMarkdownReport({
     summary.totalDelta === 0
       ? []
       : [
-          '## Summary',
+          `## ${t.report.summary}`,
           '',
-          `- **Stars gained:** ${summary.newStars}`,
-          `- **Stars lost:** ${summary.lostStars}`,
-          `- **Net change:** ${deltaIndicator(summary.totalDelta)}`,
+          `- **${t.report.starsGained}:** ${summary.newStars}`,
+          `- **${t.report.starsLost}:** ${summary.lostStars}`,
+          `- **${t.report.netChange}:** ${deltaIndicator(summary.totalDelta)}`,
           '',
         ];
 
@@ -118,10 +122,11 @@ export function generateMarkdownReport({
   ].join('\n');
 }
 
-export function generateHtmlReport({ results, previousTimestamp }: GenerateReportParams): string {
+export function generateHtmlReport({ results, previousTimestamp, locale = 'en' }: GenerateReportParams): string {
   const { repos, summary } = results;
+  const t = getTranslations(locale);
   const now = new Date().toISOString().split('T')[0];
-  const prev = previousTimestamp ? previousTimestamp.split('T')[0] : 'first run';
+  const prev = previousTimestamp ? previousTimestamp.split('T')[0] : t.report.firstRun;
 
   const activeRepos = repos.filter((repo) => !repo.isRemoved);
   const sorted = [...activeRepos].sort((repoA, repoB) => repoB.current - repoA.current);
@@ -135,7 +140,7 @@ export function generateHtmlReport({ results, previousTimestamp }: GenerateRepor
   const rows = sorted
     .map((repo) => {
       const badge = repo.isNew
-        ? ` <span style="background:${COLORS.positive};color:${COLORS.white};padding:1px 6px;border-radius:3px;font-size:11px;">NEW</span>`
+        ? ` <span style="background:${COLORS.positive};color:${COLORS.white};padding:1px 6px;border-radius:3px;font-size:11px;">${t.report.badges.new}</span>`
         : '';
       return `
       <tr>
@@ -155,8 +160,8 @@ export function generateHtmlReport({ results, previousTimestamp }: GenerateRepor
     removedRepos.length > 0
       ? `
       <div style="margin-top:16px;">
-        <h3 style="color:${COLORS.negative};font-size:14px;">Removed Repositories</h3>
-        <ul>${removedRepos.map((repo) => `<li>${repo.fullName} — was ${repo.previous} stars</li>`).join('')}</ul>
+        <h3 style="color:${COLORS.negative};font-size:14px;">${t.report.removedRepositories}</h3>
+        <ul>${removedRepos.map((repo) => `<li>${repo.fullName} — ${t.report.was} ${repo.previous} ${t.report.stars.toLowerCase()}</li>`).join('')}</ul>
       </div>`
       : '';
 
@@ -165,35 +170,35 @@ export function generateHtmlReport({ results, previousTimestamp }: GenerateRepor
 <head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${COLORS.text};">
   <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${COLORS.accent};">
-    <h1 style="margin:0;font-size:24px;">Star Tracker Report</h1>
-    <p style="color:${COLORS.neutral};margin:8px 0 0;">${now} ${prev === 'first run' ? '| First snapshot' : `| vs ${prev}`}</p>
+    <h1 style="margin:0;font-size:24px;">${t.report.title}</h1>
+    <p style="color:${COLORS.neutral};margin:8px 0 0;">${now} ${prev === t.report.firstRun ? `| ${t.report.firstRun}` : `| ${t.report.comparedTo} ${prev}`}</p>
   </div>
 
   <div style="display:flex;justify-content:space-around;padding:20px 0;text-align:center;">
     <div>
       <div style="font-size:28px;font-weight:700;">${summary.totalStars}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">Total Stars</div>
+      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.total} ${t.report.stars}</div>
     </div>
     <div>
       <div style="font-size:28px;font-weight:700;color:${deltaColor(summary.totalDelta)};">${deltaIndicator(summary.totalDelta)}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">Net Change</div>
+      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.netChange}</div>
     </div>
     <div>
       <div style="font-size:28px;font-weight:700;color:${COLORS.positive};">${summary.newStars}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">Gained</div>
+      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.starsGained}</div>
     </div>
     <div>
       <div style="font-size:28px;font-weight:700;color:${COLORS.negative};">${summary.lostStars}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">Lost</div>
+      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.starsLost}</div>
     </div>
   </div>
 
   <table style="width:100%;border-collapse:collapse;margin-top:16px;">
     <thead>
       <tr style="background:${COLORS.tableHeaderBg};">
-        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid ${COLORS.tableHeaderBorder};">Repository</th>
-        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};">Stars</th>
-        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};">Change</th>
+        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid ${COLORS.tableHeaderBorder};">${t.report.repositories}</th>
+        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};">${t.report.stars}</th>
+        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};">${t.report.change}</th>
       </tr>
     </thead>
     <tbody>
