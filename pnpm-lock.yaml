@@ -18,8 +18,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.1
       nodemailer:
-        specifier: ^6.9.16
-        version: 6.10.1
+        specifier: ^7.0.11
+        version: 7.0.11
     devDependencies:
       '@types/js-yaml':
         specifier: ^4.0.9
@@ -707,8 +707,8 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  nodemailer@6.10.1:
-    resolution: {integrity: sha512-Z+iLaBGVaSjbIzQ4pX6XV41HrooLsQ10ZWPUehGmuantvzWoDVBnmsdUcOIDM1t+yPor5pDhVlDESgOMEGxhHA==}
+  nodemailer@7.0.11:
+    resolution: {integrity: sha512-gnXhNRE0FNhD7wPSCGhdNh46Hs6nm+uTyg+Kq0cZukNQiYdnCsoQjodNP9BQVG9XrcK/v6/MgpAPBUFyzh9pvw==}
     engines: {node: '>=6.0.0'}
 
   once@1.4.0:
@@ -1513,7 +1513,7 @@ snapshots:
 
   nanoid@3.3.11: {}
 
-  nodemailer@6.10.1: {}
+  nodemailer@7.0.11: {}
 
   once@1.4.0:
     dependencies:
