@@ -1,7 +1,9 @@
 #!/usr/bin/env tsx
-import { appendFileSync, readdirSync, readFileSync, statSync } from 'fs';
-import { join } from 'path';
+import { appendFileSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const distDir = join(__dirname, '..', 'dist');
 
 readdirSync(distDir).forEach((file) => {
