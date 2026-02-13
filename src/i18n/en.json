@@ -20,6 +20,8 @@
     "netChange": "Net change",
     "starTrend": "Star Trend",
     "starHistory": "Star History",
+    "topRepositories": "Top Repositories",
+    "byRepository": "By Repository",
     "badges": {
       "new": "NEW"
     }

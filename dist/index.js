@@ -38032,6 +38032,13 @@ var COLORS = {
   cellBorder: "#eee",
   gradientStart: "#bbb"
 };
+var CHART_COMPARISON_COLORS = [
+  "#dfb317",
+  "#28a745",
+  "#e74c3c",
+  "#3498db",
+  "#9b59b6"
+];
 var CHART = {
   width: 800,
   height: 400,
@@ -38062,6 +38069,8 @@ var ca_default = {
     netChange: "Canvi net",
     starTrend: "Tend\xE8ncia d'Estrelles",
     starHistory: "Historial d'Estrelles",
+    topRepositories: "Repositoris Principals",
+    byRepository: "Per Repositori",
     badges: {
       new: "NOU"
     }
@@ -38100,6 +38109,8 @@ var en_default = {
     netChange: "Net change",
     starTrend: "Star Trend",
     starHistory: "Star History",
+    topRepositories: "Top Repositories",
+    byRepository: "By Repository",
     badges: {
       new: "NEW"
     }
@@ -38138,6 +38149,8 @@ var es_default = {
     netChange: "Cambio neto",
     starTrend: "Tendencia de Estrellas",
     starHistory: "Historial de Estrellas",
+    topRepositories: "Repositorios Principales",
+    byRepository: "Por Repositorio",
     badges: {
       new: "NUEVO"
     }
@@ -38176,6 +38189,8 @@ var it_default = {
     netChange: "Variazione netta",
     starTrend: "Andamento Stelle",
     starHistory: "Storia delle Stelle",
+    topRepositories: "Repository Principali",
+    byRepository: "Per Repository",
     badges: {
       new: "NUOVO"
     }
@@ -38569,6 +38584,72 @@ function generateChartUrl({
   const encodedConfig = encodeURIComponent(JSON.stringify(config));
   return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&c=${encodedConfig}`;
 }
+function generateComparisonChartUrl({
+  history,
+  repoNames,
+  title = "Repository Comparison",
+  locale = "en"
+}) {
+  if (!history.snapshots || history.snapshots.length < 2 || repoNames.length === 0) {
+    return null;
+  }
+  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const labels = snapshots.map((s) => formatDate(s.timestamp, locale));
+  const datasets = repoNames.slice(0, CHART.maxComparison).map((repoName, index) => {
+    const data = snapshots.map((s) => {
+      const repo = s.repos.find((r) => r.fullName === repoName);
+      return repo?.stars ?? 0;
+    });
+    const color = CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length];
+    return {
+      label: repoName,
+      data,
+      borderColor: color,
+      backgroundColor: `${color}33`,
+      fill: false,
+      tension: 0.4,
+      pointRadius: 2,
+      pointHoverRadius: 5
+    };
+  });
+  const config = {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: "top",
+          labels: {
+            color: COLORS.text,
+            font: { size: 11 }
+          }
+        },
+        title: {
+          display: true,
+          text: title,
+          color: COLORS.text,
+          font: { size: 16, weight: "bold" }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: COLORS.cellBorder },
+          ticks: { color: COLORS.neutral }
+        },
+        y: {
+          grid: { color: COLORS.cellBorder },
+          ticks: { color: COLORS.neutral },
+          beginAtZero: false
+        }
+      }
+    }
+  };
+  const encodedConfig = encodeURIComponent(JSON.stringify(config));
+  return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&c=${encodedConfig}`;
+}
 
 // src/reporting/report.ts
 function generateMarkdownReport({
@@ -38593,11 +38674,24 @@ function generateMarkdownReport({
     ""
   ];
   const comparison = prev === t.report.firstRun ? [] : [`> ${t.report.comparedTo} ${prev}`, ""];
+  const topRepos = sorted.slice(0, 5).map((r) => r.fullName);
+  const comparisonChartUrl = includeCharts && history && history.snapshots.length >= 2 && topRepos.length > 0 ? generateComparisonChartUrl({
+    history,
+    repoNames: topRepos,
+    title: t.report.topRepositories,
+    locale
+  }) : null;
   const chartSection = includeCharts && history && history.snapshots.length >= 2 ? [
     `## \u{1F4C8} ${t.report.starTrend}`,
     "",
     `![Star History](${generateChartUrl({ history, title: t.report.starHistory, locale })})`,
-    ""
+    "",
+    ...comparisonChartUrl ? [
+      `### ${t.report.byRepository}`,
+      "",
+      `![${t.report.topRepositories}](${comparisonChartUrl})`,
+      ""
+    ] : []
   ] : [];
   const repoTable = activeRepos.length > 0 ? [
     `## ${t.report.repositories}`,
@@ -38686,10 +38780,20 @@ function generateHtmlReport({
         <h3 style="color:${COLORS.negative};font-size:14px;">${t.report.removedRepositories}</h3>
         <ul>${removedRepos.map((repo) => `<li>${repo.fullName} \u2014 ${t.report.was} ${repo.previous} ${t.report.stars.toLowerCase()}</li>`).join("")}</ul>
       </div>` : "";
+  const topRepos = sorted.slice(0, 5).map((r) => r.fullName);
+  const comparisonChartUrl = includeCharts && history && history.snapshots.length >= 2 && topRepos.length > 0 ? generateComparisonChartUrl({
+    history,
+    repoNames: topRepos,
+    title: t.report.topRepositories,
+    locale
+  }) : null;
   const chartSection = includeCharts && history && history.snapshots.length >= 2 ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F4C8} ${t.report.starTrend}</h2>
         <img src="${generateChartUrl({ history, title: t.report.starHistory, locale })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        ${comparisonChartUrl ? `
+        <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
+        <img src="${comparisonChartUrl}" alt="${t.report.topRepositories}" style="max-width:100%;height:auto;border-radius:4px;">` : ""}
       </div>` : "";
   return `<!DOCTYPE html>
 <html>

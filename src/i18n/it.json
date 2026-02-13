@@ -20,6 +20,8 @@
     "netChange": "Variazione netta",
     "starTrend": "Andamento Stelle",
     "starHistory": "Storia delle Stelle",
+    "topRepositories": "Repository Principali",
+    "byRepository": "Per Repository",
     "badges": {
       "new": "NUOVO"
     }

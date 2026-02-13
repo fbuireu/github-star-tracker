@@ -27,6 +27,8 @@ export interface Translations {
     netChange: string;
     starTrend: string;
     starHistory: string;
+    topRepositories: string;
+    byRepository: string;
     badges: {
       new: string;
     };

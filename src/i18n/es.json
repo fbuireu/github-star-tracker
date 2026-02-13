@@ -20,6 +20,8 @@
     "netChange": "Cambio neto",
     "starTrend": "Tendencia de Estrellas",
     "starHistory": "Historial de Estrellas",
+    "topRepositories": "Repositorios Principales",
+    "byRepository": "Por Repositorio",
     "badges": {
       "new": "NUEVO"
     }

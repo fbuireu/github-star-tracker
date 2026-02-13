@@ -20,6 +20,8 @@
     "netChange": "Canvi net",
     "starTrend": "Tendència d'Estrelles",
     "starHistory": "Historial d'Estrelles",
+    "topRepositories": "Repositoris Principals",
+    "byRepository": "Per Repositori",
     "badges": {
       "new": "NOU"
     }

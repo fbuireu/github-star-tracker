@@ -2,7 +2,7 @@ import { COLORS } from '../constants';
 import { getTranslations, type Locale } from '../i18n';
 import type { ComparisonResults, History } from '../types';
 import { deltaIndicator, trendIcon } from '../utils';
-import { generateChartUrl } from './chart';
+import { generateChartUrl, generateComparisonChartUrl } from './chart';
 
 interface GenerateReportParams {
   results: ComparisonResults;
@@ -38,6 +38,17 @@ export function generateMarkdownReport({
 
   const comparison = prev === t.report.firstRun ? [] : [`> ${t.report.comparedTo} ${prev}`, ''];
 
+  const topRepos = sorted.slice(0, 5).map((r) => r.fullName);
+  const comparisonChartUrl =
+    includeCharts && history && history.snapshots.length >= 2 && topRepos.length > 0
+      ? generateComparisonChartUrl({
+          history,
+          repoNames: topRepos,
+          title: t.report.topRepositories,
+          locale,
+        })
+      : null;
+
   const chartSection =
     includeCharts && history && history.snapshots.length >= 2
       ? [
@@ -45,6 +56,14 @@ export function generateMarkdownReport({
           '',
           `![Star History](${generateChartUrl({ history, title: t.report.starHistory, locale })})`,
           '',
+          ...(comparisonChartUrl
+            ? [
+                `### ${t.report.byRepository}`,
+                '',
+                `![${t.report.topRepositories}](${comparisonChartUrl})`,
+                '',
+              ]
+            : []),
         ]
       : [];
 
@@ -167,12 +186,30 @@ export function generateHtmlReport({
       </div>`
       : '';
 
+  const topRepos = sorted.slice(0, 5).map((r) => r.fullName);
+  const comparisonChartUrl =
+    includeCharts && history && history.snapshots.length >= 2 && topRepos.length > 0
+      ? generateComparisonChartUrl({
+          history,
+          repoNames: topRepos,
+          title: t.report.topRepositories,
+          locale,
+        })
+      : null;
+
   const chartSection =
     includeCharts && history && history.snapshots.length >= 2
       ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">📈 ${t.report.starTrend}</h2>
         <img src="${generateChartUrl({ history, title: t.report.starHistory, locale })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        ${
+          comparisonChartUrl
+            ? `
+        <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
+        <img src="${comparisonChartUrl}" alt="${t.report.topRepositories}" style="max-width:100%;height:auto;border-radius:4px;">`
+            : ''
+        }
       </div>`
       : '';
 
