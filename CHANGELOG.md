@@ -1,3 +1,11 @@
+## [1.0.7](https://github.com/fbuireu/github-star-tracker/compare/v1.0.6...v1.0.7) (2026-02-13)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @actions/core to v3 ([fbfaf0d](https://github.com/fbuireu/github-star-tracker/commit/fbfaf0d8ccc352cc00dd7837b305f2d384a7e2c3))
+* **deps:** update dependency nodemailer to v8 ([80e1f71](https://github.com/fbuireu/github-star-tracker/commit/80e1f717511e2cbd6faf91675681456459e37276))
+
 ## [1.0.6](https://github.com/fbuireu/github-star-tracker/compare/v1.0.5...v1.0.6) (2026-02-13)
 
 
