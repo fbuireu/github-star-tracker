@@ -1,0 +1,64 @@
+name: Dependabot auto-merge
+on: 
+  pull_request_target: 
+    types: [opened, synchronize]
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2.5.0
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Check if should auto-merge
+        id: auto-merge-check
+        run: |
+          UPDATE_TYPE="${{ steps.metadata.outputs.update-type }}"
+          DEP_TYPE="${{ steps.metadata.outputs.dependency-type }}"
+          
+          if [[ "$UPDATE_TYPE" == "version-update:semver-patch" ]] || \
+             [[ "$UPDATE_TYPE" == "version-update:semver-minor" ]] || \
+             [[ "$DEP_TYPE" == "indirect" ]] || \
+             [[ "$DEP_TYPE" == "direct:development" ]]; then
+            echo "should-merge=true" >> $GITHUB_OUTPUT
+          else
+            echo "should-merge=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Approve and auto-merge
+        if: steps.auto-merge-check.outputs.should-merge == 'true'
+        run: |
+          echo "Auto-merging ${{ steps.metadata.outputs.dependency-type }} dependency: ${{ steps.metadata.outputs.dependency-names }}"
+          gh pr review --approve "$PR_URL"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.PAT }} 
+      - name: Comment on major updates
+        if: steps.metadata.outputs['update-type'] == 'version-update:semver-major'
+        run: |
+          gh pr comment "$PR_URL" --body "🚨 **Major update detected** - Manual review required for ${{ steps.metadata.outputs.dependency-names }}"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Label PRs by update type
+        run: |
+          case "${{ steps.metadata.outputs['update-type'] }}" in
+            version-update:semver-patch)
+              gh pr edit "$PR_URL" --add-label "patch-update,auto-merge"
+              ;;
+            version-update:semver-minor)
+              gh pr edit "$PR_URL" --add-label "minor-update"
+              ;;
+            version-update:semver-major)
+              gh pr edit "$PR_URL" --add-label "major-update,review-required"
+              ;;
+          esac
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
