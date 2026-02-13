@@ -35,7 +35,7 @@
     "@actions/core": "^1.11.1",
     "@actions/github": "^6.0.0",
     "js-yaml": "^4.1.0",
-    "nodemailer": "^7.0.11"
+    "nodemailer": "^8.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.14",
