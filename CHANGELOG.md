@@ -1,3 +1,10 @@
+## [1.0.8](https://github.com/fbuireu/github-star-tracker/compare/v1.0.7...v1.0.8) (2026-02-13)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @actions/github to v9 ([5e8780b](https://github.com/fbuireu/github-star-tracker/commit/5e8780b8cc47383ec3ee2bb1a6ae8b028b878eb8))
+
 ## [1.0.7](https://github.com/fbuireu/github-star-tracker/compare/v1.0.6...v1.0.7) (2026-02-13)
 
 
