@@ -1,3 +1,10 @@
+## [1.0.6](https://github.com/fbuireu/github-star-tracker/compare/v1.0.5...v1.0.6) (2026-02-13)
+
+
+### Bug Fixes
+
+* **release:** enable git push credentials for tag update ([9b86462](https://github.com/fbuireu/github-star-tracker/commit/9b86462b8d183fa7f081f76ec314ef3a8f1951e3))
+
 ## [1.0.5](https://github.com/fbuireu/github-star-tracker/compare/v1.0.4...v1.0.5) (2026-02-13)
 
 
