@@ -1,0 +1,90 @@
+name: Security Vulnerability Report
+description: Report a security vulnerability (will be handled privately)
+title: "[Security]: "
+labels: ["security", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚠️ Security Vulnerability
+        
+        **Please do not report security vulnerabilities through public GitHub issues.**
+        
+        If you believe you've found a security vulnerability, please report it privately:
+        - Email: fbuireu@gmail.com
+        - Use GitHub's private vulnerability reporting (if enabled)
+        
+        If you prefer to report here, the issue will be made private immediately.
+  - type: textarea
+    id: description
+    attributes:
+      label: Vulnerability Description
+      description: Describe the security vulnerability in detail
+      placeholder: The action is vulnerable to...
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this vulnerability?
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: What is the potential impact of this vulnerability?
+      placeholder: An attacker could...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can this vulnerability be exploited?
+      placeholder: |
+        1. Configure the action with...
+        2. An attacker can...
+        3. Result in...
+    validations:
+      required: true
+  - type: textarea
+    id: poc
+    attributes:
+      label: Proof of Concept
+      description: Provide a proof of concept if possible (be careful not to expose sensitive info)
+      placeholder: |
+        ```yaml
+        # Example configuration that demonstrates the vulnerability
+        ```
+      render: yaml
+  - type: textarea
+    id: affected
+    attributes:
+      label: Affected Versions
+      description: Which versions are affected by this vulnerability?
+      placeholder: v1.0.0 - v1.2.3
+    validations:
+      required: true
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Suggested Mitigation
+      description: If you have suggestions for fixing this vulnerability, please share them
+      placeholder: This could be fixed by...
+  - type: checkboxes
+    id: disclosure
+    attributes:
+      label: Responsible Disclosure
+      description: Please confirm you agree to responsible disclosure
+      options:
+        - label: I agree to allow 90 days for a fix before public disclosure
+          required: true
+        - label: I have not and will not publicly disclose this vulnerability before it is fixed
+          required: true

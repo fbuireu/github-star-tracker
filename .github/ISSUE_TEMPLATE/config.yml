@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or Discussion
+    url: https://github.com/fbuireu/github-star-tracker/discussions
+    about: Ask questions or discuss ideas with the community
+  - name: Documentation
+    url: https://github.com/fbuireu/github-star-tracker#readme
+    about: Check out the documentation for usage guides and examples
+  - name: Security Policy
+    url: https://github.com/fbuireu/github-star-tracker/security/policy
+    about: Review our security policy and report vulnerabilities privately

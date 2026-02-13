@@ -1,0 +1,104 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please provide as much detail as possible.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the bug is.
+      placeholder: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Configure action with '...'
+        2. Run workflow '...'
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: The action should...
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: Instead, the action...
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Workflow Configuration
+      description: Please provide your workflow YAML configuration
+      placeholder: |
+        ```yaml
+        - uses: fbuireu/github-star-tracker@v1
+          with:
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            config-path: 'star-tracker.yml'
+        ```
+      render: yaml
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration File (if applicable)
+      description: If you're using a config file, paste its contents here
+      placeholder: |
+        ```yaml
+        tracking:
+          visibility: public
+          include_archived: false
+        ```
+      render: yaml
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs
+      description: Please paste any relevant log output or error messages
+      placeholder: Paste logs here...
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: Action Version
+      description: Which version of the action are you using?
+      placeholder: v1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: runner
+    attributes:
+      label: Runner Type
+      description: What type of runner are you using?
+      options:
+        - GitHub-hosted (ubuntu-latest)
+        - GitHub-hosted (windows-latest)
+        - GitHub-hosted (macos-latest)
+        - Self-hosted
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here
+      placeholder: Any other relevant information...

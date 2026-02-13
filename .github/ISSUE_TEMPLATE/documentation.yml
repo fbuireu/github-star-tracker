@@ -1,0 +1,94 @@
+name: Documentation Request
+description: Suggest improvements or additions to the documentation
+title: "[Docs]: "
+labels: ["documentation", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation! Clear docs make the project better for everyone.
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: What kind of documentation needs improvement?
+      options:
+        - README
+        - Configuration guide
+        - Examples
+        - API reference
+        - Troubleshooting guide
+        - Contributing guide
+        - Code comments
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Documentation
+      description: What is currently documented (if anything)?
+      placeholder: The current documentation says...
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is unclear, missing, or incorrect?
+      placeholder: The documentation doesn't explain...
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested Improvement
+      description: How should the documentation be improved?
+      placeholder: |
+        The documentation should include...
+        
+        For example:
+        ```markdown
+        ## New Section
+        This is how you...
+        ```
+    validations:
+      required: true
+  - type: textarea
+    id: examples
+    attributes:
+      label: Example Use Cases
+      description: What examples or use cases should be documented?
+      placeholder: |
+        It would be helpful to show how to...
+        
+        ```yaml
+        # Example workflow
+        ```
+      render: yaml
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Target Audience
+      description: Who would benefit from this documentation?
+      options:
+        - Beginners
+        - Intermediate users
+        - Advanced users
+        - Contributors
+        - All users
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Link to any relevant external documentation or resources
+      placeholder: |
+        - https://example.com/similar-docs
+        - Related GitHub Action: ...
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to submit a PR to improve this documentation
