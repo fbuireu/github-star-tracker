@@ -9,6 +9,7 @@ GitHub Star Tracker generates interactive charts to visualize your repository st
 Shows the **cumulative star count** across all your tracked repositories.
 
 **Features:**
+
 - Line graph with gradient fill
 - Timeline on X-axis (formatted per locale)
 - Star count on Y-axis
@@ -23,6 +24,7 @@ Shows the **cumulative star count** across all your tracked repositories.
 Shows **individual trend lines** for your 5 most-starred repositories.
 
 **Features:**
+
 - Multi-line chart with distinct colors per repository
 - Compare growth rates across repositories
 - Legend showing repository names
@@ -42,7 +44,7 @@ Charts are **enabled by default**. To explicitly control:
 - uses: fbuireu/github-star-tracker@v1
   with:
     github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
-    include-charts: true  # Default
+    include-charts: true # Default
 ```
 
 ### Disabling Charts
@@ -55,6 +57,7 @@ with:
 ```
 
 **When to disable:**
+
 - You only need JSON data
 - Reducing QuickChart API calls
 - Faster report generation
@@ -69,10 +72,12 @@ with:
 Charts use predefined color schemes:
 
 **Total Stars Chart:**
+
 - Line: `rgba(75, 192, 192, 1)` (teal)
 - Fill: `rgba(75, 192, 192, 0.2)` (teal with transparency)
 
 **Comparison Chart (up to 5 repositories):**
+
 1. Blue: `#36A2EB`
 2. Red: `#FF6384`
 3. Yellow: `#FFCE56`
@@ -94,10 +99,11 @@ Chart labels and dates are automatically localized based on your `locale` settin
 
 ```yaml
 with:
-  locale: 'es'  # Spanish labels
+  locale: 'es' # Spanish labels
 ```
 
 **Localized elements:**
+
 - Chart title
 - Axis labels
 - Date formatting (e.g., "13 Feb 2026" vs "13 feb 2026")
@@ -112,11 +118,13 @@ with:
 Charts display up to **30 data points** (QuickChart limitation).
 
 **What happens with more data:**
+
 - Older snapshots are **excluded** from charts
 - JSON data still contains all historical snapshots
 - Most recent 30 runs are visualized
 
 **Example:**
+
 ```
 Total snapshots: 100
 Chart shows: Most recent 30
@@ -154,12 +162,11 @@ GitHub automatically renders these URLs as images.
 Charts are embedded as inline images:
 
 ```html
-<img src="https://quickchart.io/chart?c={...}" 
-     alt="Star Trend Chart" 
-     style="max-width: 100%;" />
+<img src="https://quickchart.io/chart?c={...}" alt="Star Trend Chart" style="max-width: 100%;" />
 ```
 
 **Benefits:**
+
 - No external dependencies (charts load from QuickChart CDN)
 - Work in all email clients
 - Responsive on mobile devices
@@ -213,6 +220,7 @@ https://quickchart.io/chart?c={urlEncodedConfig}
 ```
 
 **Limits:**
+
 - URL length: ~2048 characters (browser limit)
 - Requests: No authentication required
 - Rate limits: Fair use policy
@@ -295,10 +303,12 @@ Charts use data from `stars-data.json`:
 ### Data Aggregation
 
 **Total Stars Chart:**
+
 - X-axis: `timestamp` (formatted per locale)
 - Y-axis: `totalStars` (sum of all repositories)
 
 **Comparison Chart:**
+
 - X-axis: `timestamp` (formatted per locale)
 - Y-axis: Individual repository `stars`
 - Series: Top 5 repositories by current star count

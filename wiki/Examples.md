@@ -13,7 +13,7 @@ name: Track Stars
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Daily at midnight
+    - cron: '0 0 * * *' # Daily at midnight
   workflow_dispatch:
 
 jobs:
@@ -26,6 +26,7 @@ jobs:
 ```
 
 **What it does:**
+
 - Tracks all repositories (public and private)
 - Generates reports with charts
 - Saves to `star-tracker-data` branch
@@ -43,7 +44,7 @@ name: Track Public Stars
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # Daily at 3 AM UTC
+    - cron: '0 3 * * *' # Daily at 3 AM UTC
   workflow_dispatch:
 
 jobs:
@@ -83,6 +84,7 @@ jobs:
 ```
 
 **Languages available:**
+
 - `en` — English
 - `es` — Spanish
 - `ca` — Catalan
@@ -99,7 +101,7 @@ name: Track Stars with Email
 
 on:
   schedule:
-    - cron: '0 9 * * 1'  # Monday at 9 AM
+    - cron: '0 9 * * 1' # Monday at 9 AM
   workflow_dispatch:
 
 jobs:
@@ -119,6 +121,7 @@ jobs:
 ```
 
 **Required secrets:**
+
 - `STAR_TRACKER_TOKEN` — PAT with repo access
 - `EMAIL_FROM` — Gmail address
 - `EMAIL_PASSWORD` — App-specific password
@@ -155,13 +158,14 @@ jobs:
           server_port: 587
           username: ${{ secrets.EMAIL_FROM }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "⭐ Star Update: ${{ steps.tracker.outputs.total-stars }} total (+${{ steps.tracker.outputs.new-stars }})"
+          subject: '⭐ Star Update: ${{ steps.tracker.outputs.total-stars }} total (+${{ steps.tracker.outputs.new-stars }})'
           to: ${{ secrets.EMAIL_TO }}
           from: GitHub Star Tracker
           html_body: ${{ steps.tracker.outputs.report-html }}
 ```
 
 **Benefits:**
+
 - Only send emails when stars change
 - Custom subject line with star counts
 - Better reliability
@@ -185,11 +189,13 @@ Send to multiple email addresses:
 ```
 
 **Alternative using secrets:**
+
 ```yaml
 email-to: ${{ secrets.EMAIL_RECIPIENTS }}
 ```
 
 Where `EMAIL_RECIPIENTS` secret contains:
+
 ```
 user1@example.com,user2@example.com,team@company.com
 ```
@@ -210,6 +216,7 @@ Generate text-only reports:
 ```
 
 **Use cases:**
+
 - Reduce QuickChart API calls
 - Faster workflow execution
 - Smaller email size
@@ -266,7 +273,7 @@ Only send email if 10+ stars gained:
     server_port: 587
     username: ${{ secrets.EMAIL_FROM }}
     password: ${{ secrets.EMAIL_PASSWORD }}
-    subject: "🎉 Big milestone: +${{ steps.tracker.outputs.new-stars }} stars!"
+    subject: '🎉 Big milestone: +${{ steps.tracker.outputs.new-stars }} stars!'
     to: ${{ secrets.EMAIL_TO }}
     from: Star Tracker
     html_body: ${{ steps.tracker.outputs.report-html }}
@@ -424,6 +431,7 @@ on:
 ### Using External Config File
 
 **`.github/workflows/star-tracker.yml`:**
+
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
@@ -432,6 +440,7 @@ on:
 ```
 
 **`.github/star-config.json`:**
+
 ```json
 {
   "visibility": "public",
@@ -447,6 +456,7 @@ on:
 Track different repository sets separately:
 
 **Track public repos daily:**
+
 ```yaml
 name: Track Public Repos
 
@@ -466,6 +476,7 @@ jobs:
 ```
 
 **Track private repos weekly:**
+
 ```yaml
 name: Track Private Repos
 
@@ -509,7 +520,7 @@ Send different language reports to different teams:
     server_port: 587
     username: ${{ secrets.EMAIL_FROM }}
     password: ${{ secrets.EMAIL_PASSWORD }}
-    subject: "Star Report (English)"
+    subject: 'Star Report (English)'
     to: team-en@company.com
     from: Star Tracker
     html_body: ${{ steps.tracker-en.outputs.report-html }}
@@ -528,7 +539,7 @@ Send different language reports to different teams:
     server_port: 587
     username: ${{ secrets.EMAIL_FROM }}
     password: ${{ secrets.EMAIL_PASSWORD }}
-    subject: "Informe de Estrellas"
+    subject: 'Informe de Estrellas'
     to: team-es@company.com
     from: Star Tracker
     html_body: ${{ steps.tracker-es.outputs.report-html }}
@@ -541,6 +552,7 @@ Send different language reports to different teams:
 ### Basic Badge in README
 
 **Your repository `README.md`:**
+
 ```markdown
 # My Project
 

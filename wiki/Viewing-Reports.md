@@ -17,6 +17,7 @@ The `star-tracker-data` branch contains:
 ### Viewing the Data Branch
 
 Navigate to:
+
 ```
 https://github.com/YOUR_USERNAME/YOUR_REPO/tree/star-tracker-data
 ```
@@ -69,14 +70,14 @@ Access report data in subsequent workflow steps for custom integrations.
 
 ### Available Outputs
 
-| Output | Type | Description |
-|--------|------|-------------|
-| `report` | `string` | Full Markdown report |
-| `report-html` | `string` | HTML version (for emails) |
-| `total-stars` | `number` | Total star count across all repos |
+| Output          | Type      | Description                          |
+| --------------- | --------- | ------------------------------------ |
+| `report`        | `string`  | Full Markdown report                 |
+| `report-html`   | `string`  | HTML version (for emails)            |
+| `total-stars`   | `number`  | Total star count across all repos    |
 | `stars-changed` | `boolean` | Whether stars changed since last run |
-| `new-stars` | `number` | Stars gained since last run |
-| `lost-stars` | `number` | Stars lost since last run |
+| `new-stars`     | `number`  | Stars gained since last run          |
+| `lost-stars`    | `number`  | Stars lost since last run            |
 
 ### Example Usage
 
@@ -243,6 +244,7 @@ cat stars-data.json | jq '.'
 ### HTML Report Structure
 
 Same structure as Markdown, but:
+
 - Formatted for email clients
 - Charts embedded as inline images
 - Responsive design for mobile/desktop
@@ -266,8 +268,9 @@ The report format is currently fixed, but you can process the JSON data to creat
 
 ```javascript
 // Fetch data
-const data = await fetch('https://raw.githubusercontent.com/USERNAME/REPO/star-tracker-data/stars-data.json')
-  .then(r => r.json());
+const data = await fetch('https://raw.githubusercontent.com/USERNAME/REPO/star-tracker-data/stars-data.json').then(
+  (r) => r.json(),
+);
 
 // Custom analysis
 const latest = data[0];
@@ -286,6 +289,7 @@ Data branch is **public** by default — anyone can view your star reports.
 ### Private Repositories
 
 If your main repository is private:
+
 - The `star-tracker-data` branch is also **private**
 - Only users with repository access can view reports
 - Badges won't render for unauthorized users

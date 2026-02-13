@@ -5,11 +5,11 @@ GitHub Star Tracker supports multiple languages for reports, charts, and email n
 ## Supported Languages
 
 | Code | Language | Native Name |
-|------|----------|-------------|
-| `en` | English | English |
-| `es` | Spanish | Español |
-| `ca` | Catalan | Català |
-| `it` | Italian | Italiano |
+| ---- | -------- | ----------- |
+| `en` | English  | English     |
+| `es` | Spanish  | Español     |
+| `ca` | Catalan  | Català      |
+| `it` | Italian  | Italiano    |
 
 ---
 
@@ -21,7 +21,7 @@ Set the locale in your workflow:
 - uses: fbuireu/github-star-tracker@v1
   with:
     github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
-    locale: 'es'  # Spanish
+    locale: 'es' # Spanish
 ```
 
 Or in configuration file:
@@ -43,16 +43,20 @@ Or in configuration file:
 All report headers and labels:
 
 **English (en):**
+
 ```markdown
 # GitHub Stars Report
+
 Total stars: 123
 Stars gained: 5
 Last updated: February 13, 2026
 ```
 
 **Spanish (es):**
+
 ```markdown
 # Informe de estrellas de GitHub
+
 Estrellas totales: 123
 Estrellas ganadas: 5
 Última actualización: 13 de febrero de 2026
@@ -65,11 +69,13 @@ Estrellas ganadas: 5
 Chart titles and axis labels:
 
 **English:**
+
 - "Star Trend"
 - "Top Repositories"
 - "By Repository"
 
 **Spanish:**
+
 - "Tendencia de Estrellas"
 - "Principales Repositorios"
 - "Por Repositorio"
@@ -80,12 +86,12 @@ Chart titles and axis labels:
 
 Dates are formatted per locale:
 
-| Locale | Format Example |
-|--------|----------------|
-| `en` | February 13, 2026 |
-| `es` | 13 de febrero de 2026 |
-| `ca` | 13 de febrer de 2026 |
-| `it` | 13 febbraio 2026 |
+| Locale | Format Example        |
+| ------ | --------------------- |
+| `en`   | February 13, 2026     |
+| `es`   | 13 de febrero de 2026 |
+| `ca`   | 13 de febrer de 2026  |
+| `it`   | 13 febbraio 2026      |
 
 ---
 
@@ -93,12 +99,12 @@ Dates are formatted per locale:
 
 **Built-in email subject (auto-generated):**
 
-| Locale | Subject |
-|--------|---------|
-| `en` | GitHub Stars Report: 123 total stars |
-| `es` | Informe de estrellas de GitHub: 123 estrellas totales |
-| `ca` | Informe d'estrelles de GitHub: 123 estrelles totals |
-| `it` | Rapporto stelle GitHub: 123 stelle totali |
+| Locale | Subject                                               |
+| ------ | ----------------------------------------------------- |
+| `en`   | GitHub Stars Report: 123 total stars                  |
+| `es`   | Informe de estrellas de GitHub: 123 estrellas totales |
+| `ca`   | Informe d'estrelles de GitHub: 123 estrelles totals   |
+| `it`   | Rapporto stelle GitHub: 123 stelle totali             |
 
 ---
 
@@ -106,24 +112,24 @@ Dates are formatted per locale:
 
 ### Report Labels
 
-| Key | en | es | ca | it |
-|-----|----|----|----|----|
-| `report` | GitHub Stars Report | Informe de estrellas de GitHub | Informe d'estrelles de GitHub | Rapporto stelle GitHub |
-| `totalStars` | Total stars | Estrellas totales | Estrelles totals | Stelle totali |
-| `starsGained` | Stars gained | Estrellas ganadas | Estrelles guanyades | Stelle guadagnate |
-| `starsLost` | Stars lost | Estrellas perdidas | Estrelles perdudes | Stelle perse |
-| `lastUpdated` | Last updated | Última actualización | Última actualització | Ultimo aggiornamento |
-| `repository` | Repository | Repositorio | Repositori | Repository |
-| `stars` | Stars | Estrellas | Estrelles | Stelle |
+| Key           | en                  | es                             | ca                            | it                     |
+| ------------- | ------------------- | ------------------------------ | ----------------------------- | ---------------------- |
+| `report`      | GitHub Stars Report | Informe de estrellas de GitHub | Informe d'estrelles de GitHub | Rapporto stelle GitHub |
+| `totalStars`  | Total stars         | Estrellas totales              | Estrelles totals              | Stelle totali          |
+| `starsGained` | Stars gained        | Estrellas ganadas              | Estrelles guanyades           | Stelle guadagnate      |
+| `starsLost`   | Stars lost          | Estrellas perdidas             | Estrelles perdudes            | Stelle perse           |
+| `lastUpdated` | Last updated        | Última actualización           | Última actualització          | Ultimo aggiornamento   |
+| `repository`  | Repository          | Repositorio                    | Repositori                    | Repository             |
+| `stars`       | Stars               | Estrellas                      | Estrelles                     | Stelle                 |
 
 ### Chart Labels
 
-| Key | en | es | ca | it |
-|-----|----|----|----|----|
-| `starTrend` | Star Trend | Tendencia de Estrellas | Tendència d'Estrelles | Tendenza Stelle |
-| `starHistory` | Star History | Historial de Estrellas | Historial d'Estrelles | Storico Stelle |
+| Key               | en               | es                       | ca                     | it                    |
+| ----------------- | ---------------- | ------------------------ | ---------------------- | --------------------- |
+| `starTrend`       | Star Trend       | Tendencia de Estrellas   | Tendència d'Estrelles  | Tendenza Stelle       |
+| `starHistory`     | Star History     | Historial de Estrellas   | Historial d'Estrelles  | Storico Stelle        |
 | `topRepositories` | Top Repositories | Principales Repositorios | Principals Repositoris | Repository Principali |
-| `byRepository` | By Repository | Por Repositorio | Per Repositori | Per Repository |
+| `byRepository`    | By Repository    | Por Repositorio          | Per Repositori         | Per Repository        |
 
 ---
 

@@ -63,15 +63,17 @@ See **[Getting Started](Getting-Started)** for detailed PAT setup.
 **Check these in order:**
 
 1. **Secrets configured?**
+
    ```yaml
    # Verify all secrets exist in Settings → Secrets
    EMAIL_FROM, EMAIL_PASSWORD, EMAIL_TO
    ```
 
 2. **Correct SMTP settings?**
+
    ```yaml
    smtp-host: smtp.gmail.com
-   smtp-port: '587'  # Note: string, not number
+   smtp-port: '587' # Note: string, not number
    ```
 
 3. **App password for Gmail?**
@@ -95,11 +97,13 @@ See **[Getting Started](Getting-Started)** for detailed PAT setup.
 **Symptom:** Email step fails with authentication error.
 
 **Gmail users:**
+
 - **Must use app-specific password**, not account password
 - Enable 2FA first: [Google Account → Security](https://myaccount.google.com/security)
 - Generate app password: [App Passwords](https://myaccount.google.com/apppasswords)
 
 **Other providers:**
+
 - Verify username/password are correct
 - Check if account requires special app password
 
@@ -112,6 +116,7 @@ See **[Getting Started](Getting-Started)** for detailed PAT setup.
 **Solution:**
 
 1. Verify charts are enabled:
+
    ```yaml
    with:
      include-charts: true
@@ -122,6 +127,7 @@ See **[Getting Started](Getting-Started)** for detailed PAT setup.
    - First run has no historical data
 
 3. Check QuickChart accessibility:
+
    ```yaml
    - name: Test QuickChart
      run: curl -I https://quickchart.io
@@ -139,6 +145,7 @@ See **[Getting Started](Getting-Started)** for detailed PAT setup.
 **Symptom:** Receiving duplicate emails on each run.
 
 **Causes:**
+
 - Multiple workflows running the action
 - Overlapping cron schedules
 - Workflow triggered multiple times
@@ -146,15 +153,17 @@ See **[Getting Started](Getting-Started)** for detailed PAT setup.
 **Solution:**
 
 1. Check for duplicate workflows:
+
    ```bash
    ls .github/workflows/*.yml
    ```
 
 2. Review cron schedules:
+
    ```yaml
    on:
      schedule:
-       - cron: '0 0 * * *'  # Should appear only once
+       - cron: '0 0 * * *' # Should appear only once
    ```
 
 3. Add conditional email:
@@ -194,9 +203,10 @@ See **[Getting Started](Getting-Started)** for detailed PAT setup.
 **Solution:**
 
 Set correct locale:
+
 ```yaml
 with:
-  locale: 'es'  # or 'en', 'ca', 'it'
+  locale: 'es' # or 'en', 'ca', 'it'
 ```
 
 ---
@@ -208,6 +218,7 @@ with:
 **Cause:** Very large datasets exceeding URL limits.
 
 **Solution:**
+
 - Action automatically limits to 30 data points
 - This should prevent URL overflow
 - If issue persists, [report a bug](https://github.com/fbuireu/github-star-tracker/issues/new?template=bug_report.yml)
@@ -223,11 +234,13 @@ with:
 **Solution:**
 
 1. Check workflow completed successfully:
+
    ```
    Actions → Select run → Verify green checkmark
    ```
 
 2. Verify PAT has repo access:
+
    ```yaml
    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
    ```
@@ -255,11 +268,13 @@ with:
 **Solution:**
 
 1. Check workflow logs for errors:
+
    ```
    Actions → Latest run → View logs → Push to data branch step
    ```
 
 2. Verify git configuration:
+
    ```yaml
    # Action should set these automatically
    git config user.name "github-actions[bot]"
@@ -267,6 +282,7 @@ with:
    ```
 
 3. Check for conflicts:
+
    ```bash
    git checkout star-tracker-data
    git status
@@ -289,11 +305,13 @@ with:
 **Solution:**
 
 1. Check branch exists:
+
    ```
    Repository → Branches → Look for "star-tracker-data"
    ```
 
 2. Verify URL format:
+
    ```
    https://github.com/USERNAME/REPO/tree/star-tracker-data
    ```
@@ -317,12 +335,14 @@ with:
    - **Solution:** Make a commit or manually trigger workflow
 
 2. **Wrong cron syntax**
+
    ```yaml
    on:
      schedule:
-       - cron: '0 0 * * *'  # Valid: Daily at midnight
+       - cron: '0 0 * * *' # Valid: Daily at midnight
        - cron: '60 0 * * *' # INVALID: Hour can't be 60
    ```
+
    - **Solution:** Validate at [Crontab Guru](https://crontab.guru/)
 
 3. **Workflow file in wrong location**
@@ -341,21 +361,26 @@ with:
 **Common errors:**
 
 1. **Missing secrets**
+
    ```
    Error: Input required and not supplied: github-token
    ```
+
    - **Solution:** Add `STAR_TRACKER_TOKEN` secret
 
 2. **Invalid configuration**
+
    ```
    Error: Invalid visibility value
    ```
+
    - **Solution:** Use `all`, `public`, or `private`
 
 3. **Syntax errors**
    ```
    Error: Invalid workflow file
    ```
+
    - **Solution:** Validate YAML syntax at [YAML Lint](http://www.yamllint.com/)
 
 ---
@@ -365,6 +390,7 @@ with:
 **Symptom:** Workflow takes 5+ minutes to complete.
 
 **Causes:**
+
 - Many repositories (100+)
 - Large historical data
 - Network latency to GitHub API
@@ -372,12 +398,14 @@ with:
 **Optimizations:**
 
 1. **Filter by visibility:**
+
    ```yaml
    with:
-     visibility: 'public'  # Only track public repos
+     visibility: 'public' # Only track public repos
    ```
 
 2. **Disable charts:**
+
    ```yaml
    with:
      include-charts: false
@@ -387,7 +415,7 @@ with:
    ```yaml
    on:
      schedule:
-       - cron: '0 0 * * 1'  # Weekly instead of daily
+       - cron: '0 0 * * 1' # Weekly instead of daily
    ```
 
 ---
@@ -421,9 +449,10 @@ with:
 **Solution:**
 
 1. Check visibility filter:
+
    ```yaml
    with:
-     visibility: 'all'  # Include both public and private
+     visibility: 'all' # Include both public and private
    ```
 
 2. Verify PAT scopes:
@@ -464,12 +493,14 @@ with:
 **Solution:**
 
 Set locale explicitly:
+
 ```yaml
 with:
-  locale: 'es'  # Spanish
+  locale: 'es' # Spanish
 ```
 
 **Available:**
+
 - `en` — English
 - `es` — Spanish
 - `ca` — Catalan
@@ -484,6 +515,7 @@ with:
 **Cause:** Date formatting uses basic locale support.
 
 **Expected behavior:**
+
 - Format changes (e.g., `13/02/2026` vs `02/13/2026`)
 - Month names localized
 - This is working as designed
@@ -517,13 +549,13 @@ If you've tried everything and still have issues:
 
 ## 💡 Common Solutions Quick Reference
 
-| Problem | Quick Fix |
-|---------|-----------|
-| 401/403 error | Use PAT, not `GITHUB_TOKEN` |
-| No email | Check secrets, use app password (Gmail) |
-| No charts | Need 2+ runs, set `include-charts: true` |
-| Branch not created | Check PAT permissions |
-| Wrong locale | Set `locale: 'xx'` explicitly |
-| Workflow not scheduled | Re-enable in Actions tab |
-| Missing repos | Check `visibility` and PAT scopes |
-| Slow workflow | Filter by visibility, disable charts |
+| Problem                | Quick Fix                                |
+| ---------------------- | ---------------------------------------- |
+| 401/403 error          | Use PAT, not `GITHUB_TOKEN`              |
+| No email               | Check secrets, use app password (Gmail)  |
+| No charts              | Need 2+ runs, set `include-charts: true` |
+| Branch not created     | Check PAT permissions                    |
+| Wrong locale           | Set `locale: 'xx'` explicitly            |
+| Workflow not scheduled | Re-enable in Actions tab                 |
+| Missing repos          | Check `visibility` and PAT scopes        |
+| Slow workflow          | Filter by visibility, disable charts     |

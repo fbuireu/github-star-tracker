@@ -55,7 +55,7 @@ jobs:
           server_port: 587
           username: ${{ secrets.EMAIL_FROM }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "⭐ Star Update: ${{ steps.tracker.outputs.total-stars }} total"
+          subject: '⭐ Star Update: ${{ steps.tracker.outputs.total-stars }} total'
           to: ${{ secrets.EMAIL_TO }}
           from: GitHub Star Tracker
           html_body: ${{ steps.tracker.outputs.report-html }}
@@ -65,11 +65,11 @@ jobs:
 
 Create these secrets in **Settings → Secrets and variables → Actions**:
 
-| Secret | Description | Example |
-|--------|-------------|---------|
-| `EMAIL_FROM` | Sender email address | `your.email@gmail.com` |
-| `EMAIL_PASSWORD` | App-specific password | `abcd efgh ijkl mnop` |
-| `EMAIL_TO` | Recipient(s), comma-separated | `user@example.com` |
+| Secret           | Description                   | Example                |
+| ---------------- | ----------------------------- | ---------------------- |
+| `EMAIL_FROM`     | Sender email address          | `your.email@gmail.com` |
+| `EMAIL_PASSWORD` | App-specific password         | `abcd efgh ijkl mnop`  |
+| `EMAIL_TO`       | Recipient(s), comma-separated | `user@example.com`     |
 
 ---
 
@@ -123,16 +123,18 @@ Same as Option A — see table above.
    - Copy the 16-character password
 
 **Configuration:**
+
 ```yaml
 smtp-host: smtp.gmail.com
 smtp-port: '587'
 smtp-username: your.email@gmail.com
-smtp-password: ${{ secrets.EMAIL_PASSWORD }}  # App password
+smtp-password: ${{ secrets.EMAIL_PASSWORD }} # App password
 ```
 
 ### Outlook / Hotmail
 
 **Configuration:**
+
 ```yaml
 smtp-host: smtp-mail.outlook.com
 smtp-port: '587'
@@ -143,6 +145,7 @@ smtp-password: ${{ secrets.EMAIL_PASSWORD }}
 ### Office 365
 
 **Configuration:**
+
 ```yaml
 smtp-host: smtp.office365.com
 smtp-port: '587'
@@ -156,19 +159,21 @@ smtp-password: ${{ secrets.EMAIL_PASSWORD }}
 2. Verify sender email
 
 **Configuration:**
+
 ```yaml
 smtp-host: smtp.sendgrid.net
 smtp-port: '587'
-smtp-username: apikey  # Literal string "apikey"
+smtp-username: apikey # Literal string "apikey"
 smtp-password: ${{ secrets.SENDGRID_API_KEY }}
 ```
 
 ### Custom SMTP Server
 
 **Configuration:**
+
 ```yaml
 smtp-host: mail.example.com
-smtp-port: '587'  # Or 465 for SSL
+smtp-port: '587' # Or 465 for SSL
 smtp-username: ${{ secrets.SMTP_USER }}
 smtp-password: ${{ secrets.SMTP_PASS }}
 ```
@@ -213,7 +218,7 @@ Send emails weekly regardless of changes:
 ```yaml
 on:
   schedule:
-    - cron: '0 9 * * 1'  # Monday at 9 AM
+    - cron: '0 9 * * 1' # Monday at 9 AM
 ```
 
 ---
@@ -223,12 +228,14 @@ on:
 ### Subject Line
 
 **With External Action:**
+
 ```yaml
-subject: "⭐ ${{ steps.tracker.outputs.total-stars }} GitHub stars (+${{ steps.tracker.outputs.new-stars }})"
+subject: '⭐ ${{ steps.tracker.outputs.total-stars }} GitHub stars (+${{ steps.tracker.outputs.new-stars }})'
 ```
 
 **Built-in Email:**  
 Subject is automatically generated based on locale:
+
 - English: `GitHub Stars Report: X total stars`
 - Spanish: `Informe de estrellas de GitHub: X estrellas totales`
 - Catalan: `Informe d'estrelles de GitHub: X estrelles totals`
@@ -243,6 +250,7 @@ email-to: user1@example.com,user2@example.com,team@example.com
 ### Sender Name
 
 **With External Action:**
+
 ```yaml
 from: GitHub Star Tracker <noreply@example.com>
 ```
@@ -327,7 +335,7 @@ Add logging to troubleshoot:
 ```yaml
 # Add error handling
 - name: Send email
-  continue-on-error: true  # Don't fail workflow if email fails
+  continue-on-error: true # Don't fail workflow if email fails
   uses: dawidd6/action-send-mail@v9
   # ...
 ```
@@ -359,34 +367,31 @@ The HTML email includes:
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <style>
-    /* Responsive CSS */
-  </style>
-</head>
-<body>
-  <h1>GitHub Stars Report</h1>
-  
-  <div>
-    <strong>Total Stars:</strong> 123
-    <strong>Change:</strong> +5
-  </div>
-  
-  <!-- Star Trend Chart -->
-  <img src="https://quickchart.io/chart?..." />
-  
-  <!-- Repository List -->
-  <table>
-    <tr>
-      <th>Repository</th>
-      <th>Stars</th>
-    </tr>
-    <!-- ... -->
-  </table>
-  
-  <!-- Top Repositories Chart -->
-  <img src="https://quickchart.io/chart?..." />
-</body>
+  <head>
+    <style>
+      /* Responsive CSS */
+    </style>
+  </head>
+  <body>
+    <h1>GitHub Stars Report</h1>
+
+    <div><strong>Total Stars:</strong> 123 <strong>Change:</strong> +5</div>
+
+    <!-- Star Trend Chart -->
+    <img src="https://quickchart.io/chart?..." />
+
+    <!-- Repository List -->
+    <table>
+      <tr>
+        <th>Repository</th>
+        <th>Stars</th>
+      </tr>
+      <!-- ... -->
+    </table>
+
+    <!-- Top Repositories Chart -->
+    <img src="https://quickchart.io/chart?..." />
+  </body>
 </html>
 ```
 

@@ -16,6 +16,7 @@ with:
 **Type:** `string` (secret)  
 **Required:** Yes  
 **Scopes needed:**
+
 - `repo` (for private repositories)
 - `public_repo` (for public repositories only)
 
@@ -49,6 +50,7 @@ with:
 ```
 
 **Supported options:**
+
 - `visibility`: `"all"` | `"public"` | `"private"`
 - `locale`: `"en"` | `"es"` | `"ca"` | `"it"`
 - `includeCharts`: `true` | `false`
@@ -61,13 +63,14 @@ Filter repositories by visibility.
 
 ```yaml
 with:
-  visibility: 'public'  # Track only public repos
+  visibility: 'public' # Track only public repos
 ```
 
 **Type:** `string`  
 **Required:** No  
 **Default:** `all`  
 **Options:**
+
 - `all` — Track all repositories (public and private)
 - `public` — Track only public repositories
 - `private` — Track only private repositories
@@ -80,13 +83,14 @@ Language for reports and labels.
 
 ```yaml
 with:
-  locale: 'es'  # Spanish reports
+  locale: 'es' # Spanish reports
 ```
 
 **Type:** `string`  
 **Required:** No  
 **Default:** `en`  
 **Options:**
+
 - `en` — English
 - `es` — Spanish / Español
 - `ca` — Catalan / Català
@@ -110,6 +114,7 @@ with:
 **Default:** `true`
 
 When enabled, generates:
+
 - **Total stars chart** — All repositories combined
 - **Comparison chart** — Top 5 repositories with individual trends
 
@@ -223,15 +228,15 @@ When the same option is specified in multiple places, the priority is:
   with:
     github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     config-path: '.github/star-config.json'
-    locale: 'en'  # Overrides locale from config file
+    locale: 'en' # Overrides locale from config file
 ```
 
 ```json
 // .github/star-config.json
 {
-  "locale": "es",  // Ignored, workflow input takes priority
-  "visibility": "public",  // Used
-  "includeCharts": true  // Used
+  "locale": "es", // Ignored, workflow input takes priority
+  "visibility": "public", // Used
+  "includeCharts": true // Used
 }
 ```
 
@@ -296,10 +301,10 @@ on:
   schedule:
     # Daily at 3 AM UTC
     - cron: '0 3 * * *'
-    
+
     # Every Monday at 9 AM UTC
     - cron: '0 9 * * 1'
-    
+
     # First day of every month
     - cron: '0 0 1 * *'
 ```

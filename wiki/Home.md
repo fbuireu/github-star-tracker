@@ -5,17 +5,22 @@ Welcome to the **GitHub Star Tracker** documentation! This action automatically 
 ## 📚 Documentation Sections
 
 ### Getting Started
+
 - **[Getting Started](Getting-Started)** — Quick setup guide and first run
+- **[Personal Access Token Guide](Personal-Access-Token-Guide)** — Detailed PAT creation (classic & fine-grained)
 - **[Configuration](Configuration)** — Complete reference of all configuration options
 - **[Examples](Examples)** — Real-world usage examples
 
 ### Features
+
 - **[Viewing Reports](Viewing-Reports)** — How to access your star tracking reports
 - **[Star Trend Charts](Star-Trend-Charts)** — Interactive chart visualization
 - **[Email Notifications](Email-Notifications)** — Setup email alerts (built-in & external)
 - **[Internationalization](Internationalization)** — Multi-language support
 
-### Reference
+### Advanced
+
+- **[Data Management](Data-Management)** — How data is stored, accessed, and managed
 - **[API Reference](API-Reference)** — Complete inputs and outputs reference
 - **[Troubleshooting](Troubleshooting)** — Common issues and solutions
 
@@ -25,7 +30,7 @@ Welcome to the **GitHub Star Tracker** documentation! This action automatically 
 name: Track Stars
 on:
   schedule:
-    - cron: '0 0 * * *'  # Daily at midnight
+    - cron: '0 0 * * *' # Daily at midnight
   workflow_dispatch:
 
 jobs:
@@ -56,7 +61,7 @@ GitHub Star Tracker is a GitHub Action that helps you monitor your repository st
 
 ## 🤝 Contributing
 
-Found a bug? Have a feature request? 
+Found a bug? Have a feature request?
 
 - [Report bugs](https://github.com/fbuireu/github-star-tracker/issues/new?template=bug_report.yml)
 - [Request features](https://github.com/fbuireu/github-star-tracker/issues/new?template=feature_request.yml)

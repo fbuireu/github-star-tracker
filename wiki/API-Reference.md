@@ -11,9 +11,10 @@ Complete reference for GitHub Star Tracker inputs and outputs.
 Personal Access Token for GitHub API access.
 
 **Type:** `string` (secret)  
-**Required:** ✅ Yes  
+**Required:** ✅ Yes
 
 **Details:**
+
 - Must be a Personal Access Token (PAT), not `GITHUB_TOKEN`
 - Required scopes:
   - `repo` — For private repositories
@@ -21,6 +22,7 @@ Personal Access Token for GitHub API access.
 - Create at: [GitHub Settings → Tokens](https://github.com/settings/tokens)
 
 **Example:**
+
 ```yaml
 with:
   github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
@@ -39,17 +41,20 @@ Path to JSON configuration file.
 **Default:** `.github/star-tracker-config.json`
 
 **Details:**
+
 - Allows centralizing configuration in a file
 - File must be valid JSON
 - Supported keys: `visibility`, `locale`, `includeCharts`
 
 **Example:**
+
 ```yaml
 with:
   config-path: '.github/star-config.json'
 ```
 
 **Config file format:**
+
 ```json
 {
   "visibility": "public",
@@ -70,11 +75,13 @@ Filter repositories by visibility.
 **Allowed values:** `all`, `public`, `private`
 
 **Details:**
+
 - `all` — Track all repositories (public and private)
 - `public` — Track only public repositories
 - `private` — Track only private repositories
 
 **Example:**
+
 ```yaml
 with:
   visibility: 'public'
@@ -92,6 +99,7 @@ Language for reports and labels.
 **Allowed values:** `en`, `es`, `ca`, `it`
 
 **Details:**
+
 - `en` — English
 - `es` — Spanish / Español
 - `ca` — Catalan / Català
@@ -99,6 +107,7 @@ Language for reports and labels.
 - Affects report labels, dates, and chart text
 
 **Example:**
+
 ```yaml
 with:
   locale: 'es'
@@ -115,12 +124,14 @@ Enable star trend chart generation.
 **Default:** `true`
 
 **Details:**
+
 - When `true`, generates QuickChart visualizations
 - Charts included in Markdown and HTML reports
 - Requires at least 2 data points (runs)
 - Maximum 30 data points per chart
 
 **Example:**
+
 ```yaml
 with:
   include-charts: false
@@ -140,12 +151,14 @@ SMTP server hostname.
 **Required:** ❌ No (required if using built-in email)
 
 **Common values:**
+
 - Gmail: `smtp.gmail.com`
 - Outlook: `smtp-mail.outlook.com`
 - Office 365: `smtp.office365.com`
 - SendGrid: `smtp.sendgrid.net`
 
 **Example:**
+
 ```yaml
 with:
   smtp-host: 'smtp.gmail.com'
@@ -162,11 +175,13 @@ SMTP server port.
 **Default:** `587`
 
 **Common ports:**
+
 - `587` — STARTTLS (recommended)
 - `465` — SSL/TLS
 - `25` — Unencrypted (not recommended)
 
 **Example:**
+
 ```yaml
 with:
   smtp-port: '587'
@@ -182,10 +197,12 @@ SMTP authentication username.
 **Required:** ❌ No (required if using built-in email)
 
 **Details:**
+
 - Usually your email address
 - For SendGrid, use literal string `"apikey"`
 
 **Example:**
+
 ```yaml
 with:
   smtp-username: ${{ secrets.EMAIL_FROM }}
@@ -201,11 +218,13 @@ SMTP authentication password.
 **Required:** ❌ No (required if using built-in email)
 
 **Details:**
+
 - For Gmail, must be app-specific password
 - For SendGrid, use API key
 - Store in GitHub secrets
 
 **Example:**
+
 ```yaml
 with:
   smtp-password: ${{ secrets.EMAIL_PASSWORD }}
@@ -221,10 +240,12 @@ Sender email address.
 **Required:** ❌ No (required if using built-in email)
 
 **Details:**
+
 - Must match SMTP username for most providers
 - Format: `address@domain.com`
 
 **Example:**
+
 ```yaml
 with:
   email-from: ${{ secrets.EMAIL_FROM }}
@@ -240,11 +261,13 @@ Recipient email address(es).
 **Required:** ❌ No (required if using built-in email)
 
 **Details:**
+
 - Single address: `user@example.com`
 - Multiple addresses: `user1@example.com,user2@example.com`
 - Comma-separated, no spaces
 
 **Example:**
+
 ```yaml
 with:
   email-to: ${{ secrets.EMAIL_TO }}
@@ -263,6 +286,7 @@ Full Markdown report with star data.
 **Type:** `string`
 
 **Contains:**
+
 - Summary header with total stars
 - Stars gained/lost since last run
 - Star trend chart (if enabled)
@@ -270,6 +294,7 @@ Full Markdown report with star data.
 - Top 5 repositories comparison chart (if enabled)
 
 **Example usage:**
+
 ```yaml
 - name: Track stars
   id: tracker
@@ -290,12 +315,14 @@ HTML version of the report for email.
 **Type:** `string`
 
 **Contains:**
+
 - Same content as Markdown report
 - HTML formatting with CSS
 - Embedded chart images
 - Responsive design
 
 **Example usage:**
+
 ```yaml
 - name: Send email
   uses: dawidd6/action-send-mail@v9
@@ -312,10 +339,12 @@ Total star count across all tracked repositories.
 **Type:** `number`
 
 **Details:**
+
 - Sum of stars from all repositories
 - Includes both public and private (based on `visibility`)
 
 **Example usage:**
+
 ```yaml
 - name: Print total
   run: echo "Total stars: ${{ steps.tracker.outputs.total-stars }}"
@@ -330,10 +359,12 @@ Whether star count changed since last run.
 **Type:** `boolean`
 
 **Values:**
+
 - `true` — Stars gained or lost
 - `false` — No change
 
 **Example usage:**
+
 ```yaml
 - name: Send email
   if: steps.tracker.outputs.stars-changed == 'true'
@@ -349,11 +380,13 @@ Number of stars gained since last run.
 **Type:** `number`
 
 **Details:**
+
 - `0` if no stars gained
 - Positive integer for stars gained
 - Calculated as: `current_total - previous_total` (if positive)
 
 **Example usage:**
+
 ```yaml
 - name: Celebrate
   if: steps.tracker.outputs.new-stars >= 10
@@ -369,11 +402,13 @@ Number of stars lost since last run.
 **Type:** `number`
 
 **Details:**
+
 - `0` if no stars lost
 - Positive integer for stars lost
 - Calculated as: `previous_total - current_total` (if positive)
 
 **Example usage:**
+
 ```yaml
 - name: Alert on loss
   if: steps.tracker.outputs.lost-stars > 0
@@ -398,14 +433,14 @@ When the same option is specified in multiple places:
   with:
     github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     config-path: '.github/star-config.json'
-    locale: 'en'  # Overrides config file
+    locale: 'en' # Overrides config file
 ```
 
 ```json
 // .github/star-config.json
 {
-  "locale": "es",  // Ignored, workflow input wins
-  "visibility": "public"  // Used
+  "locale": "es", // Ignored, workflow input wins
+  "visibility": "public" // Used
 }
 ```
 
@@ -421,22 +456,23 @@ The `stars-data.json` file follows this schema:
 
 ```typescript
 interface Snapshot {
-  timestamp: string;           // ISO 8601 datetime
-  repositories: Repository[];  // All tracked repositories
-  totalStars: number;          // Sum of all stars
+  timestamp: string; // ISO 8601 datetime
+  repositories: Repository[]; // All tracked repositories
+  totalStars: number; // Sum of all stars
 }
 
 interface Repository {
-  name: string;                // Repository name
-  fullName: string;            // Owner/repo format
-  stars: number;               // Star count
-  url: string;                 // GitHub URL
+  name: string; // Repository name
+  fullName: string; // Owner/repo format
+  stars: number; // Star count
+  url: string; // GitHub URL
 }
 
 type HistoricalData = Snapshot[];
 ```
 
 **Example:**
+
 ```json
 [
   {
@@ -468,6 +504,7 @@ The `stars-badge.svg` is a standard SVG badge:
 ```
 
 **Usage:**
+
 ```markdown
 ![Stars](https://raw.githubusercontent.com/USERNAME/REPO/star-tracker-data/stars-badge.svg)
 ```
@@ -478,11 +515,11 @@ The `stars-badge.svg` is a standard SVG badge:
 
 The action automatically uses these environment variables:
 
-| Variable | Purpose |
-|----------|---------|
-| `GITHUB_TOKEN` | Used internally by `@actions/core` |
+| Variable            | Purpose                              |
+| ------------------- | ------------------------------------ |
+| `GITHUB_TOKEN`      | Used internally by `@actions/core`   |
 | `GITHUB_REPOSITORY` | Current repository (for data branch) |
-| `GITHUB_ACTOR` | User for git commits |
+| `GITHUB_ACTOR`      | User for git commits                 |
 
 **Note:** You don't need to set these manually.
 
@@ -495,21 +532,25 @@ The action automatically uses these environment variables:
 The action validates inputs at startup:
 
 **Invalid visibility:**
+
 ```
 Error: Invalid visibility value: "invalid". Must be one of: all, public, private
 ```
 
 **Invalid locale:**
+
 ```
 Error: Invalid locale: "fr". Must be one of: en, es, ca, it
 ```
 
 **Missing token:**
+
 ```
 Error: Input required and not supplied: github-token
 ```
 
 **Incomplete email config:**
+
 ```
 Error: All email configuration inputs are required when using email notifications
 ```
@@ -519,34 +560,40 @@ Error: All email configuration inputs are required when using email notification
 ### Runtime Errors
 
 **Authentication failure:**
+
 ```
 HttpError: Bad credentials
 ```
+
 → Check PAT is valid and not expired
 
 **Permission denied:**
+
 ```
 HttpError: Resource not accessible by integration
 ```
+
 → Check PAT has correct scopes (`repo` or `public_repo`)
 
 **Network errors:**
+
 ```
 RequestError: connect ETIMEDOUT
 ```
+
 → Temporary network issue, retry workflow
 
 ---
 
 ## Limits and Constraints
 
-| Limit | Value | Reason |
-|-------|-------|--------|
-| Max chart data points | 30 | QuickChart URL length limit |
-| Max comparison repos | 5 | Chart readability |
-| Max email recipients | Unlimited | SMTP provider limit |
-| Max data file size | ~10MB | Git/GitHub limit (practical) |
-| API rate limit | 5,000/hour | GitHub REST API (authenticated) |
+| Limit                 | Value      | Reason                          |
+| --------------------- | ---------- | ------------------------------- |
+| Max chart data points | 30         | QuickChart URL length limit     |
+| Max comparison repos  | 5          | Chart readability               |
+| Max email recipients  | Unlimited  | SMTP provider limit             |
+| Max data file size    | ~10MB      | Git/GitHub limit (practical)    |
+| API rate limit        | 5,000/hour | GitHub REST API (authenticated) |
 
 ---
 
@@ -574,7 +621,7 @@ interface EmailConfig {
 interface ActionOutputs {
   report: string;
   'report-html': string;
-  'total-stars': string;  // Note: outputs are always strings
+  'total-stars': string; // Note: outputs are always strings
   'stars-changed': string;
   'new-stars': string;
   'lost-stars': string;
@@ -592,6 +639,7 @@ interface ActionOutputs {
 - `v1.0.4` — Specific patch version (static)
 
 **Recommended usage:**
+
 ```yaml
 uses: fbuireu/github-star-tracker@v1
 ```
