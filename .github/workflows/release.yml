@@ -1,19 +1,23 @@
 name: Release
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - main
+  workflow_dispatch:
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 jobs:
   release:
-    name: Create Release
+    name: Semantic Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -27,72 +31,22 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Validate
         run: pnpm run validate
-      - name: Extract version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-      - name: Generate Changelog
-        id: changelog
-        run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 ${GITHUB_REF}^ 2>/dev/null || echo "")
-          if [ -z "$PREV_TAG" ]; then
-            echo "changelog<<EOF" >> $GITHUB_OUTPUT
-            git log --pretty=format:"* %s (%h)" >> $GITHUB_OUTPUT
-            echo "" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          else
-            echo "changelog<<EOF" >> $GITHUB_OUTPUT
-            git log ${PREV_TAG}..${GITHUB_REF} --pretty=format:"* %s (%h)" >> $GITHUB_OUTPUT
-            echo "" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          fi
-      - name: Check if release exists
-        id: check_release
-        run: |
-          if gh release view ${{ steps.version.outputs.VERSION }} >/dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Release ${{ steps.version.outputs.VERSION }} already exists, skipping creation"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create GitHub Release
-        if: steps.check_release.outputs.exists == 'false'
-        uses: actions/create-release@v1
+      - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.version.outputs.VERSION }}
-          release_name: Release ${{ steps.version.outputs.VERSION }}
-          body: |
-            ## Changes in ${{ steps.version.outputs.VERSION }}
-
-            ${{ steps.changelog.outputs.changelog }}
-
-            ## Installation
-
-            ```yaml
-            - uses: fbuireu/github-star-tracker@${{ steps.version.outputs.VERSION }}
-              with:
-                github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
-            ```
-          draft: false
-          prerelease: false
+        run: npx semantic-release
 
       - name: Update major version tag
+        if: success()
         run: |
-          VERSION=${{ steps.version.outputs.VERSION }}
-          MAJOR_VERSION=$(echo $VERSION | cut -d. -f1)
-          MINOR_VERSION=$(echo $VERSION | cut -d. -f1-2)
+          # Get the latest tag created by semantic-release
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          MAJOR_VERSION=$(echo $LATEST_TAG | cut -d. -f1)
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Update major version tag (e.g., v1)
-          git tag -fa $MAJOR_VERSION -m "Update $MAJOR_VERSION to $VERSION"
+          git tag -fa $MAJOR_VERSION -m "Update $MAJOR_VERSION to $LATEST_TAG"
           git push origin $MAJOR_VERSION --force
-
-          # Update major.minor version tag (e.g., v1.0)
-          git tag -fa $MINOR_VERSION -m "Update $MINOR_VERSION to $VERSION"
-          git push origin $MINOR_VERSION --force

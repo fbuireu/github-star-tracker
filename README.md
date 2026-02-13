@@ -33,8 +33,8 @@
 3. Add to **repository secrets** as `STAR_TRACKER_TOKEN`
 
 > [!NOTE]
-> The default `GITHUB_TOKEN` doesn't work — you need a Personal Access Token.
->
+> `STAR_TRACKER_TOKEN` must be a [Personal Access Token](https://github.com/settings/tokens) with `repo` or `public_repo` scope. The default `GITHUB_TOKEN` is not sufficient.
+
 > 📖 **[Detailed PAT Guide](../../wiki/Personal-Access-Token-Guide)** — Step-by-step for classic & fine-grained tokens
 
 ---
@@ -293,8 +293,7 @@ Access data in subsequent workflow steps for custom integrations.
 - 💡 **[Request features](../../issues/new?template=feature_request.yml)**
 - 📖 **[Improve docs](../../issues/new?template=documentation.yml)**
 - 🔒 **[Security issues](../../security/policy)**
-
-Contributions welcome! See **[contributing guidelines](CONTRIBUTING.md)** (if available).
+- 🤝 **[Contributing guidelines](CONTRIBUTING.md)** — How to contribute to this project
 
 ---
 
