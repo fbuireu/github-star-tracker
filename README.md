@@ -83,7 +83,27 @@ Set the `locale` input to change the language.
 
 ## Usage
 
-### 1. Add the workflow
+### 1. Create a Personal Access Token
+
+The action needs to read all your repositories, which requires a Personal Access Token (PAT):
+
+1. Go to **[GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)](https://github.com/settings/tokens)**
+2. Click **"Generate new token (classic)"**
+3. Give it a descriptive name: `Star Tracker`
+4. Select **expiration** (recommend: No expiration, or 1 year)
+5. Select scopes:
+   - ✅ **`repo`** (Full control of private repositories) — for private repos
+   - ✅ **`public_repo`** (Access public repositories) — if you only track public repos
+6. Click **"Generate token"** and copy it
+7. In your repository, go to **Settings → Secrets and variables → Actions**
+8. Click **"New repository secret"**
+9. Name: `STAR_TRACKER_TOKEN`
+10. Paste your token and save
+
+> [!WARNING]
+> The default `GITHUB_TOKEN` **does not work** because it only has access to the current repository, not all your repositories.
+
+### 2. Add the workflow
 
 Create `.github/workflows/star-tracker.yml` in your repository:
 
@@ -107,10 +127,10 @@ jobs:
       - name: Track star changes
         uses: fbuireu/github-star-tracker@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
 
-### 2. (Optional) Create a config file
+### 3. (Optional) Create a config file
 
 For advanced filtering, create `star-tracker.yml` at your repo root:
 
@@ -216,7 +236,7 @@ steps:
     id: tracker
     uses: fbuireu/github-star-tracker@v1
     with:
-      github-token: ${{ secrets.GITHUB_TOKEN }}
+      github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 
   - name: Send email report
     if: steps.tracker.outputs.stars-changed == 'true'
@@ -239,7 +259,7 @@ Just provide SMTP credentials as inputs:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     smtp-host: smtp.gmail.com
     smtp-port: '465'
     smtp-username: ${{ secrets.EMAIL_USERNAME }}
@@ -259,7 +279,7 @@ All inputs are passed via `with:` in your workflow file. Only `github-token` is 
 
 | Input                | Description                                                                       | Default               |
 | :------------------- | :-------------------------------------------------------------------------------- | :-------------------- |
-| **`github-token`**   | GitHub token with repo access. **Required.**                                      | —                     |
+| **`github-token`**   | Personal Access Token with `repo` or `public_repo` scope. **Required.** Use `${{ secrets.STAR_TRACKER_TOKEN }}` | —                     |
 | `config-path`        | Path to the YAML configuration file                                               | `star-tracker.yml`    |
 | `visibility`         | Which repos to track: `public`, `private`, or `all`                               | `public`              |
 | `include-archived`   | Include archived repositories                                                     | `false`               |
@@ -306,7 +326,7 @@ Use these in subsequent workflow steps via `${{ steps.<id>.outputs.<name> }}`.
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
 
 ### Track all repos (including private)
@@ -314,7 +334,7 @@ Use these in subsequent workflow steps via `${{ steps.<id>.outputs.<name> }}`.
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     visibility: 'all'
 ```
 
@@ -323,7 +343,7 @@ Use these in subsequent workflow steps via `${{ steps.<id>.outputs.<name> }}`.
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     only-repos: 'my-awesome-lib, another-project'
 ```
 
@@ -332,7 +352,7 @@ Use these in subsequent workflow steps via `${{ steps.<id>.outputs.<name> }}`.
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     locale: 'es'
     smtp-host: smtp.gmail.com
     smtp-port: '465'
@@ -359,7 +379,7 @@ jobs:
         id: tracker
         uses: fbuireu/github-star-tracker@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
           visibility: 'all'
           min-stars: '1'
 
@@ -401,7 +421,7 @@ Charts are **enabled by default**. To disable them:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     include-charts: false
 ```
 
