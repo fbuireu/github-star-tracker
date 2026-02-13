@@ -226,7 +226,13 @@ Two ways to get email reports. Use whichever fits your setup.
 
 ### Option A: Chain with `dawidd6/action-send-mail@v9`
 
-The action exposes `report-html` as an output, so you can pipe it into any email action:
+The action exposes `report-html` as an output, so you can pipe it into any email action.
+
+> [!IMPORTANT]
+> Before using this option, configure these **repository secrets**:
+> - `EMAIL_USERNAME` - Your SMTP username
+> - `EMAIL_PASSWORD` - Your SMTP password (use App Password for Gmail)
+> - `EMAIL_TO` - Recipient email address
 
 ```yaml
 steps:
@@ -254,7 +260,13 @@ steps:
 
 ### Option B: Built-in email (no extra step)
 
-Just provide SMTP credentials as inputs:
+Just provide SMTP credentials as inputs.
+
+> [!IMPORTANT]
+> Configure these **repository secrets** first:
+> - `SMTP_USERNAME` - Your SMTP username
+> - `SMTP_PASSWORD` - Your SMTP password (use App Password for Gmail)
+> - `EMAIL_TO` - Recipient email address
 
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
@@ -262,8 +274,8 @@ Just provide SMTP credentials as inputs:
     github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     smtp-host: smtp.gmail.com
     smtp-port: '465'
-    smtp-username: ${{ secrets.EMAIL_USERNAME }}
-    smtp-password: ${{ secrets.EMAIL_PASSWORD }}
+    smtp-username: ${{ secrets.SMTP_USERNAME }}
+    smtp-password: ${{ secrets.SMTP_PASSWORD }}
     email-to: ${{ secrets.EMAIL_TO }}
     email-from: 'Star Tracker <noreply@example.com>'
 ```

@@ -122,6 +122,8 @@ export function generateHtmlReport({
   results,
   previousTimestamp,
   locale = 'en',
+  history = null,
+  includeCharts = true,
 }: GenerateReportParams): string {
   const { repos, summary } = results;
   const t = getTranslations(locale);
@@ -165,6 +167,15 @@ export function generateHtmlReport({
       </div>`
       : '';
 
+  const chartSection =
+    includeCharts && history && history.snapshots.length >= 2
+      ? `
+      <div style="margin-top:24px;text-align:center;">
+        <h2 style="font-size:18px;margin-bottom:12px;">📈 ${t.report.starTrend}</h2>
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+      </div>`
+      : '';
+
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -205,6 +216,8 @@ export function generateHtmlReport({
       ${rows}
     </tbody>
   </table>
+
+  ${chartSection}
 
   ${removedSection}
 

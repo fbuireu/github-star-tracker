@@ -38652,7 +38652,9 @@ function generateMarkdownReport({
 function generateHtmlReport({
   results,
   previousTimestamp,
-  locale = "en"
+  locale = "en",
+  history = null,
+  includeCharts = true
 }) {
   const { repos, summary } = results;
   const t = getTranslations(locale);
@@ -38683,6 +38685,11 @@ function generateHtmlReport({
       <div style="margin-top:16px;">
         <h3 style="color:${COLORS.negative};font-size:14px;">${t.report.removedRepositories}</h3>
         <ul>${removedRepos.map((repo) => `<li>${repo.fullName} \u2014 ${t.report.was} ${repo.previous} ${t.report.stars.toLowerCase()}</li>`).join("")}</ul>
+      </div>` : "";
+  const chartSection = includeCharts && history && history.snapshots.length >= 2 ? `
+      <div style="margin-top:24px;text-align:center;">
+        <h2 style="font-size:18px;margin-bottom:12px;">\u{1F4C8} ${t.report.starTrend}</h2>
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
       </div>` : "";
   return `<!DOCTYPE html>
 <html>
@@ -38724,6 +38731,8 @@ function generateHtmlReport({
       ${rows}
     </tbody>
   </table>
+
+  ${chartSection}
 
   ${removedSection}
 
