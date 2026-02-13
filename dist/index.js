@@ -38932,7 +38932,13 @@ async function run() {
         history,
         includeCharts: config.includeCharts
       });
-      const htmlReport = generateHtmlReport({ results, previousTimestamp, locale: config.locale });
+      const htmlReport = generateHtmlReport({
+        results,
+        previousTimestamp,
+        locale: config.locale,
+        history,
+        includeCharts: config.includeCharts
+      });
       const badge = generateBadge(summary.totalStars, config.locale);
       const snapshot = createSnapshot({ currentRepos: repos, summary });
       history.snapshots.push(snapshot);
