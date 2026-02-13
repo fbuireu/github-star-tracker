@@ -220,6 +220,71 @@ You can also link directly to the report:
 
 ---
 
+## Viewing Reports
+
+The action provides **multiple ways** to view your star tracking reports:
+
+### 📊 Data Branch (Primary Method)
+
+All reports are automatically saved to a dedicated branch (default: `star-tracker-data`):
+
+- **`README.md`** — Full Markdown report with interactive charts
+- **`stars-data.json`** — Historical snapshots in JSON format
+- **`stars-badge.svg`** — SVG badge showing total stars
+
+**View it at:**
+```
+https://github.com/YOUR_USER/YOUR_REPO/tree/star-tracker-data
+```
+
+The README.md is automatically rendered by GitHub with all charts visible.
+
+### 🎯 Badge in Your Main README
+
+Display the star count badge:
+
+```markdown
+![Stars](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/stars-badge.svg)
+```
+
+Link to the full report:
+
+```markdown
+[📊 View star report](https://github.com/YOUR_USER/YOUR_REPO/tree/star-tracker-data)
+```
+
+### 📤 Action Outputs
+
+Access report data in subsequent workflow steps:
+
+```yaml
+- name: Track star changes
+  id: tracker
+  uses: fbuireu/github-star-tracker@v1
+  with:
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+
+- name: Use outputs
+  run: |
+    echo "Total stars: ${{ steps.tracker.outputs.total-stars }}"
+    echo "Changed: ${{ steps.tracker.outputs.stars-changed }}"
+    echo "New stars: ${{ steps.tracker.outputs.new-stars }}"
+    echo "Lost stars: ${{ steps.tracker.outputs.lost-stars }}"
+```
+
+**Available outputs:**
+
+| Output | Description |
+|--------|-------------|
+| `report` | Full Markdown report |
+| `report-html` | HTML version (for emails) |
+| `total-stars` | Total star count |
+| `stars-changed` | Whether stars changed (`true`/`false`) |
+| `new-stars` | Stars gained since last run |
+| `lost-stars` | Stars lost since last run |
+
+---
+
 ## Email Notifications
 
 Two ways to get email reports. Use whichever fits your setup.
@@ -230,6 +295,7 @@ The action exposes `report-html` as an output, so you can pipe it into any email
 
 > [!IMPORTANT]
 > Before using this option, configure these **repository secrets**:
+>
 > - `EMAIL_USERNAME` - Your SMTP username
 > - `EMAIL_PASSWORD` - Your SMTP password (use App Password for Gmail)
 > - `EMAIL_TO` - Recipient email address
@@ -264,6 +330,7 @@ Just provide SMTP credentials as inputs.
 
 > [!IMPORTANT]
 > Configure these **repository secrets** first:
+>
 > - `SMTP_USERNAME` - Your SMTP username
 > - `SMTP_PASSWORD` - Your SMTP password (use App Password for Gmail)
 > - `EMAIL_TO` - Recipient email address
@@ -289,27 +356,27 @@ Just provide SMTP credentials as inputs.
 
 All inputs are passed via `with:` in your workflow file. Only `github-token` is required.
 
-| Input                | Description                                                                       | Default               |
-| :------------------- | :-------------------------------------------------------------------------------- | :-------------------- |
+| Input                | Description                                                                                                     | Default               |
+| :------------------- | :-------------------------------------------------------------------------------------------------------------- | :-------------------- |
 | **`github-token`**   | Personal Access Token with `repo` or `public_repo` scope. **Required.** Use `${{ secrets.STAR_TRACKER_TOKEN }}` | —                     |
-| `config-path`        | Path to the YAML configuration file                                               | `star-tracker.yml`    |
-| `visibility`         | Which repos to track: `public`, `private`, or `all`                               | `public`              |
-| `include-archived`   | Include archived repositories                                                     | `false`               |
-| `include-forks`      | Include forked repositories                                                       | `false`               |
-| `exclude-repos`      | Comma-separated repo names to exclude                                             | `''`                  |
-| `only-repos`         | Comma-separated repo names to **exclusively** track (overrides all other filters) | `''`                  |
-| `min-stars`          | Only include repos with at least this many stars                                  | `0`                   |
-| `data-branch`        | Branch name where tracking data is stored                                         | `star-tracker-data`   |
-| `max-history`        | Maximum number of historical snapshots to retain                                  | `52`                  |
-| `smtp-host`          | SMTP server host. **Providing this enables built-in email.**                      | `''`                  |
-| `smtp-port`          | SMTP server port                                                                  | `587`                 |
-| `smtp-username`      | SMTP authentication username                                                      | `''`                  |
-| `smtp-password`      | SMTP authentication password                                                      | `''`                  |
-| `email-to`           | Email recipient address                                                           | `''`                  |
-| `email-from`         | Email sender name or address                                                      | `GitHub Star Tracker` |
-| `send-on-no-changes` | Send email even when no star changes are detected                                 | `false`               |
-| `include-charts`     | Include star trend charts in reports (`true`/`false`)                             | `true`                |
-| `locale`             | Language for reports and emails: `en`, `es`, `ca`, `it`                           | `en`                  |
+| `config-path`        | Path to the YAML configuration file                                                                             | `star-tracker.yml`    |
+| `visibility`         | Which repos to track: `public`, `private`, or `all`                                                             | `public`              |
+| `include-archived`   | Include archived repositories                                                                                   | `false`               |
+| `include-forks`      | Include forked repositories                                                                                     | `false`               |
+| `exclude-repos`      | Comma-separated repo names to exclude                                                                           | `''`                  |
+| `only-repos`         | Comma-separated repo names to **exclusively** track (overrides all other filters)                               | `''`                  |
+| `min-stars`          | Only include repos with at least this many stars                                                                | `0`                   |
+| `data-branch`        | Branch name where tracking data is stored                                                                       | `star-tracker-data`   |
+| `max-history`        | Maximum number of historical snapshots to retain                                                                | `52`                  |
+| `smtp-host`          | SMTP server host. **Providing this enables built-in email.**                                                    | `''`                  |
+| `smtp-port`          | SMTP server port                                                                                                | `587`                 |
+| `smtp-username`      | SMTP authentication username                                                                                    | `''`                  |
+| `smtp-password`      | SMTP authentication password                                                                                    | `''`                  |
+| `email-to`           | Email recipient address                                                                                         | `''`                  |
+| `email-from`         | Email sender name or address                                                                                    | `GitHub Star Tracker` |
+| `send-on-no-changes` | Send email even when no star changes are detected                                                               | `false`               |
+| `include-charts`     | Include star trend charts in reports (`true`/`false`)                                                           | `true`                |
+| `locale`             | Language for reports and emails: `en`, `es`, `ca`, `it`                                                         | `en`                  |
 
 > [!NOTE]
 > Inputs override values from the config file. If both are set, the input wins.
