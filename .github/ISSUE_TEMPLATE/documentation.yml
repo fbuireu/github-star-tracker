@@ -1,7 +1,7 @@
 name: Documentation Request
 description: Suggest improvements or additions to the documentation
-title: "[Docs]: "
-labels: ["documentation", "triage"]
+title: '[Docs]: '
+labels: ['documentation', 'triage']
 body:
   - type: markdown
     attributes:
@@ -45,7 +45,7 @@ body:
       description: How should the documentation be improved?
       placeholder: |
         The documentation should include...
-        
+
         For example:
         ```markdown
         ## New Section
@@ -60,7 +60,7 @@ body:
       description: What examples or use cases should be documented?
       placeholder: |
         It would be helpful to show how to...
-        
+
         ```yaml
         # Example workflow
         ```

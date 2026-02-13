@@ -25,9 +25,9 @@ Fixes #<!-- issue number -->
 
 <!-- Please describe the changes in detail -->
 
-- 
-- 
-- 
+-
+-
+-
 
 ## Testing
 
@@ -58,3 +58,15 @@ Fixes #<!-- issue number -->
 ## Additional Notes
 
 <!-- Add any additional notes or context about the PR here -->
+
+---
+
+## GIF (mandatory)
+
+<div align="center">
+
+<!-- Add a funny or cute GIF here -->
+
+_Thanks for contributing!_ ✨
+
+</div>

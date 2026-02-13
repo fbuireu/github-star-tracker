@@ -31,6 +31,7 @@ const defaultConfig: Config = {
   dataBranch: 'star-tracker-data',
   maxHistory: 52,
   sendOnNoChanges: false,
+  includeCharts: false,
   locale: 'en',
 };
 

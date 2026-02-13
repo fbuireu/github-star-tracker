@@ -18,6 +18,8 @@
     "starsGained": "Stars gained",
     "starsLost": "Stars lost",
     "netChange": "Net change",
+    "starTrend": "Star Trend",
+    "starHistory": "Star History",
     "badges": {
       "new": "NEW"
     }

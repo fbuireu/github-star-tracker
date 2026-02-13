@@ -25,6 +25,8 @@ export interface Translations {
     starsGained: string;
     starsLost: string;
     netChange: string;
+    starTrend: string;
+    starHistory: string;
     badges: {
       new: string;
     };

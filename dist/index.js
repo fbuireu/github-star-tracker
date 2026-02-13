@@ -38014,6 +38014,7 @@ var DEFAULTS = {
   dataBranch: "star-tracker-data",
   maxHistory: 52,
   sendOnNoChanges: false,
+  includeCharts: true,
   locale: "en"
 };
 var COLORS = {
@@ -38030,6 +38031,12 @@ var COLORS = {
   tableHeaderBorder: "#e1e4e8",
   cellBorder: "#eee",
   gradientStart: "#bbb"
+};
+var CHART = {
+  width: 800,
+  height: 400,
+  maxDataPoints: 30,
+  maxComparison: 5
 };
 
 // src/i18n/ca.json
@@ -38053,6 +38060,8 @@ var ca_default = {
     starsGained: "Estrelles guanyades",
     starsLost: "Estrelles perdudes",
     netChange: "Canvi net",
+    starTrend: "Tend\xE8ncia d'Estrelles",
+    starHistory: "Historial d'Estrelles",
     badges: {
       new: "NOU"
     }
@@ -38089,6 +38098,8 @@ var en_default = {
     starsGained: "Stars gained",
     starsLost: "Stars lost",
     netChange: "Net change",
+    starTrend: "Star Trend",
+    starHistory: "Star History",
     badges: {
       new: "NEW"
     }
@@ -38125,6 +38136,8 @@ var es_default = {
     starsGained: "Estrellas ganadas",
     starsLost: "Estrellas perdidas",
     netChange: "Cambio neto",
+    starTrend: "Tendencia de Estrellas",
+    starHistory: "Historial de Estrellas",
     badges: {
       new: "NUEVO"
     }
@@ -38161,6 +38174,8 @@ var it_default = {
     starsGained: "Stelle guadagnate",
     starsLost: "Stelle perse",
     netChange: "Variazione netta",
+    starTrend: "Andamento Stelle",
+    starHistory: "Storia delle Stelle",
     badges: {
       new: "NUOVO"
     }
@@ -38220,6 +38235,7 @@ function loadConfigFile(configPath) {
     minStars: parsed.min_stars,
     dataBranch: parsed.data_branch,
     maxHistory: parsed.max_history,
+    includeCharts: parsed.include_charts,
     locale: parsed.locale
   };
 }
@@ -38234,6 +38250,7 @@ function loadConfig() {
   const inputMinStars = core2.getInput("min-stars");
   const inputDataBranch = core2.getInput("data-branch");
   const inputMaxHistory = core2.getInput("max-history");
+  const inputIncludeCharts = core2.getInput("include-charts");
   const inputLocale = core2.getInput("locale");
   const visibility = inputVisibility || fileConfig.visibility || DEFAULTS.visibility;
   if (!VALID_VISIBILITIES.includes(visibility)) {
@@ -38255,6 +38272,7 @@ function loadConfig() {
     dataBranch: inputDataBranch || fileConfig.dataBranch || DEFAULTS.dataBranch,
     maxHistory: parseNumber(inputMaxHistory) ?? fileConfig.maxHistory ?? DEFAULTS.maxHistory,
     sendOnNoChanges: parseBool(core2.getInput("send-on-no-changes")) ?? false,
+    includeCharts: parseBool(inputIncludeCharts) ?? fileConfig.includeCharts ?? DEFAULTS.includeCharts,
     locale: isValidLocale(locale) ? locale : DEFAULTS.locale
   };
   core2.info(
@@ -38390,6 +38408,17 @@ function trendIcon(delta) {
   if (delta < 0) return "\u2B07\uFE0F";
   return "\u2796";
 }
+var localeMap = {
+  en: "en-US",
+  es: "es-ES",
+  ca: "ca-ES",
+  it: "it-IT"
+};
+function formatDate(timestamp2, locale = "en") {
+  const date = new Date(timestamp2);
+  const localeCode = localeMap[locale] || "en-US";
+  return date.toLocaleDateString(localeCode, { month: "short", day: "numeric" });
+}
 
 // src/reporting/badge.ts
 function generateBadge(totalStars, locale = "en") {
@@ -38468,11 +38497,86 @@ async function sendEmail({
   return true;
 }
 
+// src/reporting/chart.ts
+function prepareChartData(history, locale) {
+  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  return {
+    labels: snapshots.map((s) => formatDate(s.timestamp, locale)),
+    data: snapshots.map((s) => s.totalStars)
+  };
+}
+function buildChartConfig({ labels, data, title }) {
+  return {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Stars",
+          data,
+          borderColor: COLORS.accent,
+          backgroundColor: `${COLORS.accent}33`,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+          pointHoverRadius: 6
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
+          position: "top",
+          labels: {
+            color: COLORS.text,
+            font: { size: 12 }
+          }
+        },
+        title: {
+          display: true,
+          text: title,
+          color: COLORS.text,
+          font: { size: 16, weight: "bold" }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: COLORS.cellBorder },
+          ticks: { color: COLORS.neutral }
+        },
+        y: {
+          grid: { color: COLORS.cellBorder },
+          ticks: { color: COLORS.neutral },
+          beginAtZero: false
+        }
+      }
+    }
+  };
+}
+function generateChartUrl({
+  history,
+  title = "Star History",
+  locale = "en"
+}) {
+  if (!history.snapshots || history.snapshots.length < 2) {
+    return null;
+  }
+  const { labels, data } = prepareChartData(history, locale);
+  const config = buildChartConfig({ labels, data, title });
+  const encodedConfig = encodeURIComponent(JSON.stringify(config));
+  return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&c=${encodedConfig}`;
+}
+
 // src/reporting/report.ts
 function generateMarkdownReport({
   results,
   previousTimestamp,
-  locale = "en"
+  locale = "en",
+  history = null,
+  includeCharts = true
 }) {
   const { repos, summary } = results;
   const t = getTranslations(locale);
@@ -38489,6 +38593,12 @@ function generateMarkdownReport({
     ""
   ];
   const comparison = prev === t.report.firstRun ? [] : [`> ${t.report.comparedTo} ${prev}`, ""];
+  const chartSection = includeCharts && history && history.snapshots.length >= 2 ? [
+    `## \u{1F4C8} ${t.report.starTrend}`,
+    "",
+    `![Star History](${generateChartUrl({ history, title: t.report.starHistory, locale })})`,
+    ""
+  ] : [];
   const repoTable = activeRepos.length > 0 ? [
     `## ${t.report.repositories}`,
     "",
@@ -38531,6 +38641,7 @@ function generateMarkdownReport({
   return [
     ...header,
     ...comparison,
+    ...chartSection,
     ...repoTable,
     ...newSection,
     ...removedSection,
@@ -38808,7 +38919,9 @@ async function run() {
       const markdownReport = generateMarkdownReport({
         results,
         previousTimestamp,
-        locale: config.locale
+        locale: config.locale,
+        history,
+        includeCharts: config.includeCharts
       });
       const htmlReport = generateHtmlReport({ results, previousTimestamp, locale: config.locale });
       const badge = generateBadge(summary.totalStars, config.locale);

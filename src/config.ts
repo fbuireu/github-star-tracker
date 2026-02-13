@@ -38,6 +38,7 @@ interface FileConfig {
   minStars?: number;
   dataBranch?: string;
   maxHistory?: number;
+  includeCharts?: boolean;
   locale?: string;
 }
 
@@ -65,6 +66,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     minStars: parsed.min_stars as number | undefined,
     dataBranch: parsed.data_branch as string | undefined,
     maxHistory: parsed.max_history as number | undefined,
+    includeCharts: parsed.include_charts as boolean | undefined,
     locale: parsed.locale as string | undefined,
   };
 }
@@ -81,6 +83,7 @@ export function loadConfig(): Config {
   const inputMinStars = core.getInput('min-stars');
   const inputDataBranch = core.getInput('data-branch');
   const inputMaxHistory = core.getInput('max-history');
+  const inputIncludeCharts = core.getInput('include-charts');
   const inputLocale = core.getInput('locale');
 
   const visibility = (inputVisibility ||
@@ -113,6 +116,8 @@ export function loadConfig(): Config {
     dataBranch: inputDataBranch || fileConfig.dataBranch || DEFAULTS.dataBranch,
     maxHistory: parseNumber(inputMaxHistory) ?? fileConfig.maxHistory ?? DEFAULTS.maxHistory,
     sendOnNoChanges: parseBool(core.getInput('send-on-no-changes')) ?? false,
+    includeCharts:
+      parseBool(inputIncludeCharts) ?? fileConfig.includeCharts ?? DEFAULTS.includeCharts,
     locale: isValidLocale(locale) ? locale : DEFAULTS.locale,
   };
 

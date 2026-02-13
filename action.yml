@@ -91,6 +91,11 @@ inputs:
     required: false
     default: 'false'
 
+  include-charts:
+    description: 'Include star trend charts in reports (true/false)'
+    required: false
+    default: 'true'
+
   locale:
     description: 'Language for reports and emails: en, es, ca, it'
     required: false

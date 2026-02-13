@@ -18,6 +18,8 @@
     "starsGained": "Estrelles guanyades",
     "starsLost": "Estrelles perdudes",
     "netChange": "Canvi net",
+    "starTrend": "Tendència d'Estrelles",
+    "starHistory": "Historial d'Estrelles",
     "badges": {
       "new": "NOU"
     }

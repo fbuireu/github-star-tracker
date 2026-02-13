@@ -18,6 +18,8 @@
     "starsGained": "Stelle guadagnate",
     "starsLost": "Stelle perse",
     "netChange": "Variazione netta",
+    "starTrend": "Andamento Stelle",
+    "starHistory": "Storia delle Stelle",
     "badges": {
       "new": "NUOVO"
     }

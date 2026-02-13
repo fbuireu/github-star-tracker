@@ -51,8 +51,8 @@ Always use minimal token permissions:
 
 ```yaml
 permissions:
-  contents: write  # Only if using data-branch
-  issues: write    # Only if creating issues
+  contents: write # Only if using data-branch
+  issues: write # Only if creating issues
 ```
 
 ### 2. Secrets Management
@@ -62,7 +62,7 @@ Never expose tokens in logs or outputs:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}  # ✅ Good
+    github-token: ${{ secrets.GITHUB_TOKEN }} # ✅ Good
     # github-token: ghp_xxxxx  # ❌ Never hardcode
 ```
 
@@ -74,7 +74,7 @@ Avoid committing sensitive data in configuration files:
 # star-tracker.yml
 reporting:
   email:
-    smtp_password: ${{ secrets.SMTP_PASSWORD }}  # ✅ Use secrets
+    smtp_password: ${{ secrets.SMTP_PASSWORD }} # ✅ Use secrets
 ```
 
 ### 4. Regular Updates
@@ -82,7 +82,7 @@ reporting:
 Keep the action updated to the latest version:
 
 ```yaml
-- uses: fbuireu/github-star-tracker@v1  # ✅ Auto-updates minor/patch
+- uses: fbuireu/github-star-tracker@v1 # ✅ Auto-updates minor/patch
 # - uses: fbuireu/github-star-tracker@v1.0.0  # ⚠️ Pinned, won't get security fixes
 ```
 
@@ -91,6 +91,7 @@ Keep the action updated to the latest version:
 ### GitHub Token Access
 
 This action requires a GitHub token with repository access. The token is used to:
+
 - Read repository information
 - Read star counts
 - Write to data branch (optional)
@@ -99,6 +100,7 @@ This action requires a GitHub token with repository access. The token is used to
 ### Data Storage
 
 If using the data-branch feature:
+
 - Historical data is stored in a Git branch
 - This data is accessible to anyone with repository access
 - Do not enable this feature if your repository is public and you want to keep star data private
@@ -106,10 +108,12 @@ If using the data-branch feature:
 ## Security Updates
 
 Security updates will be released as:
+
 - Patch versions (e.g., 1.0.1) for backward-compatible fixes
 - Minor versions (e.g., 1.1.0) if changes affect functionality
 - Documented in release notes with [Security] tag
 
 Subscribe to releases to stay informed:
+
 - Watch > Custom > Releases
 - Enable security alerts in repository settings

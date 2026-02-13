@@ -1,18 +1,23 @@
 import { COLORS } from '../constants';
 import { getTranslations, type Locale } from '../i18n';
-import type { ComparisonResults } from '../types';
+import type { ComparisonResults, History } from '../types';
 import { deltaIndicator, trendIcon } from '../utils';
+import { generateChartUrl } from './chart';
 
 interface GenerateReportParams {
   results: ComparisonResults;
   previousTimestamp: string | null;
   locale?: Locale;
+  history?: History | null;
+  includeCharts?: boolean;
 }
 
 export function generateMarkdownReport({
   results,
   previousTimestamp,
   locale = 'en',
+  history = null,
+  includeCharts = true,
 }: GenerateReportParams): string {
   const { repos, summary } = results;
   const t = getTranslations(locale);
@@ -32,6 +37,16 @@ export function generateMarkdownReport({
   ];
 
   const comparison = prev === t.report.firstRun ? [] : [`> ${t.report.comparedTo} ${prev}`, ''];
+
+  const chartSection =
+    includeCharts && history && history.snapshots.length >= 2
+      ? [
+          `## 📈 ${t.report.starTrend}`,
+          '',
+          `![Star History](${generateChartUrl({ history, title: t.report.starHistory, locale })})`,
+          '',
+        ]
+      : [];
 
   const repoTable =
     activeRepos.length > 0
@@ -94,6 +109,7 @@ export function generateMarkdownReport({
   return [
     ...header,
     ...comparison,
+    ...chartSection,
     ...repoTable,
     ...newSection,
     ...removedSection,

@@ -60,6 +60,8 @@ async function run(): Promise<void> {
         results,
         previousTimestamp,
         locale: config.locale,
+        history,
+        includeCharts: config.includeCharts,
       });
       const htmlReport = generateHtmlReport({ results, previousTimestamp, locale: config.locale });
       const badge = generateBadge(summary.totalStars, config.locale);

@@ -1,19 +1,19 @@
 name: Security Vulnerability Report
 description: Report a security vulnerability (will be handled privately)
-title: "[Security]: "
-labels: ["security", "triage"]
+title: '[Security]: '
+labels: ['security', 'triage']
 body:
   - type: markdown
     attributes:
       value: |
         ## ⚠️ Security Vulnerability
-        
+
         **Please do not report security vulnerabilities through public GitHub issues.**
-        
+
         If you believe you've found a security vulnerability, please report it privately:
         - Email: fbuireu@gmail.com
         - Use GitHub's private vulnerability reporting (if enabled)
-        
+
         If you prefer to report here, the issue will be made private immediately.
   - type: textarea
     id: description

@@ -12,6 +12,7 @@ export const DEFAULTS: Config = {
   dataBranch: 'star-tracker-data',
   maxHistory: 52,
   sendOnNoChanges: false,
+  includeCharts: true,
   locale: 'en',
 };
 
@@ -29,4 +30,19 @@ export const COLORS = {
   tableHeaderBorder: '#e1e4e8',
   cellBorder: '#eee',
   gradientStart: '#bbb',
+} as const;
+
+export const CHART_COMPARISON_COLORS = [
+  '#dfb317',
+  '#28a745',
+  '#e74c3c',
+  '#3498db',
+  '#9b59b6',
+] as const;
+
+export const CHART = {
+  width: 800,
+  height: 400,
+  maxDataPoints: 30,
+  maxComparison: 5,
 } as const;

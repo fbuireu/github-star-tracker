@@ -10,6 +10,7 @@ export interface Config {
   dataBranch: string;
   maxHistory: number;
   sendOnNoChanges: boolean;
+  includeCharts: boolean;
   locale: Locale;
 }
 
