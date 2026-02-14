@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/fbuireu/github-star-tracker/compare/v1.0.8...v1.1.0) (2026-02-14)
+
+
+### Features
+
+* add ddd ([ae3f993](https://github.com/fbuireu/github-star-tracker/commit/ae3f993a1fa5d776e9cab97d439eda959a3e4827))
+
 ## [1.0.8](https://github.com/fbuireu/github-star-tracker/compare/v1.0.7...v1.0.8) (2026-02-13)
 
 
