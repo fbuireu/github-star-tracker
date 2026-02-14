@@ -121,6 +121,65 @@ describe('generateMarkdownReport', () => {
     const report = generateMarkdownReport({ results: makeResults(), previousTimestamp: null });
     expect(report).toContain('GitHub Star Tracker');
   });
+
+  it('includes charts when history has multiple snapshots', () => {
+    const history = {
+      snapshots: [
+        {
+          timestamp: '2026-01-01T00:00:00Z',
+          totalStars: 20,
+          repos: [{ name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 20 }],
+        },
+        {
+          timestamp: '2026-01-02T00:00:00Z',
+          totalStars: 23,
+          repos: [{ name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 23 }],
+        },
+      ],
+    };
+
+    const report = generateMarkdownReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      history,
+      includeCharts: true,
+    });
+
+    expect(report).toContain('Star Trend');
+    expect(report).toContain('![Star History]');
+  });
+
+  it('includes comparison chart in markdown', () => {
+    const history = {
+      snapshots: [
+        {
+          timestamp: '2026-01-01T00:00:00Z',
+          totalStars: 20,
+          repos: [
+            { name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 10 },
+            { name: 'repo-b', owner: 'user', fullName: 'user/repo-b', stars: 10 },
+          ],
+        },
+        {
+          timestamp: '2026-01-02T00:00:00Z',
+          totalStars: 25,
+          repos: [
+            { name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 15 },
+            { name: 'repo-b', owner: 'user', fullName: 'user/repo-b', stars: 10 },
+          ],
+        },
+      ],
+    };
+
+    const report = generateMarkdownReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      history,
+      includeCharts: true,
+    });
+
+    expect(report).toContain('Top Repositories');
+  });
 });
 
 describe('generateHtmlReport', () => {
@@ -182,5 +241,113 @@ describe('generateHtmlReport', () => {
     });
     const html = generateHtmlReport({ results, previousTimestamp: '2026-01-01T00:00:00Z' });
     expect(html).toContain('Removed Repositories');
+  });
+
+  it('includes charts when history has multiple snapshots', () => {
+    const history = {
+      snapshots: [
+        {
+          timestamp: '2026-01-01T00:00:00Z',
+          totalStars: 20,
+          repos: [{ name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 20 }],
+        },
+        {
+          timestamp: '2026-01-02T00:00:00Z',
+          totalStars: 23,
+          repos: [{ name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 23 }],
+        },
+      ],
+    };
+
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      history,
+      includeCharts: true,
+    });
+
+    expect(html).toContain('Star Trend');
+    expect(html).toContain('https://quickchart.io/chart');
+  });
+
+  it('includes comparison chart for top repositories', () => {
+    const history = {
+      snapshots: [
+        {
+          timestamp: '2026-01-01T00:00:00Z',
+          totalStars: 20,
+          repos: [
+            { name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 10 },
+            { name: 'repo-b', owner: 'user', fullName: 'user/repo-b', stars: 10 },
+          ],
+        },
+        {
+          timestamp: '2026-01-02T00:00:00Z',
+          totalStars: 25,
+          repos: [
+            { name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 15 },
+            { name: 'repo-b', owner: 'user', fullName: 'user/repo-b', stars: 10 },
+          ],
+        },
+      ],
+    };
+
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      history,
+      includeCharts: true,
+    });
+
+    expect(html).toContain('By Repository');
+    expect(html).toContain('Top Repositories');
+  });
+
+  it('does not include charts when includeCharts is false', () => {
+    const history = {
+      snapshots: [
+        {
+          timestamp: '2026-01-01T00:00:00Z',
+          totalStars: 20,
+          repos: [{ name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 20 }],
+        },
+        {
+          timestamp: '2026-01-02T00:00:00Z',
+          totalStars: 23,
+          repos: [{ name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 23 }],
+        },
+      ],
+    };
+
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      history,
+      includeCharts: false,
+    });
+
+    expect(html).not.toContain('Star Trend');
+    expect(html).not.toContain('quickchart.io');
+  });
+
+  it('does not include charts when history has only one snapshot', () => {
+    const history = {
+      snapshots: [
+        {
+          timestamp: '2026-01-01T00:00:00Z',
+          totalStars: 20,
+          repos: [{ name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 20 }],
+        },
+      ],
+    };
+
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      history,
+      includeCharts: true,
+    });
+
+    expect(html).not.toContain('Star Trend');
   });
 });

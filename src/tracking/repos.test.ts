@@ -1,3 +1,4 @@
+import type { GitHub } from '@actions/github/lib/utils';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@actions/core', () => ({
@@ -6,7 +7,21 @@ vi.mock('@actions/core', () => ({
 
 import type { Config } from '../types';
 import type { GitHubRepo } from './repos';
-import { filterRepos, mapRepos } from './repos';
+import { fetchRepos, filterRepos, getRepos, mapRepos } from './repos';
+
+type Octokit = InstanceType<typeof GitHub>;
+
+interface MockOctokit {
+  rest: {
+    repos: {
+      listForAuthenticatedUser: ReturnType<typeof vi.fn>;
+    };
+  };
+}
+
+function createMockOctokit(mock: MockOctokit): Octokit {
+  return mock as unknown as Octokit;
+}
 
 function makeRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
   return {
@@ -116,5 +131,180 @@ describe('mapRepos', () => {
         stars: 42,
       },
     ]);
+  });
+});
+
+describe('fetchRepos', () => {
+  it('fetches all repositories from GitHub API', async () => {
+    const mockRepos = [makeRepo({ name: 'repo1' }), makeRepo({ name: 'repo2' })];
+    const mockOctokit: MockOctokit = {
+      rest: {
+        repos: {
+          listForAuthenticatedUser: vi.fn().mockResolvedValue({
+            data: mockRepos,
+          }),
+        },
+      },
+    };
+
+    const result = await fetchRepos({
+      octokit: createMockOctokit(mockOctokit),
+      config: defaultConfig,
+    });
+
+    expect(result).toEqual(mockRepos);
+    expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledWith({
+      per_page: 100,
+      sort: 'full_name',
+      visibility: 'all',
+      page: 1,
+    });
+  });
+
+  it('handles pagination correctly', async () => {
+    const page1 = Array.from({ length: 100 }, (_, i) => makeRepo({ name: `repo${i}` }));
+    const page2 = Array.from({ length: 50 }, (_, i) => makeRepo({ name: `repo${i + 100}` }));
+
+    const mockOctokit: MockOctokit = {
+      rest: {
+        repos: {
+          listForAuthenticatedUser: vi
+            .fn()
+            .mockResolvedValueOnce({ data: page1 })
+            .mockResolvedValueOnce({ data: page2 }),
+        },
+      },
+    };
+
+    const result = await fetchRepos({
+      octokit: createMockOctokit(mockOctokit),
+      config: defaultConfig,
+    });
+
+    expect(result).toHaveLength(150);
+    expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledTimes(2);
+  });
+
+  it('stops pagination when empty page is returned', async () => {
+    const mockOctokit: MockOctokit = {
+      rest: {
+        repos: {
+          listForAuthenticatedUser: vi.fn().mockResolvedValue({ data: [] }),
+        },
+      },
+    };
+
+    const result = await fetchRepos({
+      octokit: createMockOctokit(mockOctokit),
+      config: defaultConfig,
+    });
+
+    expect(result).toEqual([]);
+    expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses public visibility when configured', async () => {
+    const mockOctokit: MockOctokit = {
+      rest: {
+        repos: {
+          listForAuthenticatedUser: vi.fn().mockResolvedValue({ data: [] }),
+        },
+      },
+    };
+
+    const config = { ...defaultConfig, visibility: 'public' as const };
+    await fetchRepos({ octokit: createMockOctokit(mockOctokit), config });
+
+    expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledWith(
+      expect.objectContaining({ visibility: 'public' }),
+    );
+  });
+
+  it('uses private visibility when configured', async () => {
+    const mockOctokit: MockOctokit = {
+      rest: {
+        repos: {
+          listForAuthenticatedUser: vi.fn().mockResolvedValue({ data: [] }),
+        },
+      },
+    };
+
+    const config = { ...defaultConfig, visibility: 'private' as const };
+    await fetchRepos({ octokit: createMockOctokit(mockOctokit), config });
+
+    expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledWith(
+      expect.objectContaining({ visibility: 'private' }),
+    );
+  });
+
+  it('throws error with status code when API call fails', async () => {
+    const mockError = Object.assign(new Error('API Error'), { status: 401 });
+
+    const mockOctokit: MockOctokit = {
+      rest: {
+        repos: {
+          listForAuthenticatedUser: vi.fn().mockRejectedValue(mockError),
+        },
+      },
+    };
+
+    await expect(
+      fetchRepos({ octokit: createMockOctokit(mockOctokit), config: defaultConfig }),
+    ).rejects.toThrow(
+      'Failed to fetch repositories from GitHub API (HTTP 401): API Error. Verify that your github-token has the correct permissions.',
+    );
+  });
+
+  it('throws error without status code when API call fails', async () => {
+    const mockError = new Error('Network Error');
+
+    const mockOctokit: MockOctokit = {
+      rest: {
+        repos: {
+          listForAuthenticatedUser: vi.fn().mockRejectedValue(mockError),
+        },
+      },
+    };
+
+    await expect(
+      fetchRepos({ octokit: createMockOctokit(mockOctokit), config: defaultConfig }),
+    ).rejects.toThrow(
+      'Failed to fetch repositories from GitHub API: Network Error. Verify that your github-token has the correct permissions.',
+    );
+  });
+});
+
+describe('getRepos', () => {
+  it('fetches, filters, and maps repos', async () => {
+    const mockRepos = [
+      makeRepo({ name: 'repo1', stargazers_count: 10 }),
+      makeRepo({ name: 'repo2', archived: true }),
+    ];
+
+    const mockOctokit: MockOctokit = {
+      rest: {
+        repos: {
+          listForAuthenticatedUser: vi.fn().mockResolvedValue({
+            data: mockRepos,
+          }),
+        },
+      },
+    };
+
+    const result = await getRepos({
+      octokit: createMockOctokit(mockOctokit),
+      config: defaultConfig,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      owner: 'user',
+      name: 'repo1',
+      fullName: 'user/test-repo',
+      private: false,
+      archived: false,
+      fork: false,
+      stars: 10,
+    });
   });
 });
