@@ -138,7 +138,7 @@ describe('generateMarkdownReport', () => {
     });
 
     expect(report).toContain('Star Trend');
-    expect(report).toContain('![Star History]');
+    expect(report).toContain('![Star History](./charts/star-history.svg)');
   });
 
   it('includes comparison chart in markdown', () => {

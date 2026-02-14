@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as core from '@actions/core';
-import { isValidLocale, type Locale } from '@i18n';
+import { isValidLocale } from '@i18n';
 import * as yaml from 'js-yaml';
 import { DEFAULTS, VALID_VISIBILITIES } from './defaults';
 import { parseBool, parseList, parseNotificationThreshold, parseNumber } from './parsers';

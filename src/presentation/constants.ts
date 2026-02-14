@@ -42,6 +42,16 @@ export const BADGE = {
   borderRadius: 3,
 } as const;
 
+export const SVG_CHART = {
+  margin: { top: 50, right: 30, bottom: 50, left: 60 },
+  pointRadius: 4,
+  lineWidth: 2.5,
+  gridOpacity: 0.3,
+  fontSize: { title: 16, label: 11, milestone: 10 },
+  animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
+  font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+} as const;
+
 export const TOP_REPOS_COUNT = 10;
 
 export const MIN_SNAPSHOTS_FOR_CHART = 2;

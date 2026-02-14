@@ -2,7 +2,6 @@ import { FORECAST_WEEKS } from '@domain/forecast';
 import { deltaIndicator, trendIcon } from '@domain/formatting';
 import { getTranslations, interpolate } from '@i18n';
 import {
-  generateChartUrl,
   generateComparisonChartUrl,
   generateForecastChartUrl,
   generatePerRepoChartUrl,
@@ -66,7 +65,7 @@ export function generateMarkdownReport({
     ? [
         `## 📈 ${t.report.starTrend}`,
         '',
-        `![Star History](${generateChartUrl({ history, title: t.report.starHistory, locale })})`,
+        `![Star History](./charts/star-history.svg)`,
         '',
         ...(comparisonChartUrl
           ? [

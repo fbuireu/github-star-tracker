@@ -18,14 +18,16 @@ import {
   readHistory,
   readStargazers,
   writeBadge,
+  writeChart,
   writeHistory,
   writeReport,
   writeStargazers,
 } from '@infrastructure/persistence/storage';
 import { generateBadge } from '@presentation/badge';
-import { TOP_REPOS_COUNT } from '@presentation/constants';
+import { MIN_SNAPSHOTS_FOR_CHART, TOP_REPOS_COUNT } from '@presentation/constants';
 import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
+import { generateSvgChart } from '@presentation/svg-chart';
 
 async function withDataDir(branch: string, fn: (dataDir: string) => Promise<void>): Promise<void> {
   const dataDir = initializeDataBranch(branch);
@@ -119,6 +121,17 @@ export async function trackStars(): Promise<void> {
       writeHistory({ dataDir, history: updatedHistory });
       writeReport({ dataDir, markdown: markdownReport });
       writeBadge({ dataDir, svg: badge });
+
+      if (config.includeCharts && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART) {
+        const svgChart = generateSvgChart({
+          history,
+          title: t.report.starHistory,
+          locale: config.locale,
+        });
+        if (svgChart) {
+          writeChart({ dataDir, filename: 'star-history.svg', svg: svgChart });
+        }
+      }
 
       const commitMsg = `Update star data — ${summary.totalStars} total (${deltaIndicator(summary.totalDelta)})`;
       commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg });

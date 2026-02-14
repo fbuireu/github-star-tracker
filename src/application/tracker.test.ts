@@ -77,6 +77,7 @@ vi.mock('@infrastructure/persistence/storage', () => ({
   writeHistory: vi.fn(),
   writeReport: vi.fn(),
   writeBadge: vi.fn(),
+  writeChart: vi.fn(),
   writeStargazers: vi.fn(),
   commitAndPush: vi.fn(),
 }));
@@ -98,6 +99,10 @@ vi.mock('@presentation/markdown', () => ({
   generateMarkdownReport: vi.fn(),
 }));
 
+vi.mock('@presentation/svg-chart', () => ({
+  generateSvgChart: vi.fn(),
+}));
+
 import * as core from '@actions/core';
 import { loadConfig } from '@config/loader';
 import { compareStars, createSnapshot } from '@domain/comparison';
@@ -116,6 +121,7 @@ import {
   readHistory,
   readStargazers,
   writeBadge,
+  writeChart,
   writeHistory,
   writeReport,
   writeStargazers,
@@ -123,6 +129,7 @@ import {
 import { generateBadge } from '@presentation/badge';
 import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
+import { generateSvgChart } from '@presentation/svg-chart';
 import { trackStars } from './tracker';
 
 const defaultConfig = {
@@ -248,6 +255,7 @@ function setupDefaults() {
   vi.mocked(getEmailConfig).mockReturnValue(null);
   vi.mocked(sendEmail).mockResolvedValue(true);
   vi.mocked(computeForecast).mockReturnValue(null);
+  vi.mocked(generateSvgChart).mockReturnValue(null);
   vi.mocked(fetchAllStargazers).mockResolvedValue([]);
   vi.mocked(readStargazers).mockReturnValue({});
   vi.mocked(diffStargazers).mockReturnValue({ entries: [], totalNew: 0 });
@@ -468,6 +476,69 @@ describe('trackStars', () => {
       expect(buildStargazerMap).toHaveBeenCalled();
       expect(writeStargazers).toHaveBeenCalled();
       expect(core.setOutput).toHaveBeenCalledWith('new-stargazers', '3');
+    });
+  });
+
+  describe('svg chart', () => {
+    it('generates and writes SVG chart when history has enough snapshots', async () => {
+      const historyWithSnapshots = {
+        snapshots: [
+          { timestamp: '2026-01-01T00:00:00Z', totalStars: 80, repos: [] },
+          { timestamp: '2026-01-02T00:00:00Z', totalStars: 100, repos: [] },
+        ],
+      };
+      vi.mocked(readHistory).mockReturnValue(historyWithSnapshots);
+      vi.mocked(generateSvgChart).mockReturnValue('<svg>chart</svg>');
+
+      await trackStars();
+
+      expect(generateSvgChart).toHaveBeenCalledWith(
+        expect.objectContaining({ history: historyWithSnapshots, locale: 'en' }),
+      );
+      expect(writeChart).toHaveBeenCalledWith({
+        dataDir: '.star-data',
+        filename: 'star-history.svg',
+        svg: '<svg>chart</svg>',
+      });
+    });
+
+    it('skips SVG chart when includeCharts is false', async () => {
+      vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, includeCharts: false });
+      const historyWithSnapshots = {
+        snapshots: [
+          { timestamp: '2026-01-01T00:00:00Z', totalStars: 80, repos: [] },
+          { timestamp: '2026-01-02T00:00:00Z', totalStars: 100, repos: [] },
+        ],
+      };
+      vi.mocked(readHistory).mockReturnValue(historyWithSnapshots);
+
+      await trackStars();
+
+      expect(generateSvgChart).not.toHaveBeenCalled();
+      expect(writeChart).not.toHaveBeenCalled();
+    });
+
+    it('skips SVG chart when history has fewer than 2 snapshots', async () => {
+      await trackStars();
+
+      expect(generateSvgChart).not.toHaveBeenCalled();
+      expect(writeChart).not.toHaveBeenCalled();
+    });
+
+    it('skips writeChart when generateSvgChart returns null', async () => {
+      const historyWithSnapshots = {
+        snapshots: [
+          { timestamp: '2026-01-01T00:00:00Z', totalStars: 80, repos: [] },
+          { timestamp: '2026-01-02T00:00:00Z', totalStars: 100, repos: [] },
+        ],
+      };
+      vi.mocked(readHistory).mockReturnValue(historyWithSnapshots);
+      vi.mocked(generateSvgChart).mockReturnValue(null);
+
+      await trackStars();
+
+      expect(generateSvgChart).toHaveBeenCalled();
+      expect(writeChart).not.toHaveBeenCalled();
     });
   });
 

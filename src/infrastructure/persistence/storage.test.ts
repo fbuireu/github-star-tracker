@@ -18,6 +18,7 @@ import {
   readHistory,
   readStargazers,
   writeBadge,
+  writeChart,
   writeHistory,
   writeReport,
   writeStargazers,
@@ -111,6 +112,38 @@ describe('writeBadge', () => {
     writeBadge({ dataDir: '/data', svg });
 
     expect(fs.writeFileSync).toHaveBeenCalledWith(path.join('/data', 'stars-badge.svg'), svg);
+  });
+});
+
+describe('writeChart', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('creates charts directory and writes SVG file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const svg = '<svg>chart</svg>';
+    writeChart({ dataDir: '/data', filename: 'star-history.svg', svg });
+
+    expect(fs.existsSync).toHaveBeenCalledWith(path.join('/data', 'charts'));
+    expect(fs.mkdirSync).toHaveBeenCalledWith(path.join('/data', 'charts'), { recursive: true });
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      path.join('/data', 'charts', 'star-history.svg'),
+      svg,
+    );
+  });
+
+  it('skips mkdir when charts directory already exists', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+
+    writeChart({ dataDir: '/data', filename: 'star-history.svg', svg: '<svg />' });
+
+    expect(fs.mkdirSync).not.toHaveBeenCalled();
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      path.join('/data', 'charts', 'star-history.svg'),
+      '<svg />',
+    );
   });
 });
 

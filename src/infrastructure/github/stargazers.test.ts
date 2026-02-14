@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import type { RepoInfo } from '@domain/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchAllStargazers } from './stargazers';
+import type { Octokit } from './types';
 
 vi.mock('@actions/core', () => ({
   warning: vi.fn(),
@@ -43,7 +44,7 @@ describe('fetchAllStargazers', () => {
     };
 
     const result = await fetchAllStargazers({
-      octokit: octokit as any,
+      octokit: octokit as unknown as Octokit,
       repos: [makeRepo('repo-a')],
     });
 
@@ -65,7 +66,7 @@ describe('fetchAllStargazers', () => {
     };
 
     const result = await fetchAllStargazers({
-      octokit: octokit as any,
+      octokit: octokit as unknown as Octokit,
       repos: [makeRepo('repo-a')],
     });
 
@@ -82,7 +83,7 @@ describe('fetchAllStargazers', () => {
     };
 
     const result = await fetchAllStargazers({
-      octokit: octokit as any,
+      octokit: octokit as unknown as Octokit,
       repos: [makeRepo('repo-a'), makeRepo('repo-b')],
     });
 
@@ -100,7 +101,7 @@ describe('fetchAllStargazers', () => {
     };
 
     const result = await fetchAllStargazers({
-      octokit: octokit as any,
+      octokit: octokit as unknown as Octokit,
       repos: [makeRepo('repo-a')],
     });
 

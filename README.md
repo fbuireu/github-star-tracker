@@ -479,12 +479,21 @@ Contains:
 - `README.md` — Full report with charts
 - `stars-data.json` — Historical data
 - `stars-badge.svg` — Star count badge
+- `charts/` — Animated SVG charts
 
 ### Badge in README
 
 ```markdown
 ![Stars](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/stars-badge.svg)
 ```
+
+### Star History Chart in README
+
+```markdown
+![Star History](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/charts/star-history.svg)
+```
+
+The chart updates automatically on each run and features an animated line that draws the star growth trend.
 
 ### Action Outputs
 

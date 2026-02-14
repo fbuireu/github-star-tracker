@@ -32632,10 +32632,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -34927,7 +34927,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35050,7 +35050,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -38700,6 +38700,14 @@ function writeBadge({ dataDir, svg }) {
   const filePath = path3.join(dataDir, "stars-badge.svg");
   fs5.writeFileSync(filePath, svg);
 }
+function writeChart({ dataDir, filename, svg }) {
+  const chartsDir = path3.join(dataDir, "charts");
+  if (!fs5.existsSync(chartsDir)) {
+    fs5.mkdirSync(chartsDir, { recursive: true });
+  }
+  const filePath = path3.join(chartsDir, filename);
+  fs5.writeFileSync(filePath, svg);
+}
 function readStargazers(dataDir) {
   const filePath = path3.join(dataDir, "stargazers.json");
   if (!fs5.existsSync(filePath)) {
@@ -38768,6 +38776,15 @@ var BADGE = {
   horizontalPadding: 12,
   height: 20,
   borderRadius: 3
+};
+var SVG_CHART = {
+  margin: { top: 50, right: 30, bottom: 50, left: 60 },
+  pointRadius: 4,
+  lineWidth: 2.5,
+  gridOpacity: 0.3,
+  fontSize: { title: 16, label: 11, milestone: 10 },
+  animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
+  font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
 };
 var TOP_REPOS_COUNT = 10;
 var MIN_SNAPSHOTS_FOR_CHART = 2;
@@ -39323,7 +39340,7 @@ function generateMarkdownReport({
   const chartSection = hasChartHistory ? [
     `## \u{1F4C8} ${t.report.starTrend}`,
     "",
-    `![Star History](${generateChartUrl({ history, title: t.report.starHistory, locale })})`,
+    `![Star History](./charts/star-history.svg)`,
     "",
     ...comparisonChartUrl ? [
       `### ${t.report.byRepository}`,
@@ -39469,6 +39486,148 @@ function buildForecastTable({ title, forecasts, t }) {
   return lines.join("\n");
 }
 
+// src/presentation/svg-chart.ts
+function scaleY({ value, minValue, maxValue, chartTop, chartHeight }) {
+  if (maxValue === minValue) return chartTop + chartHeight / 2;
+  return chartTop + chartHeight - (value - minValue) / (maxValue - minValue) * chartHeight;
+}
+function generateSmoothPath(points) {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M${points[0].x},${points[0].y}`;
+  const tension = 0.4;
+  let d = `M${points[0].x},${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[Math.min(points.length - 1, i + 2)];
+    const cp1x = p1.x + (p2.x - p0.x) * tension / 3;
+    const cp1y = p1.y + (p2.y - p0.y) * tension / 3;
+    const cp2x = p2.x - (p3.x - p1.x) * tension / 3;
+    const cp2y = p2.y - (p3.y - p1.y) * tension / 3;
+    d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+  }
+  return d;
+}
+function calculatePathLength(points) {
+  let length = 0;
+  for (let i = 1; i < points.length; i++) {
+    const dx = points[i].x - points[i - 1].x;
+    const dy = points[i].y - points[i - 1].y;
+    length += Math.sqrt(dx * dx + dy * dy);
+  }
+  return Math.ceil(length * 1.5);
+}
+function niceAxisSteps({ min, max, count }) {
+  const range = max - min;
+  if (range === 0) return [min];
+  const rawStep = range / (count - 1);
+  const magnitude = 10 ** Math.floor(Math.log10(rawStep));
+  const residual = rawStep / magnitude;
+  let niceStep;
+  if (residual <= 1.5) niceStep = magnitude;
+  else if (residual <= 3.5) niceStep = 2 * magnitude;
+  else if (residual <= 7.5) niceStep = 5 * magnitude;
+  else niceStep = 10 * magnitude;
+  const niceMin = Math.floor(min / niceStep) * niceStep;
+  const steps = [];
+  for (let v = niceMin; v <= max + niceStep * 0.5; v += niceStep) {
+    if (v >= min - niceStep * 0.5) {
+      steps.push(Math.round(v));
+    }
+  }
+  return steps;
+}
+function escapeXml(text) {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function generateSvgChart({
+  history,
+  title,
+  locale
+}) {
+  if (!history.snapshots || history.snapshots.length < 2) {
+    return null;
+  }
+  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
+  const data = snapshots.map((s) => s.totalStars);
+  const { margin, pointRadius, lineWidth, gridOpacity, fontSize, animation, font } = SVG_CHART;
+  const chartWidth = CHART.width - margin.left - margin.right;
+  const chartHeight = CHART.height - margin.top - margin.bottom;
+  const chartTitle = title ?? "Star History";
+  const minData = Math.min(...data);
+  const maxData = Math.max(...data);
+  const padding = Math.max(1, Math.ceil((maxData - minData) * 0.1));
+  const minValue = Math.max(0, minData - padding);
+  const maxValue = maxData + padding;
+  const ySteps = niceAxisSteps({ min: minValue, max: maxValue, count: 5 });
+  const points = data.map((value, i) => ({
+    x: margin.left + i / Math.max(1, data.length - 1) * chartWidth,
+    y: scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight })
+  }));
+  const pathD = generateSmoothPath(points);
+  const pathLength = calculatePathLength(points);
+  const visibleMilestones = MILESTONE_THRESHOLDS.filter((m) => m > minData && m < maxData);
+  const gridLines = ySteps.map((value) => {
+    const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
+    return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" stroke="${COLORS.cellBorder}" stroke-opacity="${gridOpacity}" />
+    <text x="${margin.left - 8}" y="${y + 4}" text-anchor="end" fill="${COLORS.neutral}" font-size="${fontSize.label}" font-family="${font}">${value.toLocaleString("en-US")}</text>`;
+  }).join("\n    ");
+  const milestoneLines = visibleMilestones.map((value) => {
+    const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
+    return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" stroke="${COLORS.neutral}" stroke-width="1" stroke-dasharray="6,6" />
+    <text x="${margin.left + 4}" y="${y - 4}" fill="${COLORS.neutral}" font-size="${fontSize.milestone}" font-family="${font}">${value.toLocaleString("en-US")} \u2605</text>`;
+  }).join("\n    ");
+  const maxLabels = 10;
+  const labelStep = Math.max(1, Math.ceil(labels.length / maxLabels));
+  const xLabels = labels.map((label, i) => {
+    if (i % labelStep !== 0 && i !== labels.length - 1) return "";
+    const x = margin.left + i / Math.max(1, labels.length - 1) * chartWidth;
+    return `<text x="${x}" y="${CHART.height - margin.bottom + 20}" text-anchor="middle" fill="${COLORS.neutral}" font-size="${fontSize.label}" font-family="${font}">${escapeXml(label)}</text>`;
+  }).filter(Boolean).join("\n    ");
+  const circles = points.map(
+    (p, i) => `<circle cx="${p.x}" cy="${p.y}" r="${pointRadius}" fill="${COLORS.accent}" class="data-point" style="animation-delay: ${(i * animation.pointStagger + animation.pointDelay).toFixed(2)}s" />`
+  ).join("\n    ");
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART.width} ${CHART.height}" width="${CHART.width}" height="${CHART.height}">
+  <style>
+    @keyframes drawLine {
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes fadeInPoint {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .data-line {
+      stroke-dasharray: ${pathLength};
+      stroke-dashoffset: ${pathLength};
+      animation: drawLine ${animation.lineDuration}s ease-out forwards;
+    }
+    .data-point {
+      opacity: 0;
+      animation: fadeInPoint ${animation.pointDuration}s ease-out forwards;
+    }
+  </style>
+  <rect width="${CHART.width}" height="${CHART.height}" fill="${COLORS.white}" />
+  <text x="${CHART.width / 2}" y="${margin.top - 16}" text-anchor="middle" fill="${COLORS.text}" font-size="${fontSize.title}" font-weight="bold" font-family="${font}">${escapeXml(chartTitle)}</text>
+  <g class="grid">
+    ${gridLines}
+  </g>
+  <g class="milestones">
+    ${milestoneLines}
+  </g>
+  <g class="x-axis">
+    ${xLabels}
+  </g>
+  <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${CHART.height - margin.bottom}" stroke="${COLORS.neutral}" stroke-width="1" />
+  <line x1="${margin.left}" y1="${CHART.height - margin.bottom}" x2="${CHART.width - margin.right}" y2="${CHART.height - margin.bottom}" stroke="${COLORS.neutral}" stroke-width="1" />
+  <path d="${pathD}" fill="none" stroke="${COLORS.accent}" stroke-width="${lineWidth}" class="data-line" />
+  <g class="points">
+    ${circles}
+  </g>
+</svg>`;
+}
+
 // src/application/tracker.ts
 async function withDataDir(branch, fn) {
   const dataDir = initializeDataBranch(branch);
@@ -39546,6 +39705,16 @@ async function trackStars() {
       writeHistory({ dataDir, history: updatedHistory });
       writeReport({ dataDir, markdown: markdownReport });
       writeBadge({ dataDir, svg: badge });
+      if (config.includeCharts && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART) {
+        const svgChart = generateSvgChart({
+          history,
+          title: t.report.starHistory,
+          locale: config.locale
+        });
+        if (svgChart) {
+          writeChart({ dataDir, filename: "star-history.svg", svg: svgChart });
+        }
+      }
       const commitMsg = `Update star data \u2014 ${summary2.totalStars} total (${deltaIndicator(summary2.totalDelta)})`;
       commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg });
       setOutputs({

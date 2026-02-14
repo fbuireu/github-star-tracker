@@ -7,3 +7,4 @@ export {
 } from './chart';
 export { generateHtmlReport } from './html';
 export { generateMarkdownReport } from './markdown';
+export { generateSvgChart } from './svg-chart';

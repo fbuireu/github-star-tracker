@@ -1,6 +1,12 @@
 import type { History } from '@domain/types';
 import { describe, expect, it } from 'vitest';
+import type { ForecastData } from './forecast';
 import { computeForecast, linearRegression, weightedMovingAverage } from './forecast';
+
+function expectForecast(result: ForecastData | null): ForecastData {
+  expect(result).not.toBeNull();
+  return result ?? { aggregate: { forecasts: [] }, repos: [] };
+}
 
 describe('linearRegression', () => {
   it('returns slope=0 for constant values', () => {
@@ -73,22 +79,21 @@ describe('computeForecast', () => {
       ],
     };
 
-    const result = computeForecast({ history, topRepoNames: [] });
+    const result = expectForecast(computeForecast({ history, topRepoNames: [] }));
 
-    expect(result).not.toBeNull();
-    expect(result!.aggregate.forecasts).toHaveLength(2);
+    expect(result.aggregate.forecasts).toHaveLength(2);
 
-    const lrForecast = result!.aggregate.forecasts.find((f) => f.method === 'linear-regression');
+    const lrForecast = result.aggregate.forecasts.find((f) => f.method === 'linear-regression');
     expect(lrForecast).toBeDefined();
-    expect(lrForecast!.points).toHaveLength(4);
-    expect(lrForecast!.points[0].predicted).toBe(130);
-    expect(lrForecast!.points[1].predicted).toBe(140);
+    expect(lrForecast?.points).toHaveLength(4);
+    expect(lrForecast?.points[0].predicted).toBe(130);
+    expect(lrForecast?.points[1].predicted).toBe(140);
 
-    const wmaForecast = result!.aggregate.forecasts.find(
+    const wmaForecast = result.aggregate.forecasts.find(
       (f) => f.method === 'weighted-moving-average',
     );
     expect(wmaForecast).toBeDefined();
-    expect(wmaForecast!.points[0].predicted).toBe(130);
+    expect(wmaForecast?.points[0].predicted).toBe(130);
   });
 
   it('computes per-repo forecasts', () => {
@@ -112,12 +117,11 @@ describe('computeForecast', () => {
       ],
     };
 
-    const result = computeForecast({ history, topRepoNames: ['user/repo-a'] });
+    const result = expectForecast(computeForecast({ history, topRepoNames: ['user/repo-a'] }));
 
-    expect(result).not.toBeNull();
-    expect(result!.repos).toHaveLength(1);
-    expect(result!.repos[0].repoFullName).toBe('user/repo-a');
-    expect(result!.repos[0].forecasts).toHaveLength(2);
+    expect(result.repos).toHaveLength(1);
+    expect(result.repos[0].repoFullName).toBe('user/repo-a');
+    expect(result.repos[0].forecasts).toHaveLength(2);
   });
 
   it('clamps predictions to non-negative integers', () => {
@@ -129,10 +133,9 @@ describe('computeForecast', () => {
       ],
     };
 
-    const result = computeForecast({ history, topRepoNames: [] });
+    const result = expectForecast(computeForecast({ history, topRepoNames: [] }));
 
-    expect(result).not.toBeNull();
-    for (const forecast of result!.aggregate.forecasts) {
+    for (const forecast of result.aggregate.forecasts) {
       for (const point of forecast.points) {
         expect(point.predicted).toBeGreaterThanOrEqual(0);
         expect(Number.isInteger(point.predicted)).toBe(true);

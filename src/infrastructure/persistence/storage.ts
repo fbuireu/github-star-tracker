@@ -44,6 +44,21 @@ export function writeBadge({ dataDir, svg }: WriteBadgeParams): void {
   fs.writeFileSync(filePath, svg);
 }
 
+interface WriteChartParams {
+  dataDir: string;
+  filename: string;
+  svg: string;
+}
+
+export function writeChart({ dataDir, filename, svg }: WriteChartParams): void {
+  const chartsDir = path.join(dataDir, 'charts');
+  if (!fs.existsSync(chartsDir)) {
+    fs.mkdirSync(chartsDir, { recursive: true });
+  }
+  const filePath = path.join(chartsDir, filename);
+  fs.writeFileSync(filePath, svg);
+}
+
 export function readStargazers(dataDir: string): StargazerMap {
   const filePath = path.join(dataDir, 'stargazers.json');
   if (!fs.existsSync(filePath)) {
