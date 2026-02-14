@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/fbuireu/github-star-tracker/compare/v1.2.0...v1.3.0) (2026-02-14)
+
+
+### Features
+
+* add svg readme support ([82b7121](https://github.com/fbuireu/github-star-tracker/commit/82b712153bfabbbf7cb7199c989becfa4fd7c5f7))
+
 # [1.2.0](https://github.com/fbuireu/github-star-tracker/compare/v1.1.0...v1.2.0) (2026-02-14)
 
 
