@@ -1,3 +1,12 @@
+# [1.2.0](https://github.com/fbuireu/github-star-tracker/compare/v1.1.0...v1.2.0) (2026-02-14)
+
+
+### Features
+
+* add notification threshold ([44d1db0](https://github.com/fbuireu/github-star-tracker/commit/44d1db0badb6bbe853d18ef59564f5e34f23026f))
+* add per-repo feature ([9f37598](https://github.com/fbuireu/github-star-tracker/commit/9f3759862a826860a985355aded85aa6910123a3))
+* track stargazers ([85bb4ae](https://github.com/fbuireu/github-star-tracker/commit/85bb4aec65bae84e82a74cd007c18b8bc4295ced))
+
 # [1.1.0](https://github.com/fbuireu/github-star-tracker/compare/v1.0.8...v1.1.0) (2026-02-14)
 
 
