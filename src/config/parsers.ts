@@ -16,3 +16,16 @@ export function parseNumber(value: string | null | undefined): number | undefine
   const n = Number.parseInt(value, 10);
   return Number.isNaN(n) ? undefined : n;
 }
+
+interface ParseNotificationThresholdParams {
+  value: string | null | undefined;
+}
+
+export function parseNotificationThreshold({
+  value,
+}: ParseNotificationThresholdParams): number | 'auto' | undefined {
+  if (value === '' || value === undefined || value === null) return undefined;
+  if (value === 'auto') return 'auto';
+  const n = Number.parseInt(value, 10);
+  return Number.isNaN(n) ? undefined : n;
+}

@@ -35228,7 +35228,8 @@ var DEFAULTS2 = {
   maxHistory: 52,
   sendOnNoChanges: false,
   includeCharts: true,
-  locale: "en"
+  locale: "en",
+  notificationThreshold: 0
 };
 
 // src/i18n/ca.json
@@ -38031,6 +38032,14 @@ function parseNumber(value) {
   const n = Number.parseInt(value, 10);
   return Number.isNaN(n) ? void 0 : n;
 }
+function parseNotificationThreshold({
+  value
+}) {
+  if (value === "" || value === void 0 || value === null) return void 0;
+  if (value === "auto") return "auto";
+  const n = Number.parseInt(value, 10);
+  return Number.isNaN(n) ? void 0 : n;
+}
 
 // src/config/loader.ts
 function loadConfigFile(configPath) {
@@ -38054,7 +38063,8 @@ function loadConfigFile(configPath) {
     dataBranch: parsed.data_branch,
     maxHistory: parsed.max_history,
     includeCharts: parsed.include_charts,
-    locale: parsed.locale
+    locale: parsed.locale,
+    notificationThreshold: parsed.notification_threshold
   };
 }
 function loadConfig() {
@@ -38070,6 +38080,7 @@ function loadConfig() {
   const inputMaxHistory = getInput("max-history");
   const inputIncludeCharts = getInput("include-charts");
   const inputLocale = getInput("locale");
+  const inputNotificationThreshold = getInput("notification-threshold");
   const visibility = inputVisibility || fileConfig.visibility || DEFAULTS2.visibility;
   if (!VALID_VISIBILITIES.includes(visibility)) {
     throw new Error(
@@ -38091,7 +38102,8 @@ function loadConfig() {
     maxHistory: parseNumber(inputMaxHistory) ?? fileConfig.maxHistory ?? DEFAULTS2.maxHistory,
     sendOnNoChanges: parseBool(getInput("send-on-no-changes")) ?? false,
     includeCharts: parseBool(inputIncludeCharts) ?? fileConfig.includeCharts ?? DEFAULTS2.includeCharts,
-    locale: isValidLocale(locale) ? locale : DEFAULTS2.locale
+    locale: isValidLocale(locale) ? locale : DEFAULTS2.locale,
+    notificationThreshold: parseNotificationThreshold({ value: inputNotificationThreshold }) ?? fileConfig.notificationThreshold ?? DEFAULTS2.notificationThreshold
   };
   info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`
@@ -38210,6 +38222,24 @@ function formatDate({ timestamp: timestamp2, locale = "en" }) {
   return date.toLocaleDateString(localeCode, { month: "short", day: "numeric" });
 }
 
+// src/domain/notification.ts
+function getAdaptiveThreshold(totalStars) {
+  if (totalStars <= 50) return 1;
+  if (totalStars <= 200) return 5;
+  if (totalStars <= 500) return 10;
+  return 20;
+}
+function shouldNotify({
+  totalStars,
+  starsAtLastNotification,
+  threshold
+}) {
+  if (threshold === 0) return true;
+  const effectiveThreshold = threshold === "auto" ? getAdaptiveThreshold(totalStars) : threshold;
+  const accumulatedDelta = Math.abs(totalStars - (starsAtLastNotification ?? 0));
+  return accumulatedDelta >= effectiveThreshold;
+}
+
 // src/domain/snapshot.ts
 function getLastSnapshot(history) {
   if (!history.snapshots || history.snapshots.length === 0) {
@@ -38219,7 +38249,7 @@ function getLastSnapshot(history) {
 }
 function addSnapshot({ history, snapshot, maxHistory }) {
   const snapshots = [...history.snapshots, snapshot].slice(-maxHistory);
-  return { snapshots };
+  return { ...history, snapshots };
 }
 
 // src/infrastructure/git/worktree.ts
@@ -38899,14 +38929,23 @@ async function trackStars() {
       const badge = generateBadge({ totalStars: summary2.totalStars, locale: config.locale });
       const snapshot = createSnapshot({ currentRepos: repos, summary: summary2 });
       const updatedHistory = addSnapshot({ history, snapshot, maxHistory: config.maxHistory });
+      const thresholdReached = shouldNotify({
+        totalStars: summary2.totalStars,
+        starsAtLastNotification: history.starsAtLastNotification,
+        threshold: config.notificationThreshold
+      });
+      const notify = summary2.changed && thresholdReached;
+      if (notify) {
+        updatedHistory.starsAtLastNotification = summary2.totalStars;
+      }
       writeHistory({ dataDir, history: updatedHistory });
       writeReport({ dataDir, markdown: markdownReport });
       writeBadge({ dataDir, svg: badge });
       const commitMsg = `Update star data \u2014 ${summary2.totalStars} total (${deltaIndicator(summary2.totalDelta)})`;
       commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg });
-      setOutputs(summary2, markdownReport, htmlReport);
+      setOutputs({ summary: summary2, markdownReport, htmlReport, shouldNotify: notify });
       const emailConfig = getEmailConfig(config.locale);
-      if (emailConfig && (summary2.changed || config.sendOnNoChanges)) {
+      if (emailConfig && (notify || config.sendOnNoChanges)) {
         const subject = interpolate({
           template: t.email.subjectLine,
           params: {
@@ -38935,16 +38974,18 @@ function setEmptyOutputs() {
   setOutput("stars-changed", "false");
   setOutput("new-stars", "0");
   setOutput("lost-stars", "0");
+  setOutput("should-notify", "false");
   setOutput("report", "No repositories matched the configured filters.");
   setOutput("report-html", "<p>No repositories matched the configured filters.</p>");
 }
-function setOutputs(summary2, markdownReport, htmlReport) {
+function setOutputs({ summary: summary2, markdownReport, htmlReport, shouldNotify: shouldNotify2 }) {
   setOutput("report", markdownReport);
   setOutput("report-html", htmlReport);
   setOutput("total-stars", String(summary2.totalStars));
   setOutput("stars-changed", String(summary2.changed));
   setOutput("new-stars", String(summary2.newStars));
   setOutput("lost-stars", String(summary2.lostStars));
+  setOutput("should-notify", String(shouldNotify2));
 }
 
 // src/index.ts

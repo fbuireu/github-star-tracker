@@ -67,6 +67,19 @@ describe('addSnapshot', () => {
     expect(result.snapshots).toHaveLength(2);
   });
 
+  it('preserves starsAtLastNotification', () => {
+    const history: History = { snapshots: [], starsAtLastNotification: 42 };
+    const snapshot: Snapshot = {
+      timestamp: '2024-01-01T00:00:00Z',
+      totalStars: 50,
+      repos: [],
+    };
+
+    const result = addSnapshot({ history, snapshot, maxHistory: 52 });
+
+    expect(result.starsAtLastNotification).toBe(42);
+  });
+
   it('trims history when exceeding maxHistory', () => {
     const snapshots = Array.from({ length: 52 }, (_, i) => ({
       timestamp: `2024-01-${String(i + 1).padStart(2, '0')}T00:00:00Z`,

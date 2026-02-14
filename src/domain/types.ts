@@ -23,6 +23,7 @@ export interface Snapshot {
 
 export interface History {
   snapshots: Snapshot[];
+  starsAtLastNotification?: number;
 }
 
 export interface RepoResult {

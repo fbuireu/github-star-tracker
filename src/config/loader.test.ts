@@ -3,7 +3,7 @@ import * as core from '@actions/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULTS } from './defaults';
 import { loadConfig, loadConfigFile } from './loader';
-import { parseBool, parseList, parseNumber } from './parsers';
+import { parseBool, parseList, parseNotificationThreshold, parseNumber } from './parsers';
 
 vi.mock('@actions/core', () => ({
   getInput: vi.fn().mockReturnValue(''),
@@ -80,6 +80,28 @@ describe('parseNumber', () => {
   });
 });
 
+describe('parseNotificationThreshold', () => {
+  it('returns undefined for empty/null/undefined', () => {
+    expect(parseNotificationThreshold({ value: '' })).toBeUndefined();
+    expect(parseNotificationThreshold({ value: null })).toBeUndefined();
+    expect(parseNotificationThreshold({ value: undefined })).toBeUndefined();
+  });
+
+  it('returns "auto" for "auto"', () => {
+    expect(parseNotificationThreshold({ value: 'auto' })).toBe('auto');
+  });
+
+  it('parses valid integers', () => {
+    expect(parseNotificationThreshold({ value: '0' })).toBe(0);
+    expect(parseNotificationThreshold({ value: '5' })).toBe(5);
+    expect(parseNotificationThreshold({ value: '10' })).toBe(10);
+  });
+
+  it('returns undefined for non-numeric strings', () => {
+    expect(parseNotificationThreshold({ value: 'abc' })).toBeUndefined();
+  });
+});
+
 describe('loadConfigFile', () => {
   it('returns empty object when file does not exist', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
@@ -150,6 +172,35 @@ describe('loadConfig', () => {
     });
 
     expect(() => loadConfig()).toThrow(/Invalid visibility/);
+  });
+
+  it('parses notification-threshold as number', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'notification-threshold') return '5';
+      return '';
+    });
+
+    const config = loadConfig();
+    expect(config.notificationThreshold).toBe(5);
+  });
+
+  it('parses notification-threshold as auto', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'notification-threshold') return 'auto';
+      return '';
+    });
+
+    const config = loadConfig();
+    expect(config.notificationThreshold).toBe('auto');
+  });
+
+  it('defaults notification-threshold to 0', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+    expect(config.notificationThreshold).toBe(0);
   });
 
   it('parses exclude-repos input as comma-separated list', () => {

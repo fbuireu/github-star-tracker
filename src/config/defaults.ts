@@ -15,4 +15,5 @@ export const DEFAULTS: Config = {
   sendOnNoChanges: false,
   includeCharts: true,
   locale: 'en',
+  notificationThreshold: 0,
 };

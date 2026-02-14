@@ -50,7 +50,7 @@
 
 - 🏃 **GitHub Action native** — No external services, runs in your CI
 - 📊 **Historical tracking** — Not just current count, see trends over time
-- 🔔 **Smart notifications** — Email only when stars actually change
+- 🔔 **Smart notifications** — Email with configurable thresholds (every run, every N stars, or adaptive)
 - 🎨 **Multiple outputs** — Data branch, badges, charts, action outputs
 - 🔒 **Privacy-first** — Your data stays in your repo, no third parties
 
@@ -287,7 +287,8 @@ Create `.github/star-tracker-config.json`:
 | `smtp-password`      | —                     | SMTP authentication password                     |
 | `email-to`           | —                     | Recipient email address                          |
 | `email-from`         | `GitHub Star Tracker` | Sender name or email address                     |
-| `send-on-no-changes` | `false`               | Send email even when no changes detected         |
+| `send-on-no-changes`      | `false`               | Send email even when no changes detected                      |
+| `notification-threshold`  | `0`                   | Notify threshold: `0` (every run), a number, or `auto`        |
 
 📖 **[Full API reference](../../wiki/API-Reference)**
 
@@ -306,7 +307,7 @@ Create `.github/star-tracker-config.json`:
     echo "New stars: ${{ steps.tracker.outputs.new-stars }}"
 ```
 
-Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`, `lost-stars`
+Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`, `lost-stars`, `should-notify`
 
 ---
 
@@ -350,7 +351,31 @@ Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`,
     include-charts: true
 ```
 
-### Email on Changes Only
+### Notify Only After 10 Stars Change
+
+```yaml
+- uses: fbuireu/github-star-tracker@v1
+  with:
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+    notification-threshold: '10'
+    smtp-host: smtp.gmail.com
+    smtp-port: '587'
+    smtp-username: ${{ secrets.EMAIL_FROM }}
+    smtp-password: ${{ secrets.EMAIL_PASSWORD }}
+    email-from: ${{ secrets.EMAIL_FROM }}
+    email-to: ${{ secrets.EMAIL_TO }}
+```
+
+### Adaptive Notification Threshold
+
+```yaml
+- uses: fbuireu/github-star-tracker@v1
+  with:
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+    notification-threshold: 'auto' # Scales with total stars: 1/5/10/20
+```
+
+### External Notification with Threshold
 
 ```yaml
 - name: Track stars
@@ -358,9 +383,10 @@ Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`,
   uses: fbuireu/github-star-tracker@v1
   with:
     github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+    notification-threshold: '5'
 
-- name: Send email
-  if: steps.tracker.outputs.stars-changed == 'true'
+- name: Send email when threshold reached
+  if: steps.tracker.outputs.should-notify == 'true'
   uses: dawidd6/action-send-mail@v9
   with:
     server_address: smtp.gmail.com
@@ -393,6 +419,7 @@ Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`,
     email-from: ${{ secrets.EMAIL_FROM }}
     email-to: ${{ secrets.EMAIL_TO }}
     send-on-no-changes: false
+    notification-threshold: 'auto'
 ```
 
 📖 **[More examples](../../wiki/Examples)**

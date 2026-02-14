@@ -4,7 +4,7 @@ import * as core from '@actions/core';
 import { isValidLocale, type Locale } from '@i18n';
 import * as yaml from 'js-yaml';
 import { DEFAULTS, VALID_VISIBILITIES } from './defaults';
-import { parseBool, parseList, parseNumber } from './parsers';
+import { parseBool, parseList, parseNotificationThreshold, parseNumber } from './parsers';
 import type { Config, Visibility } from './types';
 
 interface FileConfig {
@@ -18,6 +18,7 @@ interface FileConfig {
   maxHistory?: number;
   includeCharts?: boolean;
   locale?: string;
+  notificationThreshold?: number | 'auto';
 }
 
 export function loadConfigFile(configPath: string): FileConfig {
@@ -46,6 +47,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     maxHistory: parsed.max_history as number | undefined,
     includeCharts: parsed.include_charts as boolean | undefined,
     locale: parsed.locale as string | undefined,
+    notificationThreshold: parsed.notification_threshold as number | 'auto' | undefined,
   };
 }
 
@@ -63,6 +65,7 @@ export function loadConfig(): Config {
   const inputMaxHistory = core.getInput('max-history');
   const inputIncludeCharts = core.getInput('include-charts');
   const inputLocale = core.getInput('locale');
+  const inputNotificationThreshold = core.getInput('notification-threshold');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -97,6 +100,10 @@ export function loadConfig(): Config {
     includeCharts:
       parseBool(inputIncludeCharts) ?? fileConfig.includeCharts ?? DEFAULTS.includeCharts,
     locale: isValidLocale(locale) ? locale : DEFAULTS.locale,
+    notificationThreshold:
+      parseNotificationThreshold({ value: inputNotificationThreshold }) ??
+      fileConfig.notificationThreshold ??
+      DEFAULTS.notificationThreshold,
   };
 
   core.info(

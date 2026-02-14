@@ -15,4 +15,5 @@ export interface Config {
   sendOnNoChanges: boolean;
   includeCharts: boolean;
   locale: Locale;
+  notificationThreshold: number | 'auto';
 }

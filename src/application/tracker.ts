@@ -3,6 +3,7 @@ import * as github from '@actions/github';
 import { loadConfig } from '@config/loader';
 import { compareStars, createSnapshot } from '@domain/comparison';
 import { deltaIndicator } from '@domain/formatting';
+import { shouldNotify } from '@domain/notification';
 import { addSnapshot, getLastSnapshot } from '@domain/snapshot';
 import type { Summary } from '@domain/types';
 import { getTranslations, interpolate } from '@i18n';
@@ -77,6 +78,17 @@ export async function trackStars(): Promise<void> {
       const snapshot = createSnapshot({ currentRepos: repos, summary });
       const updatedHistory = addSnapshot({ history, snapshot, maxHistory: config.maxHistory });
 
+      const thresholdReached = shouldNotify({
+        totalStars: summary.totalStars,
+        starsAtLastNotification: history.starsAtLastNotification,
+        threshold: config.notificationThreshold,
+      });
+      const notify = summary.changed && thresholdReached;
+
+      if (notify) {
+        updatedHistory.starsAtLastNotification = summary.totalStars;
+      }
+
       writeHistory({ dataDir, history: updatedHistory });
       writeReport({ dataDir, markdown: markdownReport });
       writeBadge({ dataDir, svg: badge });
@@ -84,10 +96,10 @@ export async function trackStars(): Promise<void> {
       const commitMsg = `Update star data — ${summary.totalStars} total (${deltaIndicator(summary.totalDelta)})`;
       commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg });
 
-      setOutputs(summary, markdownReport, htmlReport);
+      setOutputs({ summary, markdownReport, htmlReport, shouldNotify: notify });
 
       const emailConfig = getEmailConfig(config.locale);
-      if (emailConfig && (summary.changed || config.sendOnNoChanges)) {
+      if (emailConfig && (notify || config.sendOnNoChanges)) {
         const subject = interpolate({
           template: t.email.subjectLine,
           params: {
@@ -117,15 +129,24 @@ function setEmptyOutputs(): void {
   core.setOutput('stars-changed', 'false');
   core.setOutput('new-stars', '0');
   core.setOutput('lost-stars', '0');
+  core.setOutput('should-notify', 'false');
   core.setOutput('report', 'No repositories matched the configured filters.');
   core.setOutput('report-html', '<p>No repositories matched the configured filters.</p>');
 }
 
-function setOutputs(summary: Summary, markdownReport: string, htmlReport: string): void {
+interface SetOutputsParams {
+  summary: Summary;
+  markdownReport: string;
+  htmlReport: string;
+  shouldNotify: boolean;
+}
+
+function setOutputs({ summary, markdownReport, htmlReport, shouldNotify }: SetOutputsParams): void {
   core.setOutput('report', markdownReport);
   core.setOutput('report-html', htmlReport);
   core.setOutput('total-stars', String(summary.totalStars));
   core.setOutput('stars-changed', String(summary.changed));
   core.setOutput('new-stars', String(summary.newStars));
   core.setOutput('lost-stars', String(summary.lostStars));
+  core.setOutput('should-notify', String(shouldNotify));
 }

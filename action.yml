@@ -96,6 +96,11 @@ inputs:
     required: false
     default: 'true'
 
+  notification-threshold:
+    description: 'Star change threshold before sending notification: 0 (every run), a number (e.g. 5), or "auto" (adaptive)'
+    required: false
+    default: '0'
+
   locale:
     description: 'Language for reports and emails: en, es, ca, it'
     required: false
@@ -119,6 +124,9 @@ outputs:
 
   lost-stars:
     description: 'Number of stars lost since last run'
+
+  should-notify:
+    description: 'Whether the notification threshold was reached (true/false)'
 
 runs:
   using: 'node24'

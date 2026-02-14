@@ -45,6 +45,7 @@ const defaultConfig: Config = {
   sendOnNoChanges: false,
   includeCharts: false,
   locale: 'en',
+  notificationThreshold: 0,
 };
 
 describe('filterRepos', () => {

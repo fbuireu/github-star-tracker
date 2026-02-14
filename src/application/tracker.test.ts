@@ -26,6 +26,10 @@ vi.mock('@domain/formatting', () => ({
   deltaIndicator: vi.fn(),
 }));
 
+vi.mock('@domain/notification', () => ({
+  shouldNotify: vi.fn(),
+}));
+
 vi.mock('@domain/snapshot', () => ({
   getLastSnapshot: vi.fn(),
   addSnapshot: vi.fn(),
@@ -83,6 +87,7 @@ import * as core from '@actions/core';
 import { loadConfig } from '@config/loader';
 import { compareStars, createSnapshot } from '@domain/comparison';
 import { deltaIndicator } from '@domain/formatting';
+import { shouldNotify } from '@domain/notification';
 import { addSnapshot, getLastSnapshot } from '@domain/snapshot';
 import { getTranslations } from '@i18n';
 import { cleanup, initializeDataBranch } from '@infrastructure/git/worktree';
@@ -112,6 +117,7 @@ const defaultConfig = {
   sendOnNoChanges: false,
   includeCharts: true,
   locale: 'en' as const,
+  notificationThreshold: 0,
 };
 
 const defaultSummary = {
@@ -196,7 +202,8 @@ function setupDefaults() {
   vi.mocked(generateHtmlReport).mockReturnValue('<p>HTML</p>');
   vi.mocked(generateBadge).mockReturnValue('<svg>badge</svg>');
   vi.mocked(createSnapshot).mockReturnValue(defaultSnapshot);
-  vi.mocked(addSnapshot).mockReturnValue(defaultUpdatedHistory);
+  vi.mocked(addSnapshot).mockReturnValue({ ...defaultUpdatedHistory });
+  vi.mocked(shouldNotify).mockReturnValue(true);
   vi.mocked(getEmailConfig).mockReturnValue(null);
   vi.mocked(sendEmail).mockResolvedValue(true);
 }
@@ -288,6 +295,28 @@ describe('trackStars', () => {
       expect(core.info).toHaveBeenCalledWith('No star changes detected, skipping email');
     });
 
+    it('skips email when threshold is not reached', async () => {
+      vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, notificationThreshold: 10 });
+      vi.mocked(shouldNotify).mockReturnValue(false);
+      vi.mocked(getEmailConfig).mockReturnValue(emailConfig);
+
+      await trackStars();
+
+      expect(sendEmail).not.toHaveBeenCalled();
+      expect(core.setOutput).toHaveBeenCalledWith('should-notify', 'false');
+    });
+
+    it('sends email when threshold is reached', async () => {
+      vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, notificationThreshold: 5 });
+      vi.mocked(shouldNotify).mockReturnValue(true);
+      vi.mocked(getEmailConfig).mockReturnValue(emailConfig);
+
+      await trackStars();
+
+      expect(sendEmail).toHaveBeenCalled();
+      expect(core.setOutput).toHaveBeenCalledWith('should-notify', 'true');
+    });
+
     it('skips email when getEmailConfig returns null', async () => {
       vi.mocked(getEmailConfig).mockReturnValue(null);
 
@@ -342,7 +371,7 @@ describe('trackStars', () => {
   });
 
   describe('outputs', () => {
-    it('sets all 6 outputs correctly', async () => {
+    it('sets all 7 outputs correctly', async () => {
       await trackStars();
 
       expect(core.setOutput).toHaveBeenCalledWith('report', '# MD Report');
@@ -351,6 +380,7 @@ describe('trackStars', () => {
       expect(core.setOutput).toHaveBeenCalledWith('stars-changed', 'true');
       expect(core.setOutput).toHaveBeenCalledWith('new-stars', '12');
       expect(core.setOutput).toHaveBeenCalledWith('lost-stars', '2');
+      expect(core.setOutput).toHaveBeenCalledWith('should-notify', 'true');
     });
 
     it('sets default outputs for empty repos', async () => {
@@ -366,6 +396,7 @@ describe('trackStars', () => {
         'report-html',
         '<p>No repositories matched the configured filters.</p>',
       );
+      expect(core.setOutput).toHaveBeenCalledWith('should-notify', 'false');
     });
   });
 
@@ -376,6 +407,42 @@ describe('trackStars', () => {
       await trackStars();
 
       expect(addSnapshot).toHaveBeenCalledWith(expect.objectContaining({ maxHistory: 26 }));
+    });
+
+    it('updates starsAtLastNotification when notifying', async () => {
+      vi.mocked(shouldNotify).mockReturnValue(true);
+
+      await trackStars();
+
+      expect(writeHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          history: expect.objectContaining({ starsAtLastNotification: 100 }),
+        }),
+      );
+    });
+
+    it('does not update starsAtLastNotification when threshold not reached', async () => {
+      vi.mocked(shouldNotify).mockReturnValue(false);
+      vi.mocked(compareStars).mockReturnValue({
+        ...defaultResults,
+        summary: { ...defaultSummary, changed: true },
+      });
+
+      await trackStars();
+
+      expect(writeHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          history: expect.not.objectContaining({ starsAtLastNotification: expect.anything() }),
+        }),
+      );
+    });
+
+    it('passes notificationThreshold to shouldNotify', async () => {
+      vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, notificationThreshold: 'auto' });
+
+      await trackStars();
+
+      expect(shouldNotify).toHaveBeenCalledWith(expect.objectContaining({ threshold: 'auto' }));
     });
 
     it('includes delta indicator in commit message', async () => {
