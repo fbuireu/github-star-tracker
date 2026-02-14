@@ -1,3 +1,5 @@
+import type { ForecastData } from '@domain/forecast';
+import type { StargazerDiffResult } from '@domain/stargazers';
 import type { ComparisonResults, History, RepoResult } from '@domain/types';
 import { getTranslations, type Locale } from '@i18n';
 
@@ -7,6 +9,8 @@ export interface GenerateReportParams {
   locale: Locale;
   history?: History | null;
   includeCharts?: boolean;
+  stargazerDiff?: StargazerDiffResult | null;
+  forecastData?: ForecastData | null;
 }
 
 export interface ReportData {

@@ -43,3 +43,5 @@ export const BADGE = {
 } as const;
 
 export const TOP_REPOS_COUNT = 10;
+
+export const MIN_SNAPSHOTS_FOR_CHART = 2;

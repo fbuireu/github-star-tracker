@@ -47,4 +47,23 @@ export interface Translations {
     generated: string;
     madeBy: string;
   };
+  stargazers: {
+    sectionTitle: string;
+    newStargazers: string;
+    starredOn: string;
+    noNewStargazers: string;
+    stargazerCount: string;
+  };
+  forecast: {
+    sectionTitle: string;
+    predictedStars: string;
+    week: string;
+    linearRegression: string;
+    weightedMovingAverage: string;
+    aggregate: string;
+    byRepository: string;
+    insufficientData: string;
+    method: string;
+    predicted: string;
+  };
 }

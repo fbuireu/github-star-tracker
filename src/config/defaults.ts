@@ -16,4 +16,5 @@ export const DEFAULTS: Config = {
   includeCharts: true,
   locale: 'en',
   notificationThreshold: 0,
+  trackStargazers: false,
 };

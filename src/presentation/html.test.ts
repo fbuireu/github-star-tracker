@@ -1,3 +1,5 @@
+import type { ForecastData } from '@domain/forecast';
+import type { StargazerDiffResult } from '@domain/stargazers';
 import type { ComparisonResults } from '@domain/types';
 import { describe, expect, it } from 'vitest';
 import { generateHtmlReport } from './html';
@@ -254,5 +256,143 @@ describe('generateHtmlReport', () => {
     });
 
     expect(html).not.toContain('Star Trend');
+  });
+
+  it('includes stargazer section with avatars', () => {
+    const stargazerDiff: StargazerDiffResult = {
+      entries: [
+        {
+          repoFullName: 'user/repo-a',
+          newStargazers: [
+            {
+              login: 'alice',
+              avatarUrl: 'https://avatars.githubusercontent.com/alice',
+              profileUrl: 'https://github.com/alice',
+              starredAt: '2026-01-15T10:00:00Z',
+            },
+          ],
+        },
+      ],
+      totalNew: 1,
+    };
+
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+      stargazerDiff,
+    });
+
+    expect(html).toContain('New Stargazers');
+    expect(html).toContain('alice');
+    expect(html).toContain('width="32" height="32"');
+    expect(html).toContain('border-radius:50%');
+    expect(html).toContain('2026-01-15');
+  });
+
+  it('shows no-new-stargazers message when diff is empty', () => {
+    const stargazerDiff: StargazerDiffResult = {
+      entries: [],
+      totalNew: 0,
+    };
+
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+      stargazerDiff,
+    });
+
+    expect(html).toContain('New Stargazers');
+    expect(html).toContain('No new stargazers since last run');
+  });
+
+  it('excludes stargazer section when stargazerDiff is null', () => {
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+      stargazerDiff: null,
+    });
+
+    expect(html).not.toContain('New Stargazers');
+  });
+
+  it('includes forecast section with tables', () => {
+    const forecastData: ForecastData = {
+      aggregate: {
+        forecasts: [
+          {
+            method: 'linear-regression',
+            points: [
+              { weekOffset: 1, predicted: 25 },
+              { weekOffset: 2, predicted: 27 },
+              { weekOffset: 3, predicted: 29 },
+              { weekOffset: 4, predicted: 31 },
+            ],
+          },
+          {
+            method: 'weighted-moving-average',
+            points: [
+              { weekOffset: 1, predicted: 24 },
+              { weekOffset: 2, predicted: 25 },
+              { weekOffset: 3, predicted: 26 },
+              { weekOffset: 4, predicted: 27 },
+            ],
+          },
+        ],
+      },
+      repos: [
+        {
+          repoFullName: 'user/repo-a',
+          forecasts: [
+            {
+              method: 'linear-regression',
+              points: [
+                { weekOffset: 1, predicted: 17 },
+                { weekOffset: 2, predicted: 19 },
+                { weekOffset: 3, predicted: 21 },
+                { weekOffset: 4, predicted: 23 },
+              ],
+            },
+            {
+              method: 'weighted-moving-average',
+              points: [
+                { weekOffset: 1, predicted: 16 },
+                { weekOffset: 2, predicted: 17 },
+                { weekOffset: 3, predicted: 18 },
+                { weekOffset: 4, predicted: 19 },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+      forecastData,
+    });
+
+    expect(html).toContain('Growth Forecast');
+    expect(html).toContain('Linear Regression');
+    expect(html).toContain('Weighted Moving Average');
+    expect(html).toContain('Week 1');
+    expect(html).toContain('25');
+    expect(html).toContain('user/repo-a');
+    expect(html).not.toContain('<details>');
+  });
+
+  it('excludes forecast section when forecastData is null', () => {
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+      forecastData: null,
+    });
+
+    expect(html).not.toContain('Growth Forecast');
   });
 });

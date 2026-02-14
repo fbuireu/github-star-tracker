@@ -1,7 +1,13 @@
+import { FORECAST_WEEKS } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
 import { getTranslations, interpolate } from '@i18n';
-import { generateChartUrl, generateComparisonChartUrl, generatePerRepoChartUrl } from './chart';
-import { COLORS, TOP_REPOS_COUNT } from './constants';
+import {
+  generateChartUrl,
+  generateComparisonChartUrl,
+  generateForecastChartUrl,
+  generatePerRepoChartUrl,
+} from './chart';
+import { COLORS, MIN_SNAPSHOTS_FOR_CHART, TOP_REPOS_COUNT } from './constants';
 import type { GenerateReportParams } from './shared';
 import { prepareReportData } from './shared';
 
@@ -17,6 +23,8 @@ export function generateHtmlReport({
   locale,
   history = null,
   includeCharts = true,
+  stargazerDiff = null,
+  forecastData = null,
 }: GenerateReportParams): string {
   const { summary } = results;
   const t = getTranslations(locale);
@@ -25,6 +33,9 @@ export function generateHtmlReport({
     previousTimestamp,
     locale,
   });
+
+  const hasChartHistory =
+    includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
 
   const rows = sorted
     .map((repo) => {
@@ -55,7 +66,7 @@ export function generateHtmlReport({
 
   const topRepos = sorted.slice(0, TOP_REPOS_COUNT).map((r) => r.fullName);
   const comparisonChartUrl =
-    includeCharts && history && history.snapshots.length >= 2 && topRepos.length > 0
+    hasChartHistory && topRepos.length > 0
       ? generateComparisonChartUrl({
           history,
           repoNames: topRepos,
@@ -64,25 +75,23 @@ export function generateHtmlReport({
         })
       : null;
 
-  const individualRepoChartsHtml =
-    includeCharts && history && history.snapshots.length >= 2
-      ? topRepos
-          .map((repoName) => {
-            const chartUrl = generatePerRepoChartUrl({ history, repoFullName: repoName, locale });
-            if (!chartUrl) return '';
-            return `
+  const individualRepoChartsHtml = hasChartHistory
+    ? topRepos
+        .map((repoName) => {
+          const chartUrl = generatePerRepoChartUrl({ history, repoFullName: repoName, locale });
+          if (!chartUrl) return '';
+          return `
         <div style="margin-top:16px;">
           <h4 style="font-size:14px;margin-bottom:8px;">${repoName}</h4>
           <img src="${chartUrl}" alt="${repoName}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
-          })
-          .filter(Boolean)
-          .join('')
-      : '';
+        })
+        .filter(Boolean)
+        .join('')
+    : '';
 
-  const chartSection =
-    includeCharts && history && history.snapshots.length >= 2
-      ? `
+  const chartSection = hasChartHistory
+    ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">📈 ${t.report.starTrend}</h2>
         <img src="${generateChartUrl({ history, title: t.report.starHistory, locale })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
@@ -101,7 +110,63 @@ export function generateHtmlReport({
             : ''
         }
       </div>`
-      : '';
+    : '';
+
+  const stargazerSection =
+    stargazerDiff && stargazerDiff.totalNew > 0
+      ? `
+      <div style="margin-top:24px;">
+        <h2 style="font-size:18px;margin-bottom:12px;">👤 ${t.stargazers.sectionTitle}</h2>
+        <p>${interpolate({ template: t.stargazers.newStargazers, params: { count: stargazerDiff.totalNew } })}</p>
+        ${stargazerDiff.entries
+          .map(
+            (entry) => `
+        <div style="margin-top:12px;">
+          <h3 style="font-size:14px;margin-bottom:8px;">${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</h3>
+          ${entry.newStargazers
+            .map(
+              (s) => `
+          <div style="display:flex;align-items:center;margin:4px 0;">
+            <img src="${s.avatarUrl}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
+            <a href="${s.profileUrl}" style="color:${COLORS.link};text-decoration:none;font-weight:600;">${s.login}</a>
+            <span style="color:${COLORS.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: s.starredAt.split('T')[0] } })}</span>
+          </div>`,
+            )
+            .join('')}
+        </div>`,
+          )
+          .join('')}
+      </div>`
+      : stargazerDiff
+        ? `
+      <div style="margin-top:24px;">
+        <h2 style="font-size:18px;margin-bottom:12px;">👤 ${t.stargazers.sectionTitle}</h2>
+        <p style="color:${COLORS.neutral};">${t.stargazers.noNewStargazers}</p>
+      </div>`
+        : '';
+
+  const forecastSection = forecastData
+    ? `
+      <div style="margin-top:24px;">
+        <h2 style="font-size:18px;margin-bottom:12px;">🔮 ${t.forecast.sectionTitle}</h2>
+        ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t })}
+        ${
+          hasChartHistory
+            ? `<div style="margin-top:16px;text-align:center;">
+          <img src="${generateForecastChartUrl({ history, forecastData, locale })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+        </div>`
+            : ''
+        }
+        ${forecastData.repos
+          .map(
+            (repo) => `
+        <div style="margin-top:16px;">
+          ${buildHtmlForecastTable({ title: repo.repoFullName, forecasts: repo.forecasts, t })}
+        </div>`,
+          )
+          .join('')}
+      </div>`
+    : '';
 
   return `<!DOCTYPE html>
 <html>
@@ -148,6 +213,10 @@ export function generateHtmlReport({
 
   ${removedSection}
 
+  ${stargazerSection}
+
+  ${forecastSection}
+
   <div style="margin-top:24px;padding-top:16px;border-top:1px solid ${COLORS.cellBorder};text-align:center;color:${COLORS.neutral};font-size:12px;">
     ${interpolate({ template: t.footer.generated, params: { project: `<a href="https://github.com/fbuireu/github-star-tracker" style="color:${COLORS.link};">GitHub Star Tracker</a>`, date: new Date().toISOString() } })}
     <br>
@@ -155,4 +224,44 @@ export function generateHtmlReport({
   </div>
 </body>
 </html>`;
+}
+
+interface BuildHtmlForecastTableParams {
+  title: string;
+  forecasts: { method: string; points: { weekOffset: number; predicted: number }[] }[];
+  t: ReturnType<typeof getTranslations>;
+}
+
+function buildHtmlForecastTable({ title, forecasts, t }: BuildHtmlForecastTableParams): string {
+  const weekHeaders = Array.from({ length: FORECAST_WEEKS }, (_, i) =>
+    interpolate({ template: t.forecast.week, params: { n: i + 1 } }),
+  );
+
+  const methodLabel = (method: string): string => {
+    if (method === 'linear-regression') return t.forecast.linearRegression;
+    if (method === 'weighted-moving-average') return t.forecast.weightedMovingAverage;
+    return method;
+  };
+
+  return `
+    <h4 style="font-size:14px;margin-bottom:8px;">${title}</h4>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:${COLORS.tableHeaderBg};">
+          <th style="padding:6px 8px;text-align:left;border-bottom:2px solid ${COLORS.tableHeaderBorder};font-size:12px;">${t.forecast.method}</th>
+          ${weekHeaders.map((h) => `<th style="padding:6px 8px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};font-size:12px;">${h}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${forecasts
+          .map(
+            (f) => `
+        <tr>
+          <td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};font-size:12px;">${methodLabel(f.method)}</td>
+          ${f.points.map((p) => `<td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};text-align:right;font-size:12px;">${p.predicted}</td>`).join('')}
+        </tr>`,
+          )
+          .join('')}
+      </tbody>
+    </table>`;
 }

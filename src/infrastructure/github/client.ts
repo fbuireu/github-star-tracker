@@ -18,17 +18,19 @@ export async function fetchRepos({ octokit, config }: FetchReposParams): Promise
     config.visibility === 'public' || config.visibility === 'private' ? config.visibility : 'all';
 
   try {
-    while (true) {
+    let dataLength: number;
+
+    do {
       const { data } = await octokit.rest.repos.listForAuthenticatedUser({
         ...params,
         page,
       } as Parameters<Octokit['rest']['repos']['listForAuthenticatedUser']>[0]);
 
-      if (data.length === 0) break;
-      repos.push(...(data as unknown as GitHubRepo[]));
-      if (data.length < REPOS_PER_PAGE) break;
+      dataLength = data.length;
+      if (dataLength === 0) break;
+      repos.push(...data);
       page++;
-    }
+    } while (dataLength >= REPOS_PER_PAGE);
   } catch (error) {
     const err = error as Error & { status?: number };
     const status = err.status ? ` (HTTP ${err.status})` : '';

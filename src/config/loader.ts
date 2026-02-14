@@ -19,6 +19,7 @@ interface FileConfig {
   includeCharts?: boolean;
   locale?: string;
   notificationThreshold?: number | 'auto';
+  trackStargazers?: boolean;
 }
 
 export function loadConfigFile(configPath: string): FileConfig {
@@ -48,6 +49,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     includeCharts: parsed.include_charts as boolean | undefined,
     locale: parsed.locale as string | undefined,
     notificationThreshold: parsed.notification_threshold as number | 'auto' | undefined,
+    trackStargazers: parsed.track_stargazers as boolean | undefined,
   };
 }
 
@@ -66,6 +68,7 @@ export function loadConfig(): Config {
   const inputIncludeCharts = core.getInput('include-charts');
   const inputLocale = core.getInput('locale');
   const inputNotificationThreshold = core.getInput('notification-threshold');
+  const inputTrackStargazers = core.getInput('track-stargazers');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -77,7 +80,7 @@ export function loadConfig(): Config {
     );
   }
 
-  const locale = (inputLocale || fileConfig.locale || DEFAULTS.locale) as Locale;
+  const locale = inputLocale || fileConfig.locale || DEFAULTS.locale;
   if (!isValidLocale(locale)) {
     core.warning(`Invalid locale "${locale}". Falling back to "en"`);
   }
@@ -104,6 +107,8 @@ export function loadConfig(): Config {
       parseNotificationThreshold({ value: inputNotificationThreshold }) ??
       fileConfig.notificationThreshold ??
       DEFAULTS.notificationThreshold,
+    trackStargazers:
+      parseBool(inputTrackStargazers) ?? fileConfig.trackStargazers ?? DEFAULTS.trackStargazers,
   };
 
   core.info(

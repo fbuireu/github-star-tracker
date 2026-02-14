@@ -11,8 +11,17 @@ vi.mock('@actions/core', () => ({
 }));
 
 import * as core from '@actions/core';
+import type { StargazerMap } from '@domain/stargazers';
 import type { History } from '@domain/types';
-import { commitAndPush, readHistory, writeBadge, writeHistory, writeReport } from './storage';
+import {
+  commitAndPush,
+  readHistory,
+  readStargazers,
+  writeBadge,
+  writeHistory,
+  writeReport,
+  writeStargazers,
+} from './storage';
 
 describe('readHistory', () => {
   beforeEach(() => {
@@ -102,6 +111,49 @@ describe('writeBadge', () => {
     writeBadge({ dataDir: '/data', svg });
 
     expect(fs.writeFileSync).toHaveBeenCalledWith(path.join('/data', 'stars-badge.svg'), svg);
+  });
+});
+
+describe('readStargazers', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns empty map when file does not exist', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const result = readStargazers('/data');
+
+    expect(result).toEqual({});
+  });
+
+  it('reads and parses stargazers file when it exists', () => {
+    const stargazerMap: StargazerMap = { 'user/repo-a': ['alice', 'bob'] };
+
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(stargazerMap));
+
+    const result = readStargazers('/data');
+
+    expect(result).toEqual(stargazerMap);
+    expect(fs.readFileSync).toHaveBeenCalledWith(path.join('/data', 'stargazers.json'), 'utf8');
+  });
+});
+
+describe('writeStargazers', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('writes stargazer map to file', () => {
+    const stargazerMap: StargazerMap = { 'user/repo-a': ['alice', 'bob'] };
+
+    writeStargazers({ dataDir: '/data', stargazerMap });
+
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      path.join('/data', 'stargazers.json'),
+      JSON.stringify(stargazerMap, null, 2),
+    );
   });
 });
 

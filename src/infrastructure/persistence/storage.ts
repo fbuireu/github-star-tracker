@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as core from '@actions/core';
+import type { StargazerMap } from '@domain/stargazers';
 import type { History } from '@domain/types';
 import { execute } from '../git/commands';
 
@@ -41,6 +42,25 @@ interface WriteBadgeParams {
 export function writeBadge({ dataDir, svg }: WriteBadgeParams): void {
   const filePath = path.join(dataDir, 'stars-badge.svg');
   fs.writeFileSync(filePath, svg);
+}
+
+export function readStargazers(dataDir: string): StargazerMap {
+  const filePath = path.join(dataDir, 'stargazers.json');
+  if (!fs.existsSync(filePath)) {
+    return {};
+  }
+  const content = fs.readFileSync(filePath, 'utf8');
+  return JSON.parse(content) as StargazerMap;
+}
+
+interface WriteStargazersParams {
+  dataDir: string;
+  stargazerMap: StargazerMap;
+}
+
+export function writeStargazers({ dataDir, stargazerMap }: WriteStargazersParams): void {
+  const filePath = path.join(dataDir, 'stargazers.json');
+  fs.writeFileSync(filePath, JSON.stringify(stargazerMap, null, 2));
 }
 
 interface CommitAndPushParams {

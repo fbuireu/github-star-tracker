@@ -16,4 +16,5 @@ export interface Config {
   includeCharts: boolean;
   locale: Locale;
   notificationThreshold: number | 'auto';
+  trackStargazers: boolean;
 }

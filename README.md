@@ -21,6 +21,8 @@
 - ✅ **Automated scheduling** — Daily, weekly, or on-demand runs
 - 📈 **Historical tracking** — Up to 52 weeks of star data preserved
 - 🎯 **Smart filters** — Track by visibility, exclude repos, minimum stars
+- 👤 **Stargazer tracking** — See who starred your repos (opt-in)
+- 🔮 **Growth forecast** — Predict star count trends for the next 4 weeks
 
 ### 📊 Reports & Visualizations
 
@@ -37,7 +39,7 @@
 
 ### 🔒 Quality & Security
 
-- ✅ **95%+ test coverage** — +120 tests ensuring reliability
+- ✅ **95%+ test coverage** — +200 tests ensuring reliability
 - 🔒 **Secure by design** — PATs with minimal scopes, no data leaks
 - 📦 **Zero runtime deps** — Bundled action, fast execution
 - 🔄 **CI/CD verified** — Every commit tested and validated
@@ -132,6 +134,7 @@ That's it! The action will track stars and generate reports automatically.
 | **[Viewing Reports](../../wiki/Viewing-Reports)**                     | Multiple ways to access your data                |
 | **[Data Management](../../wiki/Data-Management)**                     | How data is stored and managed                   |
 | **[Internationalization](<../../wiki/Internationalization-(i18n)>)**  | Multi-language support and localization          |
+| **[Known Limitations](../../wiki/Known-Limitations)**                 | Technical constraints and design trade-offs      |
 | **[Troubleshooting](../../wiki/Troubleshooting)**                     | Common issues and solutions                      |
 
 ---
@@ -152,6 +155,8 @@ flowchart TD
     init["Initialize orphan branch"]
     read["Deserialize previous  state snapshot"]
     compare["Compute delta metrics"]
+    stargazers["Fetch stargazers (opt-in)"]
+    forecast["Compute growth forecast"]
     md["Markdown report"]
     json["JSON dataset"]
     svg["SVG badge"]
@@ -163,7 +168,8 @@ flowchart TD
 
     trigger --> config --> fetch --> filter
     filter --> init --> read --> compare
-    compare --> md & json & svg & html
+    compare --> stargazers --> forecast
+    forecast --> md & json & svg & html
     md & json & svg & html --> commit --> setout --> email
     email -->|Yes| send
 
@@ -174,6 +180,8 @@ flowchart TD
     style init fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style read fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style compare fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style stargazers fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style forecast fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style md fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
     style json fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
     style svg fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
@@ -266,6 +274,7 @@ Create `.github/star-tracker-config.json`:
 | `include-charts` | `true`              | Enable star trend charts (true/false)                |
 | `data-branch`    | `star-tracker-data` | Branch name for storing tracking data                |
 | `max-history`    | `52`                | Maximum snapshots to keep in history (weeks)         |
+| `track-stargazers` | `false`           | Track individual stargazers per repo (true/false)    |
 
 ### Filtering Options
 
@@ -307,7 +316,7 @@ Create `.github/star-tracker-config.json`:
     echo "New stars: ${{ steps.tracker.outputs.new-stars }}"
 ```
 
-Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`, `lost-stars`, `should-notify`
+Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`, `lost-stars`, `should-notify`, `new-stargazers`
 
 ---
 
@@ -411,6 +420,7 @@ Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`,
     min-stars: '5'
     locale: 'en'
     include-charts: true
+    track-stargazers: true
     max-history: '52'
     smtp-host: smtp.gmail.com
     smtp-port: '587'
@@ -442,6 +452,19 @@ Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`,
 - Set `min-stars` to filter low-activity repos
 - Disable `include-charts` if not needed
 - Use `visibility: 'public'` to reduce API calls
+
+---
+
+## Known Limitations
+
+- **Stargazer API rate limits** — Fetching stargazers requires `ceil(stars / 100)` API calls per repo. Users with many high-star repos may approach the 5,000 requests/hour GitHub rate limit. Use `track-stargazers` only when needed.
+- **Forecast accuracy** — Predictions are based on historical trends and assume growth patterns continue. Viral events, repo archival, or other discontinuities are not modeled.
+- **Chart rendering** — Charts are static images generated via QuickChart.io (external service). No interactive zooming or tooltips.
+- **Email client compatibility** — HTML reports use inline styles for maximum compatibility, but some email clients may render differently. `<details>` collapsible sections are only used in Markdown reports, not HTML emails.
+- **Snapshot granularity** — Data is captured per-run (typically daily/weekly). Intra-day changes are not tracked.
+- **GitHub token scope** — Requires a Personal Access Token (PAT); the default `GITHUB_TOKEN` provided by Actions is insufficient for listing repos across the account.
+
+📖 **[Detailed limitations guide](../../wiki/Known-Limitations)** — Technical reasons, design trade-offs, and mitigation strategies
 
 ---
 
@@ -510,4 +533,4 @@ The core logic, architecture decisions, and implementation were developed by the
 
 ## License
 
-[AGPL-3.0](LICENSE) © [Ferran Buireu](https://github.com/fbuireu)
+[AGPL-3.0](LICENSE) © Made with 🤘🏼 by [Ferran Buireu](https://github.com/fbuireu)

@@ -40,6 +40,25 @@
   },
   "footer": {
     "generated": "Generat per {project} el {date}",
-    "madeBy": "Fet per {author}"
+    "madeBy": "Fet amb 🤘 per {author}"
+  },
+  "stargazers": {
+    "sectionTitle": "Nous Stargazers",
+    "newStargazers": "{count} nous stargazers des de la darrera execució",
+    "starredOn": "va marcar estrella el {date}",
+    "noNewStargazers": "Sense nous stargazers des de la darrera execució",
+    "stargazerCount": "{count} nous"
+  },
+  "forecast": {
+    "sectionTitle": "Previsió de Creixement",
+    "predictedStars": "Estrelles Previstes",
+    "week": "Setmana {n}",
+    "linearRegression": "Regressió Lineal",
+    "weightedMovingAverage": "Mitjana Mòbil Ponderada",
+    "aggregate": "Previsió Agregada",
+    "byRepository": "Per Repositori",
+    "insufficientData": "Dades insuficients per a la previsió (calen almenys 3 snapshots)",
+    "method": "Mètode",
+    "predicted": "Previst"
   }
 }

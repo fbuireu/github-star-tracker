@@ -1,3 +1,5 @@
+import type { ForecastData } from '@domain/forecast';
+import type { StargazerDiffResult } from '@domain/stargazers';
 import type { ComparisonResults } from '@domain/types';
 import { describe, expect, it } from 'vitest';
 import { generateMarkdownReport } from './markdown';
@@ -207,5 +209,142 @@ describe('generateMarkdownReport', () => {
     expect(report).toContain('#### user/repo-a');
     expect(report).toContain('#### user/repo-b');
     expect(report).toContain('</details>');
+  });
+
+  it('includes stargazer section with new stargazers', () => {
+    const stargazerDiff: StargazerDiffResult = {
+      entries: [
+        {
+          repoFullName: 'user/repo-a',
+          newStargazers: [
+            {
+              login: 'alice',
+              avatarUrl: 'https://avatars.githubusercontent.com/alice',
+              profileUrl: 'https://github.com/alice',
+              starredAt: '2026-01-15T10:00:00Z',
+            },
+          ],
+        },
+      ],
+      totalNew: 1,
+    };
+
+    const report = generateMarkdownReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+      stargazerDiff,
+    });
+
+    expect(report).toContain('New Stargazers');
+    expect(report).toContain('alice');
+    expect(report).toContain('user/repo-a');
+    expect(report).toContain('2026-01-15');
+    expect(report).toContain('<details>');
+  });
+
+  it('shows no-new-stargazers message when diff is empty', () => {
+    const stargazerDiff: StargazerDiffResult = {
+      entries: [],
+      totalNew: 0,
+    };
+
+    const report = generateMarkdownReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+      stargazerDiff,
+    });
+
+    expect(report).toContain('New Stargazers');
+    expect(report).toContain('No new stargazers since last run');
+  });
+
+  it('excludes stargazer section when stargazerDiff is null', () => {
+    const report = generateMarkdownReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+      stargazerDiff: null,
+    });
+
+    expect(report).not.toContain('New Stargazers');
+  });
+
+  it('includes forecast section with tables', () => {
+    const forecastData: ForecastData = {
+      aggregate: {
+        forecasts: [
+          {
+            method: 'linear-regression',
+            points: [
+              { weekOffset: 1, predicted: 25 },
+              { weekOffset: 2, predicted: 27 },
+              { weekOffset: 3, predicted: 29 },
+              { weekOffset: 4, predicted: 31 },
+            ],
+          },
+          {
+            method: 'weighted-moving-average',
+            points: [
+              { weekOffset: 1, predicted: 24 },
+              { weekOffset: 2, predicted: 25 },
+              { weekOffset: 3, predicted: 26 },
+              { weekOffset: 4, predicted: 27 },
+            ],
+          },
+        ],
+      },
+      repos: [
+        {
+          repoFullName: 'user/repo-a',
+          forecasts: [
+            {
+              method: 'linear-regression',
+              points: [
+                { weekOffset: 1, predicted: 17 },
+                { weekOffset: 2, predicted: 19 },
+                { weekOffset: 3, predicted: 21 },
+                { weekOffset: 4, predicted: 23 },
+              ],
+            },
+            {
+              method: 'weighted-moving-average',
+              points: [
+                { weekOffset: 1, predicted: 16 },
+                { weekOffset: 2, predicted: 17 },
+                { weekOffset: 3, predicted: 18 },
+                { weekOffset: 4, predicted: 19 },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const report = generateMarkdownReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+      forecastData,
+    });
+
+    expect(report).toContain('Growth Forecast');
+    expect(report).toContain('Linear Regression');
+    expect(report).toContain('Weighted Moving Average');
+    expect(report).toContain('Week 1');
+    expect(report).toContain('25');
+    expect(report).toContain('user/repo-a');
+  });
+
+  it('excludes forecast section when forecastData is null', () => {
+    const report = generateMarkdownReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+      forecastData: null,
+    });
+
+    expect(report).not.toContain('Growth Forecast');
   });
 });

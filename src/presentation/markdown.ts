@@ -1,7 +1,13 @@
+import { FORECAST_WEEKS } from '@domain/forecast';
 import { deltaIndicator, trendIcon } from '@domain/formatting';
 import { getTranslations, interpolate } from '@i18n';
-import { generateChartUrl, generateComparisonChartUrl, generatePerRepoChartUrl } from './chart';
-import { TOP_REPOS_COUNT } from './constants';
+import {
+  generateChartUrl,
+  generateComparisonChartUrl,
+  generateForecastChartUrl,
+  generatePerRepoChartUrl,
+} from './chart';
+import { MIN_SNAPSHOTS_FOR_CHART, TOP_REPOS_COUNT } from './constants';
 import type { GenerateReportParams } from './shared';
 import { prepareReportData } from './shared';
 
@@ -11,6 +17,8 @@ export function generateMarkdownReport({
   locale,
   history = null,
   includeCharts = true,
+  stargazerDiff = null,
+  forecastData = null,
 }: GenerateReportParams): string {
   const { summary } = results;
   const t = getTranslations(locale);
@@ -19,6 +27,9 @@ export function generateMarkdownReport({
     previousTimestamp,
     locale,
   });
+
+  const hasChartHistory =
+    includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
 
   const header = [
     `# ${t.report.title}`,
@@ -34,7 +45,7 @@ export function generateMarkdownReport({
 
   const topRepos = sorted.slice(0, TOP_REPOS_COUNT).map((r) => r.fullName);
   const comparisonChartUrl =
-    includeCharts && history && history.snapshots.length >= 2 && topRepos.length > 0
+    hasChartHistory && topRepos.length > 0
       ? generateComparisonChartUrl({
           history,
           repoNames: topRepos,
@@ -43,42 +54,40 @@ export function generateMarkdownReport({
         })
       : null;
 
-  const individualRepoCharts =
-    includeCharts && history && history.snapshots.length >= 2
-      ? topRepos.flatMap((repoName) => {
-          const chartUrl = generatePerRepoChartUrl({ history, repoFullName: repoName, locale });
-          if (!chartUrl) return [];
-          return [`#### ${repoName}`, '', `![${repoName}](${chartUrl})`, ''];
-        })
-      : [];
+  const individualRepoCharts = hasChartHistory
+    ? topRepos.flatMap((repoName) => {
+        const chartUrl = generatePerRepoChartUrl({ history, repoFullName: repoName, locale });
+        if (!chartUrl) return [];
+        return [`#### ${repoName}`, '', `![${repoName}](${chartUrl})`, ''];
+      })
+    : [];
 
-  const chartSection =
-    includeCharts && history && history.snapshots.length >= 2
-      ? [
-          `## 📈 ${t.report.starTrend}`,
-          '',
-          `![Star History](${generateChartUrl({ history, title: t.report.starHistory, locale })})`,
-          '',
-          ...(comparisonChartUrl
-            ? [
-                `### ${t.report.byRepository}`,
-                '',
-                `![${t.report.topRepositories}](${comparisonChartUrl})`,
-                '',
-              ]
-            : []),
-          ...(individualRepoCharts.length > 0
-            ? [
-                '<details>',
-                `<summary>${t.report.individualRepoCharts}</summary>`,
-                '',
-                ...individualRepoCharts,
-                '</details>',
-                '',
-              ]
-            : []),
-        ]
-      : [];
+  const chartSection = hasChartHistory
+    ? [
+        `## 📈 ${t.report.starTrend}`,
+        '',
+        `![Star History](${generateChartUrl({ history, title: t.report.starHistory, locale })})`,
+        '',
+        ...(comparisonChartUrl
+          ? [
+              `### ${t.report.byRepository}`,
+              '',
+              `![${t.report.topRepositories}](${comparisonChartUrl})`,
+              '',
+            ]
+          : []),
+        ...(individualRepoCharts.length > 0
+          ? [
+              '<details>',
+              `<summary>${t.report.individualRepoCharts}</summary>`,
+              '',
+              ...individualRepoCharts,
+              '</details>',
+              '',
+            ]
+          : []),
+      ]
+    : [];
 
   const repoTable =
     sorted.length > 0
@@ -135,6 +144,71 @@ export function generateMarkdownReport({
           '',
         ];
 
+  const stargazerSection =
+    stargazerDiff && stargazerDiff.totalNew > 0
+      ? [
+          `## 👤 ${t.stargazers.sectionTitle}`,
+          '',
+          interpolate({
+            template: t.stargazers.newStargazers,
+            params: { count: stargazerDiff.totalNew },
+          }),
+          '',
+          ...stargazerDiff.entries.flatMap((entry) => [
+            '<details>',
+            `<summary>${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</summary>`,
+            '',
+            ...entry.newStargazers.map(
+              (s) =>
+                `- <img src="${s.avatarUrl}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${s.login}](${s.profileUrl}) — ${interpolate({ template: t.stargazers.starredOn, params: { date: s.starredAt.split('T')[0] } })}`,
+            ),
+            '',
+            '</details>',
+            '',
+          ]),
+        ]
+      : stargazerDiff
+        ? [`## 👤 ${t.stargazers.sectionTitle}`, '', t.stargazers.noNewStargazers, '']
+        : [];
+
+  const forecastSection = forecastData
+    ? [
+        `## 🔮 ${t.forecast.sectionTitle}`,
+        '',
+        buildForecastTable({
+          title: t.forecast.aggregate,
+          forecasts: forecastData.aggregate.forecasts,
+          t,
+        }),
+        ...(hasChartHistory
+          ? [
+              '',
+              `![${t.forecast.sectionTitle}](${generateForecastChartUrl({ history, forecastData, locale })})`,
+              '',
+            ]
+          : []),
+        ...(forecastData.repos.length > 0
+          ? [
+              `### ${t.forecast.byRepository}`,
+              '',
+              ...forecastData.repos.flatMap((repo) => [
+                '<details>',
+                `<summary>${repo.repoFullName}</summary>`,
+                '',
+                buildForecastTable({
+                  title: repo.repoFullName,
+                  forecasts: repo.forecasts,
+                  t,
+                }),
+                '',
+                '</details>',
+                '',
+              ]),
+            ]
+          : []),
+      ]
+    : [];
+
   const footer = [
     '---',
     `*${interpolate({ template: t.footer.generated, params: { project: '[GitHub Star Tracker](https://github.com/fbuireu/github-star-tracker)', date: new Date().toISOString() } })}*`,
@@ -149,6 +223,39 @@ export function generateMarkdownReport({
     ...newSection,
     ...removedSection,
     ...summarySection,
+    ...stargazerSection,
+    ...forecastSection,
     ...footer,
   ].join('\n');
+}
+
+interface BuildForecastTableParams {
+  title: string;
+  forecasts: { method: string; points: { weekOffset: number; predicted: number }[] }[];
+  t: ReturnType<typeof getTranslations>;
+}
+
+function buildForecastTable({ title, forecasts, t }: BuildForecastTableParams): string {
+  const weekHeaders = Array.from({ length: FORECAST_WEEKS }, (_, i) =>
+    interpolate({ template: t.forecast.week, params: { n: i + 1 } }),
+  );
+
+  const methodLabel = (method: string): string => {
+    if (method === 'linear-regression') return t.forecast.linearRegression;
+    if (method === 'weighted-moving-average') return t.forecast.weightedMovingAverage;
+    return method;
+  };
+
+  const lines = [
+    `**${title}**`,
+    '',
+    `| ${t.forecast.method} | ${weekHeaders.join(' | ')} |`,
+    `|:---|${weekHeaders.map(() => '---:').join('|')}|`,
+    ...forecasts.map(
+      (f) =>
+        `| ${methodLabel(f.method)} | ${f.points.map((p) => String(p.predicted)).join(' | ')} |`,
+    ),
+  ];
+
+  return lines.join('\n');
 }

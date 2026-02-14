@@ -40,6 +40,25 @@
   },
   "footer": {
     "generated": "Generato da {project} il {date}",
-    "madeBy": "Realizzato da {author}"
+    "madeBy": "Realizzato con 🤘 da {author}"
+  },
+  "stargazers": {
+    "sectionTitle": "Nuovi Stargazer",
+    "newStargazers": "{count} nuovi stargazer dall'ultima esecuzione",
+    "starredOn": "ha messo la stella il {date}",
+    "noNewStargazers": "Nessun nuovo stargazer dall'ultima esecuzione",
+    "stargazerCount": "{count} nuovi"
+  },
+  "forecast": {
+    "sectionTitle": "Previsione di Crescita",
+    "predictedStars": "Stelle Previste",
+    "week": "Settimana {n}",
+    "linearRegression": "Regressione Lineare",
+    "weightedMovingAverage": "Media Mobile Ponderata",
+    "aggregate": "Previsione Aggregata",
+    "byRepository": "Per Repository",
+    "insufficientData": "Dati insufficienti per la previsione (servono almeno 3 snapshot)",
+    "method": "Metodo",
+    "predicted": "Previsto"
   }
 }

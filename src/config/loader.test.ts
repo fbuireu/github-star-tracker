@@ -213,4 +213,30 @@ describe('loadConfig', () => {
     const config = loadConfig();
     expect(config.excludeRepos).toEqual(['repo-a', 'repo-b']);
   });
+
+  it('defaults track-stargazers to false', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+    expect(config.trackStargazers).toBe(false);
+  });
+
+  it('parses track-stargazers input as true', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'track-stargazers') return 'true';
+      return '';
+    });
+
+    const config = loadConfig();
+    expect(config.trackStargazers).toBe(true);
+  });
+
+  it('reads track_stargazers from config file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('track_stargazers: true');
+
+    const config = loadConfig();
+    expect(config.trackStargazers).toBe(true);
+  });
 });

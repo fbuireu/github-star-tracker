@@ -4,6 +4,7 @@ import {
   buildMilestoneAnnotations,
   generateChartUrl,
   generateComparisonChartUrl,
+  generateForecastChartUrl,
   generatePerRepoChartUrl,
 } from './chart';
 
@@ -296,6 +297,92 @@ describe('chart', () => {
         const config = JSON.parse(decodedUrl.split('&c=')[1]);
         expect(config.data.datasets[0].label).toBe('alice/repo-a');
         expect(config.data.datasets[1].label).toBe('bob/repo-b');
+      }
+    });
+  });
+
+  describe('generateForecastChartUrl', () => {
+    const forecastData = {
+      aggregate: {
+        forecasts: [
+          {
+            method: 'linear-regression' as const,
+            points: [
+              { weekOffset: 1, predicted: 170 },
+              { weekOffset: 2, predicted: 195 },
+              { weekOffset: 3, predicted: 220 },
+              { weekOffset: 4, predicted: 245 },
+            ],
+          },
+          {
+            method: 'weighted-moving-average' as const,
+            points: [
+              { weekOffset: 1, predicted: 165 },
+              { weekOffset: 2, predicted: 180 },
+              { weekOffset: 3, predicted: 195 },
+              { weekOffset: 4, predicted: 210 },
+            ],
+          },
+        ],
+      },
+      repos: [],
+    };
+
+    it('should generate forecast chart with dashed lines', () => {
+      const url = generateForecastChartUrl({
+        history: mockHistory,
+        forecastData,
+        locale: 'en',
+      });
+
+      expect(url).toBeDefined();
+      if (url) {
+        const decodedUrl = decodeURIComponent(url);
+        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        expect(config.data.datasets).toHaveLength(3);
+        expect(config.data.datasets[0].borderDash).toBeUndefined();
+        expect(config.data.datasets[1].borderDash).toEqual([8, 4]);
+        expect(config.data.datasets[2].borderDash).toEqual([4, 4]);
+      }
+    });
+
+    it('should include historical and forecast labels', () => {
+      const url = generateForecastChartUrl({
+        history: mockHistory,
+        forecastData,
+        locale: 'en',
+      });
+
+      expect(url).toBeDefined();
+      if (url) {
+        const decodedUrl = decodeURIComponent(url);
+        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        expect(config.data.labels).toHaveLength(7);
+        expect(config.data.labels[3]).toContain('Week');
+      }
+    });
+
+    it('should return null when history has less than 2 snapshots', () => {
+      const url = generateForecastChartUrl({
+        history: { snapshots: [mockHistory.snapshots[0]] },
+        forecastData,
+        locale: 'en',
+      });
+      expect(url).toBeNull();
+    });
+
+    it('should enable legend', () => {
+      const url = generateForecastChartUrl({
+        history: mockHistory,
+        forecastData,
+        locale: 'en',
+      });
+
+      expect(url).toBeDefined();
+      if (url) {
+        const decodedUrl = decodeURIComponent(url);
+        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        expect(config.options.plugins.legend.display).toBe(true);
       }
     });
   });

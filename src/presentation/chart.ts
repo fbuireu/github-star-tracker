@@ -1,6 +1,7 @@
+import type { ForecastData } from '@domain/forecast';
 import { formatDate } from '@domain/formatting';
 import type { History } from '@domain/types';
-import { getTranslations, type Locale } from '@i18n';
+import { getTranslations, interpolate, type Locale } from '@i18n';
 import { CHART, CHART_COMPARISON_COLORS, COLORS } from './constants';
 
 interface ChartConfig {
@@ -21,6 +22,7 @@ interface Dataset {
   tension: number;
   pointRadius: number;
   pointHoverRadius: number;
+  borderDash?: number[];
 }
 
 interface MilestoneAnnotation {
@@ -339,5 +341,95 @@ export function generateComparisonChartUrl({
   });
 
   const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: true });
+  return buildChartUrl(config);
+}
+
+interface GenerateForecastChartUrlParams {
+  history: History;
+  forecastData: ForecastData;
+  locale: Locale;
+  title?: string;
+}
+
+export function generateForecastChartUrl({
+  history,
+  forecastData,
+  locale,
+  title,
+}: GenerateForecastChartUrlParams): string | null {
+  if (!history.snapshots || history.snapshots.length < 2) {
+    return null;
+  }
+
+  const t = getTranslations(locale);
+  const chartTitle = title ?? t.forecast.sectionTitle;
+  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+
+  const historicalLabels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
+  const historicalData = snapshots.map((s) => s.totalStars);
+
+  const forecastLabels = forecastData.aggregate.forecasts[0].points.map((p) =>
+    interpolate({ template: t.forecast.week, params: { n: p.weekOffset } }),
+  );
+
+  const allLabels = [...historicalLabels, ...forecastLabels];
+
+  const lrForecast = forecastData.aggregate.forecasts.find((f) => f.method === 'linear-regression');
+  const wmaForecast = forecastData.aggregate.forecasts.find(
+    (f) => f.method === 'weighted-moving-average',
+  );
+
+  const lastHistorical = historicalData.at(-1) ?? 0;
+  const padLength = historicalData.length;
+
+  const datasets: Dataset[] = [
+    {
+      label: t.report.starHistory,
+      data: [...historicalData, ...Array(forecastLabels.length).fill(null)],
+      borderColor: COLORS.accent,
+      backgroundColor: `${COLORS.accent}33`,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 3,
+      pointHoverRadius: 6,
+    },
+    {
+      label: t.forecast.linearRegression,
+      data: [
+        ...Array(padLength - 1).fill(null),
+        lastHistorical,
+        ...(lrForecast?.points.map((p) => p.predicted) ?? []),
+      ],
+      borderColor: COLORS.positive,
+      backgroundColor: 'transparent',
+      fill: false,
+      tension: 0.4,
+      pointRadius: 2,
+      pointHoverRadius: 5,
+      borderDash: [8, 4],
+    },
+    {
+      label: t.forecast.weightedMovingAverage,
+      data: [
+        ...Array(padLength - 1).fill(null),
+        lastHistorical,
+        ...(wmaForecast?.points.map((p) => p.predicted) ?? []),
+      ],
+      borderColor: COLORS.negative,
+      backgroundColor: 'transparent',
+      fill: false,
+      tension: 0.4,
+      pointRadius: 2,
+      pointHoverRadius: 5,
+      borderDash: [4, 4],
+    },
+  ];
+
+  const config = buildChartConfig({
+    labels: allLabels,
+    datasets,
+    title: chartTitle,
+    showLegend: true,
+  });
   return buildChartUrl(config);
 }

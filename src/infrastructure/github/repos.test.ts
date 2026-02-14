@@ -46,6 +46,7 @@ const defaultConfig: Config = {
   includeCharts: false,
   locale: 'en',
   notificationThreshold: 0,
+  trackStargazers: false,
 };
 
 describe('filterRepos', () => {
