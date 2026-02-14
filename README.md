@@ -4,9 +4,9 @@
 
 **Track star count changes across your repositories — automatically and get notified!**
 
-[![CI](https://github.com/fbuireu/github-star-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/fbuireu/github-star-tracker/actions/workflows/ci.yml)
-[![Codecov](https://codecov.io/gh/fbuireu/github-star-tracker/branch/main/graph/badge.svg)](https://codecov.io/gh/fbuireu/github-star-tracker)
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![CI](https://img.shields.io/github/actions/workflow/status/fbuireu/github-star-tracker/ci.yml?style=flat-square&logo=github&label=CI)](https://github.com/fbuireu/github-star-tracker/actions/workflows/ci.yml)
+[![Codecov](https://img.shields.io/codecov/c/gh/fbuireu/github-star-tracker?style=flat-square&logo=codecov)](https://codecov.io/gh/fbuireu/github-star-tracker)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue?style=flat-square)](https://www.gnu.org/licenses/agpl-3.0)
 
 📚 **[Complete Documentation](../../wiki)** | 🚀 **[Getting Started](../../wiki/Getting-Started)** | 🔧 **[How It Works](../../wiki/How-It-Works)** | 🏗️ **[Technical Stack](../../wiki/Technical-Stack)** | ⚙️ **[Configuration](../../wiki/Configuration)** | 💡 **[Examples](../../wiki/Examples)** | 🐛 **[Troubleshooting](../../wiki/Troubleshooting)**
 
@@ -532,7 +532,7 @@ Access data in subsequent workflow steps for custom integrations.
 
 This project uses AI assistance primarily for documentation purposes. AI tools (GitHub Copilot, Claude) were used to:
 
-- Write and improve documentation (README, wiki pages, code comments)
+- Write and improve documentation (README, wiki pages)
 - Generate boilerplate code and configuration files
 - Assist with code reviews and suggestions
 
