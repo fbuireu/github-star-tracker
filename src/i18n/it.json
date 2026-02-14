@@ -1,19 +1,20 @@
 {
   "badge": {
-    "totalStars": "stelle totali"
+    "totalStars": "Stelle Totali"
   },
   "report": {
     "title": "Report Tracciamento Stelle",
     "total": "Totale",
     "change": "Variazione",
-    "comparedTo": "Confrontato con snapshot del",
+    "comparedTo": "Confrontato con snapshot del {date}",
     "firstRun": "prima esecuzione",
     "repositories": "Repository",
     "stars": "Stelle",
+    "starsCount": "{count} stelle",
     "trend": "Tendenza",
     "newRepositories": "Nuovi Repository",
     "removedRepositories": "Repository Rimossi",
-    "was": "aveva",
+    "removedRepoText": "{name} — aveva {count} stelle",
     "summary": "Riepilogo",
     "starsGained": "Stelle guadagnate",
     "starsLost": "Stelle perse",
@@ -28,11 +29,16 @@
   },
   "email": {
     "subject": "Report Tracciamento Stelle GitHub",
+    "subjectLine": "{subject}: {totalStars} ({delta})",
     "defaultFrom": "Tracciamento Stelle GitHub"
   },
   "trends": {
     "up": "in aumento",
     "down": "in diminuzione",
     "stable": "stabile"
+  },
+  "footer": {
+    "generated": "Generato da {project} il {date}",
+    "madeBy": "Realizzato da {author}"
   }
 }

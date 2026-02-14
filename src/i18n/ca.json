@@ -1,19 +1,20 @@
 {
   "badge": {
-    "totalStars": "estrelles totals"
+    "totalStars": "Estrelles Totals"
   },
   "report": {
     "title": "Informe de Seguiment d'Estrelles",
     "total": "Total",
     "change": "Canvi",
-    "comparedTo": "Comparat amb instantània del",
+    "comparedTo": "Comparat amb instantània del {date}",
     "firstRun": "primera execució",
     "repositories": "Repositoris",
     "stars": "Estrelles",
+    "starsCount": "{count} estrelles",
     "trend": "Tendència",
     "newRepositories": "Nous Repositoris",
     "removedRepositories": "Repositoris Eliminats",
-    "was": "tenia",
+    "removedRepoText": "{name} — tenia {count} estrelles",
     "summary": "Resum",
     "starsGained": "Estrelles guanyades",
     "starsLost": "Estrelles perdudes",
@@ -28,11 +29,16 @@
   },
   "email": {
     "subject": "Informe de Seguiment d'Estrelles a GitHub",
+    "subjectLine": "{subject}: {totalStars} ({delta})",
     "defaultFrom": "Seguiment d'Estrelles GitHub"
   },
   "trends": {
     "up": "pujant",
     "down": "baixant",
     "stable": "estable"
+  },
+  "footer": {
+    "generated": "Generat per {project} el {date}",
+    "madeBy": "Fet per {author}"
   }
 }

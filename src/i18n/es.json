@@ -1,19 +1,20 @@
 {
   "badge": {
-    "totalStars": "estrellas totales"
+    "totalStars": "Estrellas Totales"
   },
   "report": {
     "title": "Informe de Seguimiento de Estrellas",
     "total": "Total",
     "change": "Cambio",
-    "comparedTo": "Comparado con instantánea del",
+    "comparedTo": "Comparado con instantánea del {date}",
     "firstRun": "primera ejecución",
     "repositories": "Repositorios",
     "stars": "Estrellas",
+    "starsCount": "{count} estrellas",
     "trend": "Tendencia",
     "newRepositories": "Nuevos Repositorios",
     "removedRepositories": "Repositorios Eliminados",
-    "was": "tenía",
+    "removedRepoText": "{name} — tenía {count} estrellas",
     "summary": "Resumen",
     "starsGained": "Estrellas ganadas",
     "starsLost": "Estrellas perdidas",
@@ -28,11 +29,16 @@
   },
   "email": {
     "subject": "Informe de Seguimiento de Estrellas en GitHub",
+    "subjectLine": "{subject}: {totalStars} ({delta})",
     "defaultFrom": "Seguimiento de Estrellas GitHub"
   },
   "trends": {
     "up": "subiendo",
     "down": "bajando",
     "stable": "estable"
+  },
+  "footer": {
+    "generated": "Generado por {project} el {date}",
+    "madeBy": "Hecho por {author}"
   }
 }

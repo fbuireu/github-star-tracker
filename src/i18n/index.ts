@@ -1,47 +1,21 @@
+import { LOCALES } from '@config/defaults';
+import type { Locale } from '@config/types';
 import ca from './ca.json';
 import en from './en.json';
 import es from './es.json';
 import it from './it.json';
+import type { InterpolateParams, Translations } from './types';
 
-export type Locale = 'en' | 'es' | 'ca' | 'it';
+export { LOCALES } from '@config/defaults';
+export type { Locale } from '@config/types';
+export type { Translations } from './types';
 
-export interface Translations {
-  badge: {
-    totalStars: string;
-  };
-  report: {
-    title: string;
-    total: string;
-    change: string;
-    comparedTo: string;
-    firstRun: string;
-    repositories: string;
-    stars: string;
-    trend: string;
-    newRepositories: string;
-    removedRepositories: string;
-    was: string;
-    summary: string;
-    starsGained: string;
-    starsLost: string;
-    netChange: string;
-    starTrend: string;
-    starHistory: string;
-    topRepositories: string;
-    byRepository: string;
-    badges: {
-      new: string;
-    };
-  };
-  email: {
-    subject: string;
-    defaultFrom: string;
-  };
-  trends: {
-    up: string;
-    down: string;
-    stable: string;
-  };
+const PLACEHOLDER_PATTERN = /\{(\w+)\}/g;
+
+export function interpolate({ template, params }: InterpolateParams): string {
+  return template.replaceAll(PLACEHOLDER_PATTERN, (match, key) =>
+    key in params ? String(params[key]) : match,
+  );
 }
 
 const translations: Record<Locale, Translations> = { en, es, ca, it };
@@ -51,5 +25,5 @@ export function getTranslations(locale: Locale = 'en'): Translations {
 }
 
 export function isValidLocale(value: string): value is Locale {
-  return ['en', 'es', 'ca', 'it'].includes(value);
+  return LOCALES.includes(value as Locale);
 }

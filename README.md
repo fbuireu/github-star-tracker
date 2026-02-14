@@ -5,7 +5,7 @@
 **Track star count changes across your repositories — automatically and get notified!**
 
 [![CI](https://github.com/fbuireu/github-star-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/fbuireu/github-star-tracker/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/fbuireu/github-star-tracker/branch/main/graph/badge.svg)](https://codecov.io/gh/fbuireu/github-star-tracker)
+[![Codecov](https://codecov.io/gh/fbuireu/github-star-tracker/branch/main/graph/badge.svg)](https://codecov.io/gh/fbuireu/github-star-tracker)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 📚 **[Complete Documentation](../../wiki)** | 🚀 **[Getting Started](../../wiki/Getting-Started)** | 🔧 **[How It Works](../../wiki/How-It-Works)** | 🏗️ **[Technical Stack](../../wiki/Technical-Stack)** | ⚙️ **[Configuration](../../wiki/Configuration)** | 💡 **[Examples](../../wiki/Examples)** | 🐛 **[Troubleshooting](../../wiki/Troubleshooting)**
@@ -37,7 +37,7 @@
 
 ### 🔒 Quality & Security
 
-- ✅ **98%+ test coverage** — 119 tests ensuring reliability
+- ✅ **95%+ test coverage** — +120 tests ensuring reliability
 - 🔒 **Secure by design** — PATs with minimal scopes, no data leaks
 - 📦 **Zero runtime deps** — Bundled action, fast execution
 - 🔄 **CI/CD verified** — Every commit tested and validated
