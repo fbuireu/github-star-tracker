@@ -1,5 +1,5 @@
 import { CHART, CHART_COMPARISON_COLORS, COLORS } from '../constants';
-import type { Locale } from '../i18n';
+import { getTranslations, type Locale } from '../i18n';
 import type { History } from '../types';
 import { formatDate } from '../utils';
 
@@ -125,20 +125,22 @@ function buildChartConfig({ labels, data, title }: BuildChartConfigParams): Char
 interface GenerateChartUrlParams {
   history: History;
   title?: string;
-  locale?: Locale;
+  locale: Locale;
 }
 
 export function generateChartUrl({
   history,
-  title = 'Star History',
-  locale = 'en',
+  title,
+  locale,
 }: GenerateChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
   }
 
+  const t = getTranslations(locale);
+  const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData(history, locale);
-  const config = buildChartConfig({ labels, data, title });
+  const config = buildChartConfig({ labels, data, title: chartTitle });
 
   const encodedConfig = encodeURIComponent(JSON.stringify(config));
   return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&c=${encodedConfig}`;
@@ -148,14 +150,14 @@ interface GeneratePerRepoChartUrlParams {
   history: History;
   repoFullName: string;
   title?: string;
-  locale?: Locale;
+  locale: Locale;
 }
 
 export function generatePerRepoChartUrl({
   history,
   repoFullName,
   title,
-  locale = 'en',
+  locale,
 }: GeneratePerRepoChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
@@ -179,19 +181,21 @@ interface GenerateComparisonChartUrlParams {
   history: History;
   repoNames: string[];
   title?: string;
-  locale?: Locale;
+  locale: Locale;
 }
 
 export function generateComparisonChartUrl({
   history,
   repoNames,
-  title = 'Repository Comparison',
-  locale = 'en',
+  title,
+  locale,
 }: GenerateComparisonChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2 || repoNames.length === 0) {
     return null;
   }
 
+  const t = getTranslations(locale);
+  const chartTitle = title ?? t.report.topRepositories;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const labels = snapshots.map((s) => formatDate(s.timestamp, locale));
 
@@ -232,7 +236,7 @@ export function generateComparisonChartUrl({
         },
         title: {
           display: true,
-          text: title,
+          text: chartTitle,
           color: COLORS.text,
           font: { size: 16, weight: 'bold' },
         },

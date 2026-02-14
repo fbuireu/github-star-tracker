@@ -5,7 +5,7 @@ import {
   cleanup,
   commitAndPush,
   getLastSnapshot,
-  initDataBranch,
+  initializeDataBranch,
   readHistory,
   writeBadge,
   writeHistory,
@@ -38,70 +38,74 @@ async function run(): Promise<void> {
       core.setOutput('lost-stars', '0');
       core.setOutput('report', 'No repositories matched the configured filters.');
       core.setOutput('report-html', '<p>No repositories matched the configured filters.</p>');
-    } else {
-      core.info(`Tracking ${repos.length} repositories...`);
+      return;
+    }
 
-      core.info('Initializing data branch...');
-      dataDir = initDataBranch(config.dataBranch);
+    core.info(`Tracking ${repos.length} repositories...`);
 
-      const history = readHistory(dataDir);
-      const lastSnapshot = getLastSnapshot(history);
-      const previousTimestamp = lastSnapshot ? lastSnapshot.timestamp : null;
+    core.info('Initializing data branch...');
+    dataDir = initializeDataBranch(config.dataBranch);
 
-      core.info('Comparing star counts...');
-      const results = compareStars({ currentRepos: repos, previousSnapshot: lastSnapshot });
-      const { summary } = results;
+    const history = readHistory(dataDir);
+    const lastSnapshot = getLastSnapshot(history);
+    const previousTimestamp = lastSnapshot ? lastSnapshot.timestamp : null;
 
-      core.info(
-        `Total: ${summary.totalStars} stars (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`,
-      );
+    core.info('Comparing star counts...');
+    const results = compareStars({ currentRepos: repos, previousSnapshot: lastSnapshot });
+    const { summary } = results;
 
-      const markdownReport = generateMarkdownReport({
-        results,
-        previousTimestamp,
-        locale: config.locale,
-        history,
-        includeCharts: config.includeCharts,
-      });
-      const htmlReport = generateHtmlReport({
-        results,
-        previousTimestamp,
-        locale: config.locale,
-        history,
-        includeCharts: config.includeCharts,
-      });
-      const badge = generateBadge(summary.totalStars, config.locale);
+    core.info(
+      `Total: ${summary.totalStars} stars (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`,
+    );
 
-      const snapshot = createSnapshot({ currentRepos: repos, summary });
-      history.snapshots.push(snapshot);
+    const markdownReport = generateMarkdownReport({
+      results,
+      previousTimestamp,
+      locale: config.locale,
+      history,
+      includeCharts: config.includeCharts,
+    });
+    const htmlReport = generateHtmlReport({
+      results,
+      previousTimestamp,
+      locale: config.locale,
+      history,
+      includeCharts: config.includeCharts,
+    });
+    const badge = generateBadge(summary.totalStars, config.locale);
 
-      writeHistory({ dataDir, history, maxHistory: config.maxHistory });
-      writeReport({ dataDir, markdown: markdownReport });
-      writeBadge({ dataDir, svg: badge });
+    const snapshot = createSnapshot({ currentRepos: repos, summary });
+    history.snapshots.push(snapshot);
 
-      const commitMsg = `Update star data — ${summary.totalStars} total (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
-      commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg });
+    writeHistory({ dataDir, history, maxHistory: config.maxHistory });
+    writeReport({ dataDir, markdown: markdownReport });
+    writeBadge({ dataDir, svg: badge });
 
-      core.setOutput('report', markdownReport);
-      core.setOutput('report-html', htmlReport);
-      core.setOutput('total-stars', String(summary.totalStars));
-      core.setOutput('stars-changed', String(summary.changed));
-      core.setOutput('new-stars', String(summary.newStars));
-      core.setOutput('lost-stars', String(summary.lostStars));
+    const commitMsg = `Update star data — ${summary.totalStars} total (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
+    commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg });
 
-      const emailConfig = getEmailConfig(config.locale);
-      if (emailConfig) {
-        if (summary.changed || config.sendOnNoChanges) {
-          const subject = `${t.email.subject}: ${summary.totalStars} (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
-          try {
-            await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
-          } catch (error) {
-            core.warning(`Failed to send email: ${(error as Error).message}`);
-          }
-        } else {
-          core.info('No star changes detected, skipping email');
-        }
-      }
+    core.setOutput('report', markdownReport);
+    core.setOutput('report-html', htmlReport);
+    core.setOutput('total-stars', String(summary.totalStars));
+    core.setOutput('stars-changed', String(summary.changed));
+    core.setOutput('new-stars', String(summary.newStars));
+    core.setOutput('lost-stars', String(summary.lostStars));
+
+    const emailConfig = getEmailConfig(config.locale);
+    if (!emailConfig) {
+      return;
+    }
+
+    if (!summary.changed && !config.sendOnNoChanges) {
+      core.info('No star changes detected, skipping email');
+      return;
+    }
+
+    const subject = `${t.email.subject}: ${summary.totalStars} (${summary.totalDelta >= 0 ? '+' : ''}${summary.totalDelta})`;
+    try {
+      await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
+    } catch (error) {
+      core.warning(`Failed to send email: ${(error as Error).message}`);
     }
   } catch (error) {
     const err = error as Error;

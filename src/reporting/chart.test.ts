@@ -34,7 +34,7 @@ const mockHistory: History = {
 describe('chart', () => {
   describe('generateChartUrl', () => {
     it('should generate valid QuickChart URL with history data', () => {
-      const url = generateChartUrl({ history: mockHistory, title: 'Test Chart' });
+      const url = generateChartUrl({ history: mockHistory, title: 'Test Chart', locale: 'en' });
 
       expect(url).toContain('https://quickchart.io/chart?');
       expect(url).toContain('w=800');
@@ -47,19 +47,19 @@ describe('chart', () => {
         snapshots: [mockHistory.snapshots[0]],
       };
 
-      const url = generateChartUrl({ history: singleSnapshot });
+      const url = generateChartUrl({ history: singleSnapshot, locale: 'en' });
       expect(url).toBeNull();
     });
 
     it('should return null when history has no snapshots', () => {
       const emptyHistory: History = { snapshots: [] };
 
-      const url = generateChartUrl({ history: emptyHistory });
+      const url = generateChartUrl({ history: emptyHistory, locale: 'en' });
       expect(url).toBeNull();
     });
 
     it('should include correct data points in chart config', () => {
-      const url = generateChartUrl({ history: mockHistory });
+      const url = generateChartUrl({ history: mockHistory, locale: 'en' });
 
       expect(url).toBeDefined();
       if (url) {
@@ -70,7 +70,7 @@ describe('chart', () => {
     });
 
     it('should format dates correctly', () => {
-      const url = generateChartUrl({ history: mockHistory });
+      const url = generateChartUrl({ history: mockHistory, locale: 'en' });
 
       expect(url).toBeDefined();
       if (url) {
@@ -90,7 +90,7 @@ describe('chart', () => {
         })),
       };
 
-      const url = generateChartUrl({ history: largeHistory });
+      const url = generateChartUrl({ history: largeHistory, locale: 'en' });
 
       expect(url).toBeDefined();
       if (url) {
@@ -104,7 +104,11 @@ describe('chart', () => {
 
   describe('generatePerRepoChartUrl', () => {
     it('should generate chart for specific repository', () => {
-      const url = generatePerRepoChartUrl({ history: mockHistory, repoFullName: 'user/repo-a' });
+      const url = generatePerRepoChartUrl({
+        history: mockHistory,
+        repoFullName: 'user/repo-a',
+        locale: 'en',
+      });
 
       expect(url).toBeDefined();
       if (url) {
@@ -118,6 +122,7 @@ describe('chart', () => {
         history: mockHistory,
         repoFullName: 'user/repo-a',
         title: 'Custom Title',
+        locale: 'en',
       });
 
       expect(url).toBeDefined();
@@ -131,6 +136,7 @@ describe('chart', () => {
       const url = generatePerRepoChartUrl({
         history: mockHistory,
         repoFullName: 'user/non-existent',
+        locale: 'en',
       });
 
       expect(url).toBeDefined();
@@ -145,7 +151,11 @@ describe('chart', () => {
         snapshots: [mockHistory.snapshots[0]],
       };
 
-      const url = generatePerRepoChartUrl({ history: singleSnapshot, repoFullName: 'user/repo-a' });
+      const url = generatePerRepoChartUrl({
+        history: singleSnapshot,
+        repoFullName: 'user/repo-a',
+        locale: 'en',
+      });
       expect(url).toBeNull();
     });
   });
@@ -155,6 +165,7 @@ describe('chart', () => {
       const url = generateComparisonChartUrl({
         history: mockHistory,
         repoNames: ['user/repo-a', 'user/repo-b'],
+        locale: 'en',
       });
 
       expect(url).toBeDefined();
@@ -178,6 +189,7 @@ describe('chart', () => {
           'user/repo-e',
           'user/repo-f',
         ],
+        locale: 'en',
       });
 
       expect(url).toBeDefined();
@@ -189,7 +201,7 @@ describe('chart', () => {
     });
 
     it('should return null when no repositories provided', () => {
-      const url = generateComparisonChartUrl({ history: mockHistory, repoNames: [] });
+      const url = generateComparisonChartUrl({ history: mockHistory, repoNames: [], locale: 'en' });
       expect(url).toBeNull();
     });
 
@@ -201,6 +213,7 @@ describe('chart', () => {
       const url = generateComparisonChartUrl({
         history: singleSnapshot,
         repoNames: ['user/repo-a'],
+        locale: 'en',
       });
       expect(url).toBeNull();
     });
@@ -210,6 +223,7 @@ describe('chart', () => {
         history: mockHistory,
         repoNames: ['user/repo-a'],
         title: 'My Comparison',
+        locale: 'en',
       });
 
       expect(url).toBeDefined();
@@ -223,6 +237,7 @@ describe('chart', () => {
       const url = generateComparisonChartUrl({
         history: mockHistory,
         repoNames: ['user/repo-a', 'user/repo-b'],
+        locale: 'en',
       });
 
       expect(url).toBeDefined();

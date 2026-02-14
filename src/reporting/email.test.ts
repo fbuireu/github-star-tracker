@@ -27,7 +27,7 @@ beforeEach(() => {
 describe('getEmailConfig', () => {
   it('returns null when smtp-host is not provided', () => {
     vi.mocked(core.getInput).mockReturnValue('');
-    expect(getEmailConfig()).toBeNull();
+    expect(getEmailConfig('en')).toBeNull();
   });
 
   it('returns config when smtp-host is provided', () => {
@@ -43,7 +43,7 @@ describe('getEmailConfig', () => {
       return map[name] || '';
     });
 
-    const config = getEmailConfig();
+    const config = getEmailConfig('en');
     expect(config).toEqual({
       host: 'smtp.example.com',
       port: 465,
@@ -61,7 +61,7 @@ describe('getEmailConfig', () => {
       return 'test';
     });
 
-    const config = getEmailConfig();
+    const config = getEmailConfig('en');
     expect(config?.from).toBe('GitHub Star Tracker');
   });
 });

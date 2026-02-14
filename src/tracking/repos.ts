@@ -60,13 +60,13 @@ export function filterRepos({
   repos: GitHubRepo[];
   config: Config;
 }): GitHubRepo[] {
-  let filtered = repos;
-
   if (config.onlyRepos.length > 0) {
-    filtered = filtered.filter((repo) => config.onlyRepos.includes(repo.name));
+    const filtered = repos.filter((repo) => config.onlyRepos.includes(repo.name));
     core.info(`After only_repos filter: ${filtered.length} repos`);
     return filtered;
   }
+
+  let filtered = repos;
 
   if (!config.includeArchived) {
     filtered = filtered.filter((repo) => !repo.archived);

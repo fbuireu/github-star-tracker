@@ -8,7 +8,7 @@
 [![codecov](https://codecov.io/gh/fbuireu/github-star-tracker/branch/main/graph/badge.svg)](https://codecov.io/gh/fbuireu/github-star-tracker)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
-📚 **[Complete Documentation](../../wiki)** — Detailed guides, examples, and troubleshooting
+📚 **[Complete Documentation](../../wiki)** | 🚀 **[Getting Started](../../wiki/Getting-Started)** | 🔧 **[How It Works](../../wiki/How-It-Works)** | 🏗️ **[Technical Stack](../../wiki/Technical-Stack)** | ⚙️ **[Configuration](../../wiki/Configuration)** | 💡 **[Examples](../../wiki/Examples)** | 🐛 **[Troubleshooting](../../wiki/Troubleshooting)**
 
 </div>
 
@@ -16,12 +16,50 @@
 
 ## Features
 
-- ✅ **Automated tracking** — Schedule daily, weekly, or on-demand
-- 📊 **Visual charts** — Star trends and per-repository comparisons
+### 🚀 Tracking & Automation
+
+- ✅ **Automated scheduling** — Daily, weekly, or on-demand runs
+- 📈 **Historical tracking** — Up to 52 weeks of star data preserved
+- 🎯 **Smart filters** — Track by visibility, exclude repos, minimum stars
+
+### 📊 Reports & Visualizations
+
+- 📊 **Interactive charts** — Star trends and per-repository comparisons
+- 📧 **Email notifications** — Built-in SMTP or external action integration
+- 🎨 **Multiple formats** — Markdown reports, HTML emails, SVG badges
+
+### ⚙️ Developer Experience
+
 - 🌍 **Multi-language** — English, Spanish, Catalan, Italian
-- 📧 **Email reports** — Built-in SMTP or external action
-- 🎯 **Flexible output** — Data branch, badges, action outputs
-- 🔒 **Secure** — Uses Personal Access Tokens with minimal scopes
+- 🔧 **Flexible config** — File-based or action inputs
+- 📤 **Action outputs** — Integrate with other workflow steps
+- 🏷️ **Type-safe** — 100% TypeScript with strict mode
+
+### 🔒 Quality & Security
+
+- ✅ **98%+ test coverage** — 119 tests ensuring reliability
+- 🔒 **Secure by design** — PATs with minimal scopes, no data leaks
+- 📦 **Zero runtime deps** — Bundled action, fast execution
+- 🔄 **CI/CD verified** — Every commit tested and validated
+
+---
+
+## Why Use This?
+
+**Different from other star trackers:**
+
+- 🏃 **GitHub Action native** — No external services, runs in your CI
+- 📊 **Historical tracking** — Not just current count, see trends over time
+- 🔔 **Smart notifications** — Email only when stars actually change
+- 🎨 **Multiple outputs** — Data branch, badges, charts, action outputs
+- 🔒 **Privacy-first** — Your data stays in your repo, no third parties
+
+**Perfect for:**
+
+- 📈 Open source maintainers tracking project growth
+- 🎯 Marketing teams monitoring repository popularity
+- 📊 Portfolio projects with automated reporting
+- 🔍 Organizations monitoring multiple repositories
 
 ---
 
@@ -35,8 +73,8 @@
 
 > [!NOTE]
 > `STAR_TRACKER_TOKEN` must be a [Personal Access Token](https://github.com/settings/tokens) with `repo` or `public_repo` scope. The default `GITHUB_TOKEN` is not sufficient.
-
-> 📖 **[Detailed PAT Guide](../../wiki/Personal-Access-Token-Guide)** — Step-by-step for classic & fine-grained tokens
+>
+> 📖 **[Detailed PAT Guide](<../../wiki/Personal-Access-Token-(PAT)>)** — Step-by-step for classic & fine-grained tokens
 
 ---
 
@@ -79,30 +117,79 @@ That's it! The action will track stars and generate reports automatically.
 
 ### 📚 [Complete Wiki](../../wiki)
 
-| Guide                                                     | Description                                    |
-| --------------------------------------------------------- | ---------------------------------------------- |
-| **[Getting Started](../../wiki/Getting-Started)**         | Complete setup guide from token to first run   |
-| **[PAT Guide](../../wiki/Personal-Access-Token-Guide)**   | Detailed PAT creation (classic & fine-grained) |
-| **[Configuration](../../wiki/Configuration)**             | All available options and settings             |
-| **[Viewing Reports](../../wiki/Viewing-Reports)**         | Multiple ways to access your data              |
-| **[Star Trend Charts](../../wiki/Star-Trend-Charts)**     | Interactive chart visualization                |
-| **[Email Notifications](../../wiki/Email-Notifications)** | Setup email alerts (built-in & external)       |
-| **[Data Management](../../wiki/Data-Management)**         | How data is stored and managed                 |
-| **[Troubleshooting](../../wiki/Troubleshooting)**         | Common issues and solutions                    |
-| **[API Reference](../../wiki/API-Reference)**             | Complete inputs and outputs                    |
-| **[Examples](../../wiki/Examples)**                       | Real-world usage examples                      |
+| Guide                                                                 | Description                                      |
+| --------------------------------------------------------------------- | ------------------------------------------------ |
+| **[Home](../../wiki/Home)**                                           | Overview and quick navigation                    |
+| **[Getting Started](../../wiki/Getting-Started)**                     | Complete setup guide from token to first run     |
+| **[How It Works](../../wiki/How-It-Works)**                           | Deep dive into execution flow and architecture   |
+| **[Technical Stack](../../wiki/Technical-Stack)**                     | Technologies, design decisions, and architecture |
+| **[Personal Access Token](<../../wiki/Personal-Access-Token-(PAT)>)** | Detailed PAT creation (classic & fine-grained)   |
+| **[Configuration](../../wiki/Configuration)**                         | All available options and settings               |
+| **[API Reference](../../wiki/API-Reference)**                         | Complete inputs and outputs documentation        |
+| **[Examples](../../wiki/Examples)**                                   | Real-world usage examples and workflows          |
+| **[Star Trend Charts](../../wiki/Star-Trend-Charts)**                 | Interactive chart visualization setup            |
+| **[Email Notifications](../../wiki/Email-Notifications)**             | Setup email alerts (built-in & external)         |
+| **[Viewing Reports](../../wiki/Viewing-Reports)**                     | Multiple ways to access your data                |
+| **[Data Management](../../wiki/Data-Management)**                     | How data is stored and managed                   |
+| **[Internationalization](<../../wiki/Internationalization-(i18n)>)**  | Multi-language support and localization          |
+| **[Troubleshooting](../../wiki/Troubleshooting)**                     | Common issues and solutions                      |
 
 ---
 
 ## How It Works
 
-1. Fetches star counts for your repositories via GitHub API
-2. Compares with previous snapshot from the data branch
-3. Generates reports with star trends and changes
-4. Commits data to the `star-tracker-data` branch
-5. Optionally sends email notifications
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart TD
+    trigger(["Workflow Trigger"])
+    config["Parse configuration"]
+    fetch["Query GitHub REST API(repositories endpoint)"]
+    filter["Apply filter criteria"]
+    init["Initialize orphan branch"]
+    read["Deserialize previous  state snapshot"]
+    compare["Compute delta metrics"]
+    md["Markdown report"]
+    json["JSON dataset"]
+    svg["SVG badge"]
+    html["HTML digest"]
+    commit["Git commit & push (data branch)"]
+    setout["Export action outputs"]
+    email{"SMTP configured?"}
+    send["Dispatch notification"]
 
-📖 **[Learn more about data management](../../wiki/Data-Management)**
+    trigger --> config --> fetch --> filter
+    filter --> init --> read --> compare
+    compare --> md & json & svg & html
+    md & json & svg & html --> commit --> setout --> email
+    email -->|Yes| send
+
+    style trigger fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    style config fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style fetch fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style filter fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style init fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style read fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style compare fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style md fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style json fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style svg fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style html fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style commit fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    style setout fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    style email fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    style send fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+```
+
+1. On each scheduled run, the action fetches star counts for your repos via the GitHub API
+2. It reads the previous snapshot from `stars-data.json` on the **data branch**
+3. Compares current vs. previous counts — computing per-repo deltas, new repos, and removed repos
+4. Generates a **Markdown report** (committed as `README.md` on the data branch), an **SVG badge**, and an **HTML report** (available as an action output or sent via email)
+5. Appends a new snapshot to the history and pushes everything to the data branch
+6. Your `main` branch is never touched
 
 ---
 
@@ -113,11 +200,13 @@ That's it! The action will track stars and generate reports automatically.
 - 🇪🇸 **Catalan** (`ca`)
 - 🇮🇹 **Italian** (`it`)
 
-📖 **[Internationalization guide](../../wiki/Internationalization)**
+Set via `locale` input or config file. Reports, emails, and charts automatically use the selected language.
+
+📖 **[Internationalization guide](<../../wiki/Internationalization-(i18n)>)**
 
 ---
 
-## Configuration
+## Quick Configuration
 
 ### Basic Example
 
@@ -168,15 +257,37 @@ Create `.github/star-tracker-config.json`:
 | -------------- | ------------------------------------ |
 | `github-token` | Personal Access Token (**required**) |
 
-### Optional Inputs
+### Core Configuration
 
-| Input            | Default | Description                         |
-| ---------------- | ------- | ----------------------------------- |
-| `visibility`     | `all`   | `public`, `private`, or `all`       |
-| `locale`         | `en`    | `en`, `es`, `ca`, or `it`           |
-| `include-charts` | `true`  | Enable star trend charts            |
-| `smtp-host`      | —       | SMTP server for email notifications |
-| `email-to`       | —       | Recipient email address             |
+| Input            | Default             | Description                                          |
+| ---------------- | ------------------- | ---------------------------------------------------- |
+| `visibility`     | `all`               | Repository visibility: `public`, `private`, or `all` |
+| `locale`         | `en`                | Report language: `en`, `es`, `ca`, or `it`           |
+| `include-charts` | `true`              | Enable star trend charts (true/false)                |
+| `data-branch`    | `star-tracker-data` | Branch name for storing tracking data                |
+| `max-history`    | `52`                | Maximum snapshots to keep in history (weeks)         |
+
+### Filtering Options
+
+| Input              | Default | Description                                        |
+| ------------------ | ------- | -------------------------------------------------- |
+| `include-archived` | `false` | Include archived repositories                      |
+| `include-forks`    | `false` | Include forked repositories                        |
+| `exclude-repos`    | —       | Comma-separated list of repos to exclude           |
+| `only-repos`       | —       | Comma-separated list of repos to exclusively track |
+| `min-stars`        | `0`     | Only track repos with at least N stars             |
+
+### Email Configuration
+
+| Input                | Default               | Description                                      |
+| -------------------- | --------------------- | ------------------------------------------------ |
+| `smtp-host`          | —                     | SMTP server hostname (enables email if provided) |
+| `smtp-port`          | `587`                 | SMTP server port                                 |
+| `smtp-username`      | —                     | SMTP authentication username                     |
+| `smtp-password`      | —                     | SMTP authentication password                     |
+| `email-to`           | —                     | Recipient email address                          |
+| `email-from`         | `GitHub Star Tracker` | Sender name or email address                     |
+| `send-on-no-changes` | `false`               | Send email even when no changes detected         |
 
 📖 **[Full API reference](../../wiki/API-Reference)**
 
@@ -199,15 +310,34 @@ Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`,
 
 ---
 
-## Examples
+## Examples & Common Use-Cases
 
-### Track All Repositories
+### Track Only Public Repositories
 
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
     github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
-    visibility: 'all'
+    visibility: 'public'
+```
+
+### Filter by Minimum Stars
+
+```yaml
+- uses: fbuireu/github-star-tracker@v1
+  with:
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+    min-stars: '10'
+    exclude-repos: 'archived-repo,test-project'
+```
+
+### Track Specific Repositories Only
+
+```yaml
+- uses: fbuireu/github-star-tracker@v1
+  with:
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+    only-repos: 'my-awesome-project,another-repo'
 ```
 
 ### Spanish Reports with Charts
@@ -243,7 +373,48 @@ Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`,
     html_body: ${{ steps.tracker.outputs.report-html }}
 ```
 
+### Complete Setup with All Features
+
+```yaml
+- uses: fbuireu/github-star-tracker@v1
+  with:
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+    visibility: 'public'
+    include-archived: false
+    include-forks: false
+    min-stars: '5'
+    locale: 'en'
+    include-charts: true
+    max-history: '52'
+    smtp-host: smtp.gmail.com
+    smtp-port: '587'
+    smtp-username: ${{ secrets.EMAIL_FROM }}
+    smtp-password: ${{ secrets.EMAIL_PASSWORD }}
+    email-from: ${{ secrets.EMAIL_FROM }}
+    email-to: ${{ secrets.EMAIL_TO }}
+    send-on-no-changes: false
+```
+
 📖 **[More examples](../../wiki/Examples)**
+
+---
+
+## Performance
+
+⚡ **Fast & Efficient**
+
+- **Execution time:** ~2-30 seconds (depends on repo count)
+- **API calls:** ~1-2 per 100 repositories (paginated efficiently)
+- **Bundle size:** <1MB compiled action
+- **Runtime:** Node.js 24+ (provided by GitHub Actions)
+- **No checkout needed:** Runs standalone without cloning your repo
+
+**Optimization tips:**
+
+- Use `only-repos` to track specific repositories
+- Set `min-stars` to filter low-activity repos
+- Disable `include-charts` if not needed
+- Use `visibility: 'public'` to reduce API calls
 
 ---
 
@@ -294,7 +465,7 @@ Access data in subsequent workflow steps for custom integrations.
 - 💡 **[Request features](../../issues/new?template=feature_request.yml)**
 - 📖 **[Improve docs](../../issues/new?template=documentation.yml)**
 - 🔒 **[Security issues](../../security/policy)**
-- 🤝 **[Contributing guidelines](CONTRIBUTING.md)** — How to contribute to this project
+- 🤝 **[Contributing guidelines](CONTRIBUTING.md)**
 
 ---
 

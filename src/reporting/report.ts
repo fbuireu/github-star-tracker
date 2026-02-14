@@ -7,7 +7,7 @@ import { generateChartUrl, generateComparisonChartUrl } from './chart';
 interface GenerateReportParams {
   results: ComparisonResults;
   previousTimestamp: string | null;
-  locale?: Locale;
+  locale: Locale;
   history?: History | null;
   includeCharts?: boolean;
 }
@@ -15,7 +15,7 @@ interface GenerateReportParams {
 export function generateMarkdownReport({
   results,
   previousTimestamp,
-  locale = 'en',
+  locale,
   history = null,
   includeCharts = true,
 }: GenerateReportParams): string {
@@ -140,7 +140,7 @@ export function generateMarkdownReport({
 export function generateHtmlReport({
   results,
   previousTimestamp,
-  locale = 'en',
+  locale,
   history = null,
   includeCharts = true,
 }: GenerateReportParams): string {

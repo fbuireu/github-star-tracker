@@ -2,13 +2,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as core from '@actions/core';
 import * as yaml from 'js-yaml';
-import { DEFAULTS } from './constants';
+import { DEFAULTS as DEFAULTS_INTERNAL, VALID_VISIBILITIES } from './constants';
 import { isValidLocale, type Locale } from './i18n';
 import type { Config } from './types';
 
-const VALID_VISIBILITIES = ['public', 'private', 'all'] as const;
-
-export { DEFAULTS };
+export { DEFAULTS } from './constants';
 
 export function parseList(value: string | null | undefined): string[] {
   if (!value || value.trim() === '') return [];
@@ -88,15 +86,15 @@ export function loadConfig(): Config {
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
-    DEFAULTS.visibility) as Config['visibility'];
+    DEFAULTS_INTERNAL.visibility) as Config['visibility'];
 
-  if (!VALID_VISIBILITIES.includes(visibility)) {
+  if (!Object.values(VALID_VISIBILITIES).includes(visibility)) {
     throw new Error(
-      `Invalid visibility "${visibility}". Must be one of: ${VALID_VISIBILITIES.join(', ')}`,
+      `Invalid visibility "${visibility}". Must be one of: ${Object.values(VALID_VISIBILITIES).join(', ')}`,
     );
   }
 
-  const locale = (inputLocale || fileConfig.locale || DEFAULTS.locale) as Locale;
+  const locale = (inputLocale || fileConfig.locale || DEFAULTS_INTERNAL.locale) as Locale;
   if (!isValidLocale(locale)) {
     core.warning(`Invalid locale "${locale}". Falling back to "en"`);
   }
@@ -104,21 +102,25 @@ export function loadConfig(): Config {
   const config: Config = {
     visibility,
     includeArchived:
-      parseBool(inputIncludeArchived) ?? fileConfig.includeArchived ?? DEFAULTS.includeArchived,
-    includeForks: parseBool(inputIncludeForks) ?? fileConfig.includeForks ?? DEFAULTS.includeForks,
+      parseBool(inputIncludeArchived) ??
+      fileConfig.includeArchived ??
+      DEFAULTS_INTERNAL.includeArchived,
+    includeForks:
+      parseBool(inputIncludeForks) ?? fileConfig.includeForks ?? DEFAULTS_INTERNAL.includeForks,
     excludeRepos: inputExcludeRepos
       ? parseList(inputExcludeRepos)
-      : fileConfig.excludeRepos || DEFAULTS.excludeRepos,
+      : fileConfig.excludeRepos || DEFAULTS_INTERNAL.excludeRepos,
     onlyRepos: inputOnlyRepos
       ? parseList(inputOnlyRepos)
-      : fileConfig.onlyRepos || DEFAULTS.onlyRepos,
-    minStars: parseNumber(inputMinStars) ?? fileConfig.minStars ?? DEFAULTS.minStars,
-    dataBranch: inputDataBranch || fileConfig.dataBranch || DEFAULTS.dataBranch,
-    maxHistory: parseNumber(inputMaxHistory) ?? fileConfig.maxHistory ?? DEFAULTS.maxHistory,
+      : fileConfig.onlyRepos || DEFAULTS_INTERNAL.onlyRepos,
+    minStars: parseNumber(inputMinStars) ?? fileConfig.minStars ?? DEFAULTS_INTERNAL.minStars,
+    dataBranch: inputDataBranch || fileConfig.dataBranch || DEFAULTS_INTERNAL.dataBranch,
+    maxHistory:
+      parseNumber(inputMaxHistory) ?? fileConfig.maxHistory ?? DEFAULTS_INTERNAL.maxHistory,
     sendOnNoChanges: parseBool(core.getInput('send-on-no-changes')) ?? false,
     includeCharts:
-      parseBool(inputIncludeCharts) ?? fileConfig.includeCharts ?? DEFAULTS.includeCharts,
-    locale: isValidLocale(locale) ? locale : DEFAULTS.locale,
+      parseBool(inputIncludeCharts) ?? fileConfig.includeCharts ?? DEFAULTS_INTERNAL.includeCharts,
+    locale: isValidLocale(locale) ? locale : DEFAULTS_INTERNAL.locale,
   };
 
   core.info(

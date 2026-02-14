@@ -16,7 +16,7 @@ import {
   cleanup,
   commitAndPush,
   getLastSnapshot,
-  initDataBranch,
+  initializeDataBranch,
   readHistory,
   writeBadge,
   writeHistory,
@@ -32,12 +32,12 @@ describe('data-branch', () => {
     vi.restoreAllMocks();
   });
 
-  describe('initDataBranch', () => {
+  describe('initializeDataBranch', () => {
     it('configures git user and creates worktree when branch exists', () => {
       vi.mocked(fs.existsSync).mockReturnValue(false);
       vi.mocked(execSync).mockReturnValue('');
 
-      const result = initDataBranch('star-tracker-data');
+      const result = initializeDataBranch('star-tracker-data');
 
       expect(execSync).toHaveBeenCalledWith(
         'git config user.name "github-actions[bot]"',
@@ -60,7 +60,7 @@ describe('data-branch', () => {
         .mockReturnValueOnce('')
         .mockReturnValueOnce('');
 
-      initDataBranch('star-tracker-data');
+      initializeDataBranch('star-tracker-data');
 
       expect(execSync).toHaveBeenCalledWith(
         'git worktree remove .star-tracker-data --force',
@@ -82,7 +82,7 @@ describe('data-branch', () => {
         .mockReturnValueOnce('')
         .mockReturnValueOnce('');
 
-      initDataBranch('star-tracker-data');
+      initializeDataBranch('star-tracker-data');
 
       expect(core.info).toHaveBeenCalledWith(
         'Branch "star-tracker-data" does not exist on remote, will create it',
@@ -106,7 +106,7 @@ describe('data-branch', () => {
         .mockReturnValueOnce('')
         .mockReturnValueOnce('');
 
-      expect(() => initDataBranch('star-tracker-data')).not.toThrow();
+      expect(() => initializeDataBranch('star-tracker-data')).not.toThrow();
       expect(core.debug).toHaveBeenCalledWith(
         'Could not remove existing worktree at .star-tracker-data, proceeding anyway',
       );

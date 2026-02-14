@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 import { getTranslations, type Locale } from '../i18n';
 import type { EmailConfig } from '../types';
 
-export function getEmailConfig(locale: Locale = 'en'): EmailConfig | null {
+export function getEmailConfig(locale: Locale): EmailConfig | null {
   const host = core.getInput('smtp-host');
   if (!host) return null;
 

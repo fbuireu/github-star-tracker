@@ -72,6 +72,7 @@ describe('generateMarkdownReport', () => {
     const report = generateMarkdownReport({
       results: makeResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
     });
     expect(report).toContain('**23**');
     expect(report).toContain('+3');
@@ -81,6 +82,7 @@ describe('generateMarkdownReport', () => {
     const report = generateMarkdownReport({
       results: makeResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
     });
     expect(report).toContain('user/repo-a');
     expect(report).toContain('user/repo-b');
@@ -89,14 +91,22 @@ describe('generateMarkdownReport', () => {
   });
 
   it('handles first run with no previous timestamp', () => {
-    const report = generateMarkdownReport({ results: makeResults(), previousTimestamp: null });
+    const report = generateMarkdownReport({
+      results: makeResults(),
+      previousTimestamp: null,
+      locale: 'en',
+    });
     expect(report).not.toContain('Compared to snapshot from');
   });
 
   it('shows NEW badge for new repos', () => {
     const results = makeResults();
     results.repos[0].isNew = true;
-    const report = generateMarkdownReport({ results, previousTimestamp: '2026-01-01T00:00:00Z' });
+    const report = generateMarkdownReport({
+      results,
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+    });
     expect(report).toContain('`NEW`');
   });
 
@@ -112,13 +122,21 @@ describe('generateMarkdownReport', () => {
       isNew: false,
       isRemoved: true,
     });
-    const report = generateMarkdownReport({ results, previousTimestamp: '2026-01-01T00:00:00Z' });
+    const report = generateMarkdownReport({
+      results,
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+    });
     expect(report).toContain('Removed Repositories');
     expect(report).toContain('user/old-repo');
   });
 
   it('includes footer with generator link', () => {
-    const report = generateMarkdownReport({ results: makeResults(), previousTimestamp: null });
+    const report = generateMarkdownReport({
+      results: makeResults(),
+      previousTimestamp: null,
+      locale: 'en',
+    });
     expect(report).toContain('GitHub Star Tracker');
   });
 
@@ -141,6 +159,7 @@ describe('generateMarkdownReport', () => {
     const report = generateMarkdownReport({
       results: makeResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
       history,
       includeCharts: true,
     });
@@ -174,6 +193,7 @@ describe('generateMarkdownReport', () => {
     const report = generateMarkdownReport({
       results: makeResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
       history,
       includeCharts: true,
     });
@@ -187,6 +207,7 @@ describe('generateHtmlReport', () => {
     const html = generateHtmlReport({
       results: makeResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
     });
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('</html>');
@@ -197,6 +218,7 @@ describe('generateHtmlReport', () => {
     const html = generateHtmlReport({
       results: makeResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
     });
     expect(html).toContain('href="https://github.com/user/repo-a"');
   });
@@ -205,6 +227,7 @@ describe('generateHtmlReport', () => {
     const html = generateHtmlReport({
       results: makeResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
     });
     expect(html).toContain('#28a745');
   });
@@ -213,6 +236,7 @@ describe('generateHtmlReport', () => {
     const html = generateHtmlReport({
       results: makeResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
     });
     expect(html).toContain('#d73a49');
   });
@@ -221,6 +245,7 @@ describe('generateHtmlReport', () => {
     const html = generateHtmlReport({
       results: makeResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
     });
     expect(html).toContain('23');
     expect(html).toContain('Total Stars');
@@ -239,7 +264,11 @@ describe('generateHtmlReport', () => {
       isNew: false,
       isRemoved: true,
     });
-    const html = generateHtmlReport({ results, previousTimestamp: '2026-01-01T00:00:00Z' });
+    const html = generateHtmlReport({
+      results,
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+    });
     expect(html).toContain('Removed Repositories');
   });
 
@@ -262,6 +291,7 @@ describe('generateHtmlReport', () => {
     const html = generateHtmlReport({
       results: makeResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
       history,
       includeCharts: true,
     });
@@ -295,6 +325,7 @@ describe('generateHtmlReport', () => {
     const html = generateHtmlReport({
       results: makeResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
       history,
       includeCharts: true,
     });
@@ -322,6 +353,7 @@ describe('generateHtmlReport', () => {
     const html = generateHtmlReport({
       results: makeResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
       history,
       includeCharts: false,
     });
@@ -344,6 +376,7 @@ describe('generateHtmlReport', () => {
     const html = generateHtmlReport({
       results: makeResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
       history,
       includeCharts: true,
     });

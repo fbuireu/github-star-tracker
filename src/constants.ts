@@ -2,8 +2,14 @@ import type { Config } from './types';
 
 export const DATA_DIR = '.star-tracker-data';
 
+export const VALID_VISIBILITIES = {
+  PUBLIC: 'public',
+  PRIVATE: 'private',
+  ALL: 'all',
+} as const;
+
 export const DEFAULTS: Config = {
-  visibility: 'public',
+  visibility: VALID_VISIBILITIES.PUBLIC,
   includeArchived: false,
   includeForks: false,
   excludeRepos: [],
@@ -45,4 +51,12 @@ export const CHART = {
   height: 400,
   maxDataPoints: 30,
   maxComparison: 5,
+} as const;
+
+export const BADGE = {
+  labelCharWidth: 6.5,
+  valueCharWidth: 7,
+  horizontalPadding: 12,
+  height: 20,
+  borderRadius: 3,
 } as const;

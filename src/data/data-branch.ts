@@ -5,7 +5,7 @@ import * as core from '@actions/core';
 import { DATA_DIR } from '../constants';
 import type { History, Snapshot } from '../types';
 
-function exec(cmd: string, options: Record<string, unknown> = {}): string {
+function execute(cmd: string, options: Record<string, unknown> = {}): string {
   try {
     return execSync(cmd, {
       encoding: 'utf8',
@@ -20,13 +20,13 @@ function exec(cmd: string, options: Record<string, unknown> = {}): string {
   }
 }
 
-export function initDataBranch(dataBranch: string): string {
-  exec('git config user.name "github-actions[bot]"');
-  exec('git config user.email "github-actions[bot]@users.noreply.github.com"');
+export function initializeDataBranch(dataBranch: string): string {
+  execute('git config user.name "github-actions[bot]"');
+  execute('git config user.email "github-actions[bot]@users.noreply.github.com"');
 
   let branchExists = false;
   try {
-    exec(`git ls-remote --exit-code --heads origin ${dataBranch}`);
+    execute(`git ls-remote --exit-code --heads origin ${dataBranch}`);
     branchExists = true;
   } catch {
     core.info(`Branch "${dataBranch}" does not exist on remote, will create it`);
@@ -34,25 +34,25 @@ export function initDataBranch(dataBranch: string): string {
 
   if (fs.existsSync(DATA_DIR)) {
     try {
-      exec(`git worktree remove ${DATA_DIR} --force`);
+      execute(`git worktree remove ${DATA_DIR} --force`);
     } catch {
       core.debug(`Could not remove existing worktree at ${DATA_DIR}, proceeding anyway`);
     }
   }
 
-  if (branchExists) {
-    exec(`git fetch origin ${dataBranch}`);
-    exec(`git worktree add ${DATA_DIR} origin/${dataBranch}`);
-  } else {
+  if (!branchExists) {
     core.info(`Creating new orphan branch: ${dataBranch}`);
-    exec(`git worktree add --detach ${DATA_DIR}`);
-    exec(`git checkout --orphan ${dataBranch}`, { cwd: path.resolve(DATA_DIR) });
-    exec('git rm -rf . || true', { cwd: path.resolve(DATA_DIR) });
-    exec('git commit --allow-empty -m "Initialize star tracker data"', {
+    execute(`git worktree add --detach ${DATA_DIR}`);
+    execute(`git checkout --orphan ${dataBranch}`, { cwd: path.resolve(DATA_DIR) });
+    execute('git rm -rf . || true', { cwd: path.resolve(DATA_DIR) });
+    execute('git commit --allow-empty -m "Initialize star tracker data"', {
       cwd: path.resolve(DATA_DIR),
     });
+    return DATA_DIR;
   }
 
+  execute(`git fetch origin ${dataBranch}`);
+  execute(`git worktree add ${DATA_DIR} origin/${dataBranch}`);
   return DATA_DIR;
 }
 
@@ -69,6 +69,7 @@ export function getLastSnapshot(history: History): Snapshot | null {
   if (!history.snapshots || history.snapshots.length === 0) {
     return null;
   }
+
   return history.snapshots.at(-1) ?? null;
 }
 
@@ -115,25 +116,25 @@ interface CommitAndPushParams {
 export function commitAndPush({ dataDir, dataBranch, message }: CommitAndPushParams): boolean {
   const cwd = path.resolve(dataDir);
 
-  exec('git add -A', { cwd });
+  execute('git add -A', { cwd });
 
   try {
-    exec('git diff --cached --quiet', { cwd });
+    execute('git diff --cached --quiet', { cwd });
     core.info('No data changes to commit');
     return false;
   } catch {
     core.debug('Staged changes detected, proceeding with commit');
   }
 
-  exec(`git commit -m "${message}"`, { cwd });
-  exec(`git push origin HEAD:${dataBranch}`, { cwd });
+  execute(`git commit -m "${message}"`, { cwd });
+  execute(`git push origin HEAD:${dataBranch}`, { cwd });
   core.info(`Data committed and pushed to ${dataBranch}`);
   return true;
 }
 
 export function cleanup(dataDir: string): void {
   try {
-    exec(`git worktree remove ${dataDir} --force`);
+    execute(`git worktree remove ${dataDir} --force`);
   } catch {
     core.debug(`Worktree cleanup for "${dataDir}" failed, it may have already been removed`);
   }

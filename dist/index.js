@@ -19411,7 +19411,7 @@ var require_exec = __commonJS({
     exports2.getExecOutput = exports2.exec = void 0;
     var string_decoder_1 = require("string_decoder");
     var tr = __importStar(require_toolrunner());
-    function exec2(commandLine, args, options) {
+    function exec(commandLine, args, options) {
       return __awaiter(this, void 0, void 0, function* () {
         const commandArgs = tr.argStringToArray(commandLine);
         if (commandArgs.length === 0) {
@@ -19423,7 +19423,7 @@ var require_exec = __commonJS({
         return runner.exec();
       });
     }
-    exports2.exec = exec2;
+    exports2.exec = exec;
     function getExecOutput(commandLine, args, options) {
       var _a, _b;
       return __awaiter(this, void 0, void 0, function* () {
@@ -19446,7 +19446,7 @@ var require_exec = __commonJS({
           }
         };
         const listeners = Object.assign(Object.assign({}, options === null || options === void 0 ? void 0 : options.listeners), { stdout: stdOutListener, stderr: stdErrListener });
-        const exitCode = yield exec2(commandLine, args, Object.assign(Object.assign({}, options), { listeners }));
+        const exitCode = yield exec(commandLine, args, Object.assign(Object.assign({}, options), { listeners }));
         stdout += stdoutDecoder.end();
         stderr += stderrDecoder.end();
         return {
@@ -19524,12 +19524,12 @@ var require_platform = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getDetails = exports2.isLinux = exports2.isMacOS = exports2.isWindows = exports2.arch = exports2.platform = void 0;
     var os_1 = __importDefault(require("os"));
-    var exec2 = __importStar(require_exec());
+    var exec = __importStar(require_exec());
     var getWindowsInfo = () => __awaiter(void 0, void 0, void 0, function* () {
-      const { stdout: version } = yield exec2.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Version"', void 0, {
+      const { stdout: version } = yield exec.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Version"', void 0, {
         silent: true
       });
-      const { stdout: name } = yield exec2.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Caption"', void 0, {
+      const { stdout: name } = yield exec.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Caption"', void 0, {
         silent: true
       });
       return {
@@ -19539,7 +19539,7 @@ var require_platform = __commonJS({
     });
     var getMacOsInfo = () => __awaiter(void 0, void 0, void 0, function* () {
       var _a, _b, _c, _d;
-      const { stdout } = yield exec2.getExecOutput("sw_vers", void 0, {
+      const { stdout } = yield exec.getExecOutput("sw_vers", void 0, {
         silent: true
       });
       const version = (_b = (_a = stdout.match(/ProductVersion:\s*(.+)/)) === null || _a === void 0 ? void 0 : _a[1]) !== null && _b !== void 0 ? _b : "";
@@ -19550,7 +19550,7 @@ var require_platform = __commonJS({
       };
     });
     var getLinuxInfo = () => __awaiter(void 0, void 0, void 0, function* () {
-      const { stdout } = yield exec2.getExecOutput("lsb_release", ["-i", "-r", "-s"], {
+      const { stdout } = yield exec.getExecOutput("lsb_release", ["-i", "-r", "-s"], {
         silent: true
       });
       const [name, version] = stdout.trim().split("\n");
@@ -38031,8 +38031,13 @@ var safeDump = renamed("safeDump", "dump");
 
 // src/constants.ts
 var DATA_DIR = ".star-tracker-data";
+var VALID_VISIBILITIES = {
+  PUBLIC: "public",
+  PRIVATE: "private",
+  ALL: "all"
+};
 var DEFAULTS = {
-  visibility: "public",
+  visibility: VALID_VISIBILITIES.PUBLIC,
   includeArchived: false,
   includeForks: false,
   excludeRepos: [],
@@ -38071,6 +38076,13 @@ var CHART = {
   height: 400,
   maxDataPoints: 30,
   maxComparison: 5
+};
+var BADGE = {
+  labelCharWidth: 6.5,
+  valueCharWidth: 7,
+  horizontalPadding: 12,
+  height: 20,
+  borderRadius: 3
 };
 
 // src/i18n/ca.json
@@ -38243,7 +38255,6 @@ function isValidLocale(value) {
 }
 
 // src/config.ts
-var VALID_VISIBILITIES = ["public", "private", "all"];
 function parseList(value) {
   if (!value || value.trim() === "") return [];
   return value.split(",").map((segment) => segment.trim()).filter(Boolean);
@@ -38295,9 +38306,9 @@ function loadConfig() {
   const inputIncludeCharts = core2.getInput("include-charts");
   const inputLocale = core2.getInput("locale");
   const visibility = inputVisibility || fileConfig.visibility || DEFAULTS.visibility;
-  if (!VALID_VISIBILITIES.includes(visibility)) {
+  if (!Object.values(VALID_VISIBILITIES).includes(visibility)) {
     throw new Error(
-      `Invalid visibility "${visibility}". Must be one of: ${VALID_VISIBILITIES.join(", ")}`
+      `Invalid visibility "${visibility}". Must be one of: ${Object.values(VALID_VISIBILITIES).join(", ")}`
     );
   }
   const locale = inputLocale || fileConfig.locale || DEFAULTS.locale;
@@ -38334,7 +38345,7 @@ var import_node_child_process = require("node:child_process");
 var fs2 = __toESM(require("node:fs"));
 var path2 = __toESM(require("node:path"));
 var core3 = __toESM(require_core());
-function exec(cmd, options = {}) {
+function execute(cmd, options = {}) {
   try {
     return (0, import_node_child_process.execSync)(cmd, {
       encoding: "utf8",
@@ -38349,35 +38360,35 @@ function exec(cmd, options = {}) {
 ${detail}`);
   }
 }
-function initDataBranch(dataBranch) {
-  exec('git config user.name "github-actions[bot]"');
-  exec('git config user.email "github-actions[bot]@users.noreply.github.com"');
+function initializeDataBranch(dataBranch) {
+  execute('git config user.name "github-actions[bot]"');
+  execute('git config user.email "github-actions[bot]@users.noreply.github.com"');
   let branchExists = false;
   try {
-    exec(`git ls-remote --exit-code --heads origin ${dataBranch}`);
+    execute(`git ls-remote --exit-code --heads origin ${dataBranch}`);
     branchExists = true;
   } catch {
     core3.info(`Branch "${dataBranch}" does not exist on remote, will create it`);
   }
   if (fs2.existsSync(DATA_DIR)) {
     try {
-      exec(`git worktree remove ${DATA_DIR} --force`);
+      execute(`git worktree remove ${DATA_DIR} --force`);
     } catch {
       core3.debug(`Could not remove existing worktree at ${DATA_DIR}, proceeding anyway`);
     }
   }
-  if (branchExists) {
-    exec(`git fetch origin ${dataBranch}`);
-    exec(`git worktree add ${DATA_DIR} origin/${dataBranch}`);
-  } else {
+  if (!branchExists) {
     core3.info(`Creating new orphan branch: ${dataBranch}`);
-    exec(`git worktree add --detach ${DATA_DIR}`);
-    exec(`git checkout --orphan ${dataBranch}`, { cwd: path2.resolve(DATA_DIR) });
-    exec("git rm -rf . || true", { cwd: path2.resolve(DATA_DIR) });
-    exec('git commit --allow-empty -m "Initialize star tracker data"', {
+    execute(`git worktree add --detach ${DATA_DIR}`);
+    execute(`git checkout --orphan ${dataBranch}`, { cwd: path2.resolve(DATA_DIR) });
+    execute("git rm -rf . || true", { cwd: path2.resolve(DATA_DIR) });
+    execute('git commit --allow-empty -m "Initialize star tracker data"', {
       cwd: path2.resolve(DATA_DIR)
     });
+    return DATA_DIR;
   }
+  execute(`git fetch origin ${dataBranch}`);
+  execute(`git worktree add ${DATA_DIR} origin/${dataBranch}`);
   return DATA_DIR;
 }
 function readHistory(dataDir) {
@@ -38411,22 +38422,22 @@ function writeBadge({ dataDir, svg }) {
 }
 function commitAndPush({ dataDir, dataBranch, message }) {
   const cwd = path2.resolve(dataDir);
-  exec("git add -A", { cwd });
+  execute("git add -A", { cwd });
   try {
-    exec("git diff --cached --quiet", { cwd });
+    execute("git diff --cached --quiet", { cwd });
     core3.info("No data changes to commit");
     return false;
   } catch {
     core3.debug("Staged changes detected, proceeding with commit");
   }
-  exec(`git commit -m "${message}"`, { cwd });
-  exec(`git push origin HEAD:${dataBranch}`, { cwd });
+  execute(`git commit -m "${message}"`, { cwd });
+  execute(`git push origin HEAD:${dataBranch}`, { cwd });
   core3.info(`Data committed and pushed to ${dataBranch}`);
   return true;
 }
 function cleanup(dataDir) {
   try {
-    exec(`git worktree remove ${dataDir} --force`);
+    execute(`git worktree remove ${dataDir} --force`);
   } catch {
     core3.debug(`Worktree cleanup for "${dataDir}" failed, it may have already been removed`);
   }
@@ -38467,22 +38478,22 @@ function generateBadge(totalStars, locale = "en") {
   const t = getTranslations(locale);
   const label = t.badge.totalStars;
   const value = `\u2605 ${formatCount(totalStars)}`;
-  const labelWidth = label.length * 6.5 + 12;
-  const valueWidth = value.length * 7 + 12;
+  const labelWidth = label.length * BADGE.labelCharWidth + BADGE.horizontalPadding;
+  const valueWidth = value.length * BADGE.valueCharWidth + BADGE.horizontalPadding;
   const totalWidth = labelWidth + valueWidth;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="20" role="img" aria-label="${label}: ${value}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${BADGE.height}" role="img" aria-label="${label}: ${value}">
   <title>${label}: ${value}</title>
   <linearGradient id="s" x2="0" y2="100%">
     <stop offset="0" stop-color="${COLORS.gradientStart}" stop-opacity=".1"/>
     <stop offset="1" stop-opacity=".1"/>
   </linearGradient>
   <clipPath id="r">
-    <rect width="${totalWidth}" height="20" rx="3" fill="${COLORS.white}"/>
+    <rect width="${totalWidth}" height="${BADGE.height}" rx="${BADGE.borderRadius}" fill="${COLORS.white}"/>
   </clipPath>
   <g clip-path="url(#r)">
-    <rect width="${labelWidth}" height="20" fill="${COLORS.muted}"/>
-    <rect x="${labelWidth}" width="${valueWidth}" height="20" fill="${COLORS.accent}"/>
-    <rect width="${totalWidth}" height="20" fill="url(#s)"/>
+    <rect width="${labelWidth}" height="${BADGE.height}" fill="${COLORS.muted}"/>
+    <rect x="${labelWidth}" width="${valueWidth}" height="${BADGE.height}" fill="${COLORS.accent}"/>
+    <rect width="${totalWidth}" height="${BADGE.height}" fill="url(#s)"/>
   </g>
   <g fill="${COLORS.white}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
     <text aria-hidden="true" x="${labelWidth / 2}" y="15" fill="${COLORS.shadow}" fill-opacity=".3">${label}</text>
@@ -38496,7 +38507,7 @@ function generateBadge(totalStars, locale = "en") {
 // src/reporting/email.ts
 var core4 = __toESM(require_core());
 var import_nodemailer = __toESM(require_nodemailer());
-function getEmailConfig(locale = "en") {
+function getEmailConfig(locale) {
   const host = core4.getInput("smtp-host");
   if (!host) return null;
   const t = getTranslations(locale);
@@ -38600,26 +38611,30 @@ function buildChartConfig({ labels, data, title }) {
 }
 function generateChartUrl({
   history,
-  title = "Star History",
-  locale = "en"
+  title,
+  locale
 }) {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
   }
+  const t = getTranslations(locale);
+  const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData(history, locale);
-  const config = buildChartConfig({ labels, data, title });
+  const config = buildChartConfig({ labels, data, title: chartTitle });
   const encodedConfig = encodeURIComponent(JSON.stringify(config));
   return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&c=${encodedConfig}`;
 }
 function generateComparisonChartUrl({
   history,
   repoNames,
-  title = "Repository Comparison",
-  locale = "en"
+  title,
+  locale
 }) {
   if (!history.snapshots || history.snapshots.length < 2 || repoNames.length === 0) {
     return null;
   }
+  const t = getTranslations(locale);
+  const chartTitle = title ?? t.report.topRepositories;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const labels = snapshots.map((s) => formatDate(s.timestamp, locale));
   const datasets = repoNames.slice(0, CHART.maxComparison).map((repoName, index) => {
@@ -38656,7 +38671,7 @@ function generateComparisonChartUrl({
         },
         title: {
           display: true,
-          text: title,
+          text: chartTitle,
           color: COLORS.text,
           font: { size: 16, weight: "bold" }
         }
@@ -38682,7 +38697,7 @@ function generateComparisonChartUrl({
 function generateMarkdownReport({
   results,
   previousTimestamp,
-  locale = "en",
+  locale,
   history = null,
   includeCharts = true
 }) {
@@ -38773,7 +38788,7 @@ function generateMarkdownReport({
 function generateHtmlReport({
   results,
   previousTimestamp,
-  locale = "en",
+  locale,
   history = null,
   includeCharts = true
 }) {
@@ -38909,12 +38924,12 @@ function filterRepos({
   repos,
   config
 }) {
-  let filtered = repos;
   if (config.onlyRepos.length > 0) {
-    filtered = filtered.filter((repo) => config.onlyRepos.includes(repo.name));
-    core5.info(`After only_repos filter: ${filtered.length} repos`);
-    return filtered;
+    const filtered2 = repos.filter((repo) => config.onlyRepos.includes(repo.name));
+    core5.info(`After only_repos filter: ${filtered2.length} repos`);
+    return filtered2;
   }
+  let filtered = repos;
   if (!config.includeArchived) {
     filtered = filtered.filter((repo) => !repo.archived);
   }
@@ -39043,60 +39058,61 @@ async function run() {
       core6.setOutput("lost-stars", "0");
       core6.setOutput("report", "No repositories matched the configured filters.");
       core6.setOutput("report-html", "<p>No repositories matched the configured filters.</p>");
-    } else {
-      core6.info(`Tracking ${repos.length} repositories...`);
-      core6.info("Initializing data branch...");
-      dataDir = initDataBranch(config.dataBranch);
-      const history = readHistory(dataDir);
-      const lastSnapshot = getLastSnapshot(history);
-      const previousTimestamp = lastSnapshot ? lastSnapshot.timestamp : null;
-      core6.info("Comparing star counts...");
-      const results = compareStars({ currentRepos: repos, previousSnapshot: lastSnapshot });
-      const { summary } = results;
-      core6.info(
-        `Total: ${summary.totalStars} stars (${summary.totalDelta >= 0 ? "+" : ""}${summary.totalDelta})`
-      );
-      const markdownReport = generateMarkdownReport({
-        results,
-        previousTimestamp,
-        locale: config.locale,
-        history,
-        includeCharts: config.includeCharts
-      });
-      const htmlReport = generateHtmlReport({
-        results,
-        previousTimestamp,
-        locale: config.locale,
-        history,
-        includeCharts: config.includeCharts
-      });
-      const badge = generateBadge(summary.totalStars, config.locale);
-      const snapshot = createSnapshot({ currentRepos: repos, summary });
-      history.snapshots.push(snapshot);
-      writeHistory({ dataDir, history, maxHistory: config.maxHistory });
-      writeReport({ dataDir, markdown: markdownReport });
-      writeBadge({ dataDir, svg: badge });
-      const commitMsg = `Update star data \u2014 ${summary.totalStars} total (${summary.totalDelta >= 0 ? "+" : ""}${summary.totalDelta})`;
-      commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg });
-      core6.setOutput("report", markdownReport);
-      core6.setOutput("report-html", htmlReport);
-      core6.setOutput("total-stars", String(summary.totalStars));
-      core6.setOutput("stars-changed", String(summary.changed));
-      core6.setOutput("new-stars", String(summary.newStars));
-      core6.setOutput("lost-stars", String(summary.lostStars));
-      const emailConfig = getEmailConfig(config.locale);
-      if (emailConfig) {
-        if (summary.changed || config.sendOnNoChanges) {
-          const subject = `${t.email.subject}: ${summary.totalStars} (${summary.totalDelta >= 0 ? "+" : ""}${summary.totalDelta})`;
-          try {
-            await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
-          } catch (error) {
-            core6.warning(`Failed to send email: ${error.message}`);
-          }
-        } else {
-          core6.info("No star changes detected, skipping email");
-        }
-      }
+      return;
+    }
+    core6.info(`Tracking ${repos.length} repositories...`);
+    core6.info("Initializing data branch...");
+    dataDir = initializeDataBranch(config.dataBranch);
+    const history = readHistory(dataDir);
+    const lastSnapshot = getLastSnapshot(history);
+    const previousTimestamp = lastSnapshot ? lastSnapshot.timestamp : null;
+    core6.info("Comparing star counts...");
+    const results = compareStars({ currentRepos: repos, previousSnapshot: lastSnapshot });
+    const { summary } = results;
+    core6.info(
+      `Total: ${summary.totalStars} stars (${summary.totalDelta >= 0 ? "+" : ""}${summary.totalDelta})`
+    );
+    const markdownReport = generateMarkdownReport({
+      results,
+      previousTimestamp,
+      locale: config.locale,
+      history,
+      includeCharts: config.includeCharts
+    });
+    const htmlReport = generateHtmlReport({
+      results,
+      previousTimestamp,
+      locale: config.locale,
+      history,
+      includeCharts: config.includeCharts
+    });
+    const badge = generateBadge(summary.totalStars, config.locale);
+    const snapshot = createSnapshot({ currentRepos: repos, summary });
+    history.snapshots.push(snapshot);
+    writeHistory({ dataDir, history, maxHistory: config.maxHistory });
+    writeReport({ dataDir, markdown: markdownReport });
+    writeBadge({ dataDir, svg: badge });
+    const commitMsg = `Update star data \u2014 ${summary.totalStars} total (${summary.totalDelta >= 0 ? "+" : ""}${summary.totalDelta})`;
+    commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg });
+    core6.setOutput("report", markdownReport);
+    core6.setOutput("report-html", htmlReport);
+    core6.setOutput("total-stars", String(summary.totalStars));
+    core6.setOutput("stars-changed", String(summary.changed));
+    core6.setOutput("new-stars", String(summary.newStars));
+    core6.setOutput("lost-stars", String(summary.lostStars));
+    const emailConfig = getEmailConfig(config.locale);
+    if (!emailConfig) {
+      return;
+    }
+    if (!summary.changed && !config.sendOnNoChanges) {
+      core6.info("No star changes detected, skipping email");
+      return;
+    }
+    const subject = `${t.email.subject}: ${summary.totalStars} (${summary.totalDelta >= 0 ? "+" : ""}${summary.totalDelta})`;
+    try {
+      await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
+    } catch (error) {
+      core6.warning(`Failed to send email: ${error.message}`);
     }
   } catch (error) {
     const err = error;

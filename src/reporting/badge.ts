@@ -1,4 +1,4 @@
-import { COLORS } from '../constants';
+import { BADGE, COLORS } from '../constants';
 import { getTranslations, type Locale } from '../i18n';
 import { formatCount } from '../utils';
 
@@ -7,23 +7,23 @@ export function generateBadge(totalStars: number, locale: Locale = 'en'): string
   const label = t.badge.totalStars;
   const value = `\u2605 ${formatCount(totalStars)}`;
 
-  const labelWidth = label.length * 6.5 + 12;
-  const valueWidth = value.length * 7 + 12;
+  const labelWidth = label.length * BADGE.labelCharWidth + BADGE.horizontalPadding;
+  const valueWidth = value.length * BADGE.valueCharWidth + BADGE.horizontalPadding;
   const totalWidth = labelWidth + valueWidth;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="20" role="img" aria-label="${label}: ${value}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${BADGE.height}" role="img" aria-label="${label}: ${value}">
   <title>${label}: ${value}</title>
   <linearGradient id="s" x2="0" y2="100%">
     <stop offset="0" stop-color="${COLORS.gradientStart}" stop-opacity=".1"/>
     <stop offset="1" stop-opacity=".1"/>
   </linearGradient>
   <clipPath id="r">
-    <rect width="${totalWidth}" height="20" rx="3" fill="${COLORS.white}"/>
+    <rect width="${totalWidth}" height="${BADGE.height}" rx="${BADGE.borderRadius}" fill="${COLORS.white}"/>
   </clipPath>
   <g clip-path="url(#r)">
-    <rect width="${labelWidth}" height="20" fill="${COLORS.muted}"/>
-    <rect x="${labelWidth}" width="${valueWidth}" height="20" fill="${COLORS.accent}"/>
-    <rect width="${totalWidth}" height="20" fill="url(#s)"/>
+    <rect width="${labelWidth}" height="${BADGE.height}" fill="${COLORS.muted}"/>
+    <rect x="${labelWidth}" width="${valueWidth}" height="${BADGE.height}" fill="${COLORS.accent}"/>
+    <rect width="${totalWidth}" height="${BADGE.height}" fill="url(#s)"/>
   </g>
   <g fill="${COLORS.white}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
     <text aria-hidden="true" x="${labelWidth / 2}" y="15" fill="${COLORS.shadow}" fill-opacity=".3">${label}</text>
