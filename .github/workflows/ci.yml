@@ -21,7 +21,12 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Check
         run: pnpm run check
-      - name: Unit Tests
-        run: pnpm run test
+      - name: Unit Tests with Coverage
+        run: pnpm run test:coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
       - name: Build
         run: pnpm run build

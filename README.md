@@ -2,9 +2,10 @@
 
 # :star: GitHub Star Tracker
 
-**Track star count changes across your repositories — automatically.**
+**Track star count changes across your repositories — automatically and get notified!**
 
 [![CI](https://github.com/fbuireu/github-star-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/fbuireu/github-star-tracker/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/fbuireu/github-star-tracker/branch/main/graph/badge.svg)](https://codecov.io/gh/fbuireu/github-star-tracker)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 
 📚 **[Complete Documentation](../../wiki)** — Detailed guides, examples, and troubleshooting
@@ -294,6 +295,18 @@ Access data in subsequent workflow steps for custom integrations.
 - 📖 **[Improve docs](../../issues/new?template=documentation.yml)**
 - 🔒 **[Security issues](../../security/policy)**
 - 🤝 **[Contributing guidelines](CONTRIBUTING.md)** — How to contribute to this project
+
+---
+
+## Use of AI
+
+This project uses AI assistance primarily for documentation purposes. AI tools (GitHub Copilot, Claude) were used to:
+
+- Write and improve documentation (README, wiki pages, code comments)
+- Generate boilerplate code and configuration files
+- Assist with code reviews and suggestions
+
+The core logic, architecture decisions, and implementation were developed by the maintainer. All AI-generated content has been reviewed and validated.
 
 ---
 
