@@ -1,6 +1,6 @@
 import { deltaIndicator, trendIcon } from '@domain/formatting';
 import { getTranslations, interpolate } from '@i18n';
-import { generateChartUrl, generateComparisonChartUrl } from './chart';
+import { generateChartUrl, generateComparisonChartUrl, generatePerRepoChartUrl } from './chart';
 import { TOP_REPOS_COUNT } from './constants';
 import type { GenerateReportParams } from './shared';
 import { prepareReportData } from './shared';
@@ -43,6 +43,15 @@ export function generateMarkdownReport({
         })
       : null;
 
+  const individualRepoCharts =
+    includeCharts && history && history.snapshots.length >= 2
+      ? topRepos.flatMap((repoName) => {
+          const chartUrl = generatePerRepoChartUrl({ history, repoFullName: repoName, locale });
+          if (!chartUrl) return [];
+          return [`#### ${repoName}`, '', `![${repoName}](${chartUrl})`, ''];
+        })
+      : [];
+
   const chartSection =
     includeCharts && history && history.snapshots.length >= 2
       ? [
@@ -55,6 +64,16 @@ export function generateMarkdownReport({
                 `### ${t.report.byRepository}`,
                 '',
                 `![${t.report.topRepositories}](${comparisonChartUrl})`,
+                '',
+              ]
+            : []),
+          ...(individualRepoCharts.length > 0
+            ? [
+                '<details>',
+                `<summary>${t.report.individualRepoCharts}</summary>`,
+                '',
+                ...individualRepoCharts,
+                '</details>',
                 '',
               ]
             : []),

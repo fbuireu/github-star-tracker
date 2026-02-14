@@ -35258,6 +35258,7 @@ var ca_default = {
     starHistory: "Historial d'Estrelles",
     topRepositories: "Repositoris Principals",
     byRepository: "Per Repositori",
+    individualRepoCharts: "Gr\xE0fics per Repositori",
     badges: {
       new: "NOU"
     }
@@ -35304,6 +35305,7 @@ var en_default = {
     starHistory: "Star History",
     topRepositories: "Top Repositories",
     byRepository: "By Repository",
+    individualRepoCharts: "Individual Repository Charts",
     badges: {
       new: "NEW"
     }
@@ -35350,6 +35352,7 @@ var es_default = {
     starHistory: "Historial de Estrellas",
     topRepositories: "Repositorios Principales",
     byRepository: "Por Repositorio",
+    individualRepoCharts: "Gr\xE1ficos por Repositorio",
     badges: {
       new: "NUEVO"
     }
@@ -35396,6 +35399,7 @@ var it_default = {
     starHistory: "Storia delle Stelle",
     topRepositories: "Repository Principali",
     byRepository: "Per Repository",
+    individualRepoCharts: "Grafici per Repository",
     badges: {
       new: "NUOVO"
     }
@@ -38494,13 +38498,18 @@ var CHART_COMPARISON_COLORS = [
   "#28a745",
   "#e74c3c",
   "#3498db",
-  "#9b59b6"
+  "#9b59b6",
+  "#e67e22",
+  "#1abc9c",
+  "#e84393",
+  "#795548",
+  "#00bcd4"
 ];
 var CHART = {
   width: 800,
   height: 400,
   maxDataPoints: 30,
-  maxComparison: 5
+  maxComparison: 10
 };
 var BADGE = {
   labelCharWidth: 6.5,
@@ -38509,7 +38518,7 @@ var BADGE = {
   height: 20,
   borderRadius: 3
 };
-var TOP_REPOS_COUNT = 5;
+var TOP_REPOS_COUNT = 10;
 
 // src/presentation/badge.ts
 function generateBadge({ totalStars, locale = "en" }) {
@@ -38543,7 +38552,39 @@ function generateBadge({ totalStars, locale = "en" }) {
 }
 
 // src/presentation/chart.ts
-function buildChartOptions({ title, showLegend }) {
+var MILESTONE_THRESHOLDS = [10, 50, 100, 500, 1e3, 5e3, 1e4];
+function buildMilestoneAnnotations({
+  minStars,
+  maxStars
+}) {
+  const visible = MILESTONE_THRESHOLDS.filter((m) => m > minStars && m < maxStars);
+  if (visible.length === 0) return null;
+  const annotations = {};
+  for (const milestone of visible) {
+    annotations[`milestone${milestone}`] = {
+      type: "line",
+      yMin: milestone,
+      yMax: milestone,
+      borderColor: COLORS.neutral,
+      borderWidth: 1,
+      borderDash: [6, 6],
+      label: {
+        display: true,
+        content: `${milestone.toLocaleString("en-US")} \u2605`,
+        position: "start",
+        backgroundColor: `${COLORS.neutral}33`,
+        color: COLORS.neutral,
+        font: { size: 10 }
+      }
+    };
+  }
+  return { annotations };
+}
+function buildChartOptions({
+  title,
+  showLegend,
+  annotation
+}) {
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -38561,7 +38602,8 @@ function buildChartOptions({ title, showLegend }) {
         text: title,
         color: COLORS.text,
         font: { size: 16, weight: "bold" }
-      }
+      },
+      ...annotation ? { annotation } : {}
     },
     scales: {
       x: {
@@ -38591,12 +38633,13 @@ function buildChartConfig({
   labels,
   datasets,
   title,
-  showLegend
+  showLegend,
+  annotation
 }) {
   return {
     type: "line",
     data: { labels, datasets },
-    options: buildChartOptions({ title, showLegend })
+    options: buildChartOptions({ title, showLegend, annotation })
   };
 }
 function generateChartUrl({
@@ -38610,6 +38653,46 @@ function generateChartUrl({
   const t = getTranslations(locale);
   const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData({ history, locale });
+  const datasets = [
+    {
+      label: "Stars",
+      data,
+      borderColor: COLORS.accent,
+      backgroundColor: `${COLORS.accent}33`,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 3,
+      pointHoverRadius: 6
+    }
+  ];
+  const minStars = Math.min(...data);
+  const maxStars = Math.max(...data);
+  const annotation = buildMilestoneAnnotations({ minStars, maxStars });
+  const config = buildChartConfig({
+    labels,
+    datasets,
+    title: chartTitle,
+    showLegend: false,
+    annotation
+  });
+  return buildChartUrl(config);
+}
+function generatePerRepoChartUrl({
+  history,
+  repoFullName,
+  title,
+  locale
+}) {
+  if (!history.snapshots || history.snapshots.length < 2) {
+    return null;
+  }
+  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
+  const data = snapshots.map((s) => {
+    const repo = s.repos.find((r) => r.fullName === repoFullName);
+    return repo?.stars ?? 0;
+  });
+  const chartTitle = title ?? `${repoFullName} Star History`;
   const datasets = [
     {
       label: "Stars",
@@ -38638,14 +38721,17 @@ function generateComparisonChartUrl({
   const chartTitle = title ?? t.report.topRepositories;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
-  const datasets = repoNames.slice(0, CHART.maxComparison).map((repoName, index) => {
+  const capped = repoNames.slice(0, CHART.maxComparison);
+  const owners = new Set(capped.map((name) => name.split("/")[0]));
+  const useShortLabels = owners.size === 1;
+  const datasets = capped.map((repoName, index) => {
     const data = snapshots.map((s) => {
       const repo = s.repos.find((r) => r.fullName === repoName);
       return repo?.stars ?? 0;
     });
     const color = CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length];
     return {
-      label: repoName,
+      label: useShortLabels ? repoName.split("/")[1] : repoName,
       data,
       borderColor: color,
       backgroundColor: `${color}33`,
@@ -38723,6 +38809,15 @@ function generateHtmlReport({
     title: t.report.topRepositories,
     locale
   }) : null;
+  const individualRepoChartsHtml = includeCharts && history && history.snapshots.length >= 2 ? topRepos.map((repoName) => {
+    const chartUrl = generatePerRepoChartUrl({ history, repoFullName: repoName, locale });
+    if (!chartUrl) return "";
+    return `
+        <div style="margin-top:16px;">
+          <h4 style="font-size:14px;margin-bottom:8px;">${repoName}</h4>
+          <img src="${chartUrl}" alt="${repoName}" style="max-width:100%;height:auto;border-radius:4px;">
+        </div>`;
+  }).filter(Boolean).join("") : "";
   const chartSection = includeCharts && history && history.snapshots.length >= 2 ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F4C8} ${t.report.starTrend}</h2>
@@ -38730,6 +38825,9 @@ function generateHtmlReport({
         ${comparisonChartUrl ? `
         <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
         <img src="${comparisonChartUrl}" alt="${t.report.topRepositories}" style="max-width:100%;height:auto;border-radius:4px;">` : ""}
+        ${individualRepoChartsHtml ? `
+        <h3 style="font-size:16px;margin:24px 0 12px;">${t.report.individualRepoCharts}</h3>
+        ${individualRepoChartsHtml}` : ""}
       </div>` : "";
   return `<!DOCTYPE html>
 <html>
@@ -38814,6 +38912,11 @@ function generateMarkdownReport({
     title: t.report.topRepositories,
     locale
   }) : null;
+  const individualRepoCharts = includeCharts && history && history.snapshots.length >= 2 ? topRepos.flatMap((repoName) => {
+    const chartUrl = generatePerRepoChartUrl({ history, repoFullName: repoName, locale });
+    if (!chartUrl) return [];
+    return [`#### ${repoName}`, "", `![${repoName}](${chartUrl})`, ""];
+  }) : [];
   const chartSection = includeCharts && history && history.snapshots.length >= 2 ? [
     `## \u{1F4C8} ${t.report.starTrend}`,
     "",
@@ -38823,6 +38926,14 @@ function generateMarkdownReport({
       `### ${t.report.byRepository}`,
       "",
       `![${t.report.topRepositories}](${comparisonChartUrl})`,
+      ""
+    ] : [],
+    ...individualRepoCharts.length > 0 ? [
+      "<details>",
+      `<summary>${t.report.individualRepoCharts}</summary>`,
+      "",
+      ...individualRepoCharts,
+      "</details>",
       ""
     ] : []
   ] : [];

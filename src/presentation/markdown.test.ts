@@ -171,4 +171,41 @@ describe('generateMarkdownReport', () => {
 
     expect(report).toContain('Top Repositories');
   });
+
+  it('includes individual repo charts in collapsible section', () => {
+    const history = {
+      snapshots: [
+        {
+          timestamp: '2026-01-01T00:00:00Z',
+          totalStars: 20,
+          repos: [
+            { name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 10 },
+            { name: 'repo-b', owner: 'user', fullName: 'user/repo-b', stars: 10 },
+          ],
+        },
+        {
+          timestamp: '2026-01-02T00:00:00Z',
+          totalStars: 25,
+          repos: [
+            { name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 15 },
+            { name: 'repo-b', owner: 'user', fullName: 'user/repo-b', stars: 10 },
+          ],
+        },
+      ],
+    };
+
+    const report = generateMarkdownReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+      history,
+      includeCharts: true,
+    });
+
+    expect(report).toContain('<details>');
+    expect(report).toContain('<summary>Individual Repository Charts</summary>');
+    expect(report).toContain('#### user/repo-a');
+    expect(report).toContain('#### user/repo-b');
+    expect(report).toContain('</details>');
+  });
 });

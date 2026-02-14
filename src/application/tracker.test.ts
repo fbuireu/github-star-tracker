@@ -177,6 +177,7 @@ const defaultTranslations = {
     starHistory: 'Star History',
     topRepositories: 'Top Repos',
     byRepository: 'By Repo',
+    individualRepoCharts: 'Individual Repository Charts',
     badges: { new: 'NEW' },
   },
   email: {

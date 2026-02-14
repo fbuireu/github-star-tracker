@@ -28,6 +28,7 @@ export interface Translations {
     starHistory: string;
     topRepositories: string;
     byRepository: string;
+    individualRepoCharts: string;
     badges: {
       new: string;
     };

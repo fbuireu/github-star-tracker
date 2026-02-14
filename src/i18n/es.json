@@ -23,6 +23,7 @@
     "starHistory": "Historial de Estrellas",
     "topRepositories": "Repositorios Principales",
     "byRepository": "Por Repositorio",
+    "individualRepoCharts": "Gráficos por Repositorio",
     "badges": {
       "new": "NUEVO"
     }

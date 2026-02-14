@@ -1,6 +1,6 @@
 import { deltaIndicator } from '@domain/formatting';
 import { getTranslations, interpolate } from '@i18n';
-import { generateChartUrl, generateComparisonChartUrl } from './chart';
+import { generateChartUrl, generateComparisonChartUrl, generatePerRepoChartUrl } from './chart';
 import { COLORS, TOP_REPOS_COUNT } from './constants';
 import type { GenerateReportParams } from './shared';
 import { prepareReportData } from './shared';
@@ -64,6 +64,22 @@ export function generateHtmlReport({
         })
       : null;
 
+  const individualRepoChartsHtml =
+    includeCharts && history && history.snapshots.length >= 2
+      ? topRepos
+          .map((repoName) => {
+            const chartUrl = generatePerRepoChartUrl({ history, repoFullName: repoName, locale });
+            if (!chartUrl) return '';
+            return `
+        <div style="margin-top:16px;">
+          <h4 style="font-size:14px;margin-bottom:8px;">${repoName}</h4>
+          <img src="${chartUrl}" alt="${repoName}" style="max-width:100%;height:auto;border-radius:4px;">
+        </div>`;
+          })
+          .filter(Boolean)
+          .join('')
+      : '';
+
   const chartSection =
     includeCharts && history && history.snapshots.length >= 2
       ? `
@@ -75,6 +91,13 @@ export function generateHtmlReport({
             ? `
         <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
         <img src="${comparisonChartUrl}" alt="${t.report.topRepositories}" style="max-width:100%;height:auto;border-radius:4px;">`
+            : ''
+        }
+        ${
+          individualRepoChartsHtml
+            ? `
+        <h3 style="font-size:16px;margin:24px 0 12px;">${t.report.individualRepoCharts}</h3>
+        ${individualRepoChartsHtml}`
             : ''
         }
       </div>`

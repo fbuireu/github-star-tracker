@@ -1,6 +1,11 @@
 import type { History } from '@domain/types';
 import { describe, expect, it } from 'vitest';
-import { generateChartUrl, generateComparisonChartUrl, generatePerRepoChartUrl } from './chart';
+import {
+  buildMilestoneAnnotations,
+  generateChartUrl,
+  generateComparisonChartUrl,
+  generatePerRepoChartUrl,
+} from './chart';
 
 const mockHistory: History = {
   snapshots: [
@@ -171,24 +176,17 @@ describe('chart', () => {
       expect(url).toBeDefined();
       if (url) {
         const decodedUrl = decodeURIComponent(url);
-        expect(decodedUrl).toContain('user/repo-a');
-        expect(decodedUrl).toContain('user/repo-b');
+        expect(decodedUrl).toContain('"label":"repo-a"');
+        expect(decodedUrl).toContain('"label":"repo-b"');
         expect(decodedUrl).toContain('"data":[50,70,90]');
         expect(decodedUrl).toContain('"data":[50,50,60]');
       }
     });
 
-    it('should limit to 5 repositories maximum', () => {
+    it('should limit to 10 repositories maximum', () => {
       const url = generateComparisonChartUrl({
         history: mockHistory,
-        repoNames: [
-          'user/repo-a',
-          'user/repo-b',
-          'user/repo-c',
-          'user/repo-d',
-          'user/repo-e',
-          'user/repo-f',
-        ],
+        repoNames: Array.from({ length: 12 }, (_, i) => `user/repo-${i}`),
         locale: 'en',
       });
 
@@ -196,7 +194,7 @@ describe('chart', () => {
       if (url) {
         const decodedUrl = decodeURIComponent(url);
         const config = JSON.parse(decodedUrl.split('&c=')[1]);
-        expect(config.data.datasets).toHaveLength(5);
+        expect(config.data.datasets).toHaveLength(10);
       }
     });
 
@@ -245,6 +243,131 @@ describe('chart', () => {
         const decodedUrl = decodeURIComponent(url);
         const config = JSON.parse(decodedUrl.split('&c=')[1]);
         expect(config.options.plugins.legend.display).toBe(true);
+      }
+    });
+
+    it('should use short labels when all repos share the same owner', () => {
+      const url = generateComparisonChartUrl({
+        history: mockHistory,
+        repoNames: ['user/repo-a', 'user/repo-b'],
+        locale: 'en',
+      });
+
+      expect(url).toBeDefined();
+      if (url) {
+        const decodedUrl = decodeURIComponent(url);
+        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        expect(config.data.datasets[0].label).toBe('repo-a');
+        expect(config.data.datasets[1].label).toBe('repo-b');
+      }
+    });
+
+    it('should use full names when repos have different owners', () => {
+      const mixedHistory: History = {
+        snapshots: [
+          {
+            timestamp: '2025-01-01T00:00:00.000Z',
+            totalStars: 100,
+            repos: [
+              { fullName: 'alice/repo-a', name: 'repo-a', owner: 'alice', stars: 50 },
+              { fullName: 'bob/repo-b', name: 'repo-b', owner: 'bob', stars: 50 },
+            ],
+          },
+          {
+            timestamp: '2025-01-08T00:00:00.000Z',
+            totalStars: 120,
+            repos: [
+              { fullName: 'alice/repo-a', name: 'repo-a', owner: 'alice', stars: 70 },
+              { fullName: 'bob/repo-b', name: 'repo-b', owner: 'bob', stars: 50 },
+            ],
+          },
+        ],
+      };
+
+      const url = generateComparisonChartUrl({
+        history: mixedHistory,
+        repoNames: ['alice/repo-a', 'bob/repo-b'],
+        locale: 'en',
+      });
+
+      expect(url).toBeDefined();
+      if (url) {
+        const decodedUrl = decodeURIComponent(url);
+        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        expect(config.data.datasets[0].label).toBe('alice/repo-a');
+        expect(config.data.datasets[1].label).toBe('bob/repo-b');
+      }
+    });
+  });
+
+  describe('buildMilestoneAnnotations', () => {
+    it('should return annotations for milestones within range', () => {
+      const result = buildMilestoneAnnotations({ minStars: 30, maxStars: 200 });
+
+      expect(result).not.toBeNull();
+      expect(result?.annotations).toHaveProperty('milestone50');
+      expect(result?.annotations).toHaveProperty('milestone100');
+      expect(result?.annotations.milestone50.yMin).toBe(50);
+      expect(result?.annotations.milestone100.yMin).toBe(100);
+    });
+
+    it('should exclude milestones outside the visible range', () => {
+      const result = buildMilestoneAnnotations({ minStars: 30, maxStars: 200 });
+
+      expect(result?.annotations).not.toHaveProperty('milestone10');
+      expect(result?.annotations).not.toHaveProperty('milestone500');
+    });
+
+    it('should return null when no milestones are visible', () => {
+      const result = buildMilestoneAnnotations({ minStars: 200, maxStars: 400 });
+      expect(result).toBeNull();
+    });
+
+    it('should exclude boundary values (min and max)', () => {
+      const result = buildMilestoneAnnotations({ minStars: 50, maxStars: 1000 });
+
+      expect(result).not.toBeNull();
+      expect(result?.annotations).not.toHaveProperty('milestone50');
+      expect(result?.annotations).not.toHaveProperty('milestone1000');
+      expect(result?.annotations).toHaveProperty('milestone100');
+      expect(result?.annotations).toHaveProperty('milestone500');
+    });
+
+    it('should include milestone annotations in aggregate chart', () => {
+      const largeHistory: History = {
+        snapshots: [
+          {
+            timestamp: '2025-01-01T00:00:00.000Z',
+            totalStars: 80,
+            repos: [],
+          },
+          {
+            timestamp: '2025-01-08T00:00:00.000Z',
+            totalStars: 120,
+            repos: [],
+          },
+        ],
+      };
+
+      const url = generateChartUrl({ history: largeHistory, locale: 'en' });
+
+      expect(url).toBeDefined();
+      if (url) {
+        const decodedUrl = decodeURIComponent(url);
+        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        expect(config.options.plugins.annotation).toBeDefined();
+        expect(config.options.plugins.annotation.annotations).toHaveProperty('milestone100');
+      }
+    });
+
+    it('should not include annotations when no milestones in range', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en' });
+
+      expect(url).toBeDefined();
+      if (url) {
+        const decodedUrl = decodeURIComponent(url);
+        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        expect(config.options.plugins.annotation).toBeUndefined();
       }
     });
   });

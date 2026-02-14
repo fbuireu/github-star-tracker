@@ -23,6 +23,27 @@ interface Dataset {
   pointHoverRadius: number;
 }
 
+interface MilestoneAnnotation {
+  type: 'line';
+  yMin: number;
+  yMax: number;
+  borderColor: string;
+  borderWidth: number;
+  borderDash: [number, number];
+  label: {
+    display: boolean;
+    content: string;
+    position: 'start';
+    backgroundColor: string;
+    color: string;
+    font: { size: number };
+  };
+}
+
+interface AnnotationPlugin {
+  annotations: Record<string, MilestoneAnnotation>;
+}
+
 interface ChartOptions {
   responsive: boolean;
   maintainAspectRatio: boolean;
@@ -41,6 +62,7 @@ interface ChartOptions {
       color: string;
       font: { size: number; weight: 'bold' };
     };
+    annotation?: AnnotationPlugin;
   };
   scales: {
     x: {
@@ -55,12 +77,55 @@ interface ChartOptions {
   };
 }
 
+const MILESTONE_THRESHOLDS = [10, 50, 100, 500, 1_000, 5_000, 10_000] as const;
+
+interface BuildMilestoneAnnotationsParams {
+  minStars: number;
+  maxStars: number;
+}
+
+export function buildMilestoneAnnotations({
+  minStars,
+  maxStars,
+}: BuildMilestoneAnnotationsParams): AnnotationPlugin | null {
+  const visible = MILESTONE_THRESHOLDS.filter((m) => m > minStars && m < maxStars);
+
+  if (visible.length === 0) return null;
+
+  const annotations: Record<string, MilestoneAnnotation> = {};
+  for (const milestone of visible) {
+    annotations[`milestone${milestone}`] = {
+      type: 'line',
+      yMin: milestone,
+      yMax: milestone,
+      borderColor: COLORS.neutral,
+      borderWidth: 1,
+      borderDash: [6, 6],
+      label: {
+        display: true,
+        content: `${milestone.toLocaleString('en-US')} ★`,
+        position: 'start',
+        backgroundColor: `${COLORS.neutral}33`,
+        color: COLORS.neutral,
+        font: { size: 10 },
+      },
+    };
+  }
+
+  return { annotations };
+}
+
 interface BuildChartOptionsParams {
   title: string;
   showLegend: boolean;
+  annotation?: AnnotationPlugin | null;
 }
 
-function buildChartOptions({ title, showLegend }: BuildChartOptionsParams): ChartOptions {
+function buildChartOptions({
+  title,
+  showLegend,
+  annotation,
+}: BuildChartOptionsParams): ChartOptions {
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -79,6 +144,7 @@ function buildChartOptions({ title, showLegend }: BuildChartOptionsParams): Char
         color: COLORS.text,
         font: { size: 16, weight: 'bold' },
       },
+      ...(annotation ? { annotation } : {}),
     },
     scales: {
       x: {
@@ -121,6 +187,7 @@ interface BuildChartConfigParams {
   datasets: Dataset[];
   title: string;
   showLegend: boolean;
+  annotation?: AnnotationPlugin | null;
 }
 
 function buildChartConfig({
@@ -128,11 +195,12 @@ function buildChartConfig({
   datasets,
   title,
   showLegend,
+  annotation,
 }: BuildChartConfigParams): ChartConfig {
   return {
     type: 'line',
     data: { labels, datasets },
-    options: buildChartOptions({ title, showLegend }),
+    options: buildChartOptions({ title, showLegend, annotation }),
   };
 }
 
@@ -168,7 +236,17 @@ export function generateChartUrl({
     },
   ];
 
-  const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: false });
+  const minStars = Math.min(...data);
+  const maxStars = Math.max(...data);
+  const annotation = buildMilestoneAnnotations({ minStars, maxStars });
+
+  const config = buildChartConfig({
+    labels,
+    datasets,
+    title: chartTitle,
+    showLegend: false,
+    annotation,
+  });
   return buildChartUrl(config);
 }
 
@@ -236,7 +314,11 @@ export function generateComparisonChartUrl({
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
 
-  const datasets: Dataset[] = repoNames.slice(0, CHART.maxComparison).map((repoName, index) => {
+  const capped = repoNames.slice(0, CHART.maxComparison);
+  const owners = new Set(capped.map((name) => name.split('/')[0]));
+  const useShortLabels = owners.size === 1;
+
+  const datasets: Dataset[] = capped.map((repoName, index) => {
     const data = snapshots.map((s) => {
       const repo = s.repos.find((r) => r.fullName === repoName);
       return repo?.stars ?? 0;
@@ -245,7 +327,7 @@ export function generateComparisonChartUrl({
     const color = CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length];
 
     return {
-      label: repoName,
+      label: useShortLabels ? repoName.split('/')[1] : repoName,
       data,
       borderColor: color,
       backgroundColor: `${color}33`,

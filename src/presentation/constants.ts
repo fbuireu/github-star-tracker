@@ -20,13 +20,18 @@ export const CHART_COMPARISON_COLORS = [
   '#e74c3c',
   '#3498db',
   '#9b59b6',
+  '#e67e22',
+  '#1abc9c',
+  '#e84393',
+  '#795548',
+  '#00bcd4',
 ] as const;
 
 export const CHART = {
   width: 800,
   height: 400,
   maxDataPoints: 30,
-  maxComparison: 5,
+  maxComparison: 10,
 } as const;
 
 export const BADGE = {
@@ -37,4 +42,4 @@ export const BADGE = {
   borderRadius: 3,
 } as const;
 
-export const TOP_REPOS_COUNT = 5;
+export const TOP_REPOS_COUNT = 10;

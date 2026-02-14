@@ -23,6 +23,7 @@
     "starHistory": "Star History",
     "topRepositories": "Top Repositories",
     "byRepository": "By Repository",
+    "individualRepoCharts": "Individual Repository Charts",
     "badges": {
       "new": "NEW"
     }
