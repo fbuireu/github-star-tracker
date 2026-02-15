@@ -558,6 +558,20 @@ describe('trackStars', () => {
   });
 
   describe('github enterprise (GHES)', () => {
+    const savedApiUrl = process.env.GITHUB_API_URL;
+
+    beforeEach(() => {
+      delete process.env.GITHUB_API_URL;
+    });
+
+    afterEach(() => {
+      if (savedApiUrl !== undefined) {
+        process.env.GITHUB_API_URL = savedApiUrl;
+      } else {
+        delete process.env.GITHUB_API_URL;
+      }
+    });
+
     it('calls getOctokit without baseUrl when no API URL is configured', async () => {
       await trackStars();
 
@@ -586,8 +600,6 @@ describe('trackStars', () => {
       expect(github.getOctokit).toHaveBeenCalledWith('fake-token', {
         baseUrl: 'https://ghes.corp.com/api/v3',
       });
-
-      delete process.env.GITHUB_API_URL;
     });
 
     it('prefers input over GITHUB_API_URL env var', async () => {
@@ -603,8 +615,6 @@ describe('trackStars', () => {
       expect(github.getOctokit).toHaveBeenCalledWith('fake-token', {
         baseUrl: 'https://ghes-input.corp.com/api/v3',
       });
-
-      delete process.env.GITHUB_API_URL;
     });
   });
 
