@@ -325,49 +325,23 @@ When you merge to `main`:
 
 ```
 github-star-tracker/
-├── .github/
-│   ├── workflows/            # CI/CD workflows
-│   └── ISSUE_TEMPLATE/       # Issue templates
+├── .github/                # CI/CD workflows and issue templates
 ├── src/
-│   ├── index.ts              # Entry point
-│   ├── application/
-│   │   └── tracker.ts        # Main orchestrator
-│   ├── config/
-│   │   ├── types.ts          # Config types (Config, Visibility, Locale)
-│   │   ├── defaults.ts       # Default values and constants
-│   │   ├── parsers.ts        # Input parsing utilities
-│   │   └── loader.ts         # Config loading (action inputs + YAML file)
-│   ├── domain/
-│   │   ├── types.ts          # Domain types (Snapshot, History, RepoResult, etc.)
-│   │   ├── formatting.ts     # Number/date formatting
-│   │   ├── snapshot.ts       # Snapshot creation and history rotation
-│   │   ├── comparison.ts     # Star delta computation
-│   │   ├── notification.ts   # Notification threshold logic
-│   │   ├── forecast.ts       # Growth forecasting (linear regression, WMA)
-│   │   └── stargazers.ts     # Stargazer diffing
-│   ├── infrastructure/
-│   │   ├── github/           # GitHub API client, repo filters, stargazer fetching
-│   │   ├── git/              # Git commands, worktree management
-│   │   ├── persistence/      # File I/O (read/write history, reports, badges, charts)
-│   │   └── notification/     # Email sending (SMTP)
-│   ├── presentation/
-│   │   ├── markdown.ts       # Markdown report generation
-│   │   ├── html.ts           # HTML email report generation
-│   │   ├── svg-chart.ts      # Animated SVG chart generation
-│   │   ├── chart.ts          # QuickChart.io URL generation (for emails)
-│   │   ├── badge.ts          # SVG badge generation
-│   │   ├── shared.ts         # Shared presentation utilities
-│   │   └── constants.ts      # Chart colors, dimensions, thresholds
-│   └── i18n/                 # Translation files (en, es, ca, it) and loader
-├── wiki/                     # Wiki documentation (.md files)
-├── action.yml                # GitHub Action metadata
-├── package.json              # Dependencies
-├── tsconfig.json             # TypeScript config (with path aliases)
-├── vitest.config.ts          # Test configuration
-└── esbuild.config.ts         # Build configuration
+│   ├── index.ts            # Entry point: Action initialization
+│   ├── application/        # Orchestration layer: Main logic flow
+│   ├── config/             # Configuration: Input parsing, validation, and defaults
+│   ├── domain/             # Core Business Logic: Snapshotting, deltas, and forecasting
+│   ├── infrastructure/     # External Services: GitHub API, Git CLI, Persistence, and SMTP
+│   ├── presentation/       # Output Generation: Markdown, HTML, SVG charts, and badges
+│   └── i18n/               # Internationalization: Locales and translation loaders
+├── action.yml              # GitHub Action metadata
+├── package.json            # Dependencies and scripts
+└── tsconfig.json           # TypeScript configuration with path aliases
 ```
 
+> [!TIP]
 > **Path aliases:** Cross-layer imports use `@application/*`, `@config/*`, `@domain/*`, `@i18n`, `@infrastructure/*`, `@presentation/*`. Same-layer imports use relative paths. Tests are co-located as `*.test.ts` files next to the source.
+
 
 ## Development Tips
 
@@ -465,5 +439,8 @@ Contributors will be recognized in:
 - [TypeScript Documentation](https://www.typescriptlang.org/docs/)
 
 ---
+<div align="center">
 
 Thank you for contributing! 🎉
+
+</div>
