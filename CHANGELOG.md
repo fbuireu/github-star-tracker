@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/fbuireu/github-star-tracker/compare/v1.5.2...v1.5.3) (2026-02-15)
+
+
+### Bug Fixes
+
+* minor struct ([883da9b](https://github.com/fbuireu/github-star-tracker/commit/883da9b34592724aebb0423d6226083fbd396376))
+
 ## [1.5.2](https://github.com/fbuireu/github-star-tracker/compare/v1.5.1...v1.5.2) (2026-02-15)
 
 
