@@ -38,8 +38,7 @@ export async function fetchRepos({ octokit, config }: FetchReposParams): Promise
     const err = error as Error & { status?: number };
     const status = err.status ? ` (HTTP ${err.status})` : '';
     throw new Error(
-      `Failed to fetch repositories from GitHub API${status}: ${err.message}. ` +
-        'Verify that your github-token has the correct permissions.',
+      `Failed to fetch repositories from GitHub API${status}: ${err.message}. Verify that your github-token has the correct permissions.`,
     );
   }
 

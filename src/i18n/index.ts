@@ -10,7 +10,9 @@ export { LOCALES } from '@config/defaults';
 export type { Locale } from '@config/types';
 export type { Translations } from './types';
 
+const TRANSLATIONS: Record<Locale, Translations> = { en, es, ca, it };
 const PLACEHOLDER_PATTERN = /\{(\w+)\}/g;
+const FALLBACK_LANG = TRANSLATIONS.en;
 
 export function interpolate({ template, params }: InterpolateParams): string {
   return template.replaceAll(PLACEHOLDER_PATTERN, (match, key) =>
@@ -18,10 +20,8 @@ export function interpolate({ template, params }: InterpolateParams): string {
   );
 }
 
-const translations: Record<Locale, Translations> = { en, es, ca, it };
-
 export function getTranslations(locale: Locale): Translations {
-  return translations[locale] || translations.en;
+  return TRANSLATIONS[locale] || FALLBACK_LANG;
 }
 
 export function isValidLocale(value: string): value is Locale {
