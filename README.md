@@ -26,7 +26,7 @@ Every run, Star Tracker commits these artifacts to a dedicated data branch:
 
         ![Stars](https://raw.githubusercontent.com/USER/REPO/star-tracker-data/stars-badge.svg)
 
-- **Markdown, CSV & HTML reports:** summary tables, delta indicators, new/removed repos, stargazer details, and forecast tables.
+- **Markdown & HTML reports:** summary tables, delta indicators, new/removed repos, stargazer details, and forecast tables.
 
 - **CSV & JSON data:** machine-readable exports for dashboards, spreadsheets, or downstream pipelines.
 
