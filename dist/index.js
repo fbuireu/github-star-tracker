@@ -32632,10 +32632,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -34927,7 +34927,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35050,7 +35050,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -35270,7 +35270,7 @@ var ca_default = {
     trend: "Tend\xE8ncia",
     newRepositories: "Nous Repositoris",
     removedRepositories: "Repositoris Eliminats",
-    removedRepoText: "{name} \u2014 tenia {count} estrelles",
+    removedRepoText: "{name}: tenia {count} estrelles",
     summary: "Resum",
     starsGained: "Estrelles guanyades",
     starsLost: "Estrelles perdudes",
@@ -35336,7 +35336,7 @@ var en_default = {
     trend: "Trend",
     newRepositories: "New Repositories",
     removedRepositories: "Removed Repositories",
-    removedRepoText: "{name} \u2014 was {count} stars",
+    removedRepoText: "{name}: was {count} stars",
     summary: "Summary",
     starsGained: "Stars gained",
     starsLost: "Stars lost",
@@ -35402,7 +35402,7 @@ var es_default = {
     trend: "Tendencia",
     newRepositories: "Nuevos Repositorios",
     removedRepositories: "Repositorios Eliminados",
-    removedRepoText: "{name} \u2014 ten\xEDa {count} estrellas",
+    removedRepoText: "{name}: ten\xEDa {count} estrellas",
     summary: "Resumen",
     starsGained: "Estrellas ganadas",
     starsLost: "Estrellas perdidas",
@@ -35468,7 +35468,7 @@ var it_default = {
     trend: "Tendenza",
     newRepositories: "Nuovi Repository",
     removedRepositories: "Repository Rimossi",
-    removedRepoText: "{name} \u2014 aveva {count} stelle",
+    removedRepoText: "{name}:aveva {count} stelle",
     summary: "Riepilogo",
     starsGained: "Stelle guadagnate",
     starsLost: "Stelle perse",
@@ -39442,7 +39442,7 @@ function generateMarkdownReport({
     `## ${t.report.newRepositories}`,
     "",
     ...newRepos.map(
-      (repo) => `- [${repo.fullName}](https://github.com/${repo.fullName}) \u2014 ${interpolate({ template: t.report.starsCount, params: { count: repo.current } })}`
+      (repo) => `- [${repo.fullName}](https://github.com/${repo.fullName}): ${interpolate({ template: t.report.starsCount, params: { count: repo.current } })}`
     ),
     ""
   ] : [];
@@ -39478,7 +39478,7 @@ function generateMarkdownReport({
       `<summary>${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</summary>`,
       "",
       ...entry.newStargazers.map(
-        (s) => `- <img src="${s.avatarUrl}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${s.login}](${s.profileUrl}) \u2014 ${interpolate({ template: t.stargazers.starredOn, params: { date: s.starredAt.split("T")[0] } })}`
+        (s) => `- <img src="${s.avatarUrl}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${s.login}](${s.profileUrl}): ${interpolate({ template: t.stargazers.starredOn, params: { date: s.starredAt.split("T")[0] } })}`
       ),
       "",
       "</details>",
@@ -40015,7 +40015,7 @@ async function trackStars() {
           }
         }
       }
-      const commitMsg = `Update star data \u2014 ${summary2.totalStars} total (${deltaIndicator(summary2.totalDelta)})`;
+      const commitMsg = `Update star data: ${summary2.totalStars} total (${deltaIndicator(summary2.totalDelta)})`;
       commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg });
       setOutputs({
         summary: summary2,

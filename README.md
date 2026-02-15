@@ -279,6 +279,24 @@ flowchart TD
 | **[Known Limitations](../../wiki/Known-Limitations)** | Constraints and workarounds |
 | **[Troubleshooting](../../wiki/Troubleshooting)** | Common issues and solutions |
 
+## Support & Contributing
+
+- **[Report bugs](../../issues/new?template=bug_report.yml)**
+- **[Request features](../../issues/new?template=feature_request.yml)**
+- **[Contributing guidelines](CONTRIBUTING.md)**
+- **[Security policy](../../security/policy)**
+
+If you find this project useful, consider supporting its development:
+
+<p align="center">
+  <a href="https://github.com/sponsors/fbuireu">
+    <img src="https://img.shields.io/badge/Sponsor-fbuireu-pink?style=for-the-badge&logo=github-sponsors" alt="Sponsor">
+  </a>
+  <a href="https://www.buymeacoffee.com/ferranbuireu">
+    <img src="https://img.shields.io/badge/Buy%20Me%20A%20Beer-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Beer">
+  </a>
+</p>
+
 ---
 
 ## Use of AI
@@ -292,16 +310,8 @@ This project uses AI assistance primarily for documentation purposes. AI tools (
 The core logic, architecture decisions, and implementation were developed by the maintainer. All AI-generated content has been reviewed and validated.
 
 ---
-
-## Support & Contributing
+<div align="center">
 
 [AGPL-3.0](LICENSE) © Made with 🤘🏼 by [Ferran Buireu](https://github.com/fbuireu)
 
-- **[Report bugs](../../issues/new?template=bug_report.yml)**
-- **[Request features](../../issues/new?template=feature_request.yml)**
-- **[Contributing guidelines](CONTRIBUTING.md)**
-- **[Security policy](../../security/policy)**
-
-If you find this project useful, consider supporting its development:
-
-<a href="https://www.buymeacoffee.com/ferranbuireu"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a beer&emoji=🍺&slug=ferranbuireu&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>
+</div>
