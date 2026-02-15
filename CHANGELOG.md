@@ -1,3 +1,10 @@
+## [1.5.2](https://github.com/fbuireu/github-star-tracker/compare/v1.5.1...v1.5.2) (2026-02-15)
+
+
+### Bug Fixes
+
+* add test coverage pre-commit hook ([59d9e2f](https://github.com/fbuireu/github-star-tracker/commit/59d9e2fc26d59f7e365bf217d244030fc95f8de2))
+
 ## [1.5.1](https://github.com/fbuireu/github-star-tracker/compare/v1.5.0...v1.5.1) (2026-02-15)
 
 
