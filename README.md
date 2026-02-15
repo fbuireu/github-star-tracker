@@ -16,12 +16,7 @@
 
 ## Features
 
-<details open>
-<summary>
-
 ### 🚀 Tracking & Automation
-
-</summary>
 
 - ✅ **Automated scheduling** — Daily, weekly, or on-demand runs
 - 📈 **Historical tracking** — Up to 52 weeks of star data preserved
@@ -29,48 +24,25 @@
 - 👤 **Stargazer tracking** — See who starred your repos (opt-in)
 - 🔮 **Growth forecast** — Predict star count trends for the next 4 weeks
 
-</details>
-
-<details open>
-<summary>
-
 ### 📊 Reports & Visualizations
-
-</summary>
 
 - 📊 **Interactive charts** — Star trends and per-repository comparisons
 - 📧 **Email notifications** — Built-in SMTP or external action integration
 - 🎨 **Multiple formats** — Markdown reports, HTML emails, SVG badges
 
-</details>
-
-<details open>
-<summary>
-
 ### ⚙️ Developer Experience
-
-</summary>
 
 - 🌍 **Multi-language** — English, Spanish, Catalan, Italian
 - 🔧 **Flexible config** — File-based or action inputs
 - 📤 **Action outputs** — Integrate with other workflow steps
 - 🏷️ **Type-safe** — 100% TypeScript with strict mode
 
-</details>
-
-<details open>
-<summary>
-
 ### 🔒 Quality & Security
-
-</summary>
 
 - ✅ **95%+ test coverage** — +200 tests ensuring reliability
 - 🔒 **Secure by design** — PATs with minimal scopes, no data leaks
 - 📦 **Zero runtime deps** — Bundled action, fast execution
 - 🔄 **CI/CD verified** — Every commit tested and validated
-
-</details>
 
 ---
 
