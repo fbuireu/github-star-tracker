@@ -53,3 +53,11 @@ export const SVG_CHART = {
 } as const;
 
 export const MIN_SNAPSHOTS_FOR_CHART = 2;
+
+export const THRESHOLDS = [
+  { limit: 50, value: 1 },
+  { limit: 200, value: 5 },
+  { limit: 500, value: 10 },
+];
+
+export const THRESHOLD_MAX_PACE = 20;

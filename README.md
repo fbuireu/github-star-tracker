@@ -298,7 +298,7 @@ Create `.github/star-tracker-config.json`:
 | `email-to`               | —                     | Recipient email address                                |
 | `email-from`             | `GitHub Star Tracker` | Sender name or email address                           |
 | `send-on-no-changes`     | `false`               | Send email even when no changes detected               |
-| `notification-threshold` | `0`                   | Notify threshold: `0` (every run), a number, or `auto` |
+| `notification-threshold` | `auto`                | Notify threshold: `0` (every run), a number, or `auto` |
 
 📖 **[Full API reference](../../wiki/API-Reference)**
 

@@ -32632,10 +32632,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -34927,7 +34927,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35050,7 +35050,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -35248,7 +35248,7 @@ var DEFAULTS2 = {
   sendOnNoChanges: false,
   includeCharts: true,
   locale: "en",
-  notificationThreshold: 0,
+  notificationThreshold: "auto",
   trackStargazers: false,
   topRepos: 10
 };
@@ -38404,12 +38404,67 @@ function formatDate({ timestamp: timestamp2, locale }) {
   return date.toLocaleDateString(localeCode, { month: "short", day: "numeric" });
 }
 
+// src/presentation/constants.ts
+var COLORS = {
+  accent: "#dfb317",
+  positive: "#28a745",
+  negative: "#d73a49",
+  neutral: "#6a737d",
+  link: "#0366d6",
+  text: "#24292e",
+  white: "#fff",
+  shadow: "#010101",
+  muted: "#555",
+  tableHeaderBg: "#f6f8fa",
+  tableHeaderBorder: "#e1e4e8",
+  cellBorder: "#eee",
+  gradientStart: "#bbb"
+};
+var CHART_COMPARISON_COLORS = [
+  "#dfb317",
+  "#28a745",
+  "#e74c3c",
+  "#3498db",
+  "#9b59b6",
+  "#e67e22",
+  "#1abc9c",
+  "#e84393",
+  "#795548",
+  "#00bcd4"
+];
+var CHART = {
+  width: 800,
+  height: 400,
+  maxDataPoints: 30,
+  maxComparison: 10
+};
+var BADGE = {
+  labelCharWidth: 6.5,
+  valueCharWidth: 7,
+  horizontalPadding: 12,
+  height: 20,
+  borderRadius: 3
+};
+var SVG_CHART = {
+  margin: { top: 50, right: 30, bottom: 50, left: 60 },
+  pointRadius: 4,
+  lineWidth: 2.5,
+  gridOpacity: 0.3,
+  fontSize: { title: 16, label: 11, milestone: 10 },
+  animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
+  font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+};
+var MIN_SNAPSHOTS_FOR_CHART = 2;
+var THRESHOLDS = [
+  { limit: 50, value: 1 },
+  { limit: 200, value: 5 },
+  { limit: 500, value: 10 }
+];
+var THRESHOLD_MAX_PACE = 20;
+
 // src/domain/notification.ts
 function getAdaptiveThreshold(totalStars) {
-  if (totalStars <= 50) return 1;
-  if (totalStars <= 200) return 5;
-  if (totalStars <= 500) return 10;
-  return 20;
+  return THRESHOLDS.find((t) => totalStars <= t.limit)?.value ?? THRESHOLD_MAX_PACE;
 }
 function shouldNotify({
   totalStars,
@@ -38767,58 +38822,6 @@ function commitAndPush({ dataDir, dataBranch, message }) {
   info(`Data committed and pushed to ${dataBranch}`);
   return true;
 }
-
-// src/presentation/constants.ts
-var COLORS = {
-  accent: "#dfb317",
-  positive: "#28a745",
-  negative: "#d73a49",
-  neutral: "#6a737d",
-  link: "#0366d6",
-  text: "#24292e",
-  white: "#fff",
-  shadow: "#010101",
-  muted: "#555",
-  tableHeaderBg: "#f6f8fa",
-  tableHeaderBorder: "#e1e4e8",
-  cellBorder: "#eee",
-  gradientStart: "#bbb"
-};
-var CHART_COMPARISON_COLORS = [
-  "#dfb317",
-  "#28a745",
-  "#e74c3c",
-  "#3498db",
-  "#9b59b6",
-  "#e67e22",
-  "#1abc9c",
-  "#e84393",
-  "#795548",
-  "#00bcd4"
-];
-var CHART = {
-  width: 800,
-  height: 400,
-  maxDataPoints: 30,
-  maxComparison: 10
-};
-var BADGE = {
-  labelCharWidth: 6.5,
-  valueCharWidth: 7,
-  horizontalPadding: 12,
-  height: 20,
-  borderRadius: 3
-};
-var SVG_CHART = {
-  margin: { top: 50, right: 30, bottom: 50, left: 60 },
-  pointRadius: 4,
-  lineWidth: 2.5,
-  gridOpacity: 0.3,
-  fontSize: { title: 16, label: 11, milestone: 10 },
-  animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
-  font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
-};
-var MIN_SNAPSHOTS_FOR_CHART = 2;
 
 // src/presentation/badge.ts
 function generateBadge({ totalStars, locale }) {

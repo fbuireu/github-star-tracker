@@ -34,7 +34,7 @@ export const DEFAULTS: Config = {
   sendOnNoChanges: false,
   includeCharts: true,
   locale: 'en' as Locale,
-  notificationThreshold: 0,
+  notificationThreshold: 'auto',
   trackStargazers: false,
   topRepos: 10,
 };
