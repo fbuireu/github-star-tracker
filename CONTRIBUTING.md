@@ -82,8 +82,9 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
    
    # Or individually:
    pnpm run test          # Unit tests
+   pnpm run test:coverage # Tests with coverage report
    pnpm run typecheck     # Type checking
-   pnpm run check         # Linting + formatting
+   pnpm run check         # Linting + type checking
    ```
 
 3. **Test your changes locally**
@@ -116,7 +117,7 @@ pnpm run format
 - TypeScript with strict mode
 - Functional programming style preferred
 - No `any` types (use `unknown` if needed)
-- Functions with 3+ parameters should use object parameters
+- Functions with 2+ parameters should use destructured named parameters
 - Constants for magic numbers/strings
 - Comprehensive JSDoc for public APIs
 
@@ -325,22 +326,48 @@ When you merge to `main`:
 ```
 github-star-tracker/
 ├── .github/
-│   ├── workflows/        # CI/CD workflows
-│   └── ISSUE_TEMPLATE/   # Issue templates
+│   ├── workflows/            # CI/CD workflows
+│   └── ISSUE_TEMPLATE/       # Issue templates
 ├── src/
-│   ├── config.ts         # Configuration handling
-│   ├── index.ts          # Main entry point
-│   ├── types.ts          # TypeScript types
-│   ├── tracking/         # Star tracking logic
-│   ├── reporting/        # Report generation
-│   ├── i18n/             # Internationalization
-│   └── data/             # Data management
-├── wiki/                 # Wiki documentation
-├── tests/                # Test files (*.test.ts)
-├── action.yml            # GitHub Action metadata
-├── package.json          # Dependencies
-└── tsconfig.json         # TypeScript config
+│   ├── index.ts              # Entry point
+│   ├── application/
+│   │   └── tracker.ts        # Main orchestrator
+│   ├── config/
+│   │   ├── types.ts          # Config types (Config, Visibility, Locale)
+│   │   ├── defaults.ts       # Default values and constants
+│   │   ├── parsers.ts        # Input parsing utilities
+│   │   └── loader.ts         # Config loading (action inputs + YAML file)
+│   ├── domain/
+│   │   ├── types.ts          # Domain types (Snapshot, History, RepoResult, etc.)
+│   │   ├── formatting.ts     # Number/date formatting
+│   │   ├── snapshot.ts       # Snapshot creation and history rotation
+│   │   ├── comparison.ts     # Star delta computation
+│   │   ├── notification.ts   # Notification threshold logic
+│   │   ├── forecast.ts       # Growth forecasting (linear regression, WMA)
+│   │   └── stargazers.ts     # Stargazer diffing
+│   ├── infrastructure/
+│   │   ├── github/           # GitHub API client, repo filters, stargazer fetching
+│   │   ├── git/              # Git commands, worktree management
+│   │   ├── persistence/      # File I/O (read/write history, reports, badges, charts)
+│   │   └── notification/     # Email sending (SMTP)
+│   ├── presentation/
+│   │   ├── markdown.ts       # Markdown report generation
+│   │   ├── html.ts           # HTML email report generation
+│   │   ├── svg-chart.ts      # Animated SVG chart generation
+│   │   ├── chart.ts          # QuickChart.io URL generation (for emails)
+│   │   ├── badge.ts          # SVG badge generation
+│   │   ├── shared.ts         # Shared presentation utilities
+│   │   └── constants.ts      # Chart colors, dimensions, thresholds
+│   └── i18n/                 # Translation files (en, es, ca, it) and loader
+├── wiki/                     # Wiki documentation (.md files)
+├── action.yml                # GitHub Action metadata
+├── package.json              # Dependencies
+├── tsconfig.json             # TypeScript config (with path aliases)
+├── vitest.config.ts          # Test configuration
+└── esbuild.config.ts         # Build configuration
 ```
+
+> **Path aliases:** Cross-layer imports use `@application/*`, `@config/*`, `@domain/*`, `@i18n`, `@infrastructure/*`, `@presentation/*`. Same-layer imports use relative paths. Tests are co-located as `*.test.ts` files next to the source.
 
 ## Development Tips
 
@@ -360,7 +387,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./  # Uses local action code
         with:
-          github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+          github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
 ```
 
 ### Debugging

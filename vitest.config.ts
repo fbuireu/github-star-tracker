@@ -10,7 +10,12 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
-      exclude: ['src/index.ts', 'src/**/{types,defaults,constants}.ts', 'src/**/*.test.ts'],
+      exclude: [
+        'src/index.ts',
+        'src/presentation/index.ts',
+        'src/**/{types,defaults,constants}.ts',
+        'src/**/*.test.ts',
+      ],
       thresholds: {
         lines: MIN_THRESHOLD,
         functions: MIN_THRESHOLD,
