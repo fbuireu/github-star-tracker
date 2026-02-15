@@ -41,8 +41,8 @@
     "format": "pnpm run lint --write",
     "lint": "biome check --no-errors-on-unmatched .",
     "typecheck": "tsc --noEmit",
-    "check": "pnpm run lint && pnpm run typecheck",
-    "validate": "pnpm run check && pnpm run test:coverage && pnpm run build"
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run test:coverage ",
+    "validate": "pnpm run check && pnpm run build"
   },
   "dependencies": {
     "@actions/core": "^3.0.0",
