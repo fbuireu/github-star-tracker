@@ -1,3 +1,15 @@
+# [1.6.0](https://github.com/fbuireu/github-star-tracker/compare/v1.5.3...v1.6.0) (2026-02-15)
+
+
+### Bug Fixes
+
+* add CSV support ([9f196f2](https://github.com/fbuireu/github-star-tracker/commit/9f196f23265888dfafddafa9ec2f0593d3cd994c))
+
+
+### Features
+
+* add csv support ([939059b](https://github.com/fbuireu/github-star-tracker/commit/939059b8c080e02e55dee9044e9f35bf30869144))
+
 ## [1.5.3](https://github.com/fbuireu/github-star-tracker/compare/v1.5.2...v1.5.3) (2026-02-15)
 
 
