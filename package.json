@@ -1,6 +1,6 @@
 {
   "name": "github-star-tracker",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "private": true,
   "description": "GitHub Action to automatically track star count changes across repositories with visual charts, email notifications, and historical reports",
   "main": "src/index.ts",
