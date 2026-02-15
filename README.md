@@ -2,7 +2,7 @@
 
 # :star: GitHub Star Tracker
 
-**Track star count changes across your repositories — automatically and get notified!**
+**A GitHub Action that tracks star counts across all your repositories on a schedule, generates visual reports with charts and badges, and sends notifications when changes are detected.**
 
 [![CI](https://img.shields.io/github/actions/workflow/status/fbuireu/github-star-tracker/ci.yml?style=flat-square&logo=github&label=CI)](https://github.com/fbuireu/github-star-tracker/actions/workflows/ci.yml)
 [![Codecov](https://img.shields.io/codecov/c/gh/fbuireu/github-star-tracker?style=flat-square&logo=codecov)](https://codecov.io/gh/fbuireu/github-star-tracker)
@@ -14,19 +14,59 @@
 
 ---
 
+## What You Get
+
+Every run, Star Tracker commits these artifacts to a dedicated data branch:
+
+<table>
+<tr>
+<td width="50%">
+
+**Animated SVG charts:** star history, per-repo trends, top repos comparison, and growth forecasts:
+
+```markdown
+![Star History](https://raw.githubusercontent.com/USER/REPO/star-tracker-data/charts/star-history.svg)
+```
+
+</td>
+<td width="50%">
+
+**Shields.io-style badge:** embeddable star count that updates automatically:
+
+```markdown
+![Stars](https://raw.githubusercontent.com/USER/REPO/star-tracker-data/stars-badge.svg)
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+**Markdown, CSV & HTML reports:** summary tables, delta indicators, new/removed repos, stargazer details, and forecast tables.
+
+</td>
+<td>
+
+**CSV & JSON data:** machine-readable exports for dashboards, spreadsheets, or downstream pipelines.
+
+</td>
+</tr>
+</table>
+
+---
+
 ## Features
 
-- **Automated tracking** — Daily, weekly, or on-demand star count monitoring
-- **Historical data** — Snapshots with configurable retention (default: 52)
-- **Animated SVG charts** — Star history, per-repo trends, comparisons, and growth forecasts
-- **Smart filtering** — By visibility, min stars, exclude/only repos (with regex), archived, forks
-- **Stargazer tracking** — See who starred your repos with avatars and dates (opt-in)
-- **Email notifications** — Built-in SMTP or external action, with fixed or adaptive thresholds
-- **GitHub Enterprise** — Works with GHES instances (auto-detected or explicit API URL)
-- **Multi-language** — English, Spanish, Catalan, Italian
-- **CSV export** — Machine-readable CSV output for data pipelines and spreadsheets
-- **Action outputs** — Use `total-stars`, `new-stars`, `should-notify`, etc. in subsequent steps
-- **Zero runtime deps** — Bundled TypeScript action, 95%+ test coverage, 300+ tests
+- :chart_with_upwards_trend: **Animated SVG charts:** Star history, per-repo trends, comparisons, and growth forecasts
+- :camera: **Historical snapshots:** Configurable retention (default: 52 runs) with JSON persistence
+- :mag: **Smart filtering:** By visibility, min stars, regex exclusions, archived, forks
+- :busts_in_silhouette: **Stargazer tracking:** See who starred your repos with avatars and dates (opt-in)
+- :mailbox_with_mail: **Email notifications:** Built-in SMTP with fixed or adaptive thresholds
+- :office: **GitHub Enterprise:** GHES support, auto-detected or explicit API URL
+- :globe_with_meridians: **Multi-language:** English, Spanish, Catalan, Italian
+- :bar_chart: **CSV export:** Machine-readable output for data pipelines
+- :jigsaw: **Action outputs:** `total-stars`, `new-stars`, `should-notify`, etc. for workflow chaining
+- :shield: **Zero runtime deps:** Bundled TypeScript action, 95%+ test coverage, 300+ tests
 
 ---
 
@@ -89,7 +129,8 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
     notification-threshold: '0' # 0 | N | auto
 ```
 
-### All Inputs
+<details>
+<summary><strong>All Inputs</strong></summary>
 
 | Input | Default | Description |
 |---|---|---|
@@ -117,7 +158,10 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `send-on-no-changes` | `false` | Email even with no changes |
 | `notification-threshold` | `0` | `0` (every run), N (threshold), or `auto` (adaptive) |
 
-### Outputs
+</details>
+
+<details>
+<summary><strong>Outputs</strong></summary>
 
 | Output | Description |
 |---|---|
@@ -131,7 +175,9 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `report-html` | HTML report (for email) |
 | `report-csv` | CSV report (for data pipelines) |
 
-**[API Reference](../../wiki/API-Reference)** — Complete inputs, outputs, and data formats
+</details>
+
+**[API Reference](../../wiki/API-Reference):** Complete inputs, outputs, and data formats
 
 ---
 
@@ -192,7 +238,7 @@ flowchart TD
     style send fill:#fce4ec,stroke:#880e4f,stroke-width:2px
 ```
 
-**[How It Works](../../wiki/How-It-Works)** — Full architecture and execution pipeline
+**[How It Works](../../wiki/How-It-Works):** Full architecture and execution pipeline
 
 ---
 
@@ -210,7 +256,7 @@ flowchart TD
 ![Star History](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/charts/star-history.svg)
 ```
 
-**[Viewing Reports](../../wiki/Viewing-Reports)** — All access methods (data branch, badges, outputs, email)
+**[Viewing Reports](../../wiki/Viewing-Reports)**: All access methods (data branch, badges, outputs, email)
 
 ---
 
@@ -235,23 +281,27 @@ flowchart TD
 
 ---
 
+## Use of AI
+
+This project uses AI assistance primarily for documentation purposes. AI tools (GitHub Copilot, Claude) were used to:
+
+- Write and improve documentation (README, wiki pages)
+- Generate boilerplate code and configuration files
+- Assist with code reviews and suggestions
+
+The core logic, architecture decisions, and implementation were developed by the maintainer. All AI-generated content has been reviewed and validated.
+
+---
+
 ## Support & Contributing
+
+[AGPL-3.0](LICENSE) © Made with 🤘🏼 by [Ferran Buireu](https://github.com/fbuireu)
 
 - **[Report bugs](../../issues/new?template=bug_report.yml)**
 - **[Request features](../../issues/new?template=feature_request.yml)**
 - **[Contributing guidelines](CONTRIBUTING.md)**
 - **[Security policy](../../security/policy)**
 
----
+If you find this project useful, consider supporting its development:
 
-## Use of AI
-
-This project uses AI assistance primarily for documentation. AI tools (GitHub Copilot, Claude) helped write and improve documentation, generate boilerplate, and assist with code reviews.
-Core logic, architecture decisions, and implementation were developed by the maintainer.
-All AI-generated content has been reviewed and validated.
-
----
-
-## License
-
-[AGPL-3.0](LICENSE) © Made with 🤘🏼 by [Ferran Buireu](https://github.com/fbuireu)
+<a href="https://www.buymeacoffee.com/ferranbuireu"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a beer&emoji=🍺&slug=ferranbuireu&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" /></a>

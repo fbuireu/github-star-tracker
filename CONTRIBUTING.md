@@ -6,10 +6,10 @@ First off, thank you for considering contributing to GitHub Star Tracker! It's p
 
 This project and everyone participating in it is governed by our commitment to providing a welcoming and inclusive environment. By participating, you are expected to uphold this code:
 
-- **Be respectful** — Different viewpoints and experiences are valuable
-- **Be constructive** — Focus on what is best for the community
-- **Be collaborative** — Work together towards common goals
-- **Be patient** — Remember that we all have different levels of experience
+- **Be respectful**: Different viewpoints and experiences are valuable
+- **Be constructive**: Focus on what is best for the community
+- **Be collaborative**: Work together towards common goals
+- **Be patient**: Remember that we all have different levels of experience
 
 ## How Can I Contribute?
 
@@ -17,23 +17,23 @@ This project and everyone participating in it is governed by our commitment to p
 
 Before creating bug reports, please check existing issues to avoid duplicates. When creating a bug report, include as many details as possible:
 
-- **Use the bug report template** — It's there to help you provide all necessary information
-- **Describe the issue** — A clear and concise description
-- **Steps to reproduce** — How can we see the bug ourselves?
-- **Expected behavior** — What should happen?
-- **Actual behavior** — What actually happens?
-- **Environment** — OS, Node version, action version
-- **Logs** — GitHub Actions workflow logs if applicable
+- **Use the bug report template**: It's there to help you provide all necessary information
+- **Describe the issue**: A clear and concise description
+- **Steps to reproduce**: How can we see the bug ourselves?
+- **Expected behavior**: What should happen?
+- **Actual behavior**: What actually happens?
+- **Environment**: OS, Node version, action version
+- **Logs**: GitHub Actions workflow logs if applicable
 
 ### Suggesting Features
 
 Feature requests are welcome! To suggest a feature:
 
-- **Use the feature request template** — Helps structure your proposal
-- **Describe the feature** — What should it do?
-- **Use cases** — Why is this feature valuable?
-- **Alternatives** — Have you considered other approaches?
-- **Implementation ideas** — Do you have thoughts on how to build it?
+- **Use the feature request template**: Helps structure your proposal
+- **Describe the feature**: What should it do?
+- **Use cases**: Why is this feature valuable?
+- **Alternatives**: Have you considered other approaches?
+- **Implementation ideas**: Do you have thoughts on how to build it?
 
 ### Improving Documentation
 
@@ -233,12 +233,12 @@ test(tracking): add edge case tests
 ```
 
 **Common scopes:**
-- `charts` — Chart generation
-- `email` — Email notifications
-- `tracking` — Star tracking logic
-- `config` — Configuration handling
-- `i18n` — Internationalization
-- `data` — Data management
+- `charts`: Chart generation
+- `email`: Email notifications
+- `tracking`: Star tracking logic
+- `config`: Configuration handling
+- `i18n`: Internationalization
+- `data`: Data management
 
 ### Multi-line Commits
 
@@ -273,12 +273,12 @@ When you merge to `main`:
 
 ### Before Submitting
 
-1. ✅ **All tests pass** — `pnpm run validate` succeeds
-2. ✅ **Code is formatted** — Run `pnpm run format`
-3. ✅ **Types are correct** — No TypeScript errors
-4. ✅ **Documentation updated** — If adding features
-5. ✅ **Commits follow conventions** — See above
-6. ✅ **Branch is up to date** — Rebase on `main` if needed
+1. ✅ **All tests pass**: `pnpm run validate` succeeds
+2. ✅ **Code is formatted**: Run `pnpm run format`
+3. ✅ **Types are correct**: No TypeScript errors
+4. ✅ **Documentation updated**: If adding features
+5. ✅ **Commits follow conventions**: See above
+6. ✅ **Branch is up to date**: Rebase on `main` if needed
 
 ### Creating a Pull Request
 
@@ -309,9 +309,9 @@ When you merge to `main`:
 ### Review Process
 
 - **Maintainers will review** your PR
-- **Address feedback** — Make requested changes
-- **Keep discussions respectful** — We're all learning
-- **Be patient** — Reviews may take a few days
+- **Address feedback**: Make requested changes
+- **Keep discussions respectful**: We're all learning
+- **Be patient**: Reviews may take a few days
 
 ### After Approval
 
@@ -431,6 +431,19 @@ pnpm run format
 
 ---
 
+## Use of AI
+
+If you use AI tools when contributing:
+
+- **Review all generated code**: You are responsible for the code you submit
+- **Test thoroughly**: AI-generated code must pass all existing tests and include new tests where appropriate
+- **Disclose significant AI usage**: If an entire feature or module was AI-generated, mention it in the PR description
+- **Don't blindly copy**: Understand what the code does before submitting
+
+AI is a tool, not a substitute for understanding the codebase.
+
+---
+
 ## Recognition
 
 Contributors will be recognized in:
@@ -440,9 +453,9 @@ Contributors will be recognized in:
 
 ## Questions?
 
-- 💬 **Discussions** — [GitHub Discussions](https://github.com/fbuireu/github-star-tracker/discussions)
-- 📖 **Documentation** — [Wiki](https://github.com/fbuireu/github-star-tracker/wiki)
-- 🐛 **Issues** — [GitHub Issues](https://github.com/fbuireu/github-star-tracker/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/fbuireu/github-star-tracker/discussions)
+- 📖 **Documentation**: [Wiki](https://github.com/fbuireu/github-star-tracker/wiki)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/fbuireu/github-star-tracker/issues)
 
 ## Resources
 

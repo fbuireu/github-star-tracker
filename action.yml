@@ -62,7 +62,7 @@ inputs:
     default: '52'
 
   smtp-host:
-    description: 'SMTP server host — providing this enables built-in email notifications'
+    description: 'SMTP server host. Providing this enables built-in email notifications'
     required: false
     default: ''
 

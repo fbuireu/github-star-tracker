@@ -97,7 +97,7 @@ export function generateMarkdownReport({
           '',
           ...newRepos.map(
             (repo) =>
-              `- [${repo.fullName}](https://github.com/${repo.fullName}) — ${interpolate({ template: t.report.starsCount, params: { count: repo.current } })}`,
+              `- [${repo.fullName}](https://github.com/${repo.fullName}): ${interpolate({ template: t.report.starsCount, params: { count: repo.current } })}`,
           ),
           '',
         ]
@@ -146,7 +146,7 @@ export function generateMarkdownReport({
             '',
             ...entry.newStargazers.map(
               (s) =>
-                `- <img src="${s.avatarUrl}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${s.login}](${s.profileUrl}) — ${interpolate({ template: t.stargazers.starredOn, params: { date: s.starredAt.split('T')[0] } })}`,
+                `- <img src="${s.avatarUrl}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${s.login}](${s.profileUrl}): ${interpolate({ template: t.stargazers.starredOn, params: { date: s.starredAt.split('T')[0] } })}`,
             ),
             '',
             '</details>',

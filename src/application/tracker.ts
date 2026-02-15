@@ -180,7 +180,7 @@ export async function trackStars(): Promise<void> {
         }
       }
 
-      const commitMsg = `Update star data — ${summary.totalStars} total (${deltaIndicator(summary.totalDelta)})`;
+      const commitMsg = `Update star data: ${summary.totalStars} total (${deltaIndicator(summary.totalDelta)})`;
       commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg });
 
       setOutputs({

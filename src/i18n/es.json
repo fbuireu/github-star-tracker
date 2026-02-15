@@ -14,7 +14,7 @@
     "trend": "Tendencia",
     "newRepositories": "Nuevos Repositorios",
     "removedRepositories": "Repositorios Eliminados",
-    "removedRepoText": "{name} — tenía {count} estrellas",
+    "removedRepoText": "{name}: tenía {count} estrellas",
     "summary": "Resumen",
     "starsGained": "Estrellas ganadas",
     "starsLost": "Estrellas perdidas",

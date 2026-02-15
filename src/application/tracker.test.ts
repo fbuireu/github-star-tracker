@@ -206,7 +206,7 @@ const defaultTranslations = {
     trend: 'Trend',
     newRepositories: 'New',
     removedRepositories: 'Removed',
-    removedRepoText: '{name} — was {count} stars',
+    removedRepoText: '{name}: was {count} stars',
     summary: 'Summary',
     starsGained: 'Stars gained',
     starsLost: 'Stars lost',
