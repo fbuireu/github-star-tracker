@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/fbuireu/github-star-tracker/compare/v1.6.0...v1.6.1) (2026-02-15)
+
+
+### Bug Fixes
+
+* invalid svg attr ([aff51ef](https://github.com/fbuireu/github-star-tracker/commit/aff51ef216d9af7b62dfa211970ef1f40bf3e7ae))
+
 # [1.6.0](https://github.com/fbuireu/github-star-tracker/compare/v1.5.3...v1.6.0) (2026-02-15)
 
 
