@@ -1,17 +1,17 @@
 import type { Config, Locale } from './types';
 import { Visibility } from './types';
 
-export const LOCALES = ['en', 'es', 'ca', 'it'] as const;
-
-export const LOCALE_MAP: Record<Locale, string> = {
+export const LOCALE_MAP = {
   en: 'en-US',
   es: 'es-ES',
   ca: 'ca-ES',
   it: 'it-IT',
-};
+} as const;
+
+export const LOCALES = Object.keys(LOCALE_MAP) as (keyof typeof LOCALE_MAP)[];
 
 interface VisibilityApiParams {
-  visibility: 'public' | 'private' | 'all';
+  visibility: Exclude<Visibility, typeof Visibility.OWNED>;
   affiliation?: string;
 }
 

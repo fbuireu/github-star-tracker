@@ -1,6 +1,6 @@
-import type { LOCALES } from './defaults';
+import type { LOCALE_MAP } from './defaults';
 
-export type Locale = (typeof LOCALES)[number];
+export type Locale = keyof typeof LOCALE_MAP;
 export const Visibility = {
   PUBLIC: 'public',
   PRIVATE: 'private',

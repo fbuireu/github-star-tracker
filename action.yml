@@ -11,6 +11,11 @@ inputs:
     description: 'Personal Access Token (PAT) with repo or public_repo scope - GITHUB_TOKEN does not work'
     required: true
 
+  github-api-url:
+    description: 'GitHub API base URL for GitHub Enterprise Server (e.g. https://github.example.com/api/v3). Auto-detected on GHES runners.'
+    required: false
+    default: ''
+
   config-path:
     description: 'Path to the configuration file (relative to repo root)'
     required: false
@@ -137,6 +142,9 @@ outputs:
 
   should-notify:
     description: 'Whether the notification threshold was reached (true/false)'
+
+  report-csv:
+    description: 'CSV report of star changes'
 
   new-stargazers:
     description: 'Number of new stargazers detected since last run (0 if tracking disabled)'

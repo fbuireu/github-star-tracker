@@ -78,6 +78,16 @@ export function writeStargazers({ dataDir, stargazerMap }: WriteStargazersParams
   fs.writeFileSync(filePath, JSON.stringify(stargazerMap, null, 2));
 }
 
+interface WriteCsvParams {
+  dataDir: string;
+  csv: string;
+}
+
+export function writeCsv({ dataDir, csv }: WriteCsvParams): void {
+  const filePath = path.join(dataDir, 'stars-data.csv');
+  fs.writeFileSync(filePath, csv);
+}
+
 interface CommitAndPushParams {
   dataDir: string;
   dataBranch: string;

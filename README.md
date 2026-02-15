@@ -22,9 +22,11 @@
 - **Smart filtering** — By visibility, min stars, exclude/only repos (with regex), archived, forks
 - **Stargazer tracking** — See who starred your repos with avatars and dates (opt-in)
 - **Email notifications** — Built-in SMTP or external action, with fixed or adaptive thresholds
+- **GitHub Enterprise** — Works with GHES instances (auto-detected or explicit API URL)
 - **Multi-language** — English, Spanish, Catalan, Italian
+- **CSV export** — Machine-readable CSV output for data pipelines and spreadsheets
 - **Action outputs** — Use `total-stars`, `new-stars`, `should-notify`, etc. in subsequent steps
-- **Zero runtime deps** — Bundled TypeScript action, 95%+ test coverage, 290+ tests
+- **Zero runtime deps** — Bundled TypeScript action, 95%+ test coverage, 300+ tests
 
 ---
 
@@ -92,6 +94,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | Input | Default | Description |
 |---|---|---|
 | `github-token` | — | **Required.** PAT with `repo` or `public_repo` scope |
+| `github-api-url` | — | GitHub API base URL (for GHES). Auto-detected on GHES runners |
 | `config-path` | `star-tracker.yml` | Path to YAML config file |
 | `visibility` | `all` | `public`, `private`, `all`, or `owned` |
 | `locale` | `en` | `en`, `es`, `ca`, or `it` |
@@ -126,6 +129,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `new-stargazers` | New stargazers count |
 | `report` | Full Markdown report |
 | `report-html` | HTML report (for email) |
+| `report-csv` | CSV report (for data pipelines) |
 
 **[API Reference](../../wiki/API-Reference)** — Complete inputs, outputs, and data formats
 
@@ -151,6 +155,7 @@ flowchart TD
     forecast["Compute growth forecast"]
     md["Markdown report"]
     json["JSON dataset"]
+    csv["CSV report"]
     svg["SVG badge"]
     html["HTML digest"]
     charts["SVG charts"]
@@ -162,8 +167,8 @@ flowchart TD
     trigger --> config --> fetch --> filter
     filter --> init --> read --> compare
     compare --> stargazers --> forecast
-    forecast --> md & json & svg & html & charts
-    md & json & svg & html & charts --> commit --> setout --> email
+    forecast --> md & json & csv & svg & html & charts
+    md & json & csv & svg & html & charts --> commit --> setout --> email
     email -->|Yes| send
 
     style trigger fill:#e1f5ff,stroke:#01579b,stroke-width:2px
@@ -177,6 +182,7 @@ flowchart TD
     style forecast fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style md fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
     style json fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style csv fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
     style svg fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
     style html fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
     style charts fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
@@ -240,7 +246,9 @@ flowchart TD
 
 ## Use of AI
 
-This project uses AI assistance primarily for documentation. AI tools (GitHub Copilot, Claude) helped write and improve documentation, generate boilerplate, and assist with code reviews. Core logic, architecture decisions, and implementation were developed by the maintainer. All AI-generated content has been reviewed and validated.
+This project uses AI assistance primarily for documentation. AI tools (GitHub Copilot, Claude) helped write and improve documentation, generate boilerplate, and assist with code reviews.
+Core logic, architecture decisions, and implementation were developed by the maintainer.
+All AI-generated content has been reviewed and validated.
 
 ---
 

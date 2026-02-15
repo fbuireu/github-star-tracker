@@ -78,6 +78,7 @@ vi.mock('@infrastructure/persistence/storage', () => ({
   writeReport: vi.fn(),
   writeBadge: vi.fn(),
   writeChart: vi.fn(),
+  writeCsv: vi.fn(),
   writeStargazers: vi.fn(),
   commitAndPush: vi.fn(),
 }));
@@ -89,6 +90,10 @@ vi.mock('@infrastructure/notification/email', () => ({
 
 vi.mock('@presentation/badge', () => ({
   generateBadge: vi.fn(),
+}));
+
+vi.mock('@presentation/csv', () => ({
+  generateCsvReport: vi.fn(),
 }));
 
 vi.mock('@presentation/html', () => ({
@@ -104,6 +109,7 @@ vi.mock('@presentation/svg-chart', () => ({
 }));
 
 import * as core from '@actions/core';
+import * as github from '@actions/github';
 import { loadConfig } from '@config/loader';
 import { Visibility } from '@config/types';
 import { compareStars, createSnapshot } from '@domain/comparison';
@@ -123,11 +129,13 @@ import {
   readStargazers,
   writeBadge,
   writeChart,
+  writeCsv,
   writeHistory,
   writeReport,
   writeStargazers,
 } from '@infrastructure/persistence/storage';
 import { generateBadge } from '@presentation/badge';
+import { generateCsvReport } from '@presentation/csv';
 import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
 import { generateSvgChart } from '@presentation/svg-chart';
@@ -239,7 +247,10 @@ const defaultTranslations = {
 };
 
 function setupDefaults() {
-  vi.mocked(core.getInput).mockReturnValue('fake-token');
+  vi.mocked(core.getInput).mockImplementation((name: string) => {
+    if (name === 'github-token') return 'fake-token';
+    return '';
+  });
   vi.mocked(loadConfig).mockReturnValue(defaultConfig);
   vi.mocked(getTranslations).mockReturnValue(defaultTranslations);
   vi.mocked(getRepos).mockResolvedValue(defaultRepos);
@@ -257,6 +268,7 @@ function setupDefaults() {
   vi.mocked(getEmailConfig).mockReturnValue(null);
   vi.mocked(sendEmail).mockResolvedValue(true);
   vi.mocked(computeForecast).mockReturnValue(null);
+  vi.mocked(generateCsvReport).mockReturnValue('repository,owner,name,stars,previous,delta,status');
   vi.mocked(generateSvgChart).mockReturnValue(null);
   vi.mocked(fetchAllStargazers).mockResolvedValue([]);
   vi.mocked(readStargazers).mockReturnValue({});
@@ -288,6 +300,7 @@ describe('trackStars', () => {
     expect(writeHistory).toHaveBeenCalled();
     expect(writeReport).toHaveBeenCalled();
     expect(writeBadge).toHaveBeenCalled();
+    expect(writeCsv).toHaveBeenCalled();
     expect(commitAndPush).toHaveBeenCalled();
     expect(core.setOutput).toHaveBeenCalled();
   });
@@ -541,6 +554,57 @@ describe('trackStars', () => {
 
       expect(generateSvgChart).toHaveBeenCalled();
       expect(writeChart).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('github enterprise (GHES)', () => {
+    it('calls getOctokit without baseUrl when no API URL is configured', async () => {
+      await trackStars();
+
+      expect(github.getOctokit).toHaveBeenCalledWith('fake-token');
+    });
+
+    it('passes baseUrl when github-api-url input is set', async () => {
+      vi.mocked(core.getInput).mockImplementation((name: string) => {
+        if (name === 'github-token') return 'fake-token';
+        if (name === 'github-api-url') return 'https://github.example.com/api/v3';
+        return '';
+      });
+
+      await trackStars();
+
+      expect(github.getOctokit).toHaveBeenCalledWith('fake-token', {
+        baseUrl: 'https://github.example.com/api/v3',
+      });
+    });
+
+    it('falls back to GITHUB_API_URL env var when input is empty', async () => {
+      process.env.GITHUB_API_URL = 'https://ghes.corp.com/api/v3';
+
+      await trackStars();
+
+      expect(github.getOctokit).toHaveBeenCalledWith('fake-token', {
+        baseUrl: 'https://ghes.corp.com/api/v3',
+      });
+
+      delete process.env.GITHUB_API_URL;
+    });
+
+    it('prefers input over GITHUB_API_URL env var', async () => {
+      process.env.GITHUB_API_URL = 'https://ghes-env.corp.com/api/v3';
+      vi.mocked(core.getInput).mockImplementation((name: string) => {
+        if (name === 'github-token') return 'fake-token';
+        if (name === 'github-api-url') return 'https://ghes-input.corp.com/api/v3';
+        return '';
+      });
+
+      await trackStars();
+
+      expect(github.getOctokit).toHaveBeenCalledWith('fake-token', {
+        baseUrl: 'https://ghes-input.corp.com/api/v3',
+      });
+
+      delete process.env.GITHUB_API_URL;
     });
   });
 

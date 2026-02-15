@@ -5,6 +5,7 @@ export {
   generateForecastChartUrl,
   generatePerRepoChartUrl,
 } from './chart';
+export { generateCsvReport } from './csv';
 export { generateHtmlReport } from './html';
 export { generateMarkdownReport } from './markdown';
 export { generateSvgChart } from './svg-chart';

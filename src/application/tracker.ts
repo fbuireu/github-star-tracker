@@ -19,12 +19,14 @@ import {
   readStargazers,
   writeBadge,
   writeChart,
+  writeCsv,
   writeHistory,
   writeReport,
   writeStargazers,
 } from '@infrastructure/persistence/storage';
 import { generateBadge } from '@presentation/badge';
 import { MIN_SNAPSHOTS_FOR_CHART } from '@presentation/constants';
+import { generateCsvReport } from '@presentation/csv';
 import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
 import {
@@ -47,7 +49,8 @@ export async function trackStars(): Promise<void> {
   try {
     const config = loadConfig();
     const token = core.getInput('github-token', { required: true });
-    const octokit = github.getOctokit(token);
+    const apiUrl = core.getInput('github-api-url') || process.env.GITHUB_API_URL || '';
+    const octokit = github.getOctokit(token, ...(apiUrl ? [{ baseUrl: apiUrl }] : []));
     const t = getTranslations(config.locale);
 
     core.info('Fetching repositories...');
@@ -110,6 +113,7 @@ export async function trackStars(): Promise<void> {
         topRepos: config.topRepos,
       });
 
+      const csvReport = generateCsvReport(results);
       const badge = generateBadge({ totalStars: summary.totalStars, locale: config.locale });
       const snapshot = createSnapshot({ currentRepos: repos, summary });
       const updatedHistory = addSnapshot({ history, snapshot, maxHistory: config.maxHistory });
@@ -128,6 +132,7 @@ export async function trackStars(): Promise<void> {
       writeHistory({ dataDir, history: updatedHistory });
       writeReport({ dataDir, markdown: markdownReport });
       writeBadge({ dataDir, svg: badge });
+      writeCsv({ dataDir, csv: csvReport });
 
       if (config.includeCharts && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART) {
         const svgChart = generateSvgChart({
@@ -182,6 +187,7 @@ export async function trackStars(): Promise<void> {
         summary,
         markdownReport,
         htmlReport,
+        csvReport,
         shouldNotify: notify,
         newStargazers: stargazerDiff?.totalNew ?? 0,
       });
@@ -221,12 +227,14 @@ function setEmptyOutputs(): void {
   core.setOutput('new-stargazers', '0');
   core.setOutput('report', 'No repositories matched the configured filters.');
   core.setOutput('report-html', '<p>No repositories matched the configured filters.</p>');
+  core.setOutput('report-csv', '');
 }
 
 interface SetOutputsParams {
   summary: Summary;
   markdownReport: string;
   htmlReport: string;
+  csvReport: string;
   shouldNotify: boolean;
   newStargazers: number;
 }
@@ -235,11 +243,13 @@ function setOutputs({
   summary,
   markdownReport,
   htmlReport,
+  csvReport,
   shouldNotify,
   newStargazers,
 }: SetOutputsParams): void {
   core.setOutput('report', markdownReport);
   core.setOutput('report-html', htmlReport);
+  core.setOutput('report-csv', csvReport);
   core.setOutput('total-stars', String(summary.totalStars));
   core.setOutput('stars-changed', String(summary.changed));
   core.setOutput('new-stars', String(summary.newStars));

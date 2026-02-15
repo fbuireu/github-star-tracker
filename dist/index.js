@@ -35223,13 +35223,13 @@ var Visibility = {
 };
 
 // src/config/defaults.ts
-var LOCALES = ["en", "es", "ca", "it"];
 var LOCALE_MAP = {
   en: "en-US",
   es: "es-ES",
   ca: "ca-ES",
   it: "it-IT"
 };
+var LOCALES = Object.keys(LOCALE_MAP);
 var VISIBILITY_CONFIG = {
   [Visibility.PUBLIC]: { visibility: Visibility.PUBLIC },
   [Visibility.PRIVATE]: { visibility: Visibility.PRIVATE },
@@ -38808,6 +38808,10 @@ function writeStargazers({ dataDir, stargazerMap }) {
   const filePath = path3.join(dataDir, "stargazers.json");
   fs5.writeFileSync(filePath, JSON.stringify(stargazerMap, null, 2));
 }
+function writeCsv({ dataDir, csv }) {
+  const filePath = path3.join(dataDir, "stars-data.csv");
+  fs5.writeFileSync(filePath, csv);
+}
 function commitAndPush({ dataDir, dataBranch, message }) {
   const cwd = path3.resolve(dataDir);
   execute({ cmd: "git add -A", options: { cwd } });
@@ -38853,6 +38857,39 @@ function generateBadge({ totalStars, locale }) {
     <text x="${labelWidth + valueWidth / 2}" y="14">${value}</text>
   </g>
 </svg>`;
+}
+
+// src/presentation/csv.ts
+var CSV_HEADER = "repository,owner,name,stars,previous,delta,status";
+function escapeCsvField(field) {
+  if (field.includes(",") || field.includes('"') || field.includes("\n")) {
+    return `"${field.replaceAll('"', '""')}"`;
+  }
+  return field;
+}
+var REPO_STATUS = {
+  new: "new",
+  removed: "removed",
+  active: "active"
+};
+function repoStatus(repo) {
+  if (repo.isNew) return REPO_STATUS.new;
+  if (repo.isRemoved) return REPO_STATUS.removed;
+  return REPO_STATUS.active;
+}
+function generateCsvReport({ repos }) {
+  const rows = repos.map(
+    (repo) => [
+      escapeCsvField(repo.fullName),
+      escapeCsvField(repo.owner),
+      escapeCsvField(repo.name),
+      repo.current,
+      repo.previous ?? "",
+      repo.delta,
+      repoStatus(repo)
+    ].join(",")
+  );
+  return [CSV_HEADER, ...rows].join("\n");
 }
 
 // src/presentation/chart.ts
@@ -39867,7 +39904,8 @@ async function trackStars() {
   try {
     const config = loadConfig();
     const token = getInput("github-token", { required: true });
-    const octokit = getOctokit(token);
+    const apiUrl = getInput("github-api-url") || process.env.GITHUB_API_URL || "";
+    const octokit = getOctokit(token, ...apiUrl ? [{ baseUrl: apiUrl }] : []);
     const t = getTranslations(config.locale);
     info("Fetching repositories...");
     const repos = await getRepos({ octokit, config });
@@ -39918,6 +39956,7 @@ async function trackStars() {
         forecastData,
         topRepos: config.topRepos
       });
+      const csvReport = generateCsvReport(results);
       const badge = generateBadge({ totalStars: summary2.totalStars, locale: config.locale });
       const snapshot = createSnapshot({ currentRepos: repos, summary: summary2 });
       const updatedHistory = addSnapshot({ history, snapshot, maxHistory: config.maxHistory });
@@ -39933,6 +39972,7 @@ async function trackStars() {
       writeHistory({ dataDir, history: updatedHistory });
       writeReport({ dataDir, markdown: markdownReport });
       writeBadge({ dataDir, svg: badge });
+      writeCsv({ dataDir, csv: csvReport });
       if (config.includeCharts && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART) {
         const svgChart = generateSvgChart({
           history,
@@ -39981,6 +40021,7 @@ async function trackStars() {
         summary: summary2,
         markdownReport,
         htmlReport,
+        csvReport,
         shouldNotify: notify,
         newStargazers: stargazerDiff?.totalNew ?? 0
       });
@@ -40018,16 +40059,19 @@ function setEmptyOutputs() {
   setOutput("new-stargazers", "0");
   setOutput("report", "No repositories matched the configured filters.");
   setOutput("report-html", "<p>No repositories matched the configured filters.</p>");
+  setOutput("report-csv", "");
 }
 function setOutputs({
   summary: summary2,
   markdownReport,
   htmlReport,
+  csvReport,
   shouldNotify: shouldNotify2,
   newStargazers
 }) {
   setOutput("report", markdownReport);
   setOutput("report-html", htmlReport);
+  setOutput("report-csv", csvReport);
   setOutput("total-stars", String(summary2.totalStars));
   setOutput("stars-changed", String(summary2.changed));
   setOutput("new-stars", String(summary2.newStars));
