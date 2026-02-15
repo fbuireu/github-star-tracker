@@ -36,13 +36,13 @@ Every run, Star Tracker commits these artifacts to a dedicated data branch:
 
 - :chart_with_upwards_trend: **Animated SVG charts:** Star history, per-repo trends, comparisons, and growth forecasts
 - :camera: **Historical snapshots:** Configurable retention (default: 52 runs) with JSON persistence
-- :mag: **Smart filtering:** By visibility, min stars, regex exclusions, archived, forks
-- :busts_in_silhouette: **Stargazer tracking:** See who starred your repos with avatars and dates (opt-in)
+- :mag: **Smart filtering:** By visibility, ownership, min stars, regex exclusions, archived, forks
+- :busts_in_silhouette: **Stargazer tracking:** See who starred your repos with avatars and dates
 - :mailbox_with_mail: **Email notifications:** Built-in SMTP with fixed or adaptive thresholds
 - :office: **GitHub Enterprise:** GHES support, auto-detected or explicit API URL
 - :globe_with_meridians: **Multi-language:** English, Spanish, Catalan, Italian
 - :bar_chart: **CSV export:** Machine-readable output for data pipelines
-- :jigsaw: **Action outputs:** `total-stars`, `new-stars`, `should-notify`, etc. for workflow chaining
+- :jigsaw: **Action outputs:** `total-stars`, `new-stars`, `new-stars`, `lost-stars`, `new-stargazers` (and much more) for workflow chaining
 - :shield: **Zero runtime deps:** Bundled TypeScript action, 95%+ test coverage, 300+ tests
 
 ---
