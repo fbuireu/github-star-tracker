@@ -39,7 +39,7 @@
 
 ### 🔒 Quality & Security
 
-- ✅ **95%+ test coverage** — +200 tests ensuring reliability
+- ✅ **95%+ test coverage** — +290 tests ensuring reliability
 - 🔒 **Secure by design** — PATs with minimal scopes, no data leaks
 - 📦 **Zero runtime deps** — Bundled action, fast execution
 - 🔄 **CI/CD verified** — Every commit tested and validated
