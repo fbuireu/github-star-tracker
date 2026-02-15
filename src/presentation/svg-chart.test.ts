@@ -475,6 +475,14 @@ describe('generateForecastSvgChart', () => {
     expect(result).toContain('Weighted Moving Average');
   });
 
+  it('generates valid XML attributes in legend for dashed datasets', () => {
+    const history = makeHistory([10, 20, 30]);
+    const result = expectSvg(generateForecastSvgChart({ history, forecastData, locale: 'en' }));
+
+    const CONSECUTIVE_XML_ATTRIBUTES = /="[^"]*"="[^"]*"/;
+    expect(result).not.toMatch(CONSECUTIVE_XML_ATTRIBUTES);
+  });
+
   it('includes week labels', () => {
     const history = makeHistory([10, 20, 30]);
     const result = expectSvg(generateForecastSvgChart({ history, forecastData, locale: 'en' }));

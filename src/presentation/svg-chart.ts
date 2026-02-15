@@ -252,7 +252,8 @@ function renderSvg({
           .map((ds, i) => {
             const x = startX + i * itemWidth;
             const dashAttr = ds.dashed ? ' stroke-dasharray="4,2"' : '';
-            return `<rect x="${x}" y="${legendY - 5}" width="12" height="3" fill="${ds.color}"${dashAttr.replace('stroke-dasharray', 'rx="1"')} />
+            const rectAttr = ds.dashed ? ' rx="1"' : '';
+            return `<rect x="${x}" y="${legendY - 5}" width="12" height="3" fill="${ds.color}"${rectAttr} />
     <line x1="${x}" y1="${legendY - 3.5}" x2="${x + 12}" y2="${legendY - 3.5}" stroke="${ds.color}" stroke-width="2"${dashAttr} />
     <text x="${x + 16}" y="${legendY}" fill="${COLORS.text}" font-size="10" font-family="${font}">${escapeXml(ds.label)}</text>`;
           })
