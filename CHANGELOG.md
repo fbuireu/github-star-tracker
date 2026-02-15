@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/fbuireu/github-star-tracker/compare/v1.3.0...v1.4.0) (2026-02-15)
+
+
+### Features
+
+* add top-repos + visibility: owned + regex pattern on exclude-repos ([2197ead](https://github.com/fbuireu/github-star-tracker/commit/2197eadcfafccca797b6c66e06a0c9834f02ca21))
+
 # [1.3.0](https://github.com/fbuireu/github-star-tracker/compare/v1.2.0...v1.3.0) (2026-02-14)
 
 
