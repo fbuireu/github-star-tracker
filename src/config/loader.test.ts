@@ -197,11 +197,11 @@ describe('loadConfig', () => {
     expect(config.notificationThreshold).toBe('auto');
   });
 
-  it('defaults notification-threshold to 0', () => {
+  it('defaults notification-threshold to auto', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 
     const config = loadConfig();
-    expect(config.notificationThreshold).toBe(0);
+    expect(config.notificationThreshold).toBe('auto');
   });
 
   it('parses exclude-repos input as comma-separated list', () => {
