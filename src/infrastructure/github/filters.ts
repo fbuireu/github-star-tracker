@@ -4,6 +4,24 @@ import type { RepoInfo } from '@domain/types';
 import { fetchRepos } from './client';
 import type { GitHubRepo, Octokit } from './types';
 
+const REGEX_PATTERN = /^\/(.+)\/([gimsuy]*)$/;
+
+interface MatchesExcludePatternParams {
+  name: string;
+  patterns: string[];
+}
+
+function matchesExcludePattern({ name, patterns }: MatchesExcludePatternParams): boolean {
+  return patterns.some((pattern) => {
+    const match = REGEX_PATTERN.exec(pattern);
+    if (match) {
+      const regex = new RegExp(match[1], match[2]);
+      return regex.test(name);
+    }
+    return name === pattern;
+  });
+}
+
 interface FilterReposParams {
   repos: GitHubRepo[];
   config: Config;
@@ -27,7 +45,9 @@ export function filterRepos({ repos, config }: FilterReposParams): GitHubRepo[] 
   }
 
   if (config.excludeRepos.length > 0) {
-    filtered = filtered.filter((repo) => !config.excludeRepos.includes(repo.name));
+    filtered = filtered.filter(
+      (repo) => !matchesExcludePattern({ name: repo.name, patterns: config.excludeRepos }),
+    );
   }
 
   if (config.minStars > 0) {

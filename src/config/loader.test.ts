@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULTS } from './defaults';
 import { loadConfig, loadConfigFile } from './loader';
 import { parseBool, parseList, parseNotificationThreshold, parseNumber } from './parsers';
+import { Visibility } from './types';
 
 vi.mock('@actions/core', () => ({
   getInput: vi.fn().mockReturnValue(''),
@@ -121,7 +122,7 @@ min_stars: 5
     `);
 
     const config = loadConfigFile('star-tracker.yml');
-    expect(config.visibility).toBe('private');
+    expect(config.visibility).toBe(Visibility.PRIVATE);
     expect(config.includeArchived).toBe(true);
     expect(config.includeForks).toBe(false);
     expect(config.excludeRepos).toEqual(['old-repo']);
@@ -160,7 +161,7 @@ describe('loadConfig', () => {
     });
 
     const config = loadConfig();
-    expect(config.visibility).toBe('private');
+    expect(config.visibility).toBe(Visibility.PRIVATE);
     expect(config.minStars).toBe(20);
   });
 

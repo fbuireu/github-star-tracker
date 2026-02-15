@@ -24,10 +24,15 @@ import {
   writeStargazers,
 } from '@infrastructure/persistence/storage';
 import { generateBadge } from '@presentation/badge';
-import { MIN_SNAPSHOTS_FOR_CHART, TOP_REPOS_COUNT } from '@presentation/constants';
+import { MIN_SNAPSHOTS_FOR_CHART } from '@presentation/constants';
 import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
-import { generateSvgChart } from '@presentation/svg-chart';
+import {
+  generateComparisonSvgChart,
+  generateForecastSvgChart,
+  generatePerRepoSvgChart,
+  generateSvgChart,
+} from '@presentation/svg-chart';
 
 async function withDataDir(branch: string, fn: (dataDir: string) => Promise<void>): Promise<void> {
   const dataDir = initializeDataBranch(branch);
@@ -81,7 +86,7 @@ export async function trackStars(): Promise<void> {
       const sorted = [...results.repos]
         .filter((r) => !r.isRemoved)
         .sort((a, b) => b.current - a.current);
-      const topRepoNames = sorted.slice(0, TOP_REPOS_COUNT).map((r) => r.fullName);
+      const topRepoNames = sorted.slice(0, config.topRepos).map((r) => r.fullName);
       const forecastData = computeForecast({ history, topRepoNames });
 
       const markdownReport = generateMarkdownReport({
@@ -92,6 +97,7 @@ export async function trackStars(): Promise<void> {
         includeCharts: config.includeCharts,
         stargazerDiff,
         forecastData,
+        topRepos: config.topRepos,
       });
       const htmlReport = generateHtmlReport({
         results,
@@ -101,6 +107,7 @@ export async function trackStars(): Promise<void> {
         includeCharts: config.includeCharts,
         stargazerDiff,
         forecastData,
+        topRepos: config.topRepos,
       });
 
       const badge = generateBadge({ totalStars: summary.totalStars, locale: config.locale });
@@ -130,6 +137,41 @@ export async function trackStars(): Promise<void> {
         });
         if (svgChart) {
           writeChart({ dataDir, filename: 'star-history.svg', svg: svgChart });
+        }
+
+        for (const repoName of topRepoNames) {
+          const repoChart = generatePerRepoSvgChart({
+            history,
+            repoFullName: repoName,
+            locale: config.locale,
+          });
+          if (repoChart) {
+            const filename = `${repoName.replace('/', '-')}.svg`;
+            writeChart({ dataDir, filename, svg: repoChart });
+          }
+        }
+
+        if (topRepoNames.length > 0) {
+          const comparisonChart = generateComparisonSvgChart({
+            history,
+            repoNames: topRepoNames,
+            title: t.report.topRepositories,
+            locale: config.locale,
+          });
+          if (comparisonChart) {
+            writeChart({ dataDir, filename: 'comparison.svg', svg: comparisonChart });
+          }
+        }
+
+        if (forecastData) {
+          const forecastChart = generateForecastSvgChart({
+            history,
+            forecastData,
+            locale: config.locale,
+          });
+          if (forecastChart) {
+            writeChart({ dataDir, filename: 'forecast.svg', svg: forecastChart });
+          }
         }
       }
 

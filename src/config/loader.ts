@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import * as core from '@actions/core';
 import { isValidLocale } from '@i18n';
 import * as yaml from 'js-yaml';
-import { DEFAULTS, VALID_VISIBILITIES } from './defaults';
+import { DEFAULTS, VISIBILITY_CONFIG } from './defaults';
 import { parseBool, parseList, parseNotificationThreshold, parseNumber } from './parsers';
 import type { Config, Visibility } from './types';
 
@@ -20,6 +20,7 @@ interface FileConfig {
   locale?: string;
   notificationThreshold?: number | 'auto';
   trackStargazers?: boolean;
+  topRepos?: number;
 }
 
 export function loadConfigFile(configPath: string): FileConfig {
@@ -50,6 +51,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     locale: parsed.locale as string | undefined,
     notificationThreshold: parsed.notification_threshold as number | 'auto' | undefined,
     trackStargazers: parsed.track_stargazers as boolean | undefined,
+    topRepos: parsed.top_repos as number | undefined,
   };
 }
 
@@ -69,14 +71,15 @@ export function loadConfig(): Config {
   const inputLocale = core.getInput('locale');
   const inputNotificationThreshold = core.getInput('notification-threshold');
   const inputTrackStargazers = core.getInput('track-stargazers');
+  const inputTopRepos = core.getInput('top-repos');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
     DEFAULTS.visibility) as Visibility;
 
-  if (!VALID_VISIBILITIES.includes(visibility)) {
+  if (!(visibility in VISIBILITY_CONFIG)) {
     throw new Error(
-      `Invalid visibility "${visibility}". Must be one of: ${VALID_VISIBILITIES.join(', ')}`,
+      `Invalid visibility "${visibility}". Must be one of: ${Object.keys(VISIBILITY_CONFIG).join(', ')}`,
     );
   }
 
@@ -109,6 +112,7 @@ export function loadConfig(): Config {
       DEFAULTS.notificationThreshold,
     trackStargazers:
       parseBool(inputTrackStargazers) ?? fileConfig.trackStargazers ?? DEFAULTS.trackStargazers,
+    topRepos: parseNumber(inputTopRepos) ?? fileConfig.topRepos ?? DEFAULTS.topRepos,
   };
 
   core.info(

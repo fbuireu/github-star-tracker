@@ -1,3 +1,4 @@
+import { ForecastMethod } from '@domain/forecast';
 import type { History } from '@domain/types';
 import { describe, expect, it } from 'vitest';
 import {
@@ -306,7 +307,7 @@ describe('chart', () => {
       aggregate: {
         forecasts: [
           {
-            method: 'linear-regression' as const,
+            method: ForecastMethod.LINEAR_REGRESSION,
             points: [
               { weekOffset: 1, predicted: 170 },
               { weekOffset: 2, predicted: 195 },
@@ -315,7 +316,7 @@ describe('chart', () => {
             ],
           },
           {
-            method: 'weighted-moving-average' as const,
+            method: ForecastMethod.WEIGHTED_MOVING_AVERAGE,
             points: [
               { weekOffset: 1, predicted: 165 },
               { weekOffset: 2, predicted: 180 },

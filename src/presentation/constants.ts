@@ -52,6 +52,4 @@ export const SVG_CHART = {
   font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
 } as const;
 
-export const TOP_REPOS_COUNT = 10;
-
 export const MIN_SNAPSHOTS_FOR_CHART = 2;

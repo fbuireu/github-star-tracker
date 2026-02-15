@@ -10,10 +10,8 @@ export function compareStars({
   previousSnapshot,
 }: CompareStarsParams): ComparisonResults {
   const prevMap: Record<string, number> = {};
-  if (previousSnapshot?.repos) {
-    for (const repo of previousSnapshot.repos) {
-      prevMap[repo.fullName] = repo.stars;
-    }
+  for (const repo of previousSnapshot?.repos ?? []) {
+    prevMap[repo.fullName] = repo.stars;
   }
 
   const currentMap: Record<string, boolean> = {};
@@ -40,21 +38,19 @@ export function compareStars({
     });
   }
 
-  if (previousSnapshot?.repos) {
-    for (const repo of previousSnapshot.repos) {
-      if (!currentMap[repo.fullName]) {
-        repoResults.push({
-          name: repo.name || repo.fullName.split('/')[1],
-          fullName: repo.fullName,
-          owner: repo.owner || repo.fullName.split('/')[0],
-          current: 0,
-          previous: repo.stars,
-          delta: -repo.stars,
-          isNew: false,
-          isRemoved: true,
-        });
-      }
-    }
+  for (const repo of previousSnapshot?.repos ?? []) {
+    if (currentMap[repo.fullName]) continue;
+
+    repoResults.push({
+      name: repo.name || repo.fullName.split('/')[1],
+      fullName: repo.fullName,
+      owner: repo.owner || repo.fullName.split('/')[0],
+      current: 0,
+      previous: repo.stars,
+      delta: -repo.stars,
+      isNew: false,
+      isRemoved: true,
+    });
   }
 
   const totalStars = repoResults

@@ -4,10 +4,10 @@ import { BADGE, COLORS } from './constants';
 
 interface GenerateBadgeParams {
   totalStars: number;
-  locale?: Locale;
+  locale: Locale;
 }
 
-export function generateBadge({ totalStars, locale = 'en' }: GenerateBadgeParams): string {
+export function generateBadge({ totalStars, locale }: GenerateBadgeParams): string {
   const t = getTranslations(locale);
   const label = t.badge.totalStars;
   const value = `\u2605 ${formatCount(totalStars)}`;

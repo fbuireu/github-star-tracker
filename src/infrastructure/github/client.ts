@@ -1,4 +1,5 @@
 import * as core from '@actions/core';
+import { VISIBILITY_CONFIG } from '@config/defaults';
 import type { Config } from '@config/types';
 import type { GitHubRepo, Octokit } from './types';
 
@@ -13,9 +14,11 @@ export async function fetchRepos({ octokit, config }: FetchReposParams): Promise
   const repos: GitHubRepo[] = [];
   let page = 1;
 
-  const params: Record<string, unknown> = { per_page: REPOS_PER_PAGE, sort: 'full_name' };
-  params.visibility =
-    config.visibility === 'public' || config.visibility === 'private' ? config.visibility : 'all';
+  const params: Record<string, unknown> = {
+    per_page: REPOS_PER_PAGE,
+    sort: 'full_name',
+    ...VISIBILITY_CONFIG[config.visibility],
+  };
 
   try {
     let dataLength: number;
@@ -24,7 +27,7 @@ export async function fetchRepos({ octokit, config }: FetchReposParams): Promise
       const { data } = await octokit.rest.repos.listForAuthenticatedUser({
         ...params,
         page,
-      } as Parameters<Octokit['rest']['repos']['listForAuthenticatedUser']>[0]);
+      });
 
       dataLength = data.length;
       if (dataLength === 0) break;

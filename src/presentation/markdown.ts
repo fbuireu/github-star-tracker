@@ -1,12 +1,7 @@
-import { FORECAST_WEEKS } from '@domain/forecast';
+import { FORECAST_WEEKS, ForecastMethod } from '@domain/forecast';
 import { deltaIndicator, trendIcon } from '@domain/formatting';
 import { getTranslations, interpolate } from '@i18n';
-import {
-  generateComparisonChartUrl,
-  generateForecastChartUrl,
-  generatePerRepoChartUrl,
-} from './chart';
-import { MIN_SNAPSHOTS_FOR_CHART, TOP_REPOS_COUNT } from './constants';
+import { MIN_SNAPSHOTS_FOR_CHART } from './constants';
 import type { GenerateReportParams } from './shared';
 import { prepareReportData } from './shared';
 
@@ -18,6 +13,7 @@ export function generateMarkdownReport({
   includeCharts = true,
   stargazerDiff = null,
   forecastData = null,
+  topRepos: topReposCount = 10,
 }: GenerateReportParams): string {
   const { summary } = results;
   const t = getTranslations(locale);
@@ -42,22 +38,13 @@ export function generateMarkdownReport({
       ? []
       : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ''];
 
-  const topRepos = sorted.slice(0, TOP_REPOS_COUNT).map((r) => r.fullName);
-  const comparisonChartUrl =
-    hasChartHistory && topRepos.length > 0
-      ? generateComparisonChartUrl({
-          history,
-          repoNames: topRepos,
-          title: t.report.topRepositories,
-          locale,
-        })
-      : null;
+  const topRepos = sorted.slice(0, topReposCount).map((r) => r.fullName);
+  const hasComparisonChart = hasChartHistory && topRepos.length > 0;
 
   const individualRepoCharts = hasChartHistory
     ? topRepos.flatMap((repoName) => {
-        const chartUrl = generatePerRepoChartUrl({ history, repoFullName: repoName, locale });
-        if (!chartUrl) return [];
-        return [`#### ${repoName}`, '', `![${repoName}](${chartUrl})`, ''];
+        const filename = `${repoName.replace('/', '-')}.svg`;
+        return [`#### ${repoName}`, '', `![${repoName}](./charts/${filename})`, ''];
       })
     : [];
 
@@ -67,11 +54,11 @@ export function generateMarkdownReport({
         '',
         `![Star History](./charts/star-history.svg)`,
         '',
-        ...(comparisonChartUrl
+        ...(hasComparisonChart
           ? [
               `### ${t.report.byRepository}`,
               '',
-              `![${t.report.topRepositories}](${comparisonChartUrl})`,
+              `![${t.report.topRepositories}](./charts/comparison.svg)`,
               '',
             ]
           : []),
@@ -180,11 +167,7 @@ export function generateMarkdownReport({
           t,
         }),
         ...(hasChartHistory
-          ? [
-              '',
-              `![${t.forecast.sectionTitle}](${generateForecastChartUrl({ history, forecastData, locale })})`,
-              '',
-            ]
+          ? ['', `![${t.forecast.sectionTitle}](./charts/forecast.svg)`, '']
           : []),
         ...(forecastData.repos.length > 0
           ? [
@@ -240,8 +223,8 @@ function buildForecastTable({ title, forecasts, t }: BuildForecastTableParams): 
   );
 
   const methodLabel = (method: string): string => {
-    if (method === 'linear-regression') return t.forecast.linearRegression;
-    if (method === 'weighted-moving-average') return t.forecast.weightedMovingAverage;
+    if (method === ForecastMethod.LINEAR_REGRESSION) return t.forecast.linearRegression;
+    if (method === ForecastMethod.WEIGHTED_MOVING_AVERAGE) return t.forecast.weightedMovingAverage;
     return method;
   };
 

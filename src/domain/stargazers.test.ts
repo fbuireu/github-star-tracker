@@ -40,7 +40,11 @@ describe('diffStargazers', () => {
     const current: RepoStargazers[] = [
       {
         repoFullName: 'user/repo-a',
-        stargazers: [makeStar('alice'), makeStar('bob'), makeStar('charlie')],
+        stargazers: [
+          makeStar('alice', '2026-01-10'),
+          makeStar('bob', '2026-01-20'),
+          makeStar('charlie', '2026-01-15'),
+        ],
       },
     ];
     const previousMap: StargazerMap = { 'user/repo-a': ['alice'] };
@@ -49,6 +53,27 @@ describe('diffStargazers', () => {
 
     expect(result.totalNew).toBe(2);
     expect(result.entries[0].newStargazers.map((s) => s.login)).toEqual(['bob', 'charlie']);
+  });
+
+  it('sorts new stargazers by date descending', () => {
+    const current: RepoStargazers[] = [
+      {
+        repoFullName: 'user/repo-a',
+        stargazers: [
+          makeStar('alice', '2026-01-01'),
+          makeStar('bob', '2026-01-20'),
+          makeStar('charlie', '2026-01-10'),
+        ],
+      },
+    ];
+
+    const result = diffStargazers({ current, previousMap: {} });
+
+    expect(result.entries[0].newStargazers.map((s) => s.login)).toEqual([
+      'bob',
+      'charlie',
+      'alice',
+    ]);
   });
 
   it('handles newly added repo', () => {

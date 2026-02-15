@@ -36,7 +36,9 @@ export function diffStargazers({
 
   for (const repo of current) {
     const previousLogins = new Set(previousMap[repo.repoFullName] ?? []);
-    const newStargazers = repo.stargazers.filter((s) => !previousLogins.has(s.login));
+    const newStargazers = repo.stargazers
+      .filter((s) => !previousLogins.has(s.login))
+      .sort((a, b) => b.starredAt.localeCompare(a.starredAt));
 
     if (newStargazers.length > 0) {
       entries.push({ repoFullName: repo.repoFullName, newStargazers });

@@ -1,4 +1,5 @@
 import type { ForecastData } from '@domain/forecast';
+import { ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
 import type { ComparisonResults } from '@domain/types';
 import { describe, expect, it } from 'vitest';
@@ -172,6 +173,7 @@ describe('generateMarkdownReport', () => {
     });
 
     expect(report).toContain('Top Repositories');
+    expect(report).toContain('![Top Repositories](./charts/comparison.svg)');
   });
 
   it('includes individual repo charts in collapsible section', () => {
@@ -207,7 +209,9 @@ describe('generateMarkdownReport', () => {
     expect(report).toContain('<details>');
     expect(report).toContain('<summary>Individual Repository Charts</summary>');
     expect(report).toContain('#### user/repo-a');
+    expect(report).toContain('![user/repo-a](./charts/user-repo-a.svg)');
     expect(report).toContain('#### user/repo-b');
+    expect(report).toContain('![user/repo-b](./charts/user-repo-b.svg)');
     expect(report).toContain('</details>');
   });
 
@@ -276,7 +280,7 @@ describe('generateMarkdownReport', () => {
       aggregate: {
         forecasts: [
           {
-            method: 'linear-regression',
+            method: ForecastMethod.LINEAR_REGRESSION,
             points: [
               { weekOffset: 1, predicted: 25 },
               { weekOffset: 2, predicted: 27 },
@@ -285,7 +289,7 @@ describe('generateMarkdownReport', () => {
             ],
           },
           {
-            method: 'weighted-moving-average',
+            method: ForecastMethod.WEIGHTED_MOVING_AVERAGE,
             points: [
               { weekOffset: 1, predicted: 24 },
               { weekOffset: 2, predicted: 25 },
@@ -300,7 +304,7 @@ describe('generateMarkdownReport', () => {
           repoFullName: 'user/repo-a',
           forecasts: [
             {
-              method: 'linear-regression',
+              method: ForecastMethod.LINEAR_REGRESSION,
               points: [
                 { weekOffset: 1, predicted: 17 },
                 { weekOffset: 2, predicted: 19 },
@@ -309,7 +313,7 @@ describe('generateMarkdownReport', () => {
               ],
             },
             {
-              method: 'weighted-moving-average',
+              method: ForecastMethod.WEIGHTED_MOVING_AVERAGE,
               points: [
                 { weekOffset: 1, predicted: 16 },
                 { weekOffset: 2, predicted: 17 },
@@ -335,6 +339,34 @@ describe('generateMarkdownReport', () => {
     expect(report).toContain('Week 1');
     expect(report).toContain('25');
     expect(report).toContain('user/repo-a');
+  });
+
+  it('renders unknown forecast method name as-is', () => {
+    const forecastData: ForecastData = {
+      aggregate: {
+        forecasts: [
+          {
+            method: 'custom-method' as ForecastMethod,
+            points: [
+              { weekOffset: 1, predicted: 25 },
+              { weekOffset: 2, predicted: 27 },
+              { weekOffset: 3, predicted: 29 },
+              { weekOffset: 4, predicted: 31 },
+            ],
+          },
+        ],
+      },
+      repos: [],
+    };
+
+    const report = generateMarkdownReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+      forecastData,
+    });
+
+    expect(report).toContain('custom-method');
   });
 
   it('excludes forecast section when forecastData is null', () => {

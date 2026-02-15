@@ -1,4 +1,5 @@
 import type { Config } from '@config/types';
+import { Visibility } from '@config/types';
 import { describe, expect, it, vi } from 'vitest';
 import { fetchRepos } from './client';
 import { filterRepos, getRepos, mapRepos } from './filters';
@@ -34,7 +35,7 @@ function makeRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
 }
 
 const defaultConfig: Config = {
-  visibility: 'all',
+  visibility: Visibility.ALL,
   includeArchived: false,
   includeForks: false,
   excludeRepos: [],
@@ -47,6 +48,7 @@ const defaultConfig: Config = {
   locale: 'en',
   notificationThreshold: 0,
   trackStargazers: false,
+  topRepos: 10,
 };
 
 describe('filterRepos', () => {
@@ -83,6 +85,43 @@ describe('filterRepos', () => {
     const repos = [makeRepo(), makeRepo({ name: 'excluded' })];
     const config = { ...defaultConfig, excludeRepos: ['excluded'] };
     expect(filterRepos({ repos, config })).toHaveLength(1);
+  });
+
+  it('excludes repos by regex pattern', () => {
+    const repos = [
+      makeRepo({ name: 'my-app' }),
+      makeRepo({ name: 'test-utils' }),
+      makeRepo({ name: 'test-helpers' }),
+    ];
+    const config = { ...defaultConfig, excludeRepos: ['/^test-/'] };
+    const result = filterRepos({ repos, config });
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('my-app');
+  });
+
+  it('supports mixed exact names and regex patterns in exclude', () => {
+    const repos = [
+      makeRepo({ name: 'keep-me' }),
+      makeRepo({ name: 'drop-this' }),
+      makeRepo({ name: 'experiment-1' }),
+      makeRepo({ name: 'experiment-2' }),
+    ];
+    const config = { ...defaultConfig, excludeRepos: ['drop-this', '/^experiment-/'] };
+    const result = filterRepos({ repos, config });
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('keep-me');
+  });
+
+  it('supports regex flags in exclude pattern', () => {
+    const repos = [
+      makeRepo({ name: 'MyProject' }),
+      makeRepo({ name: 'mylib' }),
+      makeRepo({ name: 'other' }),
+    ];
+    const config = { ...defaultConfig, excludeRepos: ['/^my/i'] };
+    const result = filterRepos({ repos, config });
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('other');
   });
 
   it('filters by minimum stars', () => {
@@ -155,7 +194,7 @@ describe('fetchRepos', () => {
     expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledWith({
       per_page: 100,
       sort: 'full_name',
-      visibility: 'all',
+      visibility: Visibility.ALL,
       page: 1,
     });
   });
@@ -211,11 +250,11 @@ describe('fetchRepos', () => {
       },
     };
 
-    const config = { ...defaultConfig, visibility: 'public' as const };
+    const config = { ...defaultConfig, visibility: Visibility.PUBLIC };
     await fetchRepos({ octokit: createMockOctokit(mockOctokit), config });
 
     expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledWith(
-      expect.objectContaining({ visibility: 'public' }),
+      expect.objectContaining({ visibility: Visibility.PUBLIC }),
     );
   });
 
@@ -228,11 +267,28 @@ describe('fetchRepos', () => {
       },
     };
 
-    const config = { ...defaultConfig, visibility: 'private' as const };
+    const config = { ...defaultConfig, visibility: Visibility.PRIVATE };
     await fetchRepos({ octokit: createMockOctokit(mockOctokit), config });
 
     expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledWith(
-      expect.objectContaining({ visibility: 'private' }),
+      expect.objectContaining({ visibility: Visibility.PRIVATE }),
+    );
+  });
+
+  it('uses owner affiliation when visibility is owned', async () => {
+    const mockOctokit: MockOctokit = {
+      rest: {
+        repos: {
+          listForAuthenticatedUser: vi.fn().mockResolvedValue({ data: [] }),
+        },
+      },
+    };
+
+    const config = { ...defaultConfig, visibility: Visibility.OWNED };
+    await fetchRepos({ octokit: createMockOctokit(mockOctokit), config });
+
+    expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledWith(
+      expect.objectContaining({ visibility: Visibility.ALL, affiliation: 'owner' }),
     );
   });
 

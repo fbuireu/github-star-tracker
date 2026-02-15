@@ -1,4 +1,5 @@
 import type { ForecastData } from '@domain/forecast';
+import { ForecastMethod } from '@domain/forecast';
 import { formatDate } from '@domain/formatting';
 import type { History } from '@domain/types';
 import { getTranslations, interpolate, type Locale } from '@i18n';
@@ -374,9 +375,11 @@ export function generateForecastChartUrl({
 
   const allLabels = [...historicalLabels, ...forecastLabels];
 
-  const lrForecast = forecastData.aggregate.forecasts.find((f) => f.method === 'linear-regression');
+  const lrForecast = forecastData.aggregate.forecasts.find(
+    (f) => f.method === ForecastMethod.LINEAR_REGRESSION,
+  );
   const wmaForecast = forecastData.aggregate.forecasts.find(
-    (f) => f.method === 'weighted-moving-average',
+    (f) => f.method === ForecastMethod.WEIGHTED_MOVING_AVERAGE,
   );
 
   const lastHistorical = historicalData.at(-1) ?? 0;

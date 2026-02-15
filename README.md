@@ -16,33 +16,45 @@
 
 ## Features
 
-### 🚀 Tracking & Automation
+<details open>
+<summary><h3>🚀 Tracking & Automation</h3></summary>
 
 - ✅ **Automated scheduling** — Daily, weekly, or on-demand runs
 - 📈 **Historical tracking** — Up to 52 weeks of star data preserved
-- 🎯 **Smart filters** — Track by visibility, exclude repos, minimum stars
+- 🎯 **Smart filters** — Track by visibility, exclude repos (with regex support), minimum stars
 - 👤 **Stargazer tracking** — See who starred your repos (opt-in)
 - 🔮 **Growth forecast** — Predict star count trends for the next 4 weeks
 
-### 📊 Reports & Visualizations
+</details>
+
+<details open>
+<summary><h3>📊 Reports & Visualizations</h3></summary>
 
 - 📊 **Interactive charts** — Star trends and per-repository comparisons
 - 📧 **Email notifications** — Built-in SMTP or external action integration
 - 🎨 **Multiple formats** — Markdown reports, HTML emails, SVG badges
 
-### ⚙️ Developer Experience
+</details>
+
+<details open>
+<summary><h3>⚙️ Developer Experience</h3></summary>
 
 - 🌍 **Multi-language** — English, Spanish, Catalan, Italian
 - 🔧 **Flexible config** — File-based or action inputs
 - 📤 **Action outputs** — Integrate with other workflow steps
 - 🏷️ **Type-safe** — 100% TypeScript with strict mode
 
-### 🔒 Quality & Security
+</details>
+
+<details open>
+<summary><h3>🔒 Quality & Security</h3></summary>
 
 - ✅ **95%+ test coverage** — +200 tests ensuring reliability
 - 🔒 **Secure by design** — PATs with minimal scopes, no data leaks
 - 📦 **Zero runtime deps** — Bundled action, fast execution
 - 🔄 **CI/CD verified** — Every commit tested and validated
+
+</details>
 
 ---
 
@@ -267,14 +279,15 @@ Create `.github/star-tracker-config.json`:
 
 ### Core Configuration
 
-| Input            | Default             | Description                                          |
-| ---------------- | ------------------- | ---------------------------------------------------- |
-| `visibility`     | `all`               | Repository visibility: `public`, `private`, or `all` |
-| `locale`         | `en`                | Report language: `en`, `es`, `ca`, or `it`           |
-| `include-charts` | `true`              | Enable star trend charts (true/false)                |
-| `data-branch`    | `star-tracker-data` | Branch name for storing tracking data                |
-| `max-history`    | `52`                | Maximum snapshots to keep in history (weeks)         |
-| `track-stargazers` | `false`           | Track individual stargazers per repo (true/false)    |
+| Input              | Default             | Description                                          |
+| ------------------ | ------------------- | ---------------------------------------------------- |
+| `visibility`       | `all`               | Repository visibility: `public`, `private`, `all`, or `owned` |
+| `locale`           | `en`                | Report language: `en`, `es`, `ca`, or `it`           |
+| `include-charts`   | `true`              | Enable star trend charts (true/false)                |
+| `data-branch`      | `star-tracker-data` | Branch name for storing tracking data                |
+| `max-history`      | `52`                | Maximum snapshots to keep in history (weeks)         |
+| `track-stargazers` | `false`             | Track individual stargazers per repo (true/false)    |
+| `top-repos`        | `10`                | Number of top repositories to feature in charts and forecasts |
 
 ### Filtering Options
 
@@ -282,22 +295,22 @@ Create `.github/star-tracker-config.json`:
 | ------------------ | ------- | -------------------------------------------------- |
 | `include-archived` | `false` | Include archived repositories                      |
 | `include-forks`    | `false` | Include forked repositories                        |
-| `exclude-repos`    | —       | Comma-separated list of repos to exclude           |
+| `exclude-repos`    | —       | Comma-separated list of repo names or regex patterns (e.g. `/^test-/`) to exclude |
 | `only-repos`       | —       | Comma-separated list of repos to exclusively track |
 | `min-stars`        | `0`     | Only track repos with at least N stars             |
 
 ### Email Configuration
 
-| Input                | Default               | Description                                      |
-| -------------------- | --------------------- | ------------------------------------------------ |
-| `smtp-host`          | —                     | SMTP server hostname (enables email if provided) |
-| `smtp-port`          | `587`                 | SMTP server port                                 |
-| `smtp-username`      | —                     | SMTP authentication username                     |
-| `smtp-password`      | —                     | SMTP authentication password                     |
-| `email-to`           | —                     | Recipient email address                          |
-| `email-from`         | `GitHub Star Tracker` | Sender name or email address                     |
-| `send-on-no-changes`      | `false`               | Send email even when no changes detected                      |
-| `notification-threshold`  | `0`                   | Notify threshold: `0` (every run), a number, or `auto`        |
+| Input                    | Default               | Description                                            |
+| ------------------------ | --------------------- | ------------------------------------------------------ |
+| `smtp-host`              | —                     | SMTP server hostname (enables email if provided)       |
+| `smtp-port`              | `587`                 | SMTP server port                                       |
+| `smtp-username`          | —                     | SMTP authentication username                           |
+| `smtp-password`          | —                     | SMTP authentication password                           |
+| `email-to`               | —                     | Recipient email address                                |
+| `email-from`             | `GitHub Star Tracker` | Sender name or email address                           |
+| `send-on-no-changes`     | `false`               | Send email even when no changes detected               |
+| `notification-threshold` | `0`                   | Notify threshold: `0` (every run), a number, or `auto` |
 
 📖 **[Full API reference](../../wiki/API-Reference)**
 
@@ -421,6 +434,7 @@ Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`,
     locale: 'en'
     include-charts: true
     track-stargazers: true
+    top-repos: '5'
     max-history: '52'
     smtp-host: smtp.gmail.com
     smtp-port: '587'
@@ -440,7 +454,7 @@ Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`,
 
 ⚡ **Fast & Efficient**
 
-- **Execution time:** ~2-30 seconds (depends on repo count)
+- **Execution time:** ~1-20 seconds (depends on repo count)
 - **API calls:** ~1-2 per 100 repositories (paginated efficiently)
 - **Bundle size:** <1MB compiled action
 - **Runtime:** Node.js 24+ (provided by GitHub Actions)
@@ -459,7 +473,7 @@ Available: `report`, `report-html`, `total-stars`, `stars-changed`, `new-stars`,
 
 - **Stargazer API rate limits** — Fetching stargazers requires `ceil(stars / 100)` API calls per repo. Users with many high-star repos may approach the 5,000 requests/hour GitHub rate limit. Use `track-stargazers` only when needed.
 - **Forecast accuracy** — Predictions are based on historical trends and assume growth patterns continue. Viral events, repo archival, or other discontinuities are not modeled.
-- **Chart rendering** — Charts are static images generated via QuickChart.io (external service). No interactive zooming or tooltips.
+- **Chart rendering** — SVG charts are self-contained and saved to the data branch. QuickChart.io is only used for HTML email reports. No interactive zooming or tooltips.
 - **Email client compatibility** — HTML reports use inline styles for maximum compatibility, but some email clients may render differently. `<details>` collapsible sections are only used in Markdown reports, not HTML emails.
 - **Snapshot granularity** — Data is captured per-run (typically daily/weekly). Intra-day changes are not tracked.
 - **GitHub token scope** — Requires a Personal Access Token (PAT); the default `GITHUB_TOKEN` provided by Actions is insufficient for listing repos across the account.
@@ -479,7 +493,7 @@ Contains:
 - `README.md` — Full report with charts
 - `stars-data.json` — Historical data
 - `stars-badge.svg` — Star count badge
-- `charts/` — Animated SVG charts
+- `charts/` — Animated SVG charts (star history, per-repo, comparison, forecast)
 
 ### Badge in README
 
@@ -494,6 +508,22 @@ Contains:
 ```
 
 The chart updates automatically on each run and features an animated line that draws the star growth trend.
+
+### Other Charts
+
+```markdown
+<!-- Comparison chart (top repos overlay) -->
+
+![Comparison](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/charts/comparison.svg)
+
+<!-- Forecast chart (growth predictions) -->
+
+![Forecast](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/charts/forecast.svg)
+
+<!-- Per-repo chart (replace owner-repo with your repo) -->
+
+![Per-Repo](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/charts/owner-repo.svg)
+```
 
 ### Action Outputs
 

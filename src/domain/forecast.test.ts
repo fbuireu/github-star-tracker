@@ -1,7 +1,12 @@
 import type { History } from '@domain/types';
 import { describe, expect, it } from 'vitest';
 import type { ForecastData } from './forecast';
-import { computeForecast, linearRegression, weightedMovingAverage } from './forecast';
+import {
+  computeForecast,
+  ForecastMethod,
+  linearRegression,
+  weightedMovingAverage,
+} from './forecast';
 
 function expectForecast(result: ForecastData | null): ForecastData {
   expect(result).not.toBeNull();
@@ -83,14 +88,16 @@ describe('computeForecast', () => {
 
     expect(result.aggregate.forecasts).toHaveLength(2);
 
-    const lrForecast = result.aggregate.forecasts.find((f) => f.method === 'linear-regression');
+    const lrForecast = result.aggregate.forecasts.find(
+      (f) => f.method === ForecastMethod.LINEAR_REGRESSION,
+    );
     expect(lrForecast).toBeDefined();
     expect(lrForecast?.points).toHaveLength(4);
     expect(lrForecast?.points[0].predicted).toBe(130);
     expect(lrForecast?.points[1].predicted).toBe(140);
 
     const wmaForecast = result.aggregate.forecasts.find(
-      (f) => f.method === 'weighted-moving-average',
+      (f) => f.method === ForecastMethod.WEIGHTED_MOVING_AVERAGE,
     );
     expect(wmaForecast).toBeDefined();
     expect(wmaForecast?.points[0].predicted).toBe(130);
@@ -122,6 +129,36 @@ describe('computeForecast', () => {
     expect(result.repos).toHaveLength(1);
     expect(result.repos[0].repoFullName).toBe('user/repo-a');
     expect(result.repos[0].forecasts).toHaveLength(2);
+  });
+
+  it('handles repo missing from some snapshots', () => {
+    const history: History = {
+      snapshots: [
+        {
+          timestamp: '2026-01-01',
+          totalStars: 100,
+          repos: [{ fullName: 'user/repo-a', name: 'repo-a', owner: 'user', stars: 50 }],
+        },
+        {
+          timestamp: '2026-01-08',
+          totalStars: 110,
+          repos: [],
+        },
+        {
+          timestamp: '2026-01-15',
+          totalStars: 120,
+          repos: [{ fullName: 'user/repo-a', name: 'repo-a', owner: 'user', stars: 60 }],
+        },
+      ],
+    };
+
+    const result = expectForecast(computeForecast({ history, topRepoNames: ['user/repo-a'] }));
+    expect(result.repos[0].forecasts).toHaveLength(2);
+    for (const forecast of result.repos[0].forecasts) {
+      for (const point of forecast.points) {
+        expect(point.predicted).toBeGreaterThanOrEqual(0);
+      }
+    }
   });
 
   it('clamps predictions to non-negative integers', () => {

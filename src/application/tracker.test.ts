@@ -105,6 +105,7 @@ vi.mock('@presentation/svg-chart', () => ({
 
 import * as core from '@actions/core';
 import { loadConfig } from '@config/loader';
+import { Visibility } from '@config/types';
 import { compareStars, createSnapshot } from '@domain/comparison';
 import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
@@ -133,7 +134,7 @@ import { generateSvgChart } from '@presentation/svg-chart';
 import { trackStars } from './tracker';
 
 const defaultConfig = {
-  visibility: 'all' as const,
+  visibility: Visibility.ALL,
   includeArchived: false,
   includeForks: false,
   excludeRepos: [],
@@ -146,6 +147,7 @@ const defaultConfig = {
   locale: 'en' as const,
   notificationThreshold: 0,
   trackStargazers: false,
+  topRepos: 10,
 };
 
 const defaultSummary = {

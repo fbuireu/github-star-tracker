@@ -8,8 +8,15 @@ export interface ForecastPoint {
   predicted: number;
 }
 
+export const ForecastMethod = {
+  LINEAR_REGRESSION: 'linear-regression',
+  WEIGHTED_MOVING_AVERAGE: 'weighted-moving-average',
+} as const;
+
+export type ForecastMethod = (typeof ForecastMethod)[keyof typeof ForecastMethod];
+
 export interface ForecastResult {
-  method: 'linear-regression' | 'weighted-moving-average';
+  method: ForecastMethod;
   points: ForecastPoint[];
 }
 
@@ -103,8 +110,8 @@ function forecastFromValues(values: number[]): ForecastResult[] {
   }
 
   return [
-    { method: 'linear-regression', points: lrPoints },
-    { method: 'weighted-moving-average', points: wmaPoints },
+    { method: ForecastMethod.LINEAR_REGRESSION, points: lrPoints },
+    { method: ForecastMethod.WEIGHTED_MOVING_AVERAGE, points: wmaPoints },
   ];
 }
 

@@ -17,7 +17,7 @@ inputs:
     default: 'star-tracker.yml'
 
   visibility:
-    description: 'Repository visibility filter: public, private, or all (overrides config file)'
+    description: 'Repository visibility filter: public, private, all, or owned (only repos you own) (overrides config file)'
     required: false
     default: ''
 
@@ -32,7 +32,7 @@ inputs:
     default: ''
 
   exclude-repos:
-    description: 'Comma-separated list of repository names to exclude (overrides config file)'
+    description: 'Comma-separated list of repository names or regex patterns (e.g. /^test-.*/) to exclude (overrides config file)'
     required: false
     default: ''
 
@@ -105,6 +105,11 @@ inputs:
     description: 'Language for reports and emails: en, es, ca, it'
     required: false
     default: 'en'
+
+  top-repos:
+    description: 'Number of top repositories to feature in charts and forecasts (by star count)'
+    required: false
+    default: '10'
 
   track-stargazers:
     description: 'Track individual stargazers and show new ones in reports (true/false)'

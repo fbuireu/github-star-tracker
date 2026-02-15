@@ -1,4 +1,5 @@
 import type { ForecastData } from '@domain/forecast';
+import { ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
 import type { ComparisonResults } from '@domain/types';
 import { describe, expect, it } from 'vitest';
@@ -323,7 +324,7 @@ describe('generateHtmlReport', () => {
       aggregate: {
         forecasts: [
           {
-            method: 'linear-regression',
+            method: ForecastMethod.LINEAR_REGRESSION,
             points: [
               { weekOffset: 1, predicted: 25 },
               { weekOffset: 2, predicted: 27 },
@@ -332,7 +333,7 @@ describe('generateHtmlReport', () => {
             ],
           },
           {
-            method: 'weighted-moving-average',
+            method: ForecastMethod.WEIGHTED_MOVING_AVERAGE,
             points: [
               { weekOffset: 1, predicted: 24 },
               { weekOffset: 2, predicted: 25 },
@@ -347,7 +348,7 @@ describe('generateHtmlReport', () => {
           repoFullName: 'user/repo-a',
           forecasts: [
             {
-              method: 'linear-regression',
+              method: ForecastMethod.LINEAR_REGRESSION,
               points: [
                 { weekOffset: 1, predicted: 17 },
                 { weekOffset: 2, predicted: 19 },
@@ -356,7 +357,7 @@ describe('generateHtmlReport', () => {
               ],
             },
             {
-              method: 'weighted-moving-average',
+              method: ForecastMethod.WEIGHTED_MOVING_AVERAGE,
               points: [
                 { weekOffset: 1, predicted: 16 },
                 { weekOffset: 2, predicted: 17 },
@@ -383,6 +384,65 @@ describe('generateHtmlReport', () => {
     expect(html).toContain('25');
     expect(html).toContain('user/repo-a');
     expect(html).not.toContain('<details>');
+  });
+
+  it('uses neutral color for zero delta', () => {
+    const results = makeResults({
+      repos: [
+        {
+          name: 'repo-a',
+          fullName: 'user/repo-a',
+          owner: 'user',
+          current: 10,
+          previous: 10,
+          delta: 0,
+          isNew: false,
+          isRemoved: false,
+        },
+      ],
+      summary: {
+        totalStars: 10,
+        totalPrevious: 10,
+        totalDelta: 0,
+        newStars: 0,
+        lostStars: 0,
+        changed: false,
+      },
+    });
+    const html = generateHtmlReport({
+      results,
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+    });
+    expect(html).toContain('#6a737d');
+  });
+
+  it('renders unknown forecast method name as-is', () => {
+    const forecastData: ForecastData = {
+      aggregate: {
+        forecasts: [
+          {
+            method: 'custom-method' as ForecastMethod,
+            points: [
+              { weekOffset: 1, predicted: 25 },
+              { weekOffset: 2, predicted: 27 },
+              { weekOffset: 3, predicted: 29 },
+              { weekOffset: 4, predicted: 31 },
+            ],
+          },
+        ],
+      },
+      repos: [],
+    };
+
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+      forecastData,
+    });
+
+    expect(html).toContain('custom-method');
   });
 
   it('excludes forecast section when forecastData is null', () => {

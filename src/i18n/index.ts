@@ -20,7 +20,7 @@ export function interpolate({ template, params }: InterpolateParams): string {
 
 const translations: Record<Locale, Translations> = { en, es, ca, it };
 
-export function getTranslations(locale: Locale = 'en'): Translations {
+export function getTranslations(locale: Locale): Translations {
   return translations[locale] || translations.en;
 }
 

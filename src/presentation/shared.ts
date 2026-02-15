@@ -11,6 +11,7 @@ export interface GenerateReportParams {
   includeCharts?: boolean;
   stargazerDiff?: StargazerDiffResult | null;
   forecastData?: ForecastData | null;
+  topRepos?: number;
 }
 
 export interface ReportData {

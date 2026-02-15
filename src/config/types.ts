@@ -1,7 +1,14 @@
 import type { LOCALES } from './defaults';
 
 export type Locale = (typeof LOCALES)[number];
-export type Visibility = 'public' | 'private' | 'all';
+export const Visibility = {
+  PUBLIC: 'public',
+  PRIVATE: 'private',
+  ALL: 'all',
+  OWNED: 'owned',
+} as const;
+
+export type Visibility = (typeof Visibility)[keyof typeof Visibility];
 
 export interface Config {
   visibility: Visibility;
@@ -17,4 +24,5 @@ export interface Config {
   locale: Locale;
   notificationThreshold: number | 'auto';
   trackStargazers: boolean;
+  topRepos: number;
 }

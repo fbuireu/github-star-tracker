@@ -1,3 +1,4 @@
+import { LOCALE_MAP } from '@config/defaults';
 import type { Locale } from '@i18n';
 
 const compactFormatter = new Intl.NumberFormat('en', {
@@ -21,20 +22,13 @@ export function trendIcon(delta: number): string {
   return '\u2796';
 }
 
-const localeMap: Record<Locale, string> = {
-  en: 'en-US',
-  es: 'es-ES',
-  ca: 'ca-ES',
-  it: 'it-IT',
-};
-
 interface FormatDateParams {
   timestamp: string;
-  locale?: Locale;
+  locale: Locale;
 }
 
-export function formatDate({ timestamp, locale = 'en' }: FormatDateParams): string {
+export function formatDate({ timestamp, locale }: FormatDateParams): string {
   const date = new Date(timestamp);
-  const localeCode = localeMap[locale] || 'en-US';
+  const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
   return date.toLocaleDateString(localeCode, { month: 'short', day: 'numeric' });
 }

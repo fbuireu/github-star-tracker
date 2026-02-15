@@ -1,4 +1,4 @@
-import { FORECAST_WEEKS } from '@domain/forecast';
+import { FORECAST_WEEKS, ForecastMethod } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
 import { getTranslations, interpolate } from '@i18n';
 import {
@@ -7,7 +7,7 @@ import {
   generateForecastChartUrl,
   generatePerRepoChartUrl,
 } from './chart';
-import { COLORS, MIN_SNAPSHOTS_FOR_CHART, TOP_REPOS_COUNT } from './constants';
+import { COLORS, MIN_SNAPSHOTS_FOR_CHART } from './constants';
 import type { GenerateReportParams } from './shared';
 import { prepareReportData } from './shared';
 
@@ -25,6 +25,7 @@ export function generateHtmlReport({
   includeCharts = true,
   stargazerDiff = null,
   forecastData = null,
+  topRepos: topReposCount = 10,
 }: GenerateReportParams): string {
   const { summary } = results;
   const t = getTranslations(locale);
@@ -64,7 +65,7 @@ export function generateHtmlReport({
       </div>`
       : '';
 
-  const topRepos = sorted.slice(0, TOP_REPOS_COUNT).map((r) => r.fullName);
+  const topRepos = sorted.slice(0, topReposCount).map((r) => r.fullName);
   const comparisonChartUrl =
     hasChartHistory && topRepos.length > 0
       ? generateComparisonChartUrl({
@@ -238,8 +239,8 @@ function buildHtmlForecastTable({ title, forecasts, t }: BuildHtmlForecastTableP
   );
 
   const methodLabel = (method: string): string => {
-    if (method === 'linear-regression') return t.forecast.linearRegression;
-    if (method === 'weighted-moving-average') return t.forecast.weightedMovingAverage;
+    if (method === ForecastMethod.LINEAR_REGRESSION) return t.forecast.linearRegression;
+    if (method === ForecastMethod.WEIGHTED_MOVING_AVERAGE) return t.forecast.weightedMovingAverage;
     return method;
   };
 
