@@ -1,3 +1,11 @@
+## [1.5.1](https://github.com/fbuireu/github-star-tracker/compare/v1.5.0...v1.5.1) (2026-02-15)
+
+
+### Bug Fixes
+
+* add default notification threshold to auto ([08a31bc](https://github.com/fbuireu/github-star-tracker/commit/08a31bcaf99844a7f3fe0dd8ba419c733c513021))
+* tests auto notification threshold ([0cd6527](https://github.com/fbuireu/github-star-tracker/commit/0cd65271be4cf6ae09105faa1894e7a6d4ee3500))
+
 # [1.5.0](https://github.com/fbuireu/github-star-tracker/compare/v1.4.0...v1.5.0) (2026-02-15)
 
 
