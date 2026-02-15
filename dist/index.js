@@ -32632,10 +32632,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -34927,7 +34927,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35050,7 +35050,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -39514,7 +39514,8 @@ function generateMarkdownReport({
   ] : [];
   const footer = [
     "---",
-    `*${interpolate({ template: t.footer.generated, params: { project: "[GitHub Star Tracker](https://github.com/fbuireu/github-star-tracker)", date: (/* @__PURE__ */ new Date()).toISOString() } })}*`,
+    `*${interpolate({ template: t.footer.generated, params: { project: "[GitHub Star Tracker](https://github.com/fbuireu/github-star-tracker)", date: (/* @__PURE__ */ new Date()).toISOString() } })}*
+`,
     `*${interpolate({ template: t.footer.madeBy, params: { author: "[Ferran Buireu](https://github.com/fbuireu)" } })}*`
   ];
   return [
@@ -39706,7 +39707,8 @@ function renderSvg({
     return datasets.map((ds, i) => {
       const x = startX + i * itemWidth;
       const dashAttr = ds.dashed ? ' stroke-dasharray="4,2"' : "";
-      return `<rect x="${x}" y="${legendY - 5}" width="12" height="3" fill="${ds.color}"${dashAttr.replace("stroke-dasharray", 'rx="1"')} />
+      const rectAttr = ds.dashed ? ' rx="1"' : "";
+      return `<rect x="${x}" y="${legendY - 5}" width="12" height="3" fill="${ds.color}"${rectAttr} />
     <line x1="${x}" y1="${legendY - 3.5}" x2="${x + 12}" y2="${legendY - 3.5}" stroke="${ds.color}" stroke-width="2"${dashAttr} />
     <text x="${x + 16}" y="${legendY}" fill="${COLORS.text}" font-size="10" font-family="${font}">${escapeXml(ds.label)}</text>`;
     }).join("\n    ");
