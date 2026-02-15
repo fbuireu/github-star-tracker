@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/fbuireu/github-star-tracker/compare/v1.4.0...v1.5.0) (2026-02-15)
+
+
+### Features
+
+* fix docs ([2b27049](https://github.com/fbuireu/github-star-tracker/commit/2b270491237ebe7b91c9225ac6b0a4ef6264b62c))
+
 # [1.4.0](https://github.com/fbuireu/github-star-tracker/compare/v1.3.0...v1.4.0) (2026-02-15)
 
 
