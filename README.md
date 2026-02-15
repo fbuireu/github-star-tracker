@@ -17,7 +17,11 @@
 ## Features
 
 <details open>
-<summary><h3>🚀 Tracking & Automation</h3></summary>
+<summary>
+
+### 🚀 Tracking & Automation
+
+</summary>
 
 - ✅ **Automated scheduling** — Daily, weekly, or on-demand runs
 - 📈 **Historical tracking** — Up to 52 weeks of star data preserved
@@ -28,7 +32,11 @@
 </details>
 
 <details open>
-<summary><h3>📊 Reports & Visualizations</h3></summary>
+<summary>
+
+### 📊 Reports & Visualizations
+
+</summary>
 
 - 📊 **Interactive charts** — Star trends and per-repository comparisons
 - 📧 **Email notifications** — Built-in SMTP or external action integration
@@ -37,7 +45,11 @@
 </details>
 
 <details open>
-<summary><h3>⚙️ Developer Experience</h3></summary>
+<summary>
+
+### ⚙️ Developer Experience
+
+</summary>
 
 - 🌍 **Multi-language** — English, Spanish, Catalan, Italian
 - 🔧 **Flexible config** — File-based or action inputs
@@ -47,7 +59,11 @@
 </details>
 
 <details open>
-<summary><h3>🔒 Quality & Security</h3></summary>
+<summary>
+
+### 🔒 Quality & Security
+
+</summary>
 
 - ✅ **95%+ test coverage** — +200 tests ensuring reliability
 - 🔒 **Secure by design** — PATs with minimal scopes, no data leaks

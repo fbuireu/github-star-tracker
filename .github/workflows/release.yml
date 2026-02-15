@@ -20,6 +20,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          token: ${{ secrets.PAT }}
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
       - name: Setup Node.js
@@ -33,20 +34,19 @@ jobs:
         run: pnpm run validate
       - name: Semantic Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
         run: npx semantic-release
       - name: Update major version tag
         if: success()
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
         run: |
-          # Get the latest tag created by semantic-release
           LATEST_TAG=$(git describe --tags --abbrev=0)
           MAJOR_VERSION=$(echo $LATEST_TAG | cut -d. -f1)
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Update major version tag (e.g., v1)
           git tag -fa $MAJOR_VERSION -m "Update $MAJOR_VERSION to $LATEST_TAG"
+
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git $MAJOR_VERSION --force
