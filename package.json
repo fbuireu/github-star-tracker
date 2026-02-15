@@ -51,9 +51,6 @@
     "js-yaml": "^4.1.0",
     "nodemailer": "^8.0.0"
   },
-  "lint-staged": {
-    "*.{ts,json}": "biome check --write --no-errors-on-unmatched"
-  },
   "devDependencies": {
     "@biomejs/biome": "^2.4.0",
     "@commitlint/cli": "^20.4.1",
