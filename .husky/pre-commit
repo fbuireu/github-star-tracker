@@ -1,1 +1,1 @@
-pnpm run format && pnpm run check && pnpm run build && git add .
+pnpm lint-staged && pnpm run typecheck && pnpm run test:changed && pnpm run build
