@@ -18,40 +18,17 @@
 
 Every run, Star Tracker commits these artifacts to a dedicated data branch:
 
-<table>
-<tr>
-<td width="50%">
+- **Animated SVG charts:** star history, per-repo trends, top repos comparison, and growth forecasts:
 
-**Animated SVG charts:** star history, per-repo trends, top repos comparison, and growth forecasts:
+        ![Star History](https://raw.githubusercontent.com/USER/REPO/star-tracker-data/charts/star-history.svg)
 
-```markdown
-![Star History](https://raw.githubusercontent.com/USER/REPO/star-tracker-data/charts/star-history.svg)
-```
+- **Shields.io-style badge:** embeddable star count that updates automatically:
 
-</td>
-<td width="50%">
+        ![Stars](https://raw.githubusercontent.com/USER/REPO/star-tracker-data/stars-badge.svg)
 
-**Shields.io-style badge:** embeddable star count that updates automatically:
+- **Markdown, CSV & HTML reports:** summary tables, delta indicators, new/removed repos, stargazer details, and forecast tables.
 
-```markdown
-![Stars](https://raw.githubusercontent.com/USER/REPO/star-tracker-data/stars-badge.svg)
-```
-
-</td>
-</tr>
-<tr>
-<td>
-
-**Markdown, CSV & HTML reports:** summary tables, delta indicators, new/removed repos, stargazer details, and forecast tables.
-
-</td>
-<td>
-
-**CSV & JSON data:** machine-readable exports for dashboards, spreadsheets, or downstream pipelines.
-
-</td>
-</tr>
-</table>
+- **CSV & JSON data:** machine-readable exports for dashboards, spreadsheets, or downstream pipelines.
 
 ---
 
@@ -120,8 +97,8 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 - uses: fbuireu/github-star-tracker@v1
   with:
     github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
-    visibility: 'public'       # public | private | all | owned
-    locale: 'es'               # en | es | ca | it
+    visibility: 'public' # public | private | all | owned
+    locale: 'es' # en | es | ca | it
     include-charts: true
     track-stargazers: true
     min-stars: '5'
@@ -132,48 +109,48 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 <details>
 <summary><strong>All Inputs</strong></summary>
 
-| Input | Default | Description |
-|---|---|---|
-| `github-token` | — | **Required.** PAT with `repo` or `public_repo` scope |
-| `github-api-url` | — | GitHub API base URL (for GHES). Auto-detected on GHES runners |
-| `config-path` | `star-tracker.yml` | Path to YAML config file |
-| `visibility` | `all` | `public`, `private`, `all`, or `owned` |
-| `locale` | `en` | `en`, `es`, `ca`, or `it` |
-| `include-charts` | `true` | Generate star trend charts |
-| `data-branch` | `star-tracker-data` | Branch for tracking data |
-| `max-history` | `52` | Max snapshots to keep |
-| `top-repos` | `10` | Top repos in charts/forecasts |
-| `track-stargazers` | `false` | Track individual stargazers |
-| `include-archived` | `false` | Include archived repos |
-| `include-forks` | `false` | Include forked repos |
-| `exclude-repos` | — | Names or regex to exclude |
-| `only-repos` | — | Only track these repos |
-| `min-stars` | `0` | Min stars to track |
-| `smtp-host` | — | SMTP hostname (enables email) |
-| `smtp-port` | `587` | SMTP port |
-| `smtp-username` | — | SMTP username |
-| `smtp-password` | — | SMTP password |
-| `email-to` | — | Recipient address |
-| `email-from` | `GitHub Star Tracker` | Sender name |
-| `send-on-no-changes` | `false` | Email even with no changes |
-| `notification-threshold` | `0` | `0` (every run), N (threshold), or `auto` (adaptive) |
+| Input                    | Default               | Description                                                   |
+| ------------------------ | --------------------- | ------------------------------------------------------------- |
+| `github-token`           | —                     | **Required.** PAT with `repo` or `public_repo` scope          |
+| `github-api-url`         | —                     | GitHub API base URL (for GHES). Auto-detected on GHES runners |
+| `config-path`            | `star-tracker.yml`    | Path to YAML config file                                      |
+| `visibility`             | `all`                 | `public`, `private`, `all`, or `owned`                        |
+| `locale`                 | `en`                  | `en`, `es`, `ca`, or `it`                                     |
+| `include-charts`         | `true`                | Generate star trend charts                                    |
+| `data-branch`            | `star-tracker-data`   | Branch for tracking data                                      |
+| `max-history`            | `52`                  | Max snapshots to keep                                         |
+| `top-repos`              | `10`                  | Top repos in charts/forecasts                                 |
+| `track-stargazers`       | `false`               | Track individual stargazers                                   |
+| `include-archived`       | `false`               | Include archived repos                                        |
+| `include-forks`          | `false`               | Include forked repos                                          |
+| `exclude-repos`          | —                     | Names or regex to exclude                                     |
+| `only-repos`             | —                     | Only track these repos                                        |
+| `min-stars`              | `0`                   | Min stars to track                                            |
+| `smtp-host`              | —                     | SMTP hostname (enables email)                                 |
+| `smtp-port`              | `587`                 | SMTP port                                                     |
+| `smtp-username`          | —                     | SMTP username                                                 |
+| `smtp-password`          | —                     | SMTP password                                                 |
+| `email-to`               | —                     | Recipient address                                             |
+| `email-from`             | `GitHub Star Tracker` | Sender name                                                   |
+| `send-on-no-changes`     | `false`               | Email even with no changes                                    |
+| `notification-threshold` | `0`                   | `0` (every run), N (threshold), or `auto` (adaptive)          |
 
 </details>
 
 <details>
 <summary><strong>Outputs</strong></summary>
 
-| Output | Description |
-|---|---|
-| `total-stars` | Total star count |
-| `stars-changed` | `true` / `false` |
-| `new-stars` | Stars gained |
-| `lost-stars` | Stars lost |
-| `should-notify` | Threshold reached: `true` / `false` |
-| `new-stargazers` | New stargazers count |
-| `report` | Full Markdown report |
-| `report-html` | HTML report (for email) |
-| `report-csv` | CSV report (for data pipelines) |
+| Output           | Description                         |
+| ---------------- | ----------------------------------- |
+| `total-stars`    | Total star count                    |
+| `stars-changed`  | `true` / `false`                    |
+| `new-stars`      | Stars gained                        |
+| `lost-stars`     | Stars lost                          |
+| `should-notify`  | Threshold reached: `true` / `false` |
+| `new-stargazers` | New stargazers count                |
+| `report`         | Full Markdown report                |
+| `report-html`    | HTML report (for email)             |
+| `report-csv`     | CSV report (for data pipelines)     |
 
 </details>
 
@@ -262,22 +239,22 @@ flowchart TD
 
 ## Documentation
 
-| Guide | Description |
-|---|---|
-| **[Getting Started](../../wiki/Getting-Started)** | Setup from token to first run |
-| **[How It Works](../../wiki/How-It-Works)** | Execution flow and architecture |
-| **[Configuration](../../wiki/Configuration)** | All options and settings |
-| **[API Reference](../../wiki/API-Reference)** | Inputs, outputs, and data formats |
-| **[Examples](../../wiki/Examples)** | Real-world workflow configurations |
-| **[Star Trend Charts](../../wiki/Star-Trend-Charts)** | Chart types, embedding, and customization |
-| **[Email Notifications](../../wiki/Email-Notifications)** | Built-in SMTP and external action setup |
-| **[Viewing Reports](../../wiki/Viewing-Reports)** | Data branch, badges, outputs, raw data |
-| **[Data Management](../../wiki/Data-Management)** | Storage, rotation, and manual management |
-| **[Internationalization](<../../wiki/Internationalization-(i18n)>)** | Multi-language support |
-| **[Personal Access Token](<../../wiki/Personal-Access-Token-(PAT)>)** | Classic and fine-grained token setup |
-| **[Technical Stack](../../wiki/Technical-Stack)** | Technologies and design decisions |
-| **[Known Limitations](../../wiki/Known-Limitations)** | Constraints and workarounds |
-| **[Troubleshooting](../../wiki/Troubleshooting)** | Common issues and solutions |
+| Guide                                                                 | Description                               |
+| --------------------------------------------------------------------- | ----------------------------------------- |
+| **[Getting Started](../../wiki/Getting-Started)**                     | Setup from token to first run             |
+| **[How It Works](../../wiki/How-It-Works)**                           | Execution flow and architecture           |
+| **[Configuration](../../wiki/Configuration)**                         | All options and settings                  |
+| **[API Reference](../../wiki/API-Reference)**                         | Inputs, outputs, and data formats         |
+| **[Examples](../../wiki/Examples)**                                   | Real-world workflow configurations        |
+| **[Star Trend Charts](../../wiki/Star-Trend-Charts)**                 | Chart types, embedding, and customization |
+| **[Email Notifications](../../wiki/Email-Notifications)**             | Built-in SMTP and external action setup   |
+| **[Viewing Reports](../../wiki/Viewing-Reports)**                     | Data branch, badges, outputs, raw data    |
+| **[Data Management](../../wiki/Data-Management)**                     | Storage, rotation, and manual management  |
+| **[Internationalization](<../../wiki/Internationalization-(i18n)>)**  | Multi-language support                    |
+| **[Personal Access Token](<../../wiki/Personal-Access-Token-(PAT)>)** | Classic and fine-grained token setup      |
+| **[Technical Stack](../../wiki/Technical-Stack)**                     | Technologies and design decisions         |
+| **[Known Limitations](../../wiki/Known-Limitations)**                 | Constraints and workarounds               |
+| **[Troubleshooting](../../wiki/Troubleshooting)**                     | Common issues and solutions               |
 
 ## Support & Contributing
 
@@ -310,6 +287,7 @@ This project uses AI assistance primarily for documentation purposes. AI tools (
 The core logic, architecture decisions, and implementation were developed by the maintainer. All AI-generated content has been reviewed and validated.
 
 ---
+
 <div align="center">
 
 [AGPL-3.0](LICENSE) © Made with 🤘🏼 by [Ferran Buireu](https://github.com/fbuireu)
