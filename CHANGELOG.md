@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/fbuireu/github-star-tracker/compare/v1.6.1...v1.7.0) (2026-02-16)
+
+
+### Features
+
+* add dark mode support + examples ([28b9cbb](https://github.com/fbuireu/github-star-tracker/commit/28b9cbba60f0bf1572cc3406344ed37b53a93cd6))
+
 ## [1.6.1](https://github.com/fbuireu/github-star-tracker/compare/v1.6.0...v1.6.1) (2026-02-15)
 
 
