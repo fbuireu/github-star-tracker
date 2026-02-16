@@ -38406,7 +38406,7 @@ function formatDate({ timestamp: timestamp2, locale }) {
 }
 
 // src/presentation/constants.ts
-var COLORS = {
+var LIGHT_PALETTE = {
   accent: "#dfb317",
   positive: "#28a745",
   negative: "#d73a49",
@@ -38421,6 +38421,22 @@ var COLORS = {
   cellBorder: "#eee",
   gradientStart: "#bbb"
 };
+var DARK_PALETTE = {
+  accent: "#dfb317",
+  positive: "#3fb950",
+  negative: "#f85149",
+  neutral: "#8b949e",
+  link: "#58a6ff",
+  text: "#e6edf3",
+  white: "#0d1117",
+  shadow: "#010101",
+  muted: "#8b949e",
+  tableHeaderBg: "#161b22",
+  tableHeaderBorder: "#30363d",
+  cellBorder: "#21262d",
+  gradientStart: "#484f58"
+};
+var COLORS = LIGHT_PALETTE;
 var CHART_COMPARISON_COLORS = [
   "#dfb317",
   "#28a745",
@@ -39290,7 +39306,7 @@ function generateHtmlReport({
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${COLORS.text};">
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${COLORS.text};background-color:${COLORS.white};">
   <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${COLORS.accent};">
     <h1 style="margin:0;font-size:24px;">${t.report.title}</h1>
     <p style="color:${COLORS.neutral};margin:8px 0 0;">${now} ${prev === t.report.firstRun ? `| ${t.report.firstRun}` : `| ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`}</p>
@@ -39630,20 +39646,20 @@ function renderSvg({
   const ySteps = niceAxisSteps({ min: minValue, max: maxValue, count: 5 });
   const gridLines = ySteps.map((value) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
-    return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" stroke="${COLORS.cellBorder}" stroke-opacity="${gridOpacity}" />
-    <text x="${margin.left - 8}" y="${y + 4}" text-anchor="end" fill="${COLORS.neutral}" font-size="${fontSize.label}" font-family="${font}">${value.toLocaleString("en-US")}</text>`;
+    return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
+    <text x="${margin.left - 8}" y="${y + 4}" text-anchor="end" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${value.toLocaleString("en-US")}</text>`;
   }).join("\n    ");
   const milestoneLines = milestones ? MILESTONE_THRESHOLDS.filter((m) => m > minData && m < maxData).map((value) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
-    return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" stroke="${COLORS.neutral}" stroke-width="1" stroke-dasharray="6,6" />
-    <text x="${margin.left + 4}" y="${y - 4}" fill="${COLORS.neutral}" font-size="${fontSize.milestone}" font-family="${font}">${value.toLocaleString("en-US")} \u2605</text>`;
+    return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="1" stroke-dasharray="6,6" />
+    <text x="${margin.left + 4}" y="${y - 4}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${value.toLocaleString("en-US")} \u2605</text>`;
   }).join("\n    ") : "";
   const maxLabels = 10;
   const labelStep = Math.max(1, Math.ceil(labels.length / maxLabels));
   const xLabels = labels.map((label, i) => {
     if (i % labelStep !== 0 && i !== labels.length - 1) return "";
     const x = margin.left + i / Math.max(1, labels.length - 1) * chartWidth;
-    return `<text x="${x}" y="${CHART.height - margin.bottom + 20}" text-anchor="middle" fill="${COLORS.neutral}" font-size="${fontSize.label}" font-family="${font}">${escapeXml(label)}</text>`;
+    return `<text x="${x}" y="${CHART.height - margin.bottom + 20}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(label)}</text>`;
   }).filter(Boolean).join("\n    ");
   const datasetSvg = datasets.map((ds, dsIndex) => {
     const validSegments = [];
@@ -39713,7 +39729,7 @@ function renderSvg({
       const rectAttr = ds.dashed ? ' rx="1"' : "";
       return `<rect x="${x}" y="${legendY - 5}" width="12" height="3" fill="${ds.color}"${rectAttr} />
     <line x1="${x}" y1="${legendY - 3.5}" x2="${x + 12}" y2="${legendY - 3.5}" stroke="${ds.color}" stroke-width="2"${dashAttr} />
-    <text x="${x + 16}" y="${legendY}" fill="${COLORS.text}" font-size="10" font-family="${font}">${escapeXml(ds.label)}</text>`;
+    <text x="${x + 16}" y="${legendY}" class="chart-text" font-size="10" font-family="${font}">${escapeXml(ds.label)}</text>`;
     }).join("\n    ");
   })() : "";
   const titleY = showLegend ? margin.top - 36 : margin.top - 16;
@@ -39730,9 +39746,21 @@ function renderSvg({
       opacity: 0;
       animation: fadeInPoint ${animation.pointDuration}s ease-out forwards;
     }
+    .chart-bg { fill: ${LIGHT_PALETTE.white}; }
+    .chart-text { fill: ${LIGHT_PALETTE.text}; }
+    .chart-muted { fill: ${LIGHT_PALETTE.neutral}; }
+    .chart-grid { stroke: ${LIGHT_PALETTE.cellBorder}; }
+    .chart-axis { stroke: ${LIGHT_PALETTE.neutral}; }
+    @media (prefers-color-scheme: dark) {
+      .chart-bg { fill: ${DARK_PALETTE.white}; }
+      .chart-text { fill: ${DARK_PALETTE.text}; }
+      .chart-muted { fill: ${DARK_PALETTE.neutral}; }
+      .chart-grid { stroke: ${DARK_PALETTE.cellBorder}; }
+      .chart-axis { stroke: ${DARK_PALETTE.neutral}; }
+    }
   </style>
-  <rect width="${CHART.width}" height="${CHART.height}" fill="${COLORS.white}" />
-  <text x="${CHART.width / 2}" y="${titleY}" text-anchor="middle" fill="${COLORS.text}" font-size="${fontSize.title}" font-weight="bold" font-family="${font}">${escapeXml(title)}</text>
+  <rect width="${CHART.width}" height="${CHART.height}" class="chart-bg" />
+  <text x="${CHART.width / 2}" y="${titleY}" text-anchor="middle" class="chart-text" font-size="${fontSize.title}" font-weight="bold" font-family="${font}">${escapeXml(title)}</text>
   ${legendSection ? `<g class="legend">
     ${legendSection}
   </g>` : ""}
@@ -39745,8 +39773,8 @@ function renderSvg({
   <g class="x-axis">
     ${xLabels}
   </g>
-  <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${CHART.height - margin.bottom}" stroke="${COLORS.neutral}" stroke-width="1" />
-  <line x1="${margin.left}" y1="${CHART.height - margin.bottom}" x2="${CHART.width - margin.right}" y2="${CHART.height - margin.bottom}" stroke="${COLORS.neutral}" stroke-width="1" />
+  <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="1" />
+  <line x1="${margin.left}" y1="${CHART.height - margin.bottom}" x2="${CHART.width - margin.right}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="1" />
   ${allFills}
   ${allPaths}
   <g class="points">

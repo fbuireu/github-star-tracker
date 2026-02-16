@@ -172,7 +172,7 @@ export function generateHtmlReport({
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${COLORS.text};">
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${COLORS.text};background-color:${COLORS.white};">
   <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${COLORS.accent};">
     <h1 style="margin:0;font-size:24px;">${t.report.title}</h1>
     <p style="color:${COLORS.neutral};margin:8px 0 0;">${now} ${prev === t.report.firstRun ? `| ${t.report.firstRun}` : `| ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`}</p>

@@ -3,6 +3,7 @@ import { ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
 import type { ComparisonResults } from '@domain/types';
 import { describe, expect, it } from 'vitest';
+import { COLORS } from './constants';
 import { generateHtmlReport } from './html';
 
 function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResults {
@@ -454,5 +455,15 @@ describe('generateHtmlReport', () => {
     });
 
     expect(html).not.toContain('Growth Forecast');
+  });
+
+  it('includes explicit background-color on body', () => {
+    const html = generateHtmlReport({
+      results: makeResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      locale: 'en',
+    });
+
+    expect(html).toContain(`background-color:${COLORS.white}`);
   });
 });

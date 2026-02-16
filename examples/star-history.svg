@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+  <style>
+    @keyframes drawLine {
+      to { stroke-dashoffset: 0; }
+    }
+    @keyframes fadeInPoint {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .data-line-0 {
+      stroke-dasharray: 1130;
+      stroke-dashoffset: 1130;
+      animation: drawLine 2s ease-out forwards;
+    }
+    .data-point {
+      opacity: 0;
+      animation: fadeInPoint 0.5s ease-out forwards;
+    }
+    .chart-bg { fill: #fff; }
+    .chart-text { fill: #24292e; }
+    .chart-muted { fill: #6a737d; }
+    .chart-grid { stroke: #eee; }
+    .chart-axis { stroke: #6a737d; }
+    @media (prefers-color-scheme: dark) {
+      .chart-bg { fill: #0d1117; }
+      .chart-text { fill: #e6edf3; }
+      .chart-muted { fill: #8b949e; }
+      .chart-grid { stroke: #21262d; }
+      .chart-axis { stroke: #8b949e; }
+    }
+  </style>
+  <rect width="800" height="400" class="chart-bg" />
+  <text x="400" y="34" text-anchor="middle" class="chart-text" font-size="16" font-weight="bold" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Star History</text>
+  
+  <g class="grid">
+    <line x1="60" y1="357.0422535211268" x2="770" y2="357.0422535211268" class="chart-grid" stroke-opacity="0.3" />
+    <text x="52" y="361.0422535211268" text-anchor="end" class="chart-muted" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">200</text>
+    <line x1="60" y1="286.61971830985914" x2="770" y2="286.61971830985914" class="chart-grid" stroke-opacity="0.3" />
+    <text x="52" y="290.61971830985914" text-anchor="end" class="chart-muted" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">250</text>
+    <line x1="60" y1="216.19718309859155" x2="770" y2="216.19718309859155" class="chart-grid" stroke-opacity="0.3" />
+    <text x="52" y="220.19718309859155" text-anchor="end" class="chart-muted" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">300</text>
+    <line x1="60" y1="145.77464788732394" x2="770" y2="145.77464788732394" class="chart-grid" stroke-opacity="0.3" />
+    <text x="52" y="149.77464788732394" text-anchor="end" class="chart-muted" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">350</text>
+    <line x1="60" y1="75.35211267605632" x2="770" y2="75.35211267605632" class="chart-grid" stroke-opacity="0.3" />
+    <text x="52" y="79.35211267605632" text-anchor="end" class="chart-muted" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">400</text>
+  </g>
+  <g class="milestones">
+    
+  </g>
+  <g class="x-axis">
+    <text x="60" y="370" text-anchor="middle" class="chart-muted" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Jan 7</text>
+    <text x="189.0909090909091" y="370" text-anchor="middle" class="chart-muted" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Jan 21</text>
+    <text x="318.1818181818182" y="370" text-anchor="middle" class="chart-muted" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Feb 4</text>
+    <text x="447.27272727272725" y="370" text-anchor="middle" class="chart-muted" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Feb 18</text>
+    <text x="576.3636363636364" y="370" text-anchor="middle" class="chart-muted" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Mar 4</text>
+    <text x="705.4545454545454" y="370" text-anchor="middle" class="chart-muted" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Mar 18</text>
+    <text x="770" y="370" text-anchor="middle" class="chart-muted" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Mar 25</text>
+  </g>
+  <line x1="60" y1="50" x2="60" y2="350" class="chart-axis" stroke-width="1" />
+  <line x1="60" y1="350" x2="770" y2="350" class="chart-axis" stroke-width="1" />
+  <path d="M60,324.6478873239437 C68.60606060606061,321.2676056338028 107.33333333333333,305.1173708920188 124.54545454545455,299.29577464788736 C141.75757575757575,293.4741784037559 171.87878787878788,285.6807511737089 189.0909090909091,280.98591549295776 C206.3030303030303,276.2910798122066 236.4242424242424,268.96713615023475 253.63636363636363,264.0845070422535 C270.8484848484848,259.20187793427226 300.969696969697,250 318.1818181818182,244.3661971830986 C335.3939393939394,238.73239436619718 365.5151515151515,228.21596244131456 382.7272727272727,221.83098591549296 C399.9393939393939,215.44600938967136 430.060606060606,203.23943661971833 447.27272727272725,196.47887323943664 C464.4848484848485,189.71830985915494 494.6060606060606,178.07511737089203 511.8181818181818,171.1267605633803 C529.030303030303,164.17840375586854 559.1515151515151,150.93896713615024 576.3636363636364,144.3661971830986 C593.5757575757576,137.79342723004694 623.6969696969697,128.0281690140845 640.909090909091,121.83098591549296 C658.1212121212122,115.63380281690141 688.2424242424241,104.0845070422535 705.4545454545454,97.88732394366195 C722.6666666666666,91.6901408450704 761.3939393939394,78.35680751173707 770,75.35211267605632 L770,350 L60,350 Z" fill="#dfb317" fill-opacity="0.1" />
+  <path d="M60,324.6478873239437 C68.60606060606061,321.2676056338028 107.33333333333333,305.1173708920188 124.54545454545455,299.29577464788736 C141.75757575757575,293.4741784037559 171.87878787878788,285.6807511737089 189.0909090909091,280.98591549295776 C206.3030303030303,276.2910798122066 236.4242424242424,268.96713615023475 253.63636363636363,264.0845070422535 C270.8484848484848,259.20187793427226 300.969696969697,250 318.1818181818182,244.3661971830986 C335.3939393939394,238.73239436619718 365.5151515151515,228.21596244131456 382.7272727272727,221.83098591549296 C399.9393939393939,215.44600938967136 430.060606060606,203.23943661971833 447.27272727272725,196.47887323943664 C464.4848484848485,189.71830985915494 494.6060606060606,178.07511737089203 511.8181818181818,171.1267605633803 C529.030303030303,164.17840375586854 559.1515151515151,150.93896713615024 576.3636363636364,144.3661971830986 C593.5757575757576,137.79342723004694 623.6969696969697,128.0281690140845 640.909090909091,121.83098591549296 C658.1212121212122,115.63380281690141 688.2424242424241,104.0845070422535 705.4545454545454,97.88732394366195 C722.6666666666666,91.6901408450704 761.3939393939394,78.35680751173707 770,75.35211267605632" fill="none" stroke="#dfb317" stroke-width="2.5" class="data-line-0" />
+  <g class="points">
+    
+    <circle cx="60" cy="324.6478873239437" r="4" fill="#dfb317" class="data-point" style="animation-delay: 1.50s" />
+    <circle cx="124.54545454545455" cy="299.29577464788736" r="4" fill="#dfb317" class="data-point" style="animation-delay: 1.55s" />
+    <circle cx="189.0909090909091" cy="280.98591549295776" r="4" fill="#dfb317" class="data-point" style="animation-delay: 1.60s" />
+    <circle cx="253.63636363636363" cy="264.0845070422535" r="4" fill="#dfb317" class="data-point" style="animation-delay: 1.65s" />
+    <circle cx="318.1818181818182" cy="244.3661971830986" r="4" fill="#dfb317" class="data-point" style="animation-delay: 1.70s" />
+    <circle cx="382.7272727272727" cy="221.83098591549296" r="4" fill="#dfb317" class="data-point" style="animation-delay: 1.75s" />
+    <circle cx="447.27272727272725" cy="196.47887323943664" r="4" fill="#dfb317" class="data-point" style="animation-delay: 1.80s" />
+    <circle cx="511.8181818181818" cy="171.1267605633803" r="4" fill="#dfb317" class="data-point" style="animation-delay: 1.85s" />
+    <circle cx="576.3636363636364" cy="144.3661971830986" r="4" fill="#dfb317" class="data-point" style="animation-delay: 1.90s" />
+    <circle cx="640.909090909091" cy="121.83098591549296" r="4" fill="#dfb317" class="data-point" style="animation-delay: 1.95s" />
+    <circle cx="705.4545454545454" cy="97.88732394366195" r="4" fill="#dfb317" class="data-point" style="animation-delay: 2.00s" />
+    <circle cx="770" cy="75.35211267605632" r="4" fill="#dfb317" class="data-point" style="animation-delay: 2.05s" />
+  </g>
+</svg>

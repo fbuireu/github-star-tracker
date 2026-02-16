@@ -1,4 +1,6 @@
-export const COLORS = {
+import type { ColorPalette } from './types';
+
+export const LIGHT_PALETTE: ColorPalette = {
   accent: '#dfb317',
   positive: '#28a745',
   negative: '#d73a49',
@@ -13,6 +15,24 @@ export const COLORS = {
   cellBorder: '#eee',
   gradientStart: '#bbb',
 } as const;
+
+export const DARK_PALETTE: ColorPalette = {
+  accent: '#dfb317',
+  positive: '#3fb950',
+  negative: '#f85149',
+  neutral: '#8b949e',
+  link: '#58a6ff',
+  text: '#e6edf3',
+  white: '#0d1117',
+  shadow: '#010101',
+  muted: '#8b949e',
+  tableHeaderBg: '#161b22',
+  tableHeaderBorder: '#30363d',
+  cellBorder: '#21262d',
+  gradientStart: '#484f58',
+} as const;
+
+export const COLORS = LIGHT_PALETTE;
 
 export const CHART_COMPARISON_COLORS = [
   '#dfb317',

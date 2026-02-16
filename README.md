@@ -18,13 +18,15 @@
 
 Every run, Star Tracker commits these artifacts to a dedicated data branch:
 
-- **Animated SVG charts:** star history, per-repo trends, top repos comparison, and growth forecasts:
+- **Animated SVG charts:** star history, per-repo trends, top repos comparison, and growth forecasts — with automatic dark/light mode support:
 
-        ![Star History](https://raw.githubusercontent.com/USER/REPO/star-tracker-data/charts/star-history.svg)
+  <img src="examples/star-history.svg" alt="Star History" width="800">
+  <img src="examples/comparison.svg" alt="Top Repositories" width="800">
+  <img src="examples/forecast.svg" alt="Growth Forecast" width="800">
 
 - **Shields.io-style badge:** embeddable star count that updates automatically:
 
-        ![Stars](https://raw.githubusercontent.com/USER/REPO/star-tracker-data/stars-badge.svg)
+  <img src="examples/stars-badge.svg" alt="Stars">
 
 - **Markdown & HTML reports:** summary tables, delta indicators, new/removed repos, stargazer details, and forecast tables.
 
@@ -35,6 +37,7 @@ Every run, Star Tracker commits these artifacts to a dedicated data branch:
 ## Features
 
 - :chart_with_upwards_trend: **Animated SVG charts:** Star history, per-repo trends, comparisons, and growth forecasts
+- :crescent_moon: **Dark/light mode:** SVG charts auto-adapt to the viewer's color scheme via `prefers-color-scheme`
 - :camera: **Historical snapshots:** Configurable retention (default: 52 runs) with JSON persistence
 - :mag: **Smart filtering:** By visibility, ownership, min stars, regex exclusions, archived, forks
 - :busts_in_silhouette: **Stargazer tracking:** See who starred your repos with avatars and dates
@@ -232,6 +235,9 @@ flowchart TD
 ```markdown
 ![Star History](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/charts/star-history.svg)
 ```
+
+> [!TIP]
+> SVG charts automatically adapt to dark and light mode. No extra configuration needed — they use `prefers-color-scheme` to match the viewer's theme.
 
 **[Viewing Reports](../../wiki/Viewing-Reports)**: All access methods (data branch, badges, outputs, email)
 

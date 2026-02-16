@@ -2,7 +2,7 @@ import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
 import type { History, Snapshot } from '@domain/types';
 import { describe, expect, it } from 'vitest';
-import { CHART_COMPARISON_COLORS, COLORS } from './constants';
+import { CHART_COMPARISON_COLORS, COLORS, DARK_PALETTE, LIGHT_PALETTE } from './constants';
 import {
   generateComparisonSvgChart,
   generateForecastSvgChart,
@@ -181,6 +181,54 @@ describe('generateSvgChart', () => {
     expect(result).toContain('animation-delay: 1.50s');
     expect(result).toContain('animation-delay: 1.55s');
     expect(result).toContain('animation-delay: 1.60s');
+  });
+
+  it('includes prefers-color-scheme media query', () => {
+    const history = makeHistory([10, 20]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
+
+    expect(result).toContain('@media (prefers-color-scheme: dark)');
+  });
+
+  it('includes CSS class names for themed elements', () => {
+    const history = makeHistory([10, 20]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
+
+    expect(result).toContain('class="chart-bg"');
+    expect(result).toContain('class="chart-text"');
+    expect(result).toContain('class="chart-muted"');
+    expect(result).toContain('class="chart-grid"');
+    expect(result).toContain('class="chart-axis"');
+  });
+
+  it('uses light palette values in default CSS rules', () => {
+    const history = makeHistory([10, 20]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
+
+    expect(result).toContain(`.chart-bg { fill: ${LIGHT_PALETTE.white}; }`);
+    expect(result).toContain(`.chart-text { fill: ${LIGHT_PALETTE.text}; }`);
+    expect(result).toContain(`.chart-muted { fill: ${LIGHT_PALETTE.neutral}; }`);
+    expect(result).toContain(`.chart-grid { stroke: ${LIGHT_PALETTE.cellBorder}; }`);
+    expect(result).toContain(`.chart-axis { stroke: ${LIGHT_PALETTE.neutral}; }`);
+  });
+
+  it('uses dark palette values in media query block', () => {
+    const history = makeHistory([10, 20]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
+
+    expect(result).toContain(`.chart-bg { fill: ${DARK_PALETTE.white}; }`);
+    expect(result).toContain(`.chart-text { fill: ${DARK_PALETTE.text}; }`);
+    expect(result).toContain(`.chart-muted { fill: ${DARK_PALETTE.neutral}; }`);
+    expect(result).toContain(`.chart-grid { stroke: ${DARK_PALETTE.cellBorder}; }`);
+    expect(result).toContain(`.chart-axis { stroke: ${DARK_PALETTE.neutral}; }`);
+  });
+
+  it('keeps data colors inline rather than in CSS classes', () => {
+    const history = makeHistory([10, 20, 30]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
+
+    expect(result).toContain(`stroke="${COLORS.accent}"`);
+    expect(result).toContain(`fill="${COLORS.accent}"`);
   });
 });
 
