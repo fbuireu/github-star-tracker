@@ -2,21 +2,20 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":dependencyDashboard", "customManagers:biomeVersions"],
   "labels": ["dependencies", "renovate", "bot"],
-  "schedule": ["* * 1-7,15-21 * 0"],
+  "schedule": ["on the 1st day of the month", "on the 15th day of the month"],
   "assigneesFromCodeOwners": true,
   "reviewersFromCodeOwners": true,
   "packageRules": [
     {
+      "matchUpdateTypes": ["patch"],
       "automerge": true,
       "automergeType": "pr",
-      "matchPackageNames": ["*"]
-    },
-    {
-      "matchUpdateTypes": ["patch"],
       "addLabels": ["patch-update"]
     },
     {
       "matchUpdateTypes": ["minor"],
+      "automerge": true,
+      "automergeType": "pr",
       "addLabels": ["minor-update"]
     },
     {
