@@ -14,6 +14,20 @@
 
 ---
 
+## Table of Contents
+
+- [What You Get](#what-you-get)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [How It Works](#how-it-works)
+- [Embedding in Your README](#embedding-in-your-readme)
+- [Documentation](#documentation)
+- [Support & Contributing](#support--contributing)
+- [Use of AI](#use-of-ai)
+
+---
+
 ## What You Get
 
 Every run, Star Tracker commits these artifacts to a dedicated data branch:
