@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/fbuireu/github-star-tracker/compare/v1.7.0...v1.8.0) (2026-02-22)
+
+
+### Features
+
+* update tests generators ([9dd123d](https://github.com/fbuireu/github-star-tracker/commit/9dd123dc70e41372b016868e66f15652a6c25b82))
+
 # [1.7.0](https://github.com/fbuireu/github-star-tracker/compare/v1.6.1...v1.7.0) (2026-02-16)
 
 
