@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/fbuireu/github-star-tracker/compare/v1.8.0...v1.8.1) (2026-02-22)
+
+
+### Bug Fixes
+
+* **chore:** bump deps ([fb2497a](https://github.com/fbuireu/github-star-tracker/commit/fb2497a7b10c1839f9f434e23036cddf07ff2619))
+
 # [1.8.0](https://github.com/fbuireu/github-star-tracker/compare/v1.7.0...v1.8.0) (2026-02-22)
 
 
