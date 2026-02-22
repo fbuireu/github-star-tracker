@@ -50,6 +50,7 @@ export function linearRegression(values: number[]): LinearRegressionResult {
   }
 
   const denominator = n * sumXX - sumX * sumX;
+
   if (denominator === 0) {
     return { slope: 0, intercept: values[0] ?? 0 };
   }
@@ -64,12 +65,14 @@ export function weightedMovingAverage(values: number[]): number {
   if (values.length < 2) return 0;
 
   const deltas: number[] = [];
+
   for (let i = 1; i < values.length; i++) {
     deltas.push(values[i] - values[i - 1]);
   }
 
   let weightedSum = 0;
   let totalWeight = 0;
+
   for (let i = 0; i < deltas.length; i++) {
     const weight = i + 1;
     weightedSum += deltas[i] * weight;
@@ -91,10 +94,8 @@ function clampPrediction(value: number): number {
 function forecastFromValues(values: number[]): ForecastResult[] {
   const lastValue = values.at(-1) ?? 0;
   const n = values.length;
-
   const lr = linearRegression(values);
   const wmaAvgDelta = weightedMovingAverage(values);
-
   const lrPoints: ForecastPoint[] = [];
   const wmaPoints: ForecastPoint[] = [];
 
@@ -125,7 +126,6 @@ export function computeForecast({
 
   const totalValues = history.snapshots.map((s) => s.totalStars);
   const aggregateForecasts = forecastFromValues(totalValues);
-
   const repos: RepoForecast[] = topRepoNames.map((repoFullName) => {
     const values = history.snapshots.map((s) => {
       const repo = s.repos.find((r) => r.fullName === repoFullName);

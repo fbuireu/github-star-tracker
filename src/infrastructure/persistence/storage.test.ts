@@ -124,6 +124,7 @@ describe('writeChart', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 
     const svg = '<svg>chart</svg>';
+
     writeChart({ dataDir: '/data', filename: 'star-history.svg', svg });
 
     expect(fs.existsSync).toHaveBeenCalledWith(path.join('/data', 'charts'));

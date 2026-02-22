@@ -16,7 +16,6 @@ describe('diffStargazers', () => {
     const current: RepoStargazers[] = [
       { repoFullName: 'user/repo-a', stargazers: [makeStar('alice'), makeStar('bob')] },
     ];
-
     const result = diffStargazers({ current, previousMap: {} });
 
     expect(result.totalNew).toBe(2);
@@ -29,7 +28,6 @@ describe('diffStargazers', () => {
       { repoFullName: 'user/repo-a', stargazers: [makeStar('alice'), makeStar('bob')] },
     ];
     const previousMap: StargazerMap = { 'user/repo-a': ['alice', 'bob'] };
-
     const result = diffStargazers({ current, previousMap });
 
     expect(result.totalNew).toBe(0);
@@ -48,7 +46,6 @@ describe('diffStargazers', () => {
       },
     ];
     const previousMap: StargazerMap = { 'user/repo-a': ['alice'] };
-
     const result = diffStargazers({ current, previousMap });
 
     expect(result.totalNew).toBe(2);
@@ -66,7 +63,6 @@ describe('diffStargazers', () => {
         ],
       },
     ];
-
     const result = diffStargazers({ current, previousMap: {} });
 
     expect(result.entries[0].newStargazers.map((s) => s.login)).toEqual([
@@ -81,7 +77,6 @@ describe('diffStargazers', () => {
       { repoFullName: 'user/new-repo', stargazers: [makeStar('alice')] },
     ];
     const previousMap: StargazerMap = { 'user/old-repo': ['bob'] };
-
     const result = diffStargazers({ current, previousMap });
 
     expect(result.totalNew).toBe(1);
@@ -97,7 +92,6 @@ describe('diffStargazers', () => {
       'user/repo-a': ['alice', 'bob'],
       'user/repo-b': [],
     };
-
     const result = diffStargazers({ current, previousMap });
 
     expect(result.totalNew).toBe(1);
@@ -112,7 +106,6 @@ describe('buildStargazerMap', () => {
       { repoFullName: 'user/repo-a', stargazers: [makeStar('alice'), makeStar('bob')] },
       { repoFullName: 'user/repo-b', stargazers: [makeStar('charlie')] },
     ];
-
     const map = buildStargazerMap(repoStargazers);
 
     expect(map).toEqual({
@@ -123,6 +116,7 @@ describe('buildStargazerMap', () => {
 
   it('returns empty map for empty input', () => {
     const map = buildStargazerMap([]);
+
     expect(map).toEqual({});
   });
 });

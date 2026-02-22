@@ -37,4 +37,4 @@ export const DEFAULTS: Config = {
   notificationThreshold: 'auto',
   trackStargazers: false,
   topRepos: 10,
-};
+} as const;

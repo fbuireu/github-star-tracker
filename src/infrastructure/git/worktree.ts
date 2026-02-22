@@ -10,6 +10,7 @@ export function initializeDataBranch(dataBranch: string): string {
   execute({ cmd: 'git config user.email "github-actions[bot]@users.noreply.github.com"' });
 
   let branchExists = false;
+
   try {
     execute({ cmd: `git ls-remote --exit-code --heads origin ${dataBranch}` });
     branchExists = true;
@@ -27,6 +28,7 @@ export function initializeDataBranch(dataBranch: string): string {
 
   if (!branchExists) {
     core.info(`Creating new orphan branch: ${dataBranch}`);
+
     execute({ cmd: `git worktree add --detach ${dataDir}` });
     execute({
       cmd: `git checkout --orphan ${dataBranch}`,
@@ -37,11 +39,13 @@ export function initializeDataBranch(dataBranch: string): string {
       cmd: 'git commit --allow-empty -m "Initialize star tracker data"',
       options: { cwd: path.resolve(dataDir) },
     });
+
     return dataDir;
   }
 
   execute({ cmd: `git fetch origin ${dataBranch}` });
   execute({ cmd: `git worktree add ${dataDir} origin/${dataBranch}` });
+
   return dataDir;
 }
 

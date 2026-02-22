@@ -31,26 +31,31 @@ describe('interpolate', () => {
 describe('getTranslations', () => {
   it('returns English translations by default', () => {
     const t = getTranslations('en');
+
     expect(t.report.title).toBe('Star Tracker Report');
   });
 
   it('returns English translations for en locale', () => {
     const t = getTranslations('en');
+
     expect(t.report.title).toBe('Star Tracker Report');
   });
 
   it('returns Spanish translations for es locale', () => {
     const t = getTranslations('es');
+
     expect(t.report.title).toBe('Informe de Seguimiento de Estrellas');
   });
 
   it('returns Catalan translations for ca locale', () => {
     const t = getTranslations('ca');
+
     expect(t.report.title).toBe("Informe de Seguiment d'Estrelles");
   });
 
   it('returns Italian translations for it locale', () => {
     const t = getTranslations('it');
+
     expect(t.report.title).toBe('Report Tracciamento Stelle');
   });
 });

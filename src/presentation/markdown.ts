@@ -229,6 +229,7 @@ function buildForecastTable({ title, forecasts, t }: BuildForecastTableParams): 
   const methodLabel = (method: string): string => {
     if (method === ForecastMethod.LINEAR_REGRESSION) return t.forecast.linearRegression;
     if (method === ForecastMethod.WEIGHTED_MOVING_AVERAGE) return t.forecast.weightedMovingAverage;
+
     return method;
   };
 

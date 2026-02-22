@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateCsvReport } from './csv';
+import { generateCsvReport, NEW_LINE } from './csv';
 
 const baseSummary = {
   totalStars: 100,
@@ -38,7 +38,8 @@ describe('generateCsvReport', () => {
       summary: baseSummary,
     });
 
-    const lines = csv.split('\n');
+    const lines = csv.split(NEW_LINE);
+
     expect(lines[0]).toBe('repository,owner,name,stars,previous,delta,status');
     expect(lines[1]).toBe('user/repo-a,user,repo-a,60,50,10,active');
     expect(lines[2]).toBe('user/repo-b,user,repo-b,40,40,0,active');

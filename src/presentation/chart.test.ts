@@ -9,6 +9,10 @@ import {
   generatePerRepoChartUrl,
 } from './chart';
 
+const CHART_CONFIG_PARAM = '&c=';
+const CHART_HEIGHT = '&h=';
+const CHART_WIDTH = 'w=';
+
 const mockHistory: History = {
   snapshots: [
     {
@@ -44,24 +48,24 @@ describe('chart', () => {
       const url = generateChartUrl({ history: mockHistory, title: 'Test Chart', locale: 'en' });
 
       expect(url).toContain('https://quickchart.io/chart?');
-      expect(url).toContain('w=800');
-      expect(url).toContain('h=400');
-      expect(url).toContain('&c=');
+      expect(url).toContain(`${CHART_WIDTH}800`);
+      expect(url).toContain(`${CHART_HEIGHT}400`);
+      expect(url).toContain(CHART_CONFIG_PARAM);
     });
 
     it('should return null when history has less than 2 snapshots', () => {
       const singleSnapshot: History = {
         snapshots: [mockHistory.snapshots[0]],
       };
-
       const url = generateChartUrl({ history: singleSnapshot, locale: 'en' });
+
       expect(url).toBeNull();
     });
 
     it('should return null when history has no snapshots', () => {
       const emptyHistory: History = { snapshots: [] };
-
       const url = generateChartUrl({ history: emptyHistory, locale: 'en' });
+
       expect(url).toBeNull();
     });
 
@@ -69,8 +73,10 @@ describe('chart', () => {
       const url = generateChartUrl({ history: mockHistory, locale: 'en' });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
+
         expect(decodedUrl).toContain('"data":[100,120,150]');
         expect(decodedUrl).toContain('"label":"Stars"');
       }
@@ -80,8 +86,10 @@ describe('chart', () => {
       const url = generateChartUrl({ history: mockHistory, locale: 'en' });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
+
         expect(decodedUrl).toContain('Jan 1');
         expect(decodedUrl).toContain('Jan 8');
         expect(decodedUrl).toContain('Jan 15');
@@ -102,7 +110,8 @@ describe('chart', () => {
       expect(url).toBeDefined();
       if (url) {
         const decodedUrl = decodeURIComponent(url);
-        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
+
         expect(config.data.labels).toHaveLength(30);
         expect(config.data.datasets[0].data).toHaveLength(30);
       }
@@ -118,8 +127,10 @@ describe('chart', () => {
       });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
+
         expect(decodedUrl).toContain('"data":[50,70,90]');
       }
     });
@@ -133,8 +144,10 @@ describe('chart', () => {
       });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
+
         expect(decodedUrl).toContain('Custom Title');
       }
     });
@@ -147,8 +160,10 @@ describe('chart', () => {
       });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
+
         expect(decodedUrl).toContain('"data":[0,0,0]');
       }
     });
@@ -157,12 +172,12 @@ describe('chart', () => {
       const singleSnapshot: History = {
         snapshots: [mockHistory.snapshots[0]],
       };
-
       const url = generatePerRepoChartUrl({
         history: singleSnapshot,
         repoFullName: 'user/repo-a',
         locale: 'en',
       });
+
       expect(url).toBeNull();
     });
   });
@@ -176,8 +191,10 @@ describe('chart', () => {
       });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
+
         expect(decodedUrl).toContain('"label":"repo-a"');
         expect(decodedUrl).toContain('"label":"repo-b"');
         expect(decodedUrl).toContain('"data":[50,70,90]');
@@ -193,15 +210,18 @@ describe('chart', () => {
       });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
-        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
+
         expect(config.data.datasets).toHaveLength(10);
       }
     });
 
     it('should return null when no repositories provided', () => {
       const url = generateComparisonChartUrl({ history: mockHistory, repoNames: [], locale: 'en' });
+
       expect(url).toBeNull();
     });
 
@@ -209,12 +229,12 @@ describe('chart', () => {
       const singleSnapshot: History = {
         snapshots: [mockHistory.snapshots[0]],
       };
-
       const url = generateComparisonChartUrl({
         history: singleSnapshot,
         repoNames: ['user/repo-a'],
         locale: 'en',
       });
+
       expect(url).toBeNull();
     });
 
@@ -227,8 +247,10 @@ describe('chart', () => {
       });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
+
         expect(decodedUrl).toContain('My Comparison');
       }
     });
@@ -241,9 +263,11 @@ describe('chart', () => {
       });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
-        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
+
         expect(config.options.plugins.legend.display).toBe(true);
       }
     });
@@ -256,9 +280,11 @@ describe('chart', () => {
       });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
-        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
+
         expect(config.data.datasets[0].label).toBe('repo-a');
         expect(config.data.datasets[1].label).toBe('repo-b');
       }
@@ -293,9 +319,11 @@ describe('chart', () => {
       });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
-        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
+
         expect(config.data.datasets[0].label).toBe('alice/repo-a');
         expect(config.data.datasets[1].label).toBe('bob/repo-b');
       }
@@ -337,9 +365,11 @@ describe('chart', () => {
       });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
-        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
+
         expect(config.data.datasets).toHaveLength(3);
         expect(config.data.datasets[0].borderDash).toBeUndefined();
         expect(config.data.datasets[1].borderDash).toEqual([8, 4]);
@@ -355,9 +385,11 @@ describe('chart', () => {
       });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
-        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
+
         expect(config.data.labels).toHaveLength(7);
         expect(config.data.labels[3]).toContain('Week');
       }
@@ -369,6 +401,7 @@ describe('chart', () => {
         forecastData,
         locale: 'en',
       });
+
       expect(url).toBeNull();
     });
 
@@ -380,9 +413,11 @@ describe('chart', () => {
       });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
-        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
+
         expect(config.options.plugins.legend.display).toBe(true);
       }
     });
@@ -408,6 +443,7 @@ describe('chart', () => {
 
     it('should return null when no milestones are visible', () => {
       const result = buildMilestoneAnnotations({ minStars: 200, maxStars: 400 });
+
       expect(result).toBeNull();
     });
 
@@ -440,9 +476,11 @@ describe('chart', () => {
       const url = generateChartUrl({ history: largeHistory, locale: 'en' });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
-        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
+
         expect(config.options.plugins.annotation).toBeDefined();
         expect(config.options.plugins.annotation.annotations).toHaveProperty('milestone100');
       }
@@ -452,9 +490,11 @@ describe('chart', () => {
       const url = generateChartUrl({ history: mockHistory, locale: 'en' });
 
       expect(url).toBeDefined();
+
       if (url) {
         const decodedUrl = decodeURIComponent(url);
-        const config = JSON.parse(decodedUrl.split('&c=')[1]);
+        const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
+
         expect(config.options.plugins.annotation).toBeUndefined();
       }
     });

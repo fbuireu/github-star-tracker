@@ -4,6 +4,7 @@ import type { StargazerDiffResult } from '@domain/stargazers';
 import type { ComparisonResults } from '@domain/types';
 import { describe, expect, it } from 'vitest';
 import { generateMarkdownReport } from './markdown';
+import type { GenerateReportParams } from './shared';
 
 function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResults {
   return {
@@ -41,23 +42,26 @@ function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResu
   };
 }
 
+function renderMarkdown(overrides: Partial<GenerateReportParams> = {}): string {
+  return generateMarkdownReport({
+    results: makeResults(),
+    previousTimestamp: '2026-01-01T00:00:00Z',
+    locale: 'en',
+    ...overrides,
+  });
+}
+
 describe('generateMarkdownReport', () => {
   it('includes total star count and delta', () => {
-    const report = generateMarkdownReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-    });
+    const report = renderMarkdown();
+
     expect(report).toContain('**23 stars**');
     expect(report).toContain('+3');
   });
 
   it('includes repository table rows', () => {
-    const report = generateMarkdownReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-    });
+    const report = renderMarkdown();
+
     expect(report).toContain('user/repo-a');
     expect(report).toContain('user/repo-b');
     expect(report).toContain('+5');
@@ -65,22 +69,17 @@ describe('generateMarkdownReport', () => {
   });
 
   it('handles first run with no previous timestamp', () => {
-    const report = generateMarkdownReport({
-      results: makeResults(),
-      previousTimestamp: null,
-      locale: 'en',
-    });
+    const report = renderMarkdown({ previousTimestamp: null });
+
     expect(report).not.toContain('Compared to snapshot from');
   });
 
   it('shows NEW badge for new repos', () => {
     const results = makeResults();
     results.repos[0].isNew = true;
-    const report = generateMarkdownReport({
-      results,
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-    });
+
+    const report = renderMarkdown({ results });
+
     expect(report).toContain('`NEW`');
   });
 
@@ -96,21 +95,16 @@ describe('generateMarkdownReport', () => {
       isNew: false,
       isRemoved: true,
     });
-    const report = generateMarkdownReport({
-      results,
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-    });
+
+    const report = renderMarkdown({ results });
+
     expect(report).toContain('Removed Repositories');
     expect(report).toContain('user/old-repo');
   });
 
   it('includes footer with generator link', () => {
-    const report = generateMarkdownReport({
-      results: makeResults(),
-      previousTimestamp: null,
-      locale: 'en',
-    });
+    const report = renderMarkdown({ previousTimestamp: null });
+
     expect(report).toContain('GitHub Star Tracker');
   });
 
@@ -130,13 +124,7 @@ describe('generateMarkdownReport', () => {
       ],
     };
 
-    const report = generateMarkdownReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      history,
-      includeCharts: true,
-    });
+    const report = renderMarkdown({ history, includeCharts: true });
 
     expect(report).toContain('Star Trend');
     expect(report).toContain('![Star History](./charts/star-history.svg)');
@@ -164,13 +152,7 @@ describe('generateMarkdownReport', () => {
       ],
     };
 
-    const report = generateMarkdownReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      history,
-      includeCharts: true,
-    });
+    const report = renderMarkdown({ history, includeCharts: true });
 
     expect(report).toContain('Top Repositories');
     expect(report).toContain('![Top Repositories](./charts/comparison.svg)');
@@ -198,13 +180,7 @@ describe('generateMarkdownReport', () => {
       ],
     };
 
-    const report = generateMarkdownReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      history,
-      includeCharts: true,
-    });
+    const report = renderMarkdown({ history, includeCharts: true });
 
     expect(report).toContain('<details>');
     expect(report).toContain('<summary>Individual Repository Charts</summary>');
@@ -233,12 +209,7 @@ describe('generateMarkdownReport', () => {
       totalNew: 1,
     };
 
-    const report = generateMarkdownReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      stargazerDiff,
-    });
+    const report = renderMarkdown({ stargazerDiff });
 
     expect(report).toContain('New Stargazers');
     expect(report).toContain('alice');
@@ -253,24 +224,14 @@ describe('generateMarkdownReport', () => {
       totalNew: 0,
     };
 
-    const report = generateMarkdownReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      stargazerDiff,
-    });
+    const report = renderMarkdown({ stargazerDiff });
 
     expect(report).toContain('New Stargazers');
     expect(report).toContain('No new stargazers since last run');
   });
 
   it('excludes stargazer section when stargazerDiff is null', () => {
-    const report = generateMarkdownReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      stargazerDiff: null,
-    });
+    const report = renderMarkdown({ stargazerDiff: null });
 
     expect(report).not.toContain('New Stargazers');
   });
@@ -326,12 +287,7 @@ describe('generateMarkdownReport', () => {
       ],
     };
 
-    const report = generateMarkdownReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      forecastData,
-    });
+    const report = renderMarkdown({ forecastData });
 
     expect(report).toContain('Growth Forecast');
     expect(report).toContain('Linear Regression');
@@ -359,23 +315,13 @@ describe('generateMarkdownReport', () => {
       repos: [],
     };
 
-    const report = generateMarkdownReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      forecastData,
-    });
+    const report = renderMarkdown({ forecastData });
 
     expect(report).toContain('custom-method');
   });
 
   it('excludes forecast section when forecastData is null', () => {
-    const report = generateMarkdownReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      forecastData: null,
-    });
+    const report = renderMarkdown({ forecastData: null });
 
     expect(report).not.toContain('Growth Forecast');
   });

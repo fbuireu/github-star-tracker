@@ -96,6 +96,7 @@ export function buildMilestoneAnnotations({
   if (visible.length === 0) return null;
 
   const annotations: Record<string, MilestoneAnnotation> = {};
+
   for (const milestone of visible) {
     annotations[`milestone${milestone}`] = {
       type: 'line',
@@ -165,6 +166,7 @@ function buildChartOptions({
 
 function buildChartUrl(config: ChartConfig): string {
   const encodedConfig = encodeURIComponent(JSON.stringify(config));
+
   return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&c=${encodedConfig}`;
 }
 
@@ -225,7 +227,6 @@ export function generateChartUrl({
   const t = getTranslations(locale);
   const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData({ history, locale });
-
   const datasets: Dataset[] = [
     {
       label: 'Stars',
@@ -238,11 +239,9 @@ export function generateChartUrl({
       pointHoverRadius: 6,
     },
   ];
-
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
   const annotation = buildMilestoneAnnotations({ minStars, maxStars });
-
   const config = buildChartConfig({
     labels,
     datasets,
@@ -250,6 +249,7 @@ export function generateChartUrl({
     showLegend: false,
     annotation,
   });
+
   return buildChartUrl(config);
 }
 
@@ -274,9 +274,9 @@ export function generatePerRepoChartUrl({
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const data = snapshots.map((s) => {
     const repo = s.repos.find((r) => r.fullName === repoFullName);
+
     return repo?.stars ?? 0;
   });
-
   const chartTitle = title ?? `${repoFullName} Star History`;
   const datasets: Dataset[] = [
     {
@@ -292,6 +292,7 @@ export function generatePerRepoChartUrl({
   ];
 
   const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: false });
+
   return buildChartUrl(config);
 }
 
@@ -316,17 +317,14 @@ export function generateComparisonChartUrl({
   const chartTitle = title ?? t.report.topRepositories;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
-
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split('/')[0]));
   const useShortLabels = owners.size === 1;
-
   const datasets: Dataset[] = capped.map((repoName, index) => {
     const data = snapshots.map((s) => {
       const repo = s.repos.find((r) => r.fullName === repoName);
       return repo?.stars ?? 0;
     });
-
     const color = CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length];
 
     return {
@@ -340,8 +338,8 @@ export function generateComparisonChartUrl({
       pointHoverRadius: 5,
     };
   });
-
   const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: true });
+
   return buildChartUrl(config);
 }
 
@@ -365,30 +363,24 @@ export function generateForecastChartUrl({
   const t = getTranslations(locale);
   const chartTitle = title ?? t.forecast.sectionTitle;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
-
   const historicalLabels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const historicalData = snapshots.map((s) => s.totalStars);
-
   const forecastLabels = forecastData.aggregate.forecasts[0].points.map((p) =>
     interpolate({ template: t.forecast.week, params: { n: p.weekOffset } }),
   );
-
   const allLabels = [...historicalLabels, ...forecastLabels];
-
   const lrForecast = forecastData.aggregate.forecasts.find(
     (f) => f.method === ForecastMethod.LINEAR_REGRESSION,
   );
   const wmaForecast = forecastData.aggregate.forecasts.find(
     (f) => f.method === ForecastMethod.WEIGHTED_MOVING_AVERAGE,
   );
-
   const lastHistorical = historicalData.at(-1) ?? 0;
   const padLength = historicalData.length;
-
   const datasets: Dataset[] = [
     {
       label: t.report.starHistory,
-      data: [...historicalData, ...Array(forecastLabels.length).fill(null)],
+      data: [...historicalData, ...new Array(forecastLabels.length).fill(null)],
       borderColor: COLORS.accent,
       backgroundColor: `${COLORS.accent}33`,
       fill: true,
@@ -399,7 +391,7 @@ export function generateForecastChartUrl({
     {
       label: t.forecast.linearRegression,
       data: [
-        ...Array(padLength - 1).fill(null),
+        ...new Array(padLength - 1).fill(null),
         lastHistorical,
         ...(lrForecast?.points.map((p) => p.predicted) ?? []),
       ],
@@ -414,7 +406,7 @@ export function generateForecastChartUrl({
     {
       label: t.forecast.weightedMovingAverage,
       data: [
-        ...Array(padLength - 1).fill(null),
+        ...new Array(padLength - 1).fill(null),
         lastHistorical,
         ...(wmaForecast?.points.map((p) => p.predicted) ?? []),
       ],
@@ -434,5 +426,6 @@ export function generateForecastChartUrl({
     title: chartTitle,
     showLegend: true,
   });
+
   return buildChartUrl(config);
 }

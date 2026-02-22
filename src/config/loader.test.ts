@@ -14,6 +14,7 @@ vi.mock('@actions/core', () => ({
 
 vi.mock('fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs')>();
+
   return {
     ...actual,
     existsSync: vi.fn().mockReturnValue(false),
@@ -112,16 +113,17 @@ describe('loadConfigFile', () => {
   it('parses YAML config file correctly', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.readFileSync).mockReturnValue(`
-visibility: "private"
-include_archived: true
-include_forks: false
-exclude_repos:
-  - "old-repo"
-only_repos: []
-min_stars: 5
+        visibility: "private"
+        include_archived: true
+        include_forks: false
+        exclude_repos:
+        - "old-repo"
+        only_repos: []
+        min_stars: 5
     `);
 
     const config = loadConfigFile('star-tracker.yml');
+
     expect(config.visibility).toBe(Visibility.PRIVATE);
     expect(config.includeArchived).toBe(true);
     expect(config.includeForks).toBe(false);
@@ -161,6 +163,7 @@ describe('loadConfig', () => {
     });
 
     const config = loadConfig();
+
     expect(config.visibility).toBe(Visibility.PRIVATE);
     expect(config.minStars).toBe(20);
   });
@@ -201,6 +204,7 @@ describe('loadConfig', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 
     const config = loadConfig();
+
     expect(config.notificationThreshold).toBe('auto');
   });
 
@@ -212,6 +216,7 @@ describe('loadConfig', () => {
     });
 
     const config = loadConfig();
+
     expect(config.excludeRepos).toEqual(['repo-a', 'repo-b']);
   });
 
@@ -219,6 +224,7 @@ describe('loadConfig', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 
     const config = loadConfig();
+
     expect(config.trackStargazers).toBe(false);
   });
 
@@ -230,6 +236,7 @@ describe('loadConfig', () => {
     });
 
     const config = loadConfig();
+
     expect(config.trackStargazers).toBe(true);
   });
 
@@ -238,6 +245,7 @@ describe('loadConfig', () => {
     vi.mocked(fs.readFileSync).mockReturnValue('track_stargazers: true');
 
     const config = loadConfig();
+
     expect(config.trackStargazers).toBe(true);
   });
 });

@@ -30,18 +30,22 @@ export async function fetchRepos({ octokit, config }: FetchReposParams): Promise
       });
 
       dataLength = data.length;
+
       if (dataLength === 0) break;
+
       repos.push(...data);
       page++;
     } while (dataLength >= REPOS_PER_PAGE);
   } catch (error) {
     const err = error as Error & { status?: number };
     const status = err.status ? ` (HTTP ${err.status})` : '';
+
     throw new Error(
       `Failed to fetch repositories from GitHub API${status}: ${err.message}. Verify that your github-token has the correct permissions.`,
     );
   }
 
   core.info(`Fetched ${repos.length} repositories from GitHub`);
+
   return repos;
 }

@@ -16,5 +16,6 @@ interface AddSnapshotParams {
 
 export function addSnapshot({ history, snapshot, maxHistory }: AddSnapshotParams): History {
   const snapshots = [...history.snapshots, snapshot].slice(-maxHistory);
+
   return { ...history, snapshots };
 }

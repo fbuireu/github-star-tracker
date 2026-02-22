@@ -54,10 +54,12 @@ export async function trackStars(): Promise<void> {
     const t = getTranslations(config.locale);
 
     core.info('Fetching repositories...');
+
     const repos = await getRepos({ octokit, config });
 
     if (repos.length === 0) {
       core.warning('No repositories matched the configured filters');
+
       setEmptyOutputs();
       return;
     }
@@ -70,6 +72,7 @@ export async function trackStars(): Promise<void> {
       const previousTimestamp = lastSnapshot ? lastSnapshot.timestamp : null;
 
       core.info('Comparing star counts...');
+
       const results = compareStars({ currentRepos: repos, previousSnapshot: lastSnapshot });
       const { summary } = results;
 
@@ -78,18 +81,23 @@ export async function trackStars(): Promise<void> {
       let stargazerDiff = null;
       if (config.trackStargazers) {
         core.info('Fetching stargazers...');
+
         const repoStargazers = await fetchAllStargazers({ octokit, repos });
         const previousMap = readStargazers(dataDir);
+
         stargazerDiff = diffStargazers({ current: repoStargazers, previousMap });
+
         const updatedMap = buildStargazerMap(repoStargazers);
+
         writeStargazers({ dataDir, stargazerMap: updatedMap });
+
         core.info(`Found ${stargazerDiff.totalNew} new stargazers`);
       }
 
       const sorted = [...results.repos]
-        .filter((r) => !r.isRemoved)
+        .filter((repo) => !repo.isRemoved)
         .sort((a, b) => b.current - a.current);
-      const topRepoNames = sorted.slice(0, config.topRepos).map((r) => r.fullName);
+      const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
       const forecastData = computeForecast({ history, topRepoNames });
 
       const markdownReport = generateMarkdownReport({
@@ -117,7 +125,6 @@ export async function trackStars(): Promise<void> {
       const badge = generateBadge({ totalStars: summary.totalStars, locale: config.locale });
       const snapshot = createSnapshot({ currentRepos: repos, summary });
       const updatedHistory = addSnapshot({ history, snapshot, maxHistory: config.maxHistory });
-
       const thresholdReached = shouldNotify({
         totalStars: summary.totalStars,
         starsAtLastNotification: history.starsAtLastNotification,
@@ -150,6 +157,7 @@ export async function trackStars(): Promise<void> {
             repoFullName: repoName,
             locale: config.locale,
           });
+
           if (repoChart) {
             const filename = `${repoName.replace('/', '-')}.svg`;
             writeChart({ dataDir, filename, svg: repoChart });
@@ -163,6 +171,7 @@ export async function trackStars(): Promise<void> {
             title: t.report.topRepositories,
             locale: config.locale,
           });
+
           if (comparisonChart) {
             writeChart({ dataDir, filename: 'comparison.svg', svg: comparisonChart });
           }
@@ -174,6 +183,7 @@ export async function trackStars(): Promise<void> {
             forecastData,
             locale: config.locale,
           });
+
           if (forecastChart) {
             writeChart({ dataDir, filename: 'forecast.svg', svg: forecastChart });
           }
@@ -202,6 +212,7 @@ export async function trackStars(): Promise<void> {
             delta: deltaIndicator(summary.totalDelta),
           },
         });
+
         try {
           await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
         } catch (error) {
@@ -214,6 +225,7 @@ export async function trackStars(): Promise<void> {
   } catch (error) {
     const err = error as Error;
     core.setFailed(`Star Tracker failed: ${err.message}`);
+
     if (err.stack) core.debug(err.stack);
   }
 }

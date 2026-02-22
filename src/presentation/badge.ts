@@ -11,7 +11,6 @@ export function generateBadge({ totalStars, locale }: GenerateBadgeParams): stri
   const t = getTranslations(locale);
   const label = t.badge.totalStars;
   const value = `\u2605 ${formatCount(totalStars)}`;
-
   const labelWidth = label.length * BADGE.labelCharWidth + BADGE.horizontalPadding;
   const valueWidth = value.length * BADGE.valueCharWidth + BADGE.horizontalPadding;
   const totalWidth = labelWidth + valueWidth;

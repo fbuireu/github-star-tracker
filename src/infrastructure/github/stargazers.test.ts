@@ -42,7 +42,6 @@ describe('fetchAllStargazers', () => {
         data: [makeStargazerResponse('alice'), makeStargazerResponse('bob')],
       }),
     };
-
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepo('repo-a')],
@@ -57,14 +56,12 @@ describe('fetchAllStargazers', () => {
   it('handles pagination', async () => {
     const page1 = Array.from({ length: 100 }, (_, i) => makeStargazerResponse(`user-${i}`));
     const page2 = [makeStargazerResponse('last-user')];
-
     const octokit = {
       request: vi
         .fn()
         .mockResolvedValueOnce({ data: page1 })
         .mockResolvedValueOnce({ data: page2 }),
     };
-
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepo('repo-a')],

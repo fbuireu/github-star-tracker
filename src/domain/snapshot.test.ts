@@ -5,11 +5,13 @@ import type { History, Snapshot } from './types';
 describe('getLastSnapshot', () => {
   it('returns null for empty history', () => {
     const history: History = { snapshots: [] };
+
     expect(getLastSnapshot(history)).toBeNull();
   });
 
   it('returns null when snapshots is undefined', () => {
     const history = {} as History;
+
     expect(getLastSnapshot(history)).toBeNull();
   });
 
@@ -24,8 +26,8 @@ describe('getLastSnapshot', () => {
       totalStars: 150,
       repos: [{ name: 'test', owner: 'user', fullName: 'user/test', stars: 150 }],
     };
-
     const history: History = { snapshots: [snapshot1, snapshot2] };
+
     expect(getLastSnapshot(history)).toEqual(snapshot2);
   });
 });
@@ -38,7 +40,6 @@ describe('addSnapshot', () => {
       totalStars: 100,
       repos: [{ name: 'test', owner: 'user', fullName: 'user/test', stars: 100 }],
     };
-
     const result = addSnapshot({ history, snapshot, maxHistory: 52 });
 
     expect(result.snapshots).toHaveLength(1);
@@ -60,7 +61,6 @@ describe('addSnapshot', () => {
       totalStars: 150,
       repos: [],
     };
-
     const result = addSnapshot({ history, snapshot, maxHistory: 52 });
 
     expect(history.snapshots).toHaveLength(1);
@@ -74,7 +74,6 @@ describe('addSnapshot', () => {
       totalStars: 50,
       repos: [],
     };
-
     const result = addSnapshot({ history, snapshot, maxHistory: 52 });
 
     expect(result.starsAtLastNotification).toBe(42);
@@ -86,14 +85,12 @@ describe('addSnapshot', () => {
       totalStars: i,
       repos: [],
     }));
-
     const history: History = { snapshots };
     const newSnapshot: Snapshot = {
       timestamp: '2024-03-01T00:00:00Z',
       totalStars: 100,
       repos: [],
     };
-
     const result = addSnapshot({ history, snapshot: newSnapshot, maxHistory: 52 });
 
     expect(result.snapshots).toHaveLength(52);

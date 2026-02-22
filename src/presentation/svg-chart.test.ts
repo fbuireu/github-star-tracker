@@ -33,6 +33,7 @@ function makeMultiRepoSnapshot(timestamp: string, repoStars: Record<string, numb
     return { name, owner, fullName, stars };
   });
   const totalStars = repos.reduce((sum, r) => sum + r.stars, 0);
+
   return { timestamp, totalStars, repos };
 }
 
@@ -47,6 +48,7 @@ function makeMultiRepoHistory(snapshots: { repoStars: Record<string, number> }[]
 
 function expectSvg(result: string | null): string {
   expect(result).not.toBeNull();
+
   return result ?? '';
 }
 
@@ -99,8 +101,8 @@ describe('generateSvgChart', () => {
   it('includes data points as circles', () => {
     const history = makeHistory([10, 20, 30, 40, 50]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
-
     const circleCount = (result.match(/<circle/g) || []).length;
+
     expect(circleCount).toBe(5);
   });
 
@@ -133,7 +135,6 @@ describe('generateSvgChart', () => {
         makeSnapshot('2026-06-20T00:00:00Z', 20),
       ],
     };
-
     const enResult = expectSvg(generateSvgChart({ history, locale: 'en' }));
     const esResult = expectSvg(generateSvgChart({ history, locale: 'es' }));
 
@@ -161,8 +162,8 @@ describe('generateSvgChart', () => {
     const stars = Array.from({ length: 50 }, (_, i) => 10 + i);
     const history = makeHistory(stars);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
-
     const circleCount = (result.match(/<circle/g) || []).length;
+
     expect(circleCount).toBe(30);
   });
 
@@ -239,6 +240,7 @@ describe('generatePerRepoSvgChart', () => {
       repoFullName: 'user/repo-a',
       locale: 'en',
     });
+
     expect(result).toBeNull();
   });
 
@@ -249,6 +251,7 @@ describe('generatePerRepoSvgChart', () => {
       repoFullName: 'user/repo-a',
       locale: 'en',
     });
+
     expect(result).toBeNull();
   });
 
@@ -329,6 +332,7 @@ describe('generateComparisonSvgChart', () => {
       repoNames: ['user/repo-a'],
       locale: 'en',
     });
+
     expect(result).toBeNull();
   });
 
@@ -339,6 +343,7 @@ describe('generateComparisonSvgChart', () => {
       repoNames: [],
       locale: 'en',
     });
+
     expect(result).toBeNull();
   });
 
@@ -413,19 +418,21 @@ describe('generateComparisonSvgChart', () => {
   it('caps at maxComparison repos', () => {
     const repoStars: Record<string, number> = {};
     const repoNames: string[] = [];
+
     for (let i = 0; i < 15; i++) {
       const name = `user/repo-${i}`;
       repoStars[name] = 10 + i;
       repoNames.push(name);
     }
+
     const history = makeMultiRepoHistory([
       { repoStars },
       { repoStars: Object.fromEntries(Object.entries(repoStars).map(([k, v]) => [k, v + 5])) },
     ]);
 
     const result = expectSvg(generateComparisonSvgChart({ history, repoNames, locale: 'en' }));
-
     const pathCount = (result.match(/<path d="M/g) || []).length;
+
     expect(pathCount).toBeLessThanOrEqual(10);
   });
 
@@ -480,12 +487,14 @@ describe('generateForecastSvgChart', () => {
       forecastData,
       locale: 'en',
     });
+
     expect(result).toBeNull();
   });
 
   it('returns null for fewer than 2 snapshots', () => {
     const history = makeHistory([10]);
     const result = generateForecastSvgChart({ history, forecastData, locale: 'en' });
+
     expect(result).toBeNull();
   });
 
@@ -526,8 +535,8 @@ describe('generateForecastSvgChart', () => {
   it('generates valid XML attributes in legend for dashed datasets', () => {
     const history = makeHistory([10, 20, 30]);
     const result = expectSvg(generateForecastSvgChart({ history, forecastData, locale: 'en' }));
-
     const CONSECUTIVE_XML_ATTRIBUTES = /="[^"]*"="[^"]*"/;
+
     expect(result).not.toMatch(CONSECUTIVE_XML_ATTRIBUTES);
   });
 

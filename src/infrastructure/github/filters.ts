@@ -78,5 +78,6 @@ interface GetReposParams {
 export async function getRepos({ octokit, config }: GetReposParams): Promise<RepoInfo[]> {
   const allRepos = await fetchRepos({ octokit, config });
   const filtered = filterRepos({ repos: allRepos, config });
+
   return mapRepos(filtered);
 }

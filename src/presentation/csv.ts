@@ -1,9 +1,10 @@
 import type { ComparisonResults } from '@domain/types';
 
 const CSV_HEADER = 'repository,owner,name,stars,previous,delta,status';
+export const NEW_LINE = '\n';
 
 function escapeCsvField(field: string): string {
-  if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+  if (field.includes(',') || field.includes('"') || field.includes(NEW_LINE)) {
     return `"${field.replaceAll('"', '""')}"`;
   }
   return field;
@@ -18,6 +19,7 @@ const REPO_STATUS = {
 function repoStatus(repo: { isNew: boolean; isRemoved: boolean }): string {
   if (repo.isNew) return REPO_STATUS.new;
   if (repo.isRemoved) return REPO_STATUS.removed;
+
   return REPO_STATUS.active;
 }
 
@@ -34,5 +36,5 @@ export function generateCsvReport({ repos }: ComparisonResults): string {
     ].join(','),
   );
 
-  return [CSV_HEADER, ...rows].join('\n');
+  return [CSV_HEADER, ...rows].join(NEW_LINE);
 }

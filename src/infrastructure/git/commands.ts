@@ -16,6 +16,7 @@ export function execute({ cmd, options = {} }: ExecuteParams): string {
     const err = error as { stderr?: string; message?: string };
     const stderr = err.stderr?.trim() || '';
     const detail = stderr || err.message || 'Unknown error';
+
     throw new Error(`Git command failed: "${cmd}"\n${detail}`);
   }
 }

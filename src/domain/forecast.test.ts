@@ -16,24 +16,28 @@ function expectForecast(result: ForecastData | null): ForecastData {
 describe('linearRegression', () => {
   it('returns slope=0 for constant values', () => {
     const result = linearRegression([10, 10, 10, 10]);
+
     expect(result.slope).toBeCloseTo(0);
     expect(result.intercept).toBeCloseTo(10);
   });
 
   it('computes correct slope for linear growth', () => {
     const result = linearRegression([10, 20, 30, 40]);
+
     expect(result.slope).toBeCloseTo(10);
     expect(result.intercept).toBeCloseTo(10);
   });
 
   it('computes correct slope for decreasing values', () => {
     const result = linearRegression([40, 30, 20, 10]);
+
     expect(result.slope).toBeCloseTo(-10);
     expect(result.intercept).toBeCloseTo(40);
   });
 
   it('handles single value', () => {
     const result = linearRegression([42]);
+
     expect(result.slope).toBe(0);
     expect(result.intercept).toBe(42);
   });
@@ -47,17 +51,20 @@ describe('weightedMovingAverage', () => {
 
   it('computes weighted average for constant deltas', () => {
     const result = weightedMovingAverage([10, 20, 30, 40]);
+
     expect(result).toBeCloseTo(10);
   });
 
   it('weights recent deltas more heavily (accelerating)', () => {
     const result = weightedMovingAverage([10, 11, 13, 18]);
+
     expect(result).toBeGreaterThan(2);
   });
 
   it('weights recent deltas more heavily (decelerating)', () => {
     const resultAccel = weightedMovingAverage([10, 20, 25, 26]);
     const resultConst = weightedMovingAverage([10, 14, 18, 22]);
+
     expect(resultAccel).toBeLessThan(resultConst);
   });
 });
@@ -72,6 +79,7 @@ describe('computeForecast', () => {
     };
 
     const result = computeForecast({ history, topRepoNames: [] });
+
     expect(result).toBeNull();
   });
 

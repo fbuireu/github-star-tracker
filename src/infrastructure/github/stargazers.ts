@@ -19,9 +19,11 @@ export async function fetchAllStargazers({
   for (const repo of repos) {
     try {
       const stargazers = await fetchRepoStargazers({ octokit, owner: repo.owner, name: repo.name });
+
       results.push({ repoFullName: repo.fullName, stargazers });
     } catch (error) {
       core.warning(`Failed to fetch stargazers for ${repo.fullName}: ${(error as Error).message}`);
+
       results.push({ repoFullName: repo.fullName, stargazers: [] });
     }
   }
@@ -54,7 +56,6 @@ async function fetchRepoStargazers({
         accept: 'application/vnd.github.star+json',
       },
     });
-
     const items = data as Array<{
       user: { login: string; avatar_url: string; html_url: string };
       starred_at: string;

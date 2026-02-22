@@ -42,11 +42,13 @@ export async function sendEmail({
 }: SendEmailParams): Promise<boolean> {
   if (!emailConfig) {
     core.info('No SMTP configuration provided, skipping email');
+
     return false;
   }
 
   if (!emailConfig.to) {
     core.warning('SMTP configured but no email-to address provided, skipping email');
+
     return false;
   }
 
@@ -70,5 +72,6 @@ export async function sendEmail({
   });
 
   core.info(`Email sent: ${info.messageId}`);
+
   return true;
 }

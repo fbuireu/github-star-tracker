@@ -32632,10 +32632,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -34927,7 +34927,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35050,7 +35050,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -38256,10 +38256,11 @@ function compareStars({
   }
   for (const repo of previousSnapshot?.repos ?? []) {
     if (currentMap[repo.fullName]) continue;
+    const [owner, name] = repo.fullName.split("/");
     repoResults.push({
-      name: repo.name || repo.fullName.split("/")[1],
+      name: repo.name || name,
       fullName: repo.fullName,
-      owner: repo.owner || repo.fullName.split("/")[0],
+      owner: repo.owner || owner,
       current: 0,
       previous: repo.stars,
       delta: -repo.stars,
@@ -38382,6 +38383,9 @@ function computeForecast({
 }
 
 // src/domain/formatting.ts
+var UP_ARROW = "\u2B06\uFE0F";
+var DOWN_ARROW = "\u2B07\uFE0F";
+var DASH = "\u2796";
 var compactFormatter = new Intl.NumberFormat("en", {
   notation: "compact",
   maximumFractionDigits: 1
@@ -38395,9 +38399,9 @@ function deltaIndicator(delta) {
   return "0";
 }
 function trendIcon(delta) {
-  if (delta > 0) return "\u2B06\uFE0F";
-  if (delta < 0) return "\u2B07\uFE0F";
-  return "\u2796";
+  if (delta > 0) return UP_ARROW;
+  if (delta < 0) return DOWN_ARROW;
+  return DASH;
 }
 function formatDate({ timestamp: timestamp2, locale }) {
   const date = new Date(timestamp2);
@@ -38877,8 +38881,9 @@ function generateBadge({ totalStars, locale }) {
 
 // src/presentation/csv.ts
 var CSV_HEADER = "repository,owner,name,stars,previous,delta,status";
+var NEW_LINE = "\n";
 function escapeCsvField(field) {
-  if (field.includes(",") || field.includes('"') || field.includes("\n")) {
+  if (field.includes(",") || field.includes('"') || field.includes(NEW_LINE)) {
     return `"${field.replaceAll('"', '""')}"`;
   }
   return field;
@@ -38905,7 +38910,7 @@ function generateCsvReport({ repos }) {
       repoStatus(repo)
     ].join(",")
   );
-  return [CSV_HEADER, ...rows].join("\n");
+  return [CSV_HEADER, ...rows].join(NEW_LINE);
 }
 
 // src/presentation/chart.ts
@@ -39130,7 +39135,7 @@ function generateForecastChartUrl({
   const datasets = [
     {
       label: t.report.starHistory,
-      data: [...historicalData, ...Array(forecastLabels.length).fill(null)],
+      data: [...historicalData, ...new Array(forecastLabels.length).fill(null)],
       borderColor: COLORS.accent,
       backgroundColor: `${COLORS.accent}33`,
       fill: true,
@@ -39141,7 +39146,7 @@ function generateForecastChartUrl({
     {
       label: t.forecast.linearRegression,
       data: [
-        ...Array(padLength - 1).fill(null),
+        ...new Array(padLength - 1).fill(null),
         lastHistorical,
         ...lrForecast?.points.map((p) => p.predicted) ?? []
       ],
@@ -39156,7 +39161,7 @@ function generateForecastChartUrl({
     {
       label: t.forecast.weightedMovingAverage,
       data: [
-        ...Array(padLength - 1).fill(null),
+        ...new Array(padLength - 1).fill(null),
         lastHistorical,
         ...wmaForecast?.points.map((p) => p.predicted) ?? []
       ],
@@ -39573,6 +39578,12 @@ function buildForecastTable({ title, forecasts, t }) {
 }
 
 // src/presentation/svg-chart.ts
+var XML_ESCAPE_MAP = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;"
+};
 function scaleY({ value, minValue, maxValue, chartTop, chartHeight }) {
   if (maxValue === minValue) return chartTop + chartHeight / 2;
   return chartTop + chartHeight - (value - minValue) / (maxValue - minValue) * chartHeight;
@@ -39625,7 +39636,7 @@ function niceAxisSteps({ min, max, count }) {
   return steps;
 }
 function escapeXml(text) {
-  return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+  return text.replaceAll(/[&<>"]/g, (char) => XML_ESCAPE_MAP[char]);
 }
 function renderSvg({
   labels,
@@ -39966,8 +39977,8 @@ async function trackStars() {
         writeStargazers({ dataDir, stargazerMap: updatedMap });
         info(`Found ${stargazerDiff.totalNew} new stargazers`);
       }
-      const sorted = [...results.repos].filter((r) => !r.isRemoved).sort((a, b) => b.current - a.current);
-      const topRepoNames = sorted.slice(0, config.topRepos).map((r) => r.fullName);
+      const sorted = [...results.repos].filter((repo) => !repo.isRemoved).sort((a, b) => b.current - a.current);
+      const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
       const forecastData = computeForecast({ history, topRepoNames });
       const markdownReport = generateMarkdownReport({
         results,

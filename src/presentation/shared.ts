@@ -36,7 +36,6 @@ export function prepareReportData({
 }: PrepareReportDataParams): ReportData {
   const { repos } = results;
   const t = getTranslations(locale);
-
   const activeRepos = repos.filter((r) => !r.isRemoved);
 
   return {

@@ -8,6 +8,7 @@ vi.mock('node:child_process', () => ({
 describe('execute', () => {
   it('returns trimmed output from execSync', async () => {
     const { execSync } = await import('node:child_process');
+
     vi.mocked(execSync).mockReturnValue('  output  ');
 
     expect(execute({ cmd: 'echo hello' })).toBe('output');
@@ -15,6 +16,7 @@ describe('execute', () => {
 
   it('passes options to execSync', async () => {
     const { execSync } = await import('node:child_process');
+
     vi.mocked(execSync).mockReturnValue('ok');
 
     execute({ cmd: 'git status', options: { cwd: '/tmp' } });
@@ -29,7 +31,9 @@ describe('execute', () => {
   it('throws error with stderr when command fails', async () => {
     const { execSync } = await import('node:child_process');
     const error = new Error('exec failed') as Error & { stderr?: string };
+
     error.stderr = '  fatal: not a repo  ';
+
     vi.mocked(execSync).mockImplementation(() => {
       throw error;
     });
@@ -53,6 +57,7 @@ describe('execute', () => {
 
   it('throws error with Unknown error when no stderr or message', async () => {
     const { execSync } = await import('node:child_process');
+
     vi.mocked(execSync).mockImplementation(() => {
       throw {};
     });

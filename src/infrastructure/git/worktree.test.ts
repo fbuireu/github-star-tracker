@@ -58,7 +58,9 @@ describe('initializeDataBranch', () => {
 
   it('creates new orphan branch when remote branch does not exist', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
+
     const execError = new Error('Branch not found');
+
     vi.mocked(execSync)
       .mockReturnValueOnce('')
       .mockReturnValueOnce('')
@@ -83,7 +85,9 @@ describe('initializeDataBranch', () => {
 
   it('handles worktree removal failure gracefully', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
+
     const execError = new Error('Worktree removal failed');
+
     vi.mocked(execSync)
       .mockReturnValueOnce('')
       .mockReturnValueOnce('')

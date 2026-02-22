@@ -13,6 +13,13 @@ import {
   SVG_CHART,
 } from './constants';
 
+const XML_ESCAPE_MAP: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+};
+
 interface Point {
   x: number;
   y: number;
@@ -28,6 +35,7 @@ interface ScaleYParams {
 
 function scaleY({ value, minValue, maxValue, chartTop, chartHeight }: ScaleYParams): number {
   if (maxValue === minValue) return chartTop + chartHeight / 2;
+
   return chartTop + chartHeight - ((value - minValue) / (maxValue - minValue)) * chartHeight;
 }
 
@@ -57,11 +65,13 @@ function generateSmoothPath(points: Point[]): string {
 
 function calculatePathLength(points: Point[]): number {
   let length = 0;
+
   for (let i = 1; i < points.length; i++) {
     const dx = points[i].x - points[i - 1].x;
     const dy = points[i].y - points[i - 1].y;
     length += Math.hypot(dx, dy);
   }
+
   return Math.ceil(length * 1.5);
 }
 
@@ -80,6 +90,7 @@ function niceAxisSteps({ min, max, count }: NiceAxisStepsParams): number[] {
   const residual = rawStep / magnitude;
 
   let niceStep: number;
+
   if (residual <= 1.5) niceStep = magnitude;
   else if (residual <= 3.5) niceStep = 2 * magnitude;
   else if (residual <= 7.5) niceStep = 5 * magnitude;
@@ -87,6 +98,7 @@ function niceAxisSteps({ min, max, count }: NiceAxisStepsParams): number[] {
 
   const niceMin = Math.floor(min / niceStep) * niceStep;
   const steps: number[] = [];
+
   for (let v = niceMin; v <= max + niceStep * 0.5; v += niceStep) {
     if (v >= min - niceStep * 0.5) {
       steps.push(Math.round(v));
@@ -95,13 +107,8 @@ function niceAxisSteps({ min, max, count }: NiceAxisStepsParams): number[] {
 
   return steps;
 }
-
 function escapeXml(text: string): string {
-  return text
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
+  return text.replaceAll(/[&<>"]/g, (char) => XML_ESCAPE_MAP[char]);
 }
 
 interface SvgDataset {
@@ -130,14 +137,12 @@ function renderSvg({
   const { margin, pointRadius, lineWidth, gridOpacity, fontSize, animation, font } = SVG_CHART;
   const chartWidth = CHART.width - margin.left - margin.right;
   const chartHeight = CHART.height - margin.top - margin.bottom;
-
   const allValues = datasets.flatMap((ds) => ds.data.filter((v): v is number => v !== null));
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
   const padding = Math.max(1, Math.ceil((maxData - minData) * 0.1));
   const minValue = Math.max(0, minData - padding);
   const maxValue = maxData + padding;
-
   const ySteps = niceAxisSteps({ min: minValue, max: maxValue, count: 5 });
 
   const gridLines = ySteps
@@ -399,11 +404,9 @@ export function generateComparisonSvgChart({
   const t = getTranslations(locale);
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
-
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split('/')[0]));
   const useShortLabels = owners.size === 1;
-
   const datasets: SvgDataset[] = capped.map((repoName, index) => {
     const data = snapshots.map((s) => {
       const repo = s.repos.find((r) => r.fullName === repoName);
@@ -448,26 +451,20 @@ export function generateForecastSvgChart({
 
   const t = getTranslations(locale);
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
-
   const historicalLabels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const historicalData = snapshots.map((s) => s.totalStars);
-
   const forecastLabels = forecastData.aggregate.forecasts[0].points.map((p) =>
     interpolate({ template: t.forecast.week, params: { n: p.weekOffset } }),
   );
-
   const allLabels = [...historicalLabels, ...forecastLabels];
-
   const lrForecast = forecastData.aggregate.forecasts.find(
     (f) => f.method === ForecastMethod.LINEAR_REGRESSION,
   );
   const wmaForecast = forecastData.aggregate.forecasts.find(
     (f) => f.method === ForecastMethod.WEIGHTED_MOVING_AVERAGE,
   );
-
   const lastHistorical = historicalData.at(-1) ?? 0;
   const padLength = historicalData.length;
-
   const datasets: SvgDataset[] = [
     {
       label: t.report.starHistory,

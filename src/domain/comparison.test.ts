@@ -17,7 +17,6 @@ function makeRepoData(name: string, stars: number): RepoInfo {
 describe('compareStars', () => {
   it('handles first run with no previous snapshot', () => {
     const repos = [makeRepoData('repo-a', 10), makeRepoData('repo-b', 20)];
-
     const result = compareStars({ currentRepos: repos, previousSnapshot: null });
 
     expect(result.summary.totalStars).toBe(30);

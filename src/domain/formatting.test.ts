@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { deltaIndicator, formatCount, formatDate, trendIcon } from './formatting';
+import {
+  DASH,
+  DOWN_ARROW,
+  deltaIndicator,
+  formatCount,
+  formatDate,
+  trendIcon,
+  UP_ARROW,
+} from './formatting';
 
 describe('formatCount', () => {
   it('formats small numbers as-is', () => {
@@ -35,37 +43,41 @@ describe('deltaIndicator', () => {
 
 describe('trendIcon', () => {
   it('returns up arrow for positive delta', () => {
-    expect(trendIcon(1)).toBe('\u2B06\uFE0F');
+    expect(trendIcon(1)).toBe(UP_ARROW);
   });
 
   it('returns down arrow for negative delta', () => {
-    expect(trendIcon(-1)).toBe('\u2B07\uFE0F');
+    expect(trendIcon(-1)).toBe(DOWN_ARROW);
   });
 
   it('returns dash for zero delta', () => {
-    expect(trendIcon(0)).toBe('\u2796');
+    expect(trendIcon(0)).toBe(DASH);
   });
 });
 
 describe('formatDate', () => {
   it('formats date in English by default', () => {
     const result = formatDate({ timestamp: '2026-03-15T00:00:00Z', locale: 'en' });
+
     expect(result).toContain('Mar');
     expect(result).toContain('15');
   });
 
   it('formats date in Spanish', () => {
     const result = formatDate({ timestamp: '2026-03-15T00:00:00Z', locale: 'es' });
+
     expect(result).toContain('mar');
   });
 
   it('formats date in Catalan', () => {
     const result = formatDate({ timestamp: '2026-03-15T00:00:00Z', locale: 'ca' });
+
     expect(result).toContain('mar');
   });
 
   it('formats date in Italian', () => {
     const result = formatDate({ timestamp: '2026-03-15T00:00:00Z', locale: 'it' });
+
     expect(result).toContain('mar');
   });
 });

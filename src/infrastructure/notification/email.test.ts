@@ -8,6 +8,7 @@ vi.mock('@actions/core', () => ({
 
 vi.mock('nodemailer', () => {
   const mockSendMail = vi.fn().mockResolvedValue({ messageId: 'test-id' });
+
   return {
     default: {
       createTransport: vi.fn().mockReturnValue({ sendMail: mockSendMail }),
@@ -39,10 +40,12 @@ describe('getEmailConfig', () => {
         'email-to': 'recipient@example.com',
         'email-from': 'Star Tracker',
       };
+
       return map[name] || '';
     });
 
     const config = getEmailConfig('en');
+
     expect(config).toEqual({
       host: 'smtp.example.com',
       port: 465,
@@ -61,6 +64,7 @@ describe('getEmailConfig', () => {
     });
 
     const config = getEmailConfig('en');
+
     expect(config?.from).toBe('GitHub Star Tracker');
   });
 });
@@ -81,6 +85,7 @@ describe('sendEmail', () => {
       subject: 'Subject',
       htmlBody: '<p>Body</p>',
     });
+
     expect(result).toBe(false);
     expect(nodemailer.createTransport).not.toHaveBeenCalled();
   });
@@ -91,6 +96,7 @@ describe('sendEmail', () => {
       subject: 'Subject',
       htmlBody: '<p>Body</p>',
     });
+
     expect(result).toBe(false);
     expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('no email-to'));
   });
@@ -101,6 +107,7 @@ describe('sendEmail', () => {
       subject: 'Test Subject',
       htmlBody: '<p>Test</p>',
     });
+
     const mockSendMail = vi.mocked(nodemailer.createTransport).mock.results[0]?.value?.sendMail;
 
     expect(result).toBe(true);

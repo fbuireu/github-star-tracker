@@ -5,6 +5,7 @@ import type { ComparisonResults } from '@domain/types';
 import { describe, expect, it } from 'vitest';
 import { COLORS } from './constants';
 import { generateHtmlReport } from './html';
+import type { GenerateReportParams } from './shared';
 
 function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResults {
   return {
@@ -42,51 +43,45 @@ function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResu
   };
 }
 
+function renderHtml(overrides: Partial<GenerateReportParams> = {}): string {
+  return generateHtmlReport({
+    results: makeResults(),
+    previousTimestamp: '2026-01-01T00:00:00Z',
+    locale: 'en',
+    ...overrides,
+  });
+}
+
 describe('generateHtmlReport', () => {
   it('generates valid HTML structure', () => {
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-    });
+    const html = renderHtml();
+
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('</html>');
     expect(html).toContain('<table');
   });
 
   it('includes repo links', () => {
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-    });
+    const html = renderHtml();
+
     expect(html).toContain('href="https://github.com/user/repo-a"');
   });
 
   it('uses green color for positive deltas', () => {
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-    });
-    expect(html).toContain('#28a745');
+    const html = renderHtml();
+
+    expect(html).toContain(COLORS.positive);
   });
 
   it('uses red color for negative deltas', () => {
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-    });
-    expect(html).toContain('#d73a49');
+    const html = renderHtml();
+
+    expect(html).toContain(COLORS.negative);
   });
 
   it('includes summary stats', () => {
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-    });
+    const html = renderHtml();
+
     expect(html).toContain('23');
     expect(html).toContain('Total Stars');
     expect(html).toContain('Net change');
@@ -94,6 +89,7 @@ describe('generateHtmlReport', () => {
 
   it('shows removed repos section when applicable', () => {
     const results = makeResults();
+
     results.repos.push({
       name: 'gone',
       fullName: 'user/gone',
@@ -104,11 +100,9 @@ describe('generateHtmlReport', () => {
       isNew: false,
       isRemoved: true,
     });
-    const html = generateHtmlReport({
-      results,
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-    });
+
+    const html = renderHtml({ results });
+
     expect(html).toContain('Removed Repositories');
   });
 
@@ -128,13 +122,7 @@ describe('generateHtmlReport', () => {
       ],
     };
 
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      history,
-      includeCharts: true,
-    });
+    const html = renderHtml({ history, includeCharts: true });
 
     expect(html).toContain('Star Trend');
     expect(html).toContain('https://quickchart.io/chart');
@@ -162,13 +150,7 @@ describe('generateHtmlReport', () => {
       ],
     };
 
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      history,
-      includeCharts: true,
-    });
+    const html = renderHtml({ history, includeCharts: true });
 
     expect(html).toContain('By Repository');
     expect(html).toContain('Top Repositories');
@@ -196,13 +178,7 @@ describe('generateHtmlReport', () => {
       ],
     };
 
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      history,
-      includeCharts: true,
-    });
+    const html = renderHtml({ history, includeCharts: true });
 
     expect(html).toContain('Individual Repository Charts');
     expect(html).toContain('alt="user/repo-a"');
@@ -226,13 +202,7 @@ describe('generateHtmlReport', () => {
       ],
     };
 
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      history,
-      includeCharts: false,
-    });
+    const html = renderHtml({ history, includeCharts: false });
 
     expect(html).not.toContain('Star Trend');
     expect(html).not.toContain('quickchart.io');
@@ -249,13 +219,7 @@ describe('generateHtmlReport', () => {
       ],
     };
 
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      history,
-      includeCharts: true,
-    });
+    const html = renderHtml({ history, includeCharts: true });
 
     expect(html).not.toContain('Star Trend');
   });
@@ -278,12 +242,7 @@ describe('generateHtmlReport', () => {
       totalNew: 1,
     };
 
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      stargazerDiff,
-    });
+    const html = renderHtml({ stargazerDiff });
 
     expect(html).toContain('New Stargazers');
     expect(html).toContain('alice');
@@ -298,24 +257,14 @@ describe('generateHtmlReport', () => {
       totalNew: 0,
     };
 
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      stargazerDiff,
-    });
+    const html = renderHtml({ stargazerDiff });
 
     expect(html).toContain('New Stargazers');
     expect(html).toContain('No new stargazers since last run');
   });
 
   it('excludes stargazer section when stargazerDiff is null', () => {
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      stargazerDiff: null,
-    });
+    const html = renderHtml({ stargazerDiff: null });
 
     expect(html).not.toContain('New Stargazers');
   });
@@ -371,12 +320,7 @@ describe('generateHtmlReport', () => {
       ],
     };
 
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      forecastData,
-    });
+    const html = renderHtml({ forecastData });
 
     expect(html).toContain('Growth Forecast');
     expect(html).toContain('Linear Regression');
@@ -388,34 +332,32 @@ describe('generateHtmlReport', () => {
   });
 
   it('uses neutral color for zero delta', () => {
-    const results = makeResults({
-      repos: [
-        {
-          name: 'repo-a',
-          fullName: 'user/repo-a',
-          owner: 'user',
-          current: 10,
-          previous: 10,
-          delta: 0,
-          isNew: false,
-          isRemoved: false,
+    const html = renderHtml({
+      results: makeResults({
+        repos: [
+          {
+            name: 'repo-a',
+            fullName: 'user/repo-a',
+            owner: 'user',
+            current: 10,
+            previous: 10,
+            delta: 0,
+            isNew: false,
+            isRemoved: false,
+          },
+        ],
+        summary: {
+          totalStars: 10,
+          totalPrevious: 10,
+          totalDelta: 0,
+          newStars: 0,
+          lostStars: 0,
+          changed: false,
         },
-      ],
-      summary: {
-        totalStars: 10,
-        totalPrevious: 10,
-        totalDelta: 0,
-        newStars: 0,
-        lostStars: 0,
-        changed: false,
-      },
+      }),
     });
-    const html = generateHtmlReport({
-      results,
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-    });
-    expect(html).toContain('#6a737d');
+
+    expect(html).toContain(COLORS.neutral);
   });
 
   it('renders unknown forecast method name as-is', () => {
@@ -436,33 +378,19 @@ describe('generateHtmlReport', () => {
       repos: [],
     };
 
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      forecastData,
-    });
+    const html = renderHtml({ forecastData });
 
     expect(html).toContain('custom-method');
   });
 
   it('excludes forecast section when forecastData is null', () => {
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-      forecastData: null,
-    });
+    const html = renderHtml({ forecastData: null });
 
     expect(html).not.toContain('Growth Forecast');
   });
 
   it('includes explicit background-color on body', () => {
-    const html = generateHtmlReport({
-      results: makeResults(),
-      previousTimestamp: '2026-01-01T00:00:00Z',
-      locale: 'en',
-    });
+    const html = renderHtml();
 
     expect(html).toContain(`background-color:${COLORS.white}`);
   });
