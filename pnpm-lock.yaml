@@ -65,7 +65,7 @@ importers:
         version: 9.1.7
       lint-staged:
         specifier: ^16.2.7
-        version: 16.2.7
+        version: 16.3.0
       semantic-release:
         specifier: ^25.0.3
         version: 25.0.3(typescript@5.9.3)
@@ -1112,6 +1112,10 @@ packages:
     resolution: {integrity: sha512-QZjmEOC+IT1uk6Rx0sX22V6uHWVwbdbxf1faPqJ1QhLdGgsRGCZoyaQBm/piRdJy/D2um6hM1UP7ZEeQ4EkP+Q==}
     engines: {node: '>=18'}
 
+  get-east-asian-width@1.5.0:
+    resolution: {integrity: sha512-CQ+bEO+Tva/qlmw24dCejulK5pMzVnUOFOijVogd3KQs07HnRIgp8TGipvCCRT06xeYEbpbgwaCxglFyiuIcmA==}
+    engines: {node: '>=18'}
+
   get-stream@6.0.1:
     resolution: {integrity: sha512-ts6Wi+2j3jQjqi70w5AlN8DFnkSwC+MqmxEzdEALB2qXZYV3X/b1CTfgPLGJNMeAWxdPfU8FO1ms3NUfaHCPYg==}
     engines: {node: '>=10'}
@@ -1339,8 +1343,8 @@ packages:
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
 
-  lint-staged@16.2.7:
-    resolution: {integrity: sha512-lDIj4RnYmK7/kXMya+qJsmkRFkGolciXjrsZ6PC25GdTfWOAWetR0ZbsNXRAj1EHHImRSalc+whZFg56F5DVow==}
+  lint-staged@16.3.0:
+    resolution: {integrity: sha512-YVHHy/p6U4/No9Af+35JLh3umJ9dPQnGTvNCbfO/T5fC60us0jFnc+vw33cqveI+kqxIFJQakcMVTO2KM+653A==}
     engines: {node: '>=20.17'}
     hasBin: true
 
@@ -1713,11 +1717,6 @@ packages:
     resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
     engines: {node: '>=12'}
 
-  pidtree@0.6.0:
-    resolution: {integrity: sha512-eG2dWTVw5bzqGRztnHExczNxt5VGsE6OwTeCG3fdUf9KBsZzO3R5OIIIzWR+iZA0NtZ+RDVdaoE2dK1cn6jH4g==}
-    engines: {node: '>=0.10'}
-    hasBin: true
-
   pify@3.0.0:
     resolution: {integrity: sha512-C3FsVNH1udSEX48gGX1xfvwTWfsYWj5U+8/uK15BGzIGrKoUpghX8hWZwa/OFnakBiiVNmBvemTJR5mcy7iPcg==}
     engines: {node: '>=4'}
@@ -1896,8 +1895,8 @@ packages:
     resolution: {integrity: sha512-tsaTIkKW9b4N+AEj+SVA+WhJzV7/zMhcSu78mLKWSk7cXMOSHsBKFWUs0fWwq8QyK3MgJBQRX6Gbi4kYbdvGkQ==}
     engines: {node: '>=18'}
 
-  string-width@8.1.1:
-    resolution: {integrity: sha512-KpqHIdDL9KwYk22wEOg/VIqYbrnLeSApsKT/bSj6Ez7pn3CftUiLAv2Lccpq1ALcpLV9UX1Ppn92npZWu2w/aw==}
+  string-width@8.2.0:
+    resolution: {integrity: sha512-6hJPQ8N0V0P3SNmP6h2J99RLuzrWz2gvT7VnK5tKvrNqJoyS9W4/Fb8mo31UiPvy00z7DQXkP2hnKBVav76thw==}
     engines: {node: '>=20'}
 
   string_decoder@1.1.1:
@@ -1909,6 +1908,10 @@ packages:
 
   strip-ansi@7.1.2:
     resolution: {integrity: sha512-gmBGslpoQJtgnMAvOVqGZpEz9dyoKTCzy2nfz/n8aIFhN/jCE/rCmcxabB6jOOHV+0WNnylOxaxBQPSvcWklhA==}
+    engines: {node: '>=12'}
+
+  strip-ansi@7.2.0:
+    resolution: {integrity: sha512-yDPMNjp4WyfYBkHnjIRLfca1i6KMyGCtsVgoKe/z1+6vukgaENdgGBZt+ZmKPc4gavvEZ5OgHfHdrazhgNyG7w==}
     engines: {node: '>=12'}
 
   strip-bom@3.0.0:
@@ -2960,7 +2963,7 @@ snapshots:
   cli-truncate@5.1.1:
     dependencies:
       slice-ansi: 7.1.2
-      string-width: 8.1.1
+      string-width: 8.2.0
 
   cliui@7.0.4:
     dependencies:
@@ -3233,6 +3236,8 @@ snapshots:
 
   get-east-asian-width@1.4.0: {}
 
+  get-east-asian-width@1.5.0: {}
+
   get-stream@6.0.1: {}
 
   get-stream@7.0.1: {}
@@ -3359,7 +3364,7 @@ snapshots:
 
   is-fullwidth-code-point@5.1.0:
     dependencies:
-      get-east-asian-width: 1.4.0
+      get-east-asian-width: 1.5.0
 
   is-number@7.0.0: {}
 
@@ -3426,14 +3431,14 @@ snapshots:
 
   lines-and-columns@1.2.4: {}
 
-  lint-staged@16.2.7:
+  lint-staged@16.3.0:
     dependencies:
       commander: 14.0.3
       listr2: 9.0.5
       micromatch: 4.0.8
       nano-spawn: 2.0.0
-      pidtree: 0.6.0
       string-argv: 0.3.2
+      tinyexec: 1.0.2
       yaml: 2.8.2
 
   listr2@9.0.5:
@@ -3488,7 +3493,7 @@ snapshots:
       ansi-escapes: 7.3.0
       cli-cursor: 5.0.0
       slice-ansi: 7.1.2
-      strip-ansi: 7.1.2
+      strip-ansi: 7.2.0
       wrap-ansi: 9.0.2
 
   lru-cache@10.4.3: {}
@@ -3696,8 +3701,6 @@ snapshots:
   picomatch@2.3.1: {}
 
   picomatch@4.0.3: {}
-
-  pidtree@0.6.0: {}
 
   pify@3.0.0: {}
 
@@ -3933,10 +3936,10 @@ snapshots:
       get-east-asian-width: 1.4.0
       strip-ansi: 7.1.2
 
-  string-width@8.1.1:
+  string-width@8.2.0:
     dependencies:
-      get-east-asian-width: 1.4.0
-      strip-ansi: 7.1.2
+      get-east-asian-width: 1.5.0
+      strip-ansi: 7.2.0
 
   string_decoder@1.1.1:
     dependencies:
@@ -3947,6 +3950,10 @@ snapshots:
       ansi-regex: 5.0.1
 
   strip-ansi@7.1.2:
+    dependencies:
+      ansi-regex: 6.2.2
+
+  strip-ansi@7.2.0:
     dependencies:
       ansi-regex: 6.2.2
 
@@ -4168,7 +4175,7 @@ snapshots:
     dependencies:
       ansi-styles: 6.2.3
       string-width: 7.2.0
-      strip-ansi: 7.1.2
+      strip-ansi: 7.2.0
 
   xtend@4.0.2: {}
 
