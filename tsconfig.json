@@ -13,14 +13,13 @@
     "sourceMap": true,
     "outDir": "./lib",
     "rootDir": ".",
-    "baseUrl": ".",
     "paths": {
-      "@application/*": ["src/application/*"],
-      "@config/*": ["src/config/*"],
-      "@domain/*": ["src/domain/*"],
-      "@i18n": ["src/i18n/index.ts"],
-      "@infrastructure/*": ["src/infrastructure/*"],
-      "@presentation/*": ["src/presentation/*"]
+      "@application/*": ["./src/application/*"],
+      "@config/*": ["./src/config/*"],
+      "@domain/*": ["./src/domain/*"],
+      "@i18n": ["./src/i18n/index.ts"],
+      "@infrastructure/*": ["./src/infrastructure/*"],
+      "@presentation/*": ["./src/presentation/*"]
     }
   },
   "include": ["src/**/*", "esbuild.config.ts", "vitest.config.ts", "commitlint.config.ts"],
