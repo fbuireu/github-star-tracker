@@ -1,0 +1,4 @@
+packages:
+  - ./
+ignoreScripts: true
+minimumReleaseAge: 1440
