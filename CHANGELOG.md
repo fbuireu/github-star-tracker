@@ -1,3 +1,10 @@
+## [1.8.3](https://github.com/fbuireu/github-star-tracker/compare/v1.8.2...v1.8.3) (2026-04-02)
+
+
+### Bug Fixes
+
+* pnpm add sec ([5d4fccb](https://github.com/fbuireu/github-star-tracker/commit/5d4fccbf3dda67591deeae567b38223d7e59ecd2))
+
 ## [1.8.2](https://github.com/fbuireu/github-star-tracker/compare/v1.8.1...v1.8.2) (2026-03-22)
 
 
