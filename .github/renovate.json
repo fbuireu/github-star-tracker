@@ -3,6 +3,7 @@
   "extends": ["config:recommended", ":dependencyDashboard", "customManagers:biomeVersions"],
   "labels": ["dependencies", "renovate", "bot"],
   "schedule": ["on the 1st day of the month", "on the 15th day of the month"],
+  "minimumReleaseAge": "3 days",
   "assigneesFromCodeOwners": true,
   "reviewersFromCodeOwners": true,
   "packageRules": [
