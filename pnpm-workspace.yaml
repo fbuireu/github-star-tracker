@@ -1,4 +1,4 @@
 packages:
   - ./
+minimumReleaseAge: 4320 #3 days
 ignoreScripts: true
-minimumReleaseAge: 1440
