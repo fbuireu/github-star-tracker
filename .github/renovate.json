@@ -1,11 +1,16 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":dependencyDashboard", "customManagers:biomeVersions"],
+  "extends": ["config:recommended", ":dependencyDashboard", "customManagers:biomeVersions", ":enableVulnerabilityAlerts"],
   "labels": ["dependencies", "renovate", "bot"],
-  "schedule": ["on the 1st day of the month", "on the 15th day of the month"],
+  "schedule": ["every 2 weeks"],
   "minimumReleaseAge": "3 days",
   "assigneesFromCodeOwners": true,
   "reviewersFromCodeOwners": true,
+  "vulnerabilityAlerts": {
+    "schedule": ["at any time"],
+    "labels": ["security", "vulnerability"]
+  },
+  "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
       "matchUpdateTypes": ["patch"],
