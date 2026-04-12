@@ -1,4 +1,6 @@
 packages:
   - ./
 minimumReleaseAge: 4320 #3 days
-ignoreScripts: true
+onlyBuiltDependencies:
+  - esbuild
+  - "@biomejs/biome"
