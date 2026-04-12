@@ -4,6 +4,13 @@
   "labels": ["dependencies", "renovate", "bot"],
   "schedule": ["on the 1st and 15th day of the month"],
   "minimumReleaseAge": "3 days",
+  "rangeStrategy": "pin",
+  "automergeStrategy": "squash",
+  "commitMessagePrefix": "chore(deps):",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["on the 1st and 15th day of the month"]
+  },
   "assigneesFromCodeOwners": true,
   "reviewersFromCodeOwners": true,
   "vulnerabilityAlerts": {
