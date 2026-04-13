@@ -1,3 +1,10 @@
+## [1.8.4](https://github.com/fbuireu/github-star-tracker/compare/v1.8.3...v1.8.4) (2026-04-13)
+
+
+### Bug Fixes
+
+* pin deps ([d03a312](https://github.com/fbuireu/github-star-tracker/commit/d03a3122b8ff5c080e2624786c640b41c00b41bc))
+
 ## [1.8.3](https://github.com/fbuireu/github-star-tracker/compare/v1.8.2...v1.8.3) (2026-04-02)
 
 
