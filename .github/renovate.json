@@ -35,6 +35,10 @@
       "matchUpdateTypes": ["major"],
       "addLabels": ["major-update"],
       "automerge": false
+    },
+    {
+      "matchDepNames": ["node"],
+      "allowedVersions": "/^[0-9]*[02468]\\./",
     }
   ]
 }
