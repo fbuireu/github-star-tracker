@@ -29,7 +29,7 @@
   "author": "Ferran Buireu <fbuireu@gmail.com>",
   "license": "AGPL-3.0-only",
   "engines": {
-    "node": "24.x"
+    "node": "v24.14.1"
   },
   "packageManager": "pnpm@10.33.0",
   "scripts": {
