@@ -70,7 +70,6 @@
     "semantic-release": "25.0.3",
     "tsx": "4.21.0",
     "typescript": "6.0.2",
-    "vite-tsconfig-paths": "6.1.1",
     "vitest": "4.1.4"
   }
 }
