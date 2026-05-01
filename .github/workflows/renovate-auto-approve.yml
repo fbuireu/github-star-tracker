@@ -12,7 +12,22 @@ jobs:
       (contains(github.event.pull_request.labels.*.name, 'patch-update') ||
        contains(github.event.pull_request.labels.*.name, 'minor-update'))
     steps:
+      - name: Check existing approval
+        id: check
+        run: |
+          APPROVED=$(gh pr view "$PR_URL" --json reviews \
+            --jq '[.reviews[] | select(.author.login == "fbuireu" and .state == "APPROVED")] | length')
+          if [ "$APPROVED" -gt 0 ]; then
+            echo "already-approved=true" >> $GITHUB_OUTPUT
+          else
+            echo "already-approved=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.PAT }}
+
       - name: Approve PR
+        if: steps.check.outputs.already-approved == 'false'
         run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
