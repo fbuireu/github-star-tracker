@@ -10,13 +10,14 @@ jobs:
     if: >
       github.event.pull_request.user.login == 'renovate[bot]' &&
       (contains(github.event.pull_request.labels.*.name, 'patch-update') ||
-       contains(github.event.pull_request.labels.*.name, 'minor-update'))
+       contains(github.event.pull_request.labels.*.name, 'minor-update') ||
+       contains(github.event.pull_request.labels.*.name, 'lock-maintenance'))
     steps:
       - name: Check existing approval
         id: check
         run: |
           APPROVED=$(gh pr view "$PR_URL" --json reviews \
-            --jq '[.reviews[] | select(.author.login == "fbuireu" and .state == "APPROVED")] | length')
+            --jq "[.reviews[] | select(.author.login == \"$OWNER\" and .state == \"APPROVED\")] | length")
           if [ "$APPROVED" -gt 0 ]; then
             echo "already-approved=true" >> $GITHUB_OUTPUT
           else
@@ -24,6 +25,7 @@ jobs:
           fi
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
+          OWNER: ${{ github.repository_owner }}
           GH_TOKEN: ${{ secrets.PAT }}
 
       - name: Approve PR
