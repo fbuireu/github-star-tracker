@@ -9,6 +9,8 @@
   "commitMessagePrefix": "chore(deps):",
   "lockFileMaintenance": {
     "enabled": true,
+    "automerge": true,
+    "addLabels": ["lock-maintenance"],
     "schedule": ["on the 1st and 15th day of the month"]
   },
   "assigneesFromCodeOwners": true,
