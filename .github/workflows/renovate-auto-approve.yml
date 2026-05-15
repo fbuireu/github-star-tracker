@@ -4,6 +4,9 @@ on:
     types: [opened, synchronize, reopened, labeled]
 permissions:
   pull-requests: write
+concurrency:
+  group: renovate-approve-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
 jobs:
   approve:
     runs-on: ubuntu-latest
