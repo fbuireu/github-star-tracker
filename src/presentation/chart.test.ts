@@ -44,7 +44,7 @@ const mockHistory: History = {
 
 describe('chart', () => {
   describe('generateChartUrl', () => {
-    it('should generate valid QuickChart URL with history data', () => {
+    it('generates valid QuickChart URL with history data', () => {
       const url = generateChartUrl({ history: mockHistory, title: 'Test Chart', locale: 'en' });
 
       expect(url).toContain('https://quickchart.io/chart?');
@@ -53,7 +53,7 @@ describe('chart', () => {
       expect(url).toContain(CHART_CONFIG_PARAM);
     });
 
-    it('should return null when history has less than 2 snapshots', () => {
+    it('returns null when history has fewer than 2 snapshots', () => {
       const singleSnapshot: History = {
         snapshots: [mockHistory.snapshots[0]],
       };
@@ -62,14 +62,14 @@ describe('chart', () => {
       expect(url).toBeNull();
     });
 
-    it('should return null when history has no snapshots', () => {
+    it('returns null when history has no snapshots', () => {
       const emptyHistory: History = { snapshots: [] };
       const url = generateChartUrl({ history: emptyHistory, locale: 'en' });
 
       expect(url).toBeNull();
     });
 
-    it('should include correct data points in chart config', () => {
+    it('includes correct data points in chart config', () => {
       const url = generateChartUrl({ history: mockHistory, locale: 'en' });
 
       expect(url).toBeDefined();
@@ -82,7 +82,7 @@ describe('chart', () => {
       }
     });
 
-    it('should format dates correctly', () => {
+    it('formats dates correctly', () => {
       const url = generateChartUrl({ history: mockHistory, locale: 'en' });
 
       expect(url).toBeDefined();
@@ -96,7 +96,7 @@ describe('chart', () => {
       }
     });
 
-    it('should limit data to last 30 points', () => {
+    it('limits data to last 30 points', () => {
       const largeHistory: History = {
         snapshots: Array.from({ length: 50 }, (_, i) => ({
           timestamp: new Date(2025, 0, i + 1).toISOString(),
@@ -119,7 +119,7 @@ describe('chart', () => {
   });
 
   describe('generatePerRepoChartUrl', () => {
-    it('should generate chart for specific repository', () => {
+    it('generates chart for specific repository', () => {
       const url = generatePerRepoChartUrl({
         history: mockHistory,
         repoFullName: 'user/repo-a',
@@ -135,7 +135,7 @@ describe('chart', () => {
       }
     });
 
-    it('should use custom title when provided', () => {
+    it('uses custom title when provided', () => {
       const url = generatePerRepoChartUrl({
         history: mockHistory,
         repoFullName: 'user/repo-a',
@@ -152,7 +152,7 @@ describe('chart', () => {
       }
     });
 
-    it('should return null for non-existent repository', () => {
+    it('returns null for non-existent repository', () => {
       const url = generatePerRepoChartUrl({
         history: mockHistory,
         repoFullName: 'user/non-existent',
@@ -168,7 +168,7 @@ describe('chart', () => {
       }
     });
 
-    it('should return null when history has less than 2 snapshots', () => {
+    it('returns null when history has fewer than 2 snapshots', () => {
       const singleSnapshot: History = {
         snapshots: [mockHistory.snapshots[0]],
       };
@@ -183,7 +183,7 @@ describe('chart', () => {
   });
 
   describe('generateComparisonChartUrl', () => {
-    it('should generate comparison chart for multiple repositories', () => {
+    it('generates comparison chart for multiple repositories', () => {
       const url = generateComparisonChartUrl({
         history: mockHistory,
         repoNames: ['user/repo-a', 'user/repo-b'],
@@ -202,7 +202,7 @@ describe('chart', () => {
       }
     });
 
-    it('should limit to 10 repositories maximum', () => {
+    it('limits to 10 repositories maximum', () => {
       const url = generateComparisonChartUrl({
         history: mockHistory,
         repoNames: Array.from({ length: 12 }, (_, i) => `user/repo-${i}`),
@@ -219,13 +219,13 @@ describe('chart', () => {
       }
     });
 
-    it('should return null when no repositories provided', () => {
+    it('returns null when no repositories provided', () => {
       const url = generateComparisonChartUrl({ history: mockHistory, repoNames: [], locale: 'en' });
 
       expect(url).toBeNull();
     });
 
-    it('should return null when history has less than 2 snapshots', () => {
+    it('returns null when history has fewer than 2 snapshots', () => {
       const singleSnapshot: History = {
         snapshots: [mockHistory.snapshots[0]],
       };
@@ -238,7 +238,7 @@ describe('chart', () => {
       expect(url).toBeNull();
     });
 
-    it('should use custom title when provided', () => {
+    it('uses custom title when provided', () => {
       const url = generateComparisonChartUrl({
         history: mockHistory,
         repoNames: ['user/repo-a'],
@@ -255,7 +255,7 @@ describe('chart', () => {
       }
     });
 
-    it('should enable legend for multiple repositories', () => {
+    it('enables legend for multiple repositories', () => {
       const url = generateComparisonChartUrl({
         history: mockHistory,
         repoNames: ['user/repo-a', 'user/repo-b'],
@@ -272,7 +272,7 @@ describe('chart', () => {
       }
     });
 
-    it('should use short labels when all repos share the same owner', () => {
+    it('uses short labels when all repos share the same owner', () => {
       const url = generateComparisonChartUrl({
         history: mockHistory,
         repoNames: ['user/repo-a', 'user/repo-b'],
@@ -290,7 +290,7 @@ describe('chart', () => {
       }
     });
 
-    it('should use full names when repos have different owners', () => {
+    it('uses full names when repos have different owners', () => {
       const mixedHistory: History = {
         snapshots: [
           {
@@ -357,7 +357,7 @@ describe('chart', () => {
       repos: [],
     };
 
-    it('should generate forecast chart with dashed lines', () => {
+    it('generates forecast chart with dashed lines', () => {
       const url = generateForecastChartUrl({
         history: mockHistory,
         forecastData,
@@ -377,7 +377,7 @@ describe('chart', () => {
       }
     });
 
-    it('should include historical and forecast labels', () => {
+    it('includes historical and forecast labels', () => {
       const url = generateForecastChartUrl({
         history: mockHistory,
         forecastData,
@@ -395,7 +395,7 @@ describe('chart', () => {
       }
     });
 
-    it('should return null when history has less than 2 snapshots', () => {
+    it('returns null when history has fewer than 2 snapshots', () => {
       const url = generateForecastChartUrl({
         history: { snapshots: [mockHistory.snapshots[0]] },
         forecastData,
@@ -405,7 +405,7 @@ describe('chart', () => {
       expect(url).toBeNull();
     });
 
-    it('should enable legend', () => {
+    it('enables legend', () => {
       const url = generateForecastChartUrl({
         history: mockHistory,
         forecastData,
@@ -424,7 +424,7 @@ describe('chart', () => {
   });
 
   describe('buildMilestoneAnnotations', () => {
-    it('should return annotations for milestones within range', () => {
+    it('returns annotations for milestones within range', () => {
       const result = buildMilestoneAnnotations({ minStars: 30, maxStars: 200 });
 
       expect(result).not.toBeNull();
@@ -434,20 +434,20 @@ describe('chart', () => {
       expect(result?.annotations.milestone100.yMin).toBe(100);
     });
 
-    it('should exclude milestones outside the visible range', () => {
+    it('excludes milestones outside the visible range', () => {
       const result = buildMilestoneAnnotations({ minStars: 30, maxStars: 200 });
 
       expect(result?.annotations).not.toHaveProperty('milestone10');
       expect(result?.annotations).not.toHaveProperty('milestone500');
     });
 
-    it('should return null when no milestones are visible', () => {
+    it('returns null when no milestones are visible', () => {
       const result = buildMilestoneAnnotations({ minStars: 200, maxStars: 400 });
 
       expect(result).toBeNull();
     });
 
-    it('should exclude boundary values (min and max)', () => {
+    it('excludes boundary values (min and max)', () => {
       const result = buildMilestoneAnnotations({ minStars: 50, maxStars: 1000 });
 
       expect(result).not.toBeNull();
@@ -457,7 +457,7 @@ describe('chart', () => {
       expect(result?.annotations).toHaveProperty('milestone500');
     });
 
-    it('should include milestone annotations in aggregate chart', () => {
+    it('includes milestone annotations in aggregate chart', () => {
       const largeHistory: History = {
         snapshots: [
           {
@@ -486,7 +486,7 @@ describe('chart', () => {
       }
     });
 
-    it('should not include annotations when no milestones in range', () => {
+    it('does not include annotations when no milestones in range', () => {
       const url = generateChartUrl({ history: mockHistory, locale: 'en' });
 
       expect(url).toBeDefined();

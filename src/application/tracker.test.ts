@@ -1,4 +1,36 @@
+import * as core from '@actions/core';
+import * as github from '@actions/github';
+import { loadConfig } from '@config/loader';
+import { Visibility } from '@config/types';
+import { compareStars, createSnapshot } from '@domain/comparison';
+import { computeForecast } from '@domain/forecast';
+import { deltaIndicator } from '@domain/formatting';
+import { shouldNotify } from '@domain/notification';
+import { addSnapshot, getLastSnapshot } from '@domain/snapshot';
+import { buildStargazerMap, diffStargazers } from '@domain/stargazers';
+import { getTranslations } from '@i18n';
+import { cleanup, initializeDataBranch } from '@infrastructure/git/worktree';
+import { getRepos } from '@infrastructure/github/filters';
+import { fetchAllStargazers } from '@infrastructure/github/stargazers';
+import { getEmailConfig, sendEmail } from '@infrastructure/notification/email';
+import {
+  commitAndPush,
+  readHistory,
+  readStargazers,
+  writeBadge,
+  writeChart,
+  writeCsv,
+  writeHistory,
+  writeReport,
+  writeStargazers,
+} from '@infrastructure/persistence/storage';
+import { generateBadge } from '@presentation/badge';
+import { generateCsvReport } from '@presentation/csv';
+import { generateHtmlReport } from '@presentation/html';
+import { generateMarkdownReport } from '@presentation/markdown';
+import { generateSvgChart } from '@presentation/svg-chart';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { trackStars } from './tracker';
 
 vi.mock('@actions/core', () => ({
   getInput: vi.fn(),
@@ -107,39 +139,6 @@ vi.mock('@presentation/markdown', () => ({
 vi.mock('@presentation/svg-chart', () => ({
   generateSvgChart: vi.fn(),
 }));
-
-import * as core from '@actions/core';
-import * as github from '@actions/github';
-import { loadConfig } from '@config/loader';
-import { Visibility } from '@config/types';
-import { compareStars, createSnapshot } from '@domain/comparison';
-import { computeForecast } from '@domain/forecast';
-import { deltaIndicator } from '@domain/formatting';
-import { shouldNotify } from '@domain/notification';
-import { addSnapshot, getLastSnapshot } from '@domain/snapshot';
-import { buildStargazerMap, diffStargazers } from '@domain/stargazers';
-import { getTranslations } from '@i18n';
-import { cleanup, initializeDataBranch } from '@infrastructure/git/worktree';
-import { getRepos } from '@infrastructure/github/filters';
-import { fetchAllStargazers } from '@infrastructure/github/stargazers';
-import { getEmailConfig, sendEmail } from '@infrastructure/notification/email';
-import {
-  commitAndPush,
-  readHistory,
-  readStargazers,
-  writeBadge,
-  writeChart,
-  writeCsv,
-  writeHistory,
-  writeReport,
-  writeStargazers,
-} from '@infrastructure/persistence/storage';
-import { generateBadge } from '@presentation/badge';
-import { generateCsvReport } from '@presentation/csv';
-import { generateHtmlReport } from '@presentation/html';
-import { generateMarkdownReport } from '@presentation/markdown';
-import { generateSvgChart } from '@presentation/svg-chart';
-import { trackStars } from './tracker';
 
 const defaultConfig = {
   visibility: Visibility.ALL,

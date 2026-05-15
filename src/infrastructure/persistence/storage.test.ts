@@ -1,18 +1,10 @@
 import { execSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('node:fs');
-vi.mock('node:child_process');
-vi.mock('@actions/core', () => ({
-  info: vi.fn(),
-  debug: vi.fn(),
-}));
-
 import * as core from '@actions/core';
 import type { StargazerMap } from '@domain/stargazers';
 import type { History } from '@domain/types';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   commitAndPush,
   readHistory,
@@ -23,6 +15,13 @@ import {
   writeReport,
   writeStargazers,
 } from './storage';
+
+vi.mock('node:fs');
+vi.mock('node:child_process');
+vi.mock('@actions/core', () => ({
+  info: vi.fn(),
+  debug: vi.fn(),
+}));
 
 describe('readHistory', () => {
   beforeEach(() => {

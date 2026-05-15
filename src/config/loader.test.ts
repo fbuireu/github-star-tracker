@@ -22,13 +22,6 @@ vi.mock('fs', async (importOriginal) => {
   };
 });
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  vi.mocked(core.getInput).mockReturnValue('');
-  vi.mocked(fs.existsSync).mockReturnValue(false);
-  vi.mocked(fs.readFileSync).mockReturnValue('');
-});
-
 describe('parseList', () => {
   it('returns empty array for empty string', () => {
     expect(parseList('')).toEqual([]);
@@ -105,6 +98,13 @@ describe('parseNotificationThreshold', () => {
 });
 
 describe('loadConfigFile', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(core.getInput).mockReturnValue('');
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(fs.readFileSync).mockReturnValue('');
+  });
+
   it('returns empty object when file does not exist', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
     expect(loadConfigFile('star-tracker.yml')).toEqual({});
@@ -139,6 +139,13 @@ describe('loadConfigFile', () => {
 });
 
 describe('loadConfig', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(core.getInput).mockReturnValue('');
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(fs.readFileSync).mockReturnValue('');
+  });
+
   it('uses defaults when no config file and no inputs', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 

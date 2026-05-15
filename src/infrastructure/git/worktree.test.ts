@@ -1,6 +1,8 @@
 import { execSync } from 'node:child_process';
 import * as fs from 'node:fs';
+import * as core from '@actions/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, initializeDataBranch } from './worktree';
 
 vi.mock('node:fs');
 vi.mock('node:child_process');
@@ -8,9 +10,6 @@ vi.mock('@actions/core', () => ({
   info: vi.fn(),
   debug: vi.fn(),
 }));
-
-import * as core from '@actions/core';
-import { cleanup, initializeDataBranch } from './worktree';
 
 describe('initializeDataBranch', () => {
   beforeEach(() => {

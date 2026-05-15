@@ -1,4 +1,7 @@
+import * as core from '@actions/core';
+import nodemailer from 'nodemailer';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { type EmailConfig, getEmailConfig, sendEmail } from './email';
 
 vi.mock('@actions/core', () => ({
   getInput: vi.fn().mockReturnValue(''),
@@ -16,15 +19,11 @@ vi.mock('nodemailer', () => {
   };
 });
 
-import * as core from '@actions/core';
-import nodemailer from 'nodemailer';
-import { type EmailConfig, getEmailConfig, sendEmail } from './email';
-
-beforeEach(() => {
-  vi.clearAllMocks();
-});
-
 describe('getEmailConfig', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('returns null when smtp-host is not provided', () => {
     vi.mocked(core.getInput).mockReturnValue('');
     expect(getEmailConfig('en')).toBeNull();
@@ -70,6 +69,10 @@ describe('getEmailConfig', () => {
 });
 
 describe('sendEmail', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   const emailConfig: EmailConfig = {
     host: 'smtp.example.com',
     port: 587,
