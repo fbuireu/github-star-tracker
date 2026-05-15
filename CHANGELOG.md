@@ -1,3 +1,10 @@
+## [1.8.5](https://github.com/fbuireu/github-star-tracker/compare/v1.8.4...v1.8.5) (2026-05-15)
+
+
+### Bug Fixes
+
+* tests naming conventions ([5b61f27](https://github.com/fbuireu/github-star-tracker/commit/5b61f27f1205bf0b5bd0c9f92b19fb4a63dd0cf6))
+
 ## [1.8.4](https://github.com/fbuireu/github-star-tracker/compare/v1.8.3...v1.8.4) (2026-04-13)
 
 
