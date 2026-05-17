@@ -33,7 +33,6 @@ jobs:
       - name: Approve and auto-merge
         if: steps.auto-merge-check.outputs.should-merge == 'true'
         run: |
-          echo "Auto-merging ${{ steps.metadata.outputs.dependency-type }} dependency: ${{ steps.metadata.outputs.dependency-names }}"
           gh pr review --approve "$PR_URL"
           gh pr merge --auto --squash "$PR_URL"
         env:
