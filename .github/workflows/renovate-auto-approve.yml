@@ -1,6 +1,6 @@
 name: Renovate auto-approve
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened, labeled]
 permissions:
   pull-requests: write
