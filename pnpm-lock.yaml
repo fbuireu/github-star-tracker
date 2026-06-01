@@ -18,8 +18,8 @@ importers:
         specifier: 4.1.1
         version: 4.1.1
       nodemailer:
-        specifier: 8.0.7
-        version: 8.0.7
+        specifier: 8.0.9
+        version: 8.0.9
     devDependencies:
       '@biomejs/biome':
         specifier: 2.4.15
@@ -1522,8 +1522,8 @@ packages:
     resolution: {integrity: sha512-Z3lTE9pLaJF47NyMhd4ww1yFTAP8YhYI8SleJiHzM46Fgpm5cnNzSl9XfzFNqbaz+VlJrIj3fXQ4DeN1Rjm6cw==}
     engines: {node: '>=18'}
 
-  nodemailer@8.0.7:
-    resolution: {integrity: sha512-pkjE4mkBzQjdJT4/UmlKl3pX0rC9fZmjh7c6C9o7lv66Ac6w9WCnzPzhbPNxwZAzlF4mdq4CSWB5+FbK6FWCow==}
+  nodemailer@8.0.9:
+    resolution: {integrity: sha512-5ofa7BUN8+C+Hckh5V2GjeeOGRQBx0CJQA6KxrvuZfC8iU4/q7sLn8XrtEEhJkjV6HdyIiQs7Bba6bTao8JhkA==}
     engines: {node: '>=6.0.0'}
 
   normalize-package-data@6.0.2:
@@ -3626,7 +3626,7 @@ snapshots:
       emojilib: 2.4.0
       skin-tone: 2.0.0
 
-  nodemailer@8.0.7: {}
+  nodemailer@8.0.9: {}
 
   normalize-package-data@6.0.2:
     dependencies:
