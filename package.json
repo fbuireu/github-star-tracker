@@ -31,7 +31,7 @@
   "engines": {
     "node": "v26.2.0"
   },
-  "packageManager": "pnpm@11.4.0",
+  "packageManager": "pnpm@11.5.0",
   "scripts": {
     "prepare": "husky",
     "build": "tsx esbuild.config.ts",
