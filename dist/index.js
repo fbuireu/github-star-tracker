@@ -19573,11 +19573,342 @@ var require_dist = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/fetch/cookies.js
-var require_cookies2 = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/fetch/cookies.js"(exports2, module2) {
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/punycode/index.js
+var require_punycode = __commonJS({
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/punycode/index.js"(exports2, module2) {
+    "use strict";
+    var maxInt = 2147483647;
+    var base = 36;
+    var tMin = 1;
+    var tMax = 26;
+    var skew = 38;
+    var damp = 700;
+    var initialBias = 72;
+    var initialN = 128;
+    var delimiter = "-";
+    var regexPunycode = /^xn--/;
+    var regexNonASCII = /[^\0-\x7F]/;
+    var regexSeparators = /[\x2E\u3002\uFF0E\uFF61]/g;
+    var errors = {
+      overflow: "Overflow: input needs wider integers to process",
+      "not-basic": "Illegal input >= 0x80 (not a basic code point)",
+      "invalid-input": "Invalid input"
+    };
+    var baseMinusTMin = base - tMin;
+    var floor = Math.floor;
+    var stringFromCharCode = String.fromCharCode;
+    function error2(type) {
+      throw new RangeError(errors[type]);
+    }
+    function map(array, callback) {
+      const result = [];
+      let length = array.length;
+      while (length--) {
+        result[length] = callback(array[length]);
+      }
+      return result;
+    }
+    function mapDomain(domain, callback) {
+      const parts = domain.split("@");
+      let result = "";
+      if (parts.length > 1) {
+        result = parts[0] + "@";
+        domain = parts[1];
+      }
+      domain = domain.replace(regexSeparators, ".");
+      const labels = domain.split(".");
+      const encoded = map(labels, callback).join(".");
+      return result + encoded;
+    }
+    function ucs2decode(string) {
+      const output = [];
+      let counter = 0;
+      const length = string.length;
+      while (counter < length) {
+        const value = string.charCodeAt(counter++);
+        if (value >= 55296 && value <= 56319 && counter < length) {
+          const extra = string.charCodeAt(counter++);
+          if ((extra & 64512) == 56320) {
+            output.push(((value & 1023) << 10) + (extra & 1023) + 65536);
+          } else {
+            output.push(value);
+            counter--;
+          }
+        } else {
+          output.push(value);
+        }
+      }
+      return output;
+    }
+    var ucs2encode = (codePoints) => String.fromCodePoint(...codePoints);
+    var basicToDigit = function(codePoint) {
+      if (codePoint >= 48 && codePoint < 58) {
+        return 26 + (codePoint - 48);
+      }
+      if (codePoint >= 65 && codePoint < 91) {
+        return codePoint - 65;
+      }
+      if (codePoint >= 97 && codePoint < 123) {
+        return codePoint - 97;
+      }
+      return base;
+    };
+    var digitToBasic = function(digit, flag) {
+      return digit + 22 + 75 * (digit < 26) - ((flag != 0) << 5);
+    };
+    var adapt = function(delta, numPoints, firstTime) {
+      let k = 0;
+      delta = firstTime ? floor(delta / damp) : delta >> 1;
+      delta += floor(delta / numPoints);
+      for (
+        ;
+        /* no initialization */
+        delta > baseMinusTMin * tMax >> 1;
+        k += base
+      ) {
+        delta = floor(delta / baseMinusTMin);
+      }
+      return floor(k + (baseMinusTMin + 1) * delta / (delta + skew));
+    };
+    var decode = function(input) {
+      const output = [];
+      const inputLength = input.length;
+      let i = 0;
+      let n = initialN;
+      let bias = initialBias;
+      let basic = input.lastIndexOf(delimiter);
+      if (basic < 0) {
+        basic = 0;
+      }
+      for (let j = 0; j < basic; ++j) {
+        if (input.charCodeAt(j) >= 128) {
+          error2("not-basic");
+        }
+        output.push(input.charCodeAt(j));
+      }
+      for (let index = basic > 0 ? basic + 1 : 0; index < inputLength; ) {
+        const oldi = i;
+        for (let w = 1, k = base; ; k += base) {
+          if (index >= inputLength) {
+            error2("invalid-input");
+          }
+          const digit = basicToDigit(input.charCodeAt(index++));
+          if (digit >= base) {
+            error2("invalid-input");
+          }
+          if (digit > floor((maxInt - i) / w)) {
+            error2("overflow");
+          }
+          i += digit * w;
+          const t = k <= bias ? tMin : k >= bias + tMax ? tMax : k - bias;
+          if (digit < t) {
+            break;
+          }
+          const baseMinusT = base - t;
+          if (w > floor(maxInt / baseMinusT)) {
+            error2("overflow");
+          }
+          w *= baseMinusT;
+        }
+        const out = output.length + 1;
+        bias = adapt(i - oldi, out, oldi == 0);
+        if (floor(i / out) > maxInt - n) {
+          error2("overflow");
+        }
+        n += floor(i / out);
+        i %= out;
+        output.splice(i++, 0, n);
+      }
+      return String.fromCodePoint(...output);
+    };
+    var encode = function(input) {
+      const output = [];
+      input = ucs2decode(input);
+      const inputLength = input.length;
+      let n = initialN;
+      let delta = 0;
+      let bias = initialBias;
+      for (const currentValue of input) {
+        if (currentValue < 128) {
+          output.push(stringFromCharCode(currentValue));
+        }
+      }
+      const basicLength = output.length;
+      let handledCPCount = basicLength;
+      if (basicLength) {
+        output.push(delimiter);
+      }
+      while (handledCPCount < inputLength) {
+        let m = maxInt;
+        for (const currentValue of input) {
+          if (currentValue >= n && currentValue < m) {
+            m = currentValue;
+          }
+        }
+        const handledCPCountPlusOne = handledCPCount + 1;
+        if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
+          error2("overflow");
+        }
+        delta += (m - n) * handledCPCountPlusOne;
+        n = m;
+        for (const currentValue of input) {
+          if (currentValue < n && ++delta > maxInt) {
+            error2("overflow");
+          }
+          if (currentValue === n) {
+            let q = delta;
+            for (let k = base; ; k += base) {
+              const t = k <= bias ? tMin : k >= bias + tMax ? tMax : k - bias;
+              if (q < t) {
+                break;
+              }
+              const qMinusT = q - t;
+              const baseMinusT = base - t;
+              output.push(stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0)));
+              q = floor(qMinusT / baseMinusT);
+            }
+            output.push(stringFromCharCode(digitToBasic(q, 0)));
+            bias = adapt(delta, handledCPCountPlusOne, handledCPCount === basicLength);
+            delta = 0;
+            ++handledCPCount;
+          }
+        }
+        ++delta;
+        ++n;
+      }
+      return output.join("");
+    };
+    var toUnicode = function(input) {
+      return mapDomain(input, function(string) {
+        return regexPunycode.test(string) ? decode(string.slice(4).toLowerCase()) : string;
+      });
+    };
+    var toASCII = function(input) {
+      return mapDomain(input, function(string) {
+        return regexNonASCII.test(string) ? "xn--" + encode(string) : string;
+      });
+    };
+    var punycode = {
+      /**
+       * A string representing the current Punycode.js version number.
+       * @memberOf punycode
+       * @type String
+       */
+      version: "2.3.1",
+      /**
+       * An object of methods to convert from JavaScript's internal character
+       * representation (UCS-2) to Unicode code points, and back.
+       * @see <https://mathiasbynens.be/notes/javascript-encoding>
+       * @memberOf punycode
+       * @type Object
+       */
+      ucs2: {
+        decode: ucs2decode,
+        encode: ucs2encode
+      },
+      decode,
+      encode,
+      toASCII,
+      toUnicode
+    };
+    module2.exports = punycode;
+  }
+});
+
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/shared/url.js
+var require_url = __commonJS({
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/shared/url.js"(exports2, module2) {
     "use strict";
     var urllib = require("url");
+    var punycode = require_punycode();
+    var URLImpl = typeof URL !== "undefined" && URL || urllib.URL;
+    var SLASHLESS_AUTHORITY = /^([a-zA-Z][a-zA-Z0-9+.-]*:)(?!\/\/)(.+)$/;
+    function safeDecode(str) {
+      try {
+        return decodeURIComponent(str);
+      } catch (_err) {
+        return str;
+      }
+    }
+    function normalizeHostname(raw) {
+      let hostname = raw || "";
+      if (!hostname) {
+        return "";
+      }
+      if (hostname.charAt(0) === "[" && hostname.charAt(hostname.length - 1) === "]") {
+        return hostname.slice(1, -1);
+      }
+      return punycode.toASCII(safeDecode(hostname));
+    }
+    module2.exports.parse = (input, parseQueryString) => {
+      input = input || "";
+      if (!URLImpl) {
+        return urllib.parse(input, parseQueryString);
+      }
+      const slashless = SLASHLESS_AUTHORITY.exec(input);
+      const normalized = slashless ? slashless[1] + "//" + slashless[2] : input;
+      let u;
+      try {
+        u = new URLImpl(normalized);
+      } catch (_err) {
+        return urllib.parse(input, parseQueryString);
+      }
+      const hostname = normalizeHostname(u.hostname);
+      const port = u.port || null;
+      const pathname = u.pathname || null;
+      const search = u.search || null;
+      let auth2 = null;
+      if (u.username || u.password) {
+        auth2 = safeDecode(u.username) + (u.password ? ":" + safeDecode(u.password) : "");
+      }
+      let query;
+      if (parseQueryString) {
+        query = /* @__PURE__ */ Object.create(null);
+        u.searchParams.forEach((value, key) => {
+          if (Object.prototype.hasOwnProperty.call(query, key)) {
+            if (Array.isArray(query[key])) {
+              query[key].push(value);
+            } else {
+              query[key] = [query[key], value];
+            }
+          } else {
+            query[key] = value;
+          }
+        });
+      } else {
+        query = search ? search.slice(1) : null;
+      }
+      return {
+        protocol: u.protocol || null,
+        host: u.host || null,
+        hostname,
+        port,
+        pathname,
+        search,
+        path: (pathname || "") + (search || "") || null,
+        href: u.href,
+        auth: auth2,
+        query
+      };
+    };
+    module2.exports.resolve = (from, to) => {
+      if (!URLImpl) {
+        return urllib.resolve(from, to);
+      }
+      try {
+        return new URLImpl(to, from).href;
+      } catch (_err) {
+        return urllib.resolve(from, to);
+      }
+    };
+  }
+});
+
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/fetch/cookies.js
+var require_cookies2 = __commonJS({
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/fetch/cookies.js"(exports2, module2) {
+    "use strict";
+    var urllib = require_url();
     var SESSION_TIMEOUT = 1800;
     var Cookies = class {
       constructor(options) {
@@ -19781,12 +20112,12 @@ var require_cookies2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/package.json
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/package.json
 var require_package = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/package.json"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/package.json"(exports2, module2) {
     module2.exports = {
       name: "nodemailer",
-      version: "8.0.11",
+      version: "9.0.0",
       description: "Easy as cake e-mail sending from your Node.js applications",
       main: "lib/nodemailer.js",
       scripts: {
@@ -19834,9 +20165,9 @@ var require_package = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/errors.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/errors.js
 var require_errors2 = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/errors.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/errors.js"(exports2, module2) {
     "use strict";
     var ERROR_CODES = {
       // Connection errors
@@ -19875,13 +20206,13 @@ var require_errors2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/fetch/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/fetch/index.js
 var require_fetch2 = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/fetch/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/fetch/index.js"(exports2, module2) {
     "use strict";
     var http = require("http");
     var https = require("https");
-    var urllib = require("url");
+    var urllib = require_url();
     var zlib = require("zlib");
     var { PassThrough } = require("stream");
     var Cookies = require_cookies2();
@@ -19980,7 +20311,10 @@ var require_fetch2 = __commonJS({
         path: parsed.path,
         port: parsed.port ? parsed.port : parsed.protocol === "https:" ? 443 : 80,
         headers,
-        rejectUnauthorized: false,
+        // Validate TLS certificates by default. Callers that genuinely need to
+        // reach a self-signed/internal host opt out explicitly with
+        // options.tls = { rejectUnauthorized: false }.
+        rejectUnauthorized: true,
         agent: false
       };
       if (options.tls) {
@@ -20051,7 +20385,19 @@ var require_fetch2 = __commonJS({
           }
           options.method = "GET";
           options.body = false;
-          return nmfetch(urllib.resolve(url, res.headers.location), options);
+          const redirectUrl = urllib.resolve(url, res.headers.location);
+          const redirectParsed = urllib.parse(redirectUrl);
+          const crossHost = redirectParsed.hostname !== parsed.hostname;
+          const downgrade = parsed.protocol === "https:" && redirectParsed.protocol === "http:";
+          if (options.headers && (crossHost || downgrade)) {
+            const sensitive = ["authorization", "cookie", "proxy-authorization"];
+            Object.keys(options.headers).forEach((key) => {
+              if (sensitive.includes(key.toLowerCase())) {
+                delete options.headers[key];
+              }
+            });
+          }
+          return nmfetch(redirectUrl, options);
         }
         fetchRes.statusCode = res.statusCode;
         fetchRes.headers = res.headers;
@@ -20112,11 +20458,11 @@ var require_fetch2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/shared/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/shared/index.js
 var require_shared = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/shared/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/shared/index.js"(exports2, module2) {
     "use strict";
-    var urllib = require("url");
+    var urllib = require_url();
     var util = require("util");
     var fs6 = require("fs");
     var nmfetch = require_fetch2();
@@ -20534,7 +20880,7 @@ var require_shared = __commonJS({
               callback(err);
             });
           }
-          return resolveStream(nmfetch(content.path || content.href), callback);
+          return resolveStream(nmfetch(content.path || content.href, { headers: content.httpHeaders, tls: content.tls }), callback);
         } else if (/^data:/i.test(content.path || content.href)) {
           const parsedDataUri = module2.exports.parseDataURI(content.path || content.href);
           return callback(null, parsedDataUri && parsedDataUri.data ? parsedDataUri.data : Buffer.alloc(0));
@@ -20655,9 +21001,9 @@ var require_shared = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mime-funcs/mime-types.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mime-funcs/mime-types.js
 var require_mime_types = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mime-funcs/mime-types.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mime-funcs/mime-types.js"(exports2, module2) {
     "use strict";
     var path4 = require("path");
     var defaultMimeType = "application/octet-stream";
@@ -22759,251 +23105,9 @@ var require_mime_types = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/punycode/index.js
-var require_punycode = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/punycode/index.js"(exports2, module2) {
-    "use strict";
-    var maxInt = 2147483647;
-    var base = 36;
-    var tMin = 1;
-    var tMax = 26;
-    var skew = 38;
-    var damp = 700;
-    var initialBias = 72;
-    var initialN = 128;
-    var delimiter = "-";
-    var regexPunycode = /^xn--/;
-    var regexNonASCII = /[^\0-\x7F]/;
-    var regexSeparators = /[\x2E\u3002\uFF0E\uFF61]/g;
-    var errors = {
-      overflow: "Overflow: input needs wider integers to process",
-      "not-basic": "Illegal input >= 0x80 (not a basic code point)",
-      "invalid-input": "Invalid input"
-    };
-    var baseMinusTMin = base - tMin;
-    var floor = Math.floor;
-    var stringFromCharCode = String.fromCharCode;
-    function error2(type) {
-      throw new RangeError(errors[type]);
-    }
-    function map(array, callback) {
-      const result = [];
-      let length = array.length;
-      while (length--) {
-        result[length] = callback(array[length]);
-      }
-      return result;
-    }
-    function mapDomain(domain, callback) {
-      const parts = domain.split("@");
-      let result = "";
-      if (parts.length > 1) {
-        result = parts[0] + "@";
-        domain = parts[1];
-      }
-      domain = domain.replace(regexSeparators, ".");
-      const labels = domain.split(".");
-      const encoded = map(labels, callback).join(".");
-      return result + encoded;
-    }
-    function ucs2decode(string) {
-      const output = [];
-      let counter = 0;
-      const length = string.length;
-      while (counter < length) {
-        const value = string.charCodeAt(counter++);
-        if (value >= 55296 && value <= 56319 && counter < length) {
-          const extra = string.charCodeAt(counter++);
-          if ((extra & 64512) == 56320) {
-            output.push(((value & 1023) << 10) + (extra & 1023) + 65536);
-          } else {
-            output.push(value);
-            counter--;
-          }
-        } else {
-          output.push(value);
-        }
-      }
-      return output;
-    }
-    var ucs2encode = (codePoints) => String.fromCodePoint(...codePoints);
-    var basicToDigit = function(codePoint) {
-      if (codePoint >= 48 && codePoint < 58) {
-        return 26 + (codePoint - 48);
-      }
-      if (codePoint >= 65 && codePoint < 91) {
-        return codePoint - 65;
-      }
-      if (codePoint >= 97 && codePoint < 123) {
-        return codePoint - 97;
-      }
-      return base;
-    };
-    var digitToBasic = function(digit, flag) {
-      return digit + 22 + 75 * (digit < 26) - ((flag != 0) << 5);
-    };
-    var adapt = function(delta, numPoints, firstTime) {
-      let k = 0;
-      delta = firstTime ? floor(delta / damp) : delta >> 1;
-      delta += floor(delta / numPoints);
-      for (
-        ;
-        /* no initialization */
-        delta > baseMinusTMin * tMax >> 1;
-        k += base
-      ) {
-        delta = floor(delta / baseMinusTMin);
-      }
-      return floor(k + (baseMinusTMin + 1) * delta / (delta + skew));
-    };
-    var decode = function(input) {
-      const output = [];
-      const inputLength = input.length;
-      let i = 0;
-      let n = initialN;
-      let bias = initialBias;
-      let basic = input.lastIndexOf(delimiter);
-      if (basic < 0) {
-        basic = 0;
-      }
-      for (let j = 0; j < basic; ++j) {
-        if (input.charCodeAt(j) >= 128) {
-          error2("not-basic");
-        }
-        output.push(input.charCodeAt(j));
-      }
-      for (let index = basic > 0 ? basic + 1 : 0; index < inputLength; ) {
-        const oldi = i;
-        for (let w = 1, k = base; ; k += base) {
-          if (index >= inputLength) {
-            error2("invalid-input");
-          }
-          const digit = basicToDigit(input.charCodeAt(index++));
-          if (digit >= base) {
-            error2("invalid-input");
-          }
-          if (digit > floor((maxInt - i) / w)) {
-            error2("overflow");
-          }
-          i += digit * w;
-          const t = k <= bias ? tMin : k >= bias + tMax ? tMax : k - bias;
-          if (digit < t) {
-            break;
-          }
-          const baseMinusT = base - t;
-          if (w > floor(maxInt / baseMinusT)) {
-            error2("overflow");
-          }
-          w *= baseMinusT;
-        }
-        const out = output.length + 1;
-        bias = adapt(i - oldi, out, oldi == 0);
-        if (floor(i / out) > maxInt - n) {
-          error2("overflow");
-        }
-        n += floor(i / out);
-        i %= out;
-        output.splice(i++, 0, n);
-      }
-      return String.fromCodePoint(...output);
-    };
-    var encode = function(input) {
-      const output = [];
-      input = ucs2decode(input);
-      const inputLength = input.length;
-      let n = initialN;
-      let delta = 0;
-      let bias = initialBias;
-      for (const currentValue of input) {
-        if (currentValue < 128) {
-          output.push(stringFromCharCode(currentValue));
-        }
-      }
-      const basicLength = output.length;
-      let handledCPCount = basicLength;
-      if (basicLength) {
-        output.push(delimiter);
-      }
-      while (handledCPCount < inputLength) {
-        let m = maxInt;
-        for (const currentValue of input) {
-          if (currentValue >= n && currentValue < m) {
-            m = currentValue;
-          }
-        }
-        const handledCPCountPlusOne = handledCPCount + 1;
-        if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
-          error2("overflow");
-        }
-        delta += (m - n) * handledCPCountPlusOne;
-        n = m;
-        for (const currentValue of input) {
-          if (currentValue < n && ++delta > maxInt) {
-            error2("overflow");
-          }
-          if (currentValue === n) {
-            let q = delta;
-            for (let k = base; ; k += base) {
-              const t = k <= bias ? tMin : k >= bias + tMax ? tMax : k - bias;
-              if (q < t) {
-                break;
-              }
-              const qMinusT = q - t;
-              const baseMinusT = base - t;
-              output.push(stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0)));
-              q = floor(qMinusT / baseMinusT);
-            }
-            output.push(stringFromCharCode(digitToBasic(q, 0)));
-            bias = adapt(delta, handledCPCountPlusOne, handledCPCount === basicLength);
-            delta = 0;
-            ++handledCPCount;
-          }
-        }
-        ++delta;
-        ++n;
-      }
-      return output.join("");
-    };
-    var toUnicode = function(input) {
-      return mapDomain(input, function(string) {
-        return regexPunycode.test(string) ? decode(string.slice(4).toLowerCase()) : string;
-      });
-    };
-    var toASCII = function(input) {
-      return mapDomain(input, function(string) {
-        return regexNonASCII.test(string) ? "xn--" + encode(string) : string;
-      });
-    };
-    var punycode = {
-      /**
-       * A string representing the current Punycode.js version number.
-       * @memberOf punycode
-       * @type String
-       */
-      version: "2.3.1",
-      /**
-       * An object of methods to convert from JavaScript's internal character
-       * representation (UCS-2) to Unicode code points, and back.
-       * @see <https://mathiasbynens.be/notes/javascript-encoding>
-       * @memberOf punycode
-       * @type Object
-       */
-      ucs2: {
-        decode: ucs2decode,
-        encode: ucs2encode
-      },
-      decode,
-      encode,
-      toASCII,
-      toUnicode
-    };
-    module2.exports = punycode;
-  }
-});
-
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/base64/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/base64/index.js
 var require_base64 = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/base64/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/base64/index.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     function encode(buffer) {
@@ -23100,9 +23204,9 @@ var require_base64 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/qp/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/qp/index.js
 var require_qp = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/qp/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/qp/index.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var QP_RANGES = [
@@ -23264,9 +23368,9 @@ var require_qp = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mime-funcs/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mime-funcs/index.js
 var require_mime_funcs = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mime-funcs/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mime-funcs/index.js"(exports2, module2) {
     "use strict";
     var base64 = require_base64();
     var qp = require_qp();
@@ -23755,9 +23859,9 @@ var require_mime_funcs = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/addressparser/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/addressparser/index.js
 var require_addressparser = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/addressparser/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/addressparser/index.js"(exports2, module2) {
     "use strict";
     function _handleAddress(tokens, depth) {
       let isGroup = false;
@@ -24039,9 +24143,9 @@ var require_addressparser = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mime-node/last-newline.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mime-node/last-newline.js
 var require_last_newline = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mime-node/last-newline.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mime-node/last-newline.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var LastNewline = class extends Transform {
@@ -24072,9 +24176,9 @@ var require_last_newline = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mime-node/le-windows.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mime-node/le-windows.js
 var require_le_windows = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mime-node/le-windows.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mime-node/le-windows.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var LeWindows = class extends Transform {
@@ -24114,9 +24218,9 @@ var require_le_windows = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mime-node/le-unix.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mime-node/le-unix.js
 var require_le_unix = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mime-node/le-unix.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mime-node/le-unix.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var LeUnix = class extends Transform {
@@ -24149,9 +24253,9 @@ var require_le_unix = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mime-node/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mime-node/index.js
 var require_mime_node = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mime-node/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mime-node/index.js"(exports2, module2) {
     "use strict";
     var crypto2 = require("crypto");
     var fs6 = require("fs");
@@ -24888,7 +24992,7 @@ var require_mime_node = __commonJS({
             });
             return contentStream;
           }
-          return nmfetch(content.href, { headers: content.httpHeaders });
+          return nmfetch(content.href, { headers: content.httpHeaders, tls: content.tls });
         }
         contentStream = new PassThrough();
         setImmediate(() => {
@@ -25141,9 +25245,9 @@ var require_mime_node = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mail-composer/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mail-composer/index.js
 var require_mail_composer = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mail-composer/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mail-composer/index.js"(exports2, module2) {
     "use strict";
     var MimeNode = require_mime_node();
     var mimeFuncs = require_mime_funcs();
@@ -25248,7 +25352,8 @@ var require_mail_composer = __commonJS({
           } else if (attachment.href) {
             data.content = {
               href: attachment.href,
-              httpHeaders: attachment.httpHeaders
+              httpHeaders: attachment.httpHeaders,
+              tls: attachment.tls
             };
           } else {
             data.content = attachment.content || "";
@@ -25623,9 +25728,9 @@ var require_mail_composer = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/dkim/message-parser.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/dkim/message-parser.js
 var require_message_parser = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/dkim/message-parser.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/dkim/message-parser.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var MessageParser = class extends Transform {
@@ -25752,9 +25857,9 @@ var require_message_parser = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/dkim/relaxed-body.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/dkim/relaxed-body.js
 var require_relaxed_body = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/dkim/relaxed-body.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/dkim/relaxed-body.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var crypto2 = require("crypto");
@@ -25861,9 +25966,9 @@ var require_relaxed_body = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/dkim/sign.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/dkim/sign.js
 var require_sign = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/dkim/sign.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/dkim/sign.js"(exports2, module2) {
     "use strict";
     var punycode = require_punycode();
     var mimeFuncs = require_mime_funcs();
@@ -25934,9 +26039,9 @@ var require_sign = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/dkim/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/dkim/index.js
 var require_dkim = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/dkim/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/dkim/index.js"(exports2, module2) {
     "use strict";
     var MessageParser = require_message_parser();
     var RelaxedBody = require_relaxed_body();
@@ -26129,23 +26234,28 @@ var require_dkim = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/smtp-connection/http-proxy-client.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/smtp-connection/http-proxy-client.js
 var require_http_proxy_client = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/smtp-connection/http-proxy-client.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/smtp-connection/http-proxy-client.js"(exports2, module2) {
     "use strict";
     var net = require("net");
     var tls = require("tls");
-    var urllib = require("url");
+    var urllib = require_url();
     var errors = require_errors2();
-    function httpProxyClient(proxyUrl, destinationPort, destinationHost, callback) {
+    function httpProxyClient(proxyUrl, destinationPort, destinationHost, tlsOptions, callback) {
+      if (typeof tlsOptions === "function") {
+        callback = tlsOptions;
+        tlsOptions = {};
+      }
+      tlsOptions = tlsOptions || {};
       const proxy = urllib.parse(proxyUrl);
-      const options = {
+      const connectOptions = {
         host: proxy.hostname,
         port: Number(proxy.port) ? Number(proxy.port) : proxy.protocol === "https:" ? 443 : 80
       };
       let connect;
       if (proxy.protocol === "https:") {
-        options.rejectUnauthorized = false;
+        connectOptions.rejectUnauthorized = tlsOptions.rejectUnauthorized !== false;
         connect = tls.connect.bind(tls);
       } else {
         connect = net.connect.bind(net);
@@ -26168,7 +26278,7 @@ var require_http_proxy_client = __commonJS({
         err.code = "ETIMEDOUT";
         tempSocketErr(err);
       };
-      socket = connect(options, () => {
+      socket = connect(connectOptions, () => {
         if (finished) {
           return;
         }
@@ -26227,9 +26337,9 @@ var require_http_proxy_client = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mailer/mail-message.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mailer/mail-message.js
 var require_mail_message = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mailer/mail-message.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mailer/mail-message.js"(exports2, module2) {
     "use strict";
     var shared = require_shared();
     var MimeNode = require_mime_node();
@@ -26491,9 +26601,9 @@ var require_mail_message = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mailer/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mailer/index.js
 var require_mailer = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/mailer/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/mailer/index.js"(exports2, module2) {
     "use strict";
     var EventEmitter = require("events");
     var shared = require_shared();
@@ -26503,7 +26613,7 @@ var require_mailer = __commonJS({
     var httpProxyClient = require_http_proxy_client();
     var errors = require_errors2();
     var util = require("util");
-    var urllib = require("url");
+    var urllib = require_url();
     var packageData = require_package();
     var MailMessage = require_mail_message();
     var net = require("net");
@@ -26761,7 +26871,7 @@ var require_mailer = __commonJS({
             // Connect using a HTTP CONNECT method
             case "http":
             case "https":
-              httpProxyClient(proxy.href, options.port, options.host, (err2, socket) => {
+              httpProxyClient(proxy.href, options.port, options.host, this.options.tls || {}, (err2, socket) => {
                 if (err2) {
                   return callback(err2);
                 }
@@ -26882,9 +26992,9 @@ var require_mailer = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/smtp-connection/data-stream.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/smtp-connection/data-stream.js
 var require_data_stream = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/smtp-connection/data-stream.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/smtp-connection/data-stream.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var DataStream = class extends Transform {
@@ -26969,9 +27079,9 @@ var require_data_stream = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/smtp-connection/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/smtp-connection/index.js
 var require_smtp_connection = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/smtp-connection/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/smtp-connection/index.js"(exports2, module2) {
     "use strict";
     var packageInfo = require_package();
     var { EventEmitter } = require("events");
@@ -28445,9 +28555,9 @@ var require_smtp_connection = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/xoauth2/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/xoauth2/index.js
 var require_xoauth2 = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/xoauth2/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/xoauth2/index.js"(exports2, module2) {
     "use strict";
     var { Stream } = require("stream");
     var nmfetch = require_fetch2();
@@ -28805,9 +28915,9 @@ var require_xoauth2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/smtp-pool/pool-resource.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/smtp-pool/pool-resource.js
 var require_pool_resource = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/smtp-pool/pool-resource.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/smtp-pool/pool-resource.js"(exports2, module2) {
     "use strict";
     var SMTPConnection = require_smtp_connection();
     var assign = require_shared().assign;
@@ -29026,9 +29136,9 @@ var require_pool_resource = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/well-known/services.json
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/well-known/services.json
 var require_services = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/well-known/services.json"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/well-known/services.json"(exports2, module2) {
     module2.exports = {
       "1und1": {
         description: "1&1 Mail (German hosting provider)",
@@ -29566,9 +29676,9 @@ var require_services = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/well-known/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/well-known/index.js
 var require_well_known = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/well-known/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/well-known/index.js"(exports2, module2) {
     "use strict";
     var services = require_services();
     var normalized = {};
@@ -29602,9 +29712,9 @@ var require_well_known = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/smtp-pool/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/smtp-pool/index.js
 var require_smtp_pool = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/smtp-pool/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/smtp-pool/index.js"(exports2, module2) {
     "use strict";
     var EventEmitter = require("events");
     var PoolResource = require_pool_resource();
@@ -30141,9 +30251,9 @@ var require_smtp_pool = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/smtp-transport/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/smtp-transport/index.js
 var require_smtp_transport = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/smtp-transport/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/smtp-transport/index.js"(exports2, module2) {
     "use strict";
     var EventEmitter = require("events");
     var SMTPConnection = require_smtp_connection();
@@ -30510,9 +30620,9 @@ var require_smtp_transport = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/sendmail-transport/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/sendmail-transport/index.js
 var require_sendmail_transport = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/sendmail-transport/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/sendmail-transport/index.js"(exports2, module2) {
     "use strict";
     var { spawn } = require("child_process");
     var packageData = require_package();
@@ -30686,9 +30796,9 @@ var require_sendmail_transport = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/stream-transport/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/stream-transport/index.js
 var require_stream_transport = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/stream-transport/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/stream-transport/index.js"(exports2, module2) {
     "use strict";
     var packageData = require_package();
     var shared = require_shared();
@@ -30807,9 +30917,9 @@ var require_stream_transport = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/json-transport/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/json-transport/index.js
 var require_json_transport = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/json-transport/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/json-transport/index.js"(exports2, module2) {
     "use strict";
     var packageData = require_package();
     var shared = require_shared();
@@ -30876,9 +30986,9 @@ var require_json_transport = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/ses-transport/index.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/ses-transport/index.js
 var require_ses_transport = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/ses-transport/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/ses-transport/index.js"(exports2, module2) {
     "use strict";
     var EventEmitter = require("events");
     var packageData = require_package();
@@ -31069,9 +31179,9 @@ var require_ses_transport = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/nodemailer.js
+// node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/nodemailer.js
 var require_nodemailer = __commonJS({
-  "node_modules/.pnpm/nodemailer@8.0.11/node_modules/nodemailer/lib/nodemailer.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.0/node_modules/nodemailer/lib/nodemailer.js"(exports2, module2) {
     "use strict";
     var Mailer = require_mailer();
     var shared = require_shared();
@@ -31672,6 +31782,9 @@ var ExitCode;
   ExitCode2[ExitCode2["Success"] = 0] = "Success";
   ExitCode2[ExitCode2["Failure"] = 1] = "Failure";
 })(ExitCode || (ExitCode = {}));
+function setSecret(secret) {
+  issueCommand("add-mask", {}, secret);
+}
 function getInput(name, options) {
   const val = process.env[`INPUT_${name.replace(/ /g, "_").toUpperCase()}`] || "";
   if (options && options.required && !val) {
@@ -32870,10 +32983,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -35165,7 +35278,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35288,7 +35401,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -38850,7 +38963,12 @@ function writeCsv({ dataDir, csv }) {
   const filePath = path3.join(dataDir, "stars-data.csv");
   fs5.writeFileSync(filePath, csv);
 }
-function commitAndPush({ dataDir, dataBranch, message }) {
+function commitAndPush({
+  dataDir,
+  dataBranch,
+  message,
+  token
+}) {
   const cwd = path3.resolve(dataDir);
   execute({ cmd: "git add -A", options: { cwd } });
   try {
@@ -38861,7 +38979,12 @@ function commitAndPush({ dataDir, dataBranch, message }) {
     debug("Staged changes detected, proceeding with commit");
   }
   execute({ cmd: `git commit -m "${message}"`, options: { cwd } });
-  execute({ cmd: `git push origin HEAD:${dataBranch}`, options: { cwd } });
+  const basicCredential = Buffer.from(`x-access-token:${token}`).toString("base64");
+  setSecret(basicCredential);
+  execute({
+    cmd: `git -c http.extraheader="AUTHORIZATION: basic ${basicCredential}" push origin HEAD:${dataBranch}`,
+    options: { cwd }
+  });
   info(`Data committed and pushed to ${dataBranch}`);
   return true;
 }
@@ -40078,7 +40201,7 @@ async function trackStars() {
         }
       }
       const commitMsg = `Update star data: ${summary2.totalStars} total (${deltaIndicator(summary2.totalDelta)})`;
-      commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg });
+      commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg, token });
       setOutputs({
         summary: summary2,
         markdownReport,

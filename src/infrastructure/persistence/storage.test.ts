@@ -21,6 +21,7 @@ vi.mock('node:child_process');
 vi.mock('@actions/core', () => ({
   info: vi.fn(),
   debug: vi.fn(),
+  setSecret: vi.fn(),
 }));
 
 describe('readHistory', () => {
@@ -212,13 +213,17 @@ describe('commitAndPush', () => {
       dataDir: '/data',
       dataBranch: 'star-tracker-data',
       message: 'Update data',
+      token: 'fake-token',
     });
+
+    const basicCredential = Buffer.from('x-access-token:fake-token').toString('base64');
 
     expect(result).toBe(true);
     expect(execSync).toHaveBeenCalledWith('git add -A', expect.any(Object));
     expect(execSync).toHaveBeenCalledWith('git commit -m "Update data"', expect.any(Object));
+    expect(core.setSecret).toHaveBeenCalledWith(basicCredential);
     expect(execSync).toHaveBeenCalledWith(
-      'git push origin HEAD:star-tracker-data',
+      `git -c http.extraheader="AUTHORIZATION: basic ${basicCredential}" push origin HEAD:star-tracker-data`,
       expect.any(Object),
     );
     expect(core.info).toHaveBeenCalledWith('Data committed and pushed to star-tracker-data');
@@ -231,6 +236,7 @@ describe('commitAndPush', () => {
       dataDir: '/data',
       dataBranch: 'star-tracker-data',
       message: 'Update data',
+      token: 'fake-token',
     });
 
     expect(result).toBe(false);

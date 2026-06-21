@@ -104,9 +104,15 @@ interface CommitAndPushParams {
   dataDir: string;
   dataBranch: string;
   message: string;
+  token: string;
 }
 
-export function commitAndPush({ dataDir, dataBranch, message }: CommitAndPushParams): boolean {
+export function commitAndPush({
+  dataDir,
+  dataBranch,
+  message,
+  token,
+}: CommitAndPushParams): boolean {
   const cwd = path.resolve(dataDir);
 
   execute({ cmd: 'git add -A', options: { cwd } });
@@ -122,7 +128,14 @@ export function commitAndPush({ dataDir, dataBranch, message }: CommitAndPushPar
   }
 
   execute({ cmd: `git commit -m "${message}"`, options: { cwd } });
-  execute({ cmd: `git push origin HEAD:${dataBranch}`, options: { cwd } });
+
+  const basicCredential = Buffer.from(`x-access-token:${token}`).toString('base64');
+  core.setSecret(basicCredential);
+
+  execute({
+    cmd: `git -c http.extraheader="AUTHORIZATION: basic ${basicCredential}" push origin HEAD:${dataBranch}`,
+    options: { cwd },
+  });
 
   core.info(`Data committed and pushed to ${dataBranch}`);
 
