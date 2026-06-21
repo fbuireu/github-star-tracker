@@ -1,3 +1,11 @@
+## [1.8.7](https://github.com/fbuireu/github-star-tracker/compare/v1.8.6...v1.8.7) (2026-06-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency nodemailer to v9 ([#86](https://github.com/fbuireu/github-star-tracker/issues/86)) ([c12c009](https://github.com/fbuireu/github-star-tracker/commit/c12c009b6178943b015d55d54ee2628b45243b7c))
+* push changes permissions ([7562d2b](https://github.com/fbuireu/github-star-tracker/commit/7562d2b5a48045e8fe19e3f8f9354616c560979b))
+
 ## [1.8.6](https://github.com/fbuireu/github-star-tracker/compare/v1.8.5...v1.8.6) (2026-06-15)
 
 
