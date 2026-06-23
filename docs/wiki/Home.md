@@ -86,12 +86,13 @@ jobs:
   track:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - uses: fbuireu/github-star-tracker@v1
         with:
-          github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+          github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
 
-> **Note:** `GITHUB_STAR_TRACKER_TOKEN` must be a [Personal Access Token](https://github.com/settings/tokens) with `repo` or `public_repo` scope. The default `GITHUB_TOKEN` is not sufficient.
+> **Note:** `STAR_TRACKER_TOKEN` must be a [Personal Access Token](https://github.com/settings/tokens) with `repo` or `public_repo` scope. The default `GITHUB_TOKEN` is not sufficient.
 
 See **[Getting Started](Getting-Started)** for the full setup walkthrough.
 

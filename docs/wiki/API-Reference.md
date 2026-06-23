@@ -72,7 +72,7 @@ All outputs are strings (GitHub Actions requirement). Available in subsequent wo
   id: tracker
   uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 
 - name: Use outputs
   run: |

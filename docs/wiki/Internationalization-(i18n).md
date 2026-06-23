@@ -20,7 +20,7 @@ GitHub Star Tracker supports multiple languages for all user-facing content: rep
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     locale: 'es'
 ```
 

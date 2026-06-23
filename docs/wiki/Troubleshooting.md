@@ -27,9 +27,9 @@ Solutions for common issues with GitHub Star Tracker.
 **Fix:** Verify the secret name matches exactly:
 ```yaml
 # In workflow
-github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
-Must match the secret name `GITHUB_STAR_TRACKER_TOKEN` in **Settings > Secrets**.
+Must match the secret name `STAR_TRACKER_TOKEN` in **Settings > Secrets**.
 
 ---
 
@@ -76,7 +76,7 @@ git push origin --delete star-tracker-data
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
 
 ### Stale or Missing Data Branch
@@ -182,6 +182,20 @@ Or use `notification-threshold` with the built-in email to control frequency.
 ---
 
 ## Workflow
+
+### "fatal: not in a git directory" / "This action must run inside a checked-out repository"
+
+**Cause:** The workflow is missing the `actions/checkout` step. The action stores its data in a Git branch, so it needs the repository checked out before it runs.
+
+**Fix:** Add `actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3` as the first step:
+
+```yaml
+steps:
+  - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+  - uses: fbuireu/github-star-tracker@v1
+    with:
+      github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+```
 
 ### Workflow Doesn't Run on Schedule
 

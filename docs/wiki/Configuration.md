@@ -13,7 +13,7 @@ Set options directly in your workflow YAML:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     visibility: 'public'
     locale: 'es'
     include-charts: true
@@ -69,7 +69,7 @@ Action inputs always win. Missing values fall through to the config file, then t
 # Workflow
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     config-path: 'star-tracker.yml'
     locale: 'en'  # Overrides config file
 ```
@@ -99,7 +99,7 @@ Personal Access Token for GitHub API access.
 
 ```yaml
 with:
-  github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+  github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
 
 > The default `GITHUB_TOKEN` is **not sufficient**. See **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)**.

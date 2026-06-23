@@ -30,7 +30,7 @@ Simpler setup, proven reliability, optional expiration.
 1. Go to your repository's **Settings > Secrets and variables > Actions**
 2. Click **"New repository secret"**
 3. Create:
-   - **Name:** `GITHUB_STAR_TRACKER_TOKEN`
+   - **Name:** `STAR_TRACKER_TOKEN`
    - **Value:** paste the token
 4. Click **"Add secret"**
 
@@ -39,7 +39,7 @@ Simpler setup, proven reliability, optional expiration.
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
 
 ---

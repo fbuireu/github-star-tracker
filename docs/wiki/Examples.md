@@ -20,9 +20,10 @@ jobs:
   track:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - uses: fbuireu/github-star-tracker@v1
         with:
-          github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+          github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
 
 ### Public Repositories Only
@@ -30,7 +31,7 @@ jobs:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     visibility: 'public'
 ```
 
@@ -41,7 +42,7 @@ Excludes repos where you're a collaborator:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     visibility: 'owned'
 ```
 
@@ -50,7 +51,7 @@ Excludes repos where you're a collaborator:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     locale: 'es'
     include-charts: true
 ```
@@ -64,7 +65,7 @@ Excludes repos where you're a collaborator:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     min-stars: '10'
 ```
 
@@ -73,7 +74,7 @@ Excludes repos where you're a collaborator:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     exclude-repos: 'archived-repo,test-project'
 ```
 
@@ -82,7 +83,7 @@ Excludes repos where you're a collaborator:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     exclude-repos: '/^test-.*/, /^demo-.*/, old-project'
 ```
 
@@ -91,7 +92,7 @@ Excludes repos where you're a collaborator:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     only-repos: 'my-awesome-project,another-repo'
 ```
 
@@ -100,7 +101,7 @@ Excludes repos where you're a collaborator:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     include-archived: true
     include-forks: true
 ```
@@ -125,7 +126,7 @@ When the workflow runs on a GHES runner, the API URL is auto-detected from the `
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
 
 ### GHES with Email Notifications
@@ -152,7 +153,7 @@ When the workflow runs on a GHES runner, the API URL is auto-detected from the `
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     smtp-host: smtp.gmail.com
     smtp-port: '587'
     smtp-username: ${{ secrets.EMAIL_FROM }}
@@ -168,7 +169,7 @@ When the workflow runs on a GHES runner, the API URL is auto-detected from the `
   id: tracker
   uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     notification-threshold: '5'
 
 - name: Send email when threshold reached
@@ -190,7 +191,7 @@ When the workflow runs on a GHES runner, the API URL is auto-detected from the `
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     notification-threshold: 'auto'
     smtp-host: smtp.gmail.com
     smtp-port: '587'
@@ -211,7 +212,7 @@ When the workflow runs on a GHES runner, the API URL is auto-detected from the `
   id: tracker
   uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 
 - name: Post to Slack
   if: steps.tracker.outputs.stars-changed == 'true'
@@ -232,7 +233,7 @@ When the workflow runs on a GHES runner, the API URL is auto-detected from the `
   id: tracker
   uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 
 - name: Create issue on star loss
   if: steps.tracker.outputs.lost-stars > 0
@@ -256,7 +257,7 @@ When the workflow runs on a GHES runner, the API URL is auto-detected from the `
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     track-stargazers: true
 ```
 
@@ -269,7 +270,7 @@ New stargazers appear in reports with avatar, profile link, and starred date.
   id: tracker
   uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     track-stargazers: true
 
 - name: Log new stargazers
@@ -322,7 +323,7 @@ on:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     data-branch: 'my-star-data'
 ```
 
@@ -331,7 +332,7 @@ on:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     max-history: '104'
 ```
 
@@ -340,7 +341,7 @@ on:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     top-repos: '5'
 ```
 
@@ -349,7 +350,7 @@ on:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     config-path: '.github/star-tracker.yml'
 ```
 
@@ -375,7 +376,7 @@ notification_threshold: auto
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     visibility: 'public'
     include-archived: false
     include-forks: false
@@ -402,7 +403,7 @@ notification_threshold: auto
   id: tracker
   uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 
 - name: Save CSV report
   run: echo "${{ steps.tracker.outputs.report-csv }}" > star-data.csv
@@ -421,7 +422,7 @@ notification_threshold: auto
   id: tracker
   uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 
 - name: Save report
   run: echo "${{ steps.tracker.outputs.report }}" > star-report.md
@@ -440,7 +441,7 @@ notification_threshold: auto
   id: tracker
   uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 
 - name: Debug outputs
   run: |

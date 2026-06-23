@@ -358,10 +358,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - uses: ./  # Uses local action code
         with:
-          github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+          github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
 
 ### Debugging

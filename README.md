@@ -71,7 +71,7 @@ Every run, Star Tracker commits these artifacts to a dedicated data branch:
 
 1. Go to **[GitHub Settings > Tokens](https://github.com/settings/tokens)**
 2. Generate a **classic token** with `repo` or `public_repo` scope
-3. Add it as a **repository secret** named `GITHUB_STAR_TRACKER_TOKEN`
+3. Add it as a **repository secret** named `STAR_TRACKER_TOKEN`
 
 > [!NOTE]
 > The default `GITHUB_TOKEN` is not sufficient. See the **[PAT guide](<../../wiki/Personal-Access-Token-(PAT)>)** for details.
@@ -95,9 +95,10 @@ jobs:
   track:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - uses: fbuireu/github-star-tracker@v1
         with:
-          github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+          github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
 
 ### 3. Run and View
@@ -114,7 +115,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     visibility: 'public' # public | private | all | owned
     locale: 'es' # en | es | ca | it
     include-charts: true

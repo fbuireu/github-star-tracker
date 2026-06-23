@@ -42,11 +42,12 @@ jobs:
   track:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - name: Track stars
         id: tracker
         uses: fbuireu/github-star-tracker@v1
         with:
-          github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+          github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
           include-charts: true
 
       - name: Send email
@@ -72,7 +73,7 @@ Only send email when accumulated changes reach a threshold:
   id: tracker
   uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     notification-threshold: '5'
 
 - name: Send email when threshold reached
@@ -100,7 +101,7 @@ Use the action's integrated email functionality by providing SMTP inputs.
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     include-charts: true
     smtp-host: smtp.gmail.com
     smtp-port: '587'

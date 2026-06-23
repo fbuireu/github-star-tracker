@@ -76,7 +76,7 @@ Charts are **enabled by default** (`include-charts: true`).
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     include-charts: true
 ```
 

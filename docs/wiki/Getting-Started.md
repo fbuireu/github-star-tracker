@@ -20,7 +20,7 @@ GitHub Star Tracker requires a **Personal Access Token (PAT)** because the defau
 4. Click **"Generate token"** and **copy it immediately**
 5. In your repository, go to **Settings > Secrets and variables > Actions**
 6. Click **"New repository secret"**:
-   - **Name:** `GITHUB_STAR_TRACKER_TOKEN`
+   - **Name:** `STAR_TRACKER_TOKEN`
    - **Value:** paste your PAT
 
 > For detailed instructions (including fine-grained tokens), see **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)**.
@@ -46,9 +46,10 @@ jobs:
   track:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - uses: fbuireu/github-star-tracker@v1
         with:
-          github-token: ${{ secrets.GITHUB_STAR_TRACKER_TOKEN }}
+          github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
 
 That's the minimal setup. The action will track all your repositories with default settings.

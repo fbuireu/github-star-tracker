@@ -27,6 +27,10 @@ describe('initializeDataBranch', () => {
     const result = initializeDataBranch('star-tracker-data');
 
     expect(execSync).toHaveBeenCalledWith(
+      'git rev-parse --is-inside-work-tree',
+      expect.any(Object),
+    );
+    expect(execSync).toHaveBeenCalledWith(
       'git config user.name "github-actions[bot]"',
       expect.any(Object),
     );
@@ -37,9 +41,20 @@ describe('initializeDataBranch', () => {
     expect(result).toBe('.star-tracker-data');
   });
 
+  it('throws an actionable error when not inside a checked-out repository', () => {
+    vi.mocked(execSync).mockImplementationOnce(() => {
+      throw new Error('fatal: not in a git directory');
+    });
+
+    expect(() => initializeDataBranch('star-tracker-data')).toThrow(
+      'This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.',
+    );
+  });
+
   it('handles existing worktree removal', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(execSync)
+      .mockReturnValueOnce('')
       .mockReturnValueOnce('')
       .mockReturnValueOnce('')
       .mockReturnValueOnce('')
@@ -61,6 +76,7 @@ describe('initializeDataBranch', () => {
     const execError = new Error('Branch not found');
 
     vi.mocked(execSync)
+      .mockReturnValueOnce('')
       .mockReturnValueOnce('')
       .mockReturnValueOnce('')
       .mockImplementationOnce(() => {
@@ -88,6 +104,7 @@ describe('initializeDataBranch', () => {
     const execError = new Error('Worktree removal failed');
 
     vi.mocked(execSync)
+      .mockReturnValueOnce('')
       .mockReturnValueOnce('')
       .mockReturnValueOnce('')
       .mockReturnValueOnce('')
