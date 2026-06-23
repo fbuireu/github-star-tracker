@@ -1,3 +1,10 @@
+## [1.8.8](https://github.com/fbuireu/github-star-tracker/compare/v1.8.7...v1.8.8) (2026-06-23)
+
+
+### Bug Fixes
+
+* docs ([c04e513](https://github.com/fbuireu/github-star-tracker/commit/c04e513e37e3ae7604e7b06a307d35e030c14819))
+
 ## [1.8.7](https://github.com/fbuireu/github-star-tracker/compare/v1.8.6...v1.8.7) (2026-06-21)
 
 

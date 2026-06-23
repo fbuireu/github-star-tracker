@@ -38693,8 +38693,18 @@ ${detail}`);
 }
 
 // src/infrastructure/git/worktree.ts
+function ensureGitRepository() {
+  try {
+    execute({ cmd: "git rev-parse --is-inside-work-tree" });
+  } catch {
+    throw new Error(
+      'This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.'
+    );
+  }
+}
 function initializeDataBranch(dataBranch) {
   const dataDir = `.${dataBranch}`;
+  ensureGitRepository();
   execute({ cmd: 'git config user.name "github-actions[bot]"' });
   execute({ cmd: 'git config user.email "github-actions[bot]@users.noreply.github.com"' });
   let branchExists = false;
