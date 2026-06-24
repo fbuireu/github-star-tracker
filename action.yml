@@ -147,7 +147,7 @@ inputs:
     default: '30'
 
   chart-line-color:
-    description: 'Hex color (#rgb, #rgba, #rrggbb, #rrggbbaa) for the primary chart line, fill and points (star-history, per-repo and forecast historical series). Does not affect the comparison palette or forecast trend lines. (default #dfb317)'
+    description: 'Hex color for the primary chart line, fill and points (star-history, per-repo and forecast historical series); does not affect the comparison palette or forecast trend lines. Accepts 3/4/6/8-digit hex with or without a leading #. In YAML a bare # starts a comment, so either omit it (chart-line-color: 6b63ff) or quote it (chart-line-color: "#6b63ff"). (default #dfb317)'
     required: false
     default: ''
 
@@ -165,6 +165,11 @@ inputs:
     description: 'Which side to render the Y-axis value labels on: left or right. (default left)'
     required: false
     default: 'left'
+
+  chart-smoothing:
+    description: 'Smooth chart lines with a curve (true) or draw straight segments between points to reveal small spikes (false). (default true)'
+    required: false
+    default: 'true'
 
 outputs:
   report:

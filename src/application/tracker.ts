@@ -157,6 +157,7 @@ export async function trackStars(): Promise<void> {
           lineWidth: config.chartLineWidth,
           maxPoints: config.chartMaxPoints,
           yAxisSide: config.chartYAxisSide,
+          smoothing: config.chartSmoothing,
         });
         if (svgChart) {
           writeChart({ dataDir, filename: 'star-history.svg', svg: svgChart });
@@ -171,6 +172,7 @@ export async function trackStars(): Promise<void> {
             lineWidth: config.chartLineWidth,
             maxPoints: config.chartMaxPoints,
             yAxisSide: config.chartYAxisSide,
+            smoothing: config.chartSmoothing,
           });
 
           if (repoChart) {
@@ -188,6 +190,7 @@ export async function trackStars(): Promise<void> {
             lineWidth: config.chartLineWidth,
             maxPoints: config.chartMaxPoints,
             yAxisSide: config.chartYAxisSide,
+            smoothing: config.chartSmoothing,
           });
 
           if (comparisonChart) {
@@ -204,6 +207,7 @@ export async function trackStars(): Promise<void> {
             lineWidth: config.chartLineWidth,
             maxPoints: config.chartMaxPoints,
             yAxisSide: config.chartYAxisSide,
+            smoothing: config.chartSmoothing,
           });
 
           if (forecastChart) {

@@ -46,4 +46,5 @@ export const DEFAULTS: Config = {
   chartLineWidth: 2.5,
   chartMaxPoints: 30,
   chartYAxisSide: ChartAxisSide.LEFT,
+  chartSmoothing: true,
 } as const;

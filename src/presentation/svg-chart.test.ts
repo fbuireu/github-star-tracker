@@ -313,6 +313,22 @@ describe('generateSvgChart', () => {
     expect(result).toContain('<line x1="770" y1="50" x2="770"');
     expect(result).not.toContain('text-anchor="end"');
   });
+
+  it('uses smooth cubic curves by default (#100)', () => {
+    const history = makeHistory([10, 20, 30, 40]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
+
+    expect(result).toMatch(/ C[\d.]+,[\d.]+ [\d.]+,[\d.]+ [\d.]+,[\d.]+/);
+  });
+
+  it('draws straight segments when smoothing is disabled (#100)', () => {
+    const history = makeHistory([10, 20, 30, 40]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en', smoothing: false }));
+    const linePath = result.match(/<path d="([^"]+)" fill="none"/)?.[1] ?? '';
+
+    expect(linePath).toContain(' L');
+    expect(linePath).not.toContain(' C');
+  });
 });
 
 describe('generatePerRepoSvgChart', () => {

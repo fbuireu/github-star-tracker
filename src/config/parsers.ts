@@ -17,12 +17,13 @@ export function parseNumber(value: string | null | undefined): number | undefine
   return Number.isNaN(n) ? undefined : n;
 }
 
-const HEX_COLOR_PATTERN = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+const HEX_COLOR_PATTERN = /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 
 export function parseHexColor(value: string | null | undefined): string | undefined {
   if (value === '' || value === undefined || value === null) return undefined;
-  const trimmed = value.trim();
-  return HEX_COLOR_PATTERN.test(trimmed) ? trimmed.toLowerCase() : undefined;
+  const match = HEX_COLOR_PATTERN.exec(value.trim());
+
+  return match ? `#${match[1].toLowerCase()}` : undefined;
 }
 
 export function parseDecimal(value: string | null | undefined): number | undefined {
