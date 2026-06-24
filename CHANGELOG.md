@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/fbuireu/github-star-tracker/compare/v1.8.9...v1.9.0) (2026-06-24)
+
+
+### Features
+
+* filter repositories by organization (closes [#88](https://github.com/fbuireu/github-star-tracker/issues/88)) ([#93](https://github.com/fbuireu/github-star-tracker/issues/93)) ([8a5d169](https://github.com/fbuireu/github-star-tracker/commit/8a5d16999dde9819ed10fe51e6b1d0ba728494a0))
+
 ## [1.8.9](https://github.com/fbuireu/github-star-tracker/compare/v1.8.8...v1.8.9) (2026-06-24)
 
 

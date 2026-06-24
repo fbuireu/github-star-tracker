@@ -35601,6 +35601,8 @@ var DEFAULTS2 = {
   includeForks: false,
   excludeRepos: [],
   onlyRepos: [],
+  excludeOrgs: [],
+  onlyOrgs: [],
   minStars: 0,
   dataBranch: "star-tracker-data",
   maxHistory: 52,
@@ -38296,6 +38298,8 @@ function loadConfigFile(configPath) {
     includeForks: parsed.include_forks,
     excludeRepos: parsed.exclude_repos,
     onlyRepos: parsed.only_repos,
+    excludeOrgs: parsed.exclude_orgs,
+    onlyOrgs: parsed.only_orgs,
     minStars: parsed.min_stars,
     dataBranch: parsed.data_branch,
     maxHistory: parsed.max_history,
@@ -38314,6 +38318,8 @@ function loadConfig() {
   const inputIncludeForks = getInput("include-forks");
   const inputExcludeRepos = getInput("exclude-repos");
   const inputOnlyRepos = getInput("only-repos");
+  const inputExcludeOrgs = getInput("exclude-orgs");
+  const inputOnlyOrgs = getInput("only-orgs");
   const inputMinStars = getInput("min-stars");
   const inputDataBranch = getInput("data-branch");
   const inputMaxHistory = getInput("max-history");
@@ -38338,6 +38344,8 @@ function loadConfig() {
     includeForks: parseBool(inputIncludeForks) ?? fileConfig.includeForks ?? DEFAULTS2.includeForks,
     excludeRepos: inputExcludeRepos ? parseList(inputExcludeRepos) : fileConfig.excludeRepos || DEFAULTS2.excludeRepos,
     onlyRepos: inputOnlyRepos ? parseList(inputOnlyRepos) : fileConfig.onlyRepos || DEFAULTS2.onlyRepos,
+    excludeOrgs: inputExcludeOrgs ? parseList(inputExcludeOrgs) : fileConfig.excludeOrgs || DEFAULTS2.excludeOrgs,
+    onlyOrgs: inputOnlyOrgs ? parseList(inputOnlyOrgs) : fileConfig.onlyOrgs || DEFAULTS2.onlyOrgs,
     minStars: parseNumber(inputMinStars) ?? fileConfig.minStars ?? DEFAULTS2.minStars,
     dataBranch: inputDataBranch || fileConfig.dataBranch || DEFAULTS2.dataBranch,
     maxHistory: parseNumber(inputMaxHistory) ?? fileConfig.maxHistory ?? DEFAULTS2.maxHistory,
@@ -38356,6 +38364,12 @@ function loadConfig() {
   }
   if (config.excludeRepos.length > 0) {
     info(`Config: excluding repos: ${config.excludeRepos.join(", ")}`);
+  }
+  if (config.onlyOrgs.length > 0) {
+    info(`Config: tracking only orgs: ${config.onlyOrgs.join(", ")}`);
+  }
+  if (config.excludeOrgs.length > 0) {
+    info(`Config: excluding orgs: ${config.excludeOrgs.join(", ")}`);
   }
   return config;
 }
@@ -38782,7 +38796,7 @@ async function fetchRepos({ octokit, config }) {
 
 // src/infrastructure/github/filters.ts
 var REGEX_PATTERN = /^\/(.+)\/([gimsuy]*)$/;
-function matchesExcludePattern({ name, patterns }) {
+function matchesPattern({ name, patterns }) {
   return patterns.some((pattern) => {
     const match = REGEX_PATTERN.exec(pattern);
     if (match) {
@@ -38793,12 +38807,19 @@ function matchesExcludePattern({ name, patterns }) {
   });
 }
 function filterRepos({ repos, config }) {
+  let candidates = repos;
+  if (config.onlyOrgs.length > 0) {
+    candidates = candidates.filter(
+      (repo) => matchesPattern({ name: repo.owner.login, patterns: config.onlyOrgs })
+    );
+    info(`After only_orgs filter: ${candidates.length} repos`);
+  }
   if (config.onlyRepos.length > 0) {
-    const filtered2 = repos.filter((repo) => config.onlyRepos.includes(repo.name));
+    const filtered2 = candidates.filter((repo) => config.onlyRepos.includes(repo.name));
     info(`After only_repos filter: ${filtered2.length} repos`);
     return filtered2;
   }
-  let filtered = repos;
+  let filtered = candidates;
   if (!config.includeArchived) {
     filtered = filtered.filter((repo) => !repo.archived);
   }
@@ -38807,7 +38828,12 @@ function filterRepos({ repos, config }) {
   }
   if (config.excludeRepos.length > 0) {
     filtered = filtered.filter(
-      (repo) => !matchesExcludePattern({ name: repo.name, patterns: config.excludeRepos })
+      (repo) => !matchesPattern({ name: repo.name, patterns: config.excludeRepos })
+    );
+  }
+  if (config.excludeOrgs.length > 0) {
+    filtered = filtered.filter(
+      (repo) => !matchesPattern({ name: repo.owner.login, patterns: config.excludeOrgs })
     );
   }
   if (config.minStars > 0) {
