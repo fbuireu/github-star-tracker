@@ -94,17 +94,20 @@ export async function trackStars(): Promise<void> {
         core.info(`Found ${stargazerDiff.totalNew} new stargazers`);
       }
 
+      const snapshot = createSnapshot({ currentRepos: repos, summary });
+      const updatedHistory = addSnapshot({ history, snapshot, maxHistory: config.maxHistory });
+
       const sorted = [...results.repos]
         .filter((repo) => !repo.isRemoved)
         .sort((a, b) => b.current - a.current);
       const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
-      const forecastData = computeForecast({ history, topRepoNames });
+      const forecastData = computeForecast({ history: updatedHistory, topRepoNames });
 
       const markdownReport = generateMarkdownReport({
         results,
         previousTimestamp,
         locale: config.locale,
-        history,
+        history: updatedHistory,
         includeCharts: config.includeCharts,
         stargazerDiff,
         forecastData,
@@ -114,7 +117,7 @@ export async function trackStars(): Promise<void> {
         results,
         previousTimestamp,
         locale: config.locale,
-        history,
+        history: updatedHistory,
         includeCharts: config.includeCharts,
         stargazerDiff,
         forecastData,
@@ -123,8 +126,6 @@ export async function trackStars(): Promise<void> {
 
       const csvReport = generateCsvReport(results);
       const badge = generateBadge({ totalStars: summary.totalStars, locale: config.locale });
-      const snapshot = createSnapshot({ currentRepos: repos, summary });
-      const updatedHistory = addSnapshot({ history, snapshot, maxHistory: config.maxHistory });
       const thresholdReached = shouldNotify({
         totalStars: summary.totalStars,
         starsAtLastNotification: history.starsAtLastNotification,
@@ -141,9 +142,9 @@ export async function trackStars(): Promise<void> {
       writeBadge({ dataDir, svg: badge });
       writeCsv({ dataDir, csv: csvReport });
 
-      if (config.includeCharts && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART) {
+      if (config.includeCharts && updatedHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART) {
         const svgChart = generateSvgChart({
-          history,
+          history: updatedHistory,
           title: t.report.starHistory,
           locale: config.locale,
         });
@@ -153,7 +154,7 @@ export async function trackStars(): Promise<void> {
 
         for (const repoName of topRepoNames) {
           const repoChart = generatePerRepoSvgChart({
-            history,
+            history: updatedHistory,
             repoFullName: repoName,
             locale: config.locale,
           });
@@ -166,7 +167,7 @@ export async function trackStars(): Promise<void> {
 
         if (topRepoNames.length > 0) {
           const comparisonChart = generateComparisonSvgChart({
-            history,
+            history: updatedHistory,
             repoNames: topRepoNames,
             title: t.report.topRepositories,
             locale: config.locale,
@@ -179,7 +180,7 @@ export async function trackStars(): Promise<void> {
 
         if (forecastData) {
           const forecastChart = generateForecastSvgChart({
-            history,
+            history: updatedHistory,
             forecastData,
             locale: config.locale,
           });
