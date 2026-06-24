@@ -1,5 +1,5 @@
 import type { Config, Locale } from './types';
-import { Visibility } from './types';
+import { ChartAxisSide, Visibility } from './types';
 
 export const LOCALE_MAP = {
   en: 'en-US',
@@ -44,4 +44,6 @@ export const DEFAULTS: Config = {
   smartSamplingPages: 30,
   chartLineColor: '#dfb317',
   chartLineWidth: 2.5,
+  chartMaxPoints: 30,
+  chartYAxisSide: ChartAxisSide.LEFT,
 } as const;

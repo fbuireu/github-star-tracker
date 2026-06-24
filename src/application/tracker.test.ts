@@ -162,6 +162,8 @@ const defaultConfig = {
   smartSamplingPages: 30,
   chartLineColor: '#dfb317',
   chartLineWidth: 2.5,
+  chartMaxPoints: 30,
+  chartYAxisSide: 'left' as const,
 };
 
 const defaultSummary = {

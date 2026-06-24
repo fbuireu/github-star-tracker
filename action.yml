@@ -156,6 +156,16 @@ inputs:
     required: false
     default: ''
 
+  chart-max-points:
+    description: 'Maximum number of recent data points (snapshots) to plot in charts. Set to 0 to plot the full history from the beginning. (default 30)'
+    required: false
+    default: '30'
+
+  chart-y-axis-side:
+    description: 'Which side to render the Y-axis value labels on: left or right. (default left)'
+    required: false
+    default: 'left'
+
 outputs:
   report:
     description: 'Markdown report of star changes'

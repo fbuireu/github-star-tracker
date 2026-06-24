@@ -141,6 +141,8 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `top-repos`              | `10`                  | Top repos in charts/forecasts                                 |
 | `chart-line-color`       | `#dfb317`             | Hex color of primary chart line/fill/points (not comparison)  |
 | `chart-line-width`       | `2.5`                 | Stroke width (px, >0) of data lines in all charts             |
+| `chart-max-points`       | `30`                  | Recent points to plot; `0` plots the full history             |
+| `chart-y-axis-side`      | `left`                | Y-axis labels side: `left` or `right`                         |
 | `track-stargazers`       | `false`               | Track individual stargazers                                   |
 | `smart-sampling`         | `false`               | Sample stargazer pages for high-star repos (avoids rate limits) |
 | `smart-sampling-threshold` | `1500`              | Star count above which a repo is sampled                      |
@@ -160,6 +162,8 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `email-from`             | `GitHub Star Tracker` | Sender name                                                   |
 | `send-on-no-changes`     | `false`               | Email even with no changes                                    |
 | `notification-threshold` | `0`                   | `0` (every run), N (threshold), or `auto` (adaptive)          |
+
+In the YAML config file, option keys may be written with either dashes or underscores — `include-charts` and `include_charts` are both accepted — so you can copy option names straight from this table without rewriting the separators.
 
 </details>
 

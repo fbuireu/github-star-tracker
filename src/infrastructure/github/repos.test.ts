@@ -56,6 +56,8 @@ const defaultConfig: Config = {
   smartSamplingPages: 30,
   chartLineColor: '#dfb317',
   chartLineWidth: 2.5,
+  chartMaxPoints: 30,
+  chartYAxisSide: 'left',
 };
 
 describe('filterRepos', () => {

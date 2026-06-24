@@ -186,6 +186,25 @@ describe('loadConfigFile', () => {
     expect(config.minStars).toBe(5);
   });
 
+  it('accepts kebab-case keys in the config file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('include-charts: false\nmin-stars: 7');
+
+    const config = loadConfigFile('star-tracker.yml');
+
+    expect(config.includeCharts).toBe(false);
+    expect(config.minStars).toBe(7);
+  });
+
+  it('prefers snake_case over kebab-case when both are present', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('min_stars: 5\nmin-stars: 99');
+
+    const config = loadConfigFile('star-tracker.yml');
+
+    expect(config.minStars).toBe(5);
+  });
+
   it('handles empty YAML file', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.readFileSync).mockReturnValue('');
@@ -371,6 +390,52 @@ describe('loadConfig', () => {
 
     expect(config.chartLineColor).toBe(DEFAULTS.chartLineColor);
     expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid chart-line-color'));
+  });
+
+  it('defaults chart-max-points and chart-y-axis-side', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartMaxPoints).toBe(DEFAULTS.chartMaxPoints);
+    expect(config.chartYAxisSide).toBe(DEFAULTS.chartYAxisSide);
+  });
+
+  it('parses chart-max-points input including 0 for full history', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-max-points') return '0';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartMaxPoints).toBe(0);
+  });
+
+  it('parses chart-y-axis-side input', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-y-axis-side') return 'right';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartYAxisSide).toBe('right');
+  });
+
+  it('falls back and warns on invalid chart-y-axis-side', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-y-axis-side') return 'top';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartYAxisSide).toBe(DEFAULTS.chartYAxisSide);
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid chart-y-axis-side'));
   });
 
   it('defaults track-stargazers to false', () => {

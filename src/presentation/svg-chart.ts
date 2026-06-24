@@ -53,9 +53,12 @@ function generateSmoothPath(points: Point[]): string {
     const p3 = points[Math.min(points.length - 1, i + 2)];
 
     const cp1x = p1.x + ((p2.x - p0.x) * tension) / 3;
-    const cp1y = p1.y + ((p2.y - p0.y) * tension) / 3;
     const cp2x = p2.x - ((p3.x - p1.x) * tension) / 3;
-    const cp2y = p2.y - ((p3.y - p1.y) * tension) / 3;
+
+    const segMinY = Math.min(p1.y, p2.y);
+    const segMaxY = Math.max(p1.y, p2.y);
+    const cp1y = Math.min(segMaxY, Math.max(segMinY, p1.y + ((p2.y - p0.y) * tension) / 3));
+    const cp2y = Math.min(segMaxY, Math.max(segMinY, p2.y - ((p3.y - p1.y) * tension) / 3));
 
     d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
   }
@@ -111,6 +114,14 @@ function escapeXml(text: string): string {
   return text.replaceAll(/[&<>"]/g, (char) => XML_ESCAPE_MAP[char]);
 }
 
+type AxisSide = 'left' | 'right';
+
+function sliceForChart<T>(items: T[], maxPoints?: number): T[] {
+  const limit = maxPoints ?? CHART.maxDataPoints;
+
+  return limit > 0 ? items.slice(-limit) : [...items];
+}
+
 interface SvgDataset {
   label: string;
   data: (number | null)[];
@@ -126,6 +137,7 @@ interface RenderSvgParams {
   showLegend: boolean;
   milestones?: boolean;
   lineWidth?: number;
+  yAxisSide?: AxisSide;
 }
 
 function renderSvg({
@@ -135,11 +147,15 @@ function renderSvg({
   showLegend,
   milestones = false,
   lineWidth: lineWidthParam,
+  yAxisSide = 'left',
 }: RenderSvgParams): string {
   const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
   const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
   const chartWidth = CHART.width - margin.left - margin.right;
   const chartHeight = CHART.height - margin.top - margin.bottom;
+  const yAxisX = yAxisSide === 'right' ? CHART.width - margin.right : margin.left;
+  const yLabelX = yAxisSide === 'right' ? CHART.width - margin.right + 8 : margin.left - 8;
+  const yLabelAnchor = yAxisSide === 'right' ? 'start' : 'end';
   const allValues = datasets.flatMap((ds) => ds.data.filter((v): v is number => v !== null));
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
@@ -152,7 +168,7 @@ function renderSvg({
     .map((value) => {
       const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
       return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
-    <text x="${margin.left - 8}" y="${y + 4}" text-anchor="end" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${value.toLocaleString('en-US')}</text>`;
+    <text x="${yLabelX}" y="${y + 4}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${value.toLocaleString('en-US')}</text>`;
     })
     .join('\n    ');
 
@@ -316,7 +332,7 @@ function renderSvg({
   <g class="x-axis">
     ${xLabels}
   </g>
-  <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="1" />
+  <line x1="${yAxisX}" y1="${margin.top}" x2="${yAxisX}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="1" />
   <line x1="${margin.left}" y1="${CHART.height - margin.bottom}" x2="${CHART.width - margin.right}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="1" />
   ${allFills}
   ${allPaths}
@@ -332,6 +348,8 @@ interface GenerateSvgChartParams {
   locale: Locale;
   lineColor?: string;
   lineWidth?: number;
+  maxPoints?: number;
+  yAxisSide?: AxisSide;
 }
 
 export function generateSvgChart({
@@ -340,12 +358,14 @@ export function generateSvgChart({
   locale,
   lineColor,
   lineWidth,
+  maxPoints,
+  yAxisSide,
 }: GenerateSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
   }
 
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = sliceForChart(history.snapshots, maxPoints);
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const data = snapshots.map((s) => s.totalStars);
 
@@ -356,6 +376,7 @@ export function generateSvgChart({
     showLegend: false,
     milestones: true,
     lineWidth,
+    yAxisSide,
   });
 }
 
@@ -366,6 +387,8 @@ interface GeneratePerRepoSvgChartParams {
   locale: Locale;
   lineColor?: string;
   lineWidth?: number;
+  maxPoints?: number;
+  yAxisSide?: AxisSide;
 }
 
 export function generatePerRepoSvgChart({
@@ -375,12 +398,14 @@ export function generatePerRepoSvgChart({
   locale,
   lineColor,
   lineWidth,
+  maxPoints,
+  yAxisSide,
 }: GeneratePerRepoSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
   }
 
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = sliceForChart(history.snapshots, maxPoints);
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const data = snapshots.map((s) => {
     const repo = s.repos.find((r) => r.fullName === repoFullName);
@@ -394,6 +419,7 @@ export function generatePerRepoSvgChart({
     showLegend: false,
     milestones: false,
     lineWidth,
+    yAxisSide,
   });
 }
 
@@ -403,6 +429,8 @@ interface GenerateComparisonSvgChartParams {
   title?: string;
   locale: Locale;
   lineWidth?: number;
+  maxPoints?: number;
+  yAxisSide?: AxisSide;
 }
 
 export function generateComparisonSvgChart({
@@ -411,13 +439,15 @@ export function generateComparisonSvgChart({
   title,
   locale,
   lineWidth,
+  maxPoints,
+  yAxisSide,
 }: GenerateComparisonSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2 || repoNames.length === 0) {
     return null;
   }
 
   const t = getTranslations(locale);
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = sliceForChart(history.snapshots, maxPoints);
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split('/')[0]));
@@ -445,6 +475,7 @@ export function generateComparisonSvgChart({
     showLegend: true,
     milestones: false,
     lineWidth,
+    yAxisSide,
   });
 }
 
@@ -455,6 +486,8 @@ interface GenerateForecastSvgChartParams {
   title?: string;
   lineColor?: string;
   lineWidth?: number;
+  maxPoints?: number;
+  yAxisSide?: AxisSide;
 }
 
 export function generateForecastSvgChart({
@@ -464,13 +497,15 @@ export function generateForecastSvgChart({
   title,
   lineColor,
   lineWidth,
+  maxPoints,
+  yAxisSide,
 }: GenerateForecastSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
   }
 
   const t = getTranslations(locale);
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = sliceForChart(history.snapshots, maxPoints);
   const historicalLabels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const historicalData = snapshots.map((s) => s.totalStars);
   const forecastLabels = forecastData.aggregate.forecasts[0].points.map((p) =>
@@ -523,5 +558,6 @@ export function generateForecastSvgChart({
     showLegend: true,
     milestones: false,
     lineWidth,
+    yAxisSide,
   });
 }

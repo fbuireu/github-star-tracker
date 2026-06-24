@@ -13,6 +13,7 @@ import {
   parseNumber,
 } from './parsers';
 import type { Config, Visibility } from './types';
+import { ChartAxisSide } from './types';
 
 interface FileConfig {
   visibility?: string;
@@ -35,6 +36,15 @@ interface FileConfig {
   smartSamplingPages?: number;
   chartLineColor?: string;
   chartLineWidth?: number;
+  chartMaxPoints?: number;
+  chartYAxisSide?: string;
+}
+
+function readFileKey<T>(parsed: Record<string, unknown>, snakeKey: string): T | undefined {
+  const kebabKey = snakeKey.replaceAll('_', '-');
+  const value = parsed[snakeKey] ?? parsed[kebabKey];
+
+  return value as T | undefined;
 }
 
 export function loadConfigFile(configPath: string): FileConfig {
@@ -53,26 +63,28 @@ export function loadConfigFile(configPath: string): FileConfig {
   }
 
   return {
-    visibility: parsed.visibility as string | undefined,
-    includeArchived: parsed.include_archived as boolean | undefined,
-    includeForks: parsed.include_forks as boolean | undefined,
-    excludeRepos: parsed.exclude_repos as string[] | undefined,
-    onlyRepos: parsed.only_repos as string[] | undefined,
-    excludeOrgs: parsed.exclude_orgs as string[] | undefined,
-    onlyOrgs: parsed.only_orgs as string[] | undefined,
-    minStars: parsed.min_stars as number | undefined,
-    dataBranch: parsed.data_branch as string | undefined,
-    maxHistory: parsed.max_history as number | undefined,
-    includeCharts: parsed.include_charts as boolean | undefined,
-    locale: parsed.locale as string | undefined,
-    notificationThreshold: parsed.notification_threshold as number | 'auto' | undefined,
-    trackStargazers: parsed.track_stargazers as boolean | undefined,
-    topRepos: parsed.top_repos as number | undefined,
-    smartSampling: parsed.smart_sampling as boolean | undefined,
-    smartSamplingThreshold: parsed.smart_sampling_threshold as number | undefined,
-    smartSamplingPages: parsed.smart_sampling_pages as number | undefined,
-    chartLineColor: parsed.chart_line_color as string | undefined,
-    chartLineWidth: parsed.chart_line_width as number | undefined,
+    visibility: readFileKey(parsed, 'visibility'),
+    includeArchived: readFileKey(parsed, 'include_archived'),
+    includeForks: readFileKey(parsed, 'include_forks'),
+    excludeRepos: readFileKey(parsed, 'exclude_repos'),
+    onlyRepos: readFileKey(parsed, 'only_repos'),
+    excludeOrgs: readFileKey(parsed, 'exclude_orgs'),
+    onlyOrgs: readFileKey(parsed, 'only_orgs'),
+    minStars: readFileKey(parsed, 'min_stars'),
+    dataBranch: readFileKey(parsed, 'data_branch'),
+    maxHistory: readFileKey(parsed, 'max_history'),
+    includeCharts: readFileKey(parsed, 'include_charts'),
+    locale: readFileKey(parsed, 'locale'),
+    notificationThreshold: readFileKey(parsed, 'notification_threshold'),
+    trackStargazers: readFileKey(parsed, 'track_stargazers'),
+    topRepos: readFileKey(parsed, 'top_repos'),
+    smartSampling: readFileKey(parsed, 'smart_sampling'),
+    smartSamplingThreshold: readFileKey(parsed, 'smart_sampling_threshold'),
+    smartSamplingPages: readFileKey(parsed, 'smart_sampling_pages'),
+    chartLineColor: readFileKey(parsed, 'chart_line_color'),
+    chartLineWidth: readFileKey(parsed, 'chart_line_width'),
+    chartMaxPoints: readFileKey(parsed, 'chart_max_points'),
+    chartYAxisSide: readFileKey(parsed, 'chart_y_axis_side'),
   };
 }
 
@@ -100,6 +112,8 @@ export function loadConfig(): Config {
   const inputSmartSamplingPages = core.getInput('smart-sampling-pages');
   const inputChartLineColor = core.getInput('chart-line-color');
   const inputChartLineWidth = core.getInput('chart-line-width');
+  const inputChartMaxPoints = core.getInput('chart-max-points');
+  const inputChartYAxisSide = core.getInput('chart-y-axis-side');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -131,6 +145,18 @@ export function loadConfig(): Config {
   if (inputChartLineWidth && parseDecimal(inputChartLineWidth) === undefined) {
     core.warning(
       `Invalid chart-line-width "${inputChartLineWidth}". Falling back to ${DEFAULTS.chartLineWidth}`,
+    );
+  }
+
+  const rawChartYAxisSide = inputChartYAxisSide || fileConfig.chartYAxisSide;
+  const isValidAxisSide = (value: string | undefined): value is ChartAxisSide =>
+    value === ChartAxisSide.LEFT || value === ChartAxisSide.RIGHT;
+  const chartYAxisSide = isValidAxisSide(rawChartYAxisSide)
+    ? rawChartYAxisSide
+    : DEFAULTS.chartYAxisSide;
+  if (rawChartYAxisSide && !isValidAxisSide(rawChartYAxisSide)) {
+    core.warning(
+      `Invalid chart-y-axis-side "${rawChartYAxisSide}". Must be "left" or "right". Falling back to "${DEFAULTS.chartYAxisSide}"`,
     );
   }
 
@@ -175,6 +201,9 @@ export function loadConfig(): Config {
       DEFAULTS.smartSamplingPages,
     chartLineColor,
     chartLineWidth,
+    chartMaxPoints:
+      parseNumber(inputChartMaxPoints) ?? fileConfig.chartMaxPoints ?? DEFAULTS.chartMaxPoints,
+    chartYAxisSide,
   };
 
   core.info(

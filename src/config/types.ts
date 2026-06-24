@@ -10,6 +10,13 @@ export const Visibility = {
 
 export type Visibility = (typeof Visibility)[keyof typeof Visibility];
 
+export const ChartAxisSide = {
+  LEFT: 'left',
+  RIGHT: 'right',
+} as const;
+
+export type ChartAxisSide = (typeof ChartAxisSide)[keyof typeof ChartAxisSide];
+
 export interface Config {
   visibility: Visibility;
   includeArchived: boolean;
@@ -32,4 +39,6 @@ export interface Config {
   smartSamplingPages: number;
   chartLineColor: string;
   chartLineWidth: number;
+  chartMaxPoints: number;
+  chartYAxisSide: ChartAxisSide;
 }
