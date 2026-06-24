@@ -25,4 +25,7 @@ export interface Config {
   notificationThreshold: number | 'auto';
   trackStargazers: boolean;
   topRepos: number;
+  smartSampling: boolean;
+  smartSamplingThreshold: number;
+  smartSamplingPages: number;
 }

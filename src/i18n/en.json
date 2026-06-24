@@ -47,7 +47,8 @@
     "newStargazers": "{count} new stargazers since last run",
     "starredOn": "starred on {date}",
     "noNewStargazers": "No new stargazers since last run",
-    "stargazerCount": "{count} new"
+    "stargazerCount": "{count} new",
+    "sampledNote": "Exact new-stargazer lists are unavailable for sampled repositories: {repos}"
   },
   "forecast": {
     "sectionTitle": "Growth Forecast",

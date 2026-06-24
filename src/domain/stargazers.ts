@@ -8,6 +8,7 @@ export interface Stargazer {
 export interface RepoStargazers {
   repoFullName: string;
   stargazers: Stargazer[];
+  sampled?: boolean;
 }
 
 export type StargazerMap = Record<string, string[]>;
@@ -20,6 +21,7 @@ export interface StargazerDiffEntry {
 export interface StargazerDiffResult {
   entries: StargazerDiffEntry[];
   totalNew: number;
+  sampledRepos?: string[];
 }
 
 interface DiffStargazersParams {
@@ -32,9 +34,15 @@ export function diffStargazers({
   previousMap,
 }: DiffStargazersParams): StargazerDiffResult {
   const entries: StargazerDiffEntry[] = [];
+  const sampledRepos: string[] = [];
   let totalNew = 0;
 
   for (const repo of current) {
+    if (repo.sampled) {
+      sampledRepos.push(repo.repoFullName);
+      continue;
+    }
+
     const previousLogins = new Set(previousMap[repo.repoFullName] ?? []);
     const newStargazers = repo.stargazers
       .filter((s) => !previousLogins.has(s.login))
@@ -46,13 +54,14 @@ export function diffStargazers({
     }
   }
 
-  return { entries, totalNew };
+  return { entries, totalNew, sampledRepos: sampledRepos.length > 0 ? sampledRepos : undefined };
 }
 
 export function buildStargazerMap(repoStargazers: RepoStargazers[]): StargazerMap {
   const map: StargazerMap = {};
 
   for (const repo of repoStargazers) {
+    if (repo.sampled) continue;
     map[repo.repoFullName] = repo.stargazers.map((s) => s.login);
   }
 

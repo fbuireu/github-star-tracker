@@ -255,4 +255,43 @@ describe('loadConfig', () => {
 
     expect(config.trackStargazers).toBe(true);
   });
+
+  it('defaults smart sampling options', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.smartSampling).toBe(DEFAULTS.smartSampling);
+    expect(config.smartSamplingThreshold).toBe(DEFAULTS.smartSamplingThreshold);
+    expect(config.smartSamplingPages).toBe(DEFAULTS.smartSamplingPages);
+  });
+
+  it('parses smart-sampling inputs', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'smart-sampling') return 'true';
+      if (name === 'smart-sampling-threshold') return '5000';
+      if (name === 'smart-sampling-pages') return '10';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.smartSampling).toBe(true);
+    expect(config.smartSamplingThreshold).toBe(5000);
+    expect(config.smartSamplingPages).toBe(10);
+  });
+
+  it('reads smart_sampling options from config file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      'smart_sampling: true\nsmart_sampling_threshold: 2000\nsmart_sampling_pages: 15',
+    );
+
+    const config = loadConfig();
+
+    expect(config.smartSampling).toBe(true);
+    expect(config.smartSamplingThreshold).toBe(2000);
+    expect(config.smartSamplingPages).toBe(15);
+  });
 });

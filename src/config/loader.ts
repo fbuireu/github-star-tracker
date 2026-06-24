@@ -21,6 +21,9 @@ interface FileConfig {
   notificationThreshold?: number | 'auto';
   trackStargazers?: boolean;
   topRepos?: number;
+  smartSampling?: boolean;
+  smartSamplingThreshold?: number;
+  smartSamplingPages?: number;
 }
 
 export function loadConfigFile(configPath: string): FileConfig {
@@ -52,6 +55,9 @@ export function loadConfigFile(configPath: string): FileConfig {
     notificationThreshold: parsed.notification_threshold as number | 'auto' | undefined,
     trackStargazers: parsed.track_stargazers as boolean | undefined,
     topRepos: parsed.top_repos as number | undefined,
+    smartSampling: parsed.smart_sampling as boolean | undefined,
+    smartSamplingThreshold: parsed.smart_sampling_threshold as number | undefined,
+    smartSamplingPages: parsed.smart_sampling_pages as number | undefined,
   };
 }
 
@@ -72,6 +78,9 @@ export function loadConfig(): Config {
   const inputNotificationThreshold = core.getInput('notification-threshold');
   const inputTrackStargazers = core.getInput('track-stargazers');
   const inputTopRepos = core.getInput('top-repos');
+  const inputSmartSampling = core.getInput('smart-sampling');
+  const inputSmartSamplingThreshold = core.getInput('smart-sampling-threshold');
+  const inputSmartSamplingPages = core.getInput('smart-sampling-pages');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -113,6 +122,16 @@ export function loadConfig(): Config {
     trackStargazers:
       parseBool(inputTrackStargazers) ?? fileConfig.trackStargazers ?? DEFAULTS.trackStargazers,
     topRepos: parseNumber(inputTopRepos) ?? fileConfig.topRepos ?? DEFAULTS.topRepos,
+    smartSampling:
+      parseBool(inputSmartSampling) ?? fileConfig.smartSampling ?? DEFAULTS.smartSampling,
+    smartSamplingThreshold:
+      parseNumber(inputSmartSamplingThreshold) ??
+      fileConfig.smartSamplingThreshold ??
+      DEFAULTS.smartSamplingThreshold,
+    smartSamplingPages:
+      parseNumber(inputSmartSamplingPages) ??
+      fileConfig.smartSamplingPages ??
+      DEFAULTS.smartSamplingPages,
   };
 
   core.info(

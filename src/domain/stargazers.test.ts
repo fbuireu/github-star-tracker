@@ -83,6 +83,27 @@ describe('diffStargazers', () => {
     expect(result.entries[0].repoFullName).toBe('user/new-repo');
   });
 
+  it('excludes sampled repos from the diff and reports them in sampledRepos', () => {
+    const current: RepoStargazers[] = [
+      { repoFullName: 'user/repo-a', stargazers: [makeStar('alice')] },
+      { repoFullName: 'user/huge', stargazers: [makeStar('bob')], sampled: true },
+    ];
+    const result = diffStargazers({ current, previousMap: {} });
+
+    expect(result.totalNew).toBe(1);
+    expect(result.entries.map((e) => e.repoFullName)).toEqual(['user/repo-a']);
+    expect(result.sampledRepos).toEqual(['user/huge']);
+  });
+
+  it('omits sampledRepos when no repo is sampled', () => {
+    const current: RepoStargazers[] = [
+      { repoFullName: 'user/repo-a', stargazers: [makeStar('alice')] },
+    ];
+    const result = diffStargazers({ current, previousMap: {} });
+
+    expect(result.sampledRepos).toBeUndefined();
+  });
+
   it('handles multiple repos with mixed changes', () => {
     const current: RepoStargazers[] = [
       { repoFullName: 'user/repo-a', stargazers: [makeStar('alice'), makeStar('bob')] },
@@ -118,5 +139,15 @@ describe('buildStargazerMap', () => {
     const map = buildStargazerMap([]);
 
     expect(map).toEqual({});
+  });
+
+  it('skips sampled repos so partial lists do not corrupt the next diff', () => {
+    const repoStargazers: RepoStargazers[] = [
+      { repoFullName: 'user/repo-a', stargazers: [makeStar('alice')] },
+      { repoFullName: 'user/huge', stargazers: [makeStar('bob')], sampled: true },
+    ];
+    const map = buildStargazerMap(repoStargazers);
+
+    expect(map).toEqual({ 'user/repo-a': ['alice'] });
   });
 });

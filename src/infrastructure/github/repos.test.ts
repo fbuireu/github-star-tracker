@@ -49,6 +49,9 @@ const defaultConfig: Config = {
   notificationThreshold: 0,
   trackStargazers: false,
   topRepos: 10,
+  smartSampling: false,
+  smartSamplingThreshold: 1500,
+  smartSamplingPages: 30,
 };
 
 describe('filterRepos', () => {

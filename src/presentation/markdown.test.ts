@@ -236,6 +236,43 @@ describe('generateMarkdownReport', () => {
     expect(report).not.toContain('New Stargazers');
   });
 
+  it('renders the sampled note alongside new stargazers', () => {
+    const stargazerDiff: StargazerDiffResult = {
+      entries: [
+        {
+          repoFullName: 'user/repo-a',
+          newStargazers: [
+            {
+              login: 'alice',
+              avatarUrl: 'https://avatars.githubusercontent.com/alice',
+              profileUrl: 'https://github.com/alice',
+              starredAt: '2026-01-15T10:00:00Z',
+            },
+          ],
+        },
+      ],
+      totalNew: 1,
+      sampledRepos: ['user/huge'],
+    };
+
+    const report = renderMarkdown({ stargazerDiff });
+
+    expect(report).toContain('sampled repositories: user/huge');
+  });
+
+  it('renders the sampled note when all repos are sampled (no new stargazers)', () => {
+    const stargazerDiff: StargazerDiffResult = {
+      entries: [],
+      totalNew: 0,
+      sampledRepos: ['user/huge', 'user/big'],
+    };
+
+    const report = renderMarkdown({ stargazerDiff });
+
+    expect(report).toContain('New Stargazers');
+    expect(report).toContain('sampled repositories: user/huge, user/big');
+  });
+
   it('includes forecast section with tables', () => {
     const forecastData: ForecastData = {
       aggregate: {

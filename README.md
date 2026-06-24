@@ -140,6 +140,9 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `max-history`            | `52`                  | Max snapshots to keep                                         |
 | `top-repos`              | `10`                  | Top repos in charts/forecasts                                 |
 | `track-stargazers`       | `false`               | Track individual stargazers                                   |
+| `smart-sampling`         | `false`               | Sample stargazer pages for high-star repos (avoids rate limits) |
+| `smart-sampling-threshold` | `1500`              | Star count above which a repo is sampled                      |
+| `smart-sampling-pages`   | `30`                  | Max evenly-spaced stargazer pages per sampled repo            |
 | `include-archived`       | `false`               | Include archived repos                                        |
 | `include-forks`          | `false`               | Include forked repos                                          |
 | `exclude-repos`          | —                     | Names or regex to exclude                                     |

@@ -47,7 +47,8 @@
     "newStargazers": "{count} nuovi stargazer dall'ultima esecuzione",
     "starredOn": "ha messo la stella il {date}",
     "noNewStargazers": "Nessun nuovo stargazer dall'ultima esecuzione",
-    "stargazerCount": "{count} nuovi"
+    "stargazerCount": "{count} nuovi",
+    "sampledNote": "Gli elenchi esatti dei nuovi stargazer non sono disponibili per i repository campionati: {repos}"
   },
   "forecast": {
     "sectionTitle": "Previsione di Crescita",

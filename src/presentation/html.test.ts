@@ -263,6 +263,43 @@ describe('generateHtmlReport', () => {
     expect(html).toContain('No new stargazers since last run');
   });
 
+  it('renders the sampled note alongside new stargazers', () => {
+    const stargazerDiff: StargazerDiffResult = {
+      entries: [
+        {
+          repoFullName: 'user/repo-a',
+          newStargazers: [
+            {
+              login: 'alice',
+              avatarUrl: 'https://avatars.githubusercontent.com/alice',
+              profileUrl: 'https://github.com/alice',
+              starredAt: '2026-01-15T10:00:00Z',
+            },
+          ],
+        },
+      ],
+      totalNew: 1,
+      sampledRepos: ['user/huge'],
+    };
+
+    const html = renderHtml({ stargazerDiff });
+
+    expect(html).toContain('sampled repositories: user/huge');
+  });
+
+  it('renders the sampled note when all repos are sampled (no new stargazers)', () => {
+    const stargazerDiff: StargazerDiffResult = {
+      entries: [],
+      totalNew: 0,
+      sampledRepos: ['user/huge', 'user/big'],
+    };
+
+    const html = renderHtml({ stargazerDiff });
+
+    expect(html).toContain('New Stargazers');
+    expect(html).toContain('sampled repositories: user/huge, user/big');
+  });
+
   it('excludes stargazer section when stargazerDiff is null', () => {
     const html = renderHtml({ stargazerDiff: null });
 

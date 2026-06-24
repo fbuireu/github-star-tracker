@@ -130,6 +130,17 @@ export function generateMarkdownReport({
           '',
         ];
 
+  const sampledNote =
+    stargazerDiff?.sampledRepos && stargazerDiff.sampledRepos.length > 0
+      ? [
+          interpolate({
+            template: t.stargazers.sampledNote,
+            params: { repos: stargazerDiff.sampledRepos.join(', ') },
+          }),
+          '',
+        ]
+      : [];
+
   const stargazerSection =
     stargazerDiff && stargazerDiff.totalNew > 0
       ? [
@@ -140,6 +151,7 @@ export function generateMarkdownReport({
             params: { count: stargazerDiff.totalNew },
           }),
           '',
+          ...sampledNote,
           ...stargazerDiff.entries.flatMap((entry) => [
             '<details>',
             `<summary>${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</summary>`,
@@ -154,7 +166,13 @@ export function generateMarkdownReport({
           ]),
         ]
       : stargazerDiff
-        ? [`## 👤 ${t.stargazers.sectionTitle}`, '', t.stargazers.noNewStargazers, '']
+        ? [
+            `## 👤 ${t.stargazers.sectionTitle}`,
+            '',
+            ...sampledNote,
+            t.stargazers.noNewStargazers,
+            '',
+          ]
         : [];
 
   const forecastSection = forecastData

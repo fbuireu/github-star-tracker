@@ -82,7 +82,13 @@ export async function trackStars(): Promise<void> {
       if (config.trackStargazers) {
         core.info('Fetching stargazers...');
 
-        const repoStargazers = await fetchAllStargazers({ octokit, repos });
+        const repoStargazers = await fetchAllStargazers({
+          octokit,
+          repos,
+          smartSampling: config.smartSampling,
+          smartSamplingThreshold: config.smartSamplingThreshold,
+          smartSamplingPages: config.smartSamplingPages,
+        });
         const previousMap = readStargazers(dataDir);
 
         stargazerDiff = diffStargazers({ current: repoStargazers, previousMap });

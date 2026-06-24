@@ -47,7 +47,8 @@
     "newStargazers": "{count} nous stargazers des de la darrera execució",
     "starredOn": "va marcar estrella el {date}",
     "noNewStargazers": "Sense nous stargazers des de la darrera execució",
-    "stargazerCount": "{count} nous"
+    "stargazerCount": "{count} nous",
+    "sampledNote": "Les llistes exactes de nous stargazers no estan disponibles per als repositoris mostrejats: {repos}"
   },
   "forecast": {
     "sectionTitle": "Previsió de Creixement",

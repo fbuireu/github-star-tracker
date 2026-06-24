@@ -113,12 +113,18 @@ export function generateHtmlReport({
       </div>`
     : '';
 
+  const sampledNoteHtml =
+    stargazerDiff?.sampledRepos && stargazerDiff.sampledRepos.length > 0
+      ? `<p style="color:${COLORS.neutral};">${interpolate({ template: t.stargazers.sampledNote, params: { repos: stargazerDiff.sampledRepos.join(', ') } })}</p>`
+      : '';
+
   const stargazerSection =
     stargazerDiff && stargazerDiff.totalNew > 0
       ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">👤 ${t.stargazers.sectionTitle}</h2>
         <p>${interpolate({ template: t.stargazers.newStargazers, params: { count: stargazerDiff.totalNew } })}</p>
+        ${sampledNoteHtml}
         ${stargazerDiff.entries
           .map(
             (entry) => `
@@ -142,6 +148,7 @@ export function generateHtmlReport({
         ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">👤 ${t.stargazers.sectionTitle}</h2>
+        ${sampledNoteHtml}
         <p style="color:${COLORS.neutral};">${t.stargazers.noNewStargazers}</p>
       </div>`
         : '';

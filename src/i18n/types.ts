@@ -53,6 +53,7 @@ export interface Translations {
     starredOn: string;
     noNewStargazers: string;
     stargazerCount: string;
+    sampledNote: string;
   };
   forecast: {
     sectionTitle: string;

@@ -121,6 +121,21 @@ inputs:
     required: false
     default: 'false'
 
+  smart-sampling:
+    description: 'Sample stargazer pages for high-star repos instead of fetching every page, to avoid API rate limits (true/false). Sampled repos lose exact new-stargazer lists.'
+    required: false
+    default: 'false'
+
+  smart-sampling-threshold:
+    description: 'Star count above which a repo is sampled instead of fully fetched (only when smart-sampling is enabled)'
+    required: false
+    default: '1500'
+
+  smart-sampling-pages:
+    description: 'Maximum number of evenly-spaced stargazer pages (100 stargazers each) to fetch per sampled repo'
+    required: false
+    default: '30'
+
 outputs:
   report:
     description: 'Markdown report of star changes'
