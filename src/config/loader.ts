@@ -38,6 +38,7 @@ interface FileConfig {
   chartLineWidth?: number;
   chartMaxPoints?: number;
   chartYAxisSide?: string;
+  chartSmoothing?: boolean;
 }
 
 function readFileKey<T>(parsed: Record<string, unknown>, snakeKey: string): T | undefined {
@@ -85,6 +86,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     chartLineWidth: readFileKey(parsed, 'chart_line_width'),
     chartMaxPoints: readFileKey(parsed, 'chart_max_points'),
     chartYAxisSide: readFileKey(parsed, 'chart_y_axis_side'),
+    chartSmoothing: readFileKey(parsed, 'chart_smoothing'),
   };
 }
 
@@ -114,6 +116,7 @@ export function loadConfig(): Config {
   const inputChartLineWidth = core.getInput('chart-line-width');
   const inputChartMaxPoints = core.getInput('chart-max-points');
   const inputChartYAxisSide = core.getInput('chart-y-axis-side');
+  const inputChartSmoothing = core.getInput('chart-smoothing');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -204,6 +207,8 @@ export function loadConfig(): Config {
     chartMaxPoints:
       parseNumber(inputChartMaxPoints) ?? fileConfig.chartMaxPoints ?? DEFAULTS.chartMaxPoints,
     chartYAxisSide,
+    chartSmoothing:
+      parseBool(inputChartSmoothing) ?? fileConfig.chartSmoothing ?? DEFAULTS.chartSmoothing,
   };
 
   core.info(

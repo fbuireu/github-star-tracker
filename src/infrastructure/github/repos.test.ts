@@ -58,6 +58,7 @@ const defaultConfig: Config = {
   chartLineWidth: 2.5,
   chartMaxPoints: 30,
   chartYAxisSide: 'left',
+  chartSmoothing: true,
 };
 
 describe('filterRepos', () => {

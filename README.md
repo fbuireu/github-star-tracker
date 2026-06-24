@@ -143,6 +143,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `chart-line-width`       | `2.5`                 | Stroke width (px, >0) of data lines in all charts             |
 | `chart-max-points`       | `30`                  | Recent points to plot; `0` plots the full history             |
 | `chart-y-axis-side`      | `left`                | Y-axis labels side: `left` or `right`                         |
+| `chart-smoothing`        | `true`                | Smooth curve (`true`) or straight segments to show spikes      |
 | `track-stargazers`       | `false`               | Track individual stargazers                                   |
 | `smart-sampling`         | `false`               | Sample stargazer pages for high-star repos (avoids rate limits) |
 | `smart-sampling-threshold` | `1500`              | Star count above which a repo is sampled                      |
@@ -164,6 +165,9 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `notification-threshold` | `0`                   | `0` (every run), N (threshold), or `auto` (adaptive)          |
 
 In the YAML config file, option keys may be written with either dashes or underscores — `include-charts` and `include_charts` are both accepted — so you can copy option names straight from this table without rewriting the separators.
+
+> [!TIP]
+> `chart-line-color` accepts hex with or without a leading `#`. Because a bare `#` starts a comment in YAML, either quote the value (`chart-line-color: '#6b63ff'`) or drop the `#` (`chart-line-color: 6b63ff`).
 
 </details>
 
@@ -246,6 +250,14 @@ flowchart TD
 ```
 
 **[How It Works](../../wiki/How-It-Works):** Full architecture and execution pipeline
+
+### How the charts read dates
+
+The charts plot **one point per run of this action**, not one point per star. Each scheduled run records a snapshot (timestamp + current star totals) on the data branch, and the chart connects those snapshots in order.
+
+This means the timeline starts when you first ran the action, not when the repository earned its stars. A repo that already had thousands of stars will show them all appearing on your first run, then grow gradually from there. The action cannot back-fill history because the GitHub API does not expose a daily star count over time; it only reports the current total (and, per stargazer, the date they starred, which is not the same as a historical running total).
+
+So the charts answer "how have my stars moved **since I started tracking**", which is why they look different from tools that reconstruct the full historical curve. The longer the action runs, the more complete the picture becomes.
 
 ---
 

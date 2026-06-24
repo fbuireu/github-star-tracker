@@ -1,3 +1,4 @@
+import { ChartAxisSide } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
 import { formatDate } from '@domain/formatting';
@@ -39,12 +40,21 @@ function scaleY({ value, minValue, maxValue, chartTop, chartHeight }: ScaleYPara
   return chartTop + chartHeight - ((value - minValue) / (maxValue - minValue)) * chartHeight;
 }
 
-function generateSmoothPath(points: Point[]): string {
+function generateSmoothPath(points: Point[], smooth = true): string {
   if (points.length === 0) return '';
   if (points.length === 1) return `M${points[0].x},${points[0].y}`;
 
-  const tension = 0.4;
   let d = `M${points[0].x},${points[0].y}`;
+
+  if (!smooth) {
+    for (let i = 1; i < points.length; i++) {
+      d += ` L${points[i].x},${points[i].y}`;
+    }
+
+    return d;
+  }
+
+  const tension = 0.4;
 
   for (let i = 0; i < points.length - 1; i++) {
     const p0 = points[Math.max(0, i - 1)];
@@ -114,8 +124,6 @@ function escapeXml(text: string): string {
   return text.replaceAll(/[&<>"]/g, (char) => XML_ESCAPE_MAP[char]);
 }
 
-type AxisSide = 'left' | 'right';
-
 function sliceForChart<T>(items: T[], maxPoints?: number): T[] {
   const limit = maxPoints ?? CHART.maxDataPoints;
 
@@ -137,7 +145,8 @@ interface RenderSvgParams {
   showLegend: boolean;
   milestones?: boolean;
   lineWidth?: number;
-  yAxisSide?: AxisSide;
+  yAxisSide?: ChartAxisSide;
+  smoothing?: boolean;
 }
 
 function renderSvg({
@@ -147,15 +156,17 @@ function renderSvg({
   showLegend,
   milestones = false,
   lineWidth: lineWidthParam,
-  yAxisSide = 'left',
+  yAxisSide = ChartAxisSide.LEFT,
+  smoothing = true,
 }: RenderSvgParams): string {
   const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
   const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
   const chartWidth = CHART.width - margin.left - margin.right;
   const chartHeight = CHART.height - margin.top - margin.bottom;
-  const yAxisX = yAxisSide === 'right' ? CHART.width - margin.right : margin.left;
-  const yLabelX = yAxisSide === 'right' ? CHART.width - margin.right + 8 : margin.left - 8;
-  const yLabelAnchor = yAxisSide === 'right' ? 'start' : 'end';
+  const isRightAxis = yAxisSide === ChartAxisSide.RIGHT;
+  const yAxisX = isRightAxis ? CHART.width - margin.right : margin.left;
+  const yLabelX = isRightAxis ? CHART.width - margin.right + 8 : margin.left - 8;
+  const yLabelAnchor = isRightAxis ? 'start' : 'end';
   const allValues = datasets.flatMap((ds) => ds.data.filter((v): v is number => v !== null));
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
@@ -217,7 +228,7 @@ function renderSvg({
 
     return validSegments
       .map((segment) => {
-        const pathD = generateSmoothPath(segment.points);
+        const pathD = generateSmoothPath(segment.points, smoothing);
         const pathLength = calculatePathLength(segment.points);
 
         const fillArea =
@@ -349,7 +360,8 @@ interface GenerateSvgChartParams {
   lineColor?: string;
   lineWidth?: number;
   maxPoints?: number;
-  yAxisSide?: AxisSide;
+  yAxisSide?: ChartAxisSide;
+  smoothing?: boolean;
 }
 
 export function generateSvgChart({
@@ -360,6 +372,7 @@ export function generateSvgChart({
   lineWidth,
   maxPoints,
   yAxisSide,
+  smoothing,
 }: GenerateSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
@@ -377,6 +390,7 @@ export function generateSvgChart({
     milestones: true,
     lineWidth,
     yAxisSide,
+    smoothing,
   });
 }
 
@@ -388,7 +402,8 @@ interface GeneratePerRepoSvgChartParams {
   lineColor?: string;
   lineWidth?: number;
   maxPoints?: number;
-  yAxisSide?: AxisSide;
+  yAxisSide?: ChartAxisSide;
+  smoothing?: boolean;
 }
 
 export function generatePerRepoSvgChart({
@@ -400,6 +415,7 @@ export function generatePerRepoSvgChart({
   lineWidth,
   maxPoints,
   yAxisSide,
+  smoothing,
 }: GeneratePerRepoSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
@@ -420,6 +436,7 @@ export function generatePerRepoSvgChart({
     milestones: false,
     lineWidth,
     yAxisSide,
+    smoothing,
   });
 }
 
@@ -430,7 +447,8 @@ interface GenerateComparisonSvgChartParams {
   locale: Locale;
   lineWidth?: number;
   maxPoints?: number;
-  yAxisSide?: AxisSide;
+  yAxisSide?: ChartAxisSide;
+  smoothing?: boolean;
 }
 
 export function generateComparisonSvgChart({
@@ -441,6 +459,7 @@ export function generateComparisonSvgChart({
   lineWidth,
   maxPoints,
   yAxisSide,
+  smoothing,
 }: GenerateComparisonSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2 || repoNames.length === 0) {
     return null;
@@ -476,6 +495,7 @@ export function generateComparisonSvgChart({
     milestones: false,
     lineWidth,
     yAxisSide,
+    smoothing,
   });
 }
 
@@ -487,7 +507,8 @@ interface GenerateForecastSvgChartParams {
   lineColor?: string;
   lineWidth?: number;
   maxPoints?: number;
-  yAxisSide?: AxisSide;
+  yAxisSide?: ChartAxisSide;
+  smoothing?: boolean;
 }
 
 export function generateForecastSvgChart({
@@ -499,6 +520,7 @@ export function generateForecastSvgChart({
   lineWidth,
   maxPoints,
   yAxisSide,
+  smoothing,
 }: GenerateForecastSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
@@ -559,5 +581,6 @@ export function generateForecastSvgChart({
     milestones: false,
     lineWidth,
     yAxisSide,
+    smoothing,
   });
 }

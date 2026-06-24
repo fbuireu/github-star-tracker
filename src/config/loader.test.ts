@@ -96,13 +96,18 @@ describe('parseHexColor', () => {
     expect(parseHexColor('#aabbccdd')).toBe('#aabbccdd');
   });
 
+  it('accepts hex without the leading # and normalizes it', () => {
+    expect(parseHexColor('6b63ff')).toBe('#6b63ff');
+    expect(parseHexColor('AABBCC')).toBe('#aabbcc');
+    expect(parseHexColor('abc')).toBe('#abc');
+  });
+
   it('trims surrounding whitespace', () => {
     expect(parseHexColor('  #6F42C1  ')).toBe('#6f42c1');
   });
 
   it('returns undefined for invalid colors', () => {
     expect(parseHexColor('red')).toBeUndefined();
-    expect(parseHexColor('aabbcc')).toBeUndefined();
     expect(parseHexColor('#xyz')).toBeUndefined();
     expect(parseHexColor('#12')).toBeUndefined();
     expect(parseHexColor('#1234567')).toBeUndefined();
@@ -392,6 +397,18 @@ describe('loadConfig', () => {
     expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid chart-line-color'));
   });
 
+  it('accepts a bare hex chart-line-color without the leading #', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-line-color') return '6b63ff';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartLineColor).toBe('#6b63ff');
+  });
+
   it('defaults chart-max-points and chart-y-axis-side', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 
@@ -436,6 +453,26 @@ describe('loadConfig', () => {
 
     expect(config.chartYAxisSide).toBe(DEFAULTS.chartYAxisSide);
     expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid chart-y-axis-side'));
+  });
+
+  it('defaults chart-smoothing to true', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartSmoothing).toBe(true);
+  });
+
+  it('parses chart-smoothing input as false', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-smoothing') return 'false';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartSmoothing).toBe(false);
   });
 
   it('defaults track-stargazers to false', () => {

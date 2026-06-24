@@ -164,6 +164,7 @@ const defaultConfig = {
   chartLineWidth: 2.5,
   chartMaxPoints: 30,
   chartYAxisSide: 'left' as const,
+  chartSmoothing: true,
 };
 
 const defaultSummary = {
