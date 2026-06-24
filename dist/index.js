@@ -35580,6 +35580,10 @@ var Visibility = {
   ALL: "all",
   OWNED: "owned"
 };
+var ChartAxisSide = {
+  LEFT: "left",
+  RIGHT: "right"
+};
 
 // src/config/defaults.ts
 var LOCALE_MAP = {
@@ -35616,7 +35620,9 @@ var DEFAULTS2 = {
   smartSamplingThreshold: 1500,
   smartSamplingPages: 30,
   chartLineColor: "#dfb317",
-  chartLineWidth: 2.5
+  chartLineWidth: 2.5,
+  chartMaxPoints: 30,
+  chartYAxisSide: ChartAxisSide.LEFT
 };
 
 // src/i18n/ca.json
@@ -38301,6 +38307,11 @@ function parseNotificationThreshold({
 }
 
 // src/config/loader.ts
+function readFileKey(parsed, snakeKey) {
+  const kebabKey = snakeKey.replaceAll("_", "-");
+  const value = parsed[snakeKey] ?? parsed[kebabKey];
+  return value;
+}
 function loadConfigFile(configPath) {
   const fullPath = path.resolve(configPath);
   if (!fs3.existsSync(fullPath)) {
@@ -38313,26 +38324,28 @@ function loadConfigFile(configPath) {
     return {};
   }
   return {
-    visibility: parsed.visibility,
-    includeArchived: parsed.include_archived,
-    includeForks: parsed.include_forks,
-    excludeRepos: parsed.exclude_repos,
-    onlyRepos: parsed.only_repos,
-    excludeOrgs: parsed.exclude_orgs,
-    onlyOrgs: parsed.only_orgs,
-    minStars: parsed.min_stars,
-    dataBranch: parsed.data_branch,
-    maxHistory: parsed.max_history,
-    includeCharts: parsed.include_charts,
-    locale: parsed.locale,
-    notificationThreshold: parsed.notification_threshold,
-    trackStargazers: parsed.track_stargazers,
-    topRepos: parsed.top_repos,
-    smartSampling: parsed.smart_sampling,
-    smartSamplingThreshold: parsed.smart_sampling_threshold,
-    smartSamplingPages: parsed.smart_sampling_pages,
-    chartLineColor: parsed.chart_line_color,
-    chartLineWidth: parsed.chart_line_width
+    visibility: readFileKey(parsed, "visibility"),
+    includeArchived: readFileKey(parsed, "include_archived"),
+    includeForks: readFileKey(parsed, "include_forks"),
+    excludeRepos: readFileKey(parsed, "exclude_repos"),
+    onlyRepos: readFileKey(parsed, "only_repos"),
+    excludeOrgs: readFileKey(parsed, "exclude_orgs"),
+    onlyOrgs: readFileKey(parsed, "only_orgs"),
+    minStars: readFileKey(parsed, "min_stars"),
+    dataBranch: readFileKey(parsed, "data_branch"),
+    maxHistory: readFileKey(parsed, "max_history"),
+    includeCharts: readFileKey(parsed, "include_charts"),
+    locale: readFileKey(parsed, "locale"),
+    notificationThreshold: readFileKey(parsed, "notification_threshold"),
+    trackStargazers: readFileKey(parsed, "track_stargazers"),
+    topRepos: readFileKey(parsed, "top_repos"),
+    smartSampling: readFileKey(parsed, "smart_sampling"),
+    smartSamplingThreshold: readFileKey(parsed, "smart_sampling_threshold"),
+    smartSamplingPages: readFileKey(parsed, "smart_sampling_pages"),
+    chartLineColor: readFileKey(parsed, "chart_line_color"),
+    chartLineWidth: readFileKey(parsed, "chart_line_width"),
+    chartMaxPoints: readFileKey(parsed, "chart_max_points"),
+    chartYAxisSide: readFileKey(parsed, "chart_y_axis_side")
   };
 }
 function loadConfig() {
@@ -38358,6 +38371,8 @@ function loadConfig() {
   const inputSmartSamplingPages = getInput("smart-sampling-pages");
   const inputChartLineColor = getInput("chart-line-color");
   const inputChartLineWidth = getInput("chart-line-width");
+  const inputChartMaxPoints = getInput("chart-max-points");
+  const inputChartYAxisSide = getInput("chart-y-axis-side");
   const visibility = inputVisibility || fileConfig.visibility || DEFAULTS2.visibility;
   if (!(visibility in VISIBILITY_CONFIG)) {
     throw new Error(
@@ -38378,6 +38393,14 @@ function loadConfig() {
   if (inputChartLineWidth && parseDecimal(inputChartLineWidth) === void 0) {
     warning(
       `Invalid chart-line-width "${inputChartLineWidth}". Falling back to ${DEFAULTS2.chartLineWidth}`
+    );
+  }
+  const rawChartYAxisSide = inputChartYAxisSide || fileConfig.chartYAxisSide;
+  const isValidAxisSide = (value) => value === ChartAxisSide.LEFT || value === ChartAxisSide.RIGHT;
+  const chartYAxisSide = isValidAxisSide(rawChartYAxisSide) ? rawChartYAxisSide : DEFAULTS2.chartYAxisSide;
+  if (rawChartYAxisSide && !isValidAxisSide(rawChartYAxisSide)) {
+    warning(
+      `Invalid chart-y-axis-side "${rawChartYAxisSide}". Must be "left" or "right". Falling back to "${DEFAULTS2.chartYAxisSide}"`
     );
   }
   const config = {
@@ -38401,7 +38424,9 @@ function loadConfig() {
     smartSamplingThreshold: parseNumber(inputSmartSamplingThreshold) ?? fileConfig.smartSamplingThreshold ?? DEFAULTS2.smartSamplingThreshold,
     smartSamplingPages: parseNumber(inputSmartSamplingPages) ?? fileConfig.smartSamplingPages ?? DEFAULTS2.smartSamplingPages,
     chartLineColor,
-    chartLineWidth
+    chartLineWidth,
+    chartMaxPoints: parseNumber(inputChartMaxPoints) ?? fileConfig.chartMaxPoints ?? DEFAULTS2.chartMaxPoints,
+    chartYAxisSide
   };
   info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`
@@ -39900,9 +39925,11 @@ function generateSmoothPath(points) {
     const p2 = points[i + 1];
     const p3 = points[Math.min(points.length - 1, i + 2)];
     const cp1x = p1.x + (p2.x - p0.x) * tension / 3;
-    const cp1y = p1.y + (p2.y - p0.y) * tension / 3;
     const cp2x = p2.x - (p3.x - p1.x) * tension / 3;
-    const cp2y = p2.y - (p3.y - p1.y) * tension / 3;
+    const segMinY = Math.min(p1.y, p2.y);
+    const segMaxY = Math.max(p1.y, p2.y);
+    const cp1y = Math.min(segMaxY, Math.max(segMinY, p1.y + (p2.y - p0.y) * tension / 3));
+    const cp2y = Math.min(segMaxY, Math.max(segMinY, p2.y - (p3.y - p1.y) * tension / 3));
     d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
   }
   return d;
@@ -39939,18 +39966,26 @@ function niceAxisSteps({ min, max, count }) {
 function escapeXml(text) {
   return text.replaceAll(/[&<>"]/g, (char) => XML_ESCAPE_MAP[char]);
 }
+function sliceForChart(items, maxPoints) {
+  const limit = maxPoints ?? CHART.maxDataPoints;
+  return limit > 0 ? items.slice(-limit) : [...items];
+}
 function renderSvg({
   labels,
   datasets,
   title,
   showLegend,
   milestones = false,
-  lineWidth: lineWidthParam
+  lineWidth: lineWidthParam,
+  yAxisSide = "left"
 }) {
   const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
   const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
   const chartWidth = CHART.width - margin.left - margin.right;
   const chartHeight = CHART.height - margin.top - margin.bottom;
+  const yAxisX = yAxisSide === "right" ? CHART.width - margin.right : margin.left;
+  const yLabelX = yAxisSide === "right" ? CHART.width - margin.right + 8 : margin.left - 8;
+  const yLabelAnchor = yAxisSide === "right" ? "start" : "end";
   const allValues = datasets.flatMap((ds) => ds.data.filter((v) => v !== null));
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
@@ -39961,7 +39996,7 @@ function renderSvg({
   const gridLines = ySteps.map((value) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
-    <text x="${margin.left - 8}" y="${y + 4}" text-anchor="end" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${value.toLocaleString("en-US")}</text>`;
+    <text x="${yLabelX}" y="${y + 4}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${value.toLocaleString("en-US")}</text>`;
   }).join("\n    ");
   const milestoneLines = milestones ? MILESTONE_THRESHOLDS.filter((m) => m > minData && m < maxData).map((value) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
@@ -40087,7 +40122,7 @@ function renderSvg({
   <g class="x-axis">
     ${xLabels}
   </g>
-  <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="1" />
+  <line x1="${yAxisX}" y1="${margin.top}" x2="${yAxisX}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="1" />
   <line x1="${margin.left}" y1="${CHART.height - margin.bottom}" x2="${CHART.width - margin.right}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="1" />
   ${allFills}
   ${allPaths}
@@ -40101,12 +40136,14 @@ function generateSvgChart({
   title,
   locale,
   lineColor,
-  lineWidth
+  lineWidth,
+  maxPoints,
+  yAxisSide
 }) {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
   }
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = sliceForChart(history.snapshots, maxPoints);
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const data = snapshots.map((s) => s.totalStars);
   return renderSvg({
@@ -40115,7 +40152,8 @@ function generateSvgChart({
     title: title ?? "Star History",
     showLegend: false,
     milestones: true,
-    lineWidth
+    lineWidth,
+    yAxisSide
   });
 }
 function generatePerRepoSvgChart({
@@ -40124,12 +40162,14 @@ function generatePerRepoSvgChart({
   title,
   locale,
   lineColor,
-  lineWidth
+  lineWidth,
+  maxPoints,
+  yAxisSide
 }) {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
   }
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = sliceForChart(history.snapshots, maxPoints);
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const data = snapshots.map((s) => {
     const repo = s.repos.find((r) => r.fullName === repoFullName);
@@ -40141,7 +40181,8 @@ function generatePerRepoSvgChart({
     title: title ?? `${repoFullName} Star History`,
     showLegend: false,
     milestones: false,
-    lineWidth
+    lineWidth,
+    yAxisSide
   });
 }
 function generateComparisonSvgChart({
@@ -40149,13 +40190,15 @@ function generateComparisonSvgChart({
   repoNames,
   title,
   locale,
-  lineWidth
+  lineWidth,
+  maxPoints,
+  yAxisSide
 }) {
   if (!history.snapshots || history.snapshots.length < 2 || repoNames.length === 0) {
     return null;
   }
   const t = getTranslations(locale);
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = sliceForChart(history.snapshots, maxPoints);
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split("/")[0]));
@@ -40179,7 +40222,8 @@ function generateComparisonSvgChart({
     title: title ?? t.report.topRepositories,
     showLegend: true,
     milestones: false,
-    lineWidth
+    lineWidth,
+    yAxisSide
   });
 }
 function generateForecastSvgChart({
@@ -40188,13 +40232,15 @@ function generateForecastSvgChart({
   locale,
   title,
   lineColor,
-  lineWidth
+  lineWidth,
+  maxPoints,
+  yAxisSide
 }) {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
   }
   const t = getTranslations(locale);
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = sliceForChart(history.snapshots, maxPoints);
   const historicalLabels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const historicalData = snapshots.map((s) => s.totalStars);
   const forecastLabels = forecastData.aggregate.forecasts[0].points.map(
@@ -40245,7 +40291,8 @@ function generateForecastSvgChart({
     title: title ?? t.forecast.sectionTitle,
     showLegend: true,
     milestones: false,
-    lineWidth
+    lineWidth,
+    yAxisSide
   });
 }
 
@@ -40343,7 +40390,9 @@ async function trackStars() {
           title: t.report.starHistory,
           locale: config.locale,
           lineColor: config.chartLineColor,
-          lineWidth: config.chartLineWidth
+          lineWidth: config.chartLineWidth,
+          maxPoints: config.chartMaxPoints,
+          yAxisSide: config.chartYAxisSide
         });
         if (svgChart) {
           writeChart({ dataDir, filename: "star-history.svg", svg: svgChart });
@@ -40354,7 +40403,9 @@ async function trackStars() {
             repoFullName: repoName,
             locale: config.locale,
             lineColor: config.chartLineColor,
-            lineWidth: config.chartLineWidth
+            lineWidth: config.chartLineWidth,
+            maxPoints: config.chartMaxPoints,
+            yAxisSide: config.chartYAxisSide
           });
           if (repoChart) {
             const filename = `${repoName.replace("/", "-")}.svg`;
@@ -40367,7 +40418,9 @@ async function trackStars() {
             repoNames: topRepoNames,
             title: t.report.topRepositories,
             locale: config.locale,
-            lineWidth: config.chartLineWidth
+            lineWidth: config.chartLineWidth,
+            maxPoints: config.chartMaxPoints,
+            yAxisSide: config.chartYAxisSide
           });
           if (comparisonChart) {
             writeChart({ dataDir, filename: "comparison.svg", svg: comparisonChart });
@@ -40379,7 +40432,9 @@ async function trackStars() {
             forecastData,
             locale: config.locale,
             lineColor: config.chartLineColor,
-            lineWidth: config.chartLineWidth
+            lineWidth: config.chartLineWidth,
+            maxPoints: config.chartMaxPoints,
+            yAxisSide: config.chartYAxisSide
           });
           if (forecastChart) {
             writeChart({ dataDir, filename: "forecast.svg", svg: forecastChart });

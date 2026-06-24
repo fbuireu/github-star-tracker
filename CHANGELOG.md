@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/fbuireu/github-star-tracker/compare/v1.11.0...v1.12.0) (2026-06-24)
+
+
+### Features
+
+* configurable chart window & y-axis, overshoot fix, consistent config keys ([#101](https://github.com/fbuireu/github-star-tracker/issues/101)) ([bc22cb3](https://github.com/fbuireu/github-star-tracker/commit/bc22cb31ef09f01f38cd83f4f68a9e44fe390c07)), closes [#95](https://github.com/fbuireu/github-star-tracker/issues/95) [#96](https://github.com/fbuireu/github-star-tracker/issues/96) [#98](https://github.com/fbuireu/github-star-tracker/issues/98)
+
 # [1.11.0](https://github.com/fbuireu/github-star-tracker/compare/v1.10.0...v1.11.0) (2026-06-24)
 
 
