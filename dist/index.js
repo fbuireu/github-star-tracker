@@ -35614,7 +35614,9 @@ var DEFAULTS2 = {
   topRepos: 10,
   smartSampling: false,
   smartSamplingThreshold: 1500,
-  smartSamplingPages: 30
+  smartSamplingPages: 30,
+  chartLineColor: "#dfb317",
+  chartLineWidth: 2.5
 };
 
 // src/i18n/ca.json
@@ -38278,6 +38280,17 @@ function parseNumber(value) {
   const n = Number.parseInt(value, 10);
   return Number.isNaN(n) ? void 0 : n;
 }
+var HEX_COLOR_PATTERN = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+function parseHexColor(value) {
+  if (value === "" || value === void 0 || value === null) return void 0;
+  const trimmed = value.trim();
+  return HEX_COLOR_PATTERN.test(trimmed) ? trimmed.toLowerCase() : void 0;
+}
+function parseDecimal(value) {
+  if (value === "" || value === void 0 || value === null) return void 0;
+  const n = Number.parseFloat(value);
+  return Number.isFinite(n) && n > 0 ? n : void 0;
+}
 function parseNotificationThreshold({
   value
 }) {
@@ -38317,7 +38330,9 @@ function loadConfigFile(configPath) {
     topRepos: parsed.top_repos,
     smartSampling: parsed.smart_sampling,
     smartSamplingThreshold: parsed.smart_sampling_threshold,
-    smartSamplingPages: parsed.smart_sampling_pages
+    smartSamplingPages: parsed.smart_sampling_pages,
+    chartLineColor: parsed.chart_line_color,
+    chartLineWidth: parsed.chart_line_width
   };
 }
 function loadConfig() {
@@ -38341,6 +38356,8 @@ function loadConfig() {
   const inputSmartSampling = getInput("smart-sampling");
   const inputSmartSamplingThreshold = getInput("smart-sampling-threshold");
   const inputSmartSamplingPages = getInput("smart-sampling-pages");
+  const inputChartLineColor = getInput("chart-line-color");
+  const inputChartLineWidth = getInput("chart-line-width");
   const visibility = inputVisibility || fileConfig.visibility || DEFAULTS2.visibility;
   if (!(visibility in VISIBILITY_CONFIG)) {
     throw new Error(
@@ -38350,6 +38367,18 @@ function loadConfig() {
   const locale = inputLocale || fileConfig.locale || DEFAULTS2.locale;
   if (!isValidLocale(locale)) {
     warning(`Invalid locale "${locale}". Falling back to "en"`);
+  }
+  const chartLineColor = parseHexColor(inputChartLineColor) ?? parseHexColor(fileConfig.chartLineColor) ?? DEFAULTS2.chartLineColor;
+  if (inputChartLineColor && !parseHexColor(inputChartLineColor)) {
+    warning(
+      `Invalid chart-line-color "${inputChartLineColor}". Falling back to "${DEFAULTS2.chartLineColor}"`
+    );
+  }
+  const chartLineWidth = parseDecimal(inputChartLineWidth) ?? fileConfig.chartLineWidth ?? DEFAULTS2.chartLineWidth;
+  if (inputChartLineWidth && parseDecimal(inputChartLineWidth) === void 0) {
+    warning(
+      `Invalid chart-line-width "${inputChartLineWidth}". Falling back to ${DEFAULTS2.chartLineWidth}`
+    );
   }
   const config = {
     visibility,
@@ -38370,7 +38399,9 @@ function loadConfig() {
     topRepos: parseNumber(inputTopRepos) ?? fileConfig.topRepos ?? DEFAULTS2.topRepos,
     smartSampling: parseBool(inputSmartSampling) ?? fileConfig.smartSampling ?? DEFAULTS2.smartSampling,
     smartSamplingThreshold: parseNumber(inputSmartSamplingThreshold) ?? fileConfig.smartSamplingThreshold ?? DEFAULTS2.smartSamplingThreshold,
-    smartSamplingPages: parseNumber(inputSmartSamplingPages) ?? fileConfig.smartSamplingPages ?? DEFAULTS2.smartSamplingPages
+    smartSamplingPages: parseNumber(inputSmartSamplingPages) ?? fileConfig.smartSamplingPages ?? DEFAULTS2.smartSamplingPages,
+    chartLineColor,
+    chartLineWidth
   };
   info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`
@@ -39913,9 +39944,11 @@ function renderSvg({
   datasets,
   title,
   showLegend,
-  milestones = false
+  milestones = false,
+  lineWidth: lineWidthParam
 }) {
-  const { margin, pointRadius, lineWidth, gridOpacity, fontSize, animation, font } = SVG_CHART;
+  const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
+  const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
   const chartWidth = CHART.width - margin.left - margin.right;
   const chartHeight = CHART.height - margin.top - margin.bottom;
   const allValues = datasets.flatMap((ds) => ds.data.filter((v) => v !== null));
@@ -40066,7 +40099,9 @@ function renderSvg({
 function generateSvgChart({
   history,
   title,
-  locale
+  locale,
+  lineColor,
+  lineWidth
 }) {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
@@ -40076,17 +40111,20 @@ function generateSvgChart({
   const data = snapshots.map((s) => s.totalStars);
   return renderSvg({
     labels,
-    datasets: [{ label: "Stars", data, color: COLORS.accent }],
+    datasets: [{ label: "Stars", data, color: lineColor ?? COLORS.accent }],
     title: title ?? "Star History",
     showLegend: false,
-    milestones: true
+    milestones: true,
+    lineWidth
   });
 }
 function generatePerRepoSvgChart({
   history,
   repoFullName,
   title,
-  locale
+  locale,
+  lineColor,
+  lineWidth
 }) {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
@@ -40099,17 +40137,19 @@ function generatePerRepoSvgChart({
   });
   return renderSvg({
     labels,
-    datasets: [{ label: "Stars", data, color: COLORS.accent }],
+    datasets: [{ label: "Stars", data, color: lineColor ?? COLORS.accent }],
     title: title ?? `${repoFullName} Star History`,
     showLegend: false,
-    milestones: false
+    milestones: false,
+    lineWidth
   });
 }
 function generateComparisonSvgChart({
   history,
   repoNames,
   title,
-  locale
+  locale,
+  lineWidth
 }) {
   if (!history.snapshots || history.snapshots.length < 2 || repoNames.length === 0) {
     return null;
@@ -40138,14 +40178,17 @@ function generateComparisonSvgChart({
     datasets,
     title: title ?? t.report.topRepositories,
     showLegend: true,
-    milestones: false
+    milestones: false,
+    lineWidth
   });
 }
 function generateForecastSvgChart({
   history,
   forecastData,
   locale,
-  title
+  title,
+  lineColor,
+  lineWidth
 }) {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
@@ -40170,7 +40213,7 @@ function generateForecastSvgChart({
     {
       label: t.report.starHistory,
       data: [...historicalData, ...new Array(forecastLabels.length).fill(null)],
-      color: COLORS.accent,
+      color: lineColor ?? COLORS.accent,
       fill: true
     },
     {
@@ -40201,7 +40244,8 @@ function generateForecastSvgChart({
     datasets,
     title: title ?? t.forecast.sectionTitle,
     showLegend: true,
-    milestones: false
+    milestones: false,
+    lineWidth
   });
 }
 
@@ -40297,7 +40341,9 @@ async function trackStars() {
         const svgChart = generateSvgChart({
           history: updatedHistory,
           title: t.report.starHistory,
-          locale: config.locale
+          locale: config.locale,
+          lineColor: config.chartLineColor,
+          lineWidth: config.chartLineWidth
         });
         if (svgChart) {
           writeChart({ dataDir, filename: "star-history.svg", svg: svgChart });
@@ -40306,7 +40352,9 @@ async function trackStars() {
           const repoChart = generatePerRepoSvgChart({
             history: updatedHistory,
             repoFullName: repoName,
-            locale: config.locale
+            locale: config.locale,
+            lineColor: config.chartLineColor,
+            lineWidth: config.chartLineWidth
           });
           if (repoChart) {
             const filename = `${repoName.replace("/", "-")}.svg`;
@@ -40318,7 +40366,8 @@ async function trackStars() {
             history: updatedHistory,
             repoNames: topRepoNames,
             title: t.report.topRepositories,
-            locale: config.locale
+            locale: config.locale,
+            lineWidth: config.chartLineWidth
           });
           if (comparisonChart) {
             writeChart({ dataDir, filename: "comparison.svg", svg: comparisonChart });
@@ -40328,7 +40377,9 @@ async function trackStars() {
           const forecastChart = generateForecastSvgChart({
             history: updatedHistory,
             forecastData,
-            locale: config.locale
+            locale: config.locale,
+            lineColor: config.chartLineColor,
+            lineWidth: config.chartLineWidth
           });
           if (forecastChart) {
             writeChart({ dataDir, filename: "forecast.svg", svg: forecastChart });

@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/fbuireu/github-star-tracker/compare/v1.10.0...v1.11.0) (2026-06-24)
+
+
+### Features
+
+* customizable chart line color and width (closes [#89](https://github.com/fbuireu/github-star-tracker/issues/89)) ([#94](https://github.com/fbuireu/github-star-tracker/issues/94)) ([2e493ab](https://github.com/fbuireu/github-star-tracker/commit/2e493ab6d3183818c9a586c5d970cce213927830))
+
 # [1.10.0](https://github.com/fbuireu/github-star-tracker/compare/v1.9.0...v1.10.0) (2026-06-24)
 
 
