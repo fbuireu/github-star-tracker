@@ -40,6 +40,8 @@ const defaultConfig: Config = {
   includeForks: false,
   excludeRepos: [],
   onlyRepos: [],
+  excludeOrgs: [],
+  onlyOrgs: [],
   minStars: 0,
   dataBranch: 'star-tracker-data',
   maxHistory: 52,
@@ -162,6 +164,84 @@ describe('filterRepos', () => {
     const config = { ...defaultConfig, onlyRepos: ['nonexistent'] };
 
     expect(filterRepos({ repos, config })).toHaveLength(0);
+  });
+
+  it('filters by org with only-orgs', () => {
+    const repos = [
+      makeRepo({ name: 'a', owner: { login: 'org-a' } }),
+      makeRepo({ name: 'b', owner: { login: 'org-b' } }),
+    ];
+    const config = { ...defaultConfig, onlyOrgs: ['org-a'] };
+    const result = filterRepos({ repos, config });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].owner.login).toBe('org-a');
+  });
+
+  it('supports regex pattern in only-orgs', () => {
+    const repos = [
+      makeRepo({ name: 'web', owner: { login: 'acme-web' } }),
+      makeRepo({ name: 'api', owner: { login: 'acme-api' } }),
+      makeRepo({ name: 'x', owner: { login: 'other' } }),
+    ];
+    const config = { ...defaultConfig, onlyOrgs: ['/^acme-/'] };
+
+    expect(filterRepos({ repos, config })).toHaveLength(2);
+  });
+
+  it('excludes repos by org with exclude-orgs', () => {
+    const repos = [
+      makeRepo({ name: 'a', owner: { login: 'keep' } }),
+      makeRepo({ name: 'b', owner: { login: 'drop' } }),
+    ];
+    const config = { ...defaultConfig, excludeOrgs: ['drop'] };
+    const result = filterRepos({ repos, config });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].owner.login).toBe('keep');
+  });
+
+  it('supports mixed exact names and regex in exclude-orgs', () => {
+    const repos = [
+      makeRepo({ name: 'a', owner: { login: 'keep' } }),
+      makeRepo({ name: 'b', owner: { login: 'drop-this' } }),
+      makeRepo({ name: 'c', owner: { login: 'experiment-1' } }),
+    ];
+    const config = { ...defaultConfig, excludeOrgs: ['drop-this', '/^experiment-/'] };
+    const result = filterRepos({ repos, config });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].owner.login).toBe('keep');
+  });
+
+  it('matches orgs case-sensitively', () => {
+    const repos = [makeRepo({ name: 'a', owner: { login: 'Org-A' } })];
+    const config = { ...defaultConfig, onlyOrgs: ['org-a'] };
+
+    expect(filterRepos({ repos, config })).toHaveLength(0);
+  });
+
+  it('applies only-orgs before the only-repos override on the narrowed set', () => {
+    const repos = [
+      makeRepo({ name: 'wanted', owner: { login: 'org-a' }, archived: true, fork: true }),
+      makeRepo({ name: 'wanted', owner: { login: 'org-b' } }),
+      makeRepo({ name: 'unwanted', owner: { login: 'org-a' } }),
+    ];
+    const config = { ...defaultConfig, onlyOrgs: ['org-a'], onlyRepos: ['wanted'] };
+    const result = filterRepos({ repos, config });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].owner.login).toBe('org-a');
+    expect(result[0].name).toBe('wanted');
+  });
+
+  it('does not filter by org when org lists are empty', () => {
+    const repos = [
+      makeRepo({ name: 'a', owner: { login: 'org-a' } }),
+      makeRepo({ name: 'b', owner: { login: 'org-b' } }),
+    ];
+
+    expect(filterRepos({ repos, config: defaultConfig })).toHaveLength(2);
   });
 });
 

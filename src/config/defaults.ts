@@ -28,6 +28,8 @@ export const DEFAULTS: Config = {
   includeForks: false,
   excludeRepos: [],
   onlyRepos: [],
+  excludeOrgs: [],
+  onlyOrgs: [],
   minStars: 0,
   dataBranch: 'star-tracker-data',
   maxHistory: 52,

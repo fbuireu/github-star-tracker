@@ -144,6 +144,8 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `include-forks`          | `false`               | Include forked repos                                          |
 | `exclude-repos`          | —                     | Names or regex to exclude                                     |
 | `only-repos`             | —                     | Only track these repos                                        |
+| `only-orgs`              | —                     | Only track repos under these orgs/owners (name or regex)      |
+| `exclude-orgs`           | —                     | Orgs/owners to exclude (name or regex)                        |
 | `min-stars`              | `0`                   | Min stars to track                                            |
 | `smtp-host`              | —                     | SMTP hostname (enables email)                                 |
 | `smtp-port`              | `587`                 | SMTP port                                                     |

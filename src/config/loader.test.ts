@@ -227,6 +227,49 @@ describe('loadConfig', () => {
     expect(config.excludeRepos).toEqual(['repo-a', 'repo-b']);
   });
 
+  it('parses only-orgs input as comma-separated list', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'only-orgs') return 'org-a, org-b';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.onlyOrgs).toEqual(['org-a', 'org-b']);
+  });
+
+  it('parses exclude-orgs input as comma-separated list', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'exclude-orgs') return 'org-x,org-y';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.excludeOrgs).toEqual(['org-x', 'org-y']);
+  });
+
+  it('reads only_orgs and exclude_orgs from config file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('only_orgs:\n- "org-a"\nexclude_orgs:\n- "org-z"');
+
+    const config = loadConfig();
+
+    expect(config.onlyOrgs).toEqual(['org-a']);
+    expect(config.excludeOrgs).toEqual(['org-z']);
+  });
+
+  it('defaults org filters to empty arrays', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.onlyOrgs).toEqual(DEFAULTS.onlyOrgs);
+    expect(config.excludeOrgs).toEqual(DEFAULTS.excludeOrgs);
+  });
+
   it('defaults track-stargazers to false', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 

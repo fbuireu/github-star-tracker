@@ -146,6 +146,8 @@ const defaultConfig = {
   includeForks: false,
   excludeRepos: [],
   onlyRepos: [],
+  excludeOrgs: [],
+  onlyOrgs: [],
   minStars: 0,
   dataBranch: 'star-data',
   maxHistory: 52,

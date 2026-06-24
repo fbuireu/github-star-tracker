@@ -16,6 +16,8 @@ export interface Config {
   includeForks: boolean;
   excludeRepos: string[];
   onlyRepos: string[];
+  excludeOrgs: string[];
+  onlyOrgs: string[];
   minStars: number;
   dataBranch: string;
   maxHistory: number;

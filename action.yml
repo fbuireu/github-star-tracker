@@ -46,6 +46,16 @@ inputs:
     required: false
     default: ''
 
+  only-orgs:
+    description: 'Comma-separated list of organization/owner names or regex patterns (e.g. /^my-org$/) to exclusively track (overrides config file)'
+    required: false
+    default: ''
+
+  exclude-orgs:
+    description: 'Comma-separated list of organization/owner names or regex patterns to exclude (overrides config file)'
+    required: false
+    default: ''
+
   min-stars:
     description: 'Only track repos with at least this many stars (overrides config file)'
     required: false

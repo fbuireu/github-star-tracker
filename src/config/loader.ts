@@ -13,6 +13,8 @@ interface FileConfig {
   includeForks?: boolean;
   excludeRepos?: string[];
   onlyRepos?: string[];
+  excludeOrgs?: string[];
+  onlyOrgs?: string[];
   minStars?: number;
   dataBranch?: string;
   maxHistory?: number;
@@ -44,6 +46,8 @@ export function loadConfigFile(configPath: string): FileConfig {
     includeForks: parsed.include_forks as boolean | undefined,
     excludeRepos: parsed.exclude_repos as string[] | undefined,
     onlyRepos: parsed.only_repos as string[] | undefined,
+    excludeOrgs: parsed.exclude_orgs as string[] | undefined,
+    onlyOrgs: parsed.only_orgs as string[] | undefined,
     minStars: parsed.min_stars as number | undefined,
     dataBranch: parsed.data_branch as string | undefined,
     maxHistory: parsed.max_history as number | undefined,
@@ -64,6 +68,8 @@ export function loadConfig(): Config {
   const inputIncludeForks = core.getInput('include-forks');
   const inputExcludeRepos = core.getInput('exclude-repos');
   const inputOnlyRepos = core.getInput('only-repos');
+  const inputExcludeOrgs = core.getInput('exclude-orgs');
+  const inputOnlyOrgs = core.getInput('only-orgs');
   const inputMinStars = core.getInput('min-stars');
   const inputDataBranch = core.getInput('data-branch');
   const inputMaxHistory = core.getInput('max-history');
@@ -99,6 +105,10 @@ export function loadConfig(): Config {
     onlyRepos: inputOnlyRepos
       ? parseList(inputOnlyRepos)
       : fileConfig.onlyRepos || DEFAULTS.onlyRepos,
+    excludeOrgs: inputExcludeOrgs
+      ? parseList(inputExcludeOrgs)
+      : fileConfig.excludeOrgs || DEFAULTS.excludeOrgs,
+    onlyOrgs: inputOnlyOrgs ? parseList(inputOnlyOrgs) : fileConfig.onlyOrgs || DEFAULTS.onlyOrgs,
     minStars: parseNumber(inputMinStars) ?? fileConfig.minStars ?? DEFAULTS.minStars,
     dataBranch: inputDataBranch || fileConfig.dataBranch || DEFAULTS.dataBranch,
     maxHistory: parseNumber(inputMaxHistory) ?? fileConfig.maxHistory ?? DEFAULTS.maxHistory,
@@ -123,6 +133,12 @@ export function loadConfig(): Config {
   }
   if (config.excludeRepos.length > 0) {
     core.info(`Config: excluding repos: ${config.excludeRepos.join(', ')}`);
+  }
+  if (config.onlyOrgs.length > 0) {
+    core.info(`Config: tracking only orgs: ${config.onlyOrgs.join(', ')}`);
+  }
+  if (config.excludeOrgs.length > 0) {
+    core.info(`Config: excluding orgs: ${config.excludeOrgs.join(', ')}`);
   }
 
   return config;
