@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/fbuireu/github-star-tracker/compare/v1.9.0...v1.10.0) (2026-06-24)
+
+
+### Features
+
+* smart sampling mode for high-star repos (closes [#91](https://github.com/fbuireu/github-star-tracker/issues/91)) ([#97](https://github.com/fbuireu/github-star-tracker/issues/97)) ([9f92101](https://github.com/fbuireu/github-star-tracker/commit/9f92101afa64d361d48708f21cfa8460392ba2b0))
+
 # [1.9.0](https://github.com/fbuireu/github-star-tracker/compare/v1.8.9...v1.9.0) (2026-06-24)
 
 

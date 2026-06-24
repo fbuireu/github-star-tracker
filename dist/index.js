@@ -35611,7 +35611,10 @@ var DEFAULTS2 = {
   locale: "en",
   notificationThreshold: "auto",
   trackStargazers: false,
-  topRepos: 10
+  topRepos: 10,
+  smartSampling: false,
+  smartSamplingThreshold: 1500,
+  smartSamplingPages: 30
 };
 
 // src/i18n/ca.json
@@ -35664,7 +35667,8 @@ var ca_default = {
     newStargazers: "{count} nous stargazers des de la darrera execuci\xF3",
     starredOn: "va marcar estrella el {date}",
     noNewStargazers: "Sense nous stargazers des de la darrera execuci\xF3",
-    stargazerCount: "{count} nous"
+    stargazerCount: "{count} nous",
+    sampledNote: "Les llistes exactes de nous stargazers no estan disponibles per als repositoris mostrejats: {repos}"
   },
   forecast: {
     sectionTitle: "Previsi\xF3 de Creixement",
@@ -35730,7 +35734,8 @@ var en_default = {
     newStargazers: "{count} new stargazers since last run",
     starredOn: "starred on {date}",
     noNewStargazers: "No new stargazers since last run",
-    stargazerCount: "{count} new"
+    stargazerCount: "{count} new",
+    sampledNote: "Exact new-stargazer lists are unavailable for sampled repositories: {repos}"
   },
   forecast: {
     sectionTitle: "Growth Forecast",
@@ -35796,7 +35801,8 @@ var es_default = {
     newStargazers: "{count} nuevos stargazers desde la \xFAltima ejecuci\xF3n",
     starredOn: "marc\xF3 estrella el {date}",
     noNewStargazers: "Sin nuevos stargazers desde la \xFAltima ejecuci\xF3n",
-    stargazerCount: "{count} nuevos"
+    stargazerCount: "{count} nuevos",
+    sampledNote: "Las listas exactas de nuevos stargazers no est\xE1n disponibles para los repositorios muestreados: {repos}"
   },
   forecast: {
     sectionTitle: "Previsi\xF3n de Crecimiento",
@@ -35862,7 +35868,8 @@ var it_default = {
     newStargazers: "{count} nuovi stargazer dall'ultima esecuzione",
     starredOn: "ha messo la stella il {date}",
     noNewStargazers: "Nessun nuovo stargazer dall'ultima esecuzione",
-    stargazerCount: "{count} nuovi"
+    stargazerCount: "{count} nuovi",
+    sampledNote: "Gli elenchi esatti dei nuovi stargazer non sono disponibili per i repository campionati: {repos}"
   },
   forecast: {
     sectionTitle: "Previsione di Crescita",
@@ -38307,7 +38314,10 @@ function loadConfigFile(configPath) {
     locale: parsed.locale,
     notificationThreshold: parsed.notification_threshold,
     trackStargazers: parsed.track_stargazers,
-    topRepos: parsed.top_repos
+    topRepos: parsed.top_repos,
+    smartSampling: parsed.smart_sampling,
+    smartSamplingThreshold: parsed.smart_sampling_threshold,
+    smartSamplingPages: parsed.smart_sampling_pages
   };
 }
 function loadConfig() {
@@ -38328,6 +38338,9 @@ function loadConfig() {
   const inputNotificationThreshold = getInput("notification-threshold");
   const inputTrackStargazers = getInput("track-stargazers");
   const inputTopRepos = getInput("top-repos");
+  const inputSmartSampling = getInput("smart-sampling");
+  const inputSmartSamplingThreshold = getInput("smart-sampling-threshold");
+  const inputSmartSamplingPages = getInput("smart-sampling-pages");
   const visibility = inputVisibility || fileConfig.visibility || DEFAULTS2.visibility;
   if (!(visibility in VISIBILITY_CONFIG)) {
     throw new Error(
@@ -38354,7 +38367,10 @@ function loadConfig() {
     locale: isValidLocale(locale) ? locale : DEFAULTS2.locale,
     notificationThreshold: parseNotificationThreshold({ value: inputNotificationThreshold }) ?? fileConfig.notificationThreshold ?? DEFAULTS2.notificationThreshold,
     trackStargazers: parseBool(inputTrackStargazers) ?? fileConfig.trackStargazers ?? DEFAULTS2.trackStargazers,
-    topRepos: parseNumber(inputTopRepos) ?? fileConfig.topRepos ?? DEFAULTS2.topRepos
+    topRepos: parseNumber(inputTopRepos) ?? fileConfig.topRepos ?? DEFAULTS2.topRepos,
+    smartSampling: parseBool(inputSmartSampling) ?? fileConfig.smartSampling ?? DEFAULTS2.smartSampling,
+    smartSamplingThreshold: parseNumber(inputSmartSamplingThreshold) ?? fileConfig.smartSamplingThreshold ?? DEFAULTS2.smartSamplingThreshold,
+    smartSamplingPages: parseNumber(inputSmartSamplingPages) ?? fileConfig.smartSamplingPages ?? DEFAULTS2.smartSamplingPages
   };
   info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`
@@ -38665,8 +38681,13 @@ function diffStargazers({
   previousMap
 }) {
   const entries = [];
+  const sampledRepos = [];
   let totalNew = 0;
   for (const repo of current) {
+    if (repo.sampled) {
+      sampledRepos.push(repo.repoFullName);
+      continue;
+    }
     const previousLogins = new Set(previousMap[repo.repoFullName] ?? []);
     const newStargazers = repo.stargazers.filter((s) => !previousLogins.has(s.login)).sort((a, b) => b.starredAt.localeCompare(a.starredAt));
     if (newStargazers.length > 0) {
@@ -38674,11 +38695,12 @@ function diffStargazers({
       totalNew += newStargazers.length;
     }
   }
-  return { entries, totalNew };
+  return { entries, totalNew, sampledRepos: sampledRepos.length > 0 ? sampledRepos : void 0 };
 }
 function buildStargazerMap(repoStargazers) {
   const map = {};
   for (const repo of repoStargazers) {
+    if (repo.sampled) continue;
     map[repo.repoFullName] = repo.stargazers.map((s) => s.login);
   }
   return map;
@@ -38863,19 +38885,57 @@ async function getRepos({ octokit, config }) {
 var STARGAZERS_PER_PAGE = 100;
 async function fetchAllStargazers({
   octokit,
-  repos
+  repos,
+  smartSampling,
+  smartSamplingThreshold,
+  smartSamplingPages
 }) {
   const results = [];
+  const sampled = [];
   for (const repo of repos) {
+    const shouldSample = smartSampling && repo.stars > smartSamplingThreshold;
     try {
-      const stargazers = await fetchRepoStargazers({ octokit, owner: repo.owner, name: repo.name });
-      results.push({ repoFullName: repo.fullName, stargazers });
+      const stargazers = shouldSample ? await fetchSampledStargazers({
+        octokit,
+        owner: repo.owner,
+        name: repo.name,
+        totalStars: repo.stars,
+        maxPages: smartSamplingPages
+      }) : await fetchRepoStargazers({ octokit, owner: repo.owner, name: repo.name });
+      results.push({ repoFullName: repo.fullName, stargazers, sampled: shouldSample });
+      if (shouldSample) sampled.push(repo.fullName);
     } catch (error2) {
       warning(`Failed to fetch stargazers for ${repo.fullName}: ${error2.message}`);
-      results.push({ repoFullName: repo.fullName, stargazers: [] });
+      results.push({ repoFullName: repo.fullName, stargazers: [], sampled: shouldSample });
     }
   }
+  if (sampled.length > 0) {
+    info(`Smart sampling applied to ${sampled.length} repo(s): ${sampled.join(", ")}`);
+  }
   return results;
+}
+async function fetchStargazerPage({
+  octokit,
+  owner,
+  name,
+  page
+}) {
+  const { data } = await octokit.request("GET /repos/{owner}/{repo}/stargazers", {
+    owner,
+    repo: name,
+    per_page: STARGAZERS_PER_PAGE,
+    page,
+    headers: {
+      accept: "application/vnd.github.star+json"
+    }
+  });
+  const items = data;
+  return items.map((item) => ({
+    login: item.user.login,
+    avatarUrl: item.user.avatar_url,
+    profileUrl: item.user.html_url,
+    starredAt: item.starred_at
+  }));
 }
 async function fetchRepoStargazers({
   octokit,
@@ -38886,27 +38946,39 @@ async function fetchRepoStargazers({
   let page = 1;
   let itemCount;
   do {
-    const { data } = await octokit.request("GET /repos/{owner}/{repo}/stargazers", {
-      owner,
-      repo: name,
-      per_page: STARGAZERS_PER_PAGE,
-      page,
-      headers: {
-        accept: "application/vnd.github.star+json"
-      }
-    });
-    const items = data;
+    const items = await fetchStargazerPage({ octokit, owner, name, page });
     itemCount = items.length;
-    for (const item of items) {
-      stargazers.push({
-        login: item.user.login,
-        avatarUrl: item.user.avatar_url,
-        profileUrl: item.user.html_url,
-        starredAt: item.starred_at
-      });
-    }
+    stargazers.push(...items);
     page++;
   } while (itemCount >= STARGAZERS_PER_PAGE);
+  return stargazers;
+}
+function selectSampledPages(totalPages, maxPages) {
+  const pages = Math.max(1, maxPages);
+  if (totalPages <= pages) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  if (pages === 1) return [1];
+  const selected = /* @__PURE__ */ new Set();
+  for (let i = 0; i < pages; i++) {
+    selected.add(1 + Math.round(i * (totalPages - 1) / (pages - 1)));
+  }
+  return [...selected].sort((a, b) => a - b);
+}
+async function fetchSampledStargazers({
+  octokit,
+  owner,
+  name,
+  totalStars,
+  maxPages
+}) {
+  const totalPages = Math.max(1, Math.ceil(totalStars / STARGAZERS_PER_PAGE));
+  const pages = selectSampledPages(totalPages, maxPages);
+  const stargazers = [];
+  for (const page of pages) {
+    const items = await fetchStargazerPage({ octokit, owner, name, page });
+    stargazers.push(...items);
+  }
   return stargazers;
 }
 
@@ -39452,10 +39524,12 @@ function generateHtmlReport({
         <h3 style="font-size:16px;margin:24px 0 12px;">${t.report.individualRepoCharts}</h3>
         ${individualRepoChartsHtml}` : ""}
       </div>` : "";
+  const sampledNoteHtml = stargazerDiff?.sampledRepos && stargazerDiff.sampledRepos.length > 0 ? `<p style="color:${COLORS.neutral};">${interpolate({ template: t.stargazers.sampledNote, params: { repos: stargazerDiff.sampledRepos.join(", ") } })}</p>` : "";
   const stargazerSection = stargazerDiff && stargazerDiff.totalNew > 0 ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F464} ${t.stargazers.sectionTitle}</h2>
         <p>${interpolate({ template: t.stargazers.newStargazers, params: { count: stargazerDiff.totalNew } })}</p>
+        ${sampledNoteHtml}
         ${stargazerDiff.entries.map(
     (entry) => `
         <div style="margin-top:12px;">
@@ -39473,6 +39547,7 @@ function generateHtmlReport({
       </div>` : stargazerDiff ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F464} ${t.stargazers.sectionTitle}</h2>
+        ${sampledNoteHtml}
         <p style="color:${COLORS.neutral};">${t.stargazers.noNewStargazers}</p>
       </div>` : "";
   const forecastSection = forecastData ? `
@@ -39667,6 +39742,13 @@ function generateMarkdownReport({
     `- **${t.report.netChange}:** ${deltaIndicator(summary2.totalDelta)}`,
     ""
   ];
+  const sampledNote = stargazerDiff?.sampledRepos && stargazerDiff.sampledRepos.length > 0 ? [
+    interpolate({
+      template: t.stargazers.sampledNote,
+      params: { repos: stargazerDiff.sampledRepos.join(", ") }
+    }),
+    ""
+  ] : [];
   const stargazerSection = stargazerDiff && stargazerDiff.totalNew > 0 ? [
     `## \u{1F464} ${t.stargazers.sectionTitle}`,
     "",
@@ -39675,6 +39757,7 @@ function generateMarkdownReport({
       params: { count: stargazerDiff.totalNew }
     }),
     "",
+    ...sampledNote,
     ...stargazerDiff.entries.flatMap((entry) => [
       "<details>",
       `<summary>${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</summary>`,
@@ -39686,7 +39769,13 @@ function generateMarkdownReport({
       "</details>",
       ""
     ])
-  ] : stargazerDiff ? [`## \u{1F464} ${t.stargazers.sectionTitle}`, "", t.stargazers.noNewStargazers, ""] : [];
+  ] : stargazerDiff ? [
+    `## \u{1F464} ${t.stargazers.sectionTitle}`,
+    "",
+    ...sampledNote,
+    t.stargazers.noNewStargazers,
+    ""
+  ] : [];
   const forecastSection = forecastData ? [
     `## \u{1F52E} ${t.forecast.sectionTitle}`,
     "",
@@ -40151,7 +40240,13 @@ async function trackStars() {
       let stargazerDiff = null;
       if (config.trackStargazers) {
         info("Fetching stargazers...");
-        const repoStargazers = await fetchAllStargazers({ octokit, repos });
+        const repoStargazers = await fetchAllStargazers({
+          octokit,
+          repos,
+          smartSampling: config.smartSampling,
+          smartSamplingThreshold: config.smartSamplingThreshold,
+          smartSamplingPages: config.smartSamplingPages
+        });
         const previousMap = readStargazers(dataDir);
         stargazerDiff = diffStargazers({ current: repoStargazers, previousMap });
         const updatedMap = buildStargazerMap(repoStargazers);
