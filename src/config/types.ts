@@ -30,4 +30,6 @@ export interface Config {
   smartSampling: boolean;
   smartSamplingThreshold: number;
   smartSamplingPages: number;
+  chartLineColor: string;
+  chartLineWidth: number;
 }

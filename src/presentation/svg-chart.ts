@@ -125,6 +125,7 @@ interface RenderSvgParams {
   title: string;
   showLegend: boolean;
   milestones?: boolean;
+  lineWidth?: number;
 }
 
 function renderSvg({
@@ -133,8 +134,10 @@ function renderSvg({
   title,
   showLegend,
   milestones = false,
+  lineWidth: lineWidthParam,
 }: RenderSvgParams): string {
-  const { margin, pointRadius, lineWidth, gridOpacity, fontSize, animation, font } = SVG_CHART;
+  const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
+  const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
   const chartWidth = CHART.width - margin.left - margin.right;
   const chartHeight = CHART.height - margin.top - margin.bottom;
   const allValues = datasets.flatMap((ds) => ds.data.filter((v): v is number => v !== null));
@@ -327,12 +330,16 @@ interface GenerateSvgChartParams {
   history: History;
   title?: string;
   locale: Locale;
+  lineColor?: string;
+  lineWidth?: number;
 }
 
 export function generateSvgChart({
   history,
   title,
   locale,
+  lineColor,
+  lineWidth,
 }: GenerateSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
@@ -344,10 +351,11 @@ export function generateSvgChart({
 
   return renderSvg({
     labels,
-    datasets: [{ label: 'Stars', data, color: COLORS.accent }],
+    datasets: [{ label: 'Stars', data, color: lineColor ?? COLORS.accent }],
     title: title ?? 'Star History',
     showLegend: false,
     milestones: true,
+    lineWidth,
   });
 }
 
@@ -356,6 +364,8 @@ interface GeneratePerRepoSvgChartParams {
   repoFullName: string;
   title?: string;
   locale: Locale;
+  lineColor?: string;
+  lineWidth?: number;
 }
 
 export function generatePerRepoSvgChart({
@@ -363,6 +373,8 @@ export function generatePerRepoSvgChart({
   repoFullName,
   title,
   locale,
+  lineColor,
+  lineWidth,
 }: GeneratePerRepoSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
@@ -377,10 +389,11 @@ export function generatePerRepoSvgChart({
 
   return renderSvg({
     labels,
-    datasets: [{ label: 'Stars', data, color: COLORS.accent }],
+    datasets: [{ label: 'Stars', data, color: lineColor ?? COLORS.accent }],
     title: title ?? `${repoFullName} Star History`,
     showLegend: false,
     milestones: false,
+    lineWidth,
   });
 }
 
@@ -389,6 +402,7 @@ interface GenerateComparisonSvgChartParams {
   repoNames: string[];
   title?: string;
   locale: Locale;
+  lineWidth?: number;
 }
 
 export function generateComparisonSvgChart({
@@ -396,6 +410,7 @@ export function generateComparisonSvgChart({
   repoNames,
   title,
   locale,
+  lineWidth,
 }: GenerateComparisonSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2 || repoNames.length === 0) {
     return null;
@@ -429,6 +444,7 @@ export function generateComparisonSvgChart({
     title: title ?? t.report.topRepositories,
     showLegend: true,
     milestones: false,
+    lineWidth,
   });
 }
 
@@ -437,6 +453,8 @@ interface GenerateForecastSvgChartParams {
   forecastData: ForecastData;
   locale: Locale;
   title?: string;
+  lineColor?: string;
+  lineWidth?: number;
 }
 
 export function generateForecastSvgChart({
@@ -444,6 +462,8 @@ export function generateForecastSvgChart({
   forecastData,
   locale,
   title,
+  lineColor,
+  lineWidth,
 }: GenerateForecastSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < 2) {
     return null;
@@ -469,7 +489,7 @@ export function generateForecastSvgChart({
     {
       label: t.report.starHistory,
       data: [...historicalData, ...new Array(forecastLabels.length).fill(null)],
-      color: COLORS.accent,
+      color: lineColor ?? COLORS.accent,
       fill: true,
     },
     {
@@ -502,5 +522,6 @@ export function generateForecastSvgChart({
     title: title ?? t.forecast.sectionTitle,
     showLegend: true,
     milestones: false,
+    lineWidth,
   });
 }

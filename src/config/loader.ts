@@ -4,7 +4,14 @@ import * as core from '@actions/core';
 import { isValidLocale } from '@i18n';
 import * as yaml from 'js-yaml';
 import { DEFAULTS, VISIBILITY_CONFIG } from './defaults';
-import { parseBool, parseList, parseNotificationThreshold, parseNumber } from './parsers';
+import {
+  parseBool,
+  parseDecimal,
+  parseHexColor,
+  parseList,
+  parseNotificationThreshold,
+  parseNumber,
+} from './parsers';
 import type { Config, Visibility } from './types';
 
 interface FileConfig {
@@ -26,6 +33,8 @@ interface FileConfig {
   smartSampling?: boolean;
   smartSamplingThreshold?: number;
   smartSamplingPages?: number;
+  chartLineColor?: string;
+  chartLineWidth?: number;
 }
 
 export function loadConfigFile(configPath: string): FileConfig {
@@ -62,6 +71,8 @@ export function loadConfigFile(configPath: string): FileConfig {
     smartSampling: parsed.smart_sampling as boolean | undefined,
     smartSamplingThreshold: parsed.smart_sampling_threshold as number | undefined,
     smartSamplingPages: parsed.smart_sampling_pages as number | undefined,
+    chartLineColor: parsed.chart_line_color as string | undefined,
+    chartLineWidth: parsed.chart_line_width as number | undefined,
   };
 }
 
@@ -87,6 +98,8 @@ export function loadConfig(): Config {
   const inputSmartSampling = core.getInput('smart-sampling');
   const inputSmartSamplingThreshold = core.getInput('smart-sampling-threshold');
   const inputSmartSamplingPages = core.getInput('smart-sampling-pages');
+  const inputChartLineColor = core.getInput('chart-line-color');
+  const inputChartLineWidth = core.getInput('chart-line-width');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -101,6 +114,24 @@ export function loadConfig(): Config {
   const locale = inputLocale || fileConfig.locale || DEFAULTS.locale;
   if (!isValidLocale(locale)) {
     core.warning(`Invalid locale "${locale}". Falling back to "en"`);
+  }
+
+  const chartLineColor =
+    parseHexColor(inputChartLineColor) ??
+    parseHexColor(fileConfig.chartLineColor) ??
+    DEFAULTS.chartLineColor;
+  if (inputChartLineColor && !parseHexColor(inputChartLineColor)) {
+    core.warning(
+      `Invalid chart-line-color "${inputChartLineColor}". Falling back to "${DEFAULTS.chartLineColor}"`,
+    );
+  }
+
+  const chartLineWidth =
+    parseDecimal(inputChartLineWidth) ?? fileConfig.chartLineWidth ?? DEFAULTS.chartLineWidth;
+  if (inputChartLineWidth && parseDecimal(inputChartLineWidth) === undefined) {
+    core.warning(
+      `Invalid chart-line-width "${inputChartLineWidth}". Falling back to ${DEFAULTS.chartLineWidth}`,
+    );
   }
 
   const config: Config = {
@@ -142,6 +173,8 @@ export function loadConfig(): Config {
       parseNumber(inputSmartSamplingPages) ??
       fileConfig.smartSamplingPages ??
       DEFAULTS.smartSamplingPages,
+    chartLineColor,
+    chartLineWidth,
   };
 
   core.info(

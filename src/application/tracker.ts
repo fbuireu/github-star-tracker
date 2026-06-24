@@ -153,6 +153,8 @@ export async function trackStars(): Promise<void> {
           history: updatedHistory,
           title: t.report.starHistory,
           locale: config.locale,
+          lineColor: config.chartLineColor,
+          lineWidth: config.chartLineWidth,
         });
         if (svgChart) {
           writeChart({ dataDir, filename: 'star-history.svg', svg: svgChart });
@@ -163,6 +165,8 @@ export async function trackStars(): Promise<void> {
             history: updatedHistory,
             repoFullName: repoName,
             locale: config.locale,
+            lineColor: config.chartLineColor,
+            lineWidth: config.chartLineWidth,
           });
 
           if (repoChart) {
@@ -177,6 +181,7 @@ export async function trackStars(): Promise<void> {
             repoNames: topRepoNames,
             title: t.report.topRepositories,
             locale: config.locale,
+            lineWidth: config.chartLineWidth,
           });
 
           if (comparisonChart) {
@@ -189,6 +194,8 @@ export async function trackStars(): Promise<void> {
             history: updatedHistory,
             forecastData,
             locale: config.locale,
+            lineColor: config.chartLineColor,
+            lineWidth: config.chartLineWidth,
           });
 
           if (forecastChart) {

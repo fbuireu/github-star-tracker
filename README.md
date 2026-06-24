@@ -139,6 +139,8 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `data-branch`            | `star-tracker-data`   | Branch for tracking data                                      |
 | `max-history`            | `52`                  | Max snapshots to keep                                         |
 | `top-repos`              | `10`                  | Top repos in charts/forecasts                                 |
+| `chart-line-color`       | `#dfb317`             | Hex color of primary chart line/fill/points (not comparison)  |
+| `chart-line-width`       | `2.5`                 | Stroke width (px, >0) of data lines in all charts             |
 | `track-stargazers`       | `false`               | Track individual stargazers                                   |
 | `smart-sampling`         | `false`               | Sample stargazer pages for high-star repos (avoids rate limits) |
 | `smart-sampling-threshold` | `1500`              | Star count above which a repo is sampled                      |

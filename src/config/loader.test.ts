@@ -3,7 +3,14 @@ import * as core from '@actions/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULTS } from './defaults';
 import { loadConfig, loadConfigFile } from './loader';
-import { parseBool, parseList, parseNotificationThreshold, parseNumber } from './parsers';
+import {
+  parseBool,
+  parseDecimal,
+  parseHexColor,
+  parseList,
+  parseNotificationThreshold,
+  parseNumber,
+} from './parsers';
 import { Visibility } from './types';
 
 vi.mock('@actions/core', () => ({
@@ -72,6 +79,54 @@ describe('parseNumber', () => {
 
   it('returns undefined for non-numeric strings', () => {
     expect(parseNumber('abc')).toBeUndefined();
+  });
+});
+
+describe('parseHexColor', () => {
+  it('returns undefined for empty/null/undefined', () => {
+    expect(parseHexColor('')).toBeUndefined();
+    expect(parseHexColor(null)).toBeUndefined();
+    expect(parseHexColor(undefined)).toBeUndefined();
+  });
+
+  it('accepts 3/4/6/8-digit hex and lowercases', () => {
+    expect(parseHexColor('#abc')).toBe('#abc');
+    expect(parseHexColor('#abcd')).toBe('#abcd');
+    expect(parseHexColor('#AABBCC')).toBe('#aabbcc');
+    expect(parseHexColor('#aabbccdd')).toBe('#aabbccdd');
+  });
+
+  it('trims surrounding whitespace', () => {
+    expect(parseHexColor('  #6F42C1  ')).toBe('#6f42c1');
+  });
+
+  it('returns undefined for invalid colors', () => {
+    expect(parseHexColor('red')).toBeUndefined();
+    expect(parseHexColor('aabbcc')).toBeUndefined();
+    expect(parseHexColor('#xyz')).toBeUndefined();
+    expect(parseHexColor('#12')).toBeUndefined();
+    expect(parseHexColor('#1234567')).toBeUndefined();
+  });
+});
+
+describe('parseDecimal', () => {
+  it('returns undefined for empty/null/undefined', () => {
+    expect(parseDecimal('')).toBeUndefined();
+    expect(parseDecimal(null)).toBeUndefined();
+    expect(parseDecimal(undefined)).toBeUndefined();
+  });
+
+  it('parses positive decimals and integers', () => {
+    expect(parseDecimal('2.5')).toBe(2.5);
+    expect(parseDecimal('3')).toBe(3);
+  });
+
+  it('returns undefined for non-positive, non-finite or non-numeric values', () => {
+    expect(parseDecimal('abc')).toBeUndefined();
+    expect(parseDecimal('0')).toBeUndefined();
+    expect(parseDecimal('-1')).toBeUndefined();
+    expect(parseDecimal('Infinity')).toBeUndefined();
+    expect(parseDecimal('1e999')).toBeUndefined();
   });
 });
 
@@ -268,6 +323,54 @@ describe('loadConfig', () => {
 
     expect(config.onlyOrgs).toEqual(DEFAULTS.onlyOrgs);
     expect(config.excludeOrgs).toEqual(DEFAULTS.excludeOrgs);
+  });
+
+  it('defaults chart line color and width', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartLineColor).toBe(DEFAULTS.chartLineColor);
+    expect(config.chartLineWidth).toBe(DEFAULTS.chartLineWidth);
+  });
+
+  it('parses chart-line-color and chart-line-width inputs', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-line-color') return '#6f42c1';
+      if (name === 'chart-line-width') return '4';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartLineColor).toBe('#6f42c1');
+    expect(config.chartLineWidth).toBe(4);
+  });
+
+  it('preserves decimal chart-line-width (does not truncate 2.5)', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-line-width') return '2.5';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartLineWidth).toBe(2.5);
+  });
+
+  it('falls back and warns on invalid chart-line-color', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-line-color') return 'red';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartLineColor).toBe(DEFAULTS.chartLineColor);
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid chart-line-color'));
   });
 
   it('defaults track-stargazers to false', () => {
