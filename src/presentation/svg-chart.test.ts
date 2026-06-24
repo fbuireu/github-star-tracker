@@ -231,6 +231,29 @@ describe('generateSvgChart', () => {
     expect(result).toContain(`stroke="${COLORS.accent}"`);
     expect(result).toContain(`fill="${COLORS.accent}"`);
   });
+
+  it('applies a custom line color', () => {
+    const history = makeHistory([10, 20, 30]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en', lineColor: '#6f42c1' }));
+
+    expect(result).toContain('stroke="#6f42c1"');
+    expect(result).not.toContain(COLORS.accent);
+  });
+
+  it('applies a custom line width to data lines', () => {
+    const history = makeHistory([10, 20, 30]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en', lineWidth: 5 }));
+
+    expect(result).toContain('stroke-width="5"');
+  });
+
+  it('uses default accent color and width when no overrides given', () => {
+    const history = makeHistory([10, 20, 30]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
+
+    expect(result).toContain(`stroke="${COLORS.accent}"`);
+    expect(result).toContain('stroke-width="2.5"');
+  });
 });
 
 describe('generatePerRepoSvgChart', () => {
@@ -322,6 +345,23 @@ describe('generatePerRepoSvgChart', () => {
     );
 
     expect(result).not.toContain('100 ★');
+  });
+
+  it('applies a custom line color', () => {
+    const history = makeMultiRepoHistory([
+      { repoStars: { 'user/repo-a': 10 } },
+      { repoStars: { 'user/repo-a': 20 } },
+    ]);
+    const result = expectSvg(
+      generatePerRepoSvgChart({
+        history,
+        repoFullName: 'user/repo-a',
+        locale: 'en',
+        lineColor: '#6f42c1',
+      }),
+    );
+
+    expect(result).toContain('stroke="#6f42c1"');
   });
 });
 
@@ -452,6 +492,25 @@ describe('generateComparisonSvgChart', () => {
 
     expect(result).toContain('My Comparison');
   });
+
+  it('keeps the comparison palette and applies a custom line width', () => {
+    const history = makeMultiRepoHistory([
+      { repoStars: { 'user/repo-a': 10, 'user/repo-b': 5 } },
+      { repoStars: { 'user/repo-a': 15, 'user/repo-b': 8 } },
+    ]);
+    const result = expectSvg(
+      generateComparisonSvgChart({
+        history,
+        repoNames: ['user/repo-a', 'user/repo-b'],
+        locale: 'en',
+        lineWidth: 5,
+      }),
+    );
+
+    expect(result).toContain(CHART_COMPARISON_COLORS[0]);
+    expect(result).toContain(CHART_COMPARISON_COLORS[1]);
+    expect(result).toContain('stroke-width="5"');
+  });
 });
 
 describe('generateForecastSvgChart', () => {
@@ -574,5 +633,16 @@ describe('generateForecastSvgChart', () => {
 
     expect(enResult).toContain('Mar');
     expect(esResult).toContain('mar');
+  });
+
+  it('applies custom color to the historical series only, keeping trend colors', () => {
+    const history = makeHistory([10, 20, 30]);
+    const result = expectSvg(
+      generateForecastSvgChart({ history, forecastData, locale: 'en', lineColor: '#6f42c1' }),
+    );
+
+    expect(result).toContain('#6f42c1');
+    expect(result).toContain(COLORS.positive);
+    expect(result).toContain(COLORS.negative);
   });
 });

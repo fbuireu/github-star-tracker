@@ -17,6 +17,20 @@ export function parseNumber(value: string | null | undefined): number | undefine
   return Number.isNaN(n) ? undefined : n;
 }
 
+const HEX_COLOR_PATTERN = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+export function parseHexColor(value: string | null | undefined): string | undefined {
+  if (value === '' || value === undefined || value === null) return undefined;
+  const trimmed = value.trim();
+  return HEX_COLOR_PATTERN.test(trimmed) ? trimmed.toLowerCase() : undefined;
+}
+
+export function parseDecimal(value: string | null | undefined): number | undefined {
+  if (value === '' || value === undefined || value === null) return undefined;
+  const n = Number.parseFloat(value);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
 interface ParseNotificationThresholdParams {
   value: string | null | undefined;
 }

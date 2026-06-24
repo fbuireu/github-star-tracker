@@ -160,6 +160,8 @@ const defaultConfig = {
   smartSampling: false,
   smartSamplingThreshold: 1500,
   smartSamplingPages: 30,
+  chartLineColor: '#dfb317',
+  chartLineWidth: 2.5,
 };
 
 const defaultSummary = {

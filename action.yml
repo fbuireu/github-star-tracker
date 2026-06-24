@@ -146,6 +146,16 @@ inputs:
     required: false
     default: '30'
 
+  chart-line-color:
+    description: 'Hex color (#rgb, #rgba, #rrggbb, #rrggbbaa) for the primary chart line, fill and points (star-history, per-repo and forecast historical series). Does not affect the comparison palette or forecast trend lines. (default #dfb317)'
+    required: false
+    default: ''
+
+  chart-line-width:
+    description: 'Stroke width in px (>0, decimals allowed) for data lines across all charts. (default 2.5)'
+    required: false
+    default: ''
+
 outputs:
   report:
     description: 'Markdown report of star changes'
