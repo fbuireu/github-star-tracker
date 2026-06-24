@@ -501,7 +501,10 @@ describe('trackStars', () => {
           { timestamp: '2026-01-02T00:00:00Z', totalStars: 100, repos: [] },
         ],
       };
-      vi.mocked(readHistory).mockReturnValue(historyWithSnapshots);
+      vi.mocked(readHistory).mockReturnValue({
+        snapshots: historyWithSnapshots.snapshots.slice(0, 1),
+      });
+      vi.mocked(addSnapshot).mockReturnValue(historyWithSnapshots);
       vi.mocked(generateSvgChart).mockReturnValue('<svg>chart</svg>');
 
       await trackStars();
@@ -546,7 +549,10 @@ describe('trackStars', () => {
           { timestamp: '2026-01-02T00:00:00Z', totalStars: 100, repos: [] },
         ],
       };
-      vi.mocked(readHistory).mockReturnValue(historyWithSnapshots);
+      vi.mocked(readHistory).mockReturnValue({
+        snapshots: historyWithSnapshots.snapshots.slice(0, 1),
+      });
+      vi.mocked(addSnapshot).mockReturnValue(historyWithSnapshots);
       vi.mocked(generateSvgChart).mockReturnValue(null);
 
       await trackStars();
