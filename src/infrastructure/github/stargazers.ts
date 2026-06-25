@@ -4,6 +4,11 @@ import type { RepoInfo } from '@domain/types';
 import type { GitHubStargazerRow, Octokit } from './types';
 
 const STARGAZERS_PER_PAGE = 100;
+// GitHub caps stargazer pagination at 40,000 results; requesting a page beyond
+// that returns a "pagination is limited for this resource" error and fails the
+// whole fetch, so every page index must stay within the reachable window.
+const MAX_REACHABLE_STARGAZERS = 40_000;
+const MAX_REACHABLE_PAGE = Math.floor(MAX_REACHABLE_STARGAZERS / STARGAZERS_PER_PAGE);
 
 interface FetchAllStargazersParams {
   octokit: Octokit;
@@ -106,7 +111,7 @@ async function fetchRepoStargazers({
     itemCount = items.length;
     stargazers.push(...items);
     page++;
-  } while (itemCount >= STARGAZERS_PER_PAGE);
+  } while (itemCount >= STARGAZERS_PER_PAGE && page <= MAX_REACHABLE_PAGE);
 
   return stargazers;
 }
@@ -146,7 +151,10 @@ async function fetchSampledStargazers({
   totalStars,
   maxPages,
 }: FetchSampledStargazersParams): Promise<Stargazer[]> {
-  const totalPages = Math.max(1, Math.ceil(totalStars / STARGAZERS_PER_PAGE));
+  const totalPages = Math.min(
+    MAX_REACHABLE_PAGE,
+    Math.max(1, Math.ceil(totalStars / STARGAZERS_PER_PAGE)),
+  );
   const pages = selectSampledPages({ totalPages, maxPages });
   const stargazers: Stargazer[] = [];
 
