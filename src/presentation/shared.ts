@@ -38,21 +38,21 @@ export function prepareReportData({
 }: PrepareReportDataParams): ReportData {
   const { repos } = results;
   const t = getTranslations(locale);
-  const activeRepos = repos.filter((r) => !r.isRemoved);
+  const activeRepos = repos.filter((repo) => !repo.isRemoved);
 
   return {
     activeRepos,
-    newRepos: repos.filter((r) => r.isNew),
-    removedRepos: repos.filter((r) => r.isRemoved),
-    sorted: [...activeRepos].sort((a, b) => b.current - a.current),
+    newRepos: repos.filter((repo) => repo.isNew),
+    removedRepos: repos.filter((repo) => repo.isRemoved),
+    sorted: [...activeRepos].sort((repoA, repoB) => repoB.current - repoA.current),
     now: new Date().toISOString().split('T')[0],
     prev: previousTimestamp ? previousTimestamp.split('T')[0] : t.report.firstRun,
   };
 }
 
 export function buildForecastWeekHeaders(t: Translations): string[] {
-  return Array.from({ length: FORECAST_WEEKS }, (_, i) =>
-    interpolate({ template: t.forecast.week, params: { n: i + 1 } }),
+  return Array.from({ length: FORECAST_WEEKS }, (_, index) =>
+    interpolate({ template: t.forecast.week, params: { n: index + 1 } }),
   );
 }
 
@@ -85,13 +85,13 @@ export function buildForecastChartSeries({
 }: BuildForecastChartSeriesParams): ForecastChartSeries {
   const forecastLength = forecastData.aggregate.forecasts[0].points.length;
   const findPoints = (method: string): { predicted: number }[] | undefined =>
-    forecastData.aggregate.forecasts.find((f) => f.method === method)?.points;
+    forecastData.aggregate.forecasts.find((forecast) => forecast.method === method)?.points;
   const lastHistorical = historicalData.at(-1) ?? 0;
   const padLength = historicalData.length;
   const projectFromLast = (points: { predicted: number }[] | undefined): (number | null)[] => [
     ...new Array(padLength - 1).fill(null),
     lastHistorical,
-    ...(points?.map((p) => p.predicted) ?? []),
+    ...(points?.map((point) => point.predicted) ?? []),
   ];
 
   return {

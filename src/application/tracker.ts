@@ -119,7 +119,7 @@ export async function trackStars(): Promise<void> {
 
         const sorted = [...results.repos]
           .filter((repo) => !repo.isRemoved)
-          .sort((a, b) => b.current - a.current);
+          .sort((repoA, repoB) => repoB.current - repoA.current);
         const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
 
         const chartNow = new Date();
@@ -197,7 +197,9 @@ export async function trackStars(): Promise<void> {
             const repoTotal = repoTotals.find((repo) => repo.fullName === repoName);
             const repoStarHistory = repoTotal
               ? buildStarHistory({
-                  repoStargazers: repoStargazers.filter((rs) => rs.repoFullName === repoName),
+                  repoStargazers: repoStargazers.filter(
+                    (stargazerEntry) => stargazerEntry.repoFullName === repoName,
+                  ),
                   repos: [repoTotal],
                   maxPoints: chartMaxPoints,
                   now: chartNow,

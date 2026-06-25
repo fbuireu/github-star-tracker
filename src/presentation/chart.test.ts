@@ -98,9 +98,9 @@ describe('chart', () => {
 
     it('limits data to last 30 points', () => {
       const largeHistory: History = {
-        snapshots: Array.from({ length: 50 }, (_, i) => ({
-          timestamp: new Date(2025, 0, i + 1).toISOString(),
-          totalStars: 100 + i * 10,
+        snapshots: Array.from({ length: 50 }, (_, index) => ({
+          timestamp: new Date(2025, 0, index + 1).toISOString(),
+          totalStars: 100 + index * 10,
           repos: [],
         })),
       };
@@ -205,7 +205,7 @@ describe('chart', () => {
     it('limits to 10 repositories maximum', () => {
       const url = generateComparisonChartUrl({
         history: mockHistory,
-        repoNames: Array.from({ length: 12 }, (_, i) => `user/repo-${i}`),
+        repoNames: Array.from({ length: 12 }, (_, index) => `user/repo-${index}`),
         locale: 'en',
       });
 

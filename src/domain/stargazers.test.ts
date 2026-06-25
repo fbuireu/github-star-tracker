@@ -20,7 +20,10 @@ describe('diffStargazers', () => {
 
     expect(result.totalNew).toBe(2);
     expect(result.entries).toHaveLength(1);
-    expect(result.entries[0].newStargazers.map((s) => s.login)).toEqual(['alice', 'bob']);
+    expect(result.entries[0].newStargazers.map((stargazer) => stargazer.login)).toEqual([
+      'alice',
+      'bob',
+    ]);
   });
 
   it('returns empty when no changes', () => {
@@ -49,7 +52,10 @@ describe('diffStargazers', () => {
     const result = diffStargazers({ current, previousMap });
 
     expect(result.totalNew).toBe(2);
-    expect(result.entries[0].newStargazers.map((s) => s.login)).toEqual(['bob', 'charlie']);
+    expect(result.entries[0].newStargazers.map((stargazer) => stargazer.login)).toEqual([
+      'bob',
+      'charlie',
+    ]);
   });
 
   it('sorts new stargazers by date descending', () => {
@@ -65,7 +71,7 @@ describe('diffStargazers', () => {
     ];
     const result = diffStargazers({ current, previousMap: {} });
 
-    expect(result.entries[0].newStargazers.map((s) => s.login)).toEqual([
+    expect(result.entries[0].newStargazers.map((stargazer) => stargazer.login)).toEqual([
       'bob',
       'charlie',
       'alice',
@@ -91,7 +97,7 @@ describe('diffStargazers', () => {
     const result = diffStargazers({ current, previousMap: {} });
 
     expect(result.totalNew).toBe(1);
-    expect(result.entries.map((e) => e.repoFullName)).toEqual(['user/repo-a']);
+    expect(result.entries.map((entry) => entry.repoFullName)).toEqual(['user/repo-a']);
     expect(result.sampledRepos).toEqual(['user/huge']);
   });
 

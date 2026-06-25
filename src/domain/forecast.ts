@@ -36,27 +36,27 @@ interface LinearRegressionResult {
 }
 
 export function linearRegression(values: number[]): LinearRegressionResult {
-  const n = values.length;
+  const pointCount = values.length;
   let sumX = 0;
   let sumY = 0;
   let sumXY = 0;
   let sumXX = 0;
 
-  for (let i = 0; i < n; i++) {
-    sumX += i;
-    sumY += values[i];
-    sumXY += i * values[i];
-    sumXX += i * i;
+  for (let index = 0; index < pointCount; index++) {
+    sumX += index;
+    sumY += values[index];
+    sumXY += index * values[index];
+    sumXX += index * index;
   }
 
-  const denominator = n * sumXX - sumX * sumX;
+  const denominator = pointCount * sumXX - sumX * sumX;
 
   if (denominator === 0) {
     return { slope: 0, intercept: values[0] ?? 0 };
   }
 
-  const slope = (n * sumXY - sumX * sumY) / denominator;
-  const intercept = (sumY - slope * sumX) / n;
+  const slope = (pointCount * sumXY - sumX * sumY) / denominator;
+  const intercept = (sumY - slope * sumX) / pointCount;
 
   return { slope, intercept };
 }
@@ -66,16 +66,16 @@ export function weightedMovingAverage(values: number[]): number {
 
   const deltas: number[] = [];
 
-  for (let i = 1; i < values.length; i++) {
-    deltas.push(values[i] - values[i - 1]);
+  for (let index = 1; index < values.length; index++) {
+    deltas.push(values[index] - values[index - 1]);
   }
 
   let weightedSum = 0;
   let totalWeight = 0;
 
-  for (let i = 0; i < deltas.length; i++) {
-    const weight = i + 1;
-    weightedSum += deltas[i] * weight;
+  for (let index = 0; index < deltas.length; index++) {
+    const weight = index + 1;
+    weightedSum += deltas[index] * weight;
     totalWeight += weight;
   }
 
@@ -93,20 +93,22 @@ function clampPrediction(value: number): number {
 
 function forecastFromValues(values: number[]): ForecastResult[] {
   const lastValue = values.at(-1) ?? 0;
-  const n = values.length;
-  const lr = linearRegression(values);
+  const pointCount = values.length;
+  const regression = linearRegression(values);
   const wmaAvgDelta = weightedMovingAverage(values);
   const lrPoints: ForecastPoint[] = [];
   const wmaPoints: ForecastPoint[] = [];
 
-  for (let w = 1; w <= FORECAST_WEEKS; w++) {
+  for (let weekOffset = 1; weekOffset <= FORECAST_WEEKS; weekOffset++) {
     lrPoints.push({
-      weekOffset: w,
-      predicted: clampPrediction(lr.slope * (n - 1 + w) + lr.intercept),
+      weekOffset,
+      predicted: clampPrediction(
+        regression.slope * (pointCount - 1 + weekOffset) + regression.intercept,
+      ),
     });
     wmaPoints.push({
-      weekOffset: w,
-      predicted: clampPrediction(lastValue + wmaAvgDelta * w),
+      weekOffset,
+      predicted: clampPrediction(lastValue + wmaAvgDelta * weekOffset),
     });
   }
 
@@ -124,11 +126,11 @@ export function computeForecast({
     return null;
   }
 
-  const totalValues = history.snapshots.map((s) => s.totalStars);
+  const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
   const aggregateForecasts = forecastFromValues(totalValues);
   const repos: RepoForecast[] = topRepoNames.map((repoFullName) => {
-    const values = history.snapshots.map((s) => {
-      const repo = s.repos.find((r) => r.fullName === repoFullName);
+    const values = history.snapshots.map((snapshot) => {
+      const repo = snapshot.repos.find((candidate) => candidate.fullName === repoFullName);
       return repo?.stars ?? 0;
     });
 

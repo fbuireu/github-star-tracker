@@ -42,9 +42,9 @@ function scaleToTrueTotal(fetchedCounts: number[], trueTotal: number): number[] 
     fetchedTotal === trueTotal ? count : Math.round(count * scale),
   );
 
-  for (let i = 0; i < scaled.length; i++) {
-    scaled[i] = Math.min(scaled[i], trueTotal);
-    if (i > 0) scaled[i] = Math.max(scaled[i], scaled[i - 1]);
+  for (let index = 0; index < scaled.length; index++) {
+    scaled[index] = Math.min(scaled[index], trueTotal);
+    if (index > 0) scaled[index] = Math.max(scaled[index], scaled[index - 1]);
   }
 
   if (scaled.length > 0) {
@@ -71,13 +71,15 @@ function scaleCappedToTrueTotal(counts: number[], trueTotal: number): number[] {
   const span = last - tailStart;
   if (span > 0) {
     const startValue = scaled[tailStart];
-    for (let i = tailStart; i <= last; i++) {
-      scaled[i] = Math.round(startValue + ((i - tailStart) / span) * (trueTotal - startValue));
+    for (let index = tailStart; index <= last; index++) {
+      scaled[index] = Math.round(
+        startValue + ((index - tailStart) / span) * (trueTotal - startValue),
+      );
     }
   }
 
-  for (let i = 1; i < scaled.length; i++) {
-    if (scaled[i] < scaled[i - 1]) scaled[i] = scaled[i - 1];
+  for (let index = 1; index < scaled.length; index++) {
+    if (scaled[index] < scaled[index - 1]) scaled[index] = scaled[index - 1];
   }
   if (scaled.length > 0) scaled[last] = trueTotal;
 
@@ -97,8 +99,8 @@ export function buildStarHistory({
   for (const repo of repos) {
     const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? [])
       .map((stargazer) => Date.parse(stargazer.starredAt))
-      .filter((ms) => Number.isFinite(ms))
-      .sort((a, b) => a - b);
+      .filter((timeMs) => Number.isFinite(timeMs))
+      .sort((earlier, later) => earlier - later);
 
     eventsByRepo.set(repo.fullName, times);
     if (times.length > 0 && times[0] < earliest) earliest = times[0];
@@ -116,8 +118,8 @@ export function buildStarHistory({
           const buckets = Math.max(2, Math.floor(maxPoints));
           const step = (end - earliest) / (buckets - 1);
 
-          return Array.from({ length: buckets }, (_, i) =>
-            i === buckets - 1 ? end : earliest + i * step,
+          return Array.from({ length: buckets }, (_, bucketIndex) =>
+            bucketIndex === buckets - 1 ? end : earliest + bucketIndex * step,
           );
         })();
 
@@ -131,12 +133,12 @@ export function buildStarHistory({
     cumulativeByRepo.set(repo.fullName, scaled);
   }
 
-  const snapshots: Snapshot[] = edges.map((edge, i) => {
+  const snapshots: Snapshot[] = edges.map((edge, edgeIndex) => {
     const snapshotRepos = repos.map((repo) => ({
       fullName: repo.fullName,
       name: repo.name,
       owner: repo.owner,
-      stars: cumulativeByRepo.get(repo.fullName)?.[i] ?? 0,
+      stars: cumulativeByRepo.get(repo.fullName)?.[edgeIndex] ?? 0,
     }));
 
     return {

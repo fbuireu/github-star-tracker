@@ -586,11 +586,11 @@ describe('trackStars', () => {
         // biome-ignore lint/suspicious/noExplicitAny: partial fixture stands in for full ComparisonResults
       } as any);
       const sg = (prefix: string, count: number, startMs: number, stepDays: number) =>
-        Array.from({ length: count }, (_, i) => ({
-          login: `${prefix}${i}`,
+        Array.from({ length: count }, (_, index) => ({
+          login: `${prefix}${index}`,
           avatarUrl: '',
           profileUrl: '',
-          starredAt: new Date(startMs + i * stepDays * 86_400_000).toISOString(),
+          starredAt: new Date(startMs + index * stepDays * 86_400_000).toISOString(),
         }));
       vi.mocked(fetchAllStargazers).mockResolvedValue([
         { repoFullName: 'u/old', stargazers: sg('o', 100, Date.UTC(2025, 0, 1), 5) },
@@ -605,7 +605,7 @@ describe('trackStars', () => {
 
       await trackStars();
 
-      const series = perRepo['u/new'].snapshots.map((s) => s.totalStars);
+      const series = perRepo['u/new'].snapshots.map((snapshot) => snapshot.totalStars);
       expect(perRepo['u/new'].snapshots[0].timestamp.startsWith('2026-05')).toBe(true);
       expect(series[0]).toBeGreaterThan(0);
       expect(series.at(-1)).toBe(30);

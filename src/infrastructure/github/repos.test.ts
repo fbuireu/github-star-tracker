@@ -299,8 +299,10 @@ describe('fetchRepos', () => {
   });
 
   it('handles pagination correctly', async () => {
-    const page1 = Array.from({ length: 100 }, (_, i) => makeRepo({ name: `repo${i}` }));
-    const page2 = Array.from({ length: 50 }, (_, i) => makeRepo({ name: `repo${i + 100}` }));
+    const page1 = Array.from({ length: 100 }, (_, index) => makeRepo({ name: `repo${index}` }));
+    const page2 = Array.from({ length: 50 }, (_, index) =>
+      makeRepo({ name: `repo${index + 100}` }),
+    );
     const mockOctokit: MockOctokit = {
       rest: {
         repos: {

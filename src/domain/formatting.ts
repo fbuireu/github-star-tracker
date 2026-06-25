@@ -10,8 +10,8 @@ const compactFormatter = new Intl.NumberFormat('en', {
   maximumFractionDigits: 1,
 });
 
-export function formatCount(n: number): string {
-  return compactFormatter.format(n);
+export function formatCount(count: number): string {
+  return compactFormatter.format(count);
 }
 
 export function deltaIndicator(delta: number): string {

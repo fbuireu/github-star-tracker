@@ -67,7 +67,7 @@ describe('prepareReportData', () => {
     });
 
     expect(activeRepos).toHaveLength(3);
-    expect(activeRepos.every((r) => !r.isRemoved)).toBe(true);
+    expect(activeRepos.every((repo) => !repo.isRemoved)).toBe(true);
   });
 
   it('identifies new repos', () => {
@@ -99,7 +99,7 @@ describe('prepareReportData', () => {
       locale: 'en',
     });
 
-    expect(sorted.map((r) => r.current)).toEqual([15, 8, 5]);
+    expect(sorted.map((repo) => repo.current)).toEqual([15, 8, 5]);
   });
 
   it('formats current date as YYYY-MM-DD', () => {

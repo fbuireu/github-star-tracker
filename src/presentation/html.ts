@@ -64,7 +64,7 @@ export function generateHtmlReport({
       </div>`
       : '';
 
-  const topRepos = sorted.slice(0, topReposCount).map((r) => r.fullName);
+  const topRepos = sorted.slice(0, topReposCount).map((repo) => repo.fullName);
   const comparisonChartUrl =
     hasChartHistory && topRepos.length > 0
       ? generateComparisonChartUrl({
@@ -131,11 +131,11 @@ export function generateHtmlReport({
           <h3 style="font-size:14px;margin-bottom:8px;">${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</h3>
           ${entry.newStargazers
             .map(
-              (s) => `
+              (stargazer) => `
           <div style="display:flex;align-items:center;margin:4px 0;">
-            <img src="${s.avatarUrl}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
-            <a href="${s.profileUrl}" style="color:${COLORS.link};text-decoration:none;font-weight:600;">${s.login}</a>
-            <span style="color:${COLORS.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: s.starredAt.split('T')[0] } })}</span>
+            <img src="${stargazer.avatarUrl}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
+            <a href="${stargazer.profileUrl}" style="color:${COLORS.link};text-decoration:none;font-weight:600;">${stargazer.login}</a>
+            <span style="color:${COLORS.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split('T')[0] } })}</span>
           </div>`,
             )
             .join('')}
@@ -248,16 +248,16 @@ function buildHtmlForecastTable({ title, forecasts, t }: BuildHtmlForecastTableP
       <thead>
         <tr style="background:${COLORS.tableHeaderBg};">
           <th style="padding:6px 8px;text-align:left;border-bottom:2px solid ${COLORS.tableHeaderBorder};font-size:12px;">${t.forecast.method}</th>
-          ${weekHeaders.map((h) => `<th style="padding:6px 8px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};font-size:12px;">${h}</th>`).join('')}
+          ${weekHeaders.map((header) => `<th style="padding:6px 8px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};font-size:12px;">${header}</th>`).join('')}
         </tr>
       </thead>
       <tbody>
         ${forecasts
           .map(
-            (f) => `
+            (forecast) => `
         <tr>
-          <td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};font-size:12px;">${forecastMethodLabel({ method: f.method, t })}</td>
-          ${f.points.map((p) => `<td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};text-align:right;font-size:12px;">${p.predicted}</td>`).join('')}
+          <td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};font-size:12px;">${forecastMethodLabel({ method: forecast.method, t })}</td>
+          ${forecast.points.map((point) => `<td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};text-align:right;font-size:12px;">${point.predicted}</td>`).join('')}
         </tr>`,
           )
           .join('')}

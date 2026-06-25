@@ -20,8 +20,8 @@ function makeSnapshot(timestamp: string, totalStars: number): Snapshot {
 
 function makeHistory(starCounts: number[]): History {
   return {
-    snapshots: starCounts.map((stars, i) => {
-      const date = new Date(2026, 0, i + 1).toISOString();
+    snapshots: starCounts.map((stars, index) => {
+      const date = new Date(2026, 0, index + 1).toISOString();
       return makeSnapshot(date, stars);
     }),
   };
@@ -32,16 +32,16 @@ function makeMultiRepoSnapshot(timestamp: string, repoStars: Record<string, numb
     const [owner, name] = fullName.split('/');
     return { name, owner, fullName, stars };
   });
-  const totalStars = repos.reduce((sum, r) => sum + r.stars, 0);
+  const totalStars = repos.reduce((sum, repo) => sum + repo.stars, 0);
 
   return { timestamp, totalStars, repos };
 }
 
 function makeMultiRepoHistory(snapshots: { repoStars: Record<string, number> }[]): History {
   return {
-    snapshots: snapshots.map((s, i) => {
-      const date = new Date(2026, 0, i + 1).toISOString();
-      return makeMultiRepoSnapshot(date, s.repoStars);
+    snapshots: snapshots.map((snapshot, index) => {
+      const date = new Date(2026, 0, index + 1).toISOString();
+      return makeMultiRepoSnapshot(date, snapshot.repoStars);
     }),
   };
 }
@@ -56,7 +56,9 @@ function linePathYs(svg: string): number[] {
   const match = svg.match(/<path d="([^"]+)" fill="none"/);
   const d = match?.[1] ?? '';
 
-  return [...d.matchAll(/(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)/g)].map((pair) => Number(pair[2]));
+  return [...d.matchAll(/(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)/g)].map((coordinate) =>
+    Number(coordinate[2]),
+  );
 }
 
 describe('generateSvgChart', () => {
@@ -192,7 +194,7 @@ describe('generateSvgChart', () => {
   });
 
   it('limits to 30 data points for large histories', () => {
-    const stars = Array.from({ length: 50 }, (_, i) => 10 + i);
+    const stars = Array.from({ length: 50 }, (_, index) => 10 + index);
     const history = makeHistory(stars);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
     const circleCount = (result.match(/<circle/g) || []).length;
@@ -326,7 +328,7 @@ describe('generateSvgChart', () => {
   });
 
   it('plots the full history when maxPoints is 0', () => {
-    const stars = Array.from({ length: 40 }, (_, i) => 10 + i);
+    const stars = Array.from({ length: 40 }, (_, index) => 10 + index);
     const history = makeHistory(stars);
     const result = expectSvg(generateSvgChart({ history, locale: 'en', maxPoints: 0 }));
 
@@ -571,15 +573,19 @@ describe('generateComparisonSvgChart', () => {
     const repoStars: Record<string, number> = {};
     const repoNames: string[] = [];
 
-    for (let i = 0; i < 15; i++) {
-      const name = `user/repo-${i}`;
-      repoStars[name] = 10 + i;
+    for (let index = 0; index < 15; index++) {
+      const name = `user/repo-${index}`;
+      repoStars[name] = 10 + index;
       repoNames.push(name);
     }
 
     const history = makeMultiRepoHistory([
       { repoStars },
-      { repoStars: Object.fromEntries(Object.entries(repoStars).map(([k, v]) => [k, v + 5])) },
+      {
+        repoStars: Object.fromEntries(
+          Object.entries(repoStars).map(([name, stars]) => [name, stars + 5]),
+        ),
+      },
     ]);
 
     const result = expectSvg(generateComparisonSvgChart({ history, repoNames, locale: 'en' }));

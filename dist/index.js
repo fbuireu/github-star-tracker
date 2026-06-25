@@ -32987,10 +32987,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -35282,7 +35282,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35405,7 +35405,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -38106,8 +38106,8 @@ function parseBool(value) {
 }
 function parseNumber(value) {
   if (isBlank(value)) return void 0;
-  const n = Number.parseInt(value, 10);
-  return Number.isNaN(n) ? void 0 : n;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? void 0 : parsed;
 }
 var HEX_COLOR_PATTERN = /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 function parseHexColor(value) {
@@ -38117,14 +38117,14 @@ function parseHexColor(value) {
 }
 function parseDecimal(value) {
   if (isBlank(value)) return void 0;
-  const n = Number.parseFloat(value);
-  return Number.isFinite(n) && n > 0 ? n : void 0;
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : void 0;
 }
 function parseNotificationThreshold(value) {
   if (isBlank(value)) return void 0;
   if (value === "auto") return "auto";
-  const n = Number.parseInt(value, 10);
-  return Number.isNaN(n) ? void 0 : n;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? void 0 : parsed;
 }
 
 // src/config/loader.ts
@@ -38355,36 +38355,36 @@ var ForecastMethod = {
   WEIGHTED_MOVING_AVERAGE: "weighted-moving-average"
 };
 function linearRegression(values) {
-  const n = values.length;
+  const pointCount = values.length;
   let sumX = 0;
   let sumY = 0;
   let sumXY = 0;
   let sumXX = 0;
-  for (let i = 0; i < n; i++) {
-    sumX += i;
-    sumY += values[i];
-    sumXY += i * values[i];
-    sumXX += i * i;
+  for (let index = 0; index < pointCount; index++) {
+    sumX += index;
+    sumY += values[index];
+    sumXY += index * values[index];
+    sumXX += index * index;
   }
-  const denominator = n * sumXX - sumX * sumX;
+  const denominator = pointCount * sumXX - sumX * sumX;
   if (denominator === 0) {
     return { slope: 0, intercept: values[0] ?? 0 };
   }
-  const slope = (n * sumXY - sumX * sumY) / denominator;
-  const intercept = (sumY - slope * sumX) / n;
+  const slope = (pointCount * sumXY - sumX * sumY) / denominator;
+  const intercept = (sumY - slope * sumX) / pointCount;
   return { slope, intercept };
 }
 function weightedMovingAverage(values) {
   if (values.length < 2) return 0;
   const deltas = [];
-  for (let i = 1; i < values.length; i++) {
-    deltas.push(values[i] - values[i - 1]);
+  for (let index = 1; index < values.length; index++) {
+    deltas.push(values[index] - values[index - 1]);
   }
   let weightedSum = 0;
   let totalWeight = 0;
-  for (let i = 0; i < deltas.length; i++) {
-    const weight = i + 1;
-    weightedSum += deltas[i] * weight;
+  for (let index = 0; index < deltas.length; index++) {
+    const weight = index + 1;
+    weightedSum += deltas[index] * weight;
     totalWeight += weight;
   }
   return weightedSum / totalWeight;
@@ -38394,19 +38394,21 @@ function clampPrediction(value) {
 }
 function forecastFromValues(values) {
   const lastValue = values.at(-1) ?? 0;
-  const n = values.length;
-  const lr = linearRegression(values);
+  const pointCount = values.length;
+  const regression = linearRegression(values);
   const wmaAvgDelta = weightedMovingAverage(values);
   const lrPoints = [];
   const wmaPoints = [];
-  for (let w = 1; w <= FORECAST_WEEKS; w++) {
+  for (let weekOffset = 1; weekOffset <= FORECAST_WEEKS; weekOffset++) {
     lrPoints.push({
-      weekOffset: w,
-      predicted: clampPrediction(lr.slope * (n - 1 + w) + lr.intercept)
+      weekOffset,
+      predicted: clampPrediction(
+        regression.slope * (pointCount - 1 + weekOffset) + regression.intercept
+      )
     });
     wmaPoints.push({
-      weekOffset: w,
-      predicted: clampPrediction(lastValue + wmaAvgDelta * w)
+      weekOffset,
+      predicted: clampPrediction(lastValue + wmaAvgDelta * weekOffset)
     });
   }
   return [
@@ -38421,11 +38423,11 @@ function computeForecast({
   if (history.snapshots.length < MIN_SNAPSHOTS) {
     return null;
   }
-  const totalValues = history.snapshots.map((s) => s.totalStars);
+  const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
   const aggregateForecasts = forecastFromValues(totalValues);
   const repos = topRepoNames.map((repoFullName) => {
-    const values = history.snapshots.map((s) => {
-      const repo = s.repos.find((r) => r.fullName === repoFullName);
+    const values = history.snapshots.map((snapshot) => {
+      const repo = snapshot.repos.find((candidate) => candidate.fullName === repoFullName);
       return repo?.stars ?? 0;
     });
     return { repoFullName, forecasts: forecastFromValues(values) };
@@ -38441,8 +38443,8 @@ var compactFormatter = new Intl.NumberFormat("en", {
   notation: "compact",
   maximumFractionDigits: 1
 });
-function formatCount(n) {
-  return compactFormatter.format(n);
+function formatCount(count) {
+  return compactFormatter.format(count);
 }
 function deltaIndicator(delta) {
   if (delta > 0) return `+${delta}`;
@@ -38555,7 +38557,7 @@ var THRESHOLD_MAX_PACE = 20;
 
 // src/domain/notification.ts
 function getAdaptiveThreshold(totalStars) {
-  return THRESHOLDS.find((t) => totalStars <= t.limit)?.value ?? THRESHOLD_MAX_PACE;
+  return THRESHOLDS.find((threshold) => totalStars <= threshold.limit)?.value ?? THRESHOLD_MAX_PACE;
 }
 function shouldNotify({
   totalStars,
@@ -38600,9 +38602,9 @@ function scaleToTrueTotal(fetchedCounts, trueTotal) {
   const scaled = fetchedCounts.map(
     (count) => fetchedTotal === trueTotal ? count : Math.round(count * scale)
   );
-  for (let i = 0; i < scaled.length; i++) {
-    scaled[i] = Math.min(scaled[i], trueTotal);
-    if (i > 0) scaled[i] = Math.max(scaled[i], scaled[i - 1]);
+  for (let index = 0; index < scaled.length; index++) {
+    scaled[index] = Math.min(scaled[index], trueTotal);
+    if (index > 0) scaled[index] = Math.max(scaled[index], scaled[index - 1]);
   }
   if (scaled.length > 0) {
     scaled[scaled.length - 1] = trueTotal;
@@ -38621,12 +38623,14 @@ function scaleCappedToTrueTotal(counts, trueTotal) {
   const span = last - tailStart;
   if (span > 0) {
     const startValue = scaled[tailStart];
-    for (let i = tailStart; i <= last; i++) {
-      scaled[i] = Math.round(startValue + (i - tailStart) / span * (trueTotal - startValue));
+    for (let index = tailStart; index <= last; index++) {
+      scaled[index] = Math.round(
+        startValue + (index - tailStart) / span * (trueTotal - startValue)
+      );
     }
   }
-  for (let i = 1; i < scaled.length; i++) {
-    if (scaled[i] < scaled[i - 1]) scaled[i] = scaled[i - 1];
+  for (let index = 1; index < scaled.length; index++) {
+    if (scaled[index] < scaled[index - 1]) scaled[index] = scaled[index - 1];
   }
   if (scaled.length > 0) scaled[last] = trueTotal;
   return scaled;
@@ -38641,7 +38645,7 @@ function buildStarHistory({
   const eventsByRepo = /* @__PURE__ */ new Map();
   let earliest = Number.POSITIVE_INFINITY;
   for (const repo of repos) {
-    const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? []).map((stargazer) => Date.parse(stargazer.starredAt)).filter((ms) => Number.isFinite(ms)).sort((a, b) => a - b);
+    const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? []).map((stargazer) => Date.parse(stargazer.starredAt)).filter((timeMs) => Number.isFinite(timeMs)).sort((earlier, later) => earlier - later);
     eventsByRepo.set(repo.fullName, times);
     if (times.length > 0 && times[0] < earliest) earliest = times[0];
   }
@@ -38654,7 +38658,7 @@ function buildStarHistory({
     const step = (end - earliest) / (buckets - 1);
     return Array.from(
       { length: buckets },
-      (_, i) => i === buckets - 1 ? end : earliest + i * step
+      (_, bucketIndex) => bucketIndex === buckets - 1 ? end : earliest + bucketIndex * step
     );
   })();
   const cumulativeByRepo = /* @__PURE__ */ new Map();
@@ -38663,12 +38667,12 @@ function buildStarHistory({
     const scaled = repo.stars > MAX_REACHABLE_STARGAZERS ? scaleCappedToTrueTotal(counts, repo.stars) : scaleToTrueTotal(counts, repo.stars);
     cumulativeByRepo.set(repo.fullName, scaled);
   }
-  const snapshots = edges.map((edge, i) => {
+  const snapshots = edges.map((edge, edgeIndex) => {
     const snapshotRepos = repos.map((repo) => ({
       fullName: repo.fullName,
       name: repo.name,
       owner: repo.owner,
-      stars: cumulativeByRepo.get(repo.fullName)?.[i] ?? 0
+      stars: cumulativeByRepo.get(repo.fullName)?.[edgeIndex] ?? 0
     }));
     return {
       timestamp: new Date(edge).toISOString(),
@@ -38693,7 +38697,7 @@ function diffStargazers({
       continue;
     }
     const previousLogins = new Set(previousMap[repo.repoFullName] ?? []);
-    const newStargazers = repo.stargazers.filter((s) => !previousLogins.has(s.login)).sort((a, b) => b.starredAt.localeCompare(a.starredAt));
+    const newStargazers = repo.stargazers.filter((stargazer) => !previousLogins.has(stargazer.login)).sort((earlier, later) => later.starredAt.localeCompare(earlier.starredAt));
     if (newStargazers.length > 0) {
       entries.push({ repoFullName: repo.repoFullName, newStargazers });
       totalNew += newStargazers.length;
@@ -38705,7 +38709,7 @@ function buildStargazerMap(repoStargazers) {
   const map = {};
   for (const repo of repoStargazers) {
     if (repo.sampled) continue;
-    map[repo.repoFullName] = repo.stargazers.map((s) => s.login);
+    map[repo.repoFullName] = repo.stargazers.map((stargazer) => stargazer.login);
   }
   return map;
 }
@@ -38936,11 +38940,11 @@ async function fetchStargazerPage({
     }
   });
   const items = data;
-  return items.map((item) => ({
-    login: item.user.login,
-    avatarUrl: item.user.avatar_url,
-    profileUrl: item.user.html_url,
-    starredAt: item.starred_at
+  return items.map((row) => ({
+    login: row.user.login,
+    avatarUrl: row.user.avatar_url,
+    profileUrl: row.user.html_url,
+    starredAt: row.starred_at
   }));
 }
 async function fetchRepoStargazers({
@@ -38962,14 +38966,14 @@ async function fetchRepoStargazers({
 function selectSampledPages({ totalPages, maxPages }) {
   const pages = Math.max(1, maxPages);
   if (totalPages <= pages) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
+    return Array.from({ length: totalPages }, (_, pageIndex) => pageIndex + 1);
   }
   if (pages === 1) return [1];
   const selected = /* @__PURE__ */ new Set();
-  for (let i = 0; i < pages; i++) {
-    selected.add(1 + Math.round(i * (totalPages - 1) / (pages - 1)));
+  for (let pageIndex = 0; pageIndex < pages; pageIndex++) {
+    selected.add(1 + Math.round(pageIndex * (totalPages - 1) / (pages - 1)));
   }
-  return [...selected].sort((a, b) => a - b);
+  return [...selected].sort((earlierPage, laterPage) => earlierPage - laterPage);
 }
 async function fetchSampledStargazers({
   octokit,
@@ -39186,12 +39190,12 @@ function prepareReportData({
 }) {
   const { repos } = results;
   const t = getTranslations(locale);
-  const activeRepos = repos.filter((r) => !r.isRemoved);
+  const activeRepos = repos.filter((repo) => !repo.isRemoved);
   return {
     activeRepos,
-    newRepos: repos.filter((r) => r.isNew),
-    removedRepos: repos.filter((r) => r.isRemoved),
-    sorted: [...activeRepos].sort((a, b) => b.current - a.current),
+    newRepos: repos.filter((repo) => repo.isNew),
+    removedRepos: repos.filter((repo) => repo.isRemoved),
+    sorted: [...activeRepos].sort((repoA, repoB) => repoB.current - repoA.current),
     now: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
     prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun
   };
@@ -39199,7 +39203,7 @@ function prepareReportData({
 function buildForecastWeekHeaders(t) {
   return Array.from(
     { length: FORECAST_WEEKS },
-    (_, i) => interpolate({ template: t.forecast.week, params: { n: i + 1 } })
+    (_, index) => interpolate({ template: t.forecast.week, params: { n: index + 1 } })
   );
 }
 function forecastMethodLabel({ method, t }) {
@@ -39212,13 +39216,13 @@ function buildForecastChartSeries({
   forecastData
 }) {
   const forecastLength = forecastData.aggregate.forecasts[0].points.length;
-  const findPoints = (method) => forecastData.aggregate.forecasts.find((f) => f.method === method)?.points;
+  const findPoints = (method) => forecastData.aggregate.forecasts.find((forecast) => forecast.method === method)?.points;
   const lastHistorical = historicalData.at(-1) ?? 0;
   const padLength = historicalData.length;
   const projectFromLast = (points) => [
     ...new Array(padLength - 1).fill(null),
     lastHistorical,
-    ...points?.map((p) => p.predicted) ?? []
+    ...points?.map((point) => point.predicted) ?? []
   ];
   return {
     historical: [...historicalData, ...new Array(forecastLength).fill(null)],
@@ -39232,7 +39236,9 @@ function buildMilestoneAnnotations({
   minStars,
   maxStars
 }) {
-  const visible = MILESTONE_THRESHOLDS.filter((m) => m > minStars && m < maxStars);
+  const visible = MILESTONE_THRESHOLDS.filter(
+    (milestone) => milestone > minStars && milestone < maxStars
+  );
   if (visible.length === 0) return null;
   const annotations = {};
   for (const milestone of visible) {
@@ -39312,8 +39318,8 @@ function buildChartUrl(config) {
 function prepareChartData({ history, locale }) {
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   return {
-    labels: snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale })),
-    data: snapshots.map((s) => s.totalStars)
+    labels: snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale })),
+    data: snapshots.map((snapshot) => snapshot.totalStars)
   };
 }
 function buildChartConfig({
@@ -39363,9 +39369,9 @@ function generatePerRepoChartUrl({
     return null;
   }
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
-  const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
-  const data = snapshots.map((s) => {
-    const repo = s.repos.find((r) => r.fullName === repoFullName);
+  const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
+  const data = snapshots.map((snapshot) => {
+    const repo = snapshot.repos.find((candidate) => candidate.fullName === repoFullName);
     return repo?.stars ?? 0;
   });
   const chartTitle = title ?? `${repoFullName} Star History`;
@@ -39385,13 +39391,13 @@ function generateComparisonChartUrl({
   const t = getTranslations(locale);
   const chartTitle = title ?? t.report.topRepositories;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
-  const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
+  const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split("/")[0]));
   const useShortLabels = owners.size === 1;
   const datasets = capped.map((repoName, index) => {
-    const data = snapshots.map((s) => {
-      const repo = s.repos.find((r) => r.fullName === repoName);
+    const data = snapshots.map((snapshot) => {
+      const repo = snapshot.repos.find((candidate) => candidate.fullName === repoName);
       return repo?.stars ?? 0;
     });
     const color = CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length];
@@ -39421,10 +39427,12 @@ function generateForecastChartUrl({
   const t = getTranslations(locale);
   const chartTitle = title ?? t.forecast.sectionTitle;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
-  const historicalLabels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
-  const historicalData = snapshots.map((s) => s.totalStars);
+  const historicalLabels = snapshots.map(
+    (snapshot) => formatDate({ timestamp: snapshot.timestamp, locale })
+  );
+  const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
   const forecastLabels = forecastData.aggregate.forecasts[0].points.map(
-    (p) => interpolate({ template: t.forecast.week, params: { n: p.weekOffset } })
+    (point) => interpolate({ template: t.forecast.week, params: { n: point.weekOffset } })
   );
   const allLabels = [...historicalLabels, ...forecastLabels];
   const series = buildForecastChartSeries({ historicalData, forecastData });
@@ -39513,7 +39521,7 @@ function generateHtmlReport({
         <h3 style="color:${COLORS.negative};font-size:14px;">${t.report.removedRepositories}</h3>
         <ul>${removedRepos.map((repo) => `<li>${interpolate({ template: t.report.removedRepoText, params: { name: repo.fullName, count: repo.previous ?? 0 } })}</li>`).join("")}</ul>
       </div>` : "";
-  const topRepos = sorted.slice(0, topReposCount).map((r) => r.fullName);
+  const topRepos = sorted.slice(0, topReposCount).map((repo) => repo.fullName);
   const comparisonChartUrl = hasChartHistory && topRepos.length > 0 ? generateComparisonChartUrl({
     history,
     repoNames: topRepos,
@@ -39551,11 +39559,11 @@ function generateHtmlReport({
         <div style="margin-top:12px;">
           <h3 style="font-size:14px;margin-bottom:8px;">${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</h3>
           ${entry.newStargazers.map(
-      (s) => `
+      (stargazer) => `
           <div style="display:flex;align-items:center;margin:4px 0;">
-            <img src="${s.avatarUrl}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
-            <a href="${s.profileUrl}" style="color:${COLORS.link};text-decoration:none;font-weight:600;">${s.login}</a>
-            <span style="color:${COLORS.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: s.starredAt.split("T")[0] } })}</span>
+            <img src="${stargazer.avatarUrl}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
+            <a href="${stargazer.profileUrl}" style="color:${COLORS.link};text-decoration:none;font-weight:600;">${stargazer.login}</a>
+            <span style="color:${COLORS.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split("T")[0] } })}</span>
           </div>`
     ).join("")}
         </div>`
@@ -39645,15 +39653,15 @@ function buildHtmlForecastTable({ title, forecasts, t }) {
       <thead>
         <tr style="background:${COLORS.tableHeaderBg};">
           <th style="padding:6px 8px;text-align:left;border-bottom:2px solid ${COLORS.tableHeaderBorder};font-size:12px;">${t.forecast.method}</th>
-          ${weekHeaders.map((h) => `<th style="padding:6px 8px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};font-size:12px;">${h}</th>`).join("")}
+          ${weekHeaders.map((header) => `<th style="padding:6px 8px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};font-size:12px;">${header}</th>`).join("")}
         </tr>
       </thead>
       <tbody>
         ${forecasts.map(
-    (f) => `
+    (forecast) => `
         <tr>
-          <td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};font-size:12px;">${forecastMethodLabel({ method: f.method, t })}</td>
-          ${f.points.map((p) => `<td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};text-align:right;font-size:12px;">${p.predicted}</td>`).join("")}
+          <td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};font-size:12px;">${forecastMethodLabel({ method: forecast.method, t })}</td>
+          ${forecast.points.map((point) => `<td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};text-align:right;font-size:12px;">${point.predicted}</td>`).join("")}
         </tr>`
   ).join("")}
       </tbody>
@@ -39686,7 +39694,7 @@ function generateMarkdownReport({
     ""
   ];
   const comparison = prev === t.report.firstRun ? [] : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ""];
-  const topRepos = sorted.slice(0, topReposCount).map((r) => r.fullName);
+  const topRepos = sorted.slice(0, topReposCount).map((repo) => repo.fullName);
   const hasComparisonChart = hasChartHistory && topRepos.length > 0;
   const individualRepoCharts = hasChartHistory ? topRepos.flatMap((repoName) => {
     const filename = `${repoName.replace("/", "-")}.svg`;
@@ -39771,7 +39779,7 @@ function generateMarkdownReport({
       `<summary>${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</summary>`,
       "",
       ...entry.newStargazers.map(
-        (s) => `- <img src="${s.avatarUrl}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${s.login}](${s.profileUrl}): ${interpolate({ template: t.stargazers.starredOn, params: { date: s.starredAt.split("T")[0] } })}`
+        (stargazer) => `- <img src="${stargazer.avatarUrl}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${stargazer.login}](${stargazer.profileUrl}): ${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split("T")[0] } })}`
       ),
       "",
       "</details>",
@@ -39841,7 +39849,7 @@ function buildForecastTable({ title, forecasts, t }) {
     `| ${t.forecast.method} | ${weekHeaders.join(" | ")} |`,
     `|:---|${weekHeaders.map(() => "---:").join("|")}|`,
     ...forecasts.map(
-      (f) => `| ${forecastMethodLabel({ method: f.method, t })} | ${f.points.map((p) => String(p.predicted)).join(" | ")} |`
+      (forecast) => `| ${forecastMethodLabel({ method: forecast.method, t })} | ${forecast.points.map((point) => String(point.predicted)).join(" | ")} |`
     )
   ];
   return lines.join("\n");
@@ -39861,34 +39869,40 @@ function scaleY({ value, minValue, maxValue, chartTop, chartHeight }) {
 function generateSmoothPath({ points, smooth = true }) {
   if (points.length === 0) return "";
   if (points.length === 1) return `M${points[0].x},${points[0].y}`;
-  let d = `M${points[0].x},${points[0].y}`;
+  let path4 = `M${points[0].x},${points[0].y}`;
   if (!smooth) {
-    for (let i = 1; i < points.length; i++) {
-      d += ` L${points[i].x},${points[i].y}`;
+    for (let index = 1; index < points.length; index++) {
+      path4 += ` L${points[index].x},${points[index].y}`;
     }
-    return d;
+    return path4;
   }
   const tension = 0.4;
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[Math.max(0, i - 1)];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = points[Math.min(points.length - 1, i + 2)];
-    const cp1x = p1.x + (p2.x - p0.x) * tension / 3;
-    const cp2x = p2.x - (p3.x - p1.x) * tension / 3;
-    const segMinY = Math.min(p1.y, p2.y);
-    const segMaxY = Math.max(p1.y, p2.y);
-    const cp1y = Math.min(segMaxY, Math.max(segMinY, p1.y + (p2.y - p0.y) * tension / 3));
-    const cp2y = Math.min(segMaxY, Math.max(segMinY, p2.y - (p3.y - p1.y) * tension / 3));
-    d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+  for (let index = 0; index < points.length - 1; index++) {
+    const previousPoint = points[Math.max(0, index - 1)];
+    const startPoint = points[index];
+    const endPoint = points[index + 1];
+    const nextPoint = points[Math.min(points.length - 1, index + 2)];
+    const cp1x = startPoint.x + (endPoint.x - previousPoint.x) * tension / 3;
+    const cp2x = endPoint.x - (nextPoint.x - startPoint.x) * tension / 3;
+    const segMinY = Math.min(startPoint.y, endPoint.y);
+    const segMaxY = Math.max(startPoint.y, endPoint.y);
+    const cp1y = Math.min(
+      segMaxY,
+      Math.max(segMinY, startPoint.y + (endPoint.y - previousPoint.y) * tension / 3)
+    );
+    const cp2y = Math.min(
+      segMaxY,
+      Math.max(segMinY, endPoint.y - (nextPoint.y - startPoint.y) * tension / 3)
+    );
+    path4 += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${endPoint.x},${endPoint.y}`;
   }
-  return d;
+  return path4;
 }
 function calculatePathLength(points) {
   let length = 0;
-  for (let i = 1; i < points.length; i++) {
-    const dx = points[i].x - points[i - 1].x;
-    const dy = points[i].y - points[i - 1].y;
+  for (let index = 1; index < points.length; index++) {
+    const dx = points[index].x - points[index - 1].x;
+    const dy = points[index].y - points[index - 1].y;
     length += Math.hypot(dx, dy);
   }
   return Math.ceil(length * 1.5);
@@ -39906,9 +39920,9 @@ function niceAxisSteps({ min, max, count }) {
   else niceStep = 10 * magnitude;
   const niceMin = Math.floor(min / niceStep) * niceStep;
   const steps = [];
-  for (let v = niceMin; v <= max + niceStep * 0.5; v += niceStep) {
-    if (v >= min - niceStep * 0.5) {
-      steps.push(Math.round(v));
+  for (let step = niceMin; step <= max + niceStep * 0.5; step += niceStep) {
+    if (step >= min - niceStep * 0.5) {
+      steps.push(Math.round(step));
     }
   }
   return steps;
@@ -39938,7 +39952,9 @@ function renderSvg({
   const yAxisX = isRightAxis ? CHART.width - margin.right : margin.left;
   const yLabelX = isRightAxis ? CHART.width - margin.right + 8 : margin.left - 8;
   const yLabelAnchor = isRightAxis ? "start" : "end";
-  const allValues = datasets.flatMap((ds) => ds.data.filter((v) => v !== null));
+  const allValues = datasets.flatMap(
+    (dataset) => dataset.data.filter((value) => value !== null)
+  );
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
   const padding = Math.max(1, Math.ceil((maxData - minData) * 0.1));
@@ -39950,32 +39966,32 @@ function renderSvg({
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
     <text x="${yLabelX}" y="${y + 4}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount(value)}</text>`;
   }).join("\n    ");
-  const milestoneLines = milestones ? MILESTONE_THRESHOLDS.filter((m) => m > minData && m < maxData).map((value) => {
+  const milestoneLines = milestones ? MILESTONE_THRESHOLDS.filter((milestone) => milestone > minData && milestone < maxData).map((value) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="1" stroke-dasharray="6,6" />
     <text x="${margin.left + 4}" y="${y - 4}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount(value)} \u2605</text>`;
   }).join("\n    ") : "";
   const maxLabels = 10;
-  const labelIndices = labels.reduce((acc, label, i) => {
-    if (label !== "") acc.push(i);
-    return acc;
+  const nonEmptyLabelIndices = labels.reduce((indices, label, labelIndex) => {
+    if (label !== "") indices.push(labelIndex);
+    return indices;
   }, []);
-  const labelStep = Math.max(1, Math.ceil(labelIndices.length / maxLabels));
-  const lastLabelIndex = labelIndices.at(-1);
-  const xLabels = labelIndices.filter((i, order) => order % labelStep === 0 || i === lastLabelIndex).map((i) => {
-    const x = margin.left + i / Math.max(1, labels.length - 1) * chartWidth;
-    return `<text x="${x}" y="${CHART.height - margin.bottom + 20}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(labels[i])}</text>`;
+  const labelStep = Math.max(1, Math.ceil(nonEmptyLabelIndices.length / maxLabels));
+  const lastLabelIndex = nonEmptyLabelIndices.at(-1);
+  const xLabels = nonEmptyLabelIndices.filter((labelIndex, position) => position % labelStep === 0 || labelIndex === lastLabelIndex).map((labelIndex) => {
+    const x = margin.left + labelIndex / Math.max(1, labels.length - 1) * chartWidth;
+    return `<text x="${x}" y="${CHART.height - margin.bottom + 20}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(labels[labelIndex])}</text>`;
   }).join("\n    ");
-  const datasetSvg = datasets.map((ds, dsIndex) => {
+  const datasetSvg = datasets.map((dataset, datasetIndex) => {
     const validSegments = [];
     let currentSegment = [];
     let segmentStart = -1;
-    for (let i = 0; i < ds.data.length; i++) {
-      const value = ds.data[i];
+    for (let pointIndex = 0; pointIndex < dataset.data.length; pointIndex++) {
+      const value = dataset.data[pointIndex];
       if (value !== null) {
-        if (currentSegment.length === 0) segmentStart = i;
+        if (currentSegment.length === 0) segmentStart = pointIndex;
         currentSegment.push({
-          x: margin.left + i / Math.max(1, labels.length - 1) * chartWidth,
+          x: margin.left + pointIndex / Math.max(1, labels.length - 1) * chartWidth,
           y: scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight })
         });
       } else if (currentSegment.length > 0) {
@@ -39988,58 +40004,58 @@ function renderSvg({
     }
     return validSegments.map((segment) => {
       const bottomY = CHART.height - margin.bottom;
-      const startsFromBaseline = ds.fill !== false && !ds.dashed && segment.startIndex === 0;
+      const startsFromBaseline = dataset.fill !== false && !dataset.dashed && segment.startIndex === 0;
       const firstPoint = segment.points[0];
       const smoothPath = generateSmoothPath({ points: segment.points, smooth: smoothing });
       const pathD = startsFromBaseline ? `M${firstPoint.x},${bottomY} L${firstPoint.x},${firstPoint.y}${smoothPath.slice(`M${firstPoint.x},${firstPoint.y}`.length)}` : smoothPath;
       const pathLength = calculatePathLength(
         startsFromBaseline ? [{ x: firstPoint.x, y: bottomY }, ...segment.points] : segment.points
       );
-      const fillArea = ds.fill !== false && !ds.dashed ? (() => {
+      const fillArea = dataset.fill !== false && !dataset.dashed ? (() => {
         const first = segment.points[0];
         const last = segment.points.at(-1);
-        return `<path d="${pathD} L${last.x},${bottomY} L${first.x},${bottomY} Z" fill="${ds.color}" fill-opacity="0.1" />`;
+        return `<path d="${pathD} L${last.x},${bottomY} L${first.x},${bottomY} Z" fill="${dataset.color}" fill-opacity="0.1" />`;
       })() : "";
-      const dashAttr = ds.dashed ? ' stroke-dasharray="8,4"' : "";
-      const lineClass = ds.dashed ? "" : ` class="data-line-${dsIndex}"`;
-      const pathEl = `<path d="${pathD}" fill="none" stroke="${ds.color}" stroke-width="${lineWidth}"${dashAttr}${lineClass} />`;
-      const circles = ds.dashed ? "" : segment.points.map(
-        (p, i) => `<circle cx="${p.x}" cy="${p.y}" r="${pointRadius}" fill="${ds.color}" class="data-point" style="animation-delay: ${((segment.startIndex + i) * animation.pointStagger + animation.pointDelay).toFixed(2)}s" />`
+      const dashAttr = dataset.dashed ? ' stroke-dasharray="8,4"' : "";
+      const lineClass = dataset.dashed ? "" : ` class="data-line-${datasetIndex}"`;
+      const pathEl = `<path d="${pathD}" fill="none" stroke="${dataset.color}" stroke-width="${lineWidth}"${dashAttr}${lineClass} />`;
+      const circles = dataset.dashed ? "" : segment.points.map(
+        (point, pointIndex) => `<circle cx="${point.x}" cy="${point.y}" r="${pointRadius}" fill="${dataset.color}" class="data-point" style="animation-delay: ${((segment.startIndex + pointIndex) * animation.pointStagger + animation.pointDelay).toFixed(2)}s" />`
       ).join("\n    ");
-      const animationStyle = ds.dashed ? "" : `
-    .data-line-${dsIndex} {
+      const animationStyle = dataset.dashed ? "" : `
+    .data-line-${datasetIndex} {
       stroke-dasharray: ${pathLength};
       stroke-dashoffset: ${pathLength};
       animation: drawLine ${animation.lineDuration}s ease-out forwards;
     }`;
       return { fillArea, pathEl, circles, animationStyle };
     }).reduce(
-      (acc, seg) => ({
-        fillArea: acc.fillArea + seg.fillArea,
-        pathEl: acc.pathEl + seg.pathEl,
-        circles: acc.circles + (seg.circles ? `
-    ${seg.circles}` : ""),
-        animationStyle: acc.animationStyle + seg.animationStyle
+      (accumulated, segment) => ({
+        fillArea: accumulated.fillArea + segment.fillArea,
+        pathEl: accumulated.pathEl + segment.pathEl,
+        circles: accumulated.circles + (segment.circles ? `
+    ${segment.circles}` : ""),
+        animationStyle: accumulated.animationStyle + segment.animationStyle
       }),
       { fillArea: "", pathEl: "", circles: "", animationStyle: "" }
     );
   });
-  const allAnimationStyles = datasetSvg.map((ds) => ds.animationStyle).join("");
-  const allFills = datasetSvg.map((ds) => ds.fillArea).join("\n  ");
-  const allPaths = datasetSvg.map((ds) => ds.pathEl).join("\n  ");
-  const allCircles = datasetSvg.map((ds) => ds.circles).filter(Boolean).join("\n    ");
+  const allAnimationStyles = datasetSvg.map((dataset) => dataset.animationStyle).join("");
+  const allFills = datasetSvg.map((dataset) => dataset.fillArea).join("\n  ");
+  const allPaths = datasetSvg.map((dataset) => dataset.pathEl).join("\n  ");
+  const allCircles = datasetSvg.map((dataset) => dataset.circles).filter(Boolean).join("\n    ");
   const legendSection = showLegend ? (() => {
     const legendY = margin.top - SVG_CHART.header.legendOffset;
     const itemWidth = 120;
     const totalWidth = datasets.length * itemWidth;
     const startX = (CHART.width - totalWidth) / 2;
-    return datasets.map((ds, i) => {
-      const x = startX + i * itemWidth;
-      const dashAttr = ds.dashed ? ' stroke-dasharray="4,2"' : "";
-      const rectAttr = ds.dashed ? ' rx="1"' : "";
-      return `<rect x="${x}" y="${legendY - 5}" width="12" height="3" fill="${ds.color}"${rectAttr} />
-    <line x1="${x}" y1="${legendY - 3.5}" x2="${x + 12}" y2="${legendY - 3.5}" stroke="${ds.color}" stroke-width="2"${dashAttr} />
-    <text x="${x + 16}" y="${legendY}" class="chart-text" font-size="10" font-family="${font}">${escapeXml(ds.label)}</text>`;
+    return datasets.map((dataset, datasetIndex) => {
+      const x = startX + datasetIndex * itemWidth;
+      const dashAttr = dataset.dashed ? ' stroke-dasharray="4,2"' : "";
+      const rectAttr = dataset.dashed ? ' rx="1"' : "";
+      return `<rect x="${x}" y="${legendY - 5}" width="12" height="3" fill="${dataset.color}"${rectAttr} />
+    <line x1="${x}" y1="${legendY - 3.5}" x2="${x + 12}" y2="${legendY - 3.5}" stroke="${dataset.color}" stroke-width="2"${dashAttr} />
+    <text x="${x + 16}" y="${legendY}" class="chart-text" font-size="10" font-family="${font}">${escapeXml(dataset.label)}</text>`;
     }).join("\n    ");
   })() : "";
   const titleY = margin.top - (showLegend ? SVG_CHART.header.titleWithLegendOffset : SVG_CHART.header.titleOffset);
@@ -40106,8 +40122,11 @@ function generateSvgChart({
     return null;
   }
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const labels = buildAxisLabels({ timestamps: snapshots.map((s) => s.timestamp), locale });
-  const data = snapshots.map((s) => s.totalStars);
+  const labels = buildAxisLabels({
+    timestamps: snapshots.map((snapshot) => snapshot.timestamp),
+    locale
+  });
+  const data = snapshots.map((snapshot) => snapshot.totalStars);
   return renderSvg({
     labels,
     datasets: [{ label: "Stars", data, color: lineColor ?? COLORS.accent }],
@@ -40134,9 +40153,12 @@ function generatePerRepoSvgChart({
     return null;
   }
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const labels = buildAxisLabels({ timestamps: snapshots.map((s) => s.timestamp), locale });
-  const data = snapshots.map((s) => {
-    const repo = s.repos.find((r) => r.fullName === repoFullName);
+  const labels = buildAxisLabels({
+    timestamps: snapshots.map((snapshot) => snapshot.timestamp),
+    locale
+  });
+  const data = snapshots.map((snapshot) => {
+    const repo = snapshot.repos.find((candidate) => candidate.fullName === repoFullName);
     return repo?.stars ?? 0;
   });
   return renderSvg({
@@ -40165,13 +40187,16 @@ function generateComparisonSvgChart({
   }
   const t = getTranslations(locale);
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const labels = buildAxisLabels({ timestamps: snapshots.map((s) => s.timestamp), locale });
+  const labels = buildAxisLabels({
+    timestamps: snapshots.map((snapshot) => snapshot.timestamp),
+    locale
+  });
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split("/")[0]));
   const useShortLabels = owners.size === 1;
   const datasets = capped.map((repoName, index) => {
-    const data = snapshots.map((s) => {
-      const repo = s.repos.find((r) => r.fullName === repoName);
+    const data = snapshots.map((snapshot) => {
+      const repo = snapshot.repos.find((candidate) => candidate.fullName === repoName);
       return repo?.stars ?? 0;
     });
     const color = CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length];
@@ -40209,10 +40234,12 @@ function generateForecastSvgChart({
   }
   const t = getTranslations(locale);
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const historicalLabels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
-  const historicalData = snapshots.map((s) => s.totalStars);
+  const historicalLabels = snapshots.map(
+    (snapshot) => formatDate({ timestamp: snapshot.timestamp, locale })
+  );
+  const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
   const forecastLabels = forecastData.aggregate.forecasts[0].points.map(
-    (p) => interpolate({ template: t.forecast.week, params: { n: p.weekOffset } })
+    (point) => interpolate({ template: t.forecast.week, params: { n: point.weekOffset } })
   );
   const allLabels = [...historicalLabels, ...forecastLabels];
   const series = buildForecastChartSeries({ historicalData, forecastData });
@@ -40308,7 +40335,7 @@ async function trackStars() {
           snapshot,
           maxHistory: config.maxHistory
         });
-        const sorted = [...results.repos].filter((repo) => !repo.isRemoved).sort((a, b) => b.current - a.current);
+        const sorted = [...results.repos].filter((repo) => !repo.isRemoved).sort((repoA, repoB) => repoB.current - repoA.current);
         const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
         const chartNow = /* @__PURE__ */ new Date();
         const chartMaxPoints = Math.min(
@@ -40373,7 +40400,9 @@ async function trackStars() {
           for (const repoName of topRepoNames) {
             const repoTotal = repoTotals.find((repo) => repo.fullName === repoName);
             const repoStarHistory = repoTotal ? buildStarHistory({
-              repoStargazers: repoStargazers.filter((rs) => rs.repoFullName === repoName),
+              repoStargazers: repoStargazers.filter(
+                (stargazerEntry) => stargazerEntry.repoFullName === repoName
+              ),
               repos: [repoTotal],
               maxPoints: chartMaxPoints,
               now: chartNow

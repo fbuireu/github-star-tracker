@@ -83,11 +83,11 @@ async function fetchStargazerPage({
   });
   const items = data as GitHubStargazerRow[];
 
-  return items.map((item) => ({
-    login: item.user.login,
-    avatarUrl: item.user.avatar_url,
-    profileUrl: item.user.html_url,
-    starredAt: item.starred_at,
+  return items.map((row) => ({
+    login: row.user.login,
+    avatarUrl: row.user.avatar_url,
+    profileUrl: row.user.html_url,
+    starredAt: row.starred_at,
   }));
 }
 
@@ -132,16 +132,16 @@ interface SelectSampledPagesParams {
 function selectSampledPages({ totalPages, maxPages }: SelectSampledPagesParams): number[] {
   const pages = Math.max(1, maxPages);
   if (totalPages <= pages) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
+    return Array.from({ length: totalPages }, (_, pageIndex) => pageIndex + 1);
   }
   if (pages === 1) return [1];
 
   const selected = new Set<number>();
-  for (let i = 0; i < pages; i++) {
-    selected.add(1 + Math.round((i * (totalPages - 1)) / (pages - 1)));
+  for (let pageIndex = 0; pageIndex < pages; pageIndex++) {
+    selected.add(1 + Math.round((pageIndex * (totalPages - 1)) / (pages - 1)));
   }
 
-  return [...selected].sort((a, b) => a - b);
+  return [...selected].sort((earlierPage, laterPage) => earlierPage - laterPage);
 }
 
 async function fetchSampledStargazers({

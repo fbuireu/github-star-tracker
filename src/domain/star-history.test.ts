@@ -53,15 +53,15 @@ describe('buildStarHistory', () => {
 
     expect(result.snapshots).toHaveLength(30);
 
-    const totals = result.snapshots.map((s) => s.totalStars);
-    for (let i = 1; i < totals.length; i++) {
-      expect(totals[i]).toBeGreaterThanOrEqual(totals[i - 1]);
+    const totals = result.snapshots.map((snapshot) => snapshot.totalStars);
+    for (let index = 1; index < totals.length; index++) {
+      expect(totals[index]).toBeGreaterThanOrEqual(totals[index - 1]);
     }
 
     const last = result.snapshots.at(-1);
     expect(last?.totalStars).toBe(5);
-    expect(last?.repos.find((r) => r.fullName === 'user/a')?.stars).toBe(3);
-    expect(last?.repos.find((r) => r.fullName === 'user/b')?.stars).toBe(2);
+    expect(last?.repos.find((repo) => repo.fullName === 'user/a')?.stars).toBe(3);
+    expect(last?.repos.find((repo) => repo.fullName === 'user/b')?.stars).toBe(2);
   });
 
   it('uses exact cumulative counts when nothing is sampled', () => {
@@ -97,11 +97,11 @@ describe('buildStarHistory', () => {
       now: NOW,
     });
 
-    const stars = result.snapshots.map((s) => s.repos[0].stars);
+    const stars = result.snapshots.map((snapshot) => snapshot.repos[0].stars);
     expect(stars.at(-1)).toBe(9000);
-    for (let i = 1; i < stars.length; i++) {
-      expect(stars[i]).toBeGreaterThanOrEqual(stars[i - 1]);
-      expect(stars[i]).toBeLessThanOrEqual(9000);
+    for (let index = 1; index < stars.length; index++) {
+      expect(stars[index]).toBeGreaterThanOrEqual(stars[index - 1]);
+      expect(stars[index]).toBeLessThanOrEqual(9000);
     }
   });
 
@@ -124,17 +124,19 @@ describe('buildStarHistory', () => {
       now: NOW,
     });
 
-    const stars = result.snapshots.map((s) => s.repos[0].stars);
+    const stars = result.snapshots.map((snapshot) => snapshot.repos[0].stars);
 
     expect(stars.at(-1)).toBe(50000);
-    for (let i = 1; i < stars.length; i++) {
-      expect(stars[i]).toBeGreaterThanOrEqual(stars[i - 1]);
+    for (let index = 1; index < stars.length; index++) {
+      expect(stars[index]).toBeGreaterThanOrEqual(stars[index - 1]);
     }
     // The recent tail rises toward the total rather than sitting flat at it.
     expect(stars.at(-2)).toBeLessThan(50000);
-    expect(stars.some((v) => v > MAX_REACHABLE_STARS && v < 50000)).toBe(true);
+    expect(stars.some((starCount) => starCount > MAX_REACHABLE_STARS && starCount < 50000)).toBe(
+      true,
+    );
     // The reachable portion still peaks around the 40k cap before ramping.
-    expect(stars.some((v) => v > 0 && v <= MAX_REACHABLE_STARS)).toBe(true);
+    expect(stars.some((starCount) => starCount > 0 && starCount <= MAX_REACHABLE_STARS)).toBe(true);
   });
 
   it('handles a repo with stars but no fetched dates (ends at the true total)', () => {
@@ -148,10 +150,12 @@ describe('buildStarHistory', () => {
       now: NOW,
     });
 
-    const repoB = result.snapshots.map((s) => s.repos.find((r) => r.fullName === 'user/b')?.stars);
-    expect(repoB.every((v) => Number.isFinite(v))).toBe(true);
+    const repoB = result.snapshots.map(
+      (snapshot) => snapshot.repos.find((repo) => repo.fullName === 'user/b')?.stars,
+    );
+    expect(repoB.every((starCount) => Number.isFinite(starCount))).toBe(true);
     expect(repoB.at(-1)).toBe(500);
-    expect(repoB.slice(0, -1).every((v) => v === 0)).toBe(true);
+    expect(repoB.slice(0, -1).every((starCount) => starCount === 0)).toBe(true);
   });
 
   it('keeps a zero-star repo at 0 in every snapshot', () => {
@@ -165,9 +169,9 @@ describe('buildStarHistory', () => {
       now: NOW,
     });
 
-    for (const s of result.snapshots) {
-      expect(s.repos.find((r) => r.fullName === 'user/empty')?.stars).toBe(0);
-      expect(s.repos).toHaveLength(2);
+    for (const snapshot of result.snapshots) {
+      expect(snapshot.repos.find((repo) => repo.fullName === 'user/empty')?.stars).toBe(0);
+      expect(snapshot.repos).toHaveLength(2);
     }
   });
 

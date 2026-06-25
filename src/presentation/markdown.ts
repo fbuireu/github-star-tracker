@@ -37,7 +37,7 @@ export function generateMarkdownReport({
       ? []
       : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ''];
 
-  const topRepos = sorted.slice(0, topReposCount).map((r) => r.fullName);
+  const topRepos = sorted.slice(0, topReposCount).map((repo) => repo.fullName);
   const hasComparisonChart = hasChartHistory && topRepos.length > 0;
 
   const individualRepoCharts = hasChartHistory
@@ -156,8 +156,8 @@ export function generateMarkdownReport({
             `<summary>${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</summary>`,
             '',
             ...entry.newStargazers.map(
-              (s) =>
-                `- <img src="${s.avatarUrl}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${s.login}](${s.profileUrl}): ${interpolate({ template: t.stargazers.starredOn, params: { date: s.starredAt.split('T')[0] } })}`,
+              (stargazer) =>
+                `- <img src="${stargazer.avatarUrl}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${stargazer.login}](${stargazer.profileUrl}): ${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split('T')[0] } })}`,
             ),
             '',
             '</details>',
@@ -247,8 +247,8 @@ function buildForecastTable({ title, forecasts, t }: BuildForecastTableParams): 
     `| ${t.forecast.method} | ${weekHeaders.join(' | ')} |`,
     `|:---|${weekHeaders.map(() => '---:').join('|')}|`,
     ...forecasts.map(
-      (f) =>
-        `| ${forecastMethodLabel({ method: f.method, t })} | ${f.points.map((p) => String(p.predicted)).join(' | ')} |`,
+      (forecast) =>
+        `| ${forecastMethodLabel({ method: forecast.method, t })} | ${forecast.points.map((point) => String(point.predicted)).join(' | ')} |`,
     ),
   ];
 

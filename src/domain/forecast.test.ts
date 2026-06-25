@@ -97,7 +97,7 @@ describe('computeForecast', () => {
     expect(result.aggregate.forecasts).toHaveLength(2);
 
     const lrForecast = result.aggregate.forecasts.find(
-      (f) => f.method === ForecastMethod.LINEAR_REGRESSION,
+      (forecast) => forecast.method === ForecastMethod.LINEAR_REGRESSION,
     );
     expect(lrForecast).toBeDefined();
     expect(lrForecast?.points).toHaveLength(4);
@@ -105,7 +105,7 @@ describe('computeForecast', () => {
     expect(lrForecast?.points[1].predicted).toBe(140);
 
     const wmaForecast = result.aggregate.forecasts.find(
-      (f) => f.method === ForecastMethod.WEIGHTED_MOVING_AVERAGE,
+      (forecast) => forecast.method === ForecastMethod.WEIGHTED_MOVING_AVERAGE,
     );
     expect(wmaForecast).toBeDefined();
     expect(wmaForecast?.points[0].predicted).toBe(130);

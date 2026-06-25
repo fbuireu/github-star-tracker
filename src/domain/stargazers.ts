@@ -45,8 +45,8 @@ export function diffStargazers({
 
     const previousLogins = new Set(previousMap[repo.repoFullName] ?? []);
     const newStargazers = repo.stargazers
-      .filter((s) => !previousLogins.has(s.login))
-      .sort((a, b) => b.starredAt.localeCompare(a.starredAt));
+      .filter((stargazer) => !previousLogins.has(stargazer.login))
+      .sort((earlier, later) => later.starredAt.localeCompare(earlier.starredAt));
 
     if (newStargazers.length > 0) {
       entries.push({ repoFullName: repo.repoFullName, newStargazers });
@@ -62,7 +62,7 @@ export function buildStargazerMap(repoStargazers: RepoStargazers[]): StargazerMa
 
   for (const repo of repoStargazers) {
     if (repo.sampled) continue;
-    map[repo.repoFullName] = repo.stargazers.map((s) => s.login);
+    map[repo.repoFullName] = repo.stargazers.map((stargazer) => stargazer.login);
   }
 
   return map;

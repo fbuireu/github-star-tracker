@@ -50,44 +50,50 @@ function generateSmoothPath({ points, smooth = true }: GenerateSmoothPathParams)
   if (points.length === 0) return '';
   if (points.length === 1) return `M${points[0].x},${points[0].y}`;
 
-  let d = `M${points[0].x},${points[0].y}`;
+  let path = `M${points[0].x},${points[0].y}`;
 
   if (!smooth) {
-    for (let i = 1; i < points.length; i++) {
-      d += ` L${points[i].x},${points[i].y}`;
+    for (let index = 1; index < points.length; index++) {
+      path += ` L${points[index].x},${points[index].y}`;
     }
 
-    return d;
+    return path;
   }
 
   const tension = 0.4;
 
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[Math.max(0, i - 1)];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = points[Math.min(points.length - 1, i + 2)];
+  for (let index = 0; index < points.length - 1; index++) {
+    const previousPoint = points[Math.max(0, index - 1)];
+    const startPoint = points[index];
+    const endPoint = points[index + 1];
+    const nextPoint = points[Math.min(points.length - 1, index + 2)];
 
-    const cp1x = p1.x + ((p2.x - p0.x) * tension) / 3;
-    const cp2x = p2.x - ((p3.x - p1.x) * tension) / 3;
+    const cp1x = startPoint.x + ((endPoint.x - previousPoint.x) * tension) / 3;
+    const cp2x = endPoint.x - ((nextPoint.x - startPoint.x) * tension) / 3;
 
-    const segMinY = Math.min(p1.y, p2.y);
-    const segMaxY = Math.max(p1.y, p2.y);
-    const cp1y = Math.min(segMaxY, Math.max(segMinY, p1.y + ((p2.y - p0.y) * tension) / 3));
-    const cp2y = Math.min(segMaxY, Math.max(segMinY, p2.y - ((p3.y - p1.y) * tension) / 3));
+    const segMinY = Math.min(startPoint.y, endPoint.y);
+    const segMaxY = Math.max(startPoint.y, endPoint.y);
+    const cp1y = Math.min(
+      segMaxY,
+      Math.max(segMinY, startPoint.y + ((endPoint.y - previousPoint.y) * tension) / 3),
+    );
+    const cp2y = Math.min(
+      segMaxY,
+      Math.max(segMinY, endPoint.y - ((nextPoint.y - startPoint.y) * tension) / 3),
+    );
 
-    d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+    path += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${endPoint.x},${endPoint.y}`;
   }
 
-  return d;
+  return path;
 }
 
 function calculatePathLength(points: Point[]): number {
   let length = 0;
 
-  for (let i = 1; i < points.length; i++) {
-    const dx = points[i].x - points[i - 1].x;
-    const dy = points[i].y - points[i - 1].y;
+  for (let index = 1; index < points.length; index++) {
+    const dx = points[index].x - points[index - 1].x;
+    const dy = points[index].y - points[index - 1].y;
     length += Math.hypot(dx, dy);
   }
 
@@ -118,9 +124,9 @@ function niceAxisSteps({ min, max, count }: NiceAxisStepsParams): number[] {
   const niceMin = Math.floor(min / niceStep) * niceStep;
   const steps: number[] = [];
 
-  for (let v = niceMin; v <= max + niceStep * 0.5; v += niceStep) {
-    if (v >= min - niceStep * 0.5) {
-      steps.push(Math.round(v));
+  for (let step = niceMin; step <= max + niceStep * 0.5; step += niceStep) {
+    if (step >= min - niceStep * 0.5) {
+      steps.push(Math.round(step));
     }
   }
 
@@ -178,7 +184,9 @@ function renderSvg({
   const yAxisX = isRightAxis ? CHART.width - margin.right : margin.left;
   const yLabelX = isRightAxis ? CHART.width - margin.right + 8 : margin.left - 8;
   const yLabelAnchor = isRightAxis ? 'start' : 'end';
-  const allValues = datasets.flatMap((ds) => ds.data.filter((v): v is number => v !== null));
+  const allValues = datasets.flatMap((dataset) =>
+    dataset.data.filter((value): value is number => value !== null),
+  );
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
   const padding = Math.max(1, Math.ceil((maxData - minData) * 0.1));
@@ -195,7 +203,7 @@ function renderSvg({
     .join('\n    ');
 
   const milestoneLines = milestones
-    ? MILESTONE_THRESHOLDS.filter((m) => m > minData && m < maxData)
+    ? MILESTONE_THRESHOLDS.filter((milestone) => milestone > minData && milestone < maxData)
         .map((value) => {
           const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
           return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="1" stroke-dasharray="6,6" />
@@ -205,31 +213,31 @@ function renderSvg({
     : '';
 
   const maxLabels = 10;
-  const labelIndices = labels.reduce<number[]>((acc, label, i) => {
-    if (label !== '') acc.push(i);
-    return acc;
+  const nonEmptyLabelIndices = labels.reduce<number[]>((indices, label, labelIndex) => {
+    if (label !== '') indices.push(labelIndex);
+    return indices;
   }, []);
-  const labelStep = Math.max(1, Math.ceil(labelIndices.length / maxLabels));
-  const lastLabelIndex = labelIndices.at(-1);
-  const xLabels = labelIndices
-    .filter((i, order) => order % labelStep === 0 || i === lastLabelIndex)
-    .map((i) => {
-      const x = margin.left + (i / Math.max(1, labels.length - 1)) * chartWidth;
-      return `<text x="${x}" y="${CHART.height - margin.bottom + 20}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(labels[i])}</text>`;
+  const labelStep = Math.max(1, Math.ceil(nonEmptyLabelIndices.length / maxLabels));
+  const lastLabelIndex = nonEmptyLabelIndices.at(-1);
+  const xLabels = nonEmptyLabelIndices
+    .filter((labelIndex, position) => position % labelStep === 0 || labelIndex === lastLabelIndex)
+    .map((labelIndex) => {
+      const x = margin.left + (labelIndex / Math.max(1, labels.length - 1)) * chartWidth;
+      return `<text x="${x}" y="${CHART.height - margin.bottom + 20}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(labels[labelIndex])}</text>`;
     })
     .join('\n    ');
 
-  const datasetSvg = datasets.map((ds, dsIndex) => {
+  const datasetSvg = datasets.map((dataset, datasetIndex) => {
     const validSegments: { points: Point[]; startIndex: number }[] = [];
     let currentSegment: Point[] = [];
     let segmentStart = -1;
 
-    for (let i = 0; i < ds.data.length; i++) {
-      const value = ds.data[i];
+    for (let pointIndex = 0; pointIndex < dataset.data.length; pointIndex++) {
+      const value = dataset.data[pointIndex];
       if (value !== null) {
-        if (currentSegment.length === 0) segmentStart = i;
+        if (currentSegment.length === 0) segmentStart = pointIndex;
         currentSegment.push({
-          x: margin.left + (i / Math.max(1, labels.length - 1)) * chartWidth,
+          x: margin.left + (pointIndex / Math.max(1, labels.length - 1)) * chartWidth,
           y: scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight }),
         });
       } else if (currentSegment.length > 0) {
@@ -247,7 +255,8 @@ function renderSvg({
         // Anchor the main line to the baseline at its very first point so it rises
         // from zero instead of starting mid-air. Only the primary filled line, and
         // only when it begins at the chart's left edge.
-        const startsFromBaseline = ds.fill !== false && !ds.dashed && segment.startIndex === 0;
+        const startsFromBaseline =
+          dataset.fill !== false && !dataset.dashed && segment.startIndex === 0;
         const firstPoint = segment.points[0];
         const smoothPath = generateSmoothPath({ points: segment.points, smooth: smoothing });
         const pathD = startsFromBaseline
@@ -260,31 +269,31 @@ function renderSvg({
         );
 
         const fillArea =
-          ds.fill !== false && !ds.dashed
+          dataset.fill !== false && !dataset.dashed
             ? (() => {
                 const first = segment.points[0];
                 const last = segment.points.at(-1) as Point;
-                return `<path d="${pathD} L${last.x},${bottomY} L${first.x},${bottomY} Z" fill="${ds.color}" fill-opacity="0.1" />`;
+                return `<path d="${pathD} L${last.x},${bottomY} L${first.x},${bottomY} Z" fill="${dataset.color}" fill-opacity="0.1" />`;
               })()
             : '';
 
-        const dashAttr = ds.dashed ? ' stroke-dasharray="8,4"' : '';
-        const lineClass = ds.dashed ? '' : ` class="data-line-${dsIndex}"`;
-        const pathEl = `<path d="${pathD}" fill="none" stroke="${ds.color}" stroke-width="${lineWidth}"${dashAttr}${lineClass} />`;
+        const dashAttr = dataset.dashed ? ' stroke-dasharray="8,4"' : '';
+        const lineClass = dataset.dashed ? '' : ` class="data-line-${datasetIndex}"`;
+        const pathEl = `<path d="${pathD}" fill="none" stroke="${dataset.color}" stroke-width="${lineWidth}"${dashAttr}${lineClass} />`;
 
-        const circles = ds.dashed
+        const circles = dataset.dashed
           ? ''
           : segment.points
               .map(
-                (p, i) =>
-                  `<circle cx="${p.x}" cy="${p.y}" r="${pointRadius}" fill="${ds.color}" class="data-point" style="animation-delay: ${((segment.startIndex + i) * animation.pointStagger + animation.pointDelay).toFixed(2)}s" />`,
+                (point, pointIndex) =>
+                  `<circle cx="${point.x}" cy="${point.y}" r="${pointRadius}" fill="${dataset.color}" class="data-point" style="animation-delay: ${((segment.startIndex + pointIndex) * animation.pointStagger + animation.pointDelay).toFixed(2)}s" />`,
               )
               .join('\n    ');
 
-        const animationStyle = ds.dashed
+        const animationStyle = dataset.dashed
           ? ''
           : `
-    .data-line-${dsIndex} {
+    .data-line-${datasetIndex} {
       stroke-dasharray: ${pathLength};
       stroke-dashoffset: ${pathLength};
       animation: drawLine ${animation.lineDuration}s ease-out forwards;
@@ -293,21 +302,21 @@ function renderSvg({
         return { fillArea, pathEl, circles, animationStyle };
       })
       .reduce(
-        (acc, seg) => ({
-          fillArea: acc.fillArea + seg.fillArea,
-          pathEl: acc.pathEl + seg.pathEl,
-          circles: acc.circles + (seg.circles ? `\n    ${seg.circles}` : ''),
-          animationStyle: acc.animationStyle + seg.animationStyle,
+        (accumulated, segment) => ({
+          fillArea: accumulated.fillArea + segment.fillArea,
+          pathEl: accumulated.pathEl + segment.pathEl,
+          circles: accumulated.circles + (segment.circles ? `\n    ${segment.circles}` : ''),
+          animationStyle: accumulated.animationStyle + segment.animationStyle,
         }),
         { fillArea: '', pathEl: '', circles: '', animationStyle: '' },
       );
   });
 
-  const allAnimationStyles = datasetSvg.map((ds) => ds.animationStyle).join('');
-  const allFills = datasetSvg.map((ds) => ds.fillArea).join('\n  ');
-  const allPaths = datasetSvg.map((ds) => ds.pathEl).join('\n  ');
+  const allAnimationStyles = datasetSvg.map((dataset) => dataset.animationStyle).join('');
+  const allFills = datasetSvg.map((dataset) => dataset.fillArea).join('\n  ');
+  const allPaths = datasetSvg.map((dataset) => dataset.pathEl).join('\n  ');
   const allCircles = datasetSvg
-    .map((ds) => ds.circles)
+    .map((dataset) => dataset.circles)
     .filter(Boolean)
     .join('\n    ');
 
@@ -318,13 +327,13 @@ function renderSvg({
         const totalWidth = datasets.length * itemWidth;
         const startX = (CHART.width - totalWidth) / 2;
         return datasets
-          .map((ds, i) => {
-            const x = startX + i * itemWidth;
-            const dashAttr = ds.dashed ? ' stroke-dasharray="4,2"' : '';
-            const rectAttr = ds.dashed ? ' rx="1"' : '';
-            return `<rect x="${x}" y="${legendY - 5}" width="12" height="3" fill="${ds.color}"${rectAttr} />
-    <line x1="${x}" y1="${legendY - 3.5}" x2="${x + 12}" y2="${legendY - 3.5}" stroke="${ds.color}" stroke-width="2"${dashAttr} />
-    <text x="${x + 16}" y="${legendY}" class="chart-text" font-size="10" font-family="${font}">${escapeXml(ds.label)}</text>`;
+          .map((dataset, datasetIndex) => {
+            const x = startX + datasetIndex * itemWidth;
+            const dashAttr = dataset.dashed ? ' stroke-dasharray="4,2"' : '';
+            const rectAttr = dataset.dashed ? ' rx="1"' : '';
+            return `<rect x="${x}" y="${legendY - 5}" width="12" height="3" fill="${dataset.color}"${rectAttr} />
+    <line x1="${x}" y1="${legendY - 3.5}" x2="${x + 12}" y2="${legendY - 3.5}" stroke="${dataset.color}" stroke-width="2"${dashAttr} />
+    <text x="${x + 16}" y="${legendY}" class="chart-text" font-size="10" font-family="${font}">${escapeXml(dataset.label)}</text>`;
           })
           .join('\n    ');
       })()
@@ -408,8 +417,11 @@ export function generateSvgChart({
   }
 
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const labels = buildAxisLabels({ timestamps: snapshots.map((s) => s.timestamp), locale });
-  const data = snapshots.map((s) => s.totalStars);
+  const labels = buildAxisLabels({
+    timestamps: snapshots.map((snapshot) => snapshot.timestamp),
+    locale,
+  });
+  const data = snapshots.map((snapshot) => snapshot.totalStars);
 
   return renderSvg({
     labels,
@@ -451,9 +463,12 @@ export function generatePerRepoSvgChart({
   }
 
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const labels = buildAxisLabels({ timestamps: snapshots.map((s) => s.timestamp), locale });
-  const data = snapshots.map((s) => {
-    const repo = s.repos.find((r) => r.fullName === repoFullName);
+  const labels = buildAxisLabels({
+    timestamps: snapshots.map((snapshot) => snapshot.timestamp),
+    locale,
+  });
+  const data = snapshots.map((snapshot) => {
+    const repo = snapshot.repos.find((candidate) => candidate.fullName === repoFullName);
     return repo?.stars ?? 0;
   });
 
@@ -500,13 +515,16 @@ export function generateComparisonSvgChart({
 
   const t = getTranslations(locale);
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const labels = buildAxisLabels({ timestamps: snapshots.map((s) => s.timestamp), locale });
+  const labels = buildAxisLabels({
+    timestamps: snapshots.map((snapshot) => snapshot.timestamp),
+    locale,
+  });
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split('/')[0]));
   const useShortLabels = owners.size === 1;
   const datasets: SvgDataset[] = capped.map((repoName, index) => {
-    const data = snapshots.map((s) => {
-      const repo = s.repos.find((r) => r.fullName === repoName);
+    const data = snapshots.map((snapshot) => {
+      const repo = snapshot.repos.find((candidate) => candidate.fullName === repoName);
       return repo?.stars ?? 0;
     });
 
@@ -561,10 +579,12 @@ export function generateForecastSvgChart({
 
   const t = getTranslations(locale);
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const historicalLabels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
-  const historicalData = snapshots.map((s) => s.totalStars);
-  const forecastLabels = forecastData.aggregate.forecasts[0].points.map((p) =>
-    interpolate({ template: t.forecast.week, params: { n: p.weekOffset } }),
+  const historicalLabels = snapshots.map((snapshot) =>
+    formatDate({ timestamp: snapshot.timestamp, locale }),
+  );
+  const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
+  const forecastLabels = forecastData.aggregate.forecasts[0].points.map((point) =>
+    interpolate({ template: t.forecast.week, params: { n: point.weekOffset } }),
   );
   const allLabels = [...historicalLabels, ...forecastLabels];
   const series = buildForecastChartSeries({ historicalData, forecastData });

@@ -63,7 +63,7 @@ describe('fetchAllStargazers', () => {
   });
 
   it('handles pagination', async () => {
-    const page1 = Array.from({ length: 100 }, (_, i) => makeStargazerResponse(`user-${i}`));
+    const page1 = Array.from({ length: 100 }, (_, index) => makeStargazerResponse(`user-${index}`));
     const page2 = [makeStargazerResponse('last-user')];
     const octokit = {
       request: vi
@@ -131,7 +131,7 @@ describe('fetchAllStargazers', () => {
     });
 
     expect(octokit.request).toHaveBeenCalledTimes(5);
-    const pages = octokit.request.mock.calls.map((c) => c[1].page);
+    const pages = octokit.request.mock.calls.map((call) => call[1].page);
     expect(pages[0]).toBe(1);
     expect(pages.at(-1)).toBe(50);
     expect(result[0].sampled).toBe(true);
@@ -199,14 +199,14 @@ describe('fetchAllStargazers', () => {
       smartSamplingPages: 30,
     });
 
-    const pages = octokit.request.mock.calls.map((c) => c[1].page);
+    const pages = octokit.request.mock.calls.map((call) => call[1].page);
     expect(Math.max(...pages)).toBeLessThanOrEqual(400);
   });
 
   it('stops the full fetch at the reachable page cap for repos above 40,000 stars', async () => {
     const octokit = {
       request: vi.fn().mockResolvedValue({
-        data: Array.from({ length: 100 }, (_, i) => makeStargazerResponse(`user-${i}`)),
+        data: Array.from({ length: 100 }, (_, index) => makeStargazerResponse(`user-${index}`)),
       }),
     };
 
@@ -217,7 +217,7 @@ describe('fetchAllStargazers', () => {
     });
 
     expect(octokit.request).toHaveBeenCalledTimes(400);
-    const pages = octokit.request.mock.calls.map((c) => c[1].page);
+    const pages = octokit.request.mock.calls.map((call) => call[1].page);
     expect(Math.max(...pages)).toBe(400);
     expect(result[0].sampled).toBe(false);
     expect(core.warning).not.toHaveBeenCalled();

@@ -80,9 +80,9 @@ describe('addSnapshot', () => {
   });
 
   it('trims history when exceeding maxHistory', () => {
-    const snapshots = Array.from({ length: 52 }, (_, i) => ({
-      timestamp: `2024-01-${String(i + 1).padStart(2, '0')}T00:00:00Z`,
-      totalStars: i,
+    const snapshots = Array.from({ length: 52 }, (_, index) => ({
+      timestamp: `2024-01-${String(index + 1).padStart(2, '0')}T00:00:00Z`,
+      totalStars: index,
       repos: [],
     }));
     const history: History = { snapshots };

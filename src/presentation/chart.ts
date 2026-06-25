@@ -95,7 +95,9 @@ export function buildMilestoneAnnotations({
   minStars,
   maxStars,
 }: BuildMilestoneAnnotationsParams): AnnotationPlugin | null {
-  const visible = MILESTONE_THRESHOLDS.filter((m) => m > minStars && m < maxStars);
+  const visible = MILESTONE_THRESHOLDS.filter(
+    (milestone) => milestone > minStars && milestone < maxStars,
+  );
 
   if (visible.length === 0) return null;
 
@@ -199,8 +201,8 @@ function prepareChartData({ history, locale }: PrepareChartDataParams): {
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
 
   return {
-    labels: snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale })),
-    data: snapshots.map((s) => s.totalStars),
+    labels: snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale })),
+    data: snapshots.map((snapshot) => snapshot.totalStars),
   };
 }
 
@@ -277,9 +279,9 @@ export function generatePerRepoChartUrl({
   }
 
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
-  const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
-  const data = snapshots.map((s) => {
-    const repo = s.repos.find((r) => r.fullName === repoFullName);
+  const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
+  const data = snapshots.map((snapshot) => {
+    const repo = snapshot.repos.find((candidate) => candidate.fullName === repoFullName);
 
     return repo?.stars ?? 0;
   });
@@ -315,13 +317,13 @@ export function generateComparisonChartUrl({
   const t = getTranslations(locale);
   const chartTitle = title ?? t.report.topRepositories;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
-  const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
+  const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split('/')[0]));
   const useShortLabels = owners.size === 1;
   const datasets: Dataset[] = capped.map((repoName, index) => {
-    const data = snapshots.map((s) => {
-      const repo = s.repos.find((r) => r.fullName === repoName);
+    const data = snapshots.map((snapshot) => {
+      const repo = snapshot.repos.find((candidate) => candidate.fullName === repoName);
       return repo?.stars ?? 0;
     });
     const color = CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length];
@@ -362,10 +364,12 @@ export function generateForecastChartUrl({
   const t = getTranslations(locale);
   const chartTitle = title ?? t.forecast.sectionTitle;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
-  const historicalLabels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
-  const historicalData = snapshots.map((s) => s.totalStars);
-  const forecastLabels = forecastData.aggregate.forecasts[0].points.map((p) =>
-    interpolate({ template: t.forecast.week, params: { n: p.weekOffset } }),
+  const historicalLabels = snapshots.map((snapshot) =>
+    formatDate({ timestamp: snapshot.timestamp, locale }),
+  );
+  const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
+  const forecastLabels = forecastData.aggregate.forecasts[0].points.map((point) =>
+    interpolate({ template: t.forecast.week, params: { n: point.weekOffset } }),
   );
   const allLabels = [...historicalLabels, ...forecastLabels];
   const series = buildForecastChartSeries({ historicalData, forecastData });

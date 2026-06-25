@@ -1,7 +1,7 @@
 import { THRESHOLD_MAX_PACE, THRESHOLDS } from '@presentation/constants';
 
 export function getAdaptiveThreshold(totalStars: number): number {
-  return THRESHOLDS.find((t) => totalStars <= t.limit)?.value ?? THRESHOLD_MAX_PACE;
+  return THRESHOLDS.find((threshold) => totalStars <= threshold.limit)?.value ?? THRESHOLD_MAX_PACE;
 }
 
 interface ShouldNotifyParams {
