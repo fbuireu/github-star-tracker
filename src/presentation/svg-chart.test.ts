@@ -174,6 +174,17 @@ describe('generateSvgChart', () => {
     expect(circleCount).toBe(30);
   });
 
+  it('anchors the line to the baseline so it starts from zero, not mid-air', () => {
+    const history = makeHistory([5, 20, 40]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
+    const ys = linePathYs(result);
+    const baselineY = 400 - 50;
+
+    expect(ys[0]).toBe(baselineY);
+    expect(ys[1]).toBeLessThan(baselineY);
+    expect((result.match(/<circle/g) || []).length).toBe(3);
+  });
+
   it('handles equal star counts without errors', () => {
     const history = makeHistory([100, 100, 100]);
     const result = generateSvgChart({ history, locale: 'en' });
