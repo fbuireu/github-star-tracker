@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/fbuireu/github-star-tracker/compare/v1.16.0...v1.16.1) (2026-06-25)
+
+
+### Bug Fixes
+
+* format chart axis values compactly to prevent label cropping ([#116](https://github.com/fbuireu/github-star-tracker/issues/116)) ([80e051b](https://github.com/fbuireu/github-star-tracker/commit/80e051bbe18867bd368e38598e3c27ea0b0dfcd7))
+
 # [1.16.0](https://github.com/fbuireu/github-star-tracker/compare/v1.15.1...v1.16.0) (2026-06-25)
 
 
