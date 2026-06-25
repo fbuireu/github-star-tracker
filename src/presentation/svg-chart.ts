@@ -1,6 +1,6 @@
 import { ChartAxisSide } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
-import { buildAxisLabels, formatDate } from '@domain/formatting';
+import { buildAxisLabels, formatCount, formatDate } from '@domain/formatting';
 import type { History } from '@domain/types';
 import { getTranslations, interpolate, type Locale } from '@i18n';
 import {
@@ -190,7 +190,7 @@ function renderSvg({
     .map((value) => {
       const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
       return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
-    <text x="${yLabelX}" y="${y + 4}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${value.toLocaleString('en-US')}</text>`;
+    <text x="${yLabelX}" y="${y + 4}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount(value)}</text>`;
     })
     .join('\n    ');
 
@@ -199,7 +199,7 @@ function renderSvg({
         .map((value) => {
           const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
           return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="1" stroke-dasharray="6,6" />
-    <text x="${margin.left + 4}" y="${y - 4}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${value.toLocaleString('en-US')} ★</text>`;
+    <text x="${margin.left + 4}" y="${y - 4}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount(value)} ★</text>`;
         })
         .join('\n    ')
     : '';
