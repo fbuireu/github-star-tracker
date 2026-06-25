@@ -71,6 +71,24 @@ describe('generateSvgChart', () => {
     expect(result).toBeNull();
   });
 
+  it('labels the x-axis by year for multi-year histories', () => {
+    const history: History = {
+      snapshots: [
+        makeSnapshot('2023-02-01T12:00:00Z', 10),
+        makeSnapshot('2023-09-01T12:00:00Z', 40),
+        makeSnapshot('2024-04-01T12:00:00Z', 90),
+        makeSnapshot('2025-01-01T12:00:00Z', 150),
+      ],
+    };
+
+    const svg = expectSvg(generateSvgChart({ history, locale: 'en' }));
+
+    expect(svg).toContain('>2023<');
+    expect(svg).toContain('>2024<');
+    expect(svg).toContain('>2025<');
+    expect(svg).not.toMatch(/>Feb \d/);
+  });
+
   it('generates valid SVG structure', () => {
     const history = makeHistory([10, 20, 30]);
     const result = generateSvgChart({ history, locale: 'en' });

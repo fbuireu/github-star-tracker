@@ -1,6 +1,6 @@
 import { ChartAxisSide } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
-import { formatDate } from '@domain/formatting';
+import { buildAxisLabels, formatDate } from '@domain/formatting';
 import type { History } from '@domain/types';
 import { getTranslations, interpolate, type Locale } from '@i18n';
 import {
@@ -205,14 +205,18 @@ function renderSvg({
     : '';
 
   const maxLabels = 10;
-  const labelStep = Math.max(1, Math.ceil(labels.length / maxLabels));
-  const xLabels = labels
-    .map((label, i) => {
-      if (i % labelStep !== 0 && i !== labels.length - 1) return '';
+  const labelIndices = labels.reduce<number[]>((acc, label, i) => {
+    if (label !== '') acc.push(i);
+    return acc;
+  }, []);
+  const labelStep = Math.max(1, Math.ceil(labelIndices.length / maxLabels));
+  const lastLabelIndex = labelIndices.at(-1);
+  const xLabels = labelIndices
+    .filter((i, order) => order % labelStep === 0 || i === lastLabelIndex)
+    .map((i) => {
       const x = margin.left + (i / Math.max(1, labels.length - 1)) * chartWidth;
-      return `<text x="${x}" y="${CHART.height - margin.bottom + 20}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(label)}</text>`;
+      return `<text x="${x}" y="${CHART.height - margin.bottom + 20}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(labels[i])}</text>`;
     })
-    .filter(Boolean)
     .join('\n    ');
 
   const datasetSvg = datasets.map((ds, dsIndex) => {
@@ -392,7 +396,7 @@ export function generateSvgChart({
   }
 
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
+  const labels = buildAxisLabels({ timestamps: snapshots.map((s) => s.timestamp), locale });
   const data = snapshots.map((s) => s.totalStars);
 
   return renderSvg({
@@ -435,7 +439,7 @@ export function generatePerRepoSvgChart({
   }
 
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
+  const labels = buildAxisLabels({ timestamps: snapshots.map((s) => s.timestamp), locale });
   const data = snapshots.map((s) => {
     const repo = s.repos.find((r) => r.fullName === repoFullName);
     return repo?.stars ?? 0;
@@ -484,7 +488,7 @@ export function generateComparisonSvgChart({
 
   const t = getTranslations(locale);
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
+  const labels = buildAxisLabels({ timestamps: snapshots.map((s) => s.timestamp), locale });
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split('/')[0]));
   const useShortLabels = owners.size === 1;
