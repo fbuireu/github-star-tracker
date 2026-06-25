@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/fbuireu/github-star-tracker/compare/v1.14.2...v1.15.0) (2026-06-25)
+
+
+### Features
+
+* scale chart x-axis labels to the total time span ([#112](https://github.com/fbuireu/github-star-tracker/issues/112)) ([e504801](https://github.com/fbuireu/github-star-tracker/commit/e504801629f52cef4d0f525f74cae8240ef32d1c))
+
 ## [1.14.2](https://github.com/fbuireu/github-star-tracker/compare/v1.14.1...v1.14.2) (2026-06-25)
 
 

@@ -38459,6 +38459,23 @@ function formatDate({ timestamp, locale }) {
   const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
   return date.toLocaleDateString(localeCode, { month: "short", day: "numeric" });
 }
+var DAY_MS = 864e5;
+var YEAR_MS = 365 * DAY_MS;
+function buildAxisLabels({ timestamps, locale }) {
+  const times = timestamps.map((timestamp) => Date.parse(timestamp)).filter(Number.isFinite);
+  if (times.length < 2 || Math.max(...times) - Math.min(...times) < YEAR_MS) {
+    return timestamps.map((timestamp) => formatDate({ timestamp, locale }));
+  }
+  let lastYear = null;
+  return timestamps.map((timestamp) => {
+    const time = Date.parse(timestamp);
+    if (!Number.isFinite(time)) return "";
+    const year = new Date(time).getUTCFullYear();
+    if (year === lastYear) return "";
+    lastYear = year;
+    return String(year);
+  });
+}
 
 // src/presentation/constants.ts
 var LIGHT_PALETTE = {
@@ -38564,7 +38581,7 @@ function addSnapshot({ history, snapshot, maxHistory }) {
 }
 
 // src/domain/star-history.ts
-var DAY_MS = 864e5;
+var DAY_MS2 = 864e5;
 function cumulativeCounts(sortedTimes, edges) {
   const counts = [];
   let pointer = 0;
@@ -38609,7 +38626,7 @@ function buildStarHistory({
     return { snapshots: [] };
   }
   const end = (now ?? /* @__PURE__ */ new Date()).getTime();
-  const edges = earliest >= end ? [earliest - DAY_MS, end] : (() => {
+  const edges = earliest >= end ? [earliest - DAY_MS2, end] : (() => {
     const buckets = Math.max(2, Math.floor(maxPoints));
     const step = (end - earliest) / (buckets - 1);
     return Array.from(
@@ -39915,12 +39932,16 @@ function renderSvg({
     <text x="${margin.left + 4}" y="${y - 4}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${value.toLocaleString("en-US")} \u2605</text>`;
   }).join("\n    ") : "";
   const maxLabels = 10;
-  const labelStep = Math.max(1, Math.ceil(labels.length / maxLabels));
-  const xLabels = labels.map((label, i) => {
-    if (i % labelStep !== 0 && i !== labels.length - 1) return "";
+  const labelIndices = labels.reduce((acc, label, i) => {
+    if (label !== "") acc.push(i);
+    return acc;
+  }, []);
+  const labelStep = Math.max(1, Math.ceil(labelIndices.length / maxLabels));
+  const lastLabelIndex = labelIndices.at(-1);
+  const xLabels = labelIndices.filter((i, order) => order % labelStep === 0 || i === lastLabelIndex).map((i) => {
     const x = margin.left + i / Math.max(1, labels.length - 1) * chartWidth;
-    return `<text x="${x}" y="${CHART.height - margin.bottom + 20}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(label)}</text>`;
-  }).filter(Boolean).join("\n    ");
+    return `<text x="${x}" y="${CHART.height - margin.bottom + 20}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(labels[i])}</text>`;
+  }).join("\n    ");
   const datasetSvg = datasets.map((ds, dsIndex) => {
     const validSegments = [];
     let currentSegment = [];
@@ -40056,7 +40077,7 @@ function generateSvgChart({
     return null;
   }
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
+  const labels = buildAxisLabels({ timestamps: snapshots.map((s) => s.timestamp), locale });
   const data = snapshots.map((s) => s.totalStars);
   return renderSvg({
     labels,
@@ -40084,7 +40105,7 @@ function generatePerRepoSvgChart({
     return null;
   }
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
+  const labels = buildAxisLabels({ timestamps: snapshots.map((s) => s.timestamp), locale });
   const data = snapshots.map((s) => {
     const repo = s.repos.find((r) => r.fullName === repoFullName);
     return repo?.stars ?? 0;
@@ -40115,7 +40136,7 @@ function generateComparisonSvgChart({
   }
   const t = getTranslations(locale);
   const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
-  const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
+  const labels = buildAxisLabels({ timestamps: snapshots.map((s) => s.timestamp), locale });
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split("/")[0]));
   const useShortLabels = owners.size === 1;
