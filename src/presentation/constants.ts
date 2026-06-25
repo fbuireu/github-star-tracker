@@ -68,6 +68,7 @@ export const SVG_CHART = {
   lineWidth: 2.5,
   gridOpacity: 0.3,
   fontSize: { title: 16, label: 11, milestone: 10 },
+  header: { titleOffset: 16, titleWithLegendOffset: 36, legendOffset: 14 },
   animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
   font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
 } as const;

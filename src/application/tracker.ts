@@ -122,20 +122,24 @@ export async function trackStars(): Promise<void> {
           .sort((a, b) => b.current - a.current);
         const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
 
+        const chartNow = new Date();
+        const chartMaxPoints = Math.min(
+          config.chartMaxPoints || CHART.maxDataPoints,
+          CHART.maxDataPoints,
+        );
+        const repoTotals = repos.map((repo) => ({
+          fullName: repo.fullName,
+          name: repo.name,
+          owner: repo.owner,
+          stars: repo.stars,
+        }));
+
         const starHistory = config.includeCharts
           ? buildStarHistory({
               repoStargazers,
-              repos: repos.map((repo) => ({
-                fullName: repo.fullName,
-                name: repo.name,
-                owner: repo.owner,
-                stars: repo.stars,
-              })),
-              maxPoints: Math.min(
-                config.chartMaxPoints || CHART.maxDataPoints,
-                CHART.maxDataPoints,
-              ),
-              now: new Date(),
+              repos: repoTotals,
+              maxPoints: chartMaxPoints,
+              now: chartNow,
             })
           : { snapshots: [] };
         const history =
@@ -190,8 +194,21 @@ export async function trackStars(): Promise<void> {
           }
 
           for (const repoName of topRepoNames) {
+            const repoTotal = repoTotals.find((repo) => repo.fullName === repoName);
+            const repoStarHistory = repoTotal
+              ? buildStarHistory({
+                  repoStargazers: repoStargazers.filter((rs) => rs.repoFullName === repoName),
+                  repos: [repoTotal],
+                  maxPoints: chartMaxPoints,
+                  now: chartNow,
+                })
+              : { snapshots: [] };
+            const repoHistory =
+              repoStarHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART
+                ? repoStarHistory
+                : history;
             const repoChart = generatePerRepoSvgChart({
-              history,
+              history: repoHistory,
               repoFullName: repoName,
               locale: config.locale,
               lineColor: config.chartLineColor,
