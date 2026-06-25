@@ -10,15 +10,17 @@ interface FetchReposParams {
   config: Config;
 }
 
+type ListReposParams = Parameters<Octokit['rest']['repos']['listForAuthenticatedUser']>[0];
+
 export async function fetchRepos({ octokit, config }: FetchReposParams): Promise<GitHubRepo[]> {
   const repos: GitHubRepo[] = [];
   let page = 1;
 
-  const params: Record<string, unknown> = {
+  const params = {
     per_page: REPOS_PER_PAGE,
     sort: 'full_name',
     ...VISIBILITY_CONFIG[config.visibility],
-  };
+  } satisfies ListReposParams;
 
   try {
     let dataLength: number;

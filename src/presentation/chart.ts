@@ -1,9 +1,15 @@
 import type { ForecastData } from '@domain/forecast';
-import { ForecastMethod } from '@domain/forecast';
 import { formatDate } from '@domain/formatting';
 import type { History } from '@domain/types';
 import { getTranslations, interpolate, type Locale } from '@i18n';
-import { CHART, CHART_COMPARISON_COLORS, COLORS } from './constants';
+import {
+  CHART,
+  CHART_COMPARISON_COLORS,
+  COLORS,
+  MILESTONE_THRESHOLDS,
+  MIN_SNAPSHOTS_FOR_CHART,
+} from './constants';
+import { buildForecastChartSeries } from './shared';
 
 interface ChartConfig {
   type: 'line';
@@ -16,7 +22,7 @@ interface ChartConfig {
 
 interface Dataset {
   label: string;
-  data: number[];
+  data: (number | null)[];
   borderColor: string;
   backgroundColor: string;
   fill: boolean;
@@ -79,8 +85,6 @@ interface ChartOptions {
     };
   };
 }
-
-export const MILESTONE_THRESHOLDS = [10, 50, 100, 500, 1_000, 5_000, 10_000] as const;
 
 interface BuildMilestoneAnnotationsParams {
   minStars: number;
@@ -164,6 +168,19 @@ function buildChartOptions({
   };
 }
 
+function buildStarsDataset(data: number[]): Dataset {
+  return {
+    label: 'Stars',
+    data,
+    borderColor: COLORS.accent,
+    backgroundColor: `${COLORS.accent}33`,
+    fill: true,
+    tension: 0.4,
+    pointRadius: 3,
+    pointHoverRadius: 6,
+  };
+}
+
 function buildChartUrl(config: ChartConfig): string {
   const encodedConfig = encodeURIComponent(JSON.stringify(config));
 
@@ -220,25 +237,14 @@ export function generateChartUrl({
   title,
   locale,
 }: GenerateChartUrlParams): string | null {
-  if (!history.snapshots || history.snapshots.length < 2) {
+  if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
   const t = getTranslations(locale);
   const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData({ history, locale });
-  const datasets: Dataset[] = [
-    {
-      label: 'Stars',
-      data,
-      borderColor: COLORS.accent,
-      backgroundColor: `${COLORS.accent}33`,
-      fill: true,
-      tension: 0.4,
-      pointRadius: 3,
-      pointHoverRadius: 6,
-    },
-  ];
+  const datasets: Dataset[] = [buildStarsDataset(data)];
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
   const annotation = buildMilestoneAnnotations({ minStars, maxStars });
@@ -266,7 +272,7 @@ export function generatePerRepoChartUrl({
   title,
   locale,
 }: GeneratePerRepoChartUrlParams): string | null {
-  if (!history.snapshots || history.snapshots.length < 2) {
+  if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
@@ -278,18 +284,7 @@ export function generatePerRepoChartUrl({
     return repo?.stars ?? 0;
   });
   const chartTitle = title ?? `${repoFullName} Star History`;
-  const datasets: Dataset[] = [
-    {
-      label: 'Stars',
-      data,
-      borderColor: COLORS.accent,
-      backgroundColor: `${COLORS.accent}33`,
-      fill: true,
-      tension: 0.4,
-      pointRadius: 3,
-      pointHoverRadius: 6,
-    },
-  ];
+  const datasets: Dataset[] = [buildStarsDataset(data)];
 
   const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: false });
 
@@ -309,7 +304,11 @@ export function generateComparisonChartUrl({
   title,
   locale,
 }: GenerateComparisonChartUrlParams): string | null {
-  if (!history.snapshots || history.snapshots.length < 2 || repoNames.length === 0) {
+  if (
+    !history.snapshots ||
+    history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART ||
+    repoNames.length === 0
+  ) {
     return null;
   }
 
@@ -356,7 +355,7 @@ export function generateForecastChartUrl({
   locale,
   title,
 }: GenerateForecastChartUrlParams): string | null {
-  if (!history.snapshots || history.snapshots.length < 2) {
+  if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
@@ -369,18 +368,11 @@ export function generateForecastChartUrl({
     interpolate({ template: t.forecast.week, params: { n: p.weekOffset } }),
   );
   const allLabels = [...historicalLabels, ...forecastLabels];
-  const lrForecast = forecastData.aggregate.forecasts.find(
-    (f) => f.method === ForecastMethod.LINEAR_REGRESSION,
-  );
-  const wmaForecast = forecastData.aggregate.forecasts.find(
-    (f) => f.method === ForecastMethod.WEIGHTED_MOVING_AVERAGE,
-  );
-  const lastHistorical = historicalData.at(-1) ?? 0;
-  const padLength = historicalData.length;
+  const series = buildForecastChartSeries({ historicalData, forecastData });
   const datasets: Dataset[] = [
     {
       label: t.report.starHistory,
-      data: [...historicalData, ...new Array(forecastLabels.length).fill(null)],
+      data: series.historical,
       borderColor: COLORS.accent,
       backgroundColor: `${COLORS.accent}33`,
       fill: true,
@@ -390,11 +382,7 @@ export function generateForecastChartUrl({
     },
     {
       label: t.forecast.linearRegression,
-      data: [
-        ...new Array(padLength - 1).fill(null),
-        lastHistorical,
-        ...(lrForecast?.points.map((p) => p.predicted) ?? []),
-      ],
+      data: series.linearRegression,
       borderColor: COLORS.positive,
       backgroundColor: 'transparent',
       fill: false,
@@ -405,11 +393,7 @@ export function generateForecastChartUrl({
     },
     {
       label: t.forecast.weightedMovingAverage,
-      data: [
-        ...new Array(padLength - 1).fill(null),
-        lastHistorical,
-        ...(wmaForecast?.points.map((p) => p.predicted) ?? []),
-      ],
+      data: series.weightedMovingAverage,
       borderColor: COLORS.negative,
       backgroundColor: 'transparent',
       fill: false,

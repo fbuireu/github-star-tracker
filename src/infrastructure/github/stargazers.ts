@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import type { RepoStargazers, Stargazer } from '@domain/stargazers';
 import type { RepoInfo } from '@domain/types';
-import type { Octokit } from './types';
+import type { GitHubStargazerRow, Octokit } from './types';
 
 const STARGAZERS_PER_PAGE = 100;
 
@@ -76,10 +76,7 @@ async function fetchStargazerPage({
       accept: 'application/vnd.github.star+json',
     },
   });
-  const items = data as Array<{
-    user: { login: string; avatar_url: string; html_url: string };
-    starred_at: string;
-  }>;
+  const items = data as GitHubStargazerRow[];
 
   return items.map((item) => ({
     login: item.user.login,
@@ -122,7 +119,12 @@ interface FetchSampledStargazersParams {
   maxPages: number;
 }
 
-function selectSampledPages(totalPages: number, maxPages: number): number[] {
+interface SelectSampledPagesParams {
+  totalPages: number;
+  maxPages: number;
+}
+
+function selectSampledPages({ totalPages, maxPages }: SelectSampledPagesParams): number[] {
   const pages = Math.max(1, maxPages);
   if (totalPages <= pages) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -145,7 +147,7 @@ async function fetchSampledStargazers({
   maxPages,
 }: FetchSampledStargazersParams): Promise<Stargazer[]> {
   const totalPages = Math.max(1, Math.ceil(totalStars / STARGAZERS_PER_PAGE));
-  const pages = selectSampledPages(totalPages, maxPages);
+  const pages = selectSampledPages({ totalPages, maxPages });
   const stargazers: Stargazer[] = [];
 
   for (const page of pages) {

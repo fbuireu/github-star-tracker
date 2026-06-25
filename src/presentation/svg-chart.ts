@@ -1,18 +1,19 @@
 import { ChartAxisSide } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
-import { ForecastMethod } from '@domain/forecast';
 import { formatDate } from '@domain/formatting';
 import type { History } from '@domain/types';
 import { getTranslations, interpolate, type Locale } from '@i18n';
-import { MILESTONE_THRESHOLDS } from './chart';
 import {
   CHART,
   CHART_COMPARISON_COLORS,
   COLORS,
   DARK_PALETTE,
   LIGHT_PALETTE,
+  MILESTONE_THRESHOLDS,
+  MIN_SNAPSHOTS_FOR_CHART,
   SVG_CHART,
 } from './constants';
+import { buildForecastChartSeries } from './shared';
 
 const XML_ESCAPE_MAP: Record<string, string> = {
   '&': '&amp;',
@@ -40,7 +41,12 @@ function scaleY({ value, minValue, maxValue, chartTop, chartHeight }: ScaleYPara
   return chartTop + chartHeight - ((value - minValue) / (maxValue - minValue)) * chartHeight;
 }
 
-function generateSmoothPath(points: Point[], smooth = true): string {
+interface GenerateSmoothPathParams {
+  points: Point[];
+  smooth?: boolean;
+}
+
+function generateSmoothPath({ points, smooth = true }: GenerateSmoothPathParams): string {
   if (points.length === 0) return '';
   if (points.length === 1) return `M${points[0].x},${points[0].y}`;
 
@@ -124,7 +130,12 @@ function escapeXml(text: string): string {
   return text.replaceAll(/[&<>"]/g, (char) => XML_ESCAPE_MAP[char]);
 }
 
-function sliceForChart<T>(items: T[], maxPoints?: number): T[] {
+interface SliceForChartParams<T> {
+  items: T[];
+  maxPoints?: number;
+}
+
+function sliceForChart<T>({ items, maxPoints }: SliceForChartParams<T>): T[] {
   const limit = maxPoints ?? CHART.maxDataPoints;
 
   return limit > 0 ? items.slice(-limit) : [...items];
@@ -228,7 +239,7 @@ function renderSvg({
 
     return validSegments
       .map((segment) => {
-        const pathD = generateSmoothPath(segment.points, smoothing);
+        const pathD = generateSmoothPath({ points: segment.points, smooth: smoothing });
         const pathLength = calculatePathLength(segment.points);
 
         const fillArea =
@@ -374,11 +385,11 @@ export function generateSvgChart({
   yAxisSide,
   smoothing,
 }: GenerateSvgChartParams): string | null {
-  if (!history.snapshots || history.snapshots.length < 2) {
+  if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
-  const snapshots = sliceForChart(history.snapshots, maxPoints);
+  const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const data = snapshots.map((s) => s.totalStars);
 
@@ -417,11 +428,11 @@ export function generatePerRepoSvgChart({
   yAxisSide,
   smoothing,
 }: GeneratePerRepoSvgChartParams): string | null {
-  if (!history.snapshots || history.snapshots.length < 2) {
+  if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
-  const snapshots = sliceForChart(history.snapshots, maxPoints);
+  const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const data = snapshots.map((s) => {
     const repo = s.repos.find((r) => r.fullName === repoFullName);
@@ -461,12 +472,16 @@ export function generateComparisonSvgChart({
   yAxisSide,
   smoothing,
 }: GenerateComparisonSvgChartParams): string | null {
-  if (!history.snapshots || history.snapshots.length < 2 || repoNames.length === 0) {
+  if (
+    !history.snapshots ||
+    history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART ||
+    repoNames.length === 0
+  ) {
     return null;
   }
 
   const t = getTranslations(locale);
-  const snapshots = sliceForChart(history.snapshots, maxPoints);
+  const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
   const labels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split('/')[0]));
@@ -522,51 +537,36 @@ export function generateForecastSvgChart({
   yAxisSide,
   smoothing,
 }: GenerateForecastSvgChartParams): string | null {
-  if (!history.snapshots || history.snapshots.length < 2) {
+  if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
   const t = getTranslations(locale);
-  const snapshots = sliceForChart(history.snapshots, maxPoints);
+  const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
   const historicalLabels = snapshots.map((s) => formatDate({ timestamp: s.timestamp, locale }));
   const historicalData = snapshots.map((s) => s.totalStars);
   const forecastLabels = forecastData.aggregate.forecasts[0].points.map((p) =>
     interpolate({ template: t.forecast.week, params: { n: p.weekOffset } }),
   );
   const allLabels = [...historicalLabels, ...forecastLabels];
-  const lrForecast = forecastData.aggregate.forecasts.find(
-    (f) => f.method === ForecastMethod.LINEAR_REGRESSION,
-  );
-  const wmaForecast = forecastData.aggregate.forecasts.find(
-    (f) => f.method === ForecastMethod.WEIGHTED_MOVING_AVERAGE,
-  );
-  const lastHistorical = historicalData.at(-1) ?? 0;
-  const padLength = historicalData.length;
+  const series = buildForecastChartSeries({ historicalData, forecastData });
   const datasets: SvgDataset[] = [
     {
       label: t.report.starHistory,
-      data: [...historicalData, ...new Array(forecastLabels.length).fill(null)],
+      data: series.historical,
       color: lineColor ?? COLORS.accent,
       fill: true,
     },
     {
       label: t.forecast.linearRegression,
-      data: [
-        ...new Array(padLength - 1).fill(null),
-        lastHistorical,
-        ...(lrForecast?.points.map((p) => p.predicted) ?? []),
-      ],
+      data: series.linearRegression,
       color: COLORS.positive,
       dashed: true,
       fill: false,
     },
     {
       label: t.forecast.weightedMovingAverage,
-      data: [
-        ...new Array(padLength - 1).fill(null),
-        lastHistorical,
-        ...(wmaForecast?.points.map((p) => p.predicted) ?? []),
-      ],
+      data: series.weightedMovingAverage,
       color: COLORS.negative,
       dashed: true,
       fill: false,

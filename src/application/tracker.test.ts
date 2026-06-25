@@ -28,7 +28,12 @@ import { generateBadge } from '@presentation/badge';
 import { generateCsvReport } from '@presentation/csv';
 import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
-import { generateSvgChart } from '@presentation/svg-chart';
+import {
+  generateComparisonSvgChart,
+  generateForecastSvgChart,
+  generatePerRepoSvgChart,
+  generateSvgChart,
+} from '@presentation/svg-chart';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { trackStars } from './tracker';
 
@@ -138,6 +143,9 @@ vi.mock('@presentation/markdown', () => ({
 
 vi.mock('@presentation/svg-chart', () => ({
   generateSvgChart: vi.fn(),
+  generatePerRepoSvgChart: vi.fn(),
+  generateComparisonSvgChart: vi.fn(),
+  generateForecastSvgChart: vi.fn(),
 }));
 
 const defaultConfig = {
@@ -280,6 +288,9 @@ function setupDefaults() {
   vi.mocked(computeForecast).mockReturnValue(null);
   vi.mocked(generateCsvReport).mockReturnValue('repository,owner,name,stars,previous,delta,status');
   vi.mocked(generateSvgChart).mockReturnValue(null);
+  vi.mocked(generatePerRepoSvgChart).mockReturnValue(null);
+  vi.mocked(generateComparisonSvgChart).mockReturnValue(null);
+  vi.mocked(generateForecastSvgChart).mockReturnValue(null);
   vi.mocked(fetchAllStargazers).mockResolvedValue([]);
   vi.mocked(readStargazers).mockReturnValue({});
   vi.mocked(diffStargazers).mockReturnValue({ entries: [], totalNew: 0 });
@@ -573,6 +584,96 @@ describe('trackStars', () => {
     });
   });
 
+  describe('per-repo, comparison and forecast charts', () => {
+    const twoSnapshots = {
+      snapshots: [
+        { timestamp: '2026-01-01T00:00:00Z', totalStars: 80, repos: [] },
+        { timestamp: '2026-01-02T00:00:00Z', totalStars: 100, repos: [] },
+      ],
+    };
+    const resultsWithRepos = {
+      repos: [
+        { fullName: 'user/repo-a', current: 60, isRemoved: false },
+        { fullName: 'user/repo-b', current: 40, isRemoved: false },
+        { fullName: 'user/repo-c', current: 10, isRemoved: true },
+      ],
+      summary: defaultSummary,
+    };
+    const forecastData = {
+      aggregate: {
+        forecasts: [{ method: 'linear-regression', points: [{ weekOffset: 1, predicted: 110 }] }],
+      },
+      repos: [],
+    };
+
+    beforeEach(() => {
+      // biome-ignore lint/suspicious/noExplicitAny: test fixture stands in for full ComparisonResults
+      vi.mocked(compareStars).mockReturnValue(resultsWithRepos as any);
+      vi.mocked(addSnapshot).mockReturnValue(twoSnapshots);
+      // biome-ignore lint/suspicious/noExplicitAny: test fixture stands in for full ForecastData
+      vi.mocked(computeForecast).mockReturnValue(forecastData as any);
+    });
+
+    it('writes per-repo, comparison and forecast charts when they are generated', async () => {
+      vi.mocked(generatePerRepoSvgChart).mockReturnValue('<svg>repo</svg>');
+      vi.mocked(generateComparisonSvgChart).mockReturnValue('<svg>cmp</svg>');
+      vi.mocked(generateForecastSvgChart).mockReturnValue('<svg>fc</svg>');
+
+      await trackStars();
+
+      expect(generatePerRepoSvgChart).toHaveBeenCalledWith(
+        expect.objectContaining({ repoFullName: 'user/repo-a' }),
+      );
+      expect(writeChart).toHaveBeenCalledWith({
+        dataDir: '.star-data',
+        filename: 'user-repo-a.svg',
+        svg: '<svg>repo</svg>',
+      });
+      expect(writeChart).toHaveBeenCalledWith({
+        dataDir: '.star-data',
+        filename: 'comparison.svg',
+        svg: '<svg>cmp</svg>',
+      });
+      expect(generateForecastSvgChart).toHaveBeenCalledWith(
+        expect.objectContaining({ forecastData }),
+      );
+      expect(writeChart).toHaveBeenCalledWith({
+        dataDir: '.star-data',
+        filename: 'forecast.svg',
+        svg: '<svg>fc</svg>',
+      });
+    });
+
+    it('excludes removed repos from the chart set', async () => {
+      vi.mocked(generatePerRepoSvgChart).mockReturnValue('<svg>repo</svg>');
+
+      await trackStars();
+
+      expect(generatePerRepoSvgChart).not.toHaveBeenCalledWith(
+        expect.objectContaining({ repoFullName: 'user/repo-c' }),
+      );
+    });
+
+    it('skips writing charts that come back null', async () => {
+      await trackStars();
+
+      expect(generatePerRepoSvgChart).toHaveBeenCalled();
+      expect(generateComparisonSvgChart).toHaveBeenCalled();
+      expect(generateForecastSvgChart).toHaveBeenCalled();
+      expect(writeChart).not.toHaveBeenCalledWith(
+        expect.objectContaining({ filename: 'forecast.svg' }),
+      );
+    });
+
+    it('skips the forecast chart when no forecast data is available', async () => {
+      vi.mocked(computeForecast).mockReturnValue(null);
+
+      await trackStars();
+
+      expect(generateForecastSvgChart).not.toHaveBeenCalled();
+    });
+  });
+
   describe('github enterprise (GHES)', () => {
     const savedApiUrl = process.env.GITHUB_API_URL;
 
@@ -677,6 +778,16 @@ describe('trackStars', () => {
       await trackStars();
 
       expect(shouldNotify).toHaveBeenCalledWith(expect.objectContaining({ threshold: 'auto' }));
+    });
+
+    it('derives previousTimestamp from the last snapshot when present', async () => {
+      vi.mocked(getLastSnapshot).mockReturnValue(defaultSnapshot);
+
+      await trackStars();
+
+      expect(generateMarkdownReport).toHaveBeenCalledWith(
+        expect.objectContaining({ previousTimestamp: '2026-01-01T00:00:00Z' }),
+      );
     });
 
     it('includes delta indicator in commit message', async () => {

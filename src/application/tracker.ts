@@ -36,7 +36,12 @@ import {
   generateSvgChart,
 } from '@presentation/svg-chart';
 
-async function withDataDir(branch: string, fn: (dataDir: string) => Promise<void>): Promise<void> {
+interface WithDataDirParams {
+  branch: string;
+  fn: (dataDir: string) => Promise<void>;
+}
+
+async function withDataDir({ branch, fn }: WithDataDirParams): Promise<void> {
   const dataDir = initializeDataBranch(branch);
   try {
     await fn(dataDir);
@@ -64,109 +69,88 @@ export async function trackStars(): Promise<void> {
       return;
     }
 
-    await withDataDir(config.dataBranch, async (dataDir) => {
-      core.info(`Tracking ${repos.length} repositories...`);
+    await withDataDir({
+      branch: config.dataBranch,
+      fn: async (dataDir) => {
+        core.info(`Tracking ${repos.length} repositories...`);
 
-      const history = readHistory(dataDir);
-      const lastSnapshot = getLastSnapshot(history);
-      const previousTimestamp = lastSnapshot ? lastSnapshot.timestamp : null;
+        const history = readHistory(dataDir);
+        const lastSnapshot = getLastSnapshot(history);
+        const previousTimestamp = lastSnapshot ? lastSnapshot.timestamp : null;
 
-      core.info('Comparing star counts...');
+        core.info('Comparing star counts...');
 
-      const results = compareStars({ currentRepos: repos, previousSnapshot: lastSnapshot });
-      const { summary } = results;
+        const results = compareStars({ currentRepos: repos, previousSnapshot: lastSnapshot });
+        const { summary } = results;
 
-      core.info(`Total: ${summary.totalStars} stars (${deltaIndicator(summary.totalDelta)})`);
+        core.info(`Total: ${summary.totalStars} stars (${deltaIndicator(summary.totalDelta)})`);
 
-      let stargazerDiff = null;
-      if (config.trackStargazers) {
-        core.info('Fetching stargazers...');
+        let stargazerDiff = null;
+        if (config.trackStargazers) {
+          core.info('Fetching stargazers...');
 
-        const repoStargazers = await fetchAllStargazers({
-          octokit,
-          repos,
-          smartSampling: config.smartSampling,
-          smartSamplingThreshold: config.smartSamplingThreshold,
-          smartSamplingPages: config.smartSamplingPages,
-        });
-        const previousMap = readStargazers(dataDir);
+          const repoStargazers = await fetchAllStargazers({
+            octokit,
+            repos,
+            smartSampling: config.smartSampling,
+            smartSamplingThreshold: config.smartSamplingThreshold,
+            smartSamplingPages: config.smartSamplingPages,
+          });
+          const previousMap = readStargazers(dataDir);
 
-        stargazerDiff = diffStargazers({ current: repoStargazers, previousMap });
+          stargazerDiff = diffStargazers({ current: repoStargazers, previousMap });
 
-        const updatedMap = buildStargazerMap(repoStargazers);
+          const updatedMap = buildStargazerMap(repoStargazers);
 
-        writeStargazers({ dataDir, stargazerMap: updatedMap });
+          writeStargazers({ dataDir, stargazerMap: updatedMap });
 
-        core.info(`Found ${stargazerDiff.totalNew} new stargazers`);
-      }
+          core.info(`Found ${stargazerDiff.totalNew} new stargazers`);
+        }
 
-      const snapshot = createSnapshot({ currentRepos: repos, summary });
-      const updatedHistory = addSnapshot({ history, snapshot, maxHistory: config.maxHistory });
+        const snapshot = createSnapshot({ currentRepos: repos, summary });
+        const updatedHistory = addSnapshot({ history, snapshot, maxHistory: config.maxHistory });
 
-      const sorted = [...results.repos]
-        .filter((repo) => !repo.isRemoved)
-        .sort((a, b) => b.current - a.current);
-      const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
-      const forecastData = computeForecast({ history: updatedHistory, topRepoNames });
+        const sorted = [...results.repos]
+          .filter((repo) => !repo.isRemoved)
+          .sort((a, b) => b.current - a.current);
+        const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
+        const forecastData = computeForecast({ history: updatedHistory, topRepoNames });
 
-      const markdownReport = generateMarkdownReport({
-        results,
-        previousTimestamp,
-        locale: config.locale,
-        history: updatedHistory,
-        includeCharts: config.includeCharts,
-        stargazerDiff,
-        forecastData,
-        topRepos: config.topRepos,
-      });
-      const htmlReport = generateHtmlReport({
-        results,
-        previousTimestamp,
-        locale: config.locale,
-        history: updatedHistory,
-        includeCharts: config.includeCharts,
-        stargazerDiff,
-        forecastData,
-        topRepos: config.topRepos,
-      });
-
-      const csvReport = generateCsvReport(results);
-      const badge = generateBadge({ totalStars: summary.totalStars, locale: config.locale });
-      const thresholdReached = shouldNotify({
-        totalStars: summary.totalStars,
-        starsAtLastNotification: history.starsAtLastNotification,
-        threshold: config.notificationThreshold,
-      });
-      const notify = summary.changed && thresholdReached;
-
-      if (notify) {
-        updatedHistory.starsAtLastNotification = summary.totalStars;
-      }
-
-      writeHistory({ dataDir, history: updatedHistory });
-      writeReport({ dataDir, markdown: markdownReport });
-      writeBadge({ dataDir, svg: badge });
-      writeCsv({ dataDir, csv: csvReport });
-
-      if (config.includeCharts && updatedHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART) {
-        const svgChart = generateSvgChart({
-          history: updatedHistory,
-          title: t.report.starHistory,
+        const reportParams = {
+          results,
+          previousTimestamp,
           locale: config.locale,
-          lineColor: config.chartLineColor,
-          lineWidth: config.chartLineWidth,
-          maxPoints: config.chartMaxPoints,
-          yAxisSide: config.chartYAxisSide,
-          smoothing: config.chartSmoothing,
+          history: updatedHistory,
+          includeCharts: config.includeCharts,
+          stargazerDiff,
+          forecastData,
+          topRepos: config.topRepos,
+        };
+        const markdownReport = generateMarkdownReport(reportParams);
+        const htmlReport = generateHtmlReport(reportParams);
+
+        const csvReport = generateCsvReport(results);
+        const badge = generateBadge({ totalStars: summary.totalStars, locale: config.locale });
+        const thresholdReached = shouldNotify({
+          totalStars: summary.totalStars,
+          starsAtLastNotification: history.starsAtLastNotification,
+          threshold: config.notificationThreshold,
         });
-        if (svgChart) {
-          writeChart({ dataDir, filename: 'star-history.svg', svg: svgChart });
+        const notify = summary.changed && thresholdReached;
+
+        if (notify) {
+          updatedHistory.starsAtLastNotification = summary.totalStars;
         }
 
-        for (const repoName of topRepoNames) {
-          const repoChart = generatePerRepoSvgChart({
+        writeHistory({ dataDir, history: updatedHistory });
+        writeReport({ dataDir, markdown: markdownReport });
+        writeBadge({ dataDir, svg: badge });
+        writeCsv({ dataDir, csv: csvReport });
+
+        if (config.includeCharts && updatedHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART) {
+          const svgChart = generateSvgChart({
             history: updatedHistory,
-            repoFullName: repoName,
+            title: t.report.starHistory,
             locale: config.locale,
             lineColor: config.chartLineColor,
             lineWidth: config.chartLineWidth,
@@ -174,79 +158,95 @@ export async function trackStars(): Promise<void> {
             yAxisSide: config.chartYAxisSide,
             smoothing: config.chartSmoothing,
           });
+          if (svgChart) {
+            writeChart({ dataDir, filename: 'star-history.svg', svg: svgChart });
+          }
 
-          if (repoChart) {
-            const filename = `${repoName.replace('/', '-')}.svg`;
-            writeChart({ dataDir, filename, svg: repoChart });
+          for (const repoName of topRepoNames) {
+            const repoChart = generatePerRepoSvgChart({
+              history: updatedHistory,
+              repoFullName: repoName,
+              locale: config.locale,
+              lineColor: config.chartLineColor,
+              lineWidth: config.chartLineWidth,
+              maxPoints: config.chartMaxPoints,
+              yAxisSide: config.chartYAxisSide,
+              smoothing: config.chartSmoothing,
+            });
+
+            if (repoChart) {
+              const filename = `${repoName.replace('/', '-')}.svg`;
+              writeChart({ dataDir, filename, svg: repoChart });
+            }
+          }
+
+          if (topRepoNames.length > 0) {
+            const comparisonChart = generateComparisonSvgChart({
+              history: updatedHistory,
+              repoNames: topRepoNames,
+              title: t.report.topRepositories,
+              locale: config.locale,
+              lineWidth: config.chartLineWidth,
+              maxPoints: config.chartMaxPoints,
+              yAxisSide: config.chartYAxisSide,
+              smoothing: config.chartSmoothing,
+            });
+
+            if (comparisonChart) {
+              writeChart({ dataDir, filename: 'comparison.svg', svg: comparisonChart });
+            }
+          }
+
+          if (forecastData) {
+            const forecastChart = generateForecastSvgChart({
+              history: updatedHistory,
+              forecastData,
+              locale: config.locale,
+              lineColor: config.chartLineColor,
+              lineWidth: config.chartLineWidth,
+              maxPoints: config.chartMaxPoints,
+              yAxisSide: config.chartYAxisSide,
+              smoothing: config.chartSmoothing,
+            });
+
+            if (forecastChart) {
+              writeChart({ dataDir, filename: 'forecast.svg', svg: forecastChart });
+            }
           }
         }
 
-        if (topRepoNames.length > 0) {
-          const comparisonChart = generateComparisonSvgChart({
-            history: updatedHistory,
-            repoNames: topRepoNames,
-            title: t.report.topRepositories,
-            locale: config.locale,
-            lineWidth: config.chartLineWidth,
-            maxPoints: config.chartMaxPoints,
-            yAxisSide: config.chartYAxisSide,
-            smoothing: config.chartSmoothing,
-          });
+        const commitMsg = `Update star data: ${summary.totalStars} total (${deltaIndicator(summary.totalDelta)})`;
+        commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg, token });
 
-          if (comparisonChart) {
-            writeChart({ dataDir, filename: 'comparison.svg', svg: comparisonChart });
-          }
-        }
-
-        if (forecastData) {
-          const forecastChart = generateForecastSvgChart({
-            history: updatedHistory,
-            forecastData,
-            locale: config.locale,
-            lineColor: config.chartLineColor,
-            lineWidth: config.chartLineWidth,
-            maxPoints: config.chartMaxPoints,
-            yAxisSide: config.chartYAxisSide,
-            smoothing: config.chartSmoothing,
-          });
-
-          if (forecastChart) {
-            writeChart({ dataDir, filename: 'forecast.svg', svg: forecastChart });
-          }
-        }
-      }
-
-      const commitMsg = `Update star data: ${summary.totalStars} total (${deltaIndicator(summary.totalDelta)})`;
-      commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg, token });
-
-      setOutputs({
-        summary,
-        markdownReport,
-        htmlReport,
-        csvReport,
-        shouldNotify: notify,
-        newStargazers: stargazerDiff?.totalNew ?? 0,
-      });
-
-      const emailConfig = getEmailConfig(config.locale);
-      if (emailConfig && (notify || config.sendOnNoChanges)) {
-        const subject = interpolate({
-          template: t.email.subjectLine,
-          params: {
-            subject: t.email.subject,
-            totalStars: summary.totalStars,
-            delta: deltaIndicator(summary.totalDelta),
-          },
+        setOutputs({
+          summary,
+          markdownReport,
+          htmlReport,
+          csvReport,
+          shouldNotify: notify,
+          newStargazers: stargazerDiff?.totalNew ?? 0,
         });
 
-        try {
-          await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
-        } catch (error) {
-          core.warning(`Failed to send email: ${(error as Error).message}`);
+        const emailConfig = getEmailConfig(config.locale);
+        if (emailConfig && (notify || config.sendOnNoChanges)) {
+          const subject = interpolate({
+            template: t.email.subjectLine,
+            params: {
+              subject: t.email.subject,
+              totalStars: summary.totalStars,
+              delta: deltaIndicator(summary.totalDelta),
+            },
+          });
+
+          try {
+            await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
+          } catch (error) {
+            core.warning(`Failed to send email: ${(error as Error).message}`);
+          }
+        } else if (emailConfig) {
+          core.info('No star changes detected, skipping email');
         }
-      } else if (emailConfig) {
-        core.info('No star changes detected, skipping email');
-      }
+      },
     });
   } catch (error) {
     const err = error as Error;

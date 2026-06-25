@@ -1,7 +1,9 @@
-import type { ForecastData } from '@domain/forecast';
+import { FORECAST_WEEKS, type ForecastData, ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
 import type { ComparisonResults, History, RepoResult } from '@domain/types';
-import { getTranslations, type Locale } from '@i18n';
+import { getTranslations, interpolate, type Locale } from '@i18n';
+
+type Translations = ReturnType<typeof getTranslations>;
 
 export interface GenerateReportParams {
   results: ComparisonResults;
@@ -45,5 +47,56 @@ export function prepareReportData({
     sorted: [...activeRepos].sort((a, b) => b.current - a.current),
     now: new Date().toISOString().split('T')[0],
     prev: previousTimestamp ? previousTimestamp.split('T')[0] : t.report.firstRun,
+  };
+}
+
+export function buildForecastWeekHeaders(t: Translations): string[] {
+  return Array.from({ length: FORECAST_WEEKS }, (_, i) =>
+    interpolate({ template: t.forecast.week, params: { n: i + 1 } }),
+  );
+}
+
+interface ForecastMethodLabelParams {
+  method: string;
+  t: Translations;
+}
+
+export function forecastMethodLabel({ method, t }: ForecastMethodLabelParams): string {
+  if (method === ForecastMethod.LINEAR_REGRESSION) return t.forecast.linearRegression;
+  if (method === ForecastMethod.WEIGHTED_MOVING_AVERAGE) return t.forecast.weightedMovingAverage;
+
+  return method;
+}
+
+export interface ForecastChartSeries {
+  historical: (number | null)[];
+  linearRegression: (number | null)[];
+  weightedMovingAverage: (number | null)[];
+}
+
+interface BuildForecastChartSeriesParams {
+  historicalData: number[];
+  forecastData: ForecastData;
+}
+
+export function buildForecastChartSeries({
+  historicalData,
+  forecastData,
+}: BuildForecastChartSeriesParams): ForecastChartSeries {
+  const forecastLength = forecastData.aggregate.forecasts[0].points.length;
+  const findPoints = (method: string): { predicted: number }[] | undefined =>
+    forecastData.aggregate.forecasts.find((f) => f.method === method)?.points;
+  const lastHistorical = historicalData.at(-1) ?? 0;
+  const padLength = historicalData.length;
+  const projectFromLast = (points: { predicted: number }[] | undefined): (number | null)[] => [
+    ...new Array(padLength - 1).fill(null),
+    lastHistorical,
+    ...(points?.map((p) => p.predicted) ?? []),
+  ];
+
+  return {
+    historical: [...historicalData, ...new Array(forecastLength).fill(null)],
+    linearRegression: projectFromLast(findPoints(ForecastMethod.LINEAR_REGRESSION)),
+    weightedMovingAverage: projectFromLast(findPoints(ForecastMethod.WEIGHTED_MOVING_AVERAGE)),
   };
 }

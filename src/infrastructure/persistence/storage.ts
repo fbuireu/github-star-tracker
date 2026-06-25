@@ -5,15 +5,33 @@ import type { StargazerMap } from '@domain/stargazers';
 import type { History } from '@domain/types';
 import { execute } from '../git/commands';
 
-export function readHistory(dataDir: string): History {
-  const filePath = path.join(dataDir, 'stars-data.json');
+interface ReadJsonFileParams<T> {
+  filePath: string;
+  fallback: T;
+}
+
+function readJsonFile<T>({ filePath, fallback }: ReadJsonFileParams<T>): T {
   if (!fs.existsSync(filePath)) {
-    return { snapshots: [] };
+    return fallback;
   }
 
-  const content = fs.readFileSync(filePath, 'utf8');
+  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
+}
 
-  return JSON.parse(content) as History;
+interface WriteJsonFileParams {
+  filePath: string;
+  data: unknown;
+}
+
+function writeJsonFile({ filePath, data }: WriteJsonFileParams): void {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
+
+export function readHistory(dataDir: string): History {
+  return readJsonFile<History>({
+    filePath: path.join(dataDir, 'stars-data.json'),
+    fallback: { snapshots: [] },
+  });
 }
 
 interface WriteHistoryParams {
@@ -22,9 +40,7 @@ interface WriteHistoryParams {
 }
 
 export function writeHistory({ dataDir, history }: WriteHistoryParams): void {
-  const filePath = path.join(dataDir, 'stars-data.json');
-
-  fs.writeFileSync(filePath, JSON.stringify(history, null, 2));
+  writeJsonFile({ filePath: path.join(dataDir, 'stars-data.json'), data: history });
 }
 
 interface WriteReportParams {
@@ -67,15 +83,10 @@ export function writeChart({ dataDir, filename, svg }: WriteChartParams): void {
 }
 
 export function readStargazers(dataDir: string): StargazerMap {
-  const filePath = path.join(dataDir, 'stargazers.json');
-
-  if (!fs.existsSync(filePath)) {
-    return {};
-  }
-
-  const content = fs.readFileSync(filePath, 'utf8');
-
-  return JSON.parse(content) as StargazerMap;
+  return readJsonFile<StargazerMap>({
+    filePath: path.join(dataDir, 'stargazers.json'),
+    fallback: {},
+  });
 }
 
 interface WriteStargazersParams {
@@ -84,9 +95,7 @@ interface WriteStargazersParams {
 }
 
 export function writeStargazers({ dataDir, stargazerMap }: WriteStargazersParams): void {
-  const filePath = path.join(dataDir, 'stargazers.json');
-
-  fs.writeFileSync(filePath, JSON.stringify(stargazerMap, null, 2));
+  writeJsonFile({ filePath: path.join(dataDir, 'stargazers.json'), data: stargazerMap });
 }
 
 interface WriteCsvParams {

@@ -1,9 +1,8 @@
-import { FORECAST_WEEKS, ForecastMethod } from '@domain/forecast';
 import { deltaIndicator, trendIcon } from '@domain/formatting';
 import { getTranslations, interpolate } from '@i18n';
 import { MIN_SNAPSHOTS_FOR_CHART } from './constants';
 import type { GenerateReportParams } from './shared';
-import { prepareReportData } from './shared';
+import { buildForecastWeekHeaders, forecastMethodLabel, prepareReportData } from './shared';
 
 export function generateMarkdownReport({
   results,
@@ -240,16 +239,7 @@ interface BuildForecastTableParams {
 }
 
 function buildForecastTable({ title, forecasts, t }: BuildForecastTableParams): string {
-  const weekHeaders = Array.from({ length: FORECAST_WEEKS }, (_, i) =>
-    interpolate({ template: t.forecast.week, params: { n: i + 1 } }),
-  );
-
-  const methodLabel = (method: string): string => {
-    if (method === ForecastMethod.LINEAR_REGRESSION) return t.forecast.linearRegression;
-    if (method === ForecastMethod.WEIGHTED_MOVING_AVERAGE) return t.forecast.weightedMovingAverage;
-
-    return method;
-  };
+  const weekHeaders = buildForecastWeekHeaders(t);
 
   const lines = [
     `**${title}**`,
@@ -258,7 +248,7 @@ function buildForecastTable({ title, forecasts, t }: BuildForecastTableParams): 
     `|:---|${weekHeaders.map(() => '---:').join('|')}|`,
     ...forecasts.map(
       (f) =>
-        `| ${methodLabel(f.method)} | ${f.points.map((p) => String(p.predicted)).join(' | ')} |`,
+        `| ${forecastMethodLabel({ method: f.method, t })} | ${f.points.map((p) => String(p.predicted)).join(' | ')} |`,
     ),
   ];
 

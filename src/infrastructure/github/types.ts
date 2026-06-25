@@ -11,3 +11,8 @@ export interface GitHubRepo {
   fork: boolean;
   stargazers_count: number;
 }
+
+export interface GitHubStargazerRow {
+  user: { login: string; avatar_url: string; html_url: string };
+  starred_at: string;
+}

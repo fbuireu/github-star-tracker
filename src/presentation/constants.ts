@@ -74,6 +74,8 @@ export const SVG_CHART = {
 
 export const MIN_SNAPSHOTS_FOR_CHART = 2;
 
+export const MILESTONE_THRESHOLDS = [10, 50, 100, 500, 1_000, 5_000, 10_000] as const;
+
 export const THRESHOLDS = [
   { limit: 50, value: 1 },
   { limit: 200, value: 5 },

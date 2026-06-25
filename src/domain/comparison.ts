@@ -14,11 +14,7 @@ export function compareStars({
     prevMap[repo.fullName] = repo.stars;
   }
 
-  const currentMap: Record<string, boolean> = {};
-
-  for (const repo of currentRepos) {
-    currentMap[repo.fullName] = true;
-  }
+  const currentNames = new Set(currentRepos.map((repo) => repo.fullName));
 
   const repoResults: RepoResult[] = [];
 
@@ -40,7 +36,7 @@ export function compareStars({
   }
 
   for (const repo of previousSnapshot?.repos ?? []) {
-    if (currentMap[repo.fullName]) continue;
+    if (currentNames.has(repo.fullName)) continue;
 
     const [owner, name] = repo.fullName.split('/');
 
