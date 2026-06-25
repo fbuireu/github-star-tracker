@@ -10,7 +10,7 @@ The default `GITHUB_TOKEN` provided by GitHub Actions is **not sufficient** for 
 
 ### Why
 
-The `GITHUB_TOKEN` is scoped to the **current repository only**. GitHub Star Tracker needs to list **all repositories owned by the authenticated user** via `GET /user/repos`, which requires broader access. This is a GitHub API restriction — the automatic token simply cannot enumerate repos outside the triggering repository.
+The `GITHUB_TOKEN` is scoped to the **current repository only**. GitHub Star Tracker needs to list **all repositories owned by the authenticated user** via `GET /user/repos`, which requires broader access. This is a GitHub API restriction - the automatic token simply cannot enumerate repos outside the triggering repository.
 
 ### Approach
 
@@ -31,7 +31,7 @@ When `track-stargazers` is enabled, fetching stargazers is **API-intensive**. Ea
 
 ### Why
 
-The GitHub Stargazers API (`GET /repos/{owner}/{repo}/stargazers`) paginates at 100 results per page. There is no endpoint to fetch only "recent" or "new" stargazers — the action must retrieve the full list and diff against the previously stored map to determine who's new.
+The GitHub Stargazers API (`GET /repos/{owner}/{repo}/stargazers`) paginates at 100 results per page. There is no endpoint to fetch only "recent" or "new" stargazers - the action must retrieve the full list and diff against the previously stored map to determine who's new.
 
 Additionally, stargazers are fetched **sequentially per repo** (not in parallel) to be rate-limit friendly and avoid triggering GitHub's secondary abuse limits.
 
@@ -39,7 +39,7 @@ Additionally, stargazers are fetched **sequentially per repo** (not in parallel)
 
 - **Fetched by default for charts**: `track-stargazers` defaults to `false`, but stargazers are now also fetched whenever charts are enabled (`include-charts: true`, the default) in order to reconstruct the real star-history curve. So the stargazer API cost in this table applies to any run with charts on, not only when `track-stargazers` is enabled. To avoid this cost entirely, set `include-charts: false`. Use `smart-sampling` (with `smart-sampling-threshold` / `smart-sampling-pages`) to cap requests for high-star repos.
 - **Per-repo error tolerance**: If fetching stargazers fails for one repository (e.g., due to rate limiting), the action logs a warning and continues with the remaining repos instead of aborting the entire run.
-- **Separate persistence**: Stargazer data is stored in `stargazers.json` (repo → login array), separate from `stars-data.json`. This keeps the diff lightweight — only login strings are compared, not full user objects.
+- **Separate persistence**: Stargazer data is stored in `stargazers.json` (repo → login array), separate from `stars-data.json`. This keeps the diff lightweight - only login strings are compared, not full user objects.
 
 ### Mitigation tips
 
@@ -60,7 +60,7 @@ Additionally, stargazers are fetched **sequentially per repo** (not in parallel)
 
 GitHub's stargazers API only lists up to ~40,000 stargazers per repository, oldest first. The real star-history curve is reconstructed from the listed stargazers' `starred_at` dates, so for repos above ~40,000 stars only the oldest ~40,000 stars are reachable and their dates stop well before today.
 
-For those repos the reachable history is drawn accurately (scaled to the reachable count), and the unreachable recent tail is bridged with a straight ramp from there up to the repo's true current total at the final point — so the chart no longer flattens out at the cutoff date. The final point always equals the true star count. Repos within the 40,000 window are unaffected. Pair high-star repos with `smart-sampling` to keep within rate limits.
+For those repos the reachable history is drawn accurately (scaled to the reachable count), and the unreachable recent tail is bridged with a straight ramp from there up to the repo's true current total at the final point - so the chart no longer flattens out at the cutoff date. The final point always equals the true star count. Repos within the 40,000 window are unaffected. Pair high-star repos with `smart-sampling` to keep within rate limits.
 
 ---
 
@@ -68,7 +68,7 @@ For those repos the reachable history is drawn accurately (scaled to the reachab
 
 ### Limitation
 
-Growth forecasts are **trend extrapolations**, not predictive models. They assume that recent growth patterns will continue unchanged. Sudden events — a viral Hacker News post, a project being archived, a major release — are not anticipated.
+Growth forecasts are **trend extrapolations**, not predictive models. They assume that recent growth patterns will continue unchanged. Sudden events - a viral Hacker News post, a project being archived, a major release - are not anticipated.
 
 ### Why
 
@@ -92,7 +92,7 @@ predicted(week) = lastValue + avgWeightedDelta * week
 
 Both methods clamp predictions to non-negative integers via `Math.max(0, Math.round(...))` to avoid nonsensical outputs (e.g., -3 stars).
 
-Forecasts require a minimum of **3 snapshots** (`MIN_SNAPSHOTS = 3`) and project **4 weeks ahead** (`FORECAST_WEEKS = 4`). These thresholds are intentionally conservative — with fewer data points, any extrapolation would be unreliable.
+Forecasts require a minimum of **3 snapshots** (`MIN_SNAPSHOTS = 3`) and project **4 weeks ahead** (`FORECAST_WEEKS = 4`). These thresholds are intentionally conservative - with fewer data points, any extrapolation would be unreliable.
 
 ### Interpretation guide
 
@@ -109,11 +109,11 @@ Forecasts require a minimum of **3 snapshots** (`MIN_SNAPSHOTS = 3`) and project
 
 ### Behavior
 
-SVG charts automatically adapt to the viewer's color scheme using `@media (prefers-color-scheme: dark)` inside the SVG `<style>` block. No configuration input is needed — it works out of the box on GitHub, browsers, and any SVG viewer that respects the media query.
+SVG charts automatically adapt to the viewer's color scheme using `@media (prefers-color-scheme: dark)` inside the SVG `<style>` block. No configuration input is needed - it works out of the box on GitHub, browsers, and any SVG viewer that respects the media query.
 
 ### What adapts
 
-Chrome elements — background, title, legend text, axis labels, grid lines, and axis strokes — switch between a light palette and a dark palette (GitHub dark theme values). Data colors (line strokes, point fills, comparison colors) remain unchanged because they are vibrant enough for both themes.
+Chrome elements - background, title, legend text, axis labels, grid lines, and axis strokes - switch between a light palette and a dark palette (GitHub dark theme values). Data colors (line strokes, point fills, comparison colors) remain unchanged because they are vibrant enough for both themes.
 
 | Element | Light | Dark |
 |:--------|:------|:-----|
@@ -127,10 +127,10 @@ Chrome elements — background, title, legend text, axis labels, grid lines, and
 
 | Context | Dark mode support |
 |:--------|:------------------|
-| GitHub README / Markdown | Yes — GitHub respects `prefers-color-scheme` in inline SVGs |
+| GitHub README / Markdown | Yes - GitHub respects `prefers-color-scheme` in inline SVGs |
 | Browser (direct SVG open) | Yes |
-| HTML email reports | No — Gmail strips `<style>` blocks; the HTML report uses an explicit light background instead |
-| QuickChart PNG fallbacks | No — PNGs are rasterized with a fixed white background |
+| HTML email reports | No - Gmail strips `<style>` blocks; the HTML report uses an explicit light background instead |
+| QuickChart PNG fallbacks | No - PNGs are rasterized with a fixed white background |
 
 ### Badges
 
@@ -144,8 +144,8 @@ The Shields.io-style badge (`stars-badge.svg`) does **not** include dark mode st
 
 The action produces two types of charts:
 
-1. **Animated SVG charts** — generated locally, committed to the data branch. Support dark/light mode via CSS media queries. No external dependencies.
-2. **QuickChart PNG charts** — generated via [QuickChart.io](https://quickchart.io), used in HTML email reports. Static images, light-only, dependent on an external service.
+1. **Animated SVG charts** - generated locally, committed to the data branch. Support dark/light mode via CSS media queries. No external dependencies.
+2. **QuickChart PNG charts** - generated via [QuickChart.io](https://quickchart.io), used in HTML email reports. Static images, light-only, dependent on an external service.
 
 There is no interactive zooming, panning, tooltips, or click-to-drill-down in either format.
 
@@ -175,10 +175,10 @@ SVG charts are the primary output: they are self-contained, support CSS animatio
 
 ### Implications
 
-- SVG charts have **no external dependency** — they render even offline.
+- SVG charts have **no external dependency** - they render even offline.
 - If QuickChart.io is down, email chart images appear broken. Report text content is unaffected.
 - Some corporate networks or email security filters may block external image URLs in emails.
-- QuickChart URLs are deterministic — the same data produces the same URL, enabling browser caching.
+- QuickChart URLs are deterministic - the same data produces the same URL, enabling browser caching.
 
 ---
 
@@ -197,7 +197,7 @@ Email HTML rendering is notoriously inconsistent across clients. Outlook uses th
 - **All styles are inline**: Every HTML element in the report carries its own `style` attribute. No external stylesheets, no `<style>` blocks, no CSS classes.
 - **Explicit light background**: The `<body>` has an explicit `background-color: #fff` to ensure consistent rendering regardless of the email client's own background. Dark mode is not supported in email reports.
 - **No `<details>` in HTML reports**: Collapsible sections (`<details>`/`<summary>`) are used in Markdown reports (for GitHub rendering) but excluded from HTML reports, since email clients do not support them. Per-repo stargazer lists and forecast tables are displayed flat in HTML.
-- **System fonts**: The font stack uses `-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif` — safe system fonts that render consistently everywhere.
+- **System fonts**: The font stack uses `-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif` - safe system fonts that render consistently everywhere.
 - **`max-width: 600px`**: The report container is capped at 600px, the standard width for email layouts.
 - **No external CSS frameworks**: No Bootstrap, Tailwind, or similar. Every pixel of styling is self-contained in the HTML string.
 - **Charts as QuickChart PNGs**: Email reports use QuickChart PNG images instead of SVGs because email clients strip `<style>` blocks, which would break SVG animations and dark mode theming.
@@ -219,7 +219,7 @@ Email HTML rendering is notoriously inconsistent across clients. Outlook uses th
 
 Star data is captured **once per workflow run**. If the action runs daily, there is one data point per day. Intra-day changes (e.g., a repo gaining and then losing 5 stars within the same day) are invisible.
 
-> **Note:** This per-run snapshot granularity applies to the report delta tables and notification thresholds. Charts no longer plot one point per run — when charts are enabled (the default), the action fetches each repo's stargazers and reconstructs the real historical star curve from their `starred_at` dates, so the chart timeline reflects true history regardless of how often the action runs.
+> **Note:** This per-run snapshot granularity applies to the report delta tables and notification thresholds. Charts no longer plot one point per run - when charts are enabled (the default), the action fetches each repo's stargazers and reconstructs the real historical star curve from their `starred_at` dates, so the chart timeline reflects true history regardless of how often the action runs.
 
 ### Why
 
@@ -233,7 +233,7 @@ The action is designed to run as a GitHub Actions workflow, which is triggered b
 
 ### Increasing granularity
 
-This applies only to the report delta tables and notification thresholds, not to charts — chart resolution comes from the reconstructed real star history, so running more often does not add chart points. If finer delta/notification granularity is needed, increase the workflow schedule frequency:
+This applies only to the report delta tables and notification thresholds, not to charts - chart resolution comes from the reconstructed real star history, so running more often does not add chart points. If finer delta/notification granularity is needed, increase the workflow schedule frequency:
 
 ```yaml
 on:
@@ -257,7 +257,7 @@ To compute the diff between runs (who is new since last time), the action needs 
 
 ### Approach
 
-- **Minimal data stored**: `stargazers.json` contains only `{ "owner/repo": ["login1", "login2"] }` — login names, no avatars, no dates. Full user details (avatar, profile URL, starred_at) are only shown in reports, not persisted.
+- **Minimal data stored**: `stargazers.json` contains only `{ "owner/repo": ["login1", "login2"] }` - login names, no avatars, no dates. Full user details (avatar, profile URL, starred_at) are only shown in reports, not persisted.
 - **Data branch isolation**: Stargazer data is stored on a separate `star-tracker-data` branch, not on `main`. This keeps the main branch clean.
 - **Opt-in only**: `track-stargazers` defaults to `false`. Users must explicitly enable it.
 - **All data is already public**: GitHub stargazer lists are publicly visible on any repository. The action stores the same information that's already accessible via the GitHub UI.
@@ -266,8 +266,8 @@ To compute the diff between runs (who is new since last time), the action needs 
 
 ## 📚 Additional Resources
 
-- **[Configuration](Configuration)** — All available options and settings
-- **[API Reference](API-Reference)** — Complete inputs and outputs documentation
-- **[Troubleshooting](Troubleshooting)** — Common issues and solutions
-- **[Star Trend Charts](Star-Trend-Charts)** — Chart visualization setup
-- **[Email Notifications](Email-Notifications)** — Email configuration guide
+- **[Configuration](Configuration)** - All available options and settings
+- **[API Reference](API-Reference)** - Complete inputs and outputs documentation
+- **[Troubleshooting](Troubleshooting)** - Common issues and solutions
+- **[Star Trend Charts](Star-Trend-Charts)** - Chart visualization setup
+- **[Email Notifications](Email-Notifications)** - Email configuration guide

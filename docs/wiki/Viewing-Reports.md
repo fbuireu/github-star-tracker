@@ -146,6 +146,6 @@ curl -s https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/
 
 ## Next Steps
 
-- **[Star Trend Charts](Star-Trend-Charts)** — Chart types and embedding
-- **[Email Notifications](Email-Notifications)** — Email setup
-- **[Data Management](Data-Management)** — How data is stored and rotated
+- **[Star Trend Charts](Star-Trend-Charts)** - Chart types and embedding
+- **[Email Notifications](Email-Notifications)** - Email setup
+- **[Data Management](Data-Management)** - How data is stored and rotated

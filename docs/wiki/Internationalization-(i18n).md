@@ -128,6 +128,6 @@ See **[Contributing](https://github.com/fbuireu/github-star-tracker/blob/main/CO
 
 ## Next Steps
 
-- **[Configuration](Configuration)** — `locale` setting
-- **[Email Notifications](Email-Notifications)** — Localized email subjects
-- **[Star Trend Charts](Star-Trend-Charts)** — Localized chart labels
+- **[Configuration](Configuration)** - `locale` setting
+- **[Email Notifications](Email-Notifications)** - Localized email subjects
+- **[Star Trend Charts](Star-Trend-Charts)** - Localized chart labels

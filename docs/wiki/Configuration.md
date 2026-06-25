@@ -45,7 +45,7 @@ top_repos: 10
 smart_sampling: false
 smart_sampling_threshold: 1500
 smart_sampling_pages: 30
-chart_line_color: "#dfb317"   # quote the # or drop it (6b63ff) — a bare # starts a YAML comment
+chart_line_color: "#dfb317"   # quote the # or drop it (6b63ff) - a bare # starts a YAML comment
 chart_line_width: 2.5
 chart_max_points: 30          # 0 = full history
 chart_y_axis_side: left
@@ -59,7 +59,7 @@ with:
   config-path: '.github/star-tracker.yml'
 ```
 
-> **Note:** In the config file, keys may be written with either underscores or dashes — `include_archived` and `include-archived` are both accepted. Action inputs always use `kebab-case` (e.g. `include-archived`).
+> **Note:** In the config file, keys may be written with either underscores or dashes - `include_archived` and `include-archived` are both accepted. Action inputs always use `kebab-case` (e.g. `include-archived`).
 
 ---
 
@@ -86,7 +86,7 @@ Action inputs always win. Missing values fall through to the config file, then t
 
 ```yaml
 # star-tracker.yml
-locale: es        # Ignored — workflow input takes priority
+locale: es        # Ignored - workflow input takes priority
 visibility: public # Used (no workflow input overrides it)
 include_charts: true # Used
 ```
@@ -125,7 +125,7 @@ GitHub API base URL for GitHub Enterprise Server (GHES) instances.
 | Property | Value |
 |---|---|
 | **Type** | `string` |
-| **Default** | — (auto-detected on GHES runners via `GITHUB_API_URL`) |
+| **Default** | - (auto-detected on GHES runners via `GITHUB_API_URL`) |
 
 When running on a GHES runner, the action automatically detects the API URL from the `GITHUB_API_URL` environment variable. Only set this input if you need to override the auto-detected value or if you're running on a github.com runner targeting a GHES instance.
 
@@ -162,10 +162,10 @@ Filter repositories by visibility.
 | **Default** | `all` |
 | **Options** | `all`, `public`, `private`, `owned` |
 
-- `all` — all repos accessible to the token (including collaborator repos)
-- `public` — only public repos
-- `private` — only private repos
-- `owned` — only repos you own (excludes collaborator repos)
+- `all` - all repos accessible to the token (including collaborator repos)
+- `public` - only public repos
+- `private` - only private repos
+- `owned` - only repos you own (excludes collaborator repos)
 
 ```yaml
 with:
@@ -431,7 +431,7 @@ Comma-separated list of repository names or regex patterns to exclude.
 | Property | Value |
 |---|---|
 | **Type** | `string` (comma-separated) |
-| **Default** | — |
+| **Default** | - |
 
 Supports exact names and regex patterns (wrapped in `/`):
 
@@ -458,7 +458,7 @@ Comma-separated list of repository names to exclusively track.
 | Property | Value |
 |---|---|
 | **Type** | `string` (comma-separated) |
-| **Default** | — |
+| **Default** | - |
 
 When set, **only** these repos are tracked. All other filters are ignored.
 
@@ -476,7 +476,7 @@ Comma-separated list of organization/owner names or regex patterns to exclusivel
 | Property | Value |
 |---|---|
 | **Type** | `string` (comma-separated) |
-| **Default** | — |
+| **Default** | - |
 
 Accepts an exact owner name or a `/regex/` pattern (e.g. `/^my-org$/`), case-sensitive. Composes with `only-repos`/`exclude-repos`.
 
@@ -494,7 +494,7 @@ Comma-separated list of organization/owner names or regex patterns to exclude.
 | Property | Value |
 |---|---|
 | **Type** | `string` (comma-separated) |
-| **Default** | — |
+| **Default** | - |
 
 Accepts an exact owner name or a `/regex/` pattern (e.g. `/^my-org$/`), case-sensitive. Composes with `only-repos`/`exclude-repos`.
 
@@ -532,7 +532,7 @@ SMTP server hostname. **Providing this enables built-in email notifications.**
 | Property | Value |
 |---|---|
 | **Type** | `string` |
-| **Default** | — |
+| **Default** | - |
 
 Common values: `smtp.gmail.com`, `smtp-mail.outlook.com`, `smtp.office365.com`, `smtp.sendgrid.net`
 
@@ -558,7 +558,7 @@ SMTP authentication username.
 | Property | Value |
 |---|---|
 | **Type** | `string` |
-| **Default** | — |
+| **Default** | - |
 
 ---
 
@@ -569,7 +569,7 @@ SMTP authentication password.
 | Property | Value |
 |---|---|
 | **Type** | `string` (secret) |
-| **Default** | — |
+| **Default** | - |
 
 For Gmail, use an app-specific password. For SendGrid, use your API key.
 
@@ -582,7 +582,7 @@ Recipient email address.
 | Property | Value |
 |---|---|
 | **Type** | `string` |
-| **Default** | — |
+| **Default** | - |
 
 ---
 
@@ -659,7 +659,7 @@ The action validates inputs at startup:
 
 ## Next Steps
 
-- **[API Reference](API-Reference)** — Complete inputs and outputs reference
-- **[Examples](Examples)** — Real-world configurations
-- **[Email Notifications](Email-Notifications)** — Email setup details
-- **[Troubleshooting](Troubleshooting)** — Common configuration issues
+- **[API Reference](API-Reference)** - Complete inputs and outputs reference
+- **[Examples](Examples)** - Real-world configurations
+- **[Email Notifications](Email-Notifications)** - Email setup details
+- **[Troubleshooting](Troubleshooting)** - Common configuration issues

@@ -127,7 +127,7 @@ Charts are produced on the first run, since the curve is reconstructed from hist
 ### Colors
 
 **Star history / per-repo:**
-- Line: `#dfb317` (gold) — this is the **default** and can be changed with `chart-line-color` (see [Chart customization](#chart-customization)). It affects the star-history, per-repo and forecast historical series, but not the comparison palette or the forecast trend lines.
+- Line: `#dfb317` (gold) - this is the **default** and can be changed with `chart-line-color` (see [Chart customization](#chart-customization)). It affects the star-history, per-repo and forecast historical series, but not the comparison palette or the forecast trend lines.
 - Fill: 10% opacity gold
 
 **Comparison chart palette (up to 10 repos):**
@@ -146,7 +146,7 @@ Charts are produced on the first run, since the curve is reconstructed from hist
 | 10 | `#00bcd4` (cyan) |
 
 **Forecast chart:**
-- Historical: `#dfb317` (gold, solid) — the historical series uses the `chart-line-color` default and respects `chart-line-color`; the trend lines below do not.
+- Historical: `#dfb317` (gold, solid) - the historical series uses the `chart-line-color` default and respects `chart-line-color`; the trend lines below do not.
 - Linear regression: `#28a745` (green, dashed)
 - Weighted moving average: `#d73a49` (red, dashed)
 
@@ -258,6 +258,6 @@ GitHub caps the stargazers listing at roughly 40,000 per repo. For very large re
 
 ## Next Steps
 
-- **[Viewing Reports](Viewing-Reports)** — How to access charts
-- **[Email Notifications](Email-Notifications)** — Charts in emails
-- **[Configuration](Configuration)** — Chart-related settings
+- **[Viewing Reports](Viewing-Reports)** - How to access charts
+- **[Email Notifications](Email-Notifications)** - Charts in emails
+- **[Configuration](Configuration)** - Chart-related settings

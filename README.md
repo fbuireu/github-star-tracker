@@ -33,7 +33,7 @@
 
 Every run, Star Tracker commits these artifacts to a dedicated data branch:
 
-- **Animated SVG charts:** star history, per-repo trends, top repos comparison, and growth forecasts — with automatic dark/light mode support:
+- **Animated SVG charts:** star history, per-repo trends, top repos comparison, and growth forecasts - with automatic dark/light mode support:
 
   <img src="examples/star-history.svg" alt="Star History" width="800">
   <img src="examples/comparison.svg" alt="Top Repositories" width="800">
@@ -130,8 +130,8 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 
 | Input                    | Default               | Description                                                   |
 | ------------------------ | --------------------- | ------------------------------------------------------------- |
-| `github-token`           | —                     | **Required.** PAT with `repo` or `public_repo` scope          |
-| `github-api-url`         | —                     | GitHub API base URL (for GHES). Auto-detected on GHES runners |
+| `github-token`           | -                     | **Required.** PAT with `repo` or `public_repo` scope          |
+| `github-api-url`         | -                     | GitHub API base URL (for GHES). Auto-detected on GHES runners |
 | `config-path`            | `star-tracker.yml`    | Path to YAML config file                                      |
 | `visibility`             | `all`                 | `public`, `private`, `all`, or `owned`                        |
 | `locale`                 | `en`                  | `en`, `es`, `ca`, or `it`                                     |
@@ -150,21 +150,21 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `smart-sampling-pages`   | `30`                  | Max evenly-spaced stargazer pages per sampled repo            |
 | `include-archived`       | `false`               | Include archived repos                                        |
 | `include-forks`          | `false`               | Include forked repos                                          |
-| `exclude-repos`          | —                     | Names or regex to exclude                                     |
-| `only-repos`             | —                     | Only track these repos                                        |
-| `only-orgs`              | —                     | Only track repos under these orgs/owners (name or regex)      |
-| `exclude-orgs`           | —                     | Orgs/owners to exclude (name or regex)                        |
+| `exclude-repos`          | -                     | Names or regex to exclude                                     |
+| `only-repos`             | -                     | Only track these repos                                        |
+| `only-orgs`              | -                     | Only track repos under these orgs/owners (name or regex)      |
+| `exclude-orgs`           | -                     | Orgs/owners to exclude (name or regex)                        |
 | `min-stars`              | `0`                   | Min stars to track                                            |
-| `smtp-host`              | —                     | SMTP hostname (enables email)                                 |
+| `smtp-host`              | -                     | SMTP hostname (enables email)                                 |
 | `smtp-port`              | `587`                 | SMTP port                                                     |
-| `smtp-username`          | —                     | SMTP username                                                 |
-| `smtp-password`          | —                     | SMTP password                                                 |
-| `email-to`               | —                     | Recipient address                                             |
+| `smtp-username`          | -                     | SMTP username                                                 |
+| `smtp-password`          | -                     | SMTP password                                                 |
+| `email-to`               | -                     | Recipient address                                             |
 | `email-from`             | `GitHub Star Tracker` | Sender name                                                   |
 | `send-on-no-changes`     | `false`               | Email even with no changes                                    |
 | `notification-threshold` | `0`                   | `0` (every run), N (threshold), or `auto` (adaptive)          |
 
-In the YAML config file, option keys may be written with either dashes or underscores — `include-charts` and `include_charts` are both accepted — so you can copy option names straight from this table without rewriting the separators.
+In the YAML config file, option keys may be written with either dashes or underscores - `include-charts` and `include_charts` are both accepted - so you can copy option names straight from this table without rewriting the separators.
 
 > [!TIP]
 > `chart-line-color` accepts hex with or without a leading `#`. Because a bare `#` starts a comment in YAML, either quote the value (`chart-line-color: '#6b63ff'`) or drop the `#` (`chart-line-color: 6b63ff`).
@@ -279,7 +279,7 @@ One caveat: GitHub caps the stargazers listing at roughly **40,000 per repo** (o
 ```
 
 > [!TIP]
-> SVG charts automatically adapt to dark and light mode. No extra configuration needed — they use `prefers-color-scheme` to match the viewer's theme.
+> SVG charts automatically adapt to dark and light mode. No extra configuration needed - they use `prefers-color-scheme` to match the viewer's theme.
 
 **[Viewing Reports](../../wiki/Viewing-Reports)**: All access methods (data branch, badges, outputs, email)
 

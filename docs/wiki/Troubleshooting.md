@@ -118,7 +118,7 @@ git push origin --delete star-tracker-data
 - No star changes detected (the action skips the commit)
 - Workflow failed silently
 
-**Fix:** Check the workflow run logs in **Actions** tab. If stars haven't changed, no commit is made — this is expected.
+**Fix:** Check the workflow run logs in **Actions** tab. If stars haven't changed, no commit is made - this is expected.
 
 > Star-history charts plot the true cumulative curve from each stargazer's `starred_at` date, not one point per run. If stars haven't changed, no new commit is made (expected).
 
@@ -143,7 +143,7 @@ Replace `star-tracker-data` with your `data-branch` value if customized.
 **Checklist:**
 1. Check your spam/junk folder
 2. Verify SMTP credentials are correct
-3. For Gmail: ensure you're using an **app password** (not your account password) — requires 2FA enabled
+3. For Gmail: ensure you're using an **app password** (not your account password) - requires 2FA enabled
 4. Check that `stars-changed` is `true` (no email sent if nothing changed, unless `send-on-no-changes: true`)
 5. Check the workflow run logs for email-related warnings
 
@@ -214,7 +214,7 @@ steps:
 ### Workflow Runs but Nothing Happens
 
 **Possible causes:**
-- No star changes detected (expected — no commit is made)
+- No star changes detected (expected - no commit is made)
 - All repos filtered out
 
 **Fix:** Check the workflow run logs. The action logs which repos are tracked and any filtering that occurred.
@@ -264,7 +264,7 @@ See **[Configuration > Precedence](Configuration)**.
 # Correct
 exclude-repos: '/^test-.*/'
 
-# Incorrect — treated as literal string
+# Incorrect - treated as literal string
 exclude-repos: '^test-.*'
 ```
 
@@ -282,6 +282,6 @@ If your issue isn't covered here:
 
 ## Next Steps
 
-- **[Configuration](Configuration)** — All available options
-- **[Known Limitations](Known-Limitations)** — Current constraints
-- **[Examples](Examples)** — Working configurations
+- **[Configuration](Configuration)** - All available options
+- **[Known Limitations](Known-Limitations)** - Current constraints
+- **[Examples](Examples)** - Working configurations

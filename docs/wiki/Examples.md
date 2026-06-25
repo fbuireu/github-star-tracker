@@ -121,7 +121,7 @@ Excludes repos where you're a collaborator:
 
 ### Auto-detected on GHES Runner
 
-When the workflow runs on a GHES runner, the API URL is auto-detected from the `GITHUB_API_URL` environment variable — no extra input needed:
+When the workflow runs on a GHES runner, the API URL is auto-detected from the `GITHUB_API_URL` environment variable - no extra input needed:
 
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
@@ -460,6 +460,6 @@ notification_threshold: auto
 
 ## Next Steps
 
-- **[Configuration](Configuration)** — All available options
-- **[API Reference](API-Reference)** — Complete inputs/outputs
-- **[Troubleshooting](Troubleshooting)** — Common issues
+- **[Configuration](Configuration)** - All available options
+- **[API Reference](API-Reference)** - Complete inputs/outputs
+- **[Troubleshooting](Troubleshooting)** - Common issues

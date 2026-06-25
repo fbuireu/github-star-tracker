@@ -4,7 +4,7 @@ GitHub Star Tracker requires a Personal Access Token rather than the default `GI
 
 ## Why a PAT Is Required
 
-The `GITHUB_TOKEN` provided automatically by GitHub Actions is scoped to the **current repository only**. GitHub Star Tracker needs to list **all repositories owned by the authenticated user** via `GET /user/repos`, which requires broader access. This is a GitHub API restriction — the automatic token simply cannot enumerate repos outside the triggering repository.
+The `GITHUB_TOKEN` provided automatically by GitHub Actions is scoped to the **current repository only**. GitHub Star Tracker needs to list **all repositories owned by the authenticated user** via `GET /user/repos`, which requires broader access. This is a GitHub API restriction - the automatic token simply cannot enumerate repos outside the triggering repository.
 
 ---
 
@@ -20,10 +20,10 @@ Simpler setup, proven reliability, optional expiration.
    - **Note:** `GitHub Star Tracker`
    - **Expiration:** 90 days recommended (set a calendar reminder)
    - **Scopes:**
-     - `repo` — for tracking private + public repositories
-     - OR `public_repo` — for public repositories only
+     - `repo` - for tracking private + public repositories
+     - OR `public_repo` - for public repositories only
 4. Click **"Generate token"**
-5. **Copy the token immediately** — it starts with `ghp_` and won't be shown again
+5. **Copy the token immediately** - it starts with `ghp_` and won't be shown again
 
 ### Step 2: Add to Repository Secrets
 
@@ -61,11 +61,11 @@ More granular control, required expiration, better for team environments.
    - **Permissions > Repository permissions:**
      - `Metadata`: **Read-only** (minimum required)
 4. Click **"Generate token"**
-5. **Copy the token immediately** — it starts with `github_pat_`
+5. **Copy the token immediately** - it starts with `github_pat_`
 
 ### Step 2: Add to Repository Secrets
 
-Same as Classic Token — see Step 2 above.
+Same as Classic Token - see Step 2 above.
 
 ---
 
@@ -104,5 +104,5 @@ Same as Classic Token — see Step 2 above.
 
 ## Next Steps
 
-- **[Getting Started](Getting-Started)** — Continue setup after creating your token
-- **[Configuration](Configuration)** — Customize tracking options
+- **[Getting Started](Getting-Started)** - Continue setup after creating your token
+- **[Configuration](Configuration)** - Customize tracking options

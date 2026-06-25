@@ -95,7 +95,7 @@ Action Inputs > Config File (YAML) > Built-in Defaults
 **Steps:**
 
 1. File discovery: reads YAML from `config-path` input (default: `star-tracker.yml`)
-2. YAML parsing via `js-yaml`. Empty, whitespace-only, or malformed config files no longer crash the action — an empty file yields defaults, and a parse error is logged as a warning before falling back to defaults.
+2. YAML parsing via `js-yaml`. Empty, whitespace-only, or malformed config files no longer crash the action - an empty file yields defaults, and a parse error is logged as a warning before falling back to defaults.
 3. Action input extraction via `@actions/core`
 4. Type-safe conversion using parsers (`parseBool`, `parseNumber`, `parseList`, `parseNotificationThreshold`)
 5. Merge: inputs override file values; missing values fall through to defaults
@@ -152,13 +152,13 @@ Queries `GET /user/repos` with pagination (`100` per page). The `visibility` con
 
 Client-side filtering pipeline:
 
-1. **Whitelist** (`onlyRepos`) — short-circuits all other filters
-2. **Org whitelist** (`onlyOrgs`) — restricts to owners whose name matches a listed name or `/regex/`
-3. **Archived** — removes archived repos unless `includeArchived` is `true`
-4. **Forks** — removes forks unless `includeForks` is `true`
-5. **Blacklist** (`excludeRepos`) — removes by exact name or regex (e.g. `/^test-.*/`)
-6. **Org blacklist** (`excludeOrgs`) — removes repos whose owner matches a listed name or `/regex/`
-7. **Star threshold** (`minStars`) — removes repos below minimum
+1. **Whitelist** (`onlyRepos`) - short-circuits all other filters
+2. **Org whitelist** (`onlyOrgs`) - restricts to owners whose name matches a listed name or `/regex/`
+3. **Archived** - removes archived repos unless `includeArchived` is `true`
+4. **Forks** - removes forks unless `includeForks` is `true`
+5. **Blacklist** (`excludeRepos`) - removes by exact name or regex (e.g. `/^test-.*/`)
+6. **Org blacklist** (`excludeOrgs`) - removes repos whose owner matches a listed name or `/regex/`
+7. **Star threshold** (`minStars`) - removes repos below minimum
 
 The org filters (`only-orgs`/`exclude-orgs`) compose with the repo filters (`only-repos`/`exclude-repos`). Separately, `smart-sampling` (with `smart-sampling-threshold`/`smart-sampling-pages`) and the `chart-*` options also exist as inputs.
 
@@ -178,7 +178,7 @@ Transforms GitHub API objects into the domain `RepoInfo` schema, flattening `own
 
 Creates or accesses a Git worktree for the data branch, isolating persistence from the source code checkout.
 
-**Directory derivation:** `.${dataBranch}` — e.g. `data-branch: my-stars` produces `.my-stars/`.
+**Directory derivation:** `.${dataBranch}` - e.g. `data-branch: my-stars` produces `.my-stars/`.
 
 **Workflow:**
 
@@ -219,8 +219,8 @@ Pure function computing the diff between current repos and the previous snapshot
 
 **File:** `src/domain/snapshot.ts`
 
-- `getLastSnapshot(history)` — retrieves the most recent snapshot
-- `addSnapshot({ history, snapshot, maxHistory })` — returns a new `History` with the snapshot appended and old entries pruned beyond `maxHistory`
+- `getLastSnapshot(history)` - retrieves the most recent snapshot
+- `addSnapshot({ history, snapshot, maxHistory })` - returns a new `History` with the snapshot appended and old entries pruned beyond `maxHistory`
 
 Both are pure functions returning new objects (no mutation).
 
@@ -254,7 +254,7 @@ GitHub caps stargazer listing at roughly **40,000 per repo**. For repos above th
 
 **File:** `src/domain/forecast.ts` > `computeForecast()`
 
-Requires at least **3 points** (`MIN_SNAPSHOTS`). Projects **4 weeks ahead** (`FORECAST_WEEKS`). When charts are enabled, the History passed to forecast generation is the real reconstructed star history (cumulative over actual star dates), not the per-run snapshot list — so the 3-point minimum refers to points in that reconstructed history.
+Requires at least **3 points** (`MIN_SNAPSHOTS`). Projects **4 weeks ahead** (`FORECAST_WEEKS`). When charts are enabled, the History passed to forecast generation is the real reconstructed star history (cumulative over actual star dates), not the per-run snapshot list - so the 3-point minimum refers to points in that reconstructed history.
 
 Two methods are computed in parallel:
 
@@ -365,7 +365,7 @@ Creates a Shields.io-style SVG badge with the localized "Total Stars" label and 
 
 1. `git add -A`
 2. `git diff --cached --quiet` (skip if no changes)
-3. `git commit -m "Update star data — 1,523 total (+15)"`
+3. `git commit -m "Update star data - 1,523 total (+15)"`
 4. `git push origin HEAD:{dataBranch}`
 
 Idempotent: no empty commits if data hasn't changed.
@@ -440,7 +440,7 @@ src/
 │   └── {en,es,ca,it}.json            # Translation files
 ├── infrastructure/
 │   ├── git/
-│   │   ├── commands.ts               # execute() — execSync wrapper
+│   │   ├── commands.ts               # execute() - execSync wrapper
 │   │   └── worktree.ts               # initializeDataBranch(), cleanup()
 │   ├── github/
 │   │   ├── types.ts                  # Octokit, GitHubRepo types

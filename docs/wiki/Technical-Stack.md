@@ -45,7 +45,7 @@ Aliases are configured in `tsconfig.json` paths, resolved by `vite-tsconfig-path
 
 ### Language & Runtime
 
-**TypeScript** (strict mode) on **Node.js 24+** — native GitHub Actions runtime support, first-class type safety.
+**TypeScript** (strict mode) on **Node.js 24+** - native GitHub Actions runtime support, first-class type safety.
 
 ### Tooling
 
@@ -81,9 +81,9 @@ The action ships as a single bundled `dist/index.js` with **zero runtime depende
 Historical snapshots, reports, charts, and badges are stored on an isolated orphan branch (`star-tracker-data` by default). This branch has its own Git history, completely separate from `main`.
 
 **Benefits:**
-- Main branch stays clean — no data commits polluting your project history
-- Force-push independence — data branch can be reset without affecting code
-- Portable — data travels with the repository
+- Main branch stays clean - no data commits polluting your project history
+- Force-push independence - data branch can be reset without affecting code
+- Portable - data travels with the repository
 
 ### YAML Configuration
 
@@ -112,20 +112,20 @@ Supports any SMTP provider without vendor lock-in. The `secure` flag is auto-det
 
 ### Snapshot Retention
 
-Configurable sliding window (default 52 snapshots). Pruning is a pure domain function — `addSnapshot()` returns a new `History` with old entries trimmed. Infrastructure handles serialization only.
+Configurable sliding window (default 52 snapshots). Pruning is a pure domain function - `addSnapshot()` returns a new `History` with old entries trimmed. Infrastructure handles serialization only.
 
 ### Test Coverage
 
 - **300+ tests** across all layers
 - **95%+ statement coverage** (enforced via threshold in `vitest.config.ts`)
 - Coverage excludes: `src/index.ts`, type/constant/default files, test files
-- Philosophy: "Mock at the boundary, not in the middle" — real code paths are exercised; only external dependencies (GitHub API, filesystem, Git) are mocked
+- Philosophy: "Mock at the boundary, not in the middle" - real code paths are exercised; only external dependencies (GitHub API, filesystem, Git) are mocked
 
 ### Security
 
-- Minimal PAT scopes — `public_repo` sufficient for public-only tracking
-- Ephemeral credential handling — tokens never logged or persisted
-- No sensitive data in outputs — star counts and repo names are already public
+- Minimal PAT scopes - `public_repo` sufficient for public-only tracking
+- Ephemeral credential handling - tokens never logged or persisted
+- No sensitive data in outputs - star counts and repo names are already public
 - Stargazer data is opt-in and stores only publicly available information
 
 ---

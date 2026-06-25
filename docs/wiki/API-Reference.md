@@ -14,7 +14,7 @@ Complete reference for all inputs, outputs, and data formats.
 
 | Input | Type | Default | Description |
 |---|---|---|---|
-| `github-api-url` | `string` | — | GitHub API base URL for GHES (auto-detected on GHES runners) |
+| `github-api-url` | `string` | - | GitHub API base URL for GHES (auto-detected on GHES runners) |
 | `config-path` | `string` | `star-tracker.yml` | Path to YAML config file (relative to repo root) |
 | `visibility` | `string` | `all` | Repo visibility filter: `public`, `private`, `all`, or `owned` |
 | `locale` | `string` | `en` | Report language: `en`, `es`, `ca`, `it` |
@@ -43,21 +43,21 @@ Complete reference for all inputs, outputs, and data formats.
 |---|---|---|---|
 | `include-archived` | `boolean` | `false` | Include archived repositories |
 | `include-forks` | `boolean` | `false` | Include forked repositories |
-| `exclude-repos` | `string` | — | Comma-separated names or regex patterns (e.g. `/^test-.*/`) to exclude |
-| `only-repos` | `string` | — | Comma-separated repo names to exclusively track (overrides other filters) |
-| `only-orgs` | `string` | — | Comma-separated organization/owner names or regex patterns (e.g. `/^my-org$/`) to exclusively track |
-| `exclude-orgs` | `string` | — | Comma-separated organization/owner names or regex patterns to exclude |
+| `exclude-repos` | `string` | - | Comma-separated names or regex patterns (e.g. `/^test-.*/`) to exclude |
+| `only-repos` | `string` | - | Comma-separated repo names to exclusively track (overrides other filters) |
+| `only-orgs` | `string` | - | Comma-separated organization/owner names or regex patterns (e.g. `/^my-org$/`) to exclusively track |
+| `exclude-orgs` | `string` | - | Comma-separated organization/owner names or regex patterns to exclude |
 | `min-stars` | `number` | `0` | Only track repos with at least N stars |
 
 ### Email & Notifications
 
 | Input | Type | Default | Description |
 |---|---|---|---|
-| `smtp-host` | `string` | — | SMTP hostname (enables email if provided) |
+| `smtp-host` | `string` | - | SMTP hostname (enables email if provided) |
 | `smtp-port` | `string` | `587` | SMTP port (`587` = STARTTLS, `465` = SSL) |
-| `smtp-username` | `string` | — | SMTP auth username |
-| `smtp-password` | `string` (secret) | — | SMTP auth password |
-| `email-to` | `string` | — | Recipient email address |
+| `smtp-username` | `string` | - | SMTP auth username |
+| `smtp-password` | `string` (secret) | - | SMTP auth password |
+| `email-to` | `string` | - | Recipient email address |
 | `email-from` | `string` | `GitHub Star Tracker` | Sender name or address |
 | `send-on-no-changes` | `boolean` | `false` | Send email even with no star changes |
 | `notification-threshold` | `number` or `"auto"` | `0` | When to notify: `0` (every run), N (threshold), `auto` (adaptive) |
@@ -72,7 +72,7 @@ All outputs are strings (GitHub Actions requirement). Available in subsequent wo
 |---|---|---|
 | `report` | `string` | Full Markdown report |
 | `report-html` | `string` | HTML report (for email) |
-| `report-html-path` | `string` | Filesystem path to the HTML report. Use this instead of `report-html` when piping into a custom mailer step — large reports can exceed the shell environment variable size limit |
+| `report-html-path` | `string` | Filesystem path to the HTML report. Use this instead of `report-html` when piping into a custom mailer step - large reports can exceed the shell environment variable size limit |
 | `report-csv` | `string` | CSV report (for data pipelines) |
 | `total-stars` | `string` | Total star count across all tracked repos |
 | `stars-changed` | `string` | Whether any counts changed: `true` or `false` |
@@ -293,6 +293,6 @@ See [Releases](https://github.com/fbuireu/github-star-tracker/releases) for chan
 
 ## Next Steps
 
-- **[Configuration](Configuration)** — Detailed option descriptions
-- **[Examples](Examples)** — Real-world workflows
-- **[Troubleshooting](Troubleshooting)** — Common issues
+- **[Configuration](Configuration)** - Detailed option descriptions
+- **[Examples](Examples)** - Real-world workflows
+- **[Troubleshooting](Troubleshooting)** - Common issues

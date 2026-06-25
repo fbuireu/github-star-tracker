@@ -66,10 +66,10 @@ Each run creates a snapshot appended to the `snapshots` array in `stars-data.jso
 
 ### Fields
 
-- `timestamp` — ISO 8601 datetime of when the run occurred
-- `totalStars` — sum of all tracked repos' stars
-- `repos[]` — per-repo data (fullName, name, owner, stars)
-- `starsAtLastNotification` — used by the notification threshold system; updated only when a notification is sent
+- `timestamp` - ISO 8601 datetime of when the run occurred
+- `totalStars` - sum of all tracked repos' stars
+- `repos[]` - per-repo data (fullName, name, owner, stars)
+- `starsAtLastNotification` - used by the notification threshold system; updated only when a notification is sent
 
 ---
 
@@ -90,7 +90,7 @@ with:
 
 ### How Pruning Works
 
-Pruning is a pure domain function (`addSnapshot()` in `src/domain/snapshot.ts`). It returns a new `History` object with the snapshot appended and old entries trimmed — no mutation, no side effects.
+Pruning is a pure domain function (`addSnapshot()` in `src/domain/snapshot.ts`). It returns a new `History` object with the snapshot appended and old entries trimmed - no mutation, no side effects.
 
 The infrastructure layer (`writeHistory()`) only handles serialization to disk.
 
@@ -118,7 +118,7 @@ On the first run:
 1. The action creates the data branch as an orphan branch
 2. An initial empty commit is made
 3. All repos are recorded with `delta: 0` (no previous data to compare against)
-4. Stargazers are fetched (charts are on by default) and the real star-history curve is reconstructed from their starred_at dates — so charts are generated on the first run.
+4. Stargazers are fetched (charts are on by default) and the real star-history curve is reconstructed from their starred_at dates - so charts are generated on the first run.
 5. Forecasts are generated on the first run as well, provided the reconstructed history has at least 3 points.
 
 ---
@@ -184,6 +184,6 @@ With `max-history: 52` and 100 repos, `stars-data.json` stays under ~500 KB.
 
 ## Next Steps
 
-- **[Viewing Reports](Viewing-Reports)** — How to access your data
-- **[Configuration](Configuration)** — `data-branch` and `max-history` options
-- **[How It Works](How-It-Works)** — Full execution pipeline
+- **[Viewing Reports](Viewing-Reports)** - How to access your data
+- **[Configuration](Configuration)** - `data-branch` and `max-history` options
+- **[How It Works](How-It-Works)** - Full execution pipeline

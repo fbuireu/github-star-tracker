@@ -1,6 +1,6 @@
 # :star: GitHub Star Tracker
 
-**Track star count changes across your repositories — automatically and get notified!**
+**Track star count changes across your repositories - automatically and get notified!**
 
 GitHub Star Tracker is a GitHub Action that monitors star counts across all your repositories, generates historical reports with charts and forecasts, and optionally sends email notifications when activity is detected.
 
@@ -100,4 +100,4 @@ See **[Getting Started](Getting-Started)** for the full setup walkthrough.
 
 ## License
 
-[AGPL-3.0](https://github.com/fbuireu/github-star-tracker/blob/main/LICENSE) — Made by [Ferran Buireu](https://github.com/fbuireu)
+[AGPL-3.0](https://github.com/fbuireu/github-star-tracker/blob/main/LICENSE) - Made by [Ferran Buireu](https://github.com/fbuireu)

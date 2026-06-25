@@ -72,9 +72,9 @@ After the first run:
 1. Go to your repository's branch selector and look for `star-tracker-data`
 2. Navigate to `https://github.com/YOUR_USER/YOUR_REPO/tree/star-tracker-data`
 3. You should see:
-   - `README.md` — Full Markdown report
-   - `stars-data.json` — Historical data (JSON)
-   - `stars-badge.svg` — Star count badge
+   - `README.md` - Full Markdown report
+   - `stars-data.json` - Historical data (JSON)
+   - `stars-badge.svg` - Star count badge
 
 > Charts and forecasts appear on the first run: when charts are enabled (the default), the action reconstructs the real star-history curve from your stargazers' starred dates.
 
@@ -114,8 +114,8 @@ Embed the star history chart:
 
 ## Next Steps
 
-- **[Configuration](Configuration)** — Customize filters, charts, locale, and more
-- **[Email Notifications](Email-Notifications)** — Get reports sent to your inbox
-- **[Star Trend Charts](Star-Trend-Charts)** — Understand the chart types
-- **[Examples](Examples)** — Advanced workflow configurations
-- **[Troubleshooting](Troubleshooting)** — If something doesn't work
+- **[Configuration](Configuration)** - Customize filters, charts, locale, and more
+- **[Email Notifications](Email-Notifications)** - Get reports sent to your inbox
+- **[Star Trend Charts](Star-Trend-Charts)** - Understand the chart types
+- **[Examples](Examples)** - Advanced workflow configurations
+- **[Troubleshooting](Troubleshooting)** - If something doesn't work
