@@ -556,6 +556,61 @@ describe('trackStars', () => {
       });
     });
 
+    it('draws each per-repo chart on its own timeline, not the shared global one', async () => {
+      vi.mocked(getRepos).mockResolvedValue([
+        {
+          owner: 'u',
+          name: 'old',
+          fullName: 'u/old',
+          private: false,
+          archived: false,
+          fork: false,
+          stars: 100,
+        },
+        {
+          owner: 'u',
+          name: 'new',
+          fullName: 'u/new',
+          private: false,
+          archived: false,
+          fork: false,
+          stars: 30,
+        },
+      ]);
+      vi.mocked(compareStars).mockReturnValue({
+        repos: [
+          { fullName: 'u/old', current: 100, isRemoved: false },
+          { fullName: 'u/new', current: 30, isRemoved: false },
+        ],
+        summary: defaultSummary,
+        // biome-ignore lint/suspicious/noExplicitAny: partial fixture stands in for full ComparisonResults
+      } as any);
+      const sg = (prefix: string, count: number, startMs: number, stepDays: number) =>
+        Array.from({ length: count }, (_, i) => ({
+          login: `${prefix}${i}`,
+          avatarUrl: '',
+          profileUrl: '',
+          starredAt: new Date(startMs + i * stepDays * 86_400_000).toISOString(),
+        }));
+      vi.mocked(fetchAllStargazers).mockResolvedValue([
+        { repoFullName: 'u/old', stargazers: sg('o', 100, Date.UTC(2025, 0, 1), 5) },
+        { repoFullName: 'u/new', stargazers: sg('n', 30, Date.UTC(2026, 4, 25), 1) },
+      ]);
+      const perRepo: Record<string, { snapshots: { timestamp: string; totalStars: number }[] }> =
+        {};
+      vi.mocked(generatePerRepoSvgChart).mockImplementation((params) => {
+        perRepo[params.repoFullName] = params.history;
+        return '<svg/>';
+      });
+
+      await trackStars();
+
+      const series = perRepo['u/new'].snapshots.map((s) => s.totalStars);
+      expect(perRepo['u/new'].snapshots[0].timestamp.startsWith('2026-05')).toBe(true);
+      expect(series[0]).toBeGreaterThan(0);
+      expect(series.at(-1)).toBe(30);
+    });
+
     it('skips SVG chart when includeCharts is false', async () => {
       vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, includeCharts: false });
       const historyWithSnapshots = {

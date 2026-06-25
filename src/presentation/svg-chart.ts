@@ -297,7 +297,7 @@ function renderSvg({
 
   const legendSection = showLegend
     ? (() => {
-        const legendY = margin.top - 20;
+        const legendY = margin.top - SVG_CHART.header.legendOffset;
         const itemWidth = 120;
         const totalWidth = datasets.length * itemWidth;
         const startX = (CHART.width - totalWidth) / 2;
@@ -314,7 +314,9 @@ function renderSvg({
       })()
     : '';
 
-  const titleY = showLegend ? margin.top - 36 : margin.top - 16;
+  const titleY =
+    margin.top -
+    (showLegend ? SVG_CHART.header.titleWithLegendOffset : SVG_CHART.header.titleOffset);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART.width} ${CHART.height}" width="${CHART.width}" height="${CHART.height}">
   <style>
