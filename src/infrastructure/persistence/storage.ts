@@ -98,6 +98,19 @@ export function writeStargazers({ dataDir, stargazerMap }: WriteStargazersParams
   writeJsonFile({ filePath: path.join(dataDir, 'stargazers.json'), data: stargazerMap });
 }
 
+interface WriteHtmlReportParams {
+  htmlReport: string;
+}
+
+export function writeHtmlReport({ htmlReport }: WriteHtmlReportParams): string {
+  const outputDir = process.env.RUNNER_TEMP || process.cwd();
+  const filePath = path.join(outputDir, 'star-tracker-report.html');
+
+  fs.writeFileSync(filePath, htmlReport);
+
+  return filePath;
+}
+
 interface WriteCsvParams {
   dataDir: string;
   csv: string;

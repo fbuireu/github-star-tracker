@@ -174,17 +174,18 @@ In the YAML config file, option keys may be written with either dashes or unders
 <details>
 <summary><strong>Outputs</strong></summary>
 
-| Output           | Description                         |
-| ---------------- | ----------------------------------- |
-| `total-stars`    | Total star count                    |
-| `stars-changed`  | `true` / `false`                    |
-| `new-stars`      | Stars gained                        |
-| `lost-stars`     | Stars lost                          |
-| `should-notify`  | Threshold reached: `true` / `false` |
-| `new-stargazers` | New stargazers count                |
-| `report`         | Full Markdown report                |
-| `report-html`    | HTML report (for email)             |
-| `report-csv`     | CSV report (for data pipelines)     |
+| Output             | Description                                                        |
+| ------------------ | ----------------------------------------------------------------- |
+| `total-stars`      | Total star count                                                  |
+| `stars-changed`    | `true` / `false`                                                  |
+| `new-stars`        | Stars gained                                                      |
+| `lost-stars`       | Stars lost                                                        |
+| `should-notify`    | Threshold reached: `true` / `false`                              |
+| `new-stargazers`   | New stargazers count                                              |
+| `report`           | Full Markdown report                                              |
+| `report-html`      | HTML report (for email)                                          |
+| `report-html-path` | File path to the HTML report (for large reports / custom mailers) |
+| `report-csv`       | CSV report (for data pipelines)                                  |
 
 </details>
 

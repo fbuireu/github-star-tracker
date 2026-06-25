@@ -78,6 +78,7 @@ Access data in subsequent workflow steps for custom integrations.
 |---|---|
 | `report` | Full Markdown report |
 | `report-html` | HTML report (for email) |
+| `report-html-path` | File path to the HTML report (for large reports / custom mailers) |
 | `total-stars` | Total star count |
 | `stars-changed` | Whether stars changed (`true`/`false`) |
 | `new-stars` | Stars gained since last run |

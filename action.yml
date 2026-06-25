@@ -178,6 +178,9 @@ outputs:
   report-html:
     description: 'HTML report of star changes (for email)'
 
+  report-html-path:
+    description: 'Path to a file containing the HTML report. Use this instead of report-html when piping into a custom mailer step, as large reports can exceed the shell environment variable size limit'
+
   total-stars:
     description: 'Total star count across all tracked repositories'
 
