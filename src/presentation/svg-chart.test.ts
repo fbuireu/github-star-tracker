@@ -175,6 +175,14 @@ describe('generateSvgChart', () => {
     expect(result).toContain('stroke-dasharray="6,6"');
   });
 
+  it('formats large axis values compactly so labels do not overflow', () => {
+    const history = makeHistory([10_000, 30_000, 50_000]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
+
+    expect(result).toMatch(/>\d+(\.\d+)?K<\/text>/);
+    expect(result).not.toContain('50,000');
+  });
+
   it('does not include milestone lines outside data range', () => {
     const history = makeHistory([10, 20, 30]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
