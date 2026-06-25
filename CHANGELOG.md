@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/fbuireu/github-star-tracker/compare/v1.13.1...v1.14.0) (2026-06-25)
+
+
+### Features
+
+* build charts from real star history (starred_at), not per-run snapshots ([#107](https://github.com/fbuireu/github-star-tracker/issues/107)) ([faa9934](https://github.com/fbuireu/github-star-tracker/commit/faa99347d219710e86c26c7a6f103baaaabb6f5b))
+
 ## [1.13.1](https://github.com/fbuireu/github-star-tracker/compare/v1.13.0...v1.13.1) (2026-06-25)
 
 
