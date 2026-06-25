@@ -493,7 +493,13 @@ describe('trackStars', () => {
   });
 
   describe('stargazer tracking', () => {
-    it('skips stargazer fetch when trackStargazers is false', async () => {
+    it('skips stargazer fetch when charts and tracking are both off', async () => {
+      vi.mocked(loadConfig).mockReturnValue({
+        ...defaultConfig,
+        includeCharts: false,
+        trackStargazers: false,
+      });
+
       await trackStars();
 
       expect(fetchAllStargazers).not.toHaveBeenCalled();
@@ -512,6 +518,15 @@ describe('trackStars', () => {
       expect(buildStargazerMap).toHaveBeenCalled();
       expect(writeStargazers).toHaveBeenCalled();
       expect(core.setOutput).toHaveBeenCalledWith('new-stargazers', '3');
+    });
+
+    it('fetches stargazers for the historical chart without writing the stargazer map', async () => {
+      await trackStars();
+
+      expect(fetchAllStargazers).toHaveBeenCalledTimes(1);
+      expect(writeStargazers).not.toHaveBeenCalled();
+      expect(diffStargazers).not.toHaveBeenCalled();
+      expect(core.setOutput).toHaveBeenCalledWith('new-stargazers', '0');
     });
   });
 

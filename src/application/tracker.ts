@@ -6,7 +6,8 @@ import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
 import { shouldNotify } from '@domain/notification';
 import { addSnapshot, getLastSnapshot } from '@domain/snapshot';
-import { buildStargazerMap, diffStargazers } from '@domain/stargazers';
+import { buildStarHistory } from '@domain/star-history';
+import { buildStargazerMap, diffStargazers, type RepoStargazers } from '@domain/stargazers';
 import type { Summary } from '@domain/types';
 import { getTranslations, interpolate } from '@i18n';
 import { cleanup, initializeDataBranch } from '@infrastructure/git/worktree';
@@ -25,7 +26,7 @@ import {
   writeStargazers,
 } from '@infrastructure/persistence/storage';
 import { generateBadge } from '@presentation/badge';
-import { MIN_SNAPSHOTS_FOR_CHART } from '@presentation/constants';
+import { CHART, MIN_SNAPSHOTS_FOR_CHART } from '@presentation/constants';
 import { generateCsvReport } from '@presentation/csv';
 import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
@@ -74,8 +75,8 @@ export async function trackStars(): Promise<void> {
       fn: async (dataDir) => {
         core.info(`Tracking ${repos.length} repositories...`);
 
-        const history = readHistory(dataDir);
-        const lastSnapshot = getLastSnapshot(history);
+        const storedHistory = readHistory(dataDir);
+        const lastSnapshot = getLastSnapshot(storedHistory);
         const previousTimestamp = lastSnapshot ? lastSnapshot.timestamp : null;
 
         core.info('Comparing star counts...');
@@ -85,42 +86,68 @@ export async function trackStars(): Promise<void> {
 
         core.info(`Total: ${summary.totalStars} stars (${deltaIndicator(summary.totalDelta)})`);
 
-        let stargazerDiff = null;
-        if (config.trackStargazers) {
+        let repoStargazers: RepoStargazers[] = [];
+        if (config.includeCharts || config.trackStargazers) {
           core.info('Fetching stargazers...');
 
-          const repoStargazers = await fetchAllStargazers({
+          repoStargazers = await fetchAllStargazers({
             octokit,
             repos,
             smartSampling: config.smartSampling,
             smartSamplingThreshold: config.smartSamplingThreshold,
             smartSamplingPages: config.smartSamplingPages,
           });
+        }
+
+        let stargazerDiff = null;
+        if (config.trackStargazers) {
           const previousMap = readStargazers(dataDir);
 
           stargazerDiff = diffStargazers({ current: repoStargazers, previousMap });
 
-          const updatedMap = buildStargazerMap(repoStargazers);
-
-          writeStargazers({ dataDir, stargazerMap: updatedMap });
+          writeStargazers({ dataDir, stargazerMap: buildStargazerMap(repoStargazers) });
 
           core.info(`Found ${stargazerDiff.totalNew} new stargazers`);
         }
 
         const snapshot = createSnapshot({ currentRepos: repos, summary });
-        const updatedHistory = addSnapshot({ history, snapshot, maxHistory: config.maxHistory });
+        const updatedHistory = addSnapshot({
+          history: storedHistory,
+          snapshot,
+          maxHistory: config.maxHistory,
+        });
 
         const sorted = [...results.repos]
           .filter((repo) => !repo.isRemoved)
           .sort((a, b) => b.current - a.current);
         const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
-        const forecastData = computeForecast({ history: updatedHistory, topRepoNames });
+
+        const starHistory = config.includeCharts
+          ? buildStarHistory({
+              repoStargazers,
+              repos: repos.map((repo) => ({
+                fullName: repo.fullName,
+                name: repo.name,
+                owner: repo.owner,
+                stars: repo.stars,
+              })),
+              maxPoints: Math.min(
+                config.chartMaxPoints || CHART.maxDataPoints,
+                CHART.maxDataPoints,
+              ),
+              now: new Date(),
+            })
+          : { snapshots: [] };
+        const history =
+          starHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? starHistory : updatedHistory;
+
+        const forecastData = computeForecast({ history, topRepoNames });
 
         const reportParams = {
           results,
           previousTimestamp,
           locale: config.locale,
-          history: updatedHistory,
+          history,
           includeCharts: config.includeCharts,
           stargazerDiff,
           forecastData,
@@ -133,7 +160,7 @@ export async function trackStars(): Promise<void> {
         const badge = generateBadge({ totalStars: summary.totalStars, locale: config.locale });
         const thresholdReached = shouldNotify({
           totalStars: summary.totalStars,
-          starsAtLastNotification: history.starsAtLastNotification,
+          starsAtLastNotification: storedHistory.starsAtLastNotification,
           threshold: config.notificationThreshold,
         });
         const notify = summary.changed && thresholdReached;
@@ -147,9 +174,9 @@ export async function trackStars(): Promise<void> {
         writeBadge({ dataDir, svg: badge });
         writeCsv({ dataDir, csv: csvReport });
 
-        if (config.includeCharts && updatedHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART) {
+        if (config.includeCharts && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART) {
           const svgChart = generateSvgChart({
-            history: updatedHistory,
+            history,
             title: t.report.starHistory,
             locale: config.locale,
             lineColor: config.chartLineColor,
@@ -164,7 +191,7 @@ export async function trackStars(): Promise<void> {
 
           for (const repoName of topRepoNames) {
             const repoChart = generatePerRepoSvgChart({
-              history: updatedHistory,
+              history,
               repoFullName: repoName,
               locale: config.locale,
               lineColor: config.chartLineColor,
@@ -182,7 +209,7 @@ export async function trackStars(): Promise<void> {
 
           if (topRepoNames.length > 0) {
             const comparisonChart = generateComparisonSvgChart({
-              history: updatedHistory,
+              history,
               repoNames: topRepoNames,
               title: t.report.topRepositories,
               locale: config.locale,
@@ -199,7 +226,7 @@ export async function trackStars(): Promise<void> {
 
           if (forecastData) {
             const forecastChart = generateForecastSvgChart({
-              history: updatedHistory,
+              history,
               forecastData,
               locale: config.locale,
               lineColor: config.chartLineColor,

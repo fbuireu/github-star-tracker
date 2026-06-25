@@ -208,7 +208,8 @@ flowchart TD
     init["Initialize orphan branch"]
     read["Deserialize previous  state snapshot"]
     compare["Compute delta metrics"]
-    stargazers["Fetch stargazers (opt-in)"]
+    stargazers["Fetch stargazers (starred_at)"]
+    history["Build real star history"]
     forecast["Compute growth forecast"]
     md["Markdown report"]
     json["JSON dataset"]
@@ -223,7 +224,7 @@ flowchart TD
 
     trigger --> config --> fetch --> filter
     filter --> init --> read --> compare
-    compare --> stargazers --> forecast
+    compare --> stargazers --> history --> forecast
     forecast --> md & json & csv & svg & html & charts
     md & json & csv & svg & html & charts --> commit --> setout --> email
     email -->|Yes| send
@@ -236,6 +237,7 @@ flowchart TD
     style read fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style compare fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style stargazers fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style history fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style forecast fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style md fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
     style json fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
@@ -253,11 +255,11 @@ flowchart TD
 
 ### How the charts read dates
 
-The charts plot **one point per run of this action**, not one point per star. Each scheduled run records a snapshot (timestamp + current star totals) on the data branch, and the chart connects those snapshots in order.
+The charts plot the **real historical curve**: every star is placed on the date it was actually given. Each stargazer carries a `starred_at` timestamp (GitHub's `application/vnd.github.star+json` media type), and the action reconstructs the cumulative star count over real time from those dates, so the timeline runs from a repo's very first star up to now, regardless of when you started running the action.
 
-This means the timeline starts when you first ran the action, not when the repository earned its stars. A repo that already had thousands of stars will show them all appearing on your first run, then grow gradually from there. The action cannot back-fill history because the GitHub API does not expose a daily star count over time; it only reports the current total (and, per stargazer, the date they starred, which is not the same as a historical running total).
+The per-run snapshots on the data branch are still kept for the report's delta tables and notifications ("how many stars changed since the last run"), but the charts themselves no longer depend on them.
 
-So the charts answer "how have my stars moved **since I started tracking**", which is why they look different from tools that reconstruct the full historical curve. The longer the action runs, the more complete the picture becomes.
+One caveat: GitHub caps the stargazers listing at roughly **40,000 per repo**, so for very large repos the earliest part of the curve is approximated (the cumulative total is scaled to the true count). Pair this with `smart-sampling` to keep the request cost bounded on big repos.
 
 ---
 
