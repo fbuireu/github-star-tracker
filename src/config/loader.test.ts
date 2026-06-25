@@ -215,6 +215,22 @@ describe('loadConfigFile', () => {
     vi.mocked(fs.readFileSync).mockReturnValue('');
     expect(loadConfigFile('star-tracker.yml')).toEqual({});
   });
+
+  it('handles a whitespace-only YAML file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('   \n  \n');
+    expect(loadConfigFile('star-tracker.yml')).toEqual({});
+  });
+
+  it('returns empty object and warns on malformed YAML', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('visibility: "public"\n  bad: : :');
+
+    expect(loadConfigFile('star-tracker.yml')).toEqual({});
+    expect(core.warning).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to parse config file'),
+    );
+  });
 });
 
 describe('loadConfig', () => {

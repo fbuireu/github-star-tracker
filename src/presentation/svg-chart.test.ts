@@ -262,7 +262,7 @@ describe('generateSvgChart', () => {
     expect(result).toContain('stroke-width="2.5"');
   });
 
-  it('does not let the smoothed line overshoot below the axis on valleys (#95)', () => {
+  it('does not let the smoothed line overshoot below the axis on valleys', () => {
     const history = makeHistory([5, 5, 100, 5, 5]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
     const ys = linePathYs(result);
@@ -272,7 +272,7 @@ describe('generateSvgChart', () => {
     expect(Math.min(...ys)).toBeGreaterThanOrEqual(50);
   });
 
-  it('does not overshoot above the top axis on spikes (#95)', () => {
+  it('does not overshoot above the top axis on spikes', () => {
     const history = makeHistory([2, 3, 4, 5, 1000]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
     const ys = linePathYs(result);
@@ -281,14 +281,14 @@ describe('generateSvgChart', () => {
     expect(Math.min(...ys)).toBeGreaterThanOrEqual(50);
   });
 
-  it('limits points to maxPoints (#96)', () => {
+  it('limits points to maxPoints', () => {
     const history = makeHistory([10, 20, 30, 40, 50]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en', maxPoints: 3 }));
 
     expect((result.match(/<circle/g) || []).length).toBe(3);
   });
 
-  it('plots the full history when maxPoints is 0 (#96)', () => {
+  it('plots the full history when maxPoints is 0', () => {
     const stars = Array.from({ length: 40 }, (_, i) => 10 + i);
     const history = makeHistory(stars);
     const result = expectSvg(generateSvgChart({ history, locale: 'en', maxPoints: 0 }));
@@ -296,7 +296,7 @@ describe('generateSvgChart', () => {
     expect((result.match(/<circle/g) || []).length).toBe(40);
   });
 
-  it('renders y-axis labels on the left by default (#98)', () => {
+  it('renders y-axis labels on the left by default', () => {
     const history = makeHistory([10, 20, 30]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
 
@@ -304,7 +304,7 @@ describe('generateSvgChart', () => {
     expect(result).toContain('<line x1="60" y1="50" x2="60"');
   });
 
-  it('renders y-axis labels and axis line on the right when configured (#98)', () => {
+  it('renders y-axis labels and axis line on the right when configured', () => {
     const history = makeHistory([10, 20, 30]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en', yAxisSide: 'right' }));
 
@@ -314,14 +314,14 @@ describe('generateSvgChart', () => {
     expect(result).not.toContain('text-anchor="end"');
   });
 
-  it('uses smooth cubic curves by default (#100)', () => {
+  it('uses smooth cubic curves by default', () => {
     const history = makeHistory([10, 20, 30, 40]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
 
     expect(result).toMatch(/ C[\d.]+,[\d.]+ [\d.]+,[\d.]+ [\d.]+,[\d.]+/);
   });
 
-  it('draws straight segments when smoothing is disabled (#100)', () => {
+  it('draws straight segments when smoothing is disabled', () => {
     const history = makeHistory([10, 20, 30, 40]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en', smoothing: false }));
     const linePath = result.match(/<path d="([^"]+)" fill="none"/)?.[1] ?? '';
