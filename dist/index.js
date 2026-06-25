@@ -38523,6 +38523,7 @@ var SVG_CHART = {
   lineWidth: 2.5,
   gridOpacity: 0.3,
   fontSize: { title: 16, label: 11, milestone: 10 },
+  header: { titleOffset: 16, titleWithLegendOffset: 36, legendOffset: 14 },
   animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
   font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
 };
@@ -39973,7 +39974,7 @@ function renderSvg({
   const allPaths = datasetSvg.map((ds) => ds.pathEl).join("\n  ");
   const allCircles = datasetSvg.map((ds) => ds.circles).filter(Boolean).join("\n    ");
   const legendSection = showLegend ? (() => {
-    const legendY = margin.top - 20;
+    const legendY = margin.top - SVG_CHART.header.legendOffset;
     const itemWidth = 120;
     const totalWidth = datasets.length * itemWidth;
     const startX = (CHART.width - totalWidth) / 2;
@@ -39986,7 +39987,7 @@ function renderSvg({
     <text x="${x + 16}" y="${legendY}" class="chart-text" font-size="10" font-family="${font}">${escapeXml(ds.label)}</text>`;
     }).join("\n    ");
   })() : "";
-  const titleY = showLegend ? margin.top - 36 : margin.top - 16;
+  const titleY = margin.top - (showLegend ? SVG_CHART.header.titleWithLegendOffset : SVG_CHART.header.titleOffset);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART.width} ${CHART.height}" width="${CHART.width}" height="${CHART.height}">
   <style>
     @keyframes drawLine {
@@ -40254,19 +40255,22 @@ async function trackStars() {
         });
         const sorted = [...results.repos].filter((repo) => !repo.isRemoved).sort((a, b) => b.current - a.current);
         const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
+        const chartNow = /* @__PURE__ */ new Date();
+        const chartMaxPoints = Math.min(
+          config.chartMaxPoints || CHART.maxDataPoints,
+          CHART.maxDataPoints
+        );
+        const repoTotals = repos.map((repo) => ({
+          fullName: repo.fullName,
+          name: repo.name,
+          owner: repo.owner,
+          stars: repo.stars
+        }));
         const starHistory = config.includeCharts ? buildStarHistory({
           repoStargazers,
-          repos: repos.map((repo) => ({
-            fullName: repo.fullName,
-            name: repo.name,
-            owner: repo.owner,
-            stars: repo.stars
-          })),
-          maxPoints: Math.min(
-            config.chartMaxPoints || CHART.maxDataPoints,
-            CHART.maxDataPoints
-          ),
-          now: /* @__PURE__ */ new Date()
+          repos: repoTotals,
+          maxPoints: chartMaxPoints,
+          now: chartNow
         }) : { snapshots: [] };
         const history = starHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? starHistory : updatedHistory;
         const forecastData = computeForecast({ history, topRepoNames });
@@ -40312,8 +40316,16 @@ async function trackStars() {
             writeChart({ dataDir, filename: "star-history.svg", svg: svgChart });
           }
           for (const repoName of topRepoNames) {
+            const repoTotal = repoTotals.find((repo) => repo.fullName === repoName);
+            const repoStarHistory = repoTotal ? buildStarHistory({
+              repoStargazers: repoStargazers.filter((rs) => rs.repoFullName === repoName),
+              repos: [repoTotal],
+              maxPoints: chartMaxPoints,
+              now: chartNow
+            }) : { snapshots: [] };
+            const repoHistory = repoStarHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? repoStarHistory : history;
             const repoChart = generatePerRepoSvgChart({
-              history,
+              history: repoHistory,
               repoFullName: repoName,
               locale: config.locale,
               lineColor: config.chartLineColor,

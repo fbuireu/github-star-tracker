@@ -1,3 +1,10 @@
+## [1.14.1](https://github.com/fbuireu/github-star-tracker/compare/v1.14.0...v1.14.1) (2026-06-25)
+
+
+### Bug Fixes
+
+* per-repo charts use their own timeline (+ legend-title spacing) ([#108](https://github.com/fbuireu/github-star-tracker/issues/108)) ([44d16d6](https://github.com/fbuireu/github-star-tracker/commit/44d16d6d3f558b586872ed267e4bb2beac21b4f0))
+
 # [1.14.0](https://github.com/fbuireu/github-star-tracker/compare/v1.13.1...v1.14.0) (2026-06-25)
 
 
