@@ -1,3 +1,10 @@
+## [1.15.1](https://github.com/fbuireu/github-star-tracker/compare/v1.15.0...v1.15.1) (2026-06-25)
+
+
+### Bug Fixes
+
+* ramp >40k repos up to their true total instead of a flat tail ([#118](https://github.com/fbuireu/github-star-tracker/issues/118)) ([897a068](https://github.com/fbuireu/github-star-tracker/commit/897a068bab5307fc7a554fcb44343f0c28d8b865))
+
 # [1.15.0](https://github.com/fbuireu/github-star-tracker/compare/v1.14.2...v1.15.0) (2026-06-25)
 
 

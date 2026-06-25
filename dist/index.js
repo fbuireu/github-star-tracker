@@ -38582,6 +38582,7 @@ function addSnapshot({ history, snapshot, maxHistory }) {
 
 // src/domain/star-history.ts
 var DAY_MS2 = 864e5;
+var MAX_REACHABLE_STARGAZERS = 4e4;
 function cumulativeCounts(sortedTimes, edges) {
   const counts = [];
   let pointer = 0;
@@ -38606,6 +38607,28 @@ function scaleToTrueTotal(fetchedCounts, trueTotal) {
   if (scaled.length > 0) {
     scaled[scaled.length - 1] = trueTotal;
   }
+  return scaled;
+}
+function scaleCappedToTrueTotal(counts, trueTotal) {
+  const fetchedTotal = counts.at(-1) ?? 0;
+  const scale = fetchedTotal > 0 ? MAX_REACHABLE_STARGAZERS / fetchedTotal : 0;
+  const scaled = counts.map((count) => Math.round(count * scale));
+  let tailStart = scaled.length - 1;
+  while (tailStart > 0 && counts[tailStart - 1] === fetchedTotal) {
+    tailStart--;
+  }
+  const last = scaled.length - 1;
+  const span = last - tailStart;
+  if (span > 0) {
+    const startValue = scaled[tailStart];
+    for (let i = tailStart; i <= last; i++) {
+      scaled[i] = Math.round(startValue + (i - tailStart) / span * (trueTotal - startValue));
+    }
+  }
+  for (let i = 1; i < scaled.length; i++) {
+    if (scaled[i] < scaled[i - 1]) scaled[i] = scaled[i - 1];
+  }
+  if (scaled.length > 0) scaled[last] = trueTotal;
   return scaled;
 }
 function buildStarHistory({
@@ -38637,7 +38660,8 @@ function buildStarHistory({
   const cumulativeByRepo = /* @__PURE__ */ new Map();
   for (const repo of repos) {
     const counts = cumulativeCounts(eventsByRepo.get(repo.fullName) ?? [], edges);
-    cumulativeByRepo.set(repo.fullName, scaleToTrueTotal(counts, repo.stars));
+    const scaled = repo.stars > MAX_REACHABLE_STARGAZERS ? scaleCappedToTrueTotal(counts, repo.stars) : scaleToTrueTotal(counts, repo.stars);
+    cumulativeByRepo.set(repo.fullName, scaled);
   }
   const snapshots = edges.map((edge, i) => {
     const snapshotRepos = repos.map((repo) => ({
@@ -38863,8 +38887,8 @@ async function getRepos({ octokit, config }) {
 
 // src/infrastructure/github/stargazers.ts
 var STARGAZERS_PER_PAGE = 100;
-var MAX_REACHABLE_STARGAZERS = 4e4;
-var MAX_REACHABLE_PAGE = Math.floor(MAX_REACHABLE_STARGAZERS / STARGAZERS_PER_PAGE);
+var MAX_REACHABLE_STARGAZERS2 = 4e4;
+var MAX_REACHABLE_PAGE = Math.floor(MAX_REACHABLE_STARGAZERS2 / STARGAZERS_PER_PAGE);
 async function fetchAllStargazers({
   octokit,
   repos,
