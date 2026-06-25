@@ -2,6 +2,10 @@ import type { RepoStargazers } from './stargazers';
 import type { History, Snapshot } from './types';
 
 const DAY_MS = 86_400_000;
+// GitHub only lets us page through the oldest 40,000 stargazers, so for larger
+// repos the most recent stars are unreachable and the fetched dates stop well
+// before "now". Those repos need a ramped tail instead of a flat one (#114).
+const MAX_REACHABLE_STARGAZERS = 40_000;
 
 export interface RepoTotal {
   fullName: string;
@@ -50,6 +54,36 @@ function scaleToTrueTotal(fetchedCounts: number[], trueTotal: number): number[] 
   return scaled;
 }
 
+function scaleCappedToTrueTotal(counts: number[], trueTotal: number): number[] {
+  const fetchedTotal = counts.at(-1) ?? 0;
+  const scale = fetchedTotal > 0 ? MAX_REACHABLE_STARGAZERS / fetchedTotal : 0;
+  const scaled = counts.map((count) => Math.round(count * scale));
+
+  // The fetched stargazers only cover the oldest ~40k stars, so the curve goes
+  // flat once their dates run out. Replace that flat tail with a straight ramp
+  // from the reachable count up to the repo's real current total at the last edge.
+  let tailStart = scaled.length - 1;
+  while (tailStart > 0 && counts[tailStart - 1] === fetchedTotal) {
+    tailStart--;
+  }
+
+  const last = scaled.length - 1;
+  const span = last - tailStart;
+  if (span > 0) {
+    const startValue = scaled[tailStart];
+    for (let i = tailStart; i <= last; i++) {
+      scaled[i] = Math.round(startValue + ((i - tailStart) / span) * (trueTotal - startValue));
+    }
+  }
+
+  for (let i = 1; i < scaled.length; i++) {
+    if (scaled[i] < scaled[i - 1]) scaled[i] = scaled[i - 1];
+  }
+  if (scaled.length > 0) scaled[last] = trueTotal;
+
+  return scaled;
+}
+
 export function buildStarHistory({
   repoStargazers,
   repos,
@@ -90,7 +124,11 @@ export function buildStarHistory({
   const cumulativeByRepo = new Map<string, number[]>();
   for (const repo of repos) {
     const counts = cumulativeCounts(eventsByRepo.get(repo.fullName) ?? [], edges);
-    cumulativeByRepo.set(repo.fullName, scaleToTrueTotal(counts, repo.stars));
+    const scaled =
+      repo.stars > MAX_REACHABLE_STARGAZERS
+        ? scaleCappedToTrueTotal(counts, repo.stars)
+        : scaleToTrueTotal(counts, repo.stars);
+    cumulativeByRepo.set(repo.fullName, scaled);
   }
 
   const snapshots: Snapshot[] = edges.map((edge, i) => {

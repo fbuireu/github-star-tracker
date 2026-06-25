@@ -3,6 +3,7 @@ import { buildStarHistory, type RepoTotal } from './star-history';
 import type { RepoStargazers, Stargazer } from './stargazers';
 
 const NOW = new Date('2026-06-25T00:00:00Z');
+const MAX_REACHABLE_STARS = 40_000;
 
 function star(starredAt: string): Stargazer {
   return {
@@ -102,6 +103,38 @@ describe('buildStarHistory', () => {
       expect(stars[i]).toBeGreaterThanOrEqual(stars[i - 1]);
       expect(stars[i]).toBeLessThanOrEqual(9000);
     }
+  });
+
+  it('ramps a >40k repo up to the true total instead of flattening the tail', () => {
+    const result = buildStarHistory({
+      repoStargazers: [
+        repoStargazers(
+          'user/massive',
+          [
+            '2024-01-01T00:00:00Z',
+            '2024-06-01T00:00:00Z',
+            '2025-01-01T00:00:00Z',
+            '2025-09-01T00:00:00Z',
+          ],
+          true,
+        ),
+      ],
+      repos: [repoTotal('user/massive', 50000)],
+      maxPoints: 20,
+      now: NOW,
+    });
+
+    const stars = result.snapshots.map((s) => s.repos[0].stars);
+
+    expect(stars.at(-1)).toBe(50000);
+    for (let i = 1; i < stars.length; i++) {
+      expect(stars[i]).toBeGreaterThanOrEqual(stars[i - 1]);
+    }
+    // The recent tail rises toward the total rather than sitting flat at it.
+    expect(stars.at(-2)).toBeLessThan(50000);
+    expect(stars.some((v) => v > MAX_REACHABLE_STARS && v < 50000)).toBe(true);
+    // The reachable portion still peaks around the 40k cap before ramping.
+    expect(stars.some((v) => v > 0 && v <= MAX_REACHABLE_STARS)).toBe(true);
   });
 
   it('handles a repo with stars but no fetched dates (ends at the true total)', () => {
