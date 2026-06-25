@@ -32,6 +32,8 @@ exclude_repos:
   - test-repo
   - /^demo-.*/
 only_repos: []
+only_orgs: []
+exclude_orgs: []
 min_stars: 5
 data_branch: star-tracker-data
 max_history: 52
@@ -40,6 +42,14 @@ locale: en
 notification_threshold: auto
 track_stargazers: false
 top_repos: 10
+smart_sampling: false
+smart_sampling_threshold: 1500
+smart_sampling_pages: 30
+chart_line_color: "#dfb317"   # quote the # or drop it (6b63ff) — a bare # starts a YAML comment
+chart_line_width: 2.5
+chart_max_points: 30          # 0 = full history
+chart_y_axis_side: left
+chart_smoothing: true
 ```
 
 Point to a custom path with `config-path`:
@@ -49,7 +59,7 @@ with:
   config-path: '.github/star-tracker.yml'
 ```
 
-> **Note:** Config file keys use `snake_case` (e.g. `include_archived`), while action inputs use `kebab-case` (e.g. `include-archived`).
+> **Note:** In the config file, keys may be written with either underscores or dashes — `include_archived` and `include-archived` are both accepted. Action inputs always use `kebab-case` (e.g. `include-archived`).
 
 ---
 
@@ -194,6 +204,8 @@ Enable star trend chart generation.
 
 When enabled, generates animated SVG charts committed to the `charts/` directory on the data branch, and QuickChart.io URLs in HTML email reports.
 
+When enabled, the action fetches each repo's stargazers to read their `starred_at` dates and reconstruct the true cumulative star history; this happens whenever charts are on, independent of `track-stargazers`. For very large repos (GitHub caps stargazer listing at ~40,000/repo) the earliest part of the curve is approximated; pair with `smart-sampling`.
+
 ```yaml
 with:
   include-charts: true
@@ -275,6 +287,109 @@ with:
 
 ---
 
+## Smart Sampling
+
+For high-star repos, sampling stargazer pages instead of fetching every page keeps the action within GitHub API rate limits.
+
+### `smart-sampling`
+
+Enable stargazer page sampling for high-star repos.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `false` |
+
+When enabled, repos above `smart-sampling-threshold` stars are sampled (a bounded number of evenly-spaced pages) rather than fully fetched.
+
+```yaml
+with:
+  smart-sampling: true
+```
+
+### `smart-sampling-threshold`
+
+Star count above which a repo is sampled instead of fully fetched (only when `smart-sampling` is enabled).
+
+| Property | Value |
+|---|---|
+| **Type** | `number` |
+| **Default** | `1500` |
+
+### `smart-sampling-pages`
+
+Max evenly-spaced stargazer pages (100 stargazers each) to fetch per sampled repo.
+
+| Property | Value |
+|---|---|
+| **Type** | `number` |
+| **Default** | `30` |
+
+---
+
+## Chart Customization
+
+These inputs control the appearance of the generated charts. See **[Star Trend Charts](Star-Trend-Charts)**.
+
+### `chart-line-color`
+
+Hex color for the primary chart line/fill/points (star-history, per-repo and forecast historical series; not the comparison palette or forecast trend lines).
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | `#dfb317` |
+
+Accepts 3/4/6/8-digit hex with or without a leading `#`. In YAML a bare `#` starts a comment, so quote it (`"#6b63ff"`) or drop the `#` (`6b63ff`).
+
+```yaml
+with:
+  chart-line-color: '#6b63ff'
+```
+
+### `chart-line-width`
+
+Stroke width in px (>0) of data lines across all charts.
+
+| Property | Value |
+|---|---|
+| **Type** | `number` |
+| **Default** | `2.5` |
+
+### `chart-max-points`
+
+Max data points to plot.
+
+| Property | Value |
+|---|---|
+| **Type** | `number` |
+| **Default** | `30` |
+
+Set to `0` to plot the full reconstructed history.
+
+### `chart-y-axis-side`
+
+Y-axis label side.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | `left` |
+| **Options** | `left`, `right` |
+
+### `chart-smoothing`
+
+Curve style between points.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `true` |
+
+`true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes.
+
+---
+
 ## Filtering Options
 
 ### `include-archived`
@@ -350,6 +465,42 @@ When set, **only** these repos are tracked. All other filters are ignored.
 ```yaml
 with:
   only-repos: 'my-awesome-project,another-repo'
+```
+
+---
+
+### `only-orgs`
+
+Comma-separated list of organization/owner names or regex patterns to exclusively track.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` (comma-separated) |
+| **Default** | — |
+
+Accepts an exact owner name or a `/regex/` pattern (e.g. `/^my-org$/`), case-sensitive. Composes with `only-repos`/`exclude-repos`.
+
+```yaml
+with:
+  only-orgs: 'my-org,/^acme-.*/'
+```
+
+---
+
+### `exclude-orgs`
+
+Comma-separated list of organization/owner names or regex patterns to exclude.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` (comma-separated) |
+| **Default** | — |
+
+Accepts an exact owner name or a `/regex/` pattern (e.g. `/^my-org$/`), case-sensitive. Composes with `only-repos`/`exclude-repos`.
+
+```yaml
+with:
+  exclude-orgs: 'old-org,/^test-.*/'
 ```
 
 ---

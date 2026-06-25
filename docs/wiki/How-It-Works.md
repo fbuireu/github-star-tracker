@@ -18,7 +18,8 @@ flowchart TD
     init["Initialize orphan branch"]
     read["Deserialize previous  state snapshot"]
     compare["Compute delta metrics"]
-    stargazers["Fetch stargazers (opt-in)"]
+    stargazers["Fetch stargazers (starred_at)"]
+    history["Build real star history"]
     forecast["Compute growth forecast"]
     md["Markdown report"]
     json["JSON dataset"]
@@ -33,7 +34,7 @@ flowchart TD
 
     trigger --> config --> fetch --> filter
     filter --> init --> read --> compare
-    compare --> stargazers --> forecast
+    compare --> stargazers --> history --> forecast
     forecast --> md & json & csv & svg & html & charts
     md & json & csv & svg & html & charts --> commit --> setout --> email
     email -->|Yes| send
@@ -46,6 +47,7 @@ flowchart TD
     style read fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style compare fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style stargazers fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style history fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style forecast fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style md fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
     style json fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
@@ -93,13 +95,13 @@ Action Inputs > Config File (YAML) > Built-in Defaults
 **Steps:**
 
 1. File discovery: reads YAML from `config-path` input (default: `star-tracker.yml`)
-2. YAML parsing via `js-yaml`
+2. YAML parsing via `js-yaml`. Empty, whitespace-only, or malformed config files no longer crash the action — an empty file yields defaults, and a parse error is logged as a warning before falling back to defaults.
 3. Action input extraction via `@actions/core`
 4. Type-safe conversion using parsers (`parseBool`, `parseNumber`, `parseList`, `parseNotificationThreshold`)
 5. Merge: inputs override file values; missing values fall through to defaults
 6. Validation of `visibility` enum and `locale`
 
-**Config file keys use `snake_case`:**
+**Config file keys may be written with either underscores or dashes (`include_charts` and `include-charts` both work):**
 
 ```yaml
 # star-tracker.yml
@@ -107,6 +109,8 @@ visibility: public
 include_archived: false
 include_forks: false
 exclude_repos: [test-repo, /^demo-.*/]
+only_orgs: []
+exclude_orgs: []
 min_stars: 5
 data_branch: star-tracker-data
 max_history: 52
@@ -115,6 +119,14 @@ locale: en
 notification_threshold: auto
 track_stargazers: false
 top_repos: 10
+smart_sampling: false
+smart_sampling_threshold: 1500
+smart_sampling_pages: 30
+chart_line_color: "#dfb317"
+chart_line_width: 2.5
+chart_max_points: 30
+chart_y_axis_side: left
+chart_smoothing: true
 ```
 
 ---
@@ -141,10 +153,14 @@ Queries `GET /user/repos` with pagination (`100` per page). The `visibility` con
 Client-side filtering pipeline:
 
 1. **Whitelist** (`onlyRepos`) — short-circuits all other filters
-2. **Archived** — removes archived repos unless `includeArchived` is `true`
-3. **Forks** — removes forks unless `includeForks` is `true`
-4. **Blacklist** (`excludeRepos`) — removes by exact name or regex (e.g. `/^test-.*/`)
-5. **Star threshold** (`minStars`) — removes repos below minimum
+2. **Org whitelist** (`onlyOrgs`) — restricts to owners whose name matches a listed name or `/regex/`
+3. **Archived** — removes archived repos unless `includeArchived` is `true`
+4. **Forks** — removes forks unless `includeForks` is `true`
+5. **Blacklist** (`excludeRepos`) — removes by exact name or regex (e.g. `/^test-.*/`)
+6. **Org blacklist** (`excludeOrgs`) — removes repos whose owner matches a listed name or `/regex/`
+7. **Star threshold** (`minStars`) — removes repos below minimum
+
+The org filters (`only-orgs`/`exclude-orgs`) compose with the repo filters (`only-repos`/`exclude-repos`). Separately, `smart-sampling` (with `smart-sampling-threshold`/`smart-sampling-pages`) and the `chart-*` options also exist as inputs.
 
 ### Data Transformation
 
@@ -210,17 +226,27 @@ Both are pure functions returning new objects (no mutation).
 
 ---
 
-## Phase 5: Stargazer Tracking (Opt-in)
+## Phase 5: Stargazer Tracking
 
 **Files:** `src/infrastructure/github/stargazers.ts`, `src/domain/stargazers.ts`
 
-When `track-stargazers: true`:
+Stargazers are fetched whenever charts are enabled (`include-charts: true`, the default) **OR** `track-stargazers: true`, because the real-history charts need each star's `starred_at` date.
 
 1. **Fetch:** queries `GET /repos/{owner}/{repo}/stargazers` with the `star+json` media type to get `starred_at` timestamps. Paginated at 100 per page, sequential per repo.
-2. **Diff:** compares current stargazer logins against the previously stored `stargazers.json` map to identify new stargazers.
-3. **Persist:** writes updated `stargazers.json` (repo > login array) to the data branch.
+2. **Diff (only when `track-stargazers: true`):** compares current stargazer logins against the previously stored `stargazers.json` map to identify new stargazers.
+3. **Persist (only when `track-stargazers: true`):** writes updated `stargazers.json` (repo > login array) to the data branch.
 
 New stargazers appear in reports with avatar, profile link, and starred date.
+
+---
+
+## Phase 5b: Real Star History Reconstruction
+
+**File:** `src/domain/star-history.ts` > `buildStarHistory()`
+
+When charts are enabled, `buildStarHistory()` turns the fetched stargazers' `starred_at` dates into a cumulative-over-real-time `History` used by the charts (and the forecast). Each star is placed on the date it was actually given and the cumulative total is reconstructed from the repo's first star up to now, so a multi-point curve is available on the **first run**.
+
+GitHub caps stargazer listing at roughly **40,000 per repo**. For repos above that cap, the earliest part of the curve is approximated: `scaleToTrueTotal()` scales the fetched cumulative counts up to the repo's true current star total (the final point always equals the true count). Pair high-star repos with `smart-sampling` to keep within rate limits.
 
 ---
 
@@ -228,7 +254,7 @@ New stargazers appear in reports with avatar, profile link, and starred date.
 
 **File:** `src/domain/forecast.ts` > `computeForecast()`
 
-Requires at least **3 snapshots** (`MIN_SNAPSHOTS`). Projects **4 weeks ahead** (`FORECAST_WEEKS`).
+Requires at least **3 points** (`MIN_SNAPSHOTS`). Projects **4 weeks ahead** (`FORECAST_WEEKS`). When charts are enabled, the History passed to forecast generation is the real reconstructed star history (cumulative over actual star dates), not the per-run snapshot list — so the 3-point minimum refers to points in that reconstructed history.
 
 Two methods are computed in parallel:
 
@@ -304,7 +330,7 @@ Generates self-contained animated SVG charts committed to `charts/` on the data 
 
 Features: smooth Catmull-Rom curves, CSS draw-line animation, fade-in data points, nice Y-axis steps, locale-aware date labels, legend (for multi-series).
 
-Requires at least **2 snapshots** (`MIN_SNAPSHOTS_FOR_CHART`).
+When charts are enabled, the History passed to chart generation is the real reconstructed star history (cumulative over actual star dates), not the per-run snapshot list. Requires at least **2 points** (`MIN_SNAPSHOTS_FOR_CHART`) in that reconstructed history.
 
 ### QuickChart URLs (HTML reports)
 

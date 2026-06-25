@@ -81,7 +81,7 @@ Each JSON file implements the `Translations` interface with these sections:
 | `email` | `subject`, `subjectLine`, `defaultFrom` | Email content |
 | `trends` | `up`, `down`, `stable` | Trend direction labels |
 | `footer` | `generated`, `madeBy` | Report footer |
-| `stargazers` | `sectionTitle`, `newStargazers`, `starredOn`, `noNewStargazers`, `stargazerCount` | Stargazer section |
+| `stargazers` | `sectionTitle`, `newStargazers`, `starredOn`, `noNewStargazers`, `stargazerCount`, `sampledNote` | Stargazer section |
 | `forecast` | `sectionTitle`, `predictedStars`, `week`, `linearRegression`, `weightedMovingAverage`, `aggregate`, `byRepository`, `insufficientData`, `method`, `predicted` | Forecast tables |
 
 ### Interpolation

@@ -267,7 +267,7 @@ The built-in email auto-generates localized subject lines:
 |---|---|
 | Email not received | Check spam folder; verify SMTP credentials; ensure app password for Gmail |
 | Authentication failed | Gmail requires app password (not account password); enable 2FA first |
-| Charts missing in email | Ensure `include-charts: true`; need 2+ runs; check if client blocks images |
+| Charts missing in email | Ensure `include-charts: true`; check that tracked repos have stargazers; check if the email client blocks external images |
 | Multiple emails | Check for duplicate workflows; add `if: stars-changed == 'true'` condition |
 | Email sent on no changes | Set `send-on-no-changes: false` or add conditional `if` step |
 

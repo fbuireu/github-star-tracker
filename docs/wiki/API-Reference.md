@@ -23,6 +23,19 @@ Complete reference for all inputs, outputs, and data formats.
 | `max-history` | `number` | `52` | Maximum snapshots to keep in history |
 | `top-repos` | `number` | `10` | Number of top repos in charts and forecasts |
 | `track-stargazers` | `boolean` | `false` | Track individual stargazers per repo |
+| `chart-line-color` | `string` | `#dfb317` | Hex color for the primary chart line/fill/points (not the comparison palette); accepts 3/4/6/8-digit hex with or without a leading `#` |
+| `chart-line-width` | `number` | `2.5` | Stroke width in px (>0) of data lines across all charts |
+| `chart-max-points` | `number` | `30` | Max recent data points to plot; `0` plots the full history from the beginning |
+| `chart-y-axis-side` | `string` | `left` | Y-axis label side: `left` or `right` |
+| `chart-smoothing` | `boolean` | `true` | Smooth curve (`true`) or straight segments between points to reveal small spikes (`false`) |
+
+### Stargazer Sampling
+
+| Input | Type | Default | Description |
+|---|---|---|---|
+| `smart-sampling` | `boolean` | `false` | Sample stargazer pages for high-star repos instead of fetching every page, to avoid API rate limits |
+| `smart-sampling-threshold` | `number` | `1500` | Star count above which a repo is sampled instead of fully fetched (only when smart-sampling is enabled) |
+| `smart-sampling-pages` | `number` | `30` | Max evenly-spaced stargazer pages (100 stargazers each) to fetch per sampled repo |
 
 ### Filtering
 
@@ -32,6 +45,8 @@ Complete reference for all inputs, outputs, and data formats.
 | `include-forks` | `boolean` | `false` | Include forked repositories |
 | `exclude-repos` | `string` | — | Comma-separated names or regex patterns (e.g. `/^test-.*/`) to exclude |
 | `only-repos` | `string` | — | Comma-separated repo names to exclusively track (overrides other filters) |
+| `only-orgs` | `string` | — | Comma-separated organization/owner names or regex patterns (e.g. `/^my-org$/`) to exclusively track |
+| `exclude-orgs` | `string` | — | Comma-separated organization/owner names or regex patterns to exclude |
 | `min-stars` | `number` | `0` | Only track repos with at least N stars |
 
 ### Email & Notifications
@@ -197,7 +212,7 @@ Animated SVG files committed to the data branch:
 
 | File | Description |
 |---|---|
-| `charts/star-history.svg` | Total stars over time (with milestone lines) |
+| `charts/star-history.svg` | Total stars over real time, reconstructed from each stargazer's starred_at date (from the repo's first star to now), with milestone lines |
 | `charts/comparison.svg` | Top N repos overlaid |
 | `charts/forecast.svg` | Historical + projected trends |
 | `charts/{owner}-{repo}.svg` | Per-repo star history |
@@ -216,10 +231,10 @@ Animated SVG files committed to the data branch:
 | `stars-data.json` | Historical snapshots | Yes |
 | `stars-badge.svg` | Star count badge | Yes |
 | `stars-data.csv` | CSV report with current star data | Yes |
-| `charts/star-history.svg` | Total star trend chart | After 2+ runs |
-| `charts/comparison.svg` | Top repos comparison | After 2+ runs (if multiple repos) |
-| `charts/forecast.svg` | Growth forecast | After 3+ runs |
-| `charts/{owner}-{repo}.svg` | Per-repo charts | After 2+ runs (for top N repos) |
+| `charts/star-history.svg` | Total star trend chart | After first run (when the repo has stargazers / `include-charts` is on) |
+| `charts/comparison.svg` | Top repos comparison | After first run (if multiple repos / `include-charts` is on) |
+| `charts/forecast.svg` | Growth forecast | After enough history points exist |
+| `charts/{owner}-{repo}.svg` | Per-repo charts | After first run (for top N repos with stargazers) |
 | `stargazers.json` | Stargazer login map | Only with `track-stargazers: true` |
 
 ---
@@ -238,6 +253,8 @@ exclude_repos:                # string[]
   - /^regex-pattern.*/
 only_repos:                   # string[]
   - specific-repo
+only_orgs: []                 # string[]
+exclude_orgs: []              # string[]
 min_stars: 0                  # number
 data_branch: star-tracker-data # string
 max_history: 52               # number
@@ -246,6 +263,14 @@ locale: en                    # en | es | ca | it
 notification_threshold: auto  # number | "auto"
 track_stargazers: false       # boolean
 top_repos: 10                 # number
+smart_sampling: false         # boolean
+smart_sampling_threshold: 1500 # number
+smart_sampling_pages: 30      # number
+chart_line_color: "#dfb317"   # string (hex)
+chart_line_width: 2.5         # number
+chart_max_points: 30          # number (0 = full history)
+chart_y_axis_side: left       # left | right
+chart_smoothing: true         # boolean
 ```
 
 ---

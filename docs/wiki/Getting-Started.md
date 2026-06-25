@@ -76,7 +76,7 @@ After the first run:
    - `stars-data.json` — Historical data (JSON)
    - `stars-badge.svg` — Star count badge
 
-> Charts and forecasts require at least 2 runs to have enough data points.
+> Charts and forecasts appear on the first run: when charts are enabled (the default), the action reconstructs the real star-history curve from your stargazers' starred dates.
 
 ---
 
@@ -107,8 +107,8 @@ Embed the star history chart:
 - The action runs on your configured schedule (daily by default)
 - Each run compares current stars with the previous snapshot
 - Reports and charts are updated on the `star-tracker-data` branch
-- After 2+ runs, animated SVG charts appear in the `charts/` directory
-- After 3+ runs, growth forecasts are computed
+- Animated SVG charts appear in the `charts/` directory from the first run, reconstructed from your stargazers' real starred dates
+- Growth forecasts are computed from the first run, once the reconstructed history has at least 3 points
 
 ---
 

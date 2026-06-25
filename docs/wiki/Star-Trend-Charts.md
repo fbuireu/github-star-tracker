@@ -2,6 +2,12 @@ GitHub Star Tracker generates animated SVG charts to visualize star growth over 
 
 ---
 
+## Real Star History
+
+Charts plot the **real historical star curve**. Every star is placed on the date it was actually given (GitHub's `starred_at` timestamp via the `application/vnd.github.star+json` media type), and the cumulative count is reconstructed over real time. The timeline runs from a repo's very first star up to now, regardless of when you started running the action. Per-run snapshots on the data branch are still kept for the report's delta tables and notifications, but the charts no longer depend on them.
+
+---
+
 ## Chart Types
 
 ### 1. Star History
@@ -103,7 +109,7 @@ with:
 | Comparison | 2 | At least 1 repo in top N |
 | Forecast | 3 | Linear regression needs 3+ points |
 
-Charts appear automatically once enough data accumulates. The first run produces no charts.
+Charts are produced on the first run, since the curve is reconstructed from historical star dates (you need at least ~2 stars total for a 2-point line).
 
 ---
 
@@ -118,7 +124,7 @@ Charts appear automatically once enough data accumulates. The first run produces
 ### Colors
 
 **Star history / per-repo:**
-- Line: `#dfb317` (gold)
+- Line: `#dfb317` (gold) — this is the **default** and can be changed with `chart-line-color` (see [Chart customization](#chart-customization)). It affects the star-history, per-repo and forecast historical series, but not the comparison palette or the forecast trend lines.
 - Fill: 10% opacity gold
 
 **Comparison chart palette (up to 10 repos):**
@@ -137,7 +143,7 @@ Charts appear automatically once enough data accumulates. The first run produces
 | 10 | `#00bcd4` (cyan) |
 
 **Forecast chart:**
-- Historical: `#dfb317` (gold, solid)
+- Historical: `#dfb317` (gold, solid) — the historical series uses the `chart-line-color` default and respects `chart-line-color`; the trend lines below do not.
 - Linear regression: `#28a745` (green, dashed)
 - Weighted moving average: `#d73a49` (red, dashed)
 
@@ -149,8 +155,9 @@ Charts appear automatically once enough data accumulates. The first run produces
 
 ### Data Point Limits
 
-- Maximum **30 data points** per chart (`CHART.maxDataPoints`)
-- When history exceeds 30 snapshots, only the most recent 30 are charted
+- By default charts plot up to **30 points** (`chart-max-points`, default `30`).
+- Set `chart-max-points: 0` to plot the full reconstructed history.
+- The points are sampled across the real time span of the star history.
 - JSON data still contains all snapshots up to `max-history`
 
 ### Localization
@@ -207,12 +214,39 @@ Default is `10`.
 
 ---
 
+## Chart customization
+
+The chart appearance is configurable via these inputs:
+
+| Input | Default | Description |
+|---|---|---|
+| `chart-line-color` | `#dfb317` | Hex color for the primary chart line/fill/points (star-history, per-repo and forecast historical series; not the comparison palette or forecast trend lines). A bare `#` starts a YAML comment, so quote it (`"#6b63ff"`) or drop the `#` (`6b63ff`). |
+| `chart-line-width` | `2.5` | Stroke width in px of data lines across all charts. |
+| `chart-max-points` | `30` | Max data points to plot; `0` plots the full reconstructed history. |
+| `chart-y-axis-side` | `left` | Y-axis label side: `left` or `right`. |
+| `chart-smoothing` | `true` | `true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. |
+
+```yaml
+with:
+  chart-line-color: "#6b63ff"
+  chart-line-width: 2.5
+  chart-max-points: 0
+  chart-y-axis-side: right
+  chart-smoothing: false
+```
+
+### Large repos
+
+GitHub caps the stargazers listing at roughly 40,000 per repo. For very large repos the earliest part of the curve is approximated (the cumulative total is scaled up to the true star count). Pair charts with `smart-sampling` to keep the request cost bounded on big repos.
+
+---
+
 ## Troubleshooting
 
 | Issue | Solution |
 |---|---|
-| No charts after first run | Need at least 2 runs for chart data |
-| No forecast chart | Need at least 3 runs |
+| No charts after first run | Need at least ~2 stars so the history has 2+ points |
+| No forecast chart | Need at least 3 points in the reconstructed history |
 | Charts not updating | Check workflow completed successfully |
 | Broken images in email | Email client may block external images |
 | Charts render as code | Make sure you're viewing the data branch, not raw SVG source |

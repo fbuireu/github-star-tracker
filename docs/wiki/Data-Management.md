@@ -24,11 +24,13 @@ The working directory for the branch is derived from the name: `.${dataBranch}` 
 | `README.md` | Markdown report with embedded charts | Every run |
 | `stars-data.json` | Historical snapshot data | Every run |
 | `stars-badge.svg` | Star count badge | Every run |
-| `charts/star-history.svg` | Total stars chart | After 2+ runs |
-| `charts/comparison.svg` | Top repos comparison | After 2+ runs |
-| `charts/forecast.svg` | Growth forecast | After 3+ runs |
-| `charts/{owner}-{repo}.svg` | Per-repo charts | After 2+ runs |
+| `charts/star-history.svg` | Total stars chart | Every run (charts on) |
+| `charts/comparison.svg` | Top repos comparison | Every run (charts on) |
+| `charts/forecast.svg` | Growth forecast | Every run (when enough history points exist) |
+| `charts/{owner}-{repo}.svg` | Per-repo charts | Every run (charts on) |
 | `stargazers.json` | Stargazer login map | Only with `track-stargazers: true` |
+
+> Charts are reconstructed from the real star history (each stargazer's `starred_at` date), not from accumulated per-run snapshots, so they render on the first run.
 
 ---
 
@@ -116,8 +118,8 @@ On the first run:
 1. The action creates the data branch as an orphan branch
 2. An initial empty commit is made
 3. All repos are recorded with `delta: 0` (no previous data to compare against)
-4. No charts are generated (need 2+ data points)
-5. No forecasts are generated (need 3+ data points)
+4. Stargazers are fetched (charts are on by default) and the real star-history curve is reconstructed from their starred_at dates — so charts are generated on the first run.
+5. Forecasts are generated on the first run as well, provided the reconstructed history has at least 3 points.
 
 ---
 

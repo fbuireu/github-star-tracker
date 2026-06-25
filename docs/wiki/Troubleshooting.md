@@ -62,7 +62,7 @@ git push origin --delete star-tracker-data
 
 ### No Data After First Run
 
-**Expected behavior.** The first run creates the data branch and records initial star counts with `delta: 0`. Charts require 2+ runs, forecasts require 3+ runs.
+**Expected behavior.** The first run creates the data branch and records initial star counts with `delta: 0`. Star-history charts are reconstructed from each stargazer's real `starred_at` date, so they appear on the first run (whenever `include-charts` is on). Growth forecasts still require 3+ snapshots/runs.
 
 ### Empty Report or Zero Stars
 
@@ -100,11 +100,11 @@ git push origin --delete star-tracker-data
 ### No Charts Generated
 
 **Possible causes:**
-- First run (need 2+ snapshots for charts)
 - `include-charts: false`
-- Only 1 snapshot in history
+- The repo has no stargazers with valid `starred_at` dates
+- All repos filtered out
 
-**Fix:** Wait for the second run, or trigger manually with `workflow_dispatch`.
+**Fix:** Ensure `include-charts` is true (default) and that tracked repos have stargazers. Charts are reconstructed from real stargazer history and do not require multiple runs.
 
 ### No Forecast Chart
 
@@ -119,6 +119,8 @@ git push origin --delete star-tracker-data
 - Workflow failed silently
 
 **Fix:** Check the workflow run logs in **Actions** tab. If stars haven't changed, no commit is made — this is expected.
+
+> Star-history charts plot the true cumulative curve from each stargazer's `starred_at` date, not one point per run. If stars haven't changed, no new commit is made (expected).
 
 ### Broken Chart Images in README
 

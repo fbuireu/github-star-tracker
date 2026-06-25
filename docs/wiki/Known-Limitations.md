@@ -37,7 +37,7 @@ Additionally, stargazers are fetched **sequentially per repo** (not in parallel)
 
 ### Approach
 
-- **Opt-in by default**: `track-stargazers` defaults to `false`. It is never activated unless explicitly requested, so existing users incur zero additional API cost.
+- **Fetched by default for charts**: `track-stargazers` defaults to `false`, but stargazers are now also fetched whenever charts are enabled (`include-charts: true`, the default) in order to reconstruct the real star-history curve. So the stargazer API cost in this table applies to any run with charts on, not only when `track-stargazers` is enabled. To avoid this cost entirely, set `include-charts: false`. Use `smart-sampling` (with `smart-sampling-threshold` / `smart-sampling-pages`) to cap requests for high-star repos.
 - **Per-repo error tolerance**: If fetching stargazers fails for one repository (e.g., due to rate limiting), the action logs a warning and continues with the remaining repos instead of aborting the entire run.
 - **Separate persistence**: Stargazer data is stored in `stargazers.json` (repo → login array), separate from `stars-data.json`. This keeps the diff lightweight — only login strings are compared, not full user objects.
 
@@ -56,6 +56,12 @@ Additionally, stargazers are fetched **sequentially per repo** (not in parallel)
 
 ---
 
+## ⭐ Stargazer Listing Cap (~40,000)
+
+GitHub's stargazers API only lists up to ~40,000 stargazers per repository. The real star-history curve is reconstructed from the listed stargazers' `starred_at` dates, so for repos above ~40,000 stars the early part of the curve is approximated: fetched counts are scaled up to the repo's true current total (`scaleToTrueTotal` in src/domain/star-history.ts). The final point always equals the true star count. Pair high-star repos with `smart-sampling` to keep within rate limits.
+
+---
+
 ## 🔮 Forecast Accuracy
 
 ### Limitation
@@ -64,7 +70,7 @@ Growth forecasts are **trend extrapolations**, not predictive models. They assum
 
 ### Why
 
-The action has access only to its own historical snapshots (star counts per run). It has no external signals (social media mentions, download counts, contributor activity) that could improve predictions. Adding external data sources would introduce API dependencies and configuration complexity disproportionate to the value.
+When charts are enabled (the default), forecasts extrapolate from the reconstructed real star-history curve (built from stargazers' starred_at dates); otherwise they use the per-run snapshot history. In either case the action has no external signals (social media mentions, download counts, contributor activity) that could improve predictions. Adding external data sources would introduce API dependencies and configuration complexity disproportionate to the value.
 
 ### Approach
 
@@ -211,6 +217,8 @@ Email HTML rendering is notoriously inconsistent across clients. Outlook uses th
 
 Star data is captured **once per workflow run**. If the action runs daily, there is one data point per day. Intra-day changes (e.g., a repo gaining and then losing 5 stars within the same day) are invisible.
 
+> **Note:** This per-run snapshot granularity applies to the report delta tables and notification thresholds. Charts no longer plot one point per run — when charts are enabled (the default), the action fetches each repo's stargazers and reconstructs the real historical star curve from their `starred_at` dates, so the chart timeline reflects true history regardless of how often the action runs.
+
 ### Why
 
 The action is designed to run as a GitHub Actions workflow, which is triggered by a cron schedule (typically daily or weekly) or manually. Each run produces exactly one snapshot containing the current star count for every tracked repository. There is no continuous monitoring or webhook-based approach.
@@ -223,7 +231,7 @@ The action is designed to run as a GitHub Actions workflow, which is triggered b
 
 ### Increasing granularity
 
-If finer granularity is needed, increase the workflow schedule frequency:
+This applies only to the report delta tables and notification thresholds, not to charts — chart resolution comes from the reconstructed real star history, so running more often does not add chart points. If finer delta/notification granularity is needed, increase the workflow schedule frequency:
 
 ```yaml
 on:
