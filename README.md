@@ -259,7 +259,7 @@ The charts plot the **real historical curve**: every star is placed on the date 
 
 The per-run snapshots on the data branch are still kept for the report's delta tables and notifications ("how many stars changed since the last run"), but the charts themselves no longer depend on them.
 
-One caveat: GitHub caps the stargazers listing at roughly **40,000 per repo**, so for very large repos the earliest part of the curve is approximated (the cumulative total is scaled to the true count). Pair this with `smart-sampling` to keep the request cost bounded on big repos.
+One caveat: GitHub caps the stargazers listing at roughly **40,000 per repo** (oldest first), so for very large repos the most recent stars are unreachable. The reachable history is drawn accurately and the recent tail is bridged with a straight ramp up to the true current total, so the early curve stays accurate and the chart never goes flat at the end. Pair this with `smart-sampling` to keep the request cost bounded on big repos.
 
 ---
 

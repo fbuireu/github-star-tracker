@@ -16,10 +16,11 @@ Charts plot the **real historical star curve**. Every star is placed on the date
 
 Shows the **total star count** across all tracked repositories over time.
 
-- Animated line with smooth Catmull-Rom curves
+- Animated line with smooth Catmull-Rom curves, anchored to the baseline at the first point (starts from zero, not mid-air)
 - CSS draw-line animation + fade-in data points
 - Milestone markers at 10, 50, 100, 500, 1K, 5K, 10K stars (when in range)
-- Locale-aware date labels on the X-axis
+- Compact Y-axis and milestone values (e.g. `50K`) that stay inside the chart bounds
+- X-axis date labels scaled to the time span: years for multi-year histories (e.g. `2023 2024 2025`), day-level labels for shorter ranges
 
 ![Total Stars Chart](https://quickchart.io/chart?c=%7Btype%3A%27line%27%2Cdata%3A%7Blabels%3A%5B%27Jan%201%27%2C%27Jan%208%27%2C%27Jan%2015%27%5D%2Cdatasets%3A%5B%7Blabel%3A%27Total%20Stars%27%2Cdata%3A%5B100%2C105%2C112%5D%2CbackgroundColor%3A%27rgba%2875%2C192%2C192%2C0.2%29%27%2CborderColor%3A%27rgba%2875%2C192%2C192%2C1%29%27%7D%5D%7D%7D)
 
@@ -28,6 +29,8 @@ Shows the **total star count** across all tracked repositories over time.
 **File:** `charts/{owner}-{repo}.svg`
 
 Individual star history for each of the top N repositories (configurable via `top-repos`).
+
+Each per-repo chart uses that repository's own timeline, starting at its first star (not the earliest star across all your tracked repos), so a newer repo's chart begins when it actually started getting stars instead of showing a flat line back to your oldest repo.
 
 - Same style as the star history chart
 - One chart per top repo

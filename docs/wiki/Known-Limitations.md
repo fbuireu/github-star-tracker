@@ -58,7 +58,9 @@ Additionally, stargazers are fetched **sequentially per repo** (not in parallel)
 
 ## ⭐ Stargazer Listing Cap (~40,000)
 
-GitHub's stargazers API only lists up to ~40,000 stargazers per repository. The real star-history curve is reconstructed from the listed stargazers' `starred_at` dates, so for repos above ~40,000 stars the early part of the curve is approximated: fetched counts are scaled up to the repo's true current total (`scaleToTrueTotal` in src/domain/star-history.ts). The final point always equals the true star count. Pair high-star repos with `smart-sampling` to keep within rate limits.
+GitHub's stargazers API only lists up to ~40,000 stargazers per repository, oldest first. The real star-history curve is reconstructed from the listed stargazers' `starred_at` dates, so for repos above ~40,000 stars only the oldest ~40,000 stars are reachable and their dates stop well before today.
+
+For those repos the reachable history is drawn accurately (scaled to the reachable count), and the unreachable recent tail is bridged with a straight ramp from there up to the repo's true current total at the final point — so the chart no longer flattens out at the cutoff date. The final point always equals the true star count. Repos within the 40,000 window are unaffected. Pair high-star repos with `smart-sampling` to keep within rate limits.
 
 ---
 
