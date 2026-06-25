@@ -48,6 +48,19 @@ function readFileKey<T>(parsed: Record<string, unknown>, snakeKey: string): T | 
   return value as T | undefined;
 }
 
+function parseConfigYaml(content: string, configPath: string): Record<string, unknown> | null {
+  if (content.trim() === '') {
+    return null;
+  }
+
+  try {
+    return yaml.load(content) as Record<string, unknown> | null;
+  } catch (error) {
+    core.warning(`Failed to parse config file ${configPath}: ${(error as Error).message}`);
+    return null;
+  }
+}
+
 export function loadConfigFile(configPath: string): FileConfig {
   const fullPath = path.resolve(configPath);
 
@@ -56,8 +69,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     return {};
   }
 
-  const content = fs.readFileSync(fullPath, 'utf8');
-  const parsed = yaml.load(content) as Record<string, unknown> | null;
+  const parsed = parseConfigYaml(fs.readFileSync(fullPath, 'utf8'), configPath);
 
   if (!parsed || typeof parsed !== 'object') {
     return {};
