@@ -183,7 +183,9 @@ When the workflow runs on a GHES runner, the API URL is auto-detected from the `
     subject: '⭐ Stars changed: ${{ steps.tracker.outputs.total-stars }} total'
     to: ${{ secrets.EMAIL_TO }}
     from: GitHub Star Tracker
-    html_body: ${{ steps.tracker.outputs.report-html }}
+    # Use report-html-path (file) instead of report-html (string) to avoid
+    # "Argument list too long" errors when reports are large.
+    html_body_file: ${{ steps.tracker.outputs.report-html-path }}
 ```
 
 ### Adaptive Notification Threshold

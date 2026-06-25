@@ -12,6 +12,7 @@ import {
   writeBadge,
   writeChart,
   writeHistory,
+  writeHtmlReport,
   writeReport,
   writeStargazers,
 } from './storage';
@@ -98,6 +99,42 @@ describe('writeReport', () => {
     writeReport({ dataDir: '/data', markdown });
 
     expect(fs.writeFileSync).toHaveBeenCalledWith(path.join('/data', 'README.md'), markdown);
+  });
+});
+
+describe('writeHtmlReport', () => {
+  const originalRunnerTemp = process.env.RUNNER_TEMP;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    if (originalRunnerTemp === undefined) {
+      delete process.env.RUNNER_TEMP;
+    } else {
+      process.env.RUNNER_TEMP = originalRunnerTemp;
+    }
+  });
+
+  it('writes the HTML report to RUNNER_TEMP and returns its path', () => {
+    process.env.RUNNER_TEMP = '/runner/tmp';
+    const htmlReport = '<p>Report</p>';
+
+    const filePath = writeHtmlReport({ htmlReport });
+
+    const expectedPath = path.join('/runner/tmp', 'star-tracker-report.html');
+    expect(filePath).toBe(expectedPath);
+    expect(fs.writeFileSync).toHaveBeenCalledWith(expectedPath, htmlReport);
+  });
+
+  it('falls back to the current working directory when RUNNER_TEMP is unset', () => {
+    delete process.env.RUNNER_TEMP;
+    const htmlReport = '<p>Report</p>';
+
+    const filePath = writeHtmlReport({ htmlReport });
+
+    expect(filePath).toBe(path.join(process.cwd(), 'star-tracker-report.html'));
   });
 });
 

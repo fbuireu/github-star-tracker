@@ -128,6 +128,60 @@ describe('sendEmail', () => {
     });
   });
 
+  it('logs the recipient address, not the message ID', async () => {
+    await sendEmail({
+      emailConfig,
+      subject: 'Subject',
+      htmlBody: '<p>Body</p>',
+    });
+
+    expect(core.info).toHaveBeenCalledWith(expect.stringContaining('recipient@example.com'));
+  });
+
+  it('warns when recipients are rejected', async () => {
+    const transport = vi.mocked(nodemailer.createTransport)({});
+    vi.mocked(transport.sendMail).mockResolvedValueOnce({
+      messageId: 'id',
+      rejected: ['bad@example.com'],
+    } as never);
+
+    await sendEmail({
+      emailConfig,
+      subject: 'Subject',
+      htmlBody: '<p>Body</p>',
+    });
+
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('bad@example.com'));
+  });
+
+  it('keeps the from address as-is when it already contains an email', async () => {
+    await sendEmail({
+      emailConfig: { ...emailConfig, from: 'Star Tracker <noreply@example.com>' },
+      subject: 'Subject',
+      htmlBody: '<p>Body</p>',
+    });
+
+    const mockSendMail = vi.mocked(nodemailer.createTransport).mock.results[0]?.value?.sendMail;
+
+    expect(mockSendMail).toHaveBeenCalledWith(
+      expect.objectContaining({ from: 'Star Tracker <noreply@example.com>' }),
+    );
+  });
+
+  it('combines a name-only from with the SMTP username as the address', async () => {
+    await sendEmail({
+      emailConfig: { ...emailConfig, from: 'Star Tracker', username: 'user@example.com' },
+      subject: 'Subject',
+      htmlBody: '<p>Body</p>',
+    });
+
+    const mockSendMail = vi.mocked(nodemailer.createTransport).mock.results[0]?.value?.sendMail;
+
+    expect(mockSendMail).toHaveBeenCalledWith(
+      expect.objectContaining({ from: 'Star Tracker <user@example.com>' }),
+    );
+  });
+
   it('uses secure=true for port 465', async () => {
     await sendEmail({
       emailConfig: { ...emailConfig, port: 465 },

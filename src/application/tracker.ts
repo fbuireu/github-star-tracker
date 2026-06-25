@@ -22,6 +22,7 @@ import {
   writeChart,
   writeCsv,
   writeHistory,
+  writeHtmlReport,
   writeReport,
   writeStargazers,
 } from '@infrastructure/persistence/storage';
@@ -310,7 +311,9 @@ function setEmptyOutputs(): void {
   core.setOutput('should-notify', 'false');
   core.setOutput('new-stargazers', '0');
   core.setOutput('report', 'No repositories matched the configured filters.');
-  core.setOutput('report-html', '<p>No repositories matched the configured filters.</p>');
+  const htmlReport = '<p>No repositories matched the configured filters.</p>';
+  core.setOutput('report-html', htmlReport);
+  core.setOutput('report-html-path', writeHtmlReport({ htmlReport }));
   core.setOutput('report-csv', '');
 }
 
@@ -333,6 +336,7 @@ function setOutputs({
 }: SetOutputsParams): void {
   core.setOutput('report', markdownReport);
   core.setOutput('report-html', htmlReport);
+  core.setOutput('report-html-path', writeHtmlReport({ htmlReport }));
   core.setOutput('report-csv', csvReport);
   core.setOutput('total-stars', String(summary.totalStars));
   core.setOutput('stars-changed', String(summary.changed));

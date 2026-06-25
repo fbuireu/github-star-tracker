@@ -113,6 +113,7 @@ vi.mock('@infrastructure/persistence/storage', () => ({
   readStargazers: vi.fn(),
   writeHistory: vi.fn(),
   writeReport: vi.fn(),
+  writeHtmlReport: vi.fn().mockReturnValue('/tmp/star-tracker-report.html'),
   writeBadge: vi.fn(),
   writeChart: vi.fn(),
   writeCsv: vi.fn(),
@@ -466,6 +467,10 @@ describe('trackStars', () => {
 
       expect(core.setOutput).toHaveBeenCalledWith('report', '# MD Report');
       expect(core.setOutput).toHaveBeenCalledWith('report-html', '<p>HTML</p>');
+      expect(core.setOutput).toHaveBeenCalledWith(
+        'report-html-path',
+        '/tmp/star-tracker-report.html',
+      );
       expect(core.setOutput).toHaveBeenCalledWith('total-stars', '100');
       expect(core.setOutput).toHaveBeenCalledWith('stars-changed', 'true');
       expect(core.setOutput).toHaveBeenCalledWith('new-stars', '12');

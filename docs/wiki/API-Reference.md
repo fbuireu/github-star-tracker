@@ -72,6 +72,7 @@ All outputs are strings (GitHub Actions requirement). Available in subsequent wo
 |---|---|---|
 | `report` | `string` | Full Markdown report |
 | `report-html` | `string` | HTML report (for email) |
+| `report-html-path` | `string` | Filesystem path to the HTML report. Use this instead of `report-html` when piping into a custom mailer step — large reports can exceed the shell environment variable size limit |
 | `report-csv` | `string` | CSV report (for data pipelines) |
 | `total-stars` | `string` | Total star count across all tracked repos |
 | `stars-changed` | `string` | Whether any counts changed: `true` or `false` |
