@@ -67,3 +67,36 @@ export function forecastMethodLabel({ method, t }: ForecastMethodLabelParams): s
 
   return method;
 }
+
+export interface ForecastChartSeries {
+  historical: (number | null)[];
+  linearRegression: (number | null)[];
+  weightedMovingAverage: (number | null)[];
+}
+
+interface BuildForecastChartSeriesParams {
+  historicalData: number[];
+  forecastData: ForecastData;
+}
+
+export function buildForecastChartSeries({
+  historicalData,
+  forecastData,
+}: BuildForecastChartSeriesParams): ForecastChartSeries {
+  const forecastLength = forecastData.aggregate.forecasts[0].points.length;
+  const findPoints = (method: string): { predicted: number }[] | undefined =>
+    forecastData.aggregate.forecasts.find((f) => f.method === method)?.points;
+  const lastHistorical = historicalData.at(-1) ?? 0;
+  const padLength = historicalData.length;
+  const projectFromLast = (points: { predicted: number }[] | undefined): (number | null)[] => [
+    ...new Array(padLength - 1).fill(null),
+    lastHistorical,
+    ...(points?.map((p) => p.predicted) ?? []),
+  ];
+
+  return {
+    historical: [...historicalData, ...new Array(forecastLength).fill(null)],
+    linearRegression: projectFromLast(findPoints(ForecastMethod.LINEAR_REGRESSION)),
+    weightedMovingAverage: projectFromLast(findPoints(ForecastMethod.WEIGHTED_MOVING_AVERAGE)),
+  };
+}

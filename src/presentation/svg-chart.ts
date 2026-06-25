@@ -1,6 +1,5 @@
 import { ChartAxisSide } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
-import { ForecastMethod } from '@domain/forecast';
 import { formatDate } from '@domain/formatting';
 import type { History } from '@domain/types';
 import { getTranslations, interpolate, type Locale } from '@i18n';
@@ -14,6 +13,7 @@ import {
   MIN_SNAPSHOTS_FOR_CHART,
   SVG_CHART,
 } from './constants';
+import { buildForecastChartSeries } from './shared';
 
 const XML_ESCAPE_MAP: Record<string, string> = {
   '&': '&amp;',
@@ -549,39 +549,24 @@ export function generateForecastSvgChart({
     interpolate({ template: t.forecast.week, params: { n: p.weekOffset } }),
   );
   const allLabels = [...historicalLabels, ...forecastLabels];
-  const lrForecast = forecastData.aggregate.forecasts.find(
-    (f) => f.method === ForecastMethod.LINEAR_REGRESSION,
-  );
-  const wmaForecast = forecastData.aggregate.forecasts.find(
-    (f) => f.method === ForecastMethod.WEIGHTED_MOVING_AVERAGE,
-  );
-  const lastHistorical = historicalData.at(-1) ?? 0;
-  const padLength = historicalData.length;
+  const series = buildForecastChartSeries({ historicalData, forecastData });
   const datasets: SvgDataset[] = [
     {
       label: t.report.starHistory,
-      data: [...historicalData, ...new Array(forecastLabels.length).fill(null)],
+      data: series.historical,
       color: lineColor ?? COLORS.accent,
       fill: true,
     },
     {
       label: t.forecast.linearRegression,
-      data: [
-        ...new Array(padLength - 1).fill(null),
-        lastHistorical,
-        ...(lrForecast?.points.map((p) => p.predicted) ?? []),
-      ],
+      data: series.linearRegression,
       color: COLORS.positive,
       dashed: true,
       fill: false,
     },
     {
       label: t.forecast.weightedMovingAverage,
-      data: [
-        ...new Array(padLength - 1).fill(null),
-        lastHistorical,
-        ...(wmaForecast?.points.map((p) => p.predicted) ?? []),
-      ],
+      data: series.weightedMovingAverage,
       color: COLORS.negative,
       dashed: true,
       fill: false,
