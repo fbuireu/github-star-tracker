@@ -186,6 +186,43 @@ describe('fetchAllStargazers', () => {
     expect(result[0].sampled).toBe(true);
   });
 
+  it('never samples a page beyond the 40,000-star reachable window', async () => {
+    const octokit = {
+      request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse('alice')] }),
+    };
+
+    await fetchAllStargazers({
+      octokit: octokit as unknown as Octokit,
+      repos: [makeRepo('massive', 50000)],
+      smartSampling: true,
+      smartSamplingThreshold: 1500,
+      smartSamplingPages: 30,
+    });
+
+    const pages = octokit.request.mock.calls.map((c) => c[1].page);
+    expect(Math.max(...pages)).toBeLessThanOrEqual(400);
+  });
+
+  it('stops the full fetch at the reachable page cap for repos above 40,000 stars', async () => {
+    const octokit = {
+      request: vi.fn().mockResolvedValue({
+        data: Array.from({ length: 100 }, (_, i) => makeStargazerResponse(`user-${i}`)),
+      }),
+    };
+
+    const result = await fetchAllStargazers({
+      octokit: octokit as unknown as Octokit,
+      repos: [makeRepo('massive', 50000)],
+      ...samplingOff,
+    });
+
+    expect(octokit.request).toHaveBeenCalledTimes(400);
+    const pages = octokit.request.mock.calls.map((c) => c[1].page);
+    expect(Math.max(...pages)).toBe(400);
+    expect(result[0].sampled).toBe(false);
+    expect(core.warning).not.toHaveBeenCalled();
+  });
+
   it('fetches only the first page when maxPages is 1', async () => {
     const octokit = {
       request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse('alice')] }),
