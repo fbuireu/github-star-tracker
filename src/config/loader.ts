@@ -41,14 +41,15 @@ interface FileConfig {
   chartSmoothing?: boolean;
 }
 
-function readFileKey<T>(parsed: Record<string, unknown>, snakeKey: string): T | undefined {
-  const kebabKey = snakeKey.replaceAll('_', '-');
-  const value = parsed[snakeKey] ?? parsed[kebabKey];
-
-  return value as T | undefined;
+interface ParseConfigYamlParams {
+  content: string;
+  configPath: string;
 }
 
-function parseConfigYaml(content: string, configPath: string): Record<string, unknown> | null {
+function parseConfigYaml({
+  content,
+  configPath,
+}: ParseConfigYamlParams): Record<string, unknown> | null {
   if (content.trim() === '') {
     return null;
   }
@@ -69,36 +70,39 @@ export function loadConfigFile(configPath: string): FileConfig {
     return {};
   }
 
-  const parsed = parseConfigYaml(fs.readFileSync(fullPath, 'utf8'), configPath);
+  const parsed = parseConfigYaml({ content: fs.readFileSync(fullPath, 'utf8'), configPath });
 
   if (!parsed || typeof parsed !== 'object') {
     return {};
   }
 
+  const read = <T>(snakeKey: string): T | undefined =>
+    (parsed[snakeKey] ?? parsed[snakeKey.replaceAll('_', '-')]) as T | undefined;
+
   return {
-    visibility: readFileKey(parsed, 'visibility'),
-    includeArchived: readFileKey(parsed, 'include_archived'),
-    includeForks: readFileKey(parsed, 'include_forks'),
-    excludeRepos: readFileKey(parsed, 'exclude_repos'),
-    onlyRepos: readFileKey(parsed, 'only_repos'),
-    excludeOrgs: readFileKey(parsed, 'exclude_orgs'),
-    onlyOrgs: readFileKey(parsed, 'only_orgs'),
-    minStars: readFileKey(parsed, 'min_stars'),
-    dataBranch: readFileKey(parsed, 'data_branch'),
-    maxHistory: readFileKey(parsed, 'max_history'),
-    includeCharts: readFileKey(parsed, 'include_charts'),
-    locale: readFileKey(parsed, 'locale'),
-    notificationThreshold: readFileKey(parsed, 'notification_threshold'),
-    trackStargazers: readFileKey(parsed, 'track_stargazers'),
-    topRepos: readFileKey(parsed, 'top_repos'),
-    smartSampling: readFileKey(parsed, 'smart_sampling'),
-    smartSamplingThreshold: readFileKey(parsed, 'smart_sampling_threshold'),
-    smartSamplingPages: readFileKey(parsed, 'smart_sampling_pages'),
-    chartLineColor: readFileKey(parsed, 'chart_line_color'),
-    chartLineWidth: readFileKey(parsed, 'chart_line_width'),
-    chartMaxPoints: readFileKey(parsed, 'chart_max_points'),
-    chartYAxisSide: readFileKey(parsed, 'chart_y_axis_side'),
-    chartSmoothing: readFileKey(parsed, 'chart_smoothing'),
+    visibility: read('visibility'),
+    includeArchived: read('include_archived'),
+    includeForks: read('include_forks'),
+    excludeRepos: read('exclude_repos'),
+    onlyRepos: read('only_repos'),
+    excludeOrgs: read('exclude_orgs'),
+    onlyOrgs: read('only_orgs'),
+    minStars: read('min_stars'),
+    dataBranch: read('data_branch'),
+    maxHistory: read('max_history'),
+    includeCharts: read('include_charts'),
+    locale: read('locale'),
+    notificationThreshold: read('notification_threshold'),
+    trackStargazers: read('track_stargazers'),
+    topRepos: read('top_repos'),
+    smartSampling: read('smart_sampling'),
+    smartSamplingThreshold: read('smart_sampling_threshold'),
+    smartSamplingPages: read('smart_sampling_pages'),
+    chartLineColor: read('chart_line_color'),
+    chartLineWidth: read('chart_line_width'),
+    chartMaxPoints: read('chart_max_points'),
+    chartYAxisSide: read('chart_y_axis_side'),
+    chartSmoothing: read('chart_smoothing'),
   };
 }
 
@@ -198,7 +202,7 @@ export function loadConfig(): Config {
       parseBool(inputIncludeCharts) ?? fileConfig.includeCharts ?? DEFAULTS.includeCharts,
     locale: isValidLocale(locale) ? locale : DEFAULTS.locale,
     notificationThreshold:
-      parseNotificationThreshold({ value: inputNotificationThreshold }) ??
+      parseNotificationThreshold(inputNotificationThreshold) ??
       fileConfig.notificationThreshold ??
       DEFAULTS.notificationThreshold,
     trackStargazers:

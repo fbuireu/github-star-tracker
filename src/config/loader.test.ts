@@ -137,23 +137,23 @@ describe('parseDecimal', () => {
 
 describe('parseNotificationThreshold', () => {
   it('returns undefined for empty/null/undefined', () => {
-    expect(parseNotificationThreshold({ value: '' })).toBeUndefined();
-    expect(parseNotificationThreshold({ value: null })).toBeUndefined();
-    expect(parseNotificationThreshold({ value: undefined })).toBeUndefined();
+    expect(parseNotificationThreshold('')).toBeUndefined();
+    expect(parseNotificationThreshold(null)).toBeUndefined();
+    expect(parseNotificationThreshold(undefined)).toBeUndefined();
   });
 
   it('returns "auto" for "auto"', () => {
-    expect(parseNotificationThreshold({ value: 'auto' })).toBe('auto');
+    expect(parseNotificationThreshold('auto')).toBe('auto');
   });
 
   it('parses valid integers', () => {
-    expect(parseNotificationThreshold({ value: '0' })).toBe(0);
-    expect(parseNotificationThreshold({ value: '5' })).toBe(5);
-    expect(parseNotificationThreshold({ value: '10' })).toBe(10);
+    expect(parseNotificationThreshold('0')).toBe(0);
+    expect(parseNotificationThreshold('5')).toBe(5);
+    expect(parseNotificationThreshold('10')).toBe(10);
   });
 
   it('returns undefined for non-numeric strings', () => {
-    expect(parseNotificationThreshold({ value: 'abc' })).toBeUndefined();
+    expect(parseNotificationThreshold('abc')).toBeUndefined();
   });
 });
 

@@ -1,7 +1,9 @@
-import type { ForecastData } from '@domain/forecast';
+import { FORECAST_WEEKS, type ForecastData, ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
 import type { ComparisonResults, History, RepoResult } from '@domain/types';
-import { getTranslations, type Locale } from '@i18n';
+import { getTranslations, interpolate, type Locale } from '@i18n';
+
+type Translations = ReturnType<typeof getTranslations>;
 
 export interface GenerateReportParams {
   results: ComparisonResults;
@@ -46,4 +48,22 @@ export function prepareReportData({
     now: new Date().toISOString().split('T')[0],
     prev: previousTimestamp ? previousTimestamp.split('T')[0] : t.report.firstRun,
   };
+}
+
+export function buildForecastWeekHeaders(t: Translations): string[] {
+  return Array.from({ length: FORECAST_WEEKS }, (_, i) =>
+    interpolate({ template: t.forecast.week, params: { n: i + 1 } }),
+  );
+}
+
+interface ForecastMethodLabelParams {
+  method: string;
+  t: Translations;
+}
+
+export function forecastMethodLabel({ method, t }: ForecastMethodLabelParams): string {
+  if (method === ForecastMethod.LINEAR_REGRESSION) return t.forecast.linearRegression;
+  if (method === ForecastMethod.WEIGHTED_MOVING_AVERAGE) return t.forecast.weightedMovingAverage;
+
+  return method;
 }

@@ -1,4 +1,3 @@
-import { FORECAST_WEEKS, ForecastMethod } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
 import { getTranslations, interpolate } from '@i18n';
 import {
@@ -9,7 +8,7 @@ import {
 } from './chart';
 import { COLORS, MIN_SNAPSHOTS_FOR_CHART } from './constants';
 import type { GenerateReportParams } from './shared';
-import { prepareReportData } from './shared';
+import { buildForecastWeekHeaders, forecastMethodLabel, prepareReportData } from './shared';
 
 function deltaColor(delta: number): string {
   if (delta > 0) return COLORS.positive;
@@ -241,15 +240,7 @@ interface BuildHtmlForecastTableParams {
 }
 
 function buildHtmlForecastTable({ title, forecasts, t }: BuildHtmlForecastTableParams): string {
-  const weekHeaders = Array.from({ length: FORECAST_WEEKS }, (_, i) =>
-    interpolate({ template: t.forecast.week, params: { n: i + 1 } }),
-  );
-
-  const methodLabel = (method: string): string => {
-    if (method === ForecastMethod.LINEAR_REGRESSION) return t.forecast.linearRegression;
-    if (method === ForecastMethod.WEIGHTED_MOVING_AVERAGE) return t.forecast.weightedMovingAverage;
-    return method;
-  };
+  const weekHeaders = buildForecastWeekHeaders(t);
 
   return `
     <h4 style="font-size:14px;margin-bottom:8px;">${title}</h4>
@@ -265,7 +256,7 @@ function buildHtmlForecastTable({ title, forecasts, t }: BuildHtmlForecastTableP
           .map(
             (f) => `
         <tr>
-          <td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};font-size:12px;">${methodLabel(f.method)}</td>
+          <td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};font-size:12px;">${forecastMethodLabel({ method: f.method, t })}</td>
           ${f.points.map((p) => `<td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};text-align:right;font-size:12px;">${p.predicted}</td>`).join('')}
         </tr>`,
           )
