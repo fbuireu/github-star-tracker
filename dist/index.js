@@ -35626,7 +35626,8 @@ var DEFAULTS2 = {
   chartSmoothing: true,
   chartShowPoints: true,
   chartAnimation: true,
-  chartMilestones: true
+  chartMilestones: true,
+  chartCustomMilestones: []
 };
 
 // src/i18n/ca.json
@@ -38103,6 +38104,13 @@ function parseList(value) {
   if (!value || value.trim() === "") return [];
   return value.split(",").map((segment) => segment.trim()).filter(Boolean);
 }
+function parseNumberList(value) {
+  return [
+    ...new Set(
+      parseList(value).map((segment) => Number.parseInt(segment, 10)).filter((parsed) => Number.isFinite(parsed) && parsed > 0)
+    )
+  ].sort((a, b) => a - b);
+}
 function parseBool(value) {
   if (isBlank(value)) return void 0;
   return value === "true" || value === true;
@@ -38182,7 +38190,8 @@ function loadConfigFile(configPath) {
     chartSmoothing: read("chart_smoothing"),
     chartShowPoints: read("chart_show_points"),
     chartAnimation: read("chart_animation"),
-    chartMilestones: read("chart_milestones")
+    chartMilestones: read("chart_milestones"),
+    chartCustomMilestones: read("chart_custom_milestones")
   };
 }
 function loadConfig() {
@@ -38214,12 +38223,14 @@ function loadConfig() {
   const inputChartShowPoints = getInput("chart-show-points");
   const inputChartAnimation = getInput("chart-animation");
   const inputChartMilestones = getInput("chart-milestones");
+  const inputChartCustomMilestones = getInput("chart-custom-milestones");
   const visibility = inputVisibility || fileConfig.visibility || DEFAULTS2.visibility;
   if (!(visibility in VISIBILITY_CONFIG)) {
     throw new Error(
       `Invalid visibility "${visibility}". Must be one of: ${Object.keys(VISIBILITY_CONFIG).join(", ")}`
     );
   }
+  const fileCustomMilestones = Array.isArray(fileConfig.chartCustomMilestones) ? parseNumberList(fileConfig.chartCustomMilestones.join(",")) : [];
   const locale = inputLocale || fileConfig.locale || DEFAULTS2.locale;
   if (!isValidLocale(locale)) {
     warning(`Invalid locale "${locale}". Falling back to "en"`);
@@ -38271,7 +38282,8 @@ function loadConfig() {
     chartSmoothing: parseBool(inputChartSmoothing) ?? fileConfig.chartSmoothing ?? DEFAULTS2.chartSmoothing,
     chartShowPoints: parseBool(inputChartShowPoints) ?? fileConfig.chartShowPoints ?? DEFAULTS2.chartShowPoints,
     chartAnimation: parseBool(inputChartAnimation) ?? fileConfig.chartAnimation ?? DEFAULTS2.chartAnimation,
-    chartMilestones: parseBool(inputChartMilestones) ?? fileConfig.chartMilestones ?? DEFAULTS2.chartMilestones
+    chartMilestones: parseBool(inputChartMilestones) ?? fileConfig.chartMilestones ?? DEFAULTS2.chartMilestones,
+    chartCustomMilestones: inputChartCustomMilestones ? parseNumberList(inputChartCustomMilestones) : fileCustomMilestones.length > 0 ? fileCustomMilestones : DEFAULTS2.chartCustomMilestones
   };
   info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`
@@ -39280,11 +39292,10 @@ function tensionFor(smoothing) {
 }
 function buildMilestoneAnnotations({
   minStars,
-  maxStars
+  maxStars,
+  thresholds = MILESTONE_THRESHOLDS
 }) {
-  const visible = MILESTONE_THRESHOLDS.filter(
-    (milestone) => milestone > minStars && milestone < maxStars
-  );
+  const visible = thresholds.filter((milestone) => milestone > minStars && milestone < maxStars);
   if (visible.length === 0) return null;
   const annotations = {};
   for (const milestone of visible) {
@@ -39387,7 +39398,8 @@ function generateChartUrl({
   locale,
   smoothing = true,
   showPoints = true,
-  milestones = true
+  milestones = true,
+  customMilestones
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -39399,7 +39411,8 @@ function generateChartUrl({
   const datasets = [buildStarsDataset({ data, tension, showPoints })];
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
-  const annotation = milestones ? buildMilestoneAnnotations({ minStars, maxStars }) : null;
+  const thresholds = customMilestones && customMilestones.length > 0 ? customMilestones : MILESTONE_THRESHOLDS;
+  const annotation = milestones ? buildMilestoneAnnotations({ minStars, maxStars, thresholds }) : null;
   const config = buildChartConfig({
     labels,
     datasets,
@@ -39555,7 +39568,8 @@ function generateHtmlReport({
   topRepos: topReposCount = 10,
   smoothing = true,
   showPoints = true,
-  milestones = true
+  milestones = true,
+  customMilestones
 }) {
   const { summary: summary2 } = results;
   const t = getTranslations(locale);
@@ -39610,7 +39624,7 @@ function generateHtmlReport({
   const chartSection = hasChartHistory ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F4C8} ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, customMilestones })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
         ${comparisonChartUrl ? `
         <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
         <img src="${comparisonChartUrl}" alt="${t.report.topRepositories}" style="max-width:100%;height:auto;border-radius:4px;">` : ""}
@@ -40010,6 +40024,7 @@ function renderSvg({
   title,
   showLegend,
   milestones = false,
+  milestoneThresholds = MILESTONE_THRESHOLDS,
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
@@ -40038,7 +40053,7 @@ function renderSvg({
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
     <text x="${yLabelX}" y="${y + 4}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount(value)}</text>`;
   }).join("\n    ");
-  const milestoneLines = milestones ? MILESTONE_THRESHOLDS.filter((milestone) => milestone > minData && milestone < maxData).map((value) => {
+  const milestoneLines = milestones ? milestoneThresholds.filter((milestone) => milestone > minData && milestone < maxData).map((value) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="1" stroke-dasharray="6,6" />
     <text x="${margin.left + 4}" y="${y - 4}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount(value)} \u2605</text>`;
@@ -40192,7 +40207,8 @@ function generateSvgChart({
   smoothing,
   showPoints,
   animate,
-  milestones = true
+  milestones = true,
+  customMilestones
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -40209,6 +40225,7 @@ function generateSvgChart({
     title: title ?? "Star History",
     showLegend: false,
     milestones,
+    milestoneThresholds: customMilestones && customMilestones.length > 0 ? customMilestones : MILESTONE_THRESHOLDS,
     lineWidth,
     yAxisSide,
     smoothing,
@@ -40457,7 +40474,8 @@ async function trackStars() {
           topRepos: config.topRepos,
           smoothing: config.chartSmoothing,
           showPoints: config.chartShowPoints,
-          milestones: config.chartMilestones
+          milestones: config.chartMilestones,
+          customMilestones: config.chartCustomMilestones
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport(reportParams);
@@ -40488,7 +40506,8 @@ async function trackStars() {
             smoothing: config.chartSmoothing,
             showPoints: config.chartShowPoints,
             animate: config.chartAnimation,
-            milestones: config.chartMilestones
+            milestones: config.chartMilestones,
+            customMilestones: config.chartCustomMilestones
           });
           if (svgChart) {
             writeChart({ dataDir, filename: "star-history.svg", svg: svgChart });

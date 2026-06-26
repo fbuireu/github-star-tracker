@@ -429,6 +429,24 @@ Whether to draw milestone reference lines on the main star-history chart.
 
 ---
 
+### `chart-custom-milestones`
+
+Custom star counts to use as milestone reference lines instead of the built-in defaults.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` (comma-separated integers) |
+| **Default** | _(empty)_ |
+
+A comma-separated list of positive star counts (e.g. `"250, 750, 2500"`) that replaces the built-in milestone thresholds. Values are sorted and de-duplicated; non-positive or non-numeric entries are ignored. When empty, the default milestones (10, 50, 100, 500, 1k, 5k, 10k) are used. Only the milestones that fall within the chart's visible range are drawn. Requires [`chart-milestones`](#chart-milestones) to be enabled — when milestones are turned off, no reference lines are drawn regardless of this value.
+
+```yaml
+with:
+  chart-custom-milestones: "250, 750, 2500"
+```
+
+---
+
 ## Filtering Options
 
 ### `include-archived`

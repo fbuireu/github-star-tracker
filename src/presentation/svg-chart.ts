@@ -161,6 +161,7 @@ interface RenderSvgParams {
   title: string;
   showLegend: boolean;
   milestones?: boolean;
+  milestoneThresholds?: readonly number[];
   lineWidth?: number;
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
@@ -174,6 +175,7 @@ function renderSvg({
   title,
   showLegend,
   milestones = false,
+  milestoneThresholds = MILESTONE_THRESHOLDS,
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
@@ -207,7 +209,8 @@ function renderSvg({
     .join('\n    ');
 
   const milestoneLines = milestones
-    ? MILESTONE_THRESHOLDS.filter((milestone) => milestone > minData && milestone < maxData)
+    ? milestoneThresholds
+        .filter((milestone) => milestone > minData && milestone < maxData)
         .map((value) => {
           const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
           return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="1" stroke-dasharray="6,6" />
@@ -413,6 +416,7 @@ interface GenerateSvgChartParams {
   showPoints?: boolean;
   animate?: boolean;
   milestones?: boolean;
+  customMilestones?: readonly number[];
 }
 
 export function generateSvgChart({
@@ -427,6 +431,7 @@ export function generateSvgChart({
   showPoints,
   animate,
   milestones = true,
+  customMilestones,
 }: GenerateSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -445,6 +450,8 @@ export function generateSvgChart({
     title: title ?? 'Star History',
     showLegend: false,
     milestones,
+    milestoneThresholds:
+      customMilestones && customMilestones.length > 0 ? customMilestones : MILESTONE_THRESHOLDS,
     lineWidth,
     yAxisSide,
     smoothing,

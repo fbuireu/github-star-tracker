@@ -11,6 +11,7 @@ import {
   parseList,
   parseNotificationThreshold,
   parseNumber,
+  parseNumberList,
 } from './parsers';
 import type { Config, Visibility } from './types';
 import { ChartAxisSide } from './types';
@@ -42,6 +43,7 @@ interface FileConfig {
   chartShowPoints?: boolean;
   chartAnimation?: boolean;
   chartMilestones?: boolean;
+  chartCustomMilestones?: number[];
 }
 
 interface ParseConfigYamlParams {
@@ -109,6 +111,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     chartShowPoints: read('chart_show_points'),
     chartAnimation: read('chart_animation'),
     chartMilestones: read('chart_milestones'),
+    chartCustomMilestones: read('chart_custom_milestones'),
   };
 }
 
@@ -142,6 +145,7 @@ export function loadConfig(): Config {
   const inputChartShowPoints = core.getInput('chart-show-points');
   const inputChartAnimation = core.getInput('chart-animation');
   const inputChartMilestones = core.getInput('chart-milestones');
+  const inputChartCustomMilestones = core.getInput('chart-custom-milestones');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -152,6 +156,10 @@ export function loadConfig(): Config {
       `Invalid visibility "${visibility}". Must be one of: ${Object.keys(VISIBILITY_CONFIG).join(', ')}`,
     );
   }
+
+  const fileCustomMilestones = Array.isArray(fileConfig.chartCustomMilestones)
+    ? parseNumberList(fileConfig.chartCustomMilestones.join(','))
+    : [];
 
   const locale = inputLocale || fileConfig.locale || DEFAULTS.locale;
   if (!isValidLocale(locale)) {
@@ -240,6 +248,11 @@ export function loadConfig(): Config {
       parseBool(inputChartAnimation) ?? fileConfig.chartAnimation ?? DEFAULTS.chartAnimation,
     chartMilestones:
       parseBool(inputChartMilestones) ?? fileConfig.chartMilestones ?? DEFAULTS.chartMilestones,
+    chartCustomMilestones: inputChartCustomMilestones
+      ? parseNumberList(inputChartCustomMilestones)
+      : fileCustomMilestones.length > 0
+        ? fileCustomMilestones
+        : DEFAULTS.chartCustomMilestones,
   };
 
   core.info(

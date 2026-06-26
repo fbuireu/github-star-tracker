@@ -17,6 +17,7 @@ export interface GenerateReportParams {
   smoothing?: boolean;
   showPoints?: boolean;
   milestones?: boolean;
+  customMilestones?: readonly number[];
 }
 
 export interface ReportData {
