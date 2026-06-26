@@ -175,6 +175,7 @@ const defaultConfig = {
   chartYAxisSide: 'left' as const,
   chartSmoothing: true,
   chartShowPoints: true,
+  chartAnimation: true,
 };
 
 const defaultSummary = {

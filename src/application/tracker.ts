@@ -192,6 +192,7 @@ export async function trackStars(): Promise<void> {
             yAxisSide: config.chartYAxisSide,
             smoothing: config.chartSmoothing,
             showPoints: config.chartShowPoints,
+            animate: config.chartAnimation,
           });
           if (svgChart) {
             writeChart({ dataDir, filename: 'star-history.svg', svg: svgChart });
@@ -223,6 +224,7 @@ export async function trackStars(): Promise<void> {
               yAxisSide: config.chartYAxisSide,
               smoothing: config.chartSmoothing,
               showPoints: config.chartShowPoints,
+              animate: config.chartAnimation,
             });
 
             if (repoChart) {
@@ -242,6 +244,7 @@ export async function trackStars(): Promise<void> {
               yAxisSide: config.chartYAxisSide,
               smoothing: config.chartSmoothing,
               showPoints: config.chartShowPoints,
+              animate: config.chartAnimation,
             });
 
             if (comparisonChart) {
@@ -260,6 +263,7 @@ export async function trackStars(): Promise<void> {
               yAxisSide: config.chartYAxisSide,
               smoothing: config.chartSmoothing,
               showPoints: config.chartShowPoints,
+              animate: config.chartAnimation,
             });
 
             if (forecastChart) {

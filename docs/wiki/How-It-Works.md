@@ -128,6 +128,7 @@ chart_max_points: 30
 chart_y_axis_side: left
 chart_smoothing: true
 chart_show_points: true
+chart_animation: true
 ```
 
 ---

@@ -165,6 +165,7 @@ interface RenderSvgParams {
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
   showPoints?: boolean;
+  animate?: boolean;
 }
 
 function renderSvg({
@@ -177,6 +178,7 @@ function renderSvg({
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
   showPoints = true,
+  animate = true,
 }: RenderSvgParams): string {
   const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
   const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
@@ -293,9 +295,10 @@ function renderSvg({
                 )
                 .join('\n    ');
 
-        const animationStyle = dataset.dashed
-          ? ''
-          : `
+        const animationStyle =
+          dataset.dashed || !animate
+            ? ''
+            : `
     .data-line-${datasetIndex} {
       stroke-dasharray: ${pathLength};
       stroke-dashoffset: ${pathLength};
@@ -346,9 +349,8 @@ function renderSvg({
     margin.top -
     (showLegend ? SVG_CHART.header.titleWithLegendOffset : SVG_CHART.header.titleOffset);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART.width} ${CHART.height}" width="${CHART.width}" height="${CHART.height}">
-  <style>
-    @keyframes drawLine {
+  const animationDefs = animate
+    ? `@keyframes drawLine {
       to { stroke-dashoffset: 0; }
     }
     @keyframes fadeInPoint {
@@ -359,7 +361,12 @@ function renderSvg({
       opacity: 0;
       animation: fadeInPoint ${animation.pointDuration}s ease-out forwards;
     }
-    .chart-bg { fill: ${LIGHT_PALETTE.white}; }
+    `
+    : '';
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART.width} ${CHART.height}" width="${CHART.width}" height="${CHART.height}">
+  <style>
+    ${animationDefs}.chart-bg { fill: ${LIGHT_PALETTE.white}; }
     .chart-text { fill: ${LIGHT_PALETTE.text}; }
     .chart-muted { fill: ${LIGHT_PALETTE.neutral}; }
     .chart-grid { stroke: ${LIGHT_PALETTE.cellBorder}; }
@@ -404,6 +411,7 @@ interface GenerateSvgChartParams {
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
   showPoints?: boolean;
+  animate?: boolean;
 }
 
 export function generateSvgChart({
@@ -416,6 +424,7 @@ export function generateSvgChart({
   yAxisSide,
   smoothing,
   showPoints,
+  animate,
 }: GenerateSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -438,6 +447,7 @@ export function generateSvgChart({
     yAxisSide,
     smoothing,
     showPoints,
+    animate,
   });
 }
 
@@ -452,6 +462,7 @@ interface GeneratePerRepoSvgChartParams {
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
   showPoints?: boolean;
+  animate?: boolean;
 }
 
 export function generatePerRepoSvgChart({
@@ -465,6 +476,7 @@ export function generatePerRepoSvgChart({
   yAxisSide,
   smoothing,
   showPoints,
+  animate,
 }: GeneratePerRepoSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -490,6 +502,7 @@ export function generatePerRepoSvgChart({
     yAxisSide,
     smoothing,
     showPoints,
+    animate,
   });
 }
 
@@ -503,6 +516,7 @@ interface GenerateComparisonSvgChartParams {
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
   showPoints?: boolean;
+  animate?: boolean;
 }
 
 export function generateComparisonSvgChart({
@@ -515,6 +529,7 @@ export function generateComparisonSvgChart({
   yAxisSide,
   smoothing,
   showPoints,
+  animate,
 }: GenerateComparisonSvgChartParams): string | null {
   if (
     !history.snapshots ||
@@ -559,6 +574,7 @@ export function generateComparisonSvgChart({
     yAxisSide,
     smoothing,
     showPoints,
+    animate,
   });
 }
 
@@ -573,6 +589,7 @@ interface GenerateForecastSvgChartParams {
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
   showPoints?: boolean;
+  animate?: boolean;
 }
 
 export function generateForecastSvgChart({
@@ -586,6 +603,7 @@ export function generateForecastSvgChart({
   yAxisSide,
   smoothing,
   showPoints,
+  animate,
 }: GenerateForecastSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -635,5 +653,6 @@ export function generateForecastSvgChart({
     yAxisSide,
     smoothing,
     showPoints,
+    animate,
   });
 }

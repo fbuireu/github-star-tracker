@@ -125,6 +125,16 @@ describe('generateSvgChart', () => {
     expect(result).toContain('stroke-dashoffset');
   });
 
+  it('omits CSS animations when animation is disabled', () => {
+    const history = makeHistory([10, 20, 30]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en', animate: false }));
+
+    expect(result).not.toContain('@keyframes');
+    expect(result).not.toContain('animation:');
+    expect(result).not.toContain('stroke-dashoffset');
+    expect(result).toContain('<circle');
+  });
+
   it('includes data points as circles', () => {
     const history = makeHistory([10, 20, 30, 40, 50]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));

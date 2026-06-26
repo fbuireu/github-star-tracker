@@ -43,4 +43,5 @@ export interface Config {
   chartYAxisSide: ChartAxisSide;
   chartSmoothing: boolean;
   chartShowPoints: boolean;
+  chartAnimation: boolean;
 }

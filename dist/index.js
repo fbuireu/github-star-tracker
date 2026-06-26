@@ -32987,10 +32987,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -35282,7 +35282,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35405,7 +35405,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -35624,7 +35624,8 @@ var DEFAULTS2 = {
   chartMaxPoints: 30,
   chartYAxisSide: ChartAxisSide.LEFT,
   chartSmoothing: true,
-  chartShowPoints: true
+  chartShowPoints: true,
+  chartAnimation: true
 };
 
 // src/i18n/ca.json
@@ -38178,7 +38179,8 @@ function loadConfigFile(configPath) {
     chartMaxPoints: read("chart_max_points"),
     chartYAxisSide: read("chart_y_axis_side"),
     chartSmoothing: read("chart_smoothing"),
-    chartShowPoints: read("chart_show_points")
+    chartShowPoints: read("chart_show_points"),
+    chartAnimation: read("chart_animation")
   };
 }
 function loadConfig() {
@@ -38208,6 +38210,7 @@ function loadConfig() {
   const inputChartYAxisSide = getInput("chart-y-axis-side");
   const inputChartSmoothing = getInput("chart-smoothing");
   const inputChartShowPoints = getInput("chart-show-points");
+  const inputChartAnimation = getInput("chart-animation");
   const visibility = inputVisibility || fileConfig.visibility || DEFAULTS2.visibility;
   if (!(visibility in VISIBILITY_CONFIG)) {
     throw new Error(
@@ -38263,7 +38266,8 @@ function loadConfig() {
     chartMaxPoints: parseNumber(inputChartMaxPoints) ?? fileConfig.chartMaxPoints ?? DEFAULTS2.chartMaxPoints,
     chartYAxisSide,
     chartSmoothing: parseBool(inputChartSmoothing) ?? fileConfig.chartSmoothing ?? DEFAULTS2.chartSmoothing,
-    chartShowPoints: parseBool(inputChartShowPoints) ?? fileConfig.chartShowPoints ?? DEFAULTS2.chartShowPoints
+    chartShowPoints: parseBool(inputChartShowPoints) ?? fileConfig.chartShowPoints ?? DEFAULTS2.chartShowPoints,
+    chartAnimation: parseBool(inputChartAnimation) ?? fileConfig.chartAnimation ?? DEFAULTS2.chartAnimation
   };
   info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`
@@ -40003,7 +40007,8 @@ function renderSvg({
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
-  showPoints = true
+  showPoints = true,
+  animate = true
 }) {
   const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
   const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
@@ -40083,7 +40088,7 @@ function renderSvg({
       const circles = dataset.dashed || !showPoints ? "" : segment.points.map(
         (point, pointIndex) => `<circle cx="${point.x}" cy="${point.y}" r="${pointRadius}" fill="${dataset.color}" class="data-point" style="animation-delay: ${((segment.startIndex + pointIndex) * animation.pointStagger + animation.pointDelay).toFixed(2)}s" />`
       ).join("\n    ");
-      const animationStyle = dataset.dashed ? "" : `
+      const animationStyle = dataset.dashed || !animate ? "" : `
     .data-line-${datasetIndex} {
       stroke-dasharray: ${pathLength};
       stroke-dashoffset: ${pathLength};
@@ -40120,9 +40125,7 @@ function renderSvg({
     }).join("\n    ");
   })() : "";
   const titleY = margin.top - (showLegend ? SVG_CHART.header.titleWithLegendOffset : SVG_CHART.header.titleOffset);
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART.width} ${CHART.height}" width="${CHART.width}" height="${CHART.height}">
-  <style>
-    @keyframes drawLine {
+  const animationDefs = animate ? `@keyframes drawLine {
       to { stroke-dashoffset: 0; }
     }
     @keyframes fadeInPoint {
@@ -40133,7 +40136,10 @@ function renderSvg({
       opacity: 0;
       animation: fadeInPoint ${animation.pointDuration}s ease-out forwards;
     }
-    .chart-bg { fill: ${LIGHT_PALETTE.white}; }
+    ` : "";
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART.width} ${CHART.height}" width="${CHART.width}" height="${CHART.height}">
+  <style>
+    ${animationDefs}.chart-bg { fill: ${LIGHT_PALETTE.white}; }
     .chart-text { fill: ${LIGHT_PALETTE.text}; }
     .chart-muted { fill: ${LIGHT_PALETTE.neutral}; }
     .chart-grid { stroke: ${LIGHT_PALETTE.cellBorder}; }
@@ -40178,7 +40184,8 @@ function generateSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
-  showPoints
+  showPoints,
+  animate
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -40198,7 +40205,8 @@ function generateSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
-    showPoints
+    showPoints,
+    animate
   });
 }
 function generatePerRepoSvgChart({
@@ -40211,7 +40219,8 @@ function generatePerRepoSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
-  showPoints
+  showPoints,
+  animate
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -40234,7 +40243,8 @@ function generatePerRepoSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
-    showPoints
+    showPoints,
+    animate
   });
 }
 function generateComparisonSvgChart({
@@ -40246,7 +40256,8 @@ function generateComparisonSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
-  showPoints
+  showPoints,
+  animate
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
@@ -40282,7 +40293,8 @@ function generateComparisonSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
-    showPoints
+    showPoints,
+    animate
   });
 }
 function generateForecastSvgChart({
@@ -40295,7 +40307,8 @@ function generateForecastSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
-  showPoints
+  showPoints,
+  animate
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -40342,7 +40355,8 @@ function generateForecastSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
-    showPoints
+    showPoints,
+    animate
   });
 }
 
@@ -40464,7 +40478,8 @@ async function trackStars() {
             maxPoints: config.chartMaxPoints,
             yAxisSide: config.chartYAxisSide,
             smoothing: config.chartSmoothing,
-            showPoints: config.chartShowPoints
+            showPoints: config.chartShowPoints,
+            animate: config.chartAnimation
           });
           if (svgChart) {
             writeChart({ dataDir, filename: "star-history.svg", svg: svgChart });
@@ -40489,7 +40504,8 @@ async function trackStars() {
               maxPoints: config.chartMaxPoints,
               yAxisSide: config.chartYAxisSide,
               smoothing: config.chartSmoothing,
-              showPoints: config.chartShowPoints
+              showPoints: config.chartShowPoints,
+              animate: config.chartAnimation
             });
             if (repoChart) {
               const filename = `${repoName.replace("/", "-")}.svg`;
@@ -40506,7 +40522,8 @@ async function trackStars() {
               maxPoints: config.chartMaxPoints,
               yAxisSide: config.chartYAxisSide,
               smoothing: config.chartSmoothing,
-              showPoints: config.chartShowPoints
+              showPoints: config.chartShowPoints,
+              animate: config.chartAnimation
             });
             if (comparisonChart) {
               writeChart({ dataDir, filename: "comparison.svg", svg: comparisonChart });
@@ -40522,7 +40539,8 @@ async function trackStars() {
               maxPoints: config.chartMaxPoints,
               yAxisSide: config.chartYAxisSide,
               smoothing: config.chartSmoothing,
-              showPoints: config.chartShowPoints
+              showPoints: config.chartShowPoints,
+              animate: config.chartAnimation
             });
             if (forecastChart) {
               writeChart({ dataDir, filename: "forecast.svg", svg: forecastChart });

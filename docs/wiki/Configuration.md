@@ -403,6 +403,19 @@ Whether to draw a marker on each data point.
 
 ---
 
+### `chart-animation`
+
+Whether the SVG charts animate when first rendered.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `true` |
+
+`true` draws the line and fades in the points with CSS animations; `false` renders the charts static. Static is preferable for contexts that do not play CSS animations (most email clients, raster previews). Only affects the SVG charts; the QuickChart images embedded in the email are static regardless.
+
+---
+
 ## Filtering Options
 
 ### `include-archived`
