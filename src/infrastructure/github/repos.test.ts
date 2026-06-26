@@ -61,6 +61,10 @@ const defaultConfig: Config = {
   chartSmoothing: true,
   chartShowPoints: true,
   chartAnimation: true,
+  chartMilestones: true,
+  chartBeginAtZero: false,
+  chartTheme: 'auto',
+  chartCustomMilestones: [],
 };
 
 describe('filterRepos', () => {

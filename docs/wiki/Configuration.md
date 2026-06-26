@@ -416,6 +416,74 @@ Whether the SVG charts animate when first rendered.
 
 ---
 
+### `chart-milestones`
+
+Whether to draw milestone reference lines on the main star-history chart.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `true` |
+
+`true` draws dashed reference lines at the star milestones (10, 50, 100, 500, 1k, 5k, 10k) that fall within the visible range; `false` hides them. Applies to the main chart in both the SVG output and the email report.
+
+---
+
+### `chart-begin-at-zero`
+
+Where the chart Y-axis starts.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `false` |
+
+`false` (the default) zooms the Y-axis into the data range so day-to-day changes are visible; `true` anchors the Y-axis at zero for an absolute view of scale. Applies to all charts (SVG and email).
+
+---
+
+### `chart-theme`
+
+Color theme for the charts and the email report.
+
+| Property | Value |
+|---|---|
+| **Type** | `auto`, `light`, `dark` |
+| **Default** | `auto` |
+
+`auto` makes the SVG charts follow the reader's `prefers-color-scheme` (light or dark) via a media query. `light` and `dark` force that palette. Note that most email clients ignore `prefers-color-scheme`, so the QuickChart images and the email body render in light under `auto`; set `dark` explicitly if you want a dark email.
+
+---
+
+### `chart-custom-milestones`
+
+Custom star counts to use as milestone reference lines instead of the built-in defaults.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` (comma-separated integers) |
+| **Default** | _(empty)_ |
+
+A comma-separated list of positive star counts (e.g. `"250, 750, 2500"`) that replaces the built-in milestone thresholds. Values are sorted and de-duplicated; non-positive or non-numeric entries are ignored, and an input with no valid numbers logs a warning and falls back to the built-in milestones. When empty, the default milestones (10, 50, 100, 500, 1k, 5k, 10k) are used. Only the milestones that fall within the chart's visible range are drawn. Requires [`chart-milestones`](#chart-milestones) to be enabled — when milestones are turned off, no reference lines are drawn regardless of this value.
+
+In a config file you can provide either a quoted comma-separated string or a YAML list:
+
+```yaml
+chart_custom_milestones: "250, 750, 2500"
+# or
+chart_custom_milestones:
+  - 250
+  - 750
+  - 2500
+```
+
+```yaml
+with:
+  chart-custom-milestones: "250, 750, 2500"
+```
+
+---
+
 ## Filtering Options
 
 ### `include-archived`

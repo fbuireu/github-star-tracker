@@ -531,6 +531,145 @@ describe('loadConfig', () => {
     expect(config.chartAnimation).toBe(false);
   });
 
+  it('defaults chart-milestones to true', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartMilestones).toBe(true);
+  });
+
+  it('parses chart-milestones input as false', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-milestones') return 'false';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartMilestones).toBe(false);
+  });
+
+  it('defaults chart-begin-at-zero to false', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartBeginAtZero).toBe(false);
+  });
+
+  it('parses chart-begin-at-zero input as true', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-begin-at-zero') return 'true';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartBeginAtZero).toBe(true);
+  });
+
+  it('defaults chart-theme to auto', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartTheme).toBe('auto');
+  });
+
+  it('parses chart-theme input as dark', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-theme') return 'dark';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartTheme).toBe('dark');
+  });
+
+  it('warns and falls back to auto for an invalid chart-theme', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-theme') return 'sepia';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartTheme).toBe('auto');
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid chart-theme'));
+  });
+
+  it('defaults chart-custom-milestones to an empty list', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartCustomMilestones).toEqual([]);
+  });
+
+  it('parses, sorts and de-duplicates chart-custom-milestones input', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-custom-milestones') return '750, 250, 750, abc, -5, 2500';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartCustomMilestones).toEqual([250, 750, 2500]);
+  });
+
+  it('reads chart-custom-milestones from the config file as a YAML list', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('chart_custom_milestones:\n- 300\n- 100\n- 300');
+
+    const config = loadConfig();
+
+    expect(config.chartCustomMilestones).toEqual([100, 300]);
+  });
+
+  it('prefers the chart-custom-milestones input over the config file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('chart_custom_milestones:\n- 999');
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-custom-milestones') return '42';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartCustomMilestones).toEqual([42]);
+  });
+
+  it('reads chart-custom-milestones from the config file as a quoted string', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('chart_custom_milestones: "300, 100, 300"');
+
+    const config = loadConfig();
+
+    expect(config.chartCustomMilestones).toEqual([100, 300]);
+  });
+
+  it('warns and falls back when chart-custom-milestones input has no valid numbers', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-custom-milestones') return 'abc, -5, 0';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartCustomMilestones).toEqual([]);
+    expect(core.warning).toHaveBeenCalledWith(
+      expect.stringContaining('Invalid chart-custom-milestones'),
+    );
+  });
+
   it('defaults track-stargazers to false', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 

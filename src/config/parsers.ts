@@ -10,6 +10,16 @@ export function parseList(value: string | null | undefined): string[] {
     .filter(Boolean);
 }
 
+export function parseNumberList(value: string | null | undefined): number[] {
+  return [
+    ...new Set(
+      parseList(value)
+        .map((segment) => Number.parseInt(segment, 10))
+        .filter((parsed) => Number.isFinite(parsed) && parsed > 0),
+    ),
+  ].sort((a, b) => a - b);
+}
+
 export function parseBool(value: string | boolean | null | undefined): boolean | undefined {
   if (isBlank(value)) return undefined;
   return value === 'true' || value === true;

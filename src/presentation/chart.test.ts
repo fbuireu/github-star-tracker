@@ -457,6 +457,19 @@ describe('chart', () => {
       expect(result?.annotations).toHaveProperty('milestone500');
     });
 
+    it('uses custom thresholds when provided', () => {
+      const result = buildMilestoneAnnotations({
+        minStars: 30,
+        maxStars: 400,
+        thresholds: [50, 250, 5000],
+      });
+
+      expect(result?.annotations).toHaveProperty('milestone250');
+      expect(result?.annotations.milestone250.yMin).toBe(250);
+      expect(result?.annotations).not.toHaveProperty('milestone100');
+      expect(result?.annotations).not.toHaveProperty('milestone5000');
+    });
+
     it('includes milestone annotations in aggregate chart', () => {
       const largeHistory: History = {
         snapshots: [
@@ -494,6 +507,69 @@ describe('chart', () => {
       if (url) {
         const decodedUrl = decodeURIComponent(url);
         const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
+
+        expect(config.options.plugins.annotation).toBeUndefined();
+      }
+    });
+
+    it('uses custom milestones in the aggregate chart when provided', () => {
+      const largeHistory: History = {
+        snapshots: [
+          { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 80, repos: [] },
+          { timestamp: '2025-01-08T00:00:00.000Z', totalStars: 120, repos: [] },
+        ],
+      };
+
+      const url = generateChartUrl({
+        history: largeHistory,
+        locale: 'en',
+        customMilestones: [90, 110],
+      });
+
+      expect(url).toBeDefined();
+
+      if (url) {
+        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+        const { annotations } = config.options.plugins.annotation;
+
+        expect(annotations).toHaveProperty('milestone90');
+        expect(annotations).toHaveProperty('milestone110');
+        expect(annotations).not.toHaveProperty('milestone100');
+      }
+    });
+
+    it('falls back to default milestones when custom list is empty', () => {
+      const largeHistory: History = {
+        snapshots: [
+          { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 80, repos: [] },
+          { timestamp: '2025-01-08T00:00:00.000Z', totalStars: 120, repos: [] },
+        ],
+      };
+
+      const url = generateChartUrl({ history: largeHistory, locale: 'en', customMilestones: [] });
+
+      expect(url).toBeDefined();
+
+      if (url) {
+        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+
+        expect(config.options.plugins.annotation.annotations).toHaveProperty('milestone100');
+      }
+    });
+
+    it('does not include annotations when milestones are disabled', () => {
+      const largeHistory: History = {
+        snapshots: [
+          { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 80, repos: [] },
+          { timestamp: '2025-01-08T00:00:00.000Z', totalStars: 120, repos: [] },
+        ],
+      };
+
+      const url = generateChartUrl({ history: largeHistory, locale: 'en', milestones: false });
+
+      expect(url).not.toBeNull();
+      if (url) {
+        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
 
         expect(config.options.plugins.annotation).toBeUndefined();
       }
@@ -543,6 +619,47 @@ describe('chart', () => {
           config.data.datasets.every((dataset: { tension: number }) => dataset.tension === 0),
         ).toBe(true);
       }
+    });
+  });
+
+  describe('theme', () => {
+    it('uses a light background by default', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en' });
+
+      expect(url).not.toBeNull();
+      if (url) expect(url).toContain('backgroundColor=%23fff');
+    });
+
+    it('uses a dark background and palette for the dark theme', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en', theme: 'dark' });
+
+      expect(url).not.toBeNull();
+      if (url) {
+        expect(url).toContain('backgroundColor=%230d1117');
+        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+        expect(config.options.scales.y.ticks.color).toBe('#8b949e');
+      }
+    });
+  });
+
+  describe('beginAtZero', () => {
+    const beginAtZeroOf = (url: string): boolean => {
+      const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+      return config.options.scales.y.beginAtZero;
+    };
+
+    it('does not begin the Y-axis at zero by default', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en' });
+
+      expect(url).not.toBeNull();
+      if (url) expect(beginAtZeroOf(url)).toBe(false);
+    });
+
+    it('begins the Y-axis at zero when enabled', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en', beginAtZero: true });
+
+      expect(url).not.toBeNull();
+      if (url) expect(beginAtZeroOf(url)).toBe(true);
     });
   });
 

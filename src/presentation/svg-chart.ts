@@ -1,4 +1,4 @@
-import { ChartAxisSide } from '@config/types';
+import { ChartAxisSide, ChartTheme } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { buildAxisLabels, formatCount, formatDate } from '@domain/formatting';
 import type { History } from '@domain/types';
@@ -161,11 +161,14 @@ interface RenderSvgParams {
   title: string;
   showLegend: boolean;
   milestones?: boolean;
+  milestoneThresholds?: readonly number[];
   lineWidth?: number;
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
   showPoints?: boolean;
   animate?: boolean;
+  beginAtZero?: boolean;
+  theme?: ChartTheme;
 }
 
 function renderSvg({
@@ -174,11 +177,14 @@ function renderSvg({
   title,
   showLegend,
   milestones = false,
+  milestoneThresholds = MILESTONE_THRESHOLDS,
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
   showPoints = true,
   animate = true,
+  beginAtZero = false,
+  theme = ChartTheme.AUTO,
 }: RenderSvgParams): string {
   const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
   const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
@@ -194,7 +200,7 @@ function renderSvg({
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
   const padding = Math.max(1, Math.ceil((maxData - minData) * 0.1));
-  const minValue = Math.max(0, minData - padding);
+  const minValue = beginAtZero ? 0 : Math.max(0, minData - padding);
   const maxValue = maxData + padding;
   const ySteps = niceAxisSteps({ min: minValue, max: maxValue, count: 5 });
 
@@ -207,7 +213,8 @@ function renderSvg({
     .join('\n    ');
 
   const milestoneLines = milestones
-    ? MILESTONE_THRESHOLDS.filter((milestone) => milestone > minData && milestone < maxData)
+    ? milestoneThresholds
+        .filter((milestone) => milestone > minData && milestone < maxData)
         .map((value) => {
           const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
           return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="1" stroke-dasharray="6,6" />
@@ -364,20 +371,26 @@ function renderSvg({
     `
     : '';
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART.width} ${CHART.height}" width="${CHART.width}" height="${CHART.height}">
-  <style>
-    ${animationDefs}.chart-bg { fill: ${LIGHT_PALETTE.white}; }
-    .chart-text { fill: ${LIGHT_PALETTE.text}; }
-    .chart-muted { fill: ${LIGHT_PALETTE.neutral}; }
-    .chart-grid { stroke: ${LIGHT_PALETTE.cellBorder}; }
-    .chart-axis { stroke: ${LIGHT_PALETTE.neutral}; }
+  const basePalette = theme === ChartTheme.DARK ? DARK_PALETTE : LIGHT_PALETTE;
+  const darkModeStyles =
+    theme === ChartTheme.AUTO
+      ? `
     @media (prefers-color-scheme: dark) {
       .chart-bg { fill: ${DARK_PALETTE.white}; }
       .chart-text { fill: ${DARK_PALETTE.text}; }
       .chart-muted { fill: ${DARK_PALETTE.neutral}; }
       .chart-grid { stroke: ${DARK_PALETTE.cellBorder}; }
       .chart-axis { stroke: ${DARK_PALETTE.neutral}; }
-    }
+    }`
+      : '';
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART.width} ${CHART.height}" width="${CHART.width}" height="${CHART.height}">
+  <style>
+    ${animationDefs}.chart-bg { fill: ${basePalette.white}; }
+    .chart-text { fill: ${basePalette.text}; }
+    .chart-muted { fill: ${basePalette.neutral}; }
+    .chart-grid { stroke: ${basePalette.cellBorder}; }
+    .chart-axis { stroke: ${basePalette.neutral}; }${darkModeStyles}
   </style>
   <rect width="${CHART.width}" height="${CHART.height}" class="chart-bg" />
   <text x="${CHART.width / 2}" y="${titleY}" text-anchor="middle" class="chart-text" font-size="${fontSize.title}" font-weight="bold" font-family="${font}">${escapeXml(title)}</text>
@@ -412,6 +425,10 @@ interface GenerateSvgChartParams {
   smoothing?: boolean;
   showPoints?: boolean;
   animate?: boolean;
+  milestones?: boolean;
+  beginAtZero?: boolean;
+  theme?: ChartTheme;
+  customMilestones?: readonly number[];
 }
 
 export function generateSvgChart({
@@ -425,6 +442,10 @@ export function generateSvgChart({
   smoothing,
   showPoints,
   animate,
+  milestones = true,
+  beginAtZero,
+  theme,
+  customMilestones,
 }: GenerateSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -442,12 +463,16 @@ export function generateSvgChart({
     datasets: [{ label: 'Stars', data, color: lineColor ?? COLORS.accent }],
     title: title ?? 'Star History',
     showLegend: false,
-    milestones: true,
+    milestones,
+    milestoneThresholds:
+      customMilestones && customMilestones.length > 0 ? customMilestones : MILESTONE_THRESHOLDS,
     lineWidth,
     yAxisSide,
     smoothing,
     showPoints,
     animate,
+    beginAtZero,
+    theme,
   });
 }
 
@@ -463,6 +488,8 @@ interface GeneratePerRepoSvgChartParams {
   smoothing?: boolean;
   showPoints?: boolean;
   animate?: boolean;
+  beginAtZero?: boolean;
+  theme?: ChartTheme;
 }
 
 export function generatePerRepoSvgChart({
@@ -477,6 +504,8 @@ export function generatePerRepoSvgChart({
   smoothing,
   showPoints,
   animate,
+  beginAtZero,
+  theme,
 }: GeneratePerRepoSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -503,6 +532,8 @@ export function generatePerRepoSvgChart({
     smoothing,
     showPoints,
     animate,
+    beginAtZero,
+    theme,
   });
 }
 
@@ -517,6 +548,8 @@ interface GenerateComparisonSvgChartParams {
   smoothing?: boolean;
   showPoints?: boolean;
   animate?: boolean;
+  beginAtZero?: boolean;
+  theme?: ChartTheme;
 }
 
 export function generateComparisonSvgChart({
@@ -530,6 +563,8 @@ export function generateComparisonSvgChart({
   smoothing,
   showPoints,
   animate,
+  beginAtZero,
+  theme,
 }: GenerateComparisonSvgChartParams): string | null {
   if (
     !history.snapshots ||
@@ -575,6 +610,8 @@ export function generateComparisonSvgChart({
     smoothing,
     showPoints,
     animate,
+    beginAtZero,
+    theme,
   });
 }
 
@@ -590,6 +627,8 @@ interface GenerateForecastSvgChartParams {
   smoothing?: boolean;
   showPoints?: boolean;
   animate?: boolean;
+  beginAtZero?: boolean;
+  theme?: ChartTheme;
 }
 
 export function generateForecastSvgChart({
@@ -604,6 +643,8 @@ export function generateForecastSvgChart({
   smoothing,
   showPoints,
   animate,
+  beginAtZero,
+  theme,
 }: GenerateForecastSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -654,5 +695,7 @@ export function generateForecastSvgChart({
     smoothing,
     showPoints,
     animate,
+    beginAtZero,
+    theme,
   });
 }

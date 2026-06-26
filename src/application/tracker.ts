@@ -159,6 +159,10 @@ export async function trackStars(): Promise<void> {
           topRepos: config.topRepos,
           smoothing: config.chartSmoothing,
           showPoints: config.chartShowPoints,
+          milestones: config.chartMilestones,
+          beginAtZero: config.chartBeginAtZero,
+          theme: config.chartTheme,
+          customMilestones: config.chartCustomMilestones,
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport(reportParams);
@@ -193,6 +197,10 @@ export async function trackStars(): Promise<void> {
             smoothing: config.chartSmoothing,
             showPoints: config.chartShowPoints,
             animate: config.chartAnimation,
+            beginAtZero: config.chartBeginAtZero,
+            theme: config.chartTheme,
+            milestones: config.chartMilestones,
+            customMilestones: config.chartCustomMilestones,
           });
           if (svgChart) {
             writeChart({ dataDir, filename: 'star-history.svg', svg: svgChart });
@@ -225,6 +233,8 @@ export async function trackStars(): Promise<void> {
               smoothing: config.chartSmoothing,
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
+              beginAtZero: config.chartBeginAtZero,
+              theme: config.chartTheme,
             });
 
             if (repoChart) {
@@ -245,6 +255,8 @@ export async function trackStars(): Promise<void> {
               smoothing: config.chartSmoothing,
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
+              beginAtZero: config.chartBeginAtZero,
+              theme: config.chartTheme,
             });
 
             if (comparisonChart) {
@@ -264,6 +276,8 @@ export async function trackStars(): Promise<void> {
               smoothing: config.chartSmoothing,
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
+              beginAtZero: config.chartBeginAtZero,
+              theme: config.chartTheme,
             });
 
             if (forecastChart) {

@@ -176,6 +176,10 @@ const defaultConfig = {
   chartSmoothing: true,
   chartShowPoints: true,
   chartAnimation: true,
+  chartMilestones: true,
+  chartBeginAtZero: false,
+  chartTheme: 'auto' as const,
+  chartCustomMilestones: [],
 };
 
 const defaultSummary = {

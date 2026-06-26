@@ -230,6 +230,10 @@ The chart appearance is configurable via these inputs:
 | `chart-smoothing` | `true` | `true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. Applies to email charts too. |
 | `chart-show-points` | `true` | `true` marks each data point with a dot; `false` hides them for a cleaner dense line. Applies to email charts too. |
 | `chart-animation` | `true` | `true` animates the SVG charts; `false` renders them static for email/static contexts. SVG-only. |
+| `chart-milestones` | `true` | `true` draws milestone reference lines on the main chart; `false` hides them. Applies to email charts too. |
+| `chart-begin-at-zero` | `false` | `false` zooms the Y-axis into the data range; `true` anchors it at zero. Applies to all charts. |
+| `chart-theme` | `auto` | `auto` follows `prefers-color-scheme` in SVG charts; `light`/`dark` force the palette. Email falls back to light under `auto`. |
+| `chart-custom-milestones` | _(empty)_ | Comma-separated star counts (e.g. `250, 750, 2500`) that replace the built-in milestone thresholds. When empty, the defaults are used. Requires `chart-milestones`. Applies to email charts too. |
 
 ```yaml
 with:
@@ -238,6 +242,7 @@ with:
   chart-max-points: 0
   chart-y-axis-side: right
   chart-smoothing: false
+  chart-custom-milestones: "250, 750, 2500"
 ```
 
 ### Large repos

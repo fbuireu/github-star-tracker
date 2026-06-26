@@ -1,5 +1,5 @@
 import type { Config, Locale } from './types';
-import { ChartAxisSide, Visibility } from './types';
+import { ChartAxisSide, ChartTheme, Visibility } from './types';
 
 export const LOCALE_MAP = {
   en: 'en-US',
@@ -49,4 +49,8 @@ export const DEFAULTS: Config = {
   chartSmoothing: true,
   chartShowPoints: true,
   chartAnimation: true,
+  chartMilestones: true,
+  chartBeginAtZero: false,
+  chartTheme: ChartTheme.AUTO,
+  chartCustomMilestones: [],
 } as const;
