@@ -1,3 +1,10 @@
+## [1.21.1](https://github.com/fbuireu/github-star-tracker/compare/v1.21.0...v1.21.1) (2026-06-26)
+
+
+### Bug Fixes
+
+* legend overlap ([9228645](https://github.com/fbuireu/github-star-tracker/commit/9228645270e0e8b1f8d0d5c88bd9349d99205772))
+
 # [1.21.0](https://github.com/fbuireu/github-star-tracker/compare/v1.20.0...v1.21.0) (2026-06-26)
 
 

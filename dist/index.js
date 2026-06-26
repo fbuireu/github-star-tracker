@@ -32987,10 +32987,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -35282,7 +35282,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35405,7 +35405,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -38483,8 +38483,9 @@ function linearRegression(values) {
   const intercept = (sumY - slope * sumX) / pointCount;
   return { slope, intercept };
 }
+var MIN_VALUES_FOR_WEIGHTED_AVERAGE = 2;
 function weightedMovingAverage(values) {
-  if (values.length < 2) return 0;
+  if (values.length < MIN_VALUES_FOR_WEIGHTED_AVERAGE) return 0;
   const deltas = [];
   for (let index = 1; index < values.length; index++) {
     deltas.push(values[index] - values[index - 1]);
@@ -38656,16 +38657,37 @@ var BADGE = {
   valueCharWidth: 7,
   horizontalPadding: 12,
   height: 20,
-  borderRadius: 3
+  borderRadius: 3,
+  fontSize: 11,
+  textBaseline: 14,
+  shadowBaseline: 15,
+  shadowOpacity: ".3",
+  gradientOpacity: ".1"
 };
 var SVG_CHART = {
   margin: { top: 50, right: 30, bottom: 50, left: 60 },
   pointRadius: 4,
   lineWidth: 2.5,
   gridOpacity: 0.3,
-  fontSize: { title: 16, label: 11, milestone: 10 },
-  header: { titleOffset: 16, titleWithLegendOffset: 36, legendOffset: 14 },
+  fillOpacity: 0.1,
+  axisStrokeWidth: 1,
+  fontSize: { title: 16, label: 11, milestone: 10, legend: 10 },
+  header: { titleOffset: 36, legendOffset: 14 },
   animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
+  yAxis: { stepCount: 5, labelGap: 8, labelBaselineOffset: 4 },
+  xAxis: { maxLabels: 10, labelOffset: 20 },
+  milestone: { strokeWidth: 1, dashArray: "6,6", labelXOffset: 4, labelYOffset: 4 },
+  dash: { line: "8,4", legend: "4,2" },
+  legend: {
+    itemWidth: 120,
+    markerWidth: 12,
+    markerHeight: 3,
+    markerYOffset: 5,
+    lineYOffset: 3.5,
+    lineStrokeWidth: 2,
+    rectBorderRadius: 1,
+    labelGap: 16
+  },
   font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
 };
 var MIN_SNAPSHOTS_FOR_CHART = 2;
@@ -38705,6 +38727,7 @@ function addSnapshot({ history, snapshot, maxHistory }) {
 }
 
 // src/domain/star-history.ts
+var MIN_HISTORY_BUCKETS = 2;
 function cumulativeCounts(sortedTimes, edges) {
   const counts = [];
   let pointer = 0;
@@ -38774,7 +38797,7 @@ function buildStarHistory({
   }
   const end = (now ?? /* @__PURE__ */ new Date()).getTime();
   const edges = earliest >= end ? [earliest - MS_PER_DAY, end] : (() => {
-    const buckets = Math.max(2, Math.floor(maxPoints));
+    const buckets = Math.max(MIN_HISTORY_BUCKETS, Math.floor(maxPoints));
     const step = (end - earliest) / (buckets - 1);
     return Array.from(
       { length: buckets },
@@ -39118,6 +39141,7 @@ async function fetchSampledStargazers({
 // src/infrastructure/notification/email.ts
 var import_nodemailer = __toESM(require_nodemailer());
 var SECURE_SMTP_PORT = 465;
+var DEFAULT_SMTP_PORT = "587";
 function resolveFromAddress({ from, username }) {
   if (from.includes("@")) {
     return from;
@@ -39133,7 +39157,7 @@ function getEmailConfig(locale) {
   const t = getTranslations(locale);
   return {
     host,
-    port: Number.parseInt(getInput("smtp-port") || "587", 10),
+    port: Number.parseInt(getInput("smtp-port") || DEFAULT_SMTP_PORT, 10),
     username: getInput("smtp-username"),
     password: getInput("smtp-password"),
     to: getInput("email-to"),
@@ -39268,8 +39292,8 @@ function generateBadge({ totalStars, locale }) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${BADGE.height}" role="img" aria-label="${label}: ${value}">
   <title>${label}: ${value}</title>
   <linearGradient id="s" x2="0" y2="100%">
-    <stop offset="0" stop-color="${COLORS.gradientStart}" stop-opacity=".1"/>
-    <stop offset="1" stop-opacity=".1"/>
+    <stop offset="0" stop-color="${COLORS.gradientStart}" stop-opacity="${BADGE.gradientOpacity}"/>
+    <stop offset="1" stop-opacity="${BADGE.gradientOpacity}"/>
   </linearGradient>
   <clipPath id="r">
     <rect width="${totalWidth}" height="${BADGE.height}" rx="${BADGE.borderRadius}" fill="${COLORS.white}"/>
@@ -39279,11 +39303,11 @@ function generateBadge({ totalStars, locale }) {
     <rect x="${labelWidth}" width="${valueWidth}" height="${BADGE.height}" fill="${COLORS.accent}"/>
     <rect width="${totalWidth}" height="${BADGE.height}" fill="url(#s)"/>
   </g>
-  <g fill="${COLORS.white}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
-    <text aria-hidden="true" x="${labelWidth / 2}" y="15" fill="${COLORS.shadow}" fill-opacity=".3">${label}</text>
-    <text x="${labelWidth / 2}" y="14">${label}</text>
-    <text aria-hidden="true" x="${labelWidth + valueWidth / 2}" y="15" fill="${COLORS.shadow}" fill-opacity=".3">${value}</text>
-    <text x="${labelWidth + valueWidth / 2}" y="14">${value}</text>
+  <g fill="${COLORS.white}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="${BADGE.fontSize}">
+    <text aria-hidden="true" x="${labelWidth / 2}" y="${BADGE.shadowBaseline}" fill="${COLORS.shadow}" fill-opacity="${BADGE.shadowOpacity}">${label}</text>
+    <text x="${labelWidth / 2}" y="${BADGE.textBaseline}">${label}</text>
+    <text aria-hidden="true" x="${labelWidth + valueWidth / 2}" y="${BADGE.shadowBaseline}" fill="${COLORS.shadow}" fill-opacity="${BADGE.shadowOpacity}">${value}</text>
+    <text x="${labelWidth + valueWidth / 2}" y="${BADGE.textBaseline}">${value}</text>
   </g>
 </svg>`;
 }
@@ -39336,19 +39360,27 @@ var VELOCITY_MILESTONES = [
   5e5,
   1e6
 ];
+var MIN_SNAPSHOTS_FOR_VELOCITY = 2;
+var PERCENT_MULTIPLIER = 100;
+var STARS_PER_DAY_DECIMALS = 2;
+var GROWTH_PERCENT_DECIMALS = 1;
+function roundTo(value, decimals) {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+}
 function nextMilestoneAbove(value) {
   return VELOCITY_MILESTONES.find((milestone) => milestone > value) ?? null;
 }
 function computeVelocity({ history }) {
   const snapshots = history.snapshots;
-  if (snapshots.length < 2) return null;
+  if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
   const first = snapshots[0];
   const last = snapshots[snapshots.length - 1];
   const elapsedDays = (new Date(last.timestamp).getTime() - new Date(first.timestamp).getTime()) / MS_PER_DAY;
   if (elapsedDays <= 0) return null;
   const gained = last.totalStars - first.totalStars;
-  const starsPerDay = Math.round(gained / elapsedDays * 100) / 100;
-  const growthPercent = first.totalStars > 0 ? Math.round(gained / first.totalStars * 1e3) / 10 : null;
+  const starsPerDay = roundTo(gained / elapsedDays, STARS_PER_DAY_DECIMALS);
+  const growthPercent = first.totalStars > 0 ? roundTo(gained / first.totalStars * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS) : null;
   const nextMilestone = nextMilestoneAbove(last.totalStars);
   const daysToNextMilestone = nextMilestone !== null && starsPerDay > 0 ? Math.ceil((nextMilestone - last.totalStars) / starsPerDay) : null;
   return { starsPerDay, growthPercent, nextMilestone, daysToNextMilestone };
@@ -39433,6 +39465,18 @@ function buildForecastChartSeries({
 }
 
 // src/presentation/chart.ts
+var CHART_STYLE = {
+  translucentAlpha: "33",
+  titleFontSize: 16,
+  legendFontSize: 11,
+  legendHiddenFontSize: 12,
+  milestoneBorderWidth: 1,
+  milestoneFontSize: 10,
+  milestoneDash: [6, 6],
+  trendDash: [6, 4],
+  linearRegressionDash: [8, 4],
+  weightedMovingAverageDash: [4, 4]
+};
 function tensionFor(smoothing) {
   return smoothing ? CHART_TENSION.smooth : CHART_TENSION.straight;
 }
@@ -39454,15 +39498,15 @@ function buildMilestoneAnnotations({
       yMin: milestone,
       yMax: milestone,
       borderColor: palette.neutral,
-      borderWidth: 1,
-      borderDash: [6, 6],
+      borderWidth: CHART_STYLE.milestoneBorderWidth,
+      borderDash: CHART_STYLE.milestoneDash,
       label: {
         display: true,
         content: `${milestone.toLocaleString("en-US")} \u2605`,
         position: "start",
-        backgroundColor: `${palette.neutral}33`,
+        backgroundColor: `${palette.neutral}${CHART_STYLE.translucentAlpha}`,
         color: palette.neutral,
-        font: { size: 10 }
+        font: { size: CHART_STYLE.milestoneFontSize }
       }
     };
   }
@@ -39484,14 +39528,16 @@ function buildChartOptions({
         position: "top",
         labels: {
           color: palette.text,
-          font: { size: showLegend ? 11 : 12 }
+          font: {
+            size: showLegend ? CHART_STYLE.legendFontSize : CHART_STYLE.legendHiddenFontSize
+          }
         }
       },
       title: {
         display: true,
         text: title,
         color: palette.text,
-        font: { size: 16, weight: "bold" }
+        font: { size: CHART_STYLE.titleFontSize, weight: "bold" }
       },
       ...annotation ? { annotation } : {}
     },
@@ -39518,7 +39564,7 @@ function buildStarsDataset({
     label: "Stars",
     data,
     borderColor: palette.accent,
-    backgroundColor: `${palette.accent}33`,
+    backgroundColor: `${palette.accent}${CHART_STYLE.translucentAlpha}`,
     fill: true,
     tension,
     pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
@@ -39586,7 +39632,7 @@ function generateChartUrl({
       tension,
       pointRadius: CHART_POINT.hidden,
       pointHoverRadius: CHART_POINT.hidden,
-      borderDash: [6, 4]
+      borderDash: CHART_STYLE.trendDash
     });
   }
   const minStars = Math.min(...data);
@@ -39675,7 +39721,7 @@ function generateComparisonChartUrl({
       label: useShortLabels ? repoName.split("/")[1] : repoName,
       data,
       borderColor: color,
-      backgroundColor: `${color}33`,
+      backgroundColor: `${color}${CHART_STYLE.translucentAlpha}`,
       fill: false,
       tension,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
@@ -39727,7 +39773,7 @@ function generateForecastChartUrl({
       label: t.report.starHistory,
       data: series.historical,
       borderColor: palette.accent,
-      backgroundColor: `${palette.accent}33`,
+      backgroundColor: `${palette.accent}${CHART_STYLE.translucentAlpha}`,
       fill: true,
       tension,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
@@ -39742,7 +39788,7 @@ function generateForecastChartUrl({
       tension,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
-      borderDash: [8, 4]
+      borderDash: CHART_STYLE.linearRegressionDash
     },
     {
       label: t.forecast.weightedMovingAverage,
@@ -39753,7 +39799,7 @@ function generateForecastChartUrl({
       tension,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
-      borderDash: [4, 4]
+      borderDash: CHART_STYLE.weightedMovingAverageDash
     }
   ];
   const config = buildChartConfig({
@@ -40205,6 +40251,19 @@ var XML_ESCAPE_MAP = {
   ">": "&gt;",
   '"': "&quot;"
 };
+var BEZIER_CONTROL_DIVISOR = 3;
+var PATH_LENGTH_SAFETY_FACTOR = 1.5;
+var Y_AXIS_PADDING_RATIO = 0.1;
+var Y_AXIS_MIN_PADDING = 1;
+var AXIS_STEP_BOUNDARY_TOLERANCE = 0.5;
+var NICE_AXIS_STEPS = {
+  thresholds: [
+    { maxResidual: 1.5, multiplier: 1 },
+    { maxResidual: 3.5, multiplier: 2 },
+    { maxResidual: 7.5, multiplier: 5 }
+  ],
+  largestMultiplier: 10
+};
 function scaleY({ value, minValue, maxValue, chartTop, chartHeight }) {
   if (maxValue === minValue) return chartTop + chartHeight / 2;
   return chartTop + chartHeight - (value - minValue) / (maxValue - minValue) * chartHeight;
@@ -40219,23 +40278,29 @@ function generateSmoothPath({ points, smooth = true }) {
     }
     return path4;
   }
-  const tension = 0.4;
+  const tension = CHART_TENSION.smooth;
   for (let index = 0; index < points.length - 1; index++) {
     const previousPoint = points[Math.max(0, index - 1)];
     const startPoint = points[index];
     const endPoint = points[index + 1];
     const nextPoint = points[Math.min(points.length - 1, index + 2)];
-    const cp1x = startPoint.x + (endPoint.x - previousPoint.x) * tension / 3;
-    const cp2x = endPoint.x - (nextPoint.x - startPoint.x) * tension / 3;
+    const cp1x = startPoint.x + (endPoint.x - previousPoint.x) * tension / BEZIER_CONTROL_DIVISOR;
+    const cp2x = endPoint.x - (nextPoint.x - startPoint.x) * tension / BEZIER_CONTROL_DIVISOR;
     const segMinY = Math.min(startPoint.y, endPoint.y);
     const segMaxY = Math.max(startPoint.y, endPoint.y);
     const cp1y = Math.min(
       segMaxY,
-      Math.max(segMinY, startPoint.y + (endPoint.y - previousPoint.y) * tension / 3)
+      Math.max(
+        segMinY,
+        startPoint.y + (endPoint.y - previousPoint.y) * tension / BEZIER_CONTROL_DIVISOR
+      )
     );
     const cp2y = Math.min(
       segMaxY,
-      Math.max(segMinY, endPoint.y - (nextPoint.y - startPoint.y) * tension / 3)
+      Math.max(
+        segMinY,
+        endPoint.y - (nextPoint.y - startPoint.y) * tension / BEZIER_CONTROL_DIVISOR
+      )
     );
     path4 += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${endPoint.x},${endPoint.y}`;
   }
@@ -40248,7 +40313,7 @@ function calculatePathLength(points) {
     const dy = points[index].y - points[index - 1].y;
     length += Math.hypot(dx, dy);
   }
-  return Math.ceil(length * 1.5);
+  return Math.ceil(length * PATH_LENGTH_SAFETY_FACTOR);
 }
 function niceAxisSteps({ min, max, count }) {
   const range = max - min;
@@ -40256,15 +40321,13 @@ function niceAxisSteps({ min, max, count }) {
   const rawStep = range / (count - 1);
   const magnitude = 10 ** Math.floor(Math.log10(rawStep));
   const residual = rawStep / magnitude;
-  let niceStep;
-  if (residual <= 1.5) niceStep = magnitude;
-  else if (residual <= 3.5) niceStep = 2 * magnitude;
-  else if (residual <= 7.5) niceStep = 5 * magnitude;
-  else niceStep = 10 * magnitude;
+  const multiplier = NICE_AXIS_STEPS.thresholds.find((threshold) => residual <= threshold.maxResidual)?.multiplier ?? NICE_AXIS_STEPS.largestMultiplier;
+  const niceStep = multiplier * magnitude;
   const niceMin = Math.floor(min / niceStep) * niceStep;
   const steps = [];
-  for (let step = niceMin; step <= max + niceStep * 0.5; step += niceStep) {
-    if (step >= min - niceStep * 0.5) {
+  const tolerance = niceStep * AXIS_STEP_BOUNDARY_TOLERANCE;
+  for (let step = niceMin; step <= max + tolerance; step += niceStep) {
+    if (step >= min - tolerance) {
       steps.push(Math.round(step));
     }
   }
@@ -40292,34 +40355,53 @@ function renderSvg({
   beginAtZero = false,
   theme = ChartTheme.AUTO
 }) {
-  const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
+  const {
+    margin,
+    pointRadius,
+    gridOpacity,
+    fillOpacity,
+    axisStrokeWidth,
+    fontSize,
+    animation,
+    font,
+    yAxis,
+    xAxis,
+    milestone: milestoneStyle,
+    dash,
+    legend: legendStyle
+  } = SVG_CHART;
   const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
   const chartWidth = CHART.width - margin.left - margin.right;
   const chartHeight = CHART.height - margin.top - margin.bottom;
   const isRightAxis = yAxisSide === ChartAxisSide.RIGHT;
   const yAxisX = isRightAxis ? CHART.width - margin.right : margin.left;
-  const yLabelX = isRightAxis ? CHART.width - margin.right + 8 : margin.left - 8;
+  const yLabelX = isRightAxis ? CHART.width - margin.right + yAxis.labelGap : margin.left - yAxis.labelGap;
   const yLabelAnchor = isRightAxis ? "start" : "end";
   const allValues = datasets.flatMap(
     (dataset) => dataset.data.filter((value) => value !== null)
   );
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
-  const padding = Math.max(1, Math.ceil((maxData - minData) * 0.1));
-  const minValue = beginAtZero ? 0 : Math.max(0, minData - padding);
-  const maxValue = maxData + padding;
-  const ySteps = niceAxisSteps({ min: minValue, max: maxValue, count: 5 });
+  const padding = Math.max(
+    Y_AXIS_MIN_PADDING,
+    Math.ceil((maxData - minData) * Y_AXIS_PADDING_RATIO)
+  );
+  const baseMin = beginAtZero ? 0 : Math.max(0, minData - padding);
+  const baseMax = maxData + padding;
+  const ySteps = niceAxisSteps({ min: baseMin, max: baseMax, count: yAxis.stepCount });
+  const minValue = Math.min(baseMin, ySteps.at(0) ?? baseMin);
+  const maxValue = Math.max(baseMax, ySteps.at(-1) ?? baseMax);
   const gridLines = ySteps.map((value) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
-    <text x="${yLabelX}" y="${y + 4}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount(value)}</text>`;
+    <text x="${yLabelX}" y="${y + yAxis.labelBaselineOffset}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount(value)}</text>`;
   }).join("\n    ");
   const milestoneLines = milestones ? milestoneThresholds.filter((milestone) => milestone > minData && milestone < maxData).map((value) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
-    return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="1" stroke-dasharray="6,6" />
-    <text x="${margin.left + 4}" y="${y - 4}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount(value)} \u2605</text>`;
+    return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="${milestoneStyle.strokeWidth}" stroke-dasharray="${milestoneStyle.dashArray}" />
+    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount(value)} \u2605</text>`;
   }).join("\n    ") : "";
-  const maxLabels = 10;
+  const maxLabels = xAxis.maxLabels;
   const nonEmptyLabelIndices = labels.reduce((indices, label, labelIndex) => {
     if (label !== "") indices.push(labelIndex);
     return indices;
@@ -40328,7 +40410,7 @@ function renderSvg({
   const lastLabelIndex = nonEmptyLabelIndices.at(-1);
   const xLabels = nonEmptyLabelIndices.filter((labelIndex, position) => position % labelStep === 0 || labelIndex === lastLabelIndex).map((labelIndex) => {
     const x = margin.left + labelIndex / Math.max(1, labels.length - 1) * chartWidth;
-    return `<text x="${x}" y="${CHART.height - margin.bottom + 20}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(labels[labelIndex])}</text>`;
+    return `<text x="${x}" y="${CHART.height - margin.bottom + xAxis.labelOffset}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(labels[labelIndex])}</text>`;
   }).join("\n    ");
   const datasetSvg = datasets.map((dataset, datasetIndex) => {
     const validSegments = [];
@@ -40362,9 +40444,9 @@ function renderSvg({
       const fillArea = dataset.fill !== false && !dataset.dashed ? (() => {
         const first = segment.points[0];
         const last = segment.points.at(-1);
-        return `<path d="${pathD} L${last.x},${bottomY} L${first.x},${bottomY} Z" fill="${dataset.color}" fill-opacity="0.1" />`;
+        return `<path d="${pathD} L${last.x},${bottomY} L${first.x},${bottomY} Z" fill="${dataset.color}" fill-opacity="${fillOpacity}" />`;
       })() : "";
-      const dashAttr = dataset.dashed ? ' stroke-dasharray="8,4"' : "";
+      const dashAttr = dataset.dashed ? ` stroke-dasharray="${dash.line}"` : "";
       const lineClass = dataset.dashed ? "" : ` class="data-line-${datasetIndex}"`;
       const pathEl = `<path d="${pathD}" fill="none" stroke="${dataset.color}" stroke-width="${lineWidth}"${dashAttr}${lineClass} />`;
       const circles = dataset.dashed || !showPoints ? "" : segment.points.map(
@@ -40394,19 +40476,19 @@ function renderSvg({
   const allCircles = datasetSvg.map((dataset) => dataset.circles).filter(Boolean).join("\n    ");
   const legendSection = showLegend ? (() => {
     const legendY = margin.top - SVG_CHART.header.legendOffset;
-    const itemWidth = 120;
+    const itemWidth = legendStyle.itemWidth;
     const totalWidth = datasets.length * itemWidth;
     const startX = (CHART.width - totalWidth) / 2;
     return datasets.map((dataset, datasetIndex) => {
       const x = startX + datasetIndex * itemWidth;
-      const dashAttr = dataset.dashed ? ' stroke-dasharray="4,2"' : "";
-      const rectAttr = dataset.dashed ? ' rx="1"' : "";
-      return `<rect x="${x}" y="${legendY - 5}" width="12" height="3" fill="${dataset.color}"${rectAttr} />
-    <line x1="${x}" y1="${legendY - 3.5}" x2="${x + 12}" y2="${legendY - 3.5}" stroke="${dataset.color}" stroke-width="2"${dashAttr} />
-    <text x="${x + 16}" y="${legendY}" class="chart-text" font-size="10" font-family="${font}">${escapeXml(dataset.label)}</text>`;
+      const dashAttr = dataset.dashed ? ` stroke-dasharray="${dash.legend}"` : "";
+      const rectAttr = dataset.dashed ? ` rx="${legendStyle.rectBorderRadius}"` : "";
+      return `<rect x="${x}" y="${legendY - legendStyle.markerYOffset}" width="${legendStyle.markerWidth}" height="${legendStyle.markerHeight}" fill="${dataset.color}"${rectAttr} />
+    <line x1="${x}" y1="${legendY - legendStyle.lineYOffset}" x2="${x + legendStyle.markerWidth}" y2="${legendY - legendStyle.lineYOffset}" stroke="${dataset.color}" stroke-width="${legendStyle.lineStrokeWidth}"${dashAttr} />
+    <text x="${x + legendStyle.labelGap}" y="${legendY}" class="chart-text" font-size="${fontSize.legend}" font-family="${font}">${escapeXml(dataset.label)}</text>`;
     }).join("\n    ");
   })() : "";
-  const titleY = margin.top - (showLegend ? SVG_CHART.header.titleWithLegendOffset : SVG_CHART.header.titleOffset);
+  const titleY = margin.top - SVG_CHART.header.titleOffset;
   const animationDefs = animate ? `@keyframes drawLine {
       to { stroke-dashoffset: 0; }
     }
@@ -40450,8 +40532,8 @@ function renderSvg({
   <g class="x-axis">
     ${xLabels}
   </g>
-  <line x1="${yAxisX}" y1="${margin.top}" x2="${yAxisX}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="1" />
-  <line x1="${margin.left}" y1="${CHART.height - margin.bottom}" x2="${CHART.width - margin.right}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="1" />
+  <line x1="${yAxisX}" y1="${margin.top}" x2="${yAxisX}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="${axisStrokeWidth}" />
+  <line x1="${margin.left}" y1="${CHART.height - margin.bottom}" x2="${CHART.width - margin.right}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="${axisStrokeWidth}" />
   ${allFills}
   ${allPaths}
   <g class="points">
