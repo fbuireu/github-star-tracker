@@ -240,9 +240,11 @@ function renderSvg({
     Y_AXIS_MIN_PADDING,
     Math.ceil((maxData - minData) * Y_AXIS_PADDING_RATIO),
   );
-  const minValue = beginAtZero ? 0 : Math.max(0, minData - padding);
-  const maxValue = maxData + padding;
-  const ySteps = niceAxisSteps({ min: minValue, max: maxValue, count: yAxis.stepCount });
+  const baseMin = beginAtZero ? 0 : Math.max(0, minData - padding);
+  const baseMax = maxData + padding;
+  const ySteps = niceAxisSteps({ min: baseMin, max: baseMax, count: yAxis.stepCount });
+  const minValue = Math.min(baseMin, ySteps.at(0) ?? baseMin);
+  const maxValue = Math.max(baseMax, ySteps.at(-1) ?? baseMax);
 
   const gridLines = ySteps
     .map((value) => {
@@ -303,9 +305,6 @@ function renderSvg({
     return validSegments
       .map((segment) => {
         const bottomY = CHART.height - margin.bottom;
-        // Anchor the main line to the baseline at its very first point so it rises
-        // from zero instead of starting mid-air. Only the primary filled line, and
-        // only when it begins at the chart's left edge.
         const startsFromBaseline =
           dataset.fill !== false && !dataset.dashed && segment.startIndex === 0;
         const firstPoint = segment.points[0];
@@ -392,9 +391,7 @@ function renderSvg({
       })()
     : '';
 
-  const titleY =
-    margin.top -
-    (showLegend ? SVG_CHART.header.titleWithLegendOffset : SVG_CHART.header.titleOffset);
+  const titleY = margin.top - SVG_CHART.header.titleOffset;
 
   const animationDefs = animate
     ? `@keyframes drawLine {

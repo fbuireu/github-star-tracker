@@ -90,7 +90,7 @@ export const SVG_CHART = {
   fillOpacity: 0.1,
   axisStrokeWidth: 1,
   fontSize: { title: 16, label: 11, milestone: 10, legend: 10 },
-  header: { titleOffset: 16, titleWithLegendOffset: 36, legendOffset: 14 },
+  header: { titleOffset: 36, legendOffset: 14 },
   animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
   yAxis: { stepCount: 5, labelGap: 8, labelBaselineOffset: 4 },
   xAxis: { maxLabels: 10, labelOffset: 20 },

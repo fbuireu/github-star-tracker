@@ -21,6 +21,7 @@ Shows the **total star count** across all tracked repositories over time.
 - Milestone markers at 10, 50, 100, 500, 1K, 5K, 10K stars (when in range)
 - Compact Y-axis and milestone values (e.g. `50K`) that stay inside the chart bounds
 - X-axis date labels scaled to the time span: years for multi-year histories (e.g. `2023 2024 2025`), day-level labels for shorter ranges
+- Optional **trend line**: when `chart-trend-line` is enabled, a dashed neutral-gray line (`#6a737d`) is overlaid on top of the gold star line. It is a 7-point moving average that smooths week-to-week noise so the underlying growth direction is easier to read. This chart has no legend, so the gray dashed line is the trend line (the solid gold line is the actual star count).
 
 ![Total Stars Chart](https://quickchart.io/chart?c=%7Btype%3A%27line%27%2Cdata%3A%7Blabels%3A%5B%27Jan%201%27%2C%27Jan%208%27%2C%27Jan%2015%27%5D%2Cdatasets%3A%5B%7Blabel%3A%27Total%20Stars%27%2Cdata%3A%5B100%2C105%2C112%5D%2CbackgroundColor%3A%27rgba%2875%2C192%2C192%2C0.2%29%27%2CborderColor%3A%27rgba%2875%2C192%2C192%2C1%29%27%7D%5D%7D%7D)
 
@@ -129,6 +130,7 @@ Charts are produced on the first run, since the curve is reconstructed from hist
 **Star history / per-repo:**
 - Line: `#dfb317` (gold) - this is the **default** and can be changed with `chart-line-color` (see [Chart customization](#chart-customization)). It affects the star-history, per-repo and forecast historical series, but not the comparison palette or the forecast trend lines.
 - Fill: 10% opacity gold
+- Trend line (when `chart-trend-line` is enabled): `#6a737d` (neutral gray, dashed) - fixed color, not affected by `chart-line-color`.
 
 **Comparison chart palette (up to 10 repos):**
 
@@ -235,7 +237,7 @@ The chart appearance is configurable via these inputs:
 | `chart-theme` | `auto` | `auto` follows `prefers-color-scheme` in SVG charts; `light`/`dark` force the palette. Email falls back to light under `auto`. |
 | `chart-custom-milestones` | _(empty)_ | Comma-separated star counts (e.g. `250, 750, 2500`) that replace the built-in milestone thresholds. When empty, the defaults are used. Requires `chart-milestones`. Applies to email charts too. |
 | `chart-range` | `all` | Time window plotted (`30d`, `90d`, `1y`, `all`), measured back from the latest data point, before `chart-max-points`. |
-| `chart-trend-line` | `false` | Overlay a dashed 7-point moving-average trend line on the main chart. Applies to email charts too. |
+| `chart-trend-line` | `false` | Overlay a dashed 7-point moving-average trend line (neutral gray, `#6a737d`) on the star-history chart to highlight the underlying growth direction. The chart has no legend, so the gray dashed line is the trend and the solid gold line is the actual star count. Applies to email charts too. |
 
 ```yaml
 with:
