@@ -6,6 +6,7 @@ import { getTranslations, interpolate, type Locale } from '@i18n';
 import {
   CHART,
   CHART_COMPARISON_COLORS,
+  CHART_TENSION,
   COLORS,
   DARK_PALETTE,
   LIGHT_PALETTE,
@@ -22,6 +23,20 @@ const XML_ESCAPE_MAP: Record<string, string> = {
   '>': '&gt;',
   '"': '&quot;',
 };
+
+const BEZIER_CONTROL_DIVISOR = 3;
+const PATH_LENGTH_SAFETY_FACTOR = 1.5;
+const Y_AXIS_PADDING_RATIO = 0.1;
+const Y_AXIS_MIN_PADDING = 1;
+const AXIS_STEP_BOUNDARY_TOLERANCE = 0.5;
+const NICE_AXIS_STEPS = {
+  thresholds: [
+    { maxResidual: 1.5, multiplier: 1 },
+    { maxResidual: 3.5, multiplier: 2 },
+    { maxResidual: 7.5, multiplier: 5 },
+  ],
+  largestMultiplier: 10,
+} as const;
 
 interface Point {
   x: number;
@@ -61,7 +76,7 @@ function generateSmoothPath({ points, smooth = true }: GenerateSmoothPathParams)
     return path;
   }
 
-  const tension = 0.4;
+  const tension = CHART_TENSION.smooth;
 
   for (let index = 0; index < points.length - 1; index++) {
     const previousPoint = points[Math.max(0, index - 1)];
@@ -69,18 +84,24 @@ function generateSmoothPath({ points, smooth = true }: GenerateSmoothPathParams)
     const endPoint = points[index + 1];
     const nextPoint = points[Math.min(points.length - 1, index + 2)];
 
-    const cp1x = startPoint.x + ((endPoint.x - previousPoint.x) * tension) / 3;
-    const cp2x = endPoint.x - ((nextPoint.x - startPoint.x) * tension) / 3;
+    const cp1x = startPoint.x + ((endPoint.x - previousPoint.x) * tension) / BEZIER_CONTROL_DIVISOR;
+    const cp2x = endPoint.x - ((nextPoint.x - startPoint.x) * tension) / BEZIER_CONTROL_DIVISOR;
 
     const segMinY = Math.min(startPoint.y, endPoint.y);
     const segMaxY = Math.max(startPoint.y, endPoint.y);
     const cp1y = Math.min(
       segMaxY,
-      Math.max(segMinY, startPoint.y + ((endPoint.y - previousPoint.y) * tension) / 3),
+      Math.max(
+        segMinY,
+        startPoint.y + ((endPoint.y - previousPoint.y) * tension) / BEZIER_CONTROL_DIVISOR,
+      ),
     );
     const cp2y = Math.min(
       segMaxY,
-      Math.max(segMinY, endPoint.y - ((nextPoint.y - startPoint.y) * tension) / 3),
+      Math.max(
+        segMinY,
+        endPoint.y - ((nextPoint.y - startPoint.y) * tension) / BEZIER_CONTROL_DIVISOR,
+      ),
     );
 
     path += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${endPoint.x},${endPoint.y}`;
@@ -98,7 +119,7 @@ function calculatePathLength(points: Point[]): number {
     length += Math.hypot(dx, dy);
   }
 
-  return Math.ceil(length * 1.5);
+  return Math.ceil(length * PATH_LENGTH_SAFETY_FACTOR);
 }
 
 interface NiceAxisStepsParams {
@@ -115,18 +136,17 @@ function niceAxisSteps({ min, max, count }: NiceAxisStepsParams): number[] {
   const magnitude = 10 ** Math.floor(Math.log10(rawStep));
   const residual = rawStep / magnitude;
 
-  let niceStep: number;
-
-  if (residual <= 1.5) niceStep = magnitude;
-  else if (residual <= 3.5) niceStep = 2 * magnitude;
-  else if (residual <= 7.5) niceStep = 5 * magnitude;
-  else niceStep = 10 * magnitude;
+  const multiplier =
+    NICE_AXIS_STEPS.thresholds.find((threshold) => residual <= threshold.maxResidual)?.multiplier ??
+    NICE_AXIS_STEPS.largestMultiplier;
+  const niceStep = multiplier * magnitude;
 
   const niceMin = Math.floor(min / niceStep) * niceStep;
   const steps: number[] = [];
+  const tolerance = niceStep * AXIS_STEP_BOUNDARY_TOLERANCE;
 
-  for (let step = niceMin; step <= max + niceStep * 0.5; step += niceStep) {
-    if (step >= min - niceStep * 0.5) {
+  for (let step = niceMin; step <= max + tolerance; step += niceStep) {
+    if (step >= min - tolerance) {
       steps.push(Math.round(step));
     }
   }
@@ -187,29 +207,48 @@ function renderSvg({
   beginAtZero = false,
   theme = ChartTheme.AUTO,
 }: RenderSvgParams): string {
-  const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
+  const {
+    margin,
+    pointRadius,
+    gridOpacity,
+    fillOpacity,
+    axisStrokeWidth,
+    fontSize,
+    animation,
+    font,
+    yAxis,
+    xAxis,
+    milestone: milestoneStyle,
+    dash,
+    legend: legendStyle,
+  } = SVG_CHART;
   const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
   const chartWidth = CHART.width - margin.left - margin.right;
   const chartHeight = CHART.height - margin.top - margin.bottom;
   const isRightAxis = yAxisSide === ChartAxisSide.RIGHT;
   const yAxisX = isRightAxis ? CHART.width - margin.right : margin.left;
-  const yLabelX = isRightAxis ? CHART.width - margin.right + 8 : margin.left - 8;
+  const yLabelX = isRightAxis
+    ? CHART.width - margin.right + yAxis.labelGap
+    : margin.left - yAxis.labelGap;
   const yLabelAnchor = isRightAxis ? 'start' : 'end';
   const allValues = datasets.flatMap((dataset) =>
     dataset.data.filter((value): value is number => value !== null),
   );
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
-  const padding = Math.max(1, Math.ceil((maxData - minData) * 0.1));
+  const padding = Math.max(
+    Y_AXIS_MIN_PADDING,
+    Math.ceil((maxData - minData) * Y_AXIS_PADDING_RATIO),
+  );
   const minValue = beginAtZero ? 0 : Math.max(0, minData - padding);
   const maxValue = maxData + padding;
-  const ySteps = niceAxisSteps({ min: minValue, max: maxValue, count: 5 });
+  const ySteps = niceAxisSteps({ min: minValue, max: maxValue, count: yAxis.stepCount });
 
   const gridLines = ySteps
     .map((value) => {
       const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
       return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
-    <text x="${yLabelX}" y="${y + 4}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount(value)}</text>`;
+    <text x="${yLabelX}" y="${y + yAxis.labelBaselineOffset}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount(value)}</text>`;
     })
     .join('\n    ');
 
@@ -218,13 +257,13 @@ function renderSvg({
         .filter((milestone) => milestone > minData && milestone < maxData)
         .map((value) => {
           const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
-          return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="1" stroke-dasharray="6,6" />
-    <text x="${margin.left + 4}" y="${y - 4}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount(value)} ★</text>`;
+          return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="${milestoneStyle.strokeWidth}" stroke-dasharray="${milestoneStyle.dashArray}" />
+    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount(value)} ★</text>`;
         })
         .join('\n    ')
     : '';
 
-  const maxLabels = 10;
+  const maxLabels = xAxis.maxLabels;
   const nonEmptyLabelIndices = labels.reduce<number[]>((indices, label, labelIndex) => {
     if (label !== '') indices.push(labelIndex);
     return indices;
@@ -235,7 +274,7 @@ function renderSvg({
     .filter((labelIndex, position) => position % labelStep === 0 || labelIndex === lastLabelIndex)
     .map((labelIndex) => {
       const x = margin.left + (labelIndex / Math.max(1, labels.length - 1)) * chartWidth;
-      return `<text x="${x}" y="${CHART.height - margin.bottom + 20}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(labels[labelIndex])}</text>`;
+      return `<text x="${x}" y="${CHART.height - margin.bottom + xAxis.labelOffset}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(labels[labelIndex])}</text>`;
     })
     .join('\n    ');
 
@@ -285,11 +324,11 @@ function renderSvg({
             ? (() => {
                 const first = segment.points[0];
                 const last = segment.points.at(-1) as Point;
-                return `<path d="${pathD} L${last.x},${bottomY} L${first.x},${bottomY} Z" fill="${dataset.color}" fill-opacity="0.1" />`;
+                return `<path d="${pathD} L${last.x},${bottomY} L${first.x},${bottomY} Z" fill="${dataset.color}" fill-opacity="${fillOpacity}" />`;
               })()
             : '';
 
-        const dashAttr = dataset.dashed ? ' stroke-dasharray="8,4"' : '';
+        const dashAttr = dataset.dashed ? ` stroke-dasharray="${dash.line}"` : '';
         const lineClass = dataset.dashed ? '' : ` class="data-line-${datasetIndex}"`;
         const pathEl = `<path d="${pathD}" fill="none" stroke="${dataset.color}" stroke-width="${lineWidth}"${dashAttr}${lineClass} />`;
 
@@ -337,17 +376,17 @@ function renderSvg({
   const legendSection = showLegend
     ? (() => {
         const legendY = margin.top - SVG_CHART.header.legendOffset;
-        const itemWidth = 120;
+        const itemWidth = legendStyle.itemWidth;
         const totalWidth = datasets.length * itemWidth;
         const startX = (CHART.width - totalWidth) / 2;
         return datasets
           .map((dataset, datasetIndex) => {
             const x = startX + datasetIndex * itemWidth;
-            const dashAttr = dataset.dashed ? ' stroke-dasharray="4,2"' : '';
-            const rectAttr = dataset.dashed ? ' rx="1"' : '';
-            return `<rect x="${x}" y="${legendY - 5}" width="12" height="3" fill="${dataset.color}"${rectAttr} />
-    <line x1="${x}" y1="${legendY - 3.5}" x2="${x + 12}" y2="${legendY - 3.5}" stroke="${dataset.color}" stroke-width="2"${dashAttr} />
-    <text x="${x + 16}" y="${legendY}" class="chart-text" font-size="10" font-family="${font}">${escapeXml(dataset.label)}</text>`;
+            const dashAttr = dataset.dashed ? ` stroke-dasharray="${dash.legend}"` : '';
+            const rectAttr = dataset.dashed ? ` rx="${legendStyle.rectBorderRadius}"` : '';
+            return `<rect x="${x}" y="${legendY - legendStyle.markerYOffset}" width="${legendStyle.markerWidth}" height="${legendStyle.markerHeight}" fill="${dataset.color}"${rectAttr} />
+    <line x1="${x}" y1="${legendY - legendStyle.lineYOffset}" x2="${x + legendStyle.markerWidth}" y2="${legendY - legendStyle.lineYOffset}" stroke="${dataset.color}" stroke-width="${legendStyle.lineStrokeWidth}"${dashAttr} />
+    <text x="${x + legendStyle.labelGap}" y="${legendY}" class="chart-text" font-size="${fontSize.legend}" font-family="${font}">${escapeXml(dataset.label)}</text>`;
           })
           .join('\n    ');
       })()
@@ -405,8 +444,8 @@ function renderSvg({
   <g class="x-axis">
     ${xLabels}
   </g>
-  <line x1="${yAxisX}" y1="${margin.top}" x2="${yAxisX}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="1" />
-  <line x1="${margin.left}" y1="${CHART.height - margin.bottom}" x2="${CHART.width - margin.right}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="1" />
+  <line x1="${yAxisX}" y1="${margin.top}" x2="${yAxisX}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="${axisStrokeWidth}" />
+  <line x1="${margin.left}" y1="${CHART.height - margin.bottom}" x2="${CHART.width - margin.right}" y2="${CHART.height - margin.bottom}" class="chart-axis" stroke-width="${axisStrokeWidth}" />
   ${allFills}
   ${allPaths}
   <g class="points">

@@ -75,6 +75,11 @@ export const BADGE = {
   horizontalPadding: 12,
   height: 20,
   borderRadius: 3,
+  fontSize: 11,
+  textBaseline: 14,
+  shadowBaseline: 15,
+  shadowOpacity: '.3',
+  gradientOpacity: '.1',
 } as const;
 
 export const SVG_CHART = {
@@ -82,9 +87,25 @@ export const SVG_CHART = {
   pointRadius: 4,
   lineWidth: 2.5,
   gridOpacity: 0.3,
-  fontSize: { title: 16, label: 11, milestone: 10 },
+  fillOpacity: 0.1,
+  axisStrokeWidth: 1,
+  fontSize: { title: 16, label: 11, milestone: 10, legend: 10 },
   header: { titleOffset: 16, titleWithLegendOffset: 36, legendOffset: 14 },
   animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
+  yAxis: { stepCount: 5, labelGap: 8, labelBaselineOffset: 4 },
+  xAxis: { maxLabels: 10, labelOffset: 20 },
+  milestone: { strokeWidth: 1, dashArray: '6,6', labelXOffset: 4, labelYOffset: 4 },
+  dash: { line: '8,4', legend: '4,2' },
+  legend: {
+    itemWidth: 120,
+    markerWidth: 12,
+    markerHeight: 3,
+    markerYOffset: 5,
+    lineYOffset: 3.5,
+    lineStrokeWidth: 2,
+    rectBorderRadius: 1,
+    labelGap: 16,
+  },
   font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
 } as const;
 

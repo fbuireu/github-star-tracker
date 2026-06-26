@@ -21,6 +21,19 @@ import {
 } from './shared';
 import type { ColorPalette } from './types';
 
+const CHART_STYLE = {
+  translucentAlpha: '33',
+  titleFontSize: 16,
+  legendFontSize: 11,
+  legendHiddenFontSize: 12,
+  milestoneBorderWidth: 1,
+  milestoneFontSize: 10,
+  milestoneDash: [6, 6] as [number, number],
+  trendDash: [6, 4],
+  linearRegressionDash: [8, 4],
+  weightedMovingAverageDash: [4, 4],
+};
+
 function tensionFor(smoothing: boolean): number {
   return smoothing ? CHART_TENSION.smooth : CHART_TENSION.straight;
 }
@@ -134,15 +147,15 @@ export function buildMilestoneAnnotations({
       yMin: milestone,
       yMax: milestone,
       borderColor: palette.neutral,
-      borderWidth: 1,
-      borderDash: [6, 6],
+      borderWidth: CHART_STYLE.milestoneBorderWidth,
+      borderDash: CHART_STYLE.milestoneDash,
       label: {
         display: true,
         content: `${milestone.toLocaleString('en-US')} ★`,
         position: 'start',
-        backgroundColor: `${palette.neutral}33`,
+        backgroundColor: `${palette.neutral}${CHART_STYLE.translucentAlpha}`,
         color: palette.neutral,
-        font: { size: 10 },
+        font: { size: CHART_STYLE.milestoneFontSize },
       },
     };
   }
@@ -174,14 +187,16 @@ function buildChartOptions({
         position: 'top',
         labels: {
           color: palette.text,
-          font: { size: showLegend ? 11 : 12 },
+          font: {
+            size: showLegend ? CHART_STYLE.legendFontSize : CHART_STYLE.legendHiddenFontSize,
+          },
         },
       },
       title: {
         display: true,
         text: title,
         color: palette.text,
-        font: { size: 16, weight: 'bold' },
+        font: { size: CHART_STYLE.titleFontSize, weight: 'bold' },
       },
       ...(annotation ? { annotation } : {}),
     },
@@ -216,7 +231,7 @@ function buildStarsDataset({
     label: 'Stars',
     data,
     borderColor: palette.accent,
-    backgroundColor: `${palette.accent}33`,
+    backgroundColor: `${palette.accent}${CHART_STYLE.translucentAlpha}`,
     fill: true,
     tension,
     pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
@@ -330,7 +345,7 @@ export function generateChartUrl({
       tension,
       pointRadius: CHART_POINT.hidden,
       pointHoverRadius: CHART_POINT.hidden,
-      borderDash: [6, 4],
+      borderDash: CHART_STYLE.trendDash,
     });
   }
 
@@ -460,7 +475,7 @@ export function generateComparisonChartUrl({
       label: useShortLabels ? repoName.split('/')[1] : repoName,
       data,
       borderColor: color,
-      backgroundColor: `${color}33`,
+      backgroundColor: `${color}${CHART_STYLE.translucentAlpha}`,
       fill: false,
       tension,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
@@ -527,7 +542,7 @@ export function generateForecastChartUrl({
       label: t.report.starHistory,
       data: series.historical,
       borderColor: palette.accent,
-      backgroundColor: `${palette.accent}33`,
+      backgroundColor: `${palette.accent}${CHART_STYLE.translucentAlpha}`,
       fill: true,
       tension,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
@@ -542,7 +557,7 @@ export function generateForecastChartUrl({
       tension,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
-      borderDash: [8, 4],
+      borderDash: CHART_STYLE.linearRegressionDash,
     },
     {
       label: t.forecast.weightedMovingAverage,
@@ -553,7 +568,7 @@ export function generateForecastChartUrl({
       tension,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
-      borderDash: [4, 4],
+      borderDash: CHART_STYLE.weightedMovingAverageDash,
     },
   ];
 

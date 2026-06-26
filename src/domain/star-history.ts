@@ -2,6 +2,8 @@ import { MAX_REACHABLE_STARGAZERS, MS_PER_DAY } from './constants';
 import type { RepoStargazers } from './stargazers';
 import type { History, Snapshot } from './types';
 
+const MIN_HISTORY_BUCKETS = 2;
+
 export interface RepoTotal {
   fullName: string;
   name: string;
@@ -110,7 +112,7 @@ export function buildStarHistory({
     earliest >= end
       ? [earliest - MS_PER_DAY, end]
       : (() => {
-          const buckets = Math.max(2, Math.floor(maxPoints));
+          const buckets = Math.max(MIN_HISTORY_BUCKETS, Math.floor(maxPoints));
           const step = (end - earliest) / (buckets - 1);
 
           return Array.from({ length: buckets }, (_, bucketIndex) =>

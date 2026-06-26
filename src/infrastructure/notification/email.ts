@@ -3,6 +3,7 @@ import { getTranslations, type Locale } from '@i18n';
 import nodemailer from 'nodemailer';
 
 const SECURE_SMTP_PORT = 465;
+const DEFAULT_SMTP_PORT = '587';
 
 function resolveFromAddress({ from, username }: { from: string; username: string }): string {
   if (from.includes('@')) {
@@ -33,7 +34,7 @@ export function getEmailConfig(locale: Locale): EmailConfig | null {
 
   return {
     host,
-    port: Number.parseInt(core.getInput('smtp-port') || '587', 10),
+    port: Number.parseInt(core.getInput('smtp-port') || DEFAULT_SMTP_PORT, 10),
     username: core.getInput('smtp-username'),
     password: core.getInput('smtp-password'),
     to: core.getInput('email-to'),

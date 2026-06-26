@@ -59,8 +59,10 @@ export function linearRegression(values: number[]): LinearRegressionResult {
   return { slope, intercept };
 }
 
+const MIN_VALUES_FOR_WEIGHTED_AVERAGE = 2;
+
 export function weightedMovingAverage(values: number[]): number {
-  if (values.length < 2) return 0;
+  if (values.length < MIN_VALUES_FOR_WEIGHTED_AVERAGE) return 0;
 
   const deltas: number[] = [];
 

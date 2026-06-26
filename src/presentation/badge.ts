@@ -18,8 +18,8 @@ export function generateBadge({ totalStars, locale }: GenerateBadgeParams): stri
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${BADGE.height}" role="img" aria-label="${label}: ${value}">
   <title>${label}: ${value}</title>
   <linearGradient id="s" x2="0" y2="100%">
-    <stop offset="0" stop-color="${COLORS.gradientStart}" stop-opacity=".1"/>
-    <stop offset="1" stop-opacity=".1"/>
+    <stop offset="0" stop-color="${COLORS.gradientStart}" stop-opacity="${BADGE.gradientOpacity}"/>
+    <stop offset="1" stop-opacity="${BADGE.gradientOpacity}"/>
   </linearGradient>
   <clipPath id="r">
     <rect width="${totalWidth}" height="${BADGE.height}" rx="${BADGE.borderRadius}" fill="${COLORS.white}"/>
@@ -29,11 +29,11 @@ export function generateBadge({ totalStars, locale }: GenerateBadgeParams): stri
     <rect x="${labelWidth}" width="${valueWidth}" height="${BADGE.height}" fill="${COLORS.accent}"/>
     <rect width="${totalWidth}" height="${BADGE.height}" fill="url(#s)"/>
   </g>
-  <g fill="${COLORS.white}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="11">
-    <text aria-hidden="true" x="${labelWidth / 2}" y="15" fill="${COLORS.shadow}" fill-opacity=".3">${label}</text>
-    <text x="${labelWidth / 2}" y="14">${label}</text>
-    <text aria-hidden="true" x="${labelWidth + valueWidth / 2}" y="15" fill="${COLORS.shadow}" fill-opacity=".3">${value}</text>
-    <text x="${labelWidth + valueWidth / 2}" y="14">${value}</text>
+  <g fill="${COLORS.white}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="${BADGE.fontSize}">
+    <text aria-hidden="true" x="${labelWidth / 2}" y="${BADGE.shadowBaseline}" fill="${COLORS.shadow}" fill-opacity="${BADGE.shadowOpacity}">${label}</text>
+    <text x="${labelWidth / 2}" y="${BADGE.textBaseline}">${label}</text>
+    <text aria-hidden="true" x="${labelWidth + valueWidth / 2}" y="${BADGE.shadowBaseline}" fill="${COLORS.shadow}" fill-opacity="${BADGE.shadowOpacity}">${value}</text>
+    <text x="${labelWidth + valueWidth / 2}" y="${BADGE.textBaseline}">${value}</text>
   </g>
 </svg>`;
 }
