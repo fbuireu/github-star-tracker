@@ -24,6 +24,7 @@
     "topRepositories": "Repositorios Principales",
     "byRepository": "Por Repositorio",
     "individualRepoCharts": "Gráficos por Repositorio",
+    "trendLine": "Tendencia",
     "badges": {
       "new": "NUEVO"
     }

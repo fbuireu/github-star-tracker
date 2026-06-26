@@ -11,8 +11,14 @@ import {
   LIGHT_PALETTE,
   MILESTONE_THRESHOLDS,
   MIN_SNAPSHOTS_FOR_CHART,
+  TREND_WINDOW,
 } from './constants';
-import { buildForecastChartSeries, filterSnapshotsByRange, resolvePalette } from './shared';
+import {
+  buildForecastChartSeries,
+  filterSnapshotsByRange,
+  movingAverageSeries,
+  resolvePalette,
+} from './shared';
 import type { ColorPalette } from './types';
 
 function tensionFor(smoothing: boolean): number {
@@ -278,6 +284,7 @@ interface GenerateChartUrlParams {
   theme?: ChartTheme;
   customMilestones?: readonly number[];
   range?: ChartRange;
+  trendLine?: boolean;
 }
 
 export function generateChartUrl({
@@ -291,6 +298,7 @@ export function generateChartUrl({
   theme = ChartTheme.AUTO,
   customMilestones,
   range = ChartRange.ALL,
+  trendLine = false,
 }: GenerateChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -302,6 +310,21 @@ export function generateChartUrl({
   const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData({ history, locale, range });
   const datasets: Dataset[] = [buildStarsDataset({ data, tension, showPoints, palette })];
+
+  if (trendLine) {
+    datasets.push({
+      label: t.report.trendLine,
+      data: movingAverageSeries({ values: data, window: TREND_WINDOW }),
+      borderColor: palette.neutral,
+      backgroundColor: 'transparent',
+      fill: false,
+      tension,
+      pointRadius: CHART_POINT.hidden,
+      pointHoverRadius: CHART_POINT.hidden,
+      borderDash: [6, 4],
+    });
+  }
+
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
   const thresholds =

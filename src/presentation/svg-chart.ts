@@ -12,8 +12,9 @@ import {
   MILESTONE_THRESHOLDS,
   MIN_SNAPSHOTS_FOR_CHART,
   SVG_CHART,
+  TREND_WINDOW,
 } from './constants';
-import { buildForecastChartSeries, filterSnapshotsByRange } from './shared';
+import { buildForecastChartSeries, filterSnapshotsByRange, movingAverageSeries } from './shared';
 
 const XML_ESCAPE_MAP: Record<string, string> = {
   '&': '&amp;',
@@ -430,6 +431,7 @@ interface GenerateSvgChartParams {
   theme?: ChartTheme;
   customMilestones?: readonly number[];
   range?: ChartRange;
+  trendLine?: boolean;
 }
 
 export function generateSvgChart({
@@ -448,11 +450,13 @@ export function generateSvgChart({
   theme,
   customMilestones,
   range,
+  trendLine = false,
 }: GenerateSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
+  const t = getTranslations(locale);
   const snapshots = sliceForChart({
     items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
     maxPoints,
@@ -462,10 +466,21 @@ export function generateSvgChart({
     locale,
   });
   const data = snapshots.map((snapshot) => snapshot.totalStars);
+  const datasets: SvgDataset[] = [{ label: 'Stars', data, color: lineColor ?? COLORS.accent }];
+
+  if (trendLine) {
+    datasets.push({
+      label: t.report.trendLine,
+      data: movingAverageSeries({ values: data, window: TREND_WINDOW }),
+      color: COLORS.neutral,
+      dashed: true,
+      fill: false,
+    });
+  }
 
   return renderSvg({
     labels,
-    datasets: [{ label: 'Stars', data, color: lineColor ?? COLORS.accent }],
+    datasets,
     title: title ?? 'Star History',
     showLegend: false,
     milestones,

@@ -653,6 +653,31 @@ describe('chart', () => {
     });
   });
 
+  describe('trendLine', () => {
+    const datasetCount = (url: string): number =>
+      JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]).data.datasets.length;
+
+    it('does not overlay a trend dataset by default', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en' });
+
+      expect(url).not.toBeNull();
+      if (url) expect(datasetCount(url)).toBe(1);
+    });
+
+    it('overlays a dashed moving-average dataset when enabled', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en', trendLine: true });
+
+      expect(url).not.toBeNull();
+      if (url) {
+        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+
+        expect(config.data.datasets).toHaveLength(2);
+        expect(config.data.datasets[1].borderDash).toBeDefined();
+        expect(config.data.datasets[1].fill).toBe(false);
+      }
+    });
+  });
+
   describe('theme', () => {
     it('uses a light background by default', () => {
       const url = generateChartUrl({ history: mockHistory, locale: 'en' });

@@ -66,4 +66,5 @@ export interface Config {
   chartTheme: ChartTheme;
   chartCustomMilestones: number[];
   chartRange: ChartRange;
+  chartTrendLine: boolean;
 }

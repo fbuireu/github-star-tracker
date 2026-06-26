@@ -59,6 +59,8 @@ export const CHART_TENSION = {
   straight: 0,
 } as const;
 
+export const TREND_WINDOW = 7;
+
 export const CHART_POINT = {
   hidden: 0,
   primaryRadius: 3,
