@@ -41,6 +41,7 @@ interface FileConfig {
   chartSmoothing?: boolean;
   chartShowPoints?: boolean;
   chartAnimation?: boolean;
+  chartMilestones?: boolean;
 }
 
 interface ParseConfigYamlParams {
@@ -107,6 +108,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     chartSmoothing: read('chart_smoothing'),
     chartShowPoints: read('chart_show_points'),
     chartAnimation: read('chart_animation'),
+    chartMilestones: read('chart_milestones'),
   };
 }
 
@@ -139,6 +141,7 @@ export function loadConfig(): Config {
   const inputChartSmoothing = core.getInput('chart-smoothing');
   const inputChartShowPoints = core.getInput('chart-show-points');
   const inputChartAnimation = core.getInput('chart-animation');
+  const inputChartMilestones = core.getInput('chart-milestones');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -235,6 +238,8 @@ export function loadConfig(): Config {
       parseBool(inputChartShowPoints) ?? fileConfig.chartShowPoints ?? DEFAULTS.chartShowPoints,
     chartAnimation:
       parseBool(inputChartAnimation) ?? fileConfig.chartAnimation ?? DEFAULTS.chartAnimation,
+    chartMilestones:
+      parseBool(inputChartMilestones) ?? fileConfig.chartMilestones ?? DEFAULTS.chartMilestones,
   };
 
   core.info(

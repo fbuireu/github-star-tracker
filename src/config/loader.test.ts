@@ -531,6 +531,26 @@ describe('loadConfig', () => {
     expect(config.chartAnimation).toBe(false);
   });
 
+  it('defaults chart-milestones to true', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartMilestones).toBe(true);
+  });
+
+  it('parses chart-milestones input as false', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-milestones') return 'false';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartMilestones).toBe(false);
+  });
+
   it('defaults track-stargazers to false', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 

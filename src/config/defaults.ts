@@ -49,4 +49,5 @@ export const DEFAULTS: Config = {
   chartSmoothing: true,
   chartShowPoints: true,
   chartAnimation: true,
+  chartMilestones: true,
 } as const;

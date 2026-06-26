@@ -27,6 +27,7 @@ export function generateHtmlReport({
   topRepos: topReposCount = 10,
   smoothing = true,
   showPoints = true,
+  milestones = true,
 }: GenerateReportParams): string {
   const { summary } = results;
   const t = getTranslations(locale);
@@ -104,7 +105,7 @@ export function generateHtmlReport({
     ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">📈 ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
         ${
           comparisonChartUrl
             ? `

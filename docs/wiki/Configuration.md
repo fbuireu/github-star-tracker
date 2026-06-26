@@ -416,6 +416,19 @@ Whether the SVG charts animate when first rendered.
 
 ---
 
+### `chart-milestones`
+
+Whether to draw milestone reference lines on the main star-history chart.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `true` |
+
+`true` draws dashed reference lines at the star milestones (10, 50, 100, 500, 1k, 5k, 10k) that fall within the visible range; `false` hides them. Applies to the main chart in both the SVG output and the email report.
+
+---
+
 ## Filtering Options
 
 ### `include-archived`

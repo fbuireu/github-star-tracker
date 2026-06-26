@@ -159,6 +159,7 @@ export async function trackStars(): Promise<void> {
           topRepos: config.topRepos,
           smoothing: config.chartSmoothing,
           showPoints: config.chartShowPoints,
+          milestones: config.chartMilestones,
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport(reportParams);
@@ -193,6 +194,7 @@ export async function trackStars(): Promise<void> {
             smoothing: config.chartSmoothing,
             showPoints: config.chartShowPoints,
             animate: config.chartAnimation,
+            milestones: config.chartMilestones,
           });
           if (svgChart) {
             writeChart({ dataDir, filename: 'star-history.svg', svg: svgChart });

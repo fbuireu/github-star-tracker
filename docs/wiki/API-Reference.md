@@ -30,6 +30,7 @@ Complete reference for all inputs, outputs, and data formats.
 | `chart-smoothing` | `boolean` | `true` | Smooth curve (`true`) or straight segments between points to reveal small spikes (`false`) |
 | `chart-show-points` | `boolean` | `true` | Draw a marker on each data point (`true`) or hide them for a cleaner dense line (`false`) |
 | `chart-animation` | `boolean` | `true` | Animate the SVG charts (`true`) or render them static (`false`) for email/static contexts |
+| `chart-milestones` | `boolean` | `true` | Show milestone reference lines on the main star-history chart (`true`) or hide them (`false`) |
 
 ### Stargazer Sampling
 
@@ -276,6 +277,7 @@ chart_y_axis_side: left       # left | right
 chart_smoothing: true         # boolean
 chart_show_points: true       # boolean
 chart_animation: true         # boolean
+chart_milestones: true        # boolean
 ```
 
 ---

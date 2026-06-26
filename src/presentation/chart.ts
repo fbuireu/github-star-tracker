@@ -246,6 +246,7 @@ interface GenerateChartUrlParams {
   locale: Locale;
   smoothing?: boolean;
   showPoints?: boolean;
+  milestones?: boolean;
 }
 
 export function generateChartUrl({
@@ -254,6 +255,7 @@ export function generateChartUrl({
   locale,
   smoothing = true,
   showPoints = true,
+  milestones = true,
 }: GenerateChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -266,7 +268,7 @@ export function generateChartUrl({
   const datasets: Dataset[] = [buildStarsDataset({ data, tension, showPoints })];
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
-  const annotation = buildMilestoneAnnotations({ minStars, maxStars });
+  const annotation = milestones ? buildMilestoneAnnotations({ minStars, maxStars }) : null;
   const config = buildChartConfig({
     labels,
     datasets,

@@ -498,6 +498,24 @@ describe('chart', () => {
         expect(config.options.plugins.annotation).toBeUndefined();
       }
     });
+
+    it('does not include annotations when milestones are disabled', () => {
+      const largeHistory: History = {
+        snapshots: [
+          { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 80, repos: [] },
+          { timestamp: '2025-01-08T00:00:00.000Z', totalStars: 120, repos: [] },
+        ],
+      };
+
+      const url = generateChartUrl({ history: largeHistory, locale: 'en', milestones: false });
+
+      expect(url).not.toBeNull();
+      if (url) {
+        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+
+        expect(config.options.plugins.annotation).toBeUndefined();
+      }
+    });
   });
 
   describe('smoothing', () => {

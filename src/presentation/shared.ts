@@ -16,6 +16,7 @@ export interface GenerateReportParams {
   topRepos?: number;
   smoothing?: boolean;
   showPoints?: boolean;
+  milestones?: boolean;
 }
 
 export interface ReportData {

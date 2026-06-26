@@ -412,6 +412,7 @@ interface GenerateSvgChartParams {
   smoothing?: boolean;
   showPoints?: boolean;
   animate?: boolean;
+  milestones?: boolean;
 }
 
 export function generateSvgChart({
@@ -425,6 +426,7 @@ export function generateSvgChart({
   smoothing,
   showPoints,
   animate,
+  milestones = true,
 }: GenerateSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -442,7 +444,7 @@ export function generateSvgChart({
     datasets: [{ label: 'Stars', data, color: lineColor ?? COLORS.accent }],
     title: title ?? 'Star History',
     showLegend: false,
-    milestones: true,
+    milestones,
     lineWidth,
     yAxisSide,
     smoothing,

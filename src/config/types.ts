@@ -44,4 +44,5 @@ export interface Config {
   chartSmoothing: boolean;
   chartShowPoints: boolean;
   chartAnimation: boolean;
+  chartMilestones: boolean;
 }
