@@ -14,7 +14,7 @@ import {
   parseNumberList,
 } from './parsers';
 import type { Config, Visibility } from './types';
-import { ChartAxisSide } from './types';
+import { ChartAxisSide, ChartTheme } from './types';
 
 interface FileConfig {
   visibility?: string;
@@ -43,6 +43,8 @@ interface FileConfig {
   chartShowPoints?: boolean;
   chartAnimation?: boolean;
   chartMilestones?: boolean;
+  chartBeginAtZero?: boolean;
+  chartTheme?: string;
   chartCustomMilestones?: number[] | string;
 }
 
@@ -111,6 +113,8 @@ export function loadConfigFile(configPath: string): FileConfig {
     chartShowPoints: read('chart_show_points'),
     chartAnimation: read('chart_animation'),
     chartMilestones: read('chart_milestones'),
+    chartBeginAtZero: read('chart_begin_at_zero'),
+    chartTheme: read('chart_theme'),
     chartCustomMilestones: read('chart_custom_milestones'),
   };
 }
@@ -145,6 +149,8 @@ export function loadConfig(): Config {
   const inputChartShowPoints = core.getInput('chart-show-points');
   const inputChartAnimation = core.getInput('chart-animation');
   const inputChartMilestones = core.getInput('chart-milestones');
+  const inputChartBeginAtZero = core.getInput('chart-begin-at-zero');
+  const inputChartTheme = core.getInput('chart-theme');
   const inputChartCustomMilestones = core.getInput('chart-custom-milestones');
 
   const visibility = (inputVisibility ||
@@ -202,6 +208,16 @@ export function loadConfig(): Config {
     );
   }
 
+  const rawChartTheme = inputChartTheme || fileConfig.chartTheme;
+  const isValidTheme = (value: string | undefined): value is ChartTheme =>
+    value === ChartTheme.AUTO || value === ChartTheme.LIGHT || value === ChartTheme.DARK;
+  const chartTheme = isValidTheme(rawChartTheme) ? rawChartTheme : DEFAULTS.chartTheme;
+  if (rawChartTheme && !isValidTheme(rawChartTheme)) {
+    core.warning(
+      `Invalid chart-theme "${rawChartTheme}". Must be "auto", "light", or "dark". Falling back to "${DEFAULTS.chartTheme}"`,
+    );
+  }
+
   const config: Config = {
     visibility,
     includeArchived:
@@ -254,6 +270,9 @@ export function loadConfig(): Config {
       parseBool(inputChartAnimation) ?? fileConfig.chartAnimation ?? DEFAULTS.chartAnimation,
     chartMilestones:
       parseBool(inputChartMilestones) ?? fileConfig.chartMilestones ?? DEFAULTS.chartMilestones,
+    chartBeginAtZero:
+      parseBool(inputChartBeginAtZero) ?? fileConfig.chartBeginAtZero ?? DEFAULTS.chartBeginAtZero,
+    chartTheme,
     chartCustomMilestones: inputChartCustomMilestones
       ? parseNumberList(inputChartCustomMilestones)
       : fileCustomMilestones.length > 0

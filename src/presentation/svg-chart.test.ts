@@ -115,6 +115,29 @@ describe('generateSvgChart', () => {
     expect(result).toContain('Star History');
   });
 
+  it('uses a prefers-color-scheme media query for the auto theme', () => {
+    const history = makeHistory([10, 20, 30]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
+
+    expect(result).toContain('@media (prefers-color-scheme: dark)');
+  });
+
+  it('forces the light palette without a media query for the light theme', () => {
+    const history = makeHistory([10, 20, 30]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en', theme: 'light' }));
+
+    expect(result).not.toContain('prefers-color-scheme');
+    expect(result).toContain('.chart-bg { fill: #fff; }');
+  });
+
+  it('forces the dark palette without a media query for the dark theme', () => {
+    const history = makeHistory([10, 20, 30]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en', theme: 'dark' }));
+
+    expect(result).not.toContain('prefers-color-scheme');
+    expect(result).toContain('.chart-bg { fill: #0d1117; }');
+  });
+
   it('includes CSS animations', () => {
     const history = makeHistory([10, 20, 30]);
     const result = generateSvgChart({ history, locale: 'en' });
@@ -192,6 +215,15 @@ describe('generateSvgChart', () => {
 
     expect(result).toContain('100');
     expect(result).toContain('stroke-dasharray="6,6"');
+  });
+
+  it('floors the Y-axis at zero when beginAtZero is enabled', () => {
+    const history = makeHistory([80, 120, 150]);
+    const zoomed = expectSvg(generateSvgChart({ history, locale: 'en' }));
+    const fromZero = expectSvg(generateSvgChart({ history, locale: 'en', beginAtZero: true }));
+
+    expect(zoomed).not.toContain('>0</text>');
+    expect(fromZero).toContain('>0</text>');
   });
 
   it('omits milestone lines when milestones are disabled', () => {

@@ -31,6 +31,8 @@ Complete reference for all inputs, outputs, and data formats.
 | `chart-show-points` | `boolean` | `true` | Draw a marker on each data point (`true`) or hide them for a cleaner dense line (`false`) |
 | `chart-animation` | `boolean` | `true` | Animate the SVG charts (`true`) or render them static (`false`) for email/static contexts |
 | `chart-milestones` | `boolean` | `true` | Show milestone reference lines on the main star-history chart (`true`) or hide them (`false`) |
+| `chart-begin-at-zero` | `boolean` | `false` | Start the Y-axis at zero (`true`) or zoom into the data range (`false`) |
+| `chart-theme` | `string` | `auto` | Color theme: `auto` (follows `prefers-color-scheme`), `light` or `dark` |
 | `chart-custom-milestones` | `string` | _(empty)_ | Comma-separated star counts for the milestone reference lines, replacing the built-in defaults (e.g. `250, 750, 2500`). Requires `chart-milestones` |
 
 ### Stargazer Sampling
@@ -279,6 +281,8 @@ chart_smoothing: true         # boolean
 chart_show_points: true       # boolean
 chart_animation: true         # boolean
 chart_milestones: true        # boolean
+chart_begin_at_zero: false    # boolean
+chart_theme: auto             # auto | light | dark
 ```
 
 ---

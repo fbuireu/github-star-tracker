@@ -62,6 +62,8 @@ const defaultConfig: Config = {
   chartShowPoints: true,
   chartAnimation: true,
   chartMilestones: true,
+  chartBeginAtZero: false,
+  chartTheme: 'auto',
   chartCustomMilestones: [],
 };
 

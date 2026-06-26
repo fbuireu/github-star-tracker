@@ -622,6 +622,47 @@ describe('chart', () => {
     });
   });
 
+  describe('theme', () => {
+    it('uses a light background by default', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en' });
+
+      expect(url).not.toBeNull();
+      if (url) expect(url).toContain('backgroundColor=%23fff');
+    });
+
+    it('uses a dark background and palette for the dark theme', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en', theme: 'dark' });
+
+      expect(url).not.toBeNull();
+      if (url) {
+        expect(url).toContain('backgroundColor=%230d1117');
+        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+        expect(config.options.scales.y.ticks.color).toBe('#8b949e');
+      }
+    });
+  });
+
+  describe('beginAtZero', () => {
+    const beginAtZeroOf = (url: string): boolean => {
+      const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+      return config.options.scales.y.beginAtZero;
+    };
+
+    it('does not begin the Y-axis at zero by default', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en' });
+
+      expect(url).not.toBeNull();
+      if (url) expect(beginAtZeroOf(url)).toBe(false);
+    });
+
+    it('begins the Y-axis at zero when enabled', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en', beginAtZero: true });
+
+      expect(url).not.toBeNull();
+      if (url) expect(beginAtZeroOf(url)).toBe(true);
+    });
+  });
+
   describe('showPoints', () => {
     const pointRadiusOf = (url: string): number => {
       const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);

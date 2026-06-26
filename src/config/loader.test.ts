@@ -551,6 +551,59 @@ describe('loadConfig', () => {
     expect(config.chartMilestones).toBe(false);
   });
 
+  it('defaults chart-begin-at-zero to false', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartBeginAtZero).toBe(false);
+  });
+
+  it('parses chart-begin-at-zero input as true', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-begin-at-zero') return 'true';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartBeginAtZero).toBe(true);
+  });
+
+  it('defaults chart-theme to auto', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartTheme).toBe('auto');
+  });
+
+  it('parses chart-theme input as dark', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-theme') return 'dark';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartTheme).toBe('dark');
+  });
+
+  it('warns and falls back to auto for an invalid chart-theme', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-theme') return 'sepia';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartTheme).toBe('auto');
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid chart-theme'));
+  });
+
   it('defaults chart-custom-milestones to an empty list', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 

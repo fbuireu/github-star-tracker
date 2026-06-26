@@ -429,6 +429,32 @@ Whether to draw milestone reference lines on the main star-history chart.
 
 ---
 
+### `chart-begin-at-zero`
+
+Where the chart Y-axis starts.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `false` |
+
+`false` (the default) zooms the Y-axis into the data range so day-to-day changes are visible; `true` anchors the Y-axis at zero for an absolute view of scale. Applies to all charts (SVG and email).
+
+---
+
+### `chart-theme`
+
+Color theme for the charts and the email report.
+
+| Property | Value |
+|---|---|
+| **Type** | `auto`, `light`, `dark` |
+| **Default** | `auto` |
+
+`auto` makes the SVG charts follow the reader's `prefers-color-scheme` (light or dark) via a media query. `light` and `dark` force that palette. Note that most email clients ignore `prefers-color-scheme`, so the QuickChart images and the email body render in light under `auto`; set `dark` explicitly if you want a dark email.
+
+---
+
 ### `chart-custom-milestones`
 
 Custom star counts to use as milestone reference lines instead of the built-in defaults.
