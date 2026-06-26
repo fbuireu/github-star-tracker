@@ -442,6 +442,19 @@ Where the chart Y-axis starts.
 
 ---
 
+### `chart-theme`
+
+Color theme for the charts and the email report.
+
+| Property | Value |
+|---|---|
+| **Type** | `auto`, `light`, `dark` |
+| **Default** | `auto` |
+
+`auto` makes the SVG charts follow the reader's `prefers-color-scheme` (light or dark) via a media query. `light` and `dark` force that palette. Note that most email clients ignore `prefers-color-scheme`, so the QuickChart images and the email body render in light under `auto`; set `dark` explicitly if you want a dark email.
+
+---
+
 ## Filtering Options
 
 ### `include-archived`

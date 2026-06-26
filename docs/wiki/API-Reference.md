@@ -32,6 +32,7 @@ Complete reference for all inputs, outputs, and data formats.
 | `chart-animation` | `boolean` | `true` | Animate the SVG charts (`true`) or render them static (`false`) for email/static contexts |
 | `chart-milestones` | `boolean` | `true` | Show milestone reference lines on the main star-history chart (`true`) or hide them (`false`) |
 | `chart-begin-at-zero` | `boolean` | `false` | Start the Y-axis at zero (`true`) or zoom into the data range (`false`) |
+| `chart-theme` | `string` | `auto` | Color theme: `auto` (follows `prefers-color-scheme`), `light` or `dark` |
 
 ### Stargazer Sampling
 
@@ -280,6 +281,7 @@ chart_show_points: true       # boolean
 chart_animation: true         # boolean
 chart_milestones: true        # boolean
 chart_begin_at_zero: false    # boolean
+chart_theme: auto             # auto | light | dark
 ```
 
 ---

@@ -13,7 +13,7 @@ import {
   parseNumber,
 } from './parsers';
 import type { Config, Visibility } from './types';
-import { ChartAxisSide } from './types';
+import { ChartAxisSide, ChartTheme } from './types';
 
 interface FileConfig {
   visibility?: string;
@@ -43,6 +43,7 @@ interface FileConfig {
   chartAnimation?: boolean;
   chartMilestones?: boolean;
   chartBeginAtZero?: boolean;
+  chartTheme?: string;
 }
 
 interface ParseConfigYamlParams {
@@ -111,6 +112,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     chartAnimation: read('chart_animation'),
     chartMilestones: read('chart_milestones'),
     chartBeginAtZero: read('chart_begin_at_zero'),
+    chartTheme: read('chart_theme'),
   };
 }
 
@@ -145,6 +147,7 @@ export function loadConfig(): Config {
   const inputChartAnimation = core.getInput('chart-animation');
   const inputChartMilestones = core.getInput('chart-milestones');
   const inputChartBeginAtZero = core.getInput('chart-begin-at-zero');
+  const inputChartTheme = core.getInput('chart-theme');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -188,6 +191,16 @@ export function loadConfig(): Config {
   if (rawChartYAxisSide && !isValidAxisSide(rawChartYAxisSide)) {
     core.warning(
       `Invalid chart-y-axis-side "${rawChartYAxisSide}". Must be "left" or "right". Falling back to "${DEFAULTS.chartYAxisSide}"`,
+    );
+  }
+
+  const rawChartTheme = inputChartTheme || fileConfig.chartTheme;
+  const isValidTheme = (value: string | undefined): value is ChartTheme =>
+    value === ChartTheme.AUTO || value === ChartTheme.LIGHT || value === ChartTheme.DARK;
+  const chartTheme = isValidTheme(rawChartTheme) ? rawChartTheme : DEFAULTS.chartTheme;
+  if (rawChartTheme && !isValidTheme(rawChartTheme)) {
+    core.warning(
+      `Invalid chart-theme "${rawChartTheme}". Must be "auto", "light", or "dark". Falling back to "${DEFAULTS.chartTheme}"`,
     );
   }
 
@@ -245,6 +258,7 @@ export function loadConfig(): Config {
       parseBool(inputChartMilestones) ?? fileConfig.chartMilestones ?? DEFAULTS.chartMilestones,
     chartBeginAtZero:
       parseBool(inputChartBeginAtZero) ?? fileConfig.chartBeginAtZero ?? DEFAULTS.chartBeginAtZero,
+    chartTheme,
   };
 
   core.info(

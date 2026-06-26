@@ -35584,6 +35584,11 @@ var ChartAxisSide = {
   LEFT: "left",
   RIGHT: "right"
 };
+var ChartTheme = {
+  AUTO: "auto",
+  LIGHT: "light",
+  DARK: "dark"
+};
 
 // src/config/defaults.ts
 var LOCALE_MAP = {
@@ -35627,7 +35632,8 @@ var DEFAULTS2 = {
   chartShowPoints: true,
   chartAnimation: true,
   chartMilestones: true,
-  chartBeginAtZero: false
+  chartBeginAtZero: false,
+  chartTheme: ChartTheme.AUTO
 };
 
 // src/i18n/ca.json
@@ -38184,7 +38190,8 @@ function loadConfigFile(configPath) {
     chartShowPoints: read("chart_show_points"),
     chartAnimation: read("chart_animation"),
     chartMilestones: read("chart_milestones"),
-    chartBeginAtZero: read("chart_begin_at_zero")
+    chartBeginAtZero: read("chart_begin_at_zero"),
+    chartTheme: read("chart_theme")
   };
 }
 function loadConfig() {
@@ -38217,6 +38224,7 @@ function loadConfig() {
   const inputChartAnimation = getInput("chart-animation");
   const inputChartMilestones = getInput("chart-milestones");
   const inputChartBeginAtZero = getInput("chart-begin-at-zero");
+  const inputChartTheme = getInput("chart-theme");
   const visibility = inputVisibility || fileConfig.visibility || DEFAULTS2.visibility;
   if (!(visibility in VISIBILITY_CONFIG)) {
     throw new Error(
@@ -38247,6 +38255,14 @@ function loadConfig() {
       `Invalid chart-y-axis-side "${rawChartYAxisSide}". Must be "left" or "right". Falling back to "${DEFAULTS2.chartYAxisSide}"`
     );
   }
+  const rawChartTheme = inputChartTheme || fileConfig.chartTheme;
+  const isValidTheme = (value) => value === ChartTheme.AUTO || value === ChartTheme.LIGHT || value === ChartTheme.DARK;
+  const chartTheme = isValidTheme(rawChartTheme) ? rawChartTheme : DEFAULTS2.chartTheme;
+  if (rawChartTheme && !isValidTheme(rawChartTheme)) {
+    warning(
+      `Invalid chart-theme "${rawChartTheme}". Must be "auto", "light", or "dark". Falling back to "${DEFAULTS2.chartTheme}"`
+    );
+  }
   const config = {
     visibility,
     includeArchived: parseBool(inputIncludeArchived) ?? fileConfig.includeArchived ?? DEFAULTS2.includeArchived,
@@ -38275,7 +38291,8 @@ function loadConfig() {
     chartShowPoints: parseBool(inputChartShowPoints) ?? fileConfig.chartShowPoints ?? DEFAULTS2.chartShowPoints,
     chartAnimation: parseBool(inputChartAnimation) ?? fileConfig.chartAnimation ?? DEFAULTS2.chartAnimation,
     chartMilestones: parseBool(inputChartMilestones) ?? fileConfig.chartMilestones ?? DEFAULTS2.chartMilestones,
-    chartBeginAtZero: parseBool(inputChartBeginAtZero) ?? fileConfig.chartBeginAtZero ?? DEFAULTS2.chartBeginAtZero
+    chartBeginAtZero: parseBool(inputChartBeginAtZero) ?? fileConfig.chartBeginAtZero ?? DEFAULTS2.chartBeginAtZero,
+    chartTheme
   };
   info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`
@@ -39230,6 +39247,9 @@ function generateCsvReport({ repos }) {
 }
 
 // src/presentation/shared.ts
+function resolvePalette(theme = ChartTheme.AUTO) {
+  return theme === ChartTheme.DARK ? DARK_PALETTE : LIGHT_PALETTE;
+}
 function prepareReportData({
   results,
   previousTimestamp,
@@ -39284,7 +39304,8 @@ function tensionFor(smoothing) {
 }
 function buildMilestoneAnnotations({
   minStars,
-  maxStars
+  maxStars,
+  palette = LIGHT_PALETTE
 }) {
   const visible = MILESTONE_THRESHOLDS.filter(
     (milestone) => milestone > minStars && milestone < maxStars
@@ -39296,15 +39317,15 @@ function buildMilestoneAnnotations({
       type: "line",
       yMin: milestone,
       yMax: milestone,
-      borderColor: COLORS.neutral,
+      borderColor: palette.neutral,
       borderWidth: 1,
       borderDash: [6, 6],
       label: {
         display: true,
         content: `${milestone.toLocaleString("en-US")} \u2605`,
         position: "start",
-        backgroundColor: `${COLORS.neutral}33`,
-        color: COLORS.neutral,
+        backgroundColor: `${palette.neutral}33`,
+        color: palette.neutral,
         font: { size: 10 }
       }
     };
@@ -39315,6 +39336,7 @@ function buildChartOptions({
   title,
   showLegend,
   beginAtZero,
+  palette,
   annotation
 }) {
   return {
@@ -39325,46 +39347,52 @@ function buildChartOptions({
         display: showLegend,
         position: "top",
         labels: {
-          color: COLORS.text,
+          color: palette.text,
           font: { size: showLegend ? 11 : 12 }
         }
       },
       title: {
         display: true,
         text: title,
-        color: COLORS.text,
+        color: palette.text,
         font: { size: 16, weight: "bold" }
       },
       ...annotation ? { annotation } : {}
     },
     scales: {
       x: {
-        grid: { color: COLORS.cellBorder },
-        ticks: { color: COLORS.neutral }
+        grid: { color: palette.cellBorder },
+        ticks: { color: palette.neutral }
       },
       y: {
-        grid: { color: COLORS.cellBorder },
-        ticks: { color: COLORS.neutral },
+        grid: { color: palette.cellBorder },
+        ticks: { color: palette.neutral },
         beginAtZero
       }
     }
   };
 }
-function buildStarsDataset({ data, tension, showPoints }) {
+function buildStarsDataset({
+  data,
+  tension,
+  showPoints,
+  palette
+}) {
   return {
     label: "Stars",
     data,
-    borderColor: COLORS.accent,
-    backgroundColor: `${COLORS.accent}33`,
+    borderColor: palette.accent,
+    backgroundColor: `${palette.accent}33`,
     fill: true,
     tension,
     pointRadius: showPoints ? CHART_POINT.primaryRadius : CHART_POINT.hidden,
     pointHoverRadius: CHART_POINT.primaryHoverRadius
   };
 }
-function buildChartUrl(config) {
+function buildChartUrl({ config, palette }) {
   const encodedConfig = encodeURIComponent(JSON.stringify(config));
-  return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&c=${encodedConfig}`;
+  const backgroundColor = encodeURIComponent(palette.white);
+  return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&backgroundColor=${backgroundColor}&c=${encodedConfig}`;
 }
 function prepareChartData({ history, locale }) {
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
@@ -39379,12 +39407,13 @@ function buildChartConfig({
   title,
   showLegend,
   beginAtZero,
+  palette,
   annotation
 }) {
   return {
     type: "line",
     data: { labels, datasets },
-    options: buildChartOptions({ title, showLegend, beginAtZero, annotation })
+    options: buildChartOptions({ title, showLegend, beginAtZero, palette, annotation })
   };
 }
 function generateChartUrl({
@@ -39394,28 +39423,31 @@ function generateChartUrl({
   smoothing = true,
   showPoints = true,
   milestones = true,
-  beginAtZero = false
+  beginAtZero = false,
+  theme = ChartTheme.AUTO
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
   const t = getTranslations(locale);
+  const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData({ history, locale });
-  const datasets = [buildStarsDataset({ data, tension, showPoints })];
+  const datasets = [buildStarsDataset({ data, tension, showPoints, palette })];
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
-  const annotation = milestones ? buildMilestoneAnnotations({ minStars, maxStars }) : null;
+  const annotation = milestones ? buildMilestoneAnnotations({ minStars, maxStars, palette }) : null;
   const config = buildChartConfig({
     labels,
     datasets,
     title: chartTitle,
     showLegend: false,
     beginAtZero,
+    palette,
     annotation
   });
-  return buildChartUrl(config);
+  return buildChartUrl({ config, palette });
 }
 function generatePerRepoChartUrl({
   history,
@@ -39424,11 +39456,13 @@ function generatePerRepoChartUrl({
   locale,
   smoothing = true,
   showPoints = true,
-  beginAtZero = false
+  beginAtZero = false,
+  theme = ChartTheme.AUTO
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
+  const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
@@ -39437,15 +39471,16 @@ function generatePerRepoChartUrl({
     return repo?.stars ?? 0;
   });
   const chartTitle = title ?? `${repoFullName} Star History`;
-  const datasets = [buildStarsDataset({ data, tension, showPoints })];
+  const datasets = [buildStarsDataset({ data, tension, showPoints, palette })];
   const config = buildChartConfig({
     labels,
     datasets,
     title: chartTitle,
     showLegend: false,
-    beginAtZero
+    beginAtZero,
+    palette
   });
-  return buildChartUrl(config);
+  return buildChartUrl({ config, palette });
 }
 function generateComparisonChartUrl({
   history,
@@ -39454,12 +39489,14 @@ function generateComparisonChartUrl({
   locale,
   smoothing = true,
   showPoints = true,
-  beginAtZero = false
+  beginAtZero = false,
+  theme = ChartTheme.AUTO
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
   }
   const t = getTranslations(locale);
+  const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.topRepositories;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
@@ -39489,9 +39526,10 @@ function generateComparisonChartUrl({
     datasets,
     title: chartTitle,
     showLegend: true,
-    beginAtZero
+    beginAtZero,
+    palette
   });
-  return buildChartUrl(config);
+  return buildChartUrl({ config, palette });
 }
 function generateForecastChartUrl({
   history,
@@ -39500,12 +39538,14 @@ function generateForecastChartUrl({
   title,
   smoothing = true,
   showPoints = true,
-  beginAtZero = false
+  beginAtZero = false,
+  theme = ChartTheme.AUTO
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
   const t = getTranslations(locale);
+  const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.forecast.sectionTitle;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
@@ -39522,8 +39562,8 @@ function generateForecastChartUrl({
     {
       label: t.report.starHistory,
       data: series.historical,
-      borderColor: COLORS.accent,
-      backgroundColor: `${COLORS.accent}33`,
+      borderColor: palette.accent,
+      backgroundColor: `${palette.accent}33`,
       fill: true,
       tension,
       pointRadius: showPoints ? CHART_POINT.primaryRadius : CHART_POINT.hidden,
@@ -39532,7 +39572,7 @@ function generateForecastChartUrl({
     {
       label: t.forecast.linearRegression,
       data: series.linearRegression,
-      borderColor: COLORS.positive,
+      borderColor: palette.positive,
       backgroundColor: "transparent",
       fill: false,
       tension,
@@ -39543,7 +39583,7 @@ function generateForecastChartUrl({
     {
       label: t.forecast.weightedMovingAverage,
       data: series.weightedMovingAverage,
-      borderColor: COLORS.negative,
+      borderColor: palette.negative,
       backgroundColor: "transparent",
       fill: false,
       tension,
@@ -39557,16 +39597,17 @@ function generateForecastChartUrl({
     datasets,
     title: chartTitle,
     showLegend: true,
-    beginAtZero
+    beginAtZero,
+    palette
   });
-  return buildChartUrl(config);
+  return buildChartUrl({ config, palette });
 }
 
 // src/presentation/html.ts
-function deltaColor(delta) {
-  if (delta > 0) return COLORS.positive;
-  if (delta < 0) return COLORS.negative;
-  return COLORS.neutral;
+function deltaColor({ delta, palette }) {
+  if (delta > 0) return palette.positive;
+  if (delta < 0) return palette.negative;
+  return palette.neutral;
 }
 function generateHtmlReport({
   results,
@@ -39580,10 +39621,12 @@ function generateHtmlReport({
   smoothing = true,
   showPoints = true,
   milestones = true,
-  beginAtZero = false
+  beginAtZero = false,
+  theme = ChartTheme.AUTO
 }) {
   const { summary: summary2 } = results;
   const t = getTranslations(locale);
+  const palette = resolvePalette(theme);
   const { sorted, removedRepos, now, prev } = prepareReportData({
     results,
     previousTimestamp,
@@ -39591,21 +39634,21 @@ function generateHtmlReport({
   });
   const hasChartHistory = includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
   const rows = sorted.map((repo) => {
-    const badge = repo.isNew ? ` <span style="background:${COLORS.positive};color:${COLORS.white};padding:1px 6px;border-radius:3px;font-size:11px;">${t.report.badges.new}</span>` : "";
+    const badge = repo.isNew ? ` <span style="background:${palette.positive};color:${palette.white};padding:1px 6px;border-radius:3px;font-size:11px;">${t.report.badges.new}</span>` : "";
     return `
       <tr>
-        <td style="padding:8px 12px;border-bottom:1px solid ${COLORS.cellBorder};">
-          <a href="https://github.com/${repo.fullName}" style="color:${COLORS.link};text-decoration:none;">${repo.fullName}</a>${badge}
+        <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};">
+          <a href="https://github.com/${repo.fullName}" style="color:${palette.link};text-decoration:none;">${repo.fullName}</a>${badge}
         </td>
-        <td style="padding:8px 12px;border-bottom:1px solid ${COLORS.cellBorder};text-align:right;">${repo.current}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid ${COLORS.cellBorder};text-align:right;color:${deltaColor(repo.delta)};font-weight:600;">
+        <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};text-align:right;">${repo.current}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};text-align:right;color:${deltaColor({ delta: repo.delta, palette })};font-weight:600;">
           ${deltaIndicator(repo.delta)}
         </td>
       </tr>`;
   }).join("");
   const removedSection = removedRepos.length > 0 ? `
       <div style="margin-top:16px;">
-        <h3 style="color:${COLORS.negative};font-size:14px;">${t.report.removedRepositories}</h3>
+        <h3 style="color:${palette.negative};font-size:14px;">${t.report.removedRepositories}</h3>
         <ul>${removedRepos.map((repo) => `<li>${interpolate({ template: t.report.removedRepoText, params: { name: repo.fullName, count: repo.previous ?? 0 } })}</li>`).join("")}</ul>
       </div>` : "";
   const topRepos = sorted.slice(0, topReposCount).map((repo) => repo.fullName);
@@ -39616,7 +39659,8 @@ function generateHtmlReport({
     locale,
     smoothing,
     showPoints,
-    beginAtZero
+    beginAtZero,
+    theme
   }) : null;
   const individualRepoChartsHtml = hasChartHistory ? topRepos.map((repoName) => {
     const chartUrl = generatePerRepoChartUrl({
@@ -39625,7 +39669,8 @@ function generateHtmlReport({
       locale,
       smoothing,
       showPoints,
-      beginAtZero
+      beginAtZero,
+      theme
     });
     if (!chartUrl) return "";
     return `
@@ -39637,7 +39682,7 @@ function generateHtmlReport({
   const chartSection = hasChartHistory ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F4C8} ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, beginAtZero })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, beginAtZero, theme })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
         ${comparisonChartUrl ? `
         <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
         <img src="${comparisonChartUrl}" alt="${t.report.topRepositories}" style="max-width:100%;height:auto;border-radius:4px;">` : ""}
@@ -39645,7 +39690,7 @@ function generateHtmlReport({
         <h3 style="font-size:16px;margin:24px 0 12px;">${t.report.individualRepoCharts}</h3>
         ${individualRepoChartsHtml}` : ""}
       </div>` : "";
-  const sampledNoteHtml = stargazerDiff?.sampledRepos && stargazerDiff.sampledRepos.length > 0 ? `<p style="color:${COLORS.neutral};">${interpolate({ template: t.stargazers.sampledNote, params: { repos: stargazerDiff.sampledRepos.join(", ") } })}</p>` : "";
+  const sampledNoteHtml = stargazerDiff?.sampledRepos && stargazerDiff.sampledRepos.length > 0 ? `<p style="color:${palette.neutral};">${interpolate({ template: t.stargazers.sampledNote, params: { repos: stargazerDiff.sampledRepos.join(", ") } })}</p>` : "";
   const stargazerSection = stargazerDiff && stargazerDiff.totalNew > 0 ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F464} ${t.stargazers.sectionTitle}</h2>
@@ -39659,8 +39704,8 @@ function generateHtmlReport({
       (stargazer) => `
           <div style="display:flex;align-items:center;margin:4px 0;">
             <img src="${stargazer.avatarUrl}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
-            <a href="${stargazer.profileUrl}" style="color:${COLORS.link};text-decoration:none;font-weight:600;">${stargazer.login}</a>
-            <span style="color:${COLORS.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split("T")[0] } })}</span>
+            <a href="${stargazer.profileUrl}" style="color:${palette.link};text-decoration:none;font-weight:600;">${stargazer.login}</a>
+            <span style="color:${palette.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split("T")[0] } })}</span>
           </div>`
     ).join("")}
         </div>`
@@ -39669,56 +39714,56 @@ function generateHtmlReport({
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F464} ${t.stargazers.sectionTitle}</h2>
         ${sampledNoteHtml}
-        <p style="color:${COLORS.neutral};">${t.stargazers.noNewStargazers}</p>
+        <p style="color:${palette.neutral};">${t.stargazers.noNewStargazers}</p>
       </div>` : "";
   const forecastSection = forecastData ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F52E} ${t.forecast.sectionTitle}</h2>
-        ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t })}
+        ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t, palette })}
         ${hasChartHistory ? `<div style="margin-top:16px;text-align:center;">
-          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, showPoints, beginAtZero })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, showPoints, beginAtZero, theme })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>` : ""}
         ${forecastData.repos.map(
     (repo) => `
         <div style="margin-top:16px;">
-          ${buildHtmlForecastTable({ title: repo.repoFullName, forecasts: repo.forecasts, t })}
+          ${buildHtmlForecastTable({ title: repo.repoFullName, forecasts: repo.forecasts, t, palette })}
         </div>`
   ).join("")}
       </div>` : "";
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"></head>
-<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${COLORS.text};background-color:${COLORS.white};">
-  <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${COLORS.accent};">
+<head><meta charset="utf-8"><meta name="color-scheme" content="${theme === ChartTheme.AUTO ? "light dark" : theme}"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${palette.text};background-color:${palette.white};">
+  <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${palette.accent};">
     <h1 style="margin:0;font-size:24px;">${t.report.title}</h1>
-    <p style="color:${COLORS.neutral};margin:8px 0 0;">${now} ${prev === t.report.firstRun ? `| ${t.report.firstRun}` : `| ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`}</p>
+    <p style="color:${palette.neutral};margin:8px 0 0;">${now} ${prev === t.report.firstRun ? `| ${t.report.firstRun}` : `| ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`}</p>
   </div>
 
   <div style="display:flex;justify-content:space-around;padding:20px 0;text-align:center;">
     <div>
       <div style="font-size:28px;font-weight:700;">${summary2.totalStars}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.total} ${t.report.stars}</div>
+      <div style="color:${palette.neutral};font-size:12px;">${t.report.total} ${t.report.stars}</div>
     </div>
     <div>
-      <div style="font-size:28px;font-weight:700;color:${deltaColor(summary2.totalDelta)};">${deltaIndicator(summary2.totalDelta)}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.netChange}</div>
+      <div style="font-size:28px;font-weight:700;color:${deltaColor({ delta: summary2.totalDelta, palette })};">${deltaIndicator(summary2.totalDelta)}</div>
+      <div style="color:${palette.neutral};font-size:12px;">${t.report.netChange}</div>
     </div>
     <div>
-      <div style="font-size:28px;font-weight:700;color:${COLORS.positive};">${summary2.newStars}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.starsGained}</div>
+      <div style="font-size:28px;font-weight:700;color:${palette.positive};">${summary2.newStars}</div>
+      <div style="color:${palette.neutral};font-size:12px;">${t.report.starsGained}</div>
     </div>
     <div>
-      <div style="font-size:28px;font-weight:700;color:${COLORS.negative};">${summary2.lostStars}</div>
-      <div style="color:${COLORS.neutral};font-size:12px;">${t.report.starsLost}</div>
+      <div style="font-size:28px;font-weight:700;color:${palette.negative};">${summary2.lostStars}</div>
+      <div style="color:${palette.neutral};font-size:12px;">${t.report.starsLost}</div>
     </div>
   </div>
 
   <table style="width:100%;border-collapse:collapse;margin-top:16px;">
     <thead>
-      <tr style="background:${COLORS.tableHeaderBg};">
-        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid ${COLORS.tableHeaderBorder};">${t.report.repositories}</th>
-        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};">${t.report.stars}</th>
-        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};">${t.report.change}</th>
+      <tr style="background:${palette.tableHeaderBg};">
+        <th style="padding:8px 12px;text-align:left;border-bottom:2px solid ${palette.tableHeaderBorder};">${t.report.repositories}</th>
+        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${palette.tableHeaderBorder};">${t.report.stars}</th>
+        <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${palette.tableHeaderBorder};">${t.report.change}</th>
       </tr>
     </thead>
     <tbody>
@@ -39734,31 +39779,36 @@ function generateHtmlReport({
 
   ${forecastSection}
 
-  <div style="margin-top:24px;padding-top:16px;border-top:1px solid ${COLORS.cellBorder};text-align:center;color:${COLORS.neutral};font-size:12px;">
-    ${interpolate({ template: t.footer.generated, params: { project: `<a href="https://github.com/fbuireu/github-star-tracker" style="color:${COLORS.link};">GitHub Star Tracker</a>`, date: (/* @__PURE__ */ new Date()).toISOString() } })}
+  <div style="margin-top:24px;padding-top:16px;border-top:1px solid ${palette.cellBorder};text-align:center;color:${palette.neutral};font-size:12px;">
+    ${interpolate({ template: t.footer.generated, params: { project: `<a href="https://github.com/fbuireu/github-star-tracker" style="color:${palette.link};">GitHub Star Tracker</a>`, date: (/* @__PURE__ */ new Date()).toISOString() } })}
     <br>
-    ${interpolate({ template: t.footer.madeBy, params: { author: `<a href="https://github.com/fbuireu" style="color:${COLORS.link};">Ferran Buireu</a>` } })}
+    ${interpolate({ template: t.footer.madeBy, params: { author: `<a href="https://github.com/fbuireu" style="color:${palette.link};">Ferran Buireu</a>` } })}
   </div>
 </body>
 </html>`;
 }
-function buildHtmlForecastTable({ title, forecasts, t }) {
+function buildHtmlForecastTable({
+  title,
+  forecasts,
+  t,
+  palette
+}) {
   const weekHeaders = buildForecastWeekHeaders(t);
   return `
     <h4 style="font-size:14px;margin-bottom:8px;">${title}</h4>
     <table style="width:100%;border-collapse:collapse;">
       <thead>
-        <tr style="background:${COLORS.tableHeaderBg};">
-          <th style="padding:6px 8px;text-align:left;border-bottom:2px solid ${COLORS.tableHeaderBorder};font-size:12px;">${t.forecast.method}</th>
-          ${weekHeaders.map((header) => `<th style="padding:6px 8px;text-align:right;border-bottom:2px solid ${COLORS.tableHeaderBorder};font-size:12px;">${header}</th>`).join("")}
+        <tr style="background:${palette.tableHeaderBg};">
+          <th style="padding:6px 8px;text-align:left;border-bottom:2px solid ${palette.tableHeaderBorder};font-size:12px;">${t.forecast.method}</th>
+          ${weekHeaders.map((header) => `<th style="padding:6px 8px;text-align:right;border-bottom:2px solid ${palette.tableHeaderBorder};font-size:12px;">${header}</th>`).join("")}
         </tr>
       </thead>
       <tbody>
         ${forecasts.map(
     (forecast) => `
         <tr>
-          <td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};font-size:12px;">${forecastMethodLabel({ method: forecast.method, t })}</td>
-          ${forecast.points.map((point) => `<td style="padding:6px 8px;border-bottom:1px solid ${COLORS.cellBorder};text-align:right;font-size:12px;">${point.predicted}</td>`).join("")}
+          <td style="padding:6px 8px;border-bottom:1px solid ${palette.cellBorder};font-size:12px;">${forecastMethodLabel({ method: forecast.method, t })}</td>
+          ${forecast.points.map((point) => `<td style="padding:6px 8px;border-bottom:1px solid ${palette.cellBorder};text-align:right;font-size:12px;">${point.predicted}</td>`).join("")}
         </tr>`
   ).join("")}
       </tbody>
@@ -40042,7 +40092,8 @@ function renderSvg({
   smoothing = true,
   showPoints = true,
   animate = true,
-  beginAtZero = false
+  beginAtZero = false,
+  theme = ChartTheme.AUTO
 }) {
   const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
   const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
@@ -40171,20 +40222,22 @@ function renderSvg({
       animation: fadeInPoint ${animation.pointDuration}s ease-out forwards;
     }
     ` : "";
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART.width} ${CHART.height}" width="${CHART.width}" height="${CHART.height}">
-  <style>
-    ${animationDefs}.chart-bg { fill: ${LIGHT_PALETTE.white}; }
-    .chart-text { fill: ${LIGHT_PALETTE.text}; }
-    .chart-muted { fill: ${LIGHT_PALETTE.neutral}; }
-    .chart-grid { stroke: ${LIGHT_PALETTE.cellBorder}; }
-    .chart-axis { stroke: ${LIGHT_PALETTE.neutral}; }
+  const basePalette = theme === ChartTheme.DARK ? DARK_PALETTE : LIGHT_PALETTE;
+  const darkModeStyles = theme === ChartTheme.AUTO ? `
     @media (prefers-color-scheme: dark) {
       .chart-bg { fill: ${DARK_PALETTE.white}; }
       .chart-text { fill: ${DARK_PALETTE.text}; }
       .chart-muted { fill: ${DARK_PALETTE.neutral}; }
       .chart-grid { stroke: ${DARK_PALETTE.cellBorder}; }
       .chart-axis { stroke: ${DARK_PALETTE.neutral}; }
-    }
+    }` : "";
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART.width} ${CHART.height}" width="${CHART.width}" height="${CHART.height}">
+  <style>
+    ${animationDefs}.chart-bg { fill: ${basePalette.white}; }
+    .chart-text { fill: ${basePalette.text}; }
+    .chart-muted { fill: ${basePalette.neutral}; }
+    .chart-grid { stroke: ${basePalette.cellBorder}; }
+    .chart-axis { stroke: ${basePalette.neutral}; }${darkModeStyles}
   </style>
   <rect width="${CHART.width}" height="${CHART.height}" class="chart-bg" />
   <text x="${CHART.width / 2}" y="${titleY}" text-anchor="middle" class="chart-text" font-size="${fontSize.title}" font-weight="bold" font-family="${font}">${escapeXml(title)}</text>
@@ -40221,7 +40274,8 @@ function generateSvgChart({
   showPoints,
   animate,
   milestones = true,
-  beginAtZero
+  beginAtZero,
+  theme
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -40243,7 +40297,8 @@ function generateSvgChart({
     smoothing,
     showPoints,
     animate,
-    beginAtZero
+    beginAtZero,
+    theme
   });
 }
 function generatePerRepoSvgChart({
@@ -40258,7 +40313,8 @@ function generatePerRepoSvgChart({
   smoothing,
   showPoints,
   animate,
-  beginAtZero
+  beginAtZero,
+  theme
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -40283,7 +40339,8 @@ function generatePerRepoSvgChart({
     smoothing,
     showPoints,
     animate,
-    beginAtZero
+    beginAtZero,
+    theme
   });
 }
 function generateComparisonSvgChart({
@@ -40297,7 +40354,8 @@ function generateComparisonSvgChart({
   smoothing,
   showPoints,
   animate,
-  beginAtZero
+  beginAtZero,
+  theme
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
@@ -40335,7 +40393,8 @@ function generateComparisonSvgChart({
     smoothing,
     showPoints,
     animate,
-    beginAtZero
+    beginAtZero,
+    theme
   });
 }
 function generateForecastSvgChart({
@@ -40350,7 +40409,8 @@ function generateForecastSvgChart({
   smoothing,
   showPoints,
   animate,
-  beginAtZero
+  beginAtZero,
+  theme
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -40399,7 +40459,8 @@ function generateForecastSvgChart({
     smoothing,
     showPoints,
     animate,
-    beginAtZero
+    beginAtZero,
+    theme
   });
 }
 
@@ -40494,7 +40555,8 @@ async function trackStars() {
           smoothing: config.chartSmoothing,
           showPoints: config.chartShowPoints,
           milestones: config.chartMilestones,
-          beginAtZero: config.chartBeginAtZero
+          beginAtZero: config.chartBeginAtZero,
+          theme: config.chartTheme
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport(reportParams);
@@ -40526,6 +40588,7 @@ async function trackStars() {
             showPoints: config.chartShowPoints,
             animate: config.chartAnimation,
             beginAtZero: config.chartBeginAtZero,
+            theme: config.chartTheme,
             milestones: config.chartMilestones
           });
           if (svgChart) {
@@ -40553,7 +40616,8 @@ async function trackStars() {
               smoothing: config.chartSmoothing,
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
-              beginAtZero: config.chartBeginAtZero
+              beginAtZero: config.chartBeginAtZero,
+              theme: config.chartTheme
             });
             if (repoChart) {
               const filename = `${repoName.replace("/", "-")}.svg`;
@@ -40572,7 +40636,8 @@ async function trackStars() {
               smoothing: config.chartSmoothing,
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
-              beginAtZero: config.chartBeginAtZero
+              beginAtZero: config.chartBeginAtZero,
+              theme: config.chartTheme
             });
             if (comparisonChart) {
               writeChart({ dataDir, filename: "comparison.svg", svg: comparisonChart });
@@ -40590,7 +40655,8 @@ async function trackStars() {
               smoothing: config.chartSmoothing,
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
-              beginAtZero: config.chartBeginAtZero
+              beginAtZero: config.chartBeginAtZero,
+              theme: config.chartTheme
             });
             if (forecastChart) {
               writeChart({ dataDir, filename: "forecast.svg", svg: forecastChart });

@@ -564,6 +564,26 @@ describe('chart', () => {
     });
   });
 
+  describe('theme', () => {
+    it('uses a light background by default', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en' });
+
+      expect(url).not.toBeNull();
+      if (url) expect(url).toContain('backgroundColor=%23fff');
+    });
+
+    it('uses a dark background and palette for the dark theme', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en', theme: 'dark' });
+
+      expect(url).not.toBeNull();
+      if (url) {
+        expect(url).toContain('backgroundColor=%230d1117');
+        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+        expect(config.options.scales.y.ticks.color).toBe('#8b949e');
+      }
+    });
+  });
+
   describe('beginAtZero', () => {
     const beginAtZeroOf = (url: string): boolean => {
       const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
