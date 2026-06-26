@@ -176,6 +176,11 @@ inputs:
     required: false
     default: 'true'
 
+  chart-animation:
+    description: 'Animate the SVG charts with a draw-on line and fading points (true) or render them static (false). Static is better for email and other contexts that do not play CSS animations. (default true)'
+    required: false
+    default: 'true'
+
 outputs:
   report:
     description: 'Markdown report of star changes'

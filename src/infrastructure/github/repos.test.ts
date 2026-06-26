@@ -60,6 +60,7 @@ const defaultConfig: Config = {
   chartYAxisSide: 'left',
   chartSmoothing: true,
   chartShowPoints: true,
+  chartAnimation: true,
 };
 
 describe('filterRepos', () => {

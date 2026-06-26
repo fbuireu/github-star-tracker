@@ -29,6 +29,7 @@ Complete reference for all inputs, outputs, and data formats.
 | `chart-y-axis-side` | `string` | `left` | Y-axis label side: `left` or `right` |
 | `chart-smoothing` | `boolean` | `true` | Smooth curve (`true`) or straight segments between points to reveal small spikes (`false`) |
 | `chart-show-points` | `boolean` | `true` | Draw a marker on each data point (`true`) or hide them for a cleaner dense line (`false`) |
+| `chart-animation` | `boolean` | `true` | Animate the SVG charts (`true`) or render them static (`false`) for email/static contexts |
 
 ### Stargazer Sampling
 
@@ -274,6 +275,7 @@ chart_max_points: 30          # number (0 = full history)
 chart_y_axis_side: left       # left | right
 chart_smoothing: true         # boolean
 chart_show_points: true       # boolean
+chart_animation: true         # boolean
 ```
 
 ---

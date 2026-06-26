@@ -48,4 +48,5 @@ export const DEFAULTS: Config = {
   chartYAxisSide: ChartAxisSide.LEFT,
   chartSmoothing: true,
   chartShowPoints: true,
+  chartAnimation: true,
 } as const;

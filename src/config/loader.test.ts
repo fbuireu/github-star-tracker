@@ -511,6 +511,26 @@ describe('loadConfig', () => {
     expect(config.chartShowPoints).toBe(false);
   });
 
+  it('defaults chart-animation to true', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartAnimation).toBe(true);
+  });
+
+  it('parses chart-animation input as false', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-animation') return 'false';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartAnimation).toBe(false);
+  });
+
   it('defaults track-stargazers to false', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 

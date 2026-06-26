@@ -229,6 +229,7 @@ The chart appearance is configurable via these inputs:
 | `chart-y-axis-side` | `left` | Y-axis label side: `left` or `right`. |
 | `chart-smoothing` | `true` | `true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. Applies to email charts too. |
 | `chart-show-points` | `true` | `true` marks each data point with a dot; `false` hides them for a cleaner dense line. Applies to email charts too. |
+| `chart-animation` | `true` | `true` animates the SVG charts; `false` renders them static for email/static contexts. SVG-only. |
 
 ```yaml
 with:
