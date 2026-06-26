@@ -1,7 +1,7 @@
 import { ChartRange, ChartTheme } from '@config/types';
-import { FORECAST_WEEKS, type ForecastData, ForecastMethod } from '@domain/forecast';
+import { FORECAST_WEEKS, MS_PER_DAY } from '@domain/constants';
+import { type ForecastData, ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
-import { MS_PER_DAY } from '@domain/time';
 import type { ComparisonResults, History, RepoResult } from '@domain/types';
 import { getTranslations, interpolate, type Locale } from '@i18n';
 import { DARK_PALETTE, LIGHT_PALETTE } from './constants';

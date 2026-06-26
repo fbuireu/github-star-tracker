@@ -38451,9 +38451,14 @@ function createSnapshot({ currentRepos, summary: summary2 }) {
   };
 }
 
-// src/domain/forecast.ts
-var MIN_SNAPSHOTS = 3;
+// src/domain/constants.ts
+var MS_PER_DAY = 864e5;
+var MS_PER_YEAR = 365 * MS_PER_DAY;
+var MIN_SNAPSHOTS_FOR_FORECAST = 3;
 var FORECAST_WEEKS = 4;
+var MAX_REACHABLE_STARGAZERS = 4e4;
+
+// src/domain/forecast.ts
 var ForecastMethod = {
   LINEAR_REGRESSION: "linear-regression",
   WEIGHTED_MOVING_AVERAGE: "weighted-moving-average"
@@ -38524,7 +38529,7 @@ function computeForecast({
   history,
   topRepoNames
 }) {
-  if (history.snapshots.length < MIN_SNAPSHOTS) {
+  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) {
     return null;
   }
   const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
@@ -38538,10 +38543,6 @@ function computeForecast({
   });
   return { aggregate: { forecasts: aggregateForecasts }, repos };
 }
-
-// src/domain/time.ts
-var MS_PER_DAY = 864e5;
-var MS_PER_YEAR = 365 * MS_PER_DAY;
 
 // src/domain/formatting.ts
 var UP_ARROW = "\u2B06\uFE0F";
@@ -38704,7 +38705,6 @@ function addSnapshot({ history, snapshot, maxHistory }) {
 }
 
 // src/domain/star-history.ts
-var MAX_REACHABLE_STARGAZERS = 4e4;
 function cumulativeCounts(sortedTimes, edges) {
   const counts = [];
   let pointer = 0;
@@ -39012,8 +39012,7 @@ async function getRepos({ octokit, config }) {
 
 // src/infrastructure/github/stargazers.ts
 var STARGAZERS_PER_PAGE = 100;
-var MAX_REACHABLE_STARGAZERS2 = 4e4;
-var MAX_REACHABLE_PAGE = Math.floor(MAX_REACHABLE_STARGAZERS2 / STARGAZERS_PER_PAGE);
+var MAX_REACHABLE_PAGE = Math.floor(MAX_REACHABLE_STARGAZERS / STARGAZERS_PER_PAGE);
 async function fetchAllStargazers({
   octokit,
   repos,

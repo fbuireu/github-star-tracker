@@ -1,11 +1,6 @@
+import { MAX_REACHABLE_STARGAZERS, MS_PER_DAY } from './constants';
 import type { RepoStargazers } from './stargazers';
-import { MS_PER_DAY } from './time';
 import type { History, Snapshot } from './types';
-
-// GitHub only lets us page through the oldest 40,000 stargazers, so for larger
-// repos the most recent stars are unreachable and the fetched dates stop well
-// before "now". Those repos need a ramped tail instead of a flat one (#114).
-const MAX_REACHABLE_STARGAZERS = 40_000;
 
 export interface RepoTotal {
   fullName: string;

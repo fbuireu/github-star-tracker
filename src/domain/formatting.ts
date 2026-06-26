@@ -1,6 +1,6 @@
 import { LOCALE_MAP } from '@config/defaults';
 import type { Locale } from '@i18n';
-import { MS_PER_YEAR } from './time';
+import { MS_PER_YEAR } from './constants';
 
 export const UP_ARROW = '\u2B06\uFE0F';
 export const DOWN_ARROW = '\u2B07\uFE0F';

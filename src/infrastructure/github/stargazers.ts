@@ -1,13 +1,10 @@
 import * as core from '@actions/core';
+import { MAX_REACHABLE_STARGAZERS } from '@domain/constants';
 import type { RepoStargazers, Stargazer } from '@domain/stargazers';
 import type { RepoInfo } from '@domain/types';
 import type { GitHubStargazerRow, Octokit } from './types';
 
 const STARGAZERS_PER_PAGE = 100;
-// GitHub caps stargazer pagination at 40,000 results; requesting a page beyond
-// that returns a "pagination is limited for this resource" error and fails the
-// whole fetch, so every page index must stay within the reachable window.
-const MAX_REACHABLE_STARGAZERS = 40_000;
 const MAX_REACHABLE_PAGE = Math.floor(MAX_REACHABLE_STARGAZERS / STARGAZERS_PER_PAGE);
 
 interface FetchAllStargazersParams {

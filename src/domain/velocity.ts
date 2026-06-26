@@ -1,4 +1,4 @@
-import { MS_PER_DAY } from './time';
+import { MS_PER_DAY } from './constants';
 import type { History } from './types';
 
 const VELOCITY_MILESTONES = [
