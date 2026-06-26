@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/fbuireu/github-star-tracker/compare/v1.18.0...v1.19.0) (2026-06-26)
+
+
+### Features
+
+* add chart-milestones option ([#124](https://github.com/fbuireu/github-star-tracker/issues/124)) ([c19de91](https://github.com/fbuireu/github-star-tracker/commit/c19de91b0fa0ba55a3a877a2f722202bedb1728b)), closes [#125](https://github.com/fbuireu/github-star-tracker/issues/125) [#126](https://github.com/fbuireu/github-star-tracker/issues/126)
+
 # [1.18.0](https://github.com/fbuireu/github-star-tracker/compare/v1.17.0...v1.18.0) (2026-06-26)
 
 
