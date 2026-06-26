@@ -1,3 +1,4 @@
+import { ChartTheme } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { formatDate } from '@domain/formatting';
 import type { History } from '@domain/types';
@@ -7,11 +8,12 @@ import {
   CHART_COMPARISON_COLORS,
   CHART_POINT,
   CHART_TENSION,
-  COLORS,
+  LIGHT_PALETTE,
   MILESTONE_THRESHOLDS,
   MIN_SNAPSHOTS_FOR_CHART,
 } from './constants';
-import { buildForecastChartSeries } from './shared';
+import { buildForecastChartSeries, resolvePalette } from './shared';
+import type { ColorPalette } from './types';
 
 function tensionFor(smoothing: boolean): number {
   return smoothing ? CHART_TENSION.smooth : CHART_TENSION.straight;
@@ -95,11 +97,13 @@ interface ChartOptions {
 interface BuildMilestoneAnnotationsParams {
   minStars: number;
   maxStars: number;
+  palette?: ColorPalette;
 }
 
 export function buildMilestoneAnnotations({
   minStars,
   maxStars,
+  palette = LIGHT_PALETTE,
 }: BuildMilestoneAnnotationsParams): AnnotationPlugin | null {
   const visible = MILESTONE_THRESHOLDS.filter(
     (milestone) => milestone > minStars && milestone < maxStars,
@@ -114,15 +118,15 @@ export function buildMilestoneAnnotations({
       type: 'line',
       yMin: milestone,
       yMax: milestone,
-      borderColor: COLORS.neutral,
+      borderColor: palette.neutral,
       borderWidth: 1,
       borderDash: [6, 6],
       label: {
         display: true,
         content: `${milestone.toLocaleString('en-US')} ★`,
         position: 'start',
-        backgroundColor: `${COLORS.neutral}33`,
-        color: COLORS.neutral,
+        backgroundColor: `${palette.neutral}33`,
+        color: palette.neutral,
         font: { size: 10 },
       },
     };
@@ -135,6 +139,7 @@ interface BuildChartOptionsParams {
   title: string;
   showLegend: boolean;
   beginAtZero: boolean;
+  palette: ColorPalette;
   annotation?: AnnotationPlugin | null;
 }
 
@@ -142,6 +147,7 @@ function buildChartOptions({
   title,
   showLegend,
   beginAtZero,
+  palette,
   annotation,
 }: BuildChartOptionsParams): ChartOptions {
   return {
@@ -152,26 +158,26 @@ function buildChartOptions({
         display: showLegend,
         position: 'top',
         labels: {
-          color: COLORS.text,
+          color: palette.text,
           font: { size: showLegend ? 11 : 12 },
         },
       },
       title: {
         display: true,
         text: title,
-        color: COLORS.text,
+        color: palette.text,
         font: { size: 16, weight: 'bold' },
       },
       ...(annotation ? { annotation } : {}),
     },
     scales: {
       x: {
-        grid: { color: COLORS.cellBorder },
-        ticks: { color: COLORS.neutral },
+        grid: { color: palette.cellBorder },
+        ticks: { color: palette.neutral },
       },
       y: {
-        grid: { color: COLORS.cellBorder },
-        ticks: { color: COLORS.neutral },
+        grid: { color: palette.cellBorder },
+        ticks: { color: palette.neutral },
         beginAtZero,
       },
     },
@@ -182,14 +188,20 @@ interface BuildStarsDatasetParams {
   data: number[];
   tension: number;
   showPoints: boolean;
+  palette: ColorPalette;
 }
 
-function buildStarsDataset({ data, tension, showPoints }: BuildStarsDatasetParams): Dataset {
+function buildStarsDataset({
+  data,
+  tension,
+  showPoints,
+  palette,
+}: BuildStarsDatasetParams): Dataset {
   return {
     label: 'Stars',
     data,
-    borderColor: COLORS.accent,
-    backgroundColor: `${COLORS.accent}33`,
+    borderColor: palette.accent,
+    backgroundColor: `${palette.accent}33`,
     fill: true,
     tension,
     pointRadius: showPoints ? CHART_POINT.primaryRadius : CHART_POINT.hidden,
@@ -197,10 +209,16 @@ function buildStarsDataset({ data, tension, showPoints }: BuildStarsDatasetParam
   };
 }
 
-function buildChartUrl(config: ChartConfig): string {
-  const encodedConfig = encodeURIComponent(JSON.stringify(config));
+interface BuildChartUrlParams {
+  config: ChartConfig;
+  palette: ColorPalette;
+}
 
-  return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&c=${encodedConfig}`;
+function buildChartUrl({ config, palette }: BuildChartUrlParams): string {
+  const encodedConfig = encodeURIComponent(JSON.stringify(config));
+  const backgroundColor = encodeURIComponent(palette.white);
+
+  return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&backgroundColor=${backgroundColor}&c=${encodedConfig}`;
 }
 
 interface PrepareChartDataParams {
@@ -226,6 +244,7 @@ interface BuildChartConfigParams {
   title: string;
   showLegend: boolean;
   beginAtZero: boolean;
+  palette: ColorPalette;
   annotation?: AnnotationPlugin | null;
 }
 
@@ -235,12 +254,13 @@ function buildChartConfig({
   title,
   showLegend,
   beginAtZero,
+  palette,
   annotation,
 }: BuildChartConfigParams): ChartConfig {
   return {
     type: 'line',
     data: { labels, datasets },
-    options: buildChartOptions({ title, showLegend, beginAtZero, annotation }),
+    options: buildChartOptions({ title, showLegend, beginAtZero, palette, annotation }),
   };
 }
 
@@ -252,6 +272,7 @@ interface GenerateChartUrlParams {
   showPoints?: boolean;
   milestones?: boolean;
   beginAtZero?: boolean;
+  theme?: ChartTheme;
 }
 
 export function generateChartUrl({
@@ -262,29 +283,32 @@ export function generateChartUrl({
   showPoints = true,
   milestones = true,
   beginAtZero = false,
+  theme = ChartTheme.AUTO,
 }: GenerateChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
   const t = getTranslations(locale);
+  const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData({ history, locale });
-  const datasets: Dataset[] = [buildStarsDataset({ data, tension, showPoints })];
+  const datasets: Dataset[] = [buildStarsDataset({ data, tension, showPoints, palette })];
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
-  const annotation = milestones ? buildMilestoneAnnotations({ minStars, maxStars }) : null;
+  const annotation = milestones ? buildMilestoneAnnotations({ minStars, maxStars, palette }) : null;
   const config = buildChartConfig({
     labels,
     datasets,
     title: chartTitle,
     showLegend: false,
     beginAtZero,
+    palette,
     annotation,
   });
 
-  return buildChartUrl(config);
+  return buildChartUrl({ config, palette });
 }
 
 interface GeneratePerRepoChartUrlParams {
@@ -295,6 +319,7 @@ interface GeneratePerRepoChartUrlParams {
   smoothing?: boolean;
   showPoints?: boolean;
   beginAtZero?: boolean;
+  theme?: ChartTheme;
 }
 
 export function generatePerRepoChartUrl({
@@ -305,11 +330,13 @@ export function generatePerRepoChartUrl({
   smoothing = true,
   showPoints = true,
   beginAtZero = false,
+  theme = ChartTheme.AUTO,
 }: GeneratePerRepoChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
+  const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
@@ -319,7 +346,7 @@ export function generatePerRepoChartUrl({
     return repo?.stars ?? 0;
   });
   const chartTitle = title ?? `${repoFullName} Star History`;
-  const datasets: Dataset[] = [buildStarsDataset({ data, tension, showPoints })];
+  const datasets: Dataset[] = [buildStarsDataset({ data, tension, showPoints, palette })];
 
   const config = buildChartConfig({
     labels,
@@ -327,9 +354,10 @@ export function generatePerRepoChartUrl({
     title: chartTitle,
     showLegend: false,
     beginAtZero,
+    palette,
   });
 
-  return buildChartUrl(config);
+  return buildChartUrl({ config, palette });
 }
 
 interface GenerateComparisonChartUrlParams {
@@ -340,6 +368,7 @@ interface GenerateComparisonChartUrlParams {
   smoothing?: boolean;
   showPoints?: boolean;
   beginAtZero?: boolean;
+  theme?: ChartTheme;
 }
 
 export function generateComparisonChartUrl({
@@ -350,6 +379,7 @@ export function generateComparisonChartUrl({
   smoothing = true,
   showPoints = true,
   beginAtZero = false,
+  theme = ChartTheme.AUTO,
 }: GenerateComparisonChartUrlParams): string | null {
   if (
     !history.snapshots ||
@@ -360,6 +390,7 @@ export function generateComparisonChartUrl({
   }
 
   const t = getTranslations(locale);
+  const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.topRepositories;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
@@ -391,9 +422,10 @@ export function generateComparisonChartUrl({
     title: chartTitle,
     showLegend: true,
     beginAtZero,
+    palette,
   });
 
-  return buildChartUrl(config);
+  return buildChartUrl({ config, palette });
 }
 
 interface GenerateForecastChartUrlParams {
@@ -404,6 +436,7 @@ interface GenerateForecastChartUrlParams {
   smoothing?: boolean;
   showPoints?: boolean;
   beginAtZero?: boolean;
+  theme?: ChartTheme;
 }
 
 export function generateForecastChartUrl({
@@ -414,12 +447,14 @@ export function generateForecastChartUrl({
   smoothing = true,
   showPoints = true,
   beginAtZero = false,
+  theme = ChartTheme.AUTO,
 }: GenerateForecastChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
   const t = getTranslations(locale);
+  const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.forecast.sectionTitle;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
@@ -436,8 +471,8 @@ export function generateForecastChartUrl({
     {
       label: t.report.starHistory,
       data: series.historical,
-      borderColor: COLORS.accent,
-      backgroundColor: `${COLORS.accent}33`,
+      borderColor: palette.accent,
+      backgroundColor: `${palette.accent}33`,
       fill: true,
       tension,
       pointRadius: showPoints ? CHART_POINT.primaryRadius : CHART_POINT.hidden,
@@ -446,7 +481,7 @@ export function generateForecastChartUrl({
     {
       label: t.forecast.linearRegression,
       data: series.linearRegression,
-      borderColor: COLORS.positive,
+      borderColor: palette.positive,
       backgroundColor: 'transparent',
       fill: false,
       tension,
@@ -457,7 +492,7 @@ export function generateForecastChartUrl({
     {
       label: t.forecast.weightedMovingAverage,
       data: series.weightedMovingAverage,
-      borderColor: COLORS.negative,
+      borderColor: palette.negative,
       backgroundColor: 'transparent',
       fill: false,
       tension,
@@ -473,7 +508,8 @@ export function generateForecastChartUrl({
     title: chartTitle,
     showLegend: true,
     beginAtZero,
+    palette,
   });
 
-  return buildChartUrl(config);
+  return buildChartUrl({ config, palette });
 }

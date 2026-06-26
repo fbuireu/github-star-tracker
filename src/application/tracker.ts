@@ -161,6 +161,7 @@ export async function trackStars(): Promise<void> {
           showPoints: config.chartShowPoints,
           milestones: config.chartMilestones,
           beginAtZero: config.chartBeginAtZero,
+          theme: config.chartTheme,
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport(reportParams);
@@ -196,6 +197,7 @@ export async function trackStars(): Promise<void> {
             showPoints: config.chartShowPoints,
             animate: config.chartAnimation,
             beginAtZero: config.chartBeginAtZero,
+            theme: config.chartTheme,
             milestones: config.chartMilestones,
           });
           if (svgChart) {
@@ -230,6 +232,7 @@ export async function trackStars(): Promise<void> {
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
               beginAtZero: config.chartBeginAtZero,
+              theme: config.chartTheme,
             });
 
             if (repoChart) {
@@ -251,6 +254,7 @@ export async function trackStars(): Promise<void> {
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
               beginAtZero: config.chartBeginAtZero,
+              theme: config.chartTheme,
             });
 
             if (comparisonChart) {
@@ -271,6 +275,7 @@ export async function trackStars(): Promise<void> {
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
               beginAtZero: config.chartBeginAtZero,
+              theme: config.chartTheme,
             });
 
             if (forecastChart) {

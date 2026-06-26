@@ -17,6 +17,14 @@ export const ChartAxisSide = {
 
 export type ChartAxisSide = (typeof ChartAxisSide)[keyof typeof ChartAxisSide];
 
+export const ChartTheme = {
+  AUTO: 'auto',
+  LIGHT: 'light',
+  DARK: 'dark',
+} as const;
+
+export type ChartTheme = (typeof ChartTheme)[keyof typeof ChartTheme];
+
 export interface Config {
   visibility: Visibility;
   includeArchived: boolean;
@@ -46,4 +54,5 @@ export interface Config {
   chartAnimation: boolean;
   chartMilestones: boolean;
   chartBeginAtZero: boolean;
+  chartTheme: ChartTheme;
 }

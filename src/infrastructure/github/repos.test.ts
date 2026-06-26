@@ -63,6 +63,7 @@ const defaultConfig: Config = {
   chartAnimation: true,
   chartMilestones: true,
   chartBeginAtZero: false,
+  chartTheme: 'auto',
 };
 
 describe('filterRepos', () => {

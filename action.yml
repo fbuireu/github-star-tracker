@@ -191,6 +191,11 @@ inputs:
     required: false
     default: 'false'
 
+  chart-theme:
+    description: 'Color theme for the charts and email report: auto, light or dark. auto follows the readers prefers-color-scheme in the SVG charts; email clients that ignore it fall back to light. Force light or dark to override. (default auto)'
+    required: false
+    default: 'auto'
+
 outputs:
   report:
     description: 'Markdown report of star changes'
