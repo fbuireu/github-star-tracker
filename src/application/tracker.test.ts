@@ -174,6 +174,7 @@ const defaultConfig = {
   chartMaxPoints: 30,
   chartYAxisSide: 'left' as const,
   chartSmoothing: true,
+  chartShowPoints: true,
 };
 
 const defaultSummary = {

@@ -15,6 +15,7 @@ export interface GenerateReportParams {
   forecastData?: ForecastData | null;
   topRepos?: number;
   smoothing?: boolean;
+  showPoints?: boolean;
 }
 
 export interface ReportData {

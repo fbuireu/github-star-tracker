@@ -133,6 +133,13 @@ describe('generateSvgChart', () => {
     expect(circleCount).toBe(5);
   });
 
+  it('omits data point circles when showPoints is disabled', () => {
+    const history = makeHistory([10, 20, 30, 40, 50]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en', showPoints: false }));
+
+    expect(result).not.toContain('<circle');
+  });
+
   it('includes smooth path with cubic bezier curves', () => {
     const history = makeHistory([10, 20, 30, 40]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));

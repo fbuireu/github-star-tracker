@@ -390,6 +390,19 @@ Curve style between points.
 
 ---
 
+### `chart-show-points`
+
+Whether to draw a marker on each data point.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `true` |
+
+`true` marks each snapshot with a dot; `false` hides the markers for a cleaner line on dense charts. Applies to every chart, including the ones embedded in the email report.
+
+---
+
 ## Filtering Options
 
 ### `include-archived`

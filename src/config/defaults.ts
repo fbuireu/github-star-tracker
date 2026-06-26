@@ -47,4 +47,5 @@ export const DEFAULTS: Config = {
   chartMaxPoints: 30,
   chartYAxisSide: ChartAxisSide.LEFT,
   chartSmoothing: true,
+  chartShowPoints: true,
 } as const;

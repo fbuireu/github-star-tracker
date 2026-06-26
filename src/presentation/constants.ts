@@ -59,6 +59,14 @@ export const CHART_TENSION = {
   straight: 0,
 } as const;
 
+export const CHART_POINT = {
+  hidden: 0,
+  primaryRadius: 3,
+  secondaryRadius: 2,
+  primaryHoverRadius: 6,
+  secondaryHoverRadius: 5,
+} as const;
+
 export const BADGE = {
   labelCharWidth: 6.5,
   valueCharWidth: 7,

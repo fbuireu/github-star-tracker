@@ -164,6 +164,7 @@ interface RenderSvgParams {
   lineWidth?: number;
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
+  showPoints?: boolean;
 }
 
 function renderSvg({
@@ -175,6 +176,7 @@ function renderSvg({
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
+  showPoints = true,
 }: RenderSvgParams): string {
   const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
   const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
@@ -281,14 +283,15 @@ function renderSvg({
         const lineClass = dataset.dashed ? '' : ` class="data-line-${datasetIndex}"`;
         const pathEl = `<path d="${pathD}" fill="none" stroke="${dataset.color}" stroke-width="${lineWidth}"${dashAttr}${lineClass} />`;
 
-        const circles = dataset.dashed
-          ? ''
-          : segment.points
-              .map(
-                (point, pointIndex) =>
-                  `<circle cx="${point.x}" cy="${point.y}" r="${pointRadius}" fill="${dataset.color}" class="data-point" style="animation-delay: ${((segment.startIndex + pointIndex) * animation.pointStagger + animation.pointDelay).toFixed(2)}s" />`,
-              )
-              .join('\n    ');
+        const circles =
+          dataset.dashed || !showPoints
+            ? ''
+            : segment.points
+                .map(
+                  (point, pointIndex) =>
+                    `<circle cx="${point.x}" cy="${point.y}" r="${pointRadius}" fill="${dataset.color}" class="data-point" style="animation-delay: ${((segment.startIndex + pointIndex) * animation.pointStagger + animation.pointDelay).toFixed(2)}s" />`,
+                )
+                .join('\n    ');
 
         const animationStyle = dataset.dashed
           ? ''
@@ -400,6 +403,7 @@ interface GenerateSvgChartParams {
   maxPoints?: number;
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
+  showPoints?: boolean;
 }
 
 export function generateSvgChart({
@@ -411,6 +415,7 @@ export function generateSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
+  showPoints,
 }: GenerateSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -432,6 +437,7 @@ export function generateSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
+    showPoints,
   });
 }
 
@@ -445,6 +451,7 @@ interface GeneratePerRepoSvgChartParams {
   maxPoints?: number;
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
+  showPoints?: boolean;
 }
 
 export function generatePerRepoSvgChart({
@@ -457,6 +464,7 @@ export function generatePerRepoSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
+  showPoints,
 }: GeneratePerRepoSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -481,6 +489,7 @@ export function generatePerRepoSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
+    showPoints,
   });
 }
 
@@ -493,6 +502,7 @@ interface GenerateComparisonSvgChartParams {
   maxPoints?: number;
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
+  showPoints?: boolean;
 }
 
 export function generateComparisonSvgChart({
@@ -504,6 +514,7 @@ export function generateComparisonSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
+  showPoints,
 }: GenerateComparisonSvgChartParams): string | null {
   if (
     !history.snapshots ||
@@ -547,6 +558,7 @@ export function generateComparisonSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
+    showPoints,
   });
 }
 
@@ -560,6 +572,7 @@ interface GenerateForecastSvgChartParams {
   maxPoints?: number;
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
+  showPoints?: boolean;
 }
 
 export function generateForecastSvgChart({
@@ -572,6 +585,7 @@ export function generateForecastSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
+  showPoints,
 }: GenerateForecastSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -620,5 +634,6 @@ export function generateForecastSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
+    showPoints,
   });
 }

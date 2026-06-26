@@ -5,6 +5,7 @@ import { getTranslations, interpolate, type Locale } from '@i18n';
 import {
   CHART,
   CHART_COMPARISON_COLORS,
+  CHART_POINT,
   CHART_TENSION,
   COLORS,
   MILESTONE_THRESHOLDS,
@@ -178,9 +179,10 @@ function buildChartOptions({
 interface BuildStarsDatasetParams {
   data: number[];
   tension: number;
+  showPoints: boolean;
 }
 
-function buildStarsDataset({ data, tension }: BuildStarsDatasetParams): Dataset {
+function buildStarsDataset({ data, tension, showPoints }: BuildStarsDatasetParams): Dataset {
   return {
     label: 'Stars',
     data,
@@ -188,8 +190,8 @@ function buildStarsDataset({ data, tension }: BuildStarsDatasetParams): Dataset 
     backgroundColor: `${COLORS.accent}33`,
     fill: true,
     tension,
-    pointRadius: 3,
-    pointHoverRadius: 6,
+    pointRadius: showPoints ? CHART_POINT.primaryRadius : CHART_POINT.hidden,
+    pointHoverRadius: CHART_POINT.primaryHoverRadius,
   };
 }
 
@@ -243,6 +245,7 @@ interface GenerateChartUrlParams {
   title?: string;
   locale: Locale;
   smoothing?: boolean;
+  showPoints?: boolean;
 }
 
 export function generateChartUrl({
@@ -250,6 +253,7 @@ export function generateChartUrl({
   title,
   locale,
   smoothing = true,
+  showPoints = true,
 }: GenerateChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -259,7 +263,7 @@ export function generateChartUrl({
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData({ history, locale });
-  const datasets: Dataset[] = [buildStarsDataset({ data, tension })];
+  const datasets: Dataset[] = [buildStarsDataset({ data, tension, showPoints })];
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
   const annotation = buildMilestoneAnnotations({ minStars, maxStars });
@@ -280,6 +284,7 @@ interface GeneratePerRepoChartUrlParams {
   title?: string;
   locale: Locale;
   smoothing?: boolean;
+  showPoints?: boolean;
 }
 
 export function generatePerRepoChartUrl({
@@ -288,6 +293,7 @@ export function generatePerRepoChartUrl({
   title,
   locale,
   smoothing = true,
+  showPoints = true,
 }: GeneratePerRepoChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -302,7 +308,7 @@ export function generatePerRepoChartUrl({
     return repo?.stars ?? 0;
   });
   const chartTitle = title ?? `${repoFullName} Star History`;
-  const datasets: Dataset[] = [buildStarsDataset({ data, tension })];
+  const datasets: Dataset[] = [buildStarsDataset({ data, tension, showPoints })];
 
   const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: false });
 
@@ -315,6 +321,7 @@ interface GenerateComparisonChartUrlParams {
   title?: string;
   locale: Locale;
   smoothing?: boolean;
+  showPoints?: boolean;
 }
 
 export function generateComparisonChartUrl({
@@ -323,6 +330,7 @@ export function generateComparisonChartUrl({
   title,
   locale,
   smoothing = true,
+  showPoints = true,
 }: GenerateComparisonChartUrlParams): string | null {
   if (
     !history.snapshots ||
@@ -354,8 +362,8 @@ export function generateComparisonChartUrl({
       backgroundColor: `${color}33`,
       fill: false,
       tension,
-      pointRadius: 2,
-      pointHoverRadius: 5,
+      pointRadius: showPoints ? CHART_POINT.secondaryRadius : CHART_POINT.hidden,
+      pointHoverRadius: CHART_POINT.secondaryHoverRadius,
     };
   });
   const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: true });
@@ -369,6 +377,7 @@ interface GenerateForecastChartUrlParams {
   locale: Locale;
   title?: string;
   smoothing?: boolean;
+  showPoints?: boolean;
 }
 
 export function generateForecastChartUrl({
@@ -377,6 +386,7 @@ export function generateForecastChartUrl({
   locale,
   title,
   smoothing = true,
+  showPoints = true,
 }: GenerateForecastChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -403,8 +413,8 @@ export function generateForecastChartUrl({
       backgroundColor: `${COLORS.accent}33`,
       fill: true,
       tension,
-      pointRadius: 3,
-      pointHoverRadius: 6,
+      pointRadius: showPoints ? CHART_POINT.primaryRadius : CHART_POINT.hidden,
+      pointHoverRadius: CHART_POINT.primaryHoverRadius,
     },
     {
       label: t.forecast.linearRegression,
@@ -413,8 +423,8 @@ export function generateForecastChartUrl({
       backgroundColor: 'transparent',
       fill: false,
       tension,
-      pointRadius: 2,
-      pointHoverRadius: 5,
+      pointRadius: showPoints ? CHART_POINT.secondaryRadius : CHART_POINT.hidden,
+      pointHoverRadius: CHART_POINT.secondaryHoverRadius,
       borderDash: [8, 4],
     },
     {
@@ -424,8 +434,8 @@ export function generateForecastChartUrl({
       backgroundColor: 'transparent',
       fill: false,
       tension,
-      pointRadius: 2,
-      pointHoverRadius: 5,
+      pointRadius: showPoints ? CHART_POINT.secondaryRadius : CHART_POINT.hidden,
+      pointHoverRadius: CHART_POINT.secondaryHoverRadius,
       borderDash: [4, 4],
     },
   ];

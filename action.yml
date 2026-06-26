@@ -171,6 +171,11 @@ inputs:
     required: false
     default: 'true'
 
+  chart-show-points:
+    description: 'Draw a marker on each data point (true) or hide them for a cleaner line on dense charts (false). (default true)'
+    required: false
+    default: 'true'
+
 outputs:
   report:
     description: 'Markdown report of star changes'
