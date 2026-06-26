@@ -22,6 +22,7 @@ export interface GenerateReportParams {
   milestones?: boolean;
   beginAtZero?: boolean;
   theme?: ChartTheme;
+  customMilestones?: readonly number[];
 }
 
 export function resolvePalette(theme: ChartTheme = ChartTheme.AUTO): ColorPalette {

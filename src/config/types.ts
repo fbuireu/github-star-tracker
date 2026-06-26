@@ -55,4 +55,5 @@ export interface Config {
   chartMilestones: boolean;
   chartBeginAtZero: boolean;
   chartTheme: ChartTheme;
+  chartCustomMilestones: number[];
 }

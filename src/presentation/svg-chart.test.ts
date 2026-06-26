@@ -234,6 +234,34 @@ describe('generateSvgChart', () => {
     expect(result).not.toContain('stroke-dasharray="6,6"');
   });
 
+  it('draws custom milestone lines instead of the defaults', () => {
+    const history = makeHistory([80, 120, 150]);
+    const result = expectSvg(
+      generateSvgChart({ history, locale: 'en', customMilestones: [90, 110] }),
+    );
+
+    expect(result).toContain('90 ★');
+    expect(result).toContain('110 ★');
+    expect(result).not.toContain('100 ★');
+  });
+
+  it('falls back to default milestones when the custom list is empty', () => {
+    const history = makeHistory([80, 120, 150]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en', customMilestones: [] }));
+
+    expect(result).toContain('100 ★');
+  });
+
+  it('omits custom milestone lines when milestones are disabled', () => {
+    const history = makeHistory([80, 120, 150]);
+    const result = expectSvg(
+      generateSvgChart({ history, locale: 'en', milestones: false, customMilestones: [90, 110] }),
+    );
+
+    expect(result).not.toContain('90 ★');
+    expect(result).not.toContain('stroke-dasharray="6,6"');
+  });
+
   it('formats large axis values compactly so labels do not overflow', () => {
     const history = makeHistory([10_000, 30_000, 50_000]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));

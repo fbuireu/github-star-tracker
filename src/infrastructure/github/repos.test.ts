@@ -64,6 +64,7 @@ const defaultConfig: Config = {
   chartMilestones: true,
   chartBeginAtZero: false,
   chartTheme: 'auto',
+  chartCustomMilestones: [],
 };
 
 describe('filterRepos', () => {

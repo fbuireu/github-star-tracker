@@ -457,6 +457,19 @@ describe('chart', () => {
       expect(result?.annotations).toHaveProperty('milestone500');
     });
 
+    it('uses custom thresholds when provided', () => {
+      const result = buildMilestoneAnnotations({
+        minStars: 30,
+        maxStars: 400,
+        thresholds: [50, 250, 5000],
+      });
+
+      expect(result?.annotations).toHaveProperty('milestone250');
+      expect(result?.annotations.milestone250.yMin).toBe(250);
+      expect(result?.annotations).not.toHaveProperty('milestone100');
+      expect(result?.annotations).not.toHaveProperty('milestone5000');
+    });
+
     it('includes milestone annotations in aggregate chart', () => {
       const largeHistory: History = {
         snapshots: [
@@ -496,6 +509,51 @@ describe('chart', () => {
         const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
 
         expect(config.options.plugins.annotation).toBeUndefined();
+      }
+    });
+
+    it('uses custom milestones in the aggregate chart when provided', () => {
+      const largeHistory: History = {
+        snapshots: [
+          { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 80, repos: [] },
+          { timestamp: '2025-01-08T00:00:00.000Z', totalStars: 120, repos: [] },
+        ],
+      };
+
+      const url = generateChartUrl({
+        history: largeHistory,
+        locale: 'en',
+        customMilestones: [90, 110],
+      });
+
+      expect(url).toBeDefined();
+
+      if (url) {
+        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+        const { annotations } = config.options.plugins.annotation;
+
+        expect(annotations).toHaveProperty('milestone90');
+        expect(annotations).toHaveProperty('milestone110');
+        expect(annotations).not.toHaveProperty('milestone100');
+      }
+    });
+
+    it('falls back to default milestones when custom list is empty', () => {
+      const largeHistory: History = {
+        snapshots: [
+          { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 80, repos: [] },
+          { timestamp: '2025-01-08T00:00:00.000Z', totalStars: 120, repos: [] },
+        ],
+      };
+
+      const url = generateChartUrl({ history: largeHistory, locale: 'en', customMilestones: [] });
+
+      expect(url).toBeDefined();
+
+      if (url) {
+        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+
+        expect(config.options.plugins.annotation.annotations).toHaveProperty('milestone100');
       }
     });
 

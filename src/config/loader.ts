@@ -11,6 +11,7 @@ import {
   parseList,
   parseNotificationThreshold,
   parseNumber,
+  parseNumberList,
 } from './parsers';
 import type { Config, Visibility } from './types';
 import { ChartAxisSide, ChartTheme } from './types';
@@ -44,6 +45,7 @@ interface FileConfig {
   chartMilestones?: boolean;
   chartBeginAtZero?: boolean;
   chartTheme?: string;
+  chartCustomMilestones?: number[];
 }
 
 interface ParseConfigYamlParams {
@@ -113,6 +115,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     chartMilestones: read('chart_milestones'),
     chartBeginAtZero: read('chart_begin_at_zero'),
     chartTheme: read('chart_theme'),
+    chartCustomMilestones: read('chart_custom_milestones'),
   };
 }
 
@@ -148,6 +151,7 @@ export function loadConfig(): Config {
   const inputChartMilestones = core.getInput('chart-milestones');
   const inputChartBeginAtZero = core.getInput('chart-begin-at-zero');
   const inputChartTheme = core.getInput('chart-theme');
+  const inputChartCustomMilestones = core.getInput('chart-custom-milestones');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -158,6 +162,10 @@ export function loadConfig(): Config {
       `Invalid visibility "${visibility}". Must be one of: ${Object.keys(VISIBILITY_CONFIG).join(', ')}`,
     );
   }
+
+  const fileCustomMilestones = Array.isArray(fileConfig.chartCustomMilestones)
+    ? parseNumberList(fileConfig.chartCustomMilestones.join(','))
+    : [];
 
   const locale = inputLocale || fileConfig.locale || DEFAULTS.locale;
   if (!isValidLocale(locale)) {
@@ -259,6 +267,11 @@ export function loadConfig(): Config {
     chartBeginAtZero:
       parseBool(inputChartBeginAtZero) ?? fileConfig.chartBeginAtZero ?? DEFAULTS.chartBeginAtZero,
     chartTheme,
+    chartCustomMilestones: inputChartCustomMilestones
+      ? parseNumberList(inputChartCustomMilestones)
+      : fileCustomMilestones.length > 0
+        ? fileCustomMilestones
+        : DEFAULTS.chartCustomMilestones,
   };
 
   core.info(

@@ -179,6 +179,7 @@ const defaultConfig = {
   chartMilestones: true,
   chartBeginAtZero: false,
   chartTheme: 'auto' as const,
+  chartCustomMilestones: [],
 };
 
 const defaultSummary = {

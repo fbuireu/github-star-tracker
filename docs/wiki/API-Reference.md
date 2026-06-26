@@ -33,6 +33,7 @@ Complete reference for all inputs, outputs, and data formats.
 | `chart-milestones` | `boolean` | `true` | Show milestone reference lines on the main star-history chart (`true`) or hide them (`false`) |
 | `chart-begin-at-zero` | `boolean` | `false` | Start the Y-axis at zero (`true`) or zoom into the data range (`false`) |
 | `chart-theme` | `string` | `auto` | Color theme: `auto` (follows `prefers-color-scheme`), `light` or `dark` |
+| `chart-custom-milestones` | `string` | _(empty)_ | Comma-separated star counts for the milestone reference lines, replacing the built-in defaults (e.g. `250, 750, 2500`). Requires `chart-milestones` |
 
 ### Stargazer Sampling
 

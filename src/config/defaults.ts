@@ -52,4 +52,5 @@ export const DEFAULTS: Config = {
   chartMilestones: true,
   chartBeginAtZero: false,
   chartTheme: ChartTheme.AUTO,
+  chartCustomMilestones: [],
 } as const;

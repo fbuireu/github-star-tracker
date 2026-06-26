@@ -98,16 +98,16 @@ interface BuildMilestoneAnnotationsParams {
   minStars: number;
   maxStars: number;
   palette?: ColorPalette;
+  thresholds?: readonly number[];
 }
 
 export function buildMilestoneAnnotations({
   minStars,
   maxStars,
   palette = LIGHT_PALETTE,
+  thresholds = MILESTONE_THRESHOLDS,
 }: BuildMilestoneAnnotationsParams): AnnotationPlugin | null {
-  const visible = MILESTONE_THRESHOLDS.filter(
-    (milestone) => milestone > minStars && milestone < maxStars,
-  );
+  const visible = thresholds.filter((milestone) => milestone > minStars && milestone < maxStars);
 
   if (visible.length === 0) return null;
 
@@ -273,6 +273,7 @@ interface GenerateChartUrlParams {
   milestones?: boolean;
   beginAtZero?: boolean;
   theme?: ChartTheme;
+  customMilestones?: readonly number[];
 }
 
 export function generateChartUrl({
@@ -284,6 +285,7 @@ export function generateChartUrl({
   milestones = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
+  customMilestones,
 }: GenerateChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -297,7 +299,11 @@ export function generateChartUrl({
   const datasets: Dataset[] = [buildStarsDataset({ data, tension, showPoints, palette })];
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
-  const annotation = milestones ? buildMilestoneAnnotations({ minStars, maxStars, palette }) : null;
+  const thresholds =
+    customMilestones && customMilestones.length > 0 ? customMilestones : MILESTONE_THRESHOLDS;
+  const annotation = milestones
+    ? buildMilestoneAnnotations({ minStars, maxStars, palette, thresholds })
+    : null;
   const config = buildChartConfig({
     labels,
     datasets,
