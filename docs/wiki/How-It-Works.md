@@ -134,6 +134,8 @@ chart_begin_at_zero: false
 chart_theme: auto
 chart_custom_milestones: [] # e.g. [250, 750, 2500] to override the default milestones
 chart_range: all
+chart_trend_line: false
+velocity_metrics: false
 ```
 
 ---

@@ -24,6 +24,7 @@
     "topRepositories": "Repositoris Principals",
     "byRepository": "Per Repositori",
     "individualRepoCharts": "Gràfics per Repositori",
+    "trendLine": "Tendència",
     "badges": {
       "new": "NOU"
     }
@@ -37,6 +38,12 @@
     "up": "pujant",
     "down": "baixant",
     "stable": "estable"
+  },
+  "velocity": {
+    "sectionTitle": "Velocitat de creixement",
+    "starsPerDay": "Estrelles per dia",
+    "growth": "Creixement",
+    "projection": "~{days} dies per a {milestone} ★"
   },
   "footer": {
     "generated": "Generat per {project} el {date}",

@@ -1,4 +1,5 @@
 import { deltaIndicator, trendIcon } from '@domain/formatting';
+import { computeVelocity } from '@domain/velocity';
 import { getTranslations, interpolate } from '@i18n';
 import { MIN_SNAPSHOTS_FOR_CHART } from './constants';
 import type { GenerateReportParams } from './shared';
@@ -13,6 +14,7 @@ export function generateMarkdownReport({
   stargazerDiff = null,
   forecastData = null,
   topRepos: topReposCount = 10,
+  velocityMetrics = false,
 }: GenerateReportParams): string {
   const { summary } = results;
   const t = getTranslations(locale);
@@ -208,6 +210,26 @@ export function generateMarkdownReport({
       ]
     : [];
 
+  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
+  const velocitySection = velocity
+    ? [
+        `## 🚀 ${t.velocity.sectionTitle}`,
+        '',
+        `- **${t.velocity.starsPerDay}:** ${velocity.starsPerDay}`,
+        ...(velocity.growthPercent !== null
+          ? [
+              `- **${t.velocity.growth}:** ${velocity.growthPercent >= 0 ? '+' : ''}${velocity.growthPercent}%`,
+            ]
+          : []),
+        ...(velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null
+          ? [
+              `- ${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}`,
+            ]
+          : []),
+        '',
+      ]
+    : [];
+
   const footer = [
     '---',
     `*${interpolate({ template: t.footer.generated, params: { project: '[GitHub Star Tracker](https://github.com/fbuireu/github-star-tracker)', date: new Date().toISOString() } })}*`,
@@ -228,6 +250,7 @@ export function generateMarkdownReport({
     ...summarySection,
     ...stargazerSection,
     ...forecastSection,
+    ...velocitySection,
     ...footer,
   ].join('\n');
 }

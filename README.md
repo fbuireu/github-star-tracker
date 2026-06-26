@@ -151,6 +151,8 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `chart-theme`            | `auto`                | Color theme: `auto` (follows `prefers-color-scheme`), `light` or `dark` |
 | `chart-custom-milestones` | _(empty)_            | Comma-separated star counts for the milestone reference lines, replacing the built-in defaults (e.g. `250, 750, 2500`). Requires `chart-milestones` |
 | `chart-range`            | `all`                 | Time window plotted: `30d`, `90d`, `1y` or `all` |
+| `chart-trend-line`       | `false`               | Overlay a dashed moving-average trend line on the main chart |
+| `velocity-metrics`       | `false`               | Add a growth-velocity section (stars/day, % growth, days to next milestone) to the report |
 | `track-stargazers`       | `false`               | Track individual stargazers                                   |
 | `smart-sampling`         | `false`               | Sample stargazer pages for high-star repos (avoids rate limits) |
 | `smart-sampling-threshold` | `1500`              | Star count above which a repo is sampled                      |

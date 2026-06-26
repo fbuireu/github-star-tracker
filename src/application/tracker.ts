@@ -164,6 +164,8 @@ export async function trackStars(): Promise<void> {
           theme: config.chartTheme,
           customMilestones: config.chartCustomMilestones,
           range: config.chartRange,
+          trendLine: config.chartTrendLine,
+          velocityMetrics: config.velocityMetrics,
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport(reportParams);
@@ -203,6 +205,7 @@ export async function trackStars(): Promise<void> {
             milestones: config.chartMilestones,
             customMilestones: config.chartCustomMilestones,
             range: config.chartRange,
+            trendLine: config.chartTrendLine,
           });
           if (svgChart) {
             writeChart({ dataDir, filename: 'star-history.svg', svg: svgChart });

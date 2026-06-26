@@ -24,6 +24,8 @@ export interface GenerateReportParams {
   theme?: ChartTheme;
   customMilestones?: readonly number[];
   range?: ChartRange;
+  trendLine?: boolean;
+  velocityMetrics?: boolean;
 }
 
 export function resolvePalette(theme: ChartTheme = ChartTheme.AUTO): ColorPalette {
@@ -55,6 +57,20 @@ export function filterSnapshotsByRange<T extends { timestamp: string }>({
   const cutoff = lastTimestamp - days * MS_PER_DAY;
 
   return snapshots.filter((snapshot) => new Date(snapshot.timestamp).getTime() >= cutoff);
+}
+
+interface MovingAverageSeriesParams {
+  values: number[];
+  window: number;
+}
+
+export function movingAverageSeries({ values, window }: MovingAverageSeriesParams): number[] {
+  return values.map((_, index) => {
+    const slice = values.slice(Math.max(0, index - window + 1), index + 1);
+    const sum = slice.reduce((total, value) => total + value, 0);
+
+    return Math.round(sum / slice.length);
+  });
 }
 
 export interface ReportData {

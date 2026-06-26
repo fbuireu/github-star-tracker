@@ -235,6 +235,7 @@ The chart appearance is configurable via these inputs:
 | `chart-theme` | `auto` | `auto` follows `prefers-color-scheme` in SVG charts; `light`/`dark` force the palette. Email falls back to light under `auto`. |
 | `chart-custom-milestones` | _(empty)_ | Comma-separated star counts (e.g. `250, 750, 2500`) that replace the built-in milestone thresholds. When empty, the defaults are used. Requires `chart-milestones`. Applies to email charts too. |
 | `chart-range` | `all` | Time window plotted (`30d`, `90d`, `1y`, `all`), measured back from the latest data point, before `chart-max-points`. |
+| `chart-trend-line` | `false` | Overlay a dashed 7-point moving-average trend line on the main chart. Applies to email charts too. |
 
 ```yaml
 with:

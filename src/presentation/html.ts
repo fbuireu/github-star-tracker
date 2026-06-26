@@ -1,5 +1,6 @@
 import { ChartRange, ChartTheme } from '@config/types';
 import { deltaIndicator } from '@domain/formatting';
+import { computeVelocity } from '@domain/velocity';
 import { getTranslations, interpolate } from '@i18n';
 import {
   generateChartUrl,
@@ -44,6 +45,8 @@ export function generateHtmlReport({
   theme = ChartTheme.AUTO,
   customMilestones,
   range = ChartRange.ALL,
+  trendLine = false,
+  velocityMetrics = false,
 }: GenerateReportParams): string {
   const { summary } = results;
   const t = getTranslations(locale);
@@ -128,7 +131,7 @@ export function generateHtmlReport({
     ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">📈 ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, beginAtZero, theme, customMilestones, range })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, beginAtZero, theme, customMilestones, range, trendLine })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
 
         ${
           comparisonChartUrl
@@ -210,6 +213,27 @@ export function generateHtmlReport({
       </div>`
     : '';
 
+  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
+  const velocitySection = velocity
+    ? `
+      <div style="margin-top:24px;">
+        <h2 style="font-size:18px;margin-bottom:12px;">🚀 ${t.velocity.sectionTitle}</h2>
+        <ul style="margin:0;padding-left:20px;">
+          <li><strong>${t.velocity.starsPerDay}:</strong> ${velocity.starsPerDay}</li>
+          ${
+            velocity.growthPercent !== null
+              ? `<li><strong>${t.velocity.growth}:</strong> <span style="color:${deltaColor({ delta: velocity.growthPercent, palette })};">${velocity.growthPercent >= 0 ? '+' : ''}${velocity.growthPercent}%</span></li>`
+              : ''
+          }
+          ${
+            velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null
+              ? `<li>${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}</li>`
+              : ''
+          }
+        </ul>
+      </div>`
+    : '';
+
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="color-scheme" content="${theme === ChartTheme.AUTO ? 'light dark' : theme}"></head>
@@ -258,6 +282,8 @@ export function generateHtmlReport({
   ${stargazerSection}
 
   ${forecastSection}
+
+  ${velocitySection}
 
   <div style="margin-top:24px;padding-top:16px;border-top:1px solid ${palette.cellBorder};text-align:center;color:${palette.neutral};font-size:12px;">
     ${interpolate({ template: t.footer.generated, params: { project: `<a href="https://github.com/fbuireu/github-star-tracker" style="color:${palette.link};">GitHub Star Tracker</a>`, date: new Date().toISOString() } })}

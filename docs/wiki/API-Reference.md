@@ -35,6 +35,8 @@ Complete reference for all inputs, outputs, and data formats.
 | `chart-theme` | `string` | `auto` | Color theme: `auto` (follows `prefers-color-scheme`), `light` or `dark` |
 | `chart-custom-milestones` | `string` | _(empty)_ | Comma-separated star counts for the milestone reference lines, replacing the built-in defaults (e.g. `250, 750, 2500`). Requires `chart-milestones` |
 | `chart-range` | `string` | `all` | Time window plotted: `30d`, `90d`, `1y` or `all` |
+| `chart-trend-line` | `boolean` | `false` | Overlay a dashed moving-average trend line on the main chart |
+| `velocity-metrics` | `boolean` | `false` | Add a growth-velocity section (stars/day, % growth, days to next milestone) to the report |
 
 ### Stargazer Sampling
 
@@ -285,6 +287,8 @@ chart_milestones: true        # boolean
 chart_begin_at_zero: false    # boolean
 chart_theme: auto             # auto | light | dark
 chart_range: all              # 30d | 90d | 1y | all
+chart_trend_line: false       # boolean
+velocity_metrics: false       # boolean
 ```
 
 ---

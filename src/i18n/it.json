@@ -24,6 +24,7 @@
     "topRepositories": "Repository Principali",
     "byRepository": "Per Repository",
     "individualRepoCharts": "Grafici per Repository",
+    "trendLine": "Tendenza",
     "badges": {
       "new": "NUOVO"
     }
@@ -37,6 +38,12 @@
     "up": "in aumento",
     "down": "in diminuzione",
     "stable": "stabile"
+  },
+  "velocity": {
+    "sectionTitle": "Velocità di crescita",
+    "starsPerDay": "Stelle al giorno",
+    "growth": "Crescita",
+    "projection": "~{days} giorni a {milestone} ★"
   },
   "footer": {
     "generated": "Generato da {project} il {date}",
