@@ -32987,10 +32987,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -35282,7 +35282,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35405,7 +35405,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -38388,14 +38388,14 @@ function compareStars({
   currentRepos,
   previousSnapshot
 }) {
-  const prevMap = {};
+  const previousStars = /* @__PURE__ */ new Map();
   for (const repo of previousSnapshot?.repos ?? []) {
-    prevMap[repo.fullName] = repo.stars;
+    previousStars.set(repo.fullName, repo.stars);
   }
   const currentNames = new Set(currentRepos.map((repo) => repo.fullName));
   const repoResults = [];
   for (const repo of currentRepos) {
-    const previous = prevMap[repo.fullName] ?? null;
+    const previous = previousStars.get(repo.fullName) ?? null;
     const current = repo.stars;
     const delta = previous === null ? 0 : current - previous;
     repoResults.push({
@@ -38451,9 +38451,14 @@ function createSnapshot({ currentRepos, summary: summary2 }) {
   };
 }
 
-// src/domain/forecast.ts
-var MIN_SNAPSHOTS = 3;
+// src/domain/constants.ts
+var MS_PER_DAY = 864e5;
+var MS_PER_YEAR = 365 * MS_PER_DAY;
+var MIN_SNAPSHOTS_FOR_FORECAST = 3;
 var FORECAST_WEEKS = 4;
+var MAX_REACHABLE_STARGAZERS = 4e4;
+
+// src/domain/forecast.ts
 var ForecastMethod = {
   LINEAR_REGRESSION: "linear-regression",
   WEIGHTED_MOVING_AVERAGE: "weighted-moving-average"
@@ -38524,7 +38529,7 @@ function computeForecast({
   history,
   topRepoNames
 }) {
-  if (history.snapshots.length < MIN_SNAPSHOTS) {
+  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) {
     return null;
   }
   const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
@@ -38555,6 +38560,9 @@ function deltaIndicator(delta) {
   if (delta < 0) return `${delta}`;
   return "0";
 }
+function formatSignedPercent(value) {
+  return `${value >= 0 ? "+" : ""}${value}%`;
+}
 function trendIcon(delta) {
   if (delta > 0) return UP_ARROW;
   if (delta < 0) return DOWN_ARROW;
@@ -38565,11 +38573,9 @@ function formatDate({ timestamp, locale }) {
   const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
   return date.toLocaleDateString(localeCode, { month: "short", day: "numeric" });
 }
-var DAY_MS = 864e5;
-var YEAR_MS = 365 * DAY_MS;
 function buildAxisLabels({ timestamps, locale }) {
   const times = timestamps.map((timestamp) => Date.parse(timestamp)).filter(Number.isFinite);
-  if (times.length < 2 || Math.max(...times) - Math.min(...times) < YEAR_MS) {
+  if (times.length < 2 || Math.max(...times) - Math.min(...times) < MS_PER_YEAR) {
     return timestamps.map((timestamp) => formatDate({ timestamp, locale }));
   }
   let lastYear = null;
@@ -38699,8 +38705,6 @@ function addSnapshot({ history, snapshot, maxHistory }) {
 }
 
 // src/domain/star-history.ts
-var DAY_MS2 = 864e5;
-var MAX_REACHABLE_STARGAZERS = 4e4;
 function cumulativeCounts(sortedTimes, edges) {
   const counts = [];
   let pointer = 0;
@@ -38769,7 +38773,7 @@ function buildStarHistory({
     return { snapshots: [] };
   }
   const end = (now ?? /* @__PURE__ */ new Date()).getTime();
-  const edges = earliest >= end ? [earliest - DAY_MS2, end] : (() => {
+  const edges = earliest >= end ? [earliest - MS_PER_DAY, end] : (() => {
     const buckets = Math.max(2, Math.floor(maxPoints));
     const step = (end - earliest) / (buckets - 1);
     return Array.from(
@@ -38961,7 +38965,8 @@ function filterRepos({ repos, config }) {
     info(`After only_orgs filter: ${candidates.length} repos`);
   }
   if (config.onlyRepos.length > 0) {
-    const filtered2 = candidates.filter((repo) => config.onlyRepos.includes(repo.name));
+    const onlyRepoNames = new Set(config.onlyRepos);
+    const filtered2 = candidates.filter((repo) => onlyRepoNames.has(repo.name));
     info(`After only_repos filter: ${filtered2.length} repos`);
     return filtered2;
   }
@@ -39007,8 +39012,7 @@ async function getRepos({ octokit, config }) {
 
 // src/infrastructure/github/stargazers.ts
 var STARGAZERS_PER_PAGE = 100;
-var MAX_REACHABLE_STARGAZERS2 = 4e4;
-var MAX_REACHABLE_PAGE = Math.floor(MAX_REACHABLE_STARGAZERS2 / STARGAZERS_PER_PAGE);
+var MAX_REACHABLE_PAGE = Math.floor(MAX_REACHABLE_STARGAZERS / STARGAZERS_PER_PAGE);
 async function fetchAllStargazers({
   octokit,
   repos,
@@ -39319,7 +39323,6 @@ function generateCsvReport({ repos }) {
 }
 
 // src/domain/velocity.ts
-var MS_PER_DAY = 864e5;
 var VELOCITY_MILESTONES = [
   10,
   50,
@@ -39355,7 +39358,9 @@ function computeVelocity({ history }) {
 function resolvePalette(theme = ChartTheme.AUTO) {
   return theme === ChartTheme.DARK ? DARK_PALETTE : LIGHT_PALETTE;
 }
-var MS_PER_DAY2 = 864e5;
+function colorSchemeFor(theme) {
+  return theme === ChartTheme.AUTO ? "light dark" : theme;
+}
 var CHART_RANGE_DAYS = {
   [ChartRange.D30]: 30,
   [ChartRange.D90]: 90,
@@ -39369,7 +39374,7 @@ function filterSnapshotsByRange({
   const days = CHART_RANGE_DAYS[range];
   if (!Number.isFinite(days) || snapshots.length === 0) return snapshots;
   const lastTimestamp = new Date(snapshots[snapshots.length - 1].timestamp).getTime();
-  const cutoff = lastTimestamp - days * MS_PER_DAY2;
+  const cutoff = lastTimestamp - days * MS_PER_DAY;
   return snapshots.filter((snapshot) => new Date(snapshot.timestamp).getTime() >= cutoff);
 }
 function movingAverageSeries({ values, window }) {
@@ -39430,6 +39435,9 @@ function buildForecastChartSeries({
 // src/presentation/chart.ts
 function tensionFor(smoothing) {
   return smoothing ? CHART_TENSION.smooth : CHART_TENSION.straight;
+}
+function pointRadiusFor({ showPoints, radius }) {
+  return showPoints ? radius : CHART_POINT.hidden;
 }
 function buildMilestoneAnnotations({
   minStars,
@@ -39513,7 +39521,7 @@ function buildStarsDataset({
     backgroundColor: `${palette.accent}33`,
     fill: true,
     tension,
-    pointRadius: showPoints ? CHART_POINT.primaryRadius : CHART_POINT.hidden,
+    pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
     pointHoverRadius: CHART_POINT.primaryHoverRadius
   };
 }
@@ -39670,7 +39678,7 @@ function generateComparisonChartUrl({
       backgroundColor: `${color}33`,
       fill: false,
       tension,
-      pointRadius: showPoints ? CHART_POINT.secondaryRadius : CHART_POINT.hidden,
+      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius
     };
   });
@@ -39722,7 +39730,7 @@ function generateForecastChartUrl({
       backgroundColor: `${palette.accent}33`,
       fill: true,
       tension,
-      pointRadius: showPoints ? CHART_POINT.primaryRadius : CHART_POINT.hidden,
+      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
       pointHoverRadius: CHART_POINT.primaryHoverRadius
     },
     {
@@ -39732,7 +39740,7 @@ function generateForecastChartUrl({
       backgroundColor: "transparent",
       fill: false,
       tension,
-      pointRadius: showPoints ? CHART_POINT.secondaryRadius : CHART_POINT.hidden,
+      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
       borderDash: [8, 4]
     },
@@ -39743,7 +39751,7 @@ function generateForecastChartUrl({
       backgroundColor: "transparent",
       fill: false,
       tension,
-      pointRadius: showPoints ? CHART_POINT.secondaryRadius : CHART_POINT.hidden,
+      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
       borderDash: [4, 4]
     }
@@ -39899,13 +39907,13 @@ function generateHtmlReport({
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F680} ${t.velocity.sectionTitle}</h2>
         <ul style="margin:0;padding-left:20px;">
           <li><strong>${t.velocity.starsPerDay}:</strong> ${velocity.starsPerDay}</li>
-          ${velocity.growthPercent !== null ? `<li><strong>${t.velocity.growth}:</strong> <span style="color:${deltaColor({ delta: velocity.growthPercent, palette })};">${velocity.growthPercent >= 0 ? "+" : ""}${velocity.growthPercent}%</span></li>` : ""}
+          ${velocity.growthPercent !== null ? `<li><strong>${t.velocity.growth}:</strong> <span style="color:${deltaColor({ delta: velocity.growthPercent, palette })};">${formatSignedPercent(velocity.growthPercent)}</span></li>` : ""}
           ${velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null ? `<li>${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}</li>` : ""}
         </ul>
       </div>` : "";
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><meta name="color-scheme" content="${theme === ChartTheme.AUTO ? "light dark" : theme}"></head>
+<head><meta charset="utf-8"><meta name="color-scheme" content="${colorSchemeFor(theme)}"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${palette.text};background-color:${palette.white};">
   <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${palette.accent};">
     <h1 style="margin:0;font-size:24px;">${t.report.title}</h1>
@@ -40147,9 +40155,7 @@ function generateMarkdownReport({
     `## \u{1F680} ${t.velocity.sectionTitle}`,
     "",
     `- **${t.velocity.starsPerDay}:** ${velocity.starsPerDay}`,
-    ...velocity.growthPercent !== null ? [
-      `- **${t.velocity.growth}:** ${velocity.growthPercent >= 0 ? "+" : ""}${velocity.growthPercent}%`
-    ] : [],
+    ...velocity.growthPercent !== null ? [`- **${t.velocity.growth}:** ${formatSignedPercent(velocity.growthPercent)}`] : [],
     ...velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null ? [
       `- ${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}`
     ] : [],

@@ -1,4 +1,4 @@
-import { deltaIndicator, trendIcon } from '@domain/formatting';
+import { deltaIndicator, formatSignedPercent, trendIcon } from '@domain/formatting';
 import { computeVelocity } from '@domain/velocity';
 import { getTranslations, interpolate } from '@i18n';
 import { MIN_SNAPSHOTS_FOR_CHART } from './constants';
@@ -217,9 +217,7 @@ export function generateMarkdownReport({
         '',
         `- **${t.velocity.starsPerDay}:** ${velocity.starsPerDay}`,
         ...(velocity.growthPercent !== null
-          ? [
-              `- **${t.velocity.growth}:** ${velocity.growthPercent >= 0 ? '+' : ''}${velocity.growthPercent}%`,
-            ]
+          ? [`- **${t.velocity.growth}:** ${formatSignedPercent(velocity.growthPercent)}`]
           : []),
         ...(velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null
           ? [

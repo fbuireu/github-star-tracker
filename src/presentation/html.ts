@@ -1,5 +1,5 @@
 import { ChartRange, ChartTheme } from '@config/types';
-import { deltaIndicator } from '@domain/formatting';
+import { deltaIndicator, formatSignedPercent } from '@domain/formatting';
 import { computeVelocity } from '@domain/velocity';
 import { getTranslations, interpolate } from '@i18n';
 import {
@@ -12,6 +12,7 @@ import { MIN_SNAPSHOTS_FOR_CHART } from './constants';
 import type { GenerateReportParams } from './shared';
 import {
   buildForecastWeekHeaders,
+  colorSchemeFor,
   forecastMethodLabel,
   prepareReportData,
   resolvePalette,
@@ -222,7 +223,7 @@ export function generateHtmlReport({
           <li><strong>${t.velocity.starsPerDay}:</strong> ${velocity.starsPerDay}</li>
           ${
             velocity.growthPercent !== null
-              ? `<li><strong>${t.velocity.growth}:</strong> <span style="color:${deltaColor({ delta: velocity.growthPercent, palette })};">${velocity.growthPercent >= 0 ? '+' : ''}${velocity.growthPercent}%</span></li>`
+              ? `<li><strong>${t.velocity.growth}:</strong> <span style="color:${deltaColor({ delta: velocity.growthPercent, palette })};">${formatSignedPercent(velocity.growthPercent)}</span></li>`
               : ''
           }
           ${
@@ -236,7 +237,7 @@ export function generateHtmlReport({
 
   return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><meta name="color-scheme" content="${theme === ChartTheme.AUTO ? 'light dark' : theme}"></head>
+<head><meta charset="utf-8"><meta name="color-scheme" content="${colorSchemeFor(theme)}"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${palette.text};background-color:${palette.white};">
   <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${palette.accent};">
     <h1 style="margin:0;font-size:24px;">${t.report.title}</h1>

@@ -1,6 +1,5 @@
+import { MS_PER_DAY } from './constants';
 import type { History } from './types';
-
-const MS_PER_DAY = 86_400_000;
 
 const VELOCITY_MILESTONES = [
   10, 50, 100, 500, 1_000, 5_000, 10_000, 50_000, 100_000, 500_000, 1_000_000,

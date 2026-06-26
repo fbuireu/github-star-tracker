@@ -1,5 +1,6 @@
 import { ChartRange, ChartTheme } from '@config/types';
-import { FORECAST_WEEKS, type ForecastData, ForecastMethod } from '@domain/forecast';
+import { FORECAST_WEEKS, MS_PER_DAY } from '@domain/constants';
+import { type ForecastData, ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
 import type { ComparisonResults, History, RepoResult } from '@domain/types';
 import { getTranslations, interpolate, type Locale } from '@i18n';
@@ -32,7 +33,9 @@ export function resolvePalette(theme: ChartTheme = ChartTheme.AUTO): ColorPalett
   return theme === ChartTheme.DARK ? DARK_PALETTE : LIGHT_PALETTE;
 }
 
-const MS_PER_DAY = 86_400_000;
+export function colorSchemeFor(theme: ChartTheme): string {
+  return theme === ChartTheme.AUTO ? 'light dark' : theme;
+}
 
 const CHART_RANGE_DAYS: Record<ChartRange, number> = {
   [ChartRange.D30]: 30,

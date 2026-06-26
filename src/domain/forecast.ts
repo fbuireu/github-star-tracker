@@ -1,7 +1,5 @@
+import { FORECAST_WEEKS, MIN_SNAPSHOTS_FOR_FORECAST } from './constants';
 import type { History } from './types';
-
-export const MIN_SNAPSHOTS = 3;
-export const FORECAST_WEEKS = 4;
 
 export interface ForecastPoint {
   weekOffset: number;
@@ -122,7 +120,7 @@ export function computeForecast({
   history,
   topRepoNames,
 }: ComputeForecastParams): ForecastData | null {
-  if (history.snapshots.length < MIN_SNAPSHOTS) {
+  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) {
     return null;
   }
 

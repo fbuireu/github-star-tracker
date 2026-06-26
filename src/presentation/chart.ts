@@ -25,6 +25,15 @@ function tensionFor(smoothing: boolean): number {
   return smoothing ? CHART_TENSION.smooth : CHART_TENSION.straight;
 }
 
+interface PointRadiusForParams {
+  showPoints: boolean;
+  radius: number;
+}
+
+function pointRadiusFor({ showPoints, radius }: PointRadiusForParams): number {
+  return showPoints ? radius : CHART_POINT.hidden;
+}
+
 interface ChartConfig {
   type: 'line';
   data: {
@@ -210,7 +219,7 @@ function buildStarsDataset({
     backgroundColor: `${palette.accent}33`,
     fill: true,
     tension,
-    pointRadius: showPoints ? CHART_POINT.primaryRadius : CHART_POINT.hidden,
+    pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
     pointHoverRadius: CHART_POINT.primaryHoverRadius,
   };
 }
@@ -454,7 +463,7 @@ export function generateComparisonChartUrl({
       backgroundColor: `${color}33`,
       fill: false,
       tension,
-      pointRadius: showPoints ? CHART_POINT.secondaryRadius : CHART_POINT.hidden,
+      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
     };
   });
@@ -521,7 +530,7 @@ export function generateForecastChartUrl({
       backgroundColor: `${palette.accent}33`,
       fill: true,
       tension,
-      pointRadius: showPoints ? CHART_POINT.primaryRadius : CHART_POINT.hidden,
+      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
       pointHoverRadius: CHART_POINT.primaryHoverRadius,
     },
     {
@@ -531,7 +540,7 @@ export function generateForecastChartUrl({
       backgroundColor: 'transparent',
       fill: false,
       tension,
-      pointRadius: showPoints ? CHART_POINT.secondaryRadius : CHART_POINT.hidden,
+      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
       borderDash: [8, 4],
     },
@@ -542,7 +551,7 @@ export function generateForecastChartUrl({
       backgroundColor: 'transparent',
       fill: false,
       tension,
-      pointRadius: showPoints ? CHART_POINT.secondaryRadius : CHART_POINT.hidden,
+      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
       borderDash: [4, 4],
     },

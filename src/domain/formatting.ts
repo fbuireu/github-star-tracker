@@ -1,5 +1,6 @@
 import { LOCALE_MAP } from '@config/defaults';
 import type { Locale } from '@i18n';
+import { MS_PER_YEAR } from './constants';
 
 export const UP_ARROW = '\u2B06\uFE0F';
 export const DOWN_ARROW = '\u2B07\uFE0F';
@@ -20,6 +21,10 @@ export function deltaIndicator(delta: number): string {
   return '0';
 }
 
+export function formatSignedPercent(value: number): string {
+  return `${value >= 0 ? '+' : ''}${value}%`;
+}
+
 export function trendIcon(delta: number): string {
   if (delta > 0) return UP_ARROW;
   if (delta < 0) return DOWN_ARROW;
@@ -38,9 +43,6 @@ export function formatDate({ timestamp, locale }: FormatDateParams): string {
   return date.toLocaleDateString(localeCode, { month: 'short', day: 'numeric' });
 }
 
-const DAY_MS = 86_400_000;
-const YEAR_MS = 365 * DAY_MS;
-
 interface BuildAxisLabelsParams {
   timestamps: string[];
   locale: Locale;
@@ -56,7 +58,7 @@ interface BuildAxisLabelsParams {
 export function buildAxisLabels({ timestamps, locale }: BuildAxisLabelsParams): string[] {
   const times = timestamps.map((timestamp) => Date.parse(timestamp)).filter(Number.isFinite);
 
-  if (times.length < 2 || Math.max(...times) - Math.min(...times) < YEAR_MS) {
+  if (times.length < 2 || Math.max(...times) - Math.min(...times) < MS_PER_YEAR) {
     return timestamps.map((timestamp) => formatDate({ timestamp, locale }));
   }
 
