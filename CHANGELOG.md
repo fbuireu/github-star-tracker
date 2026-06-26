@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/fbuireu/github-star-tracker/compare/v1.19.0...v1.20.0) (2026-06-26)
+
+
+### Features
+
+* add chart-range time window ([#127](https://github.com/fbuireu/github-star-tracker/issues/127)) ([158fcb8](https://github.com/fbuireu/github-star-tracker/commit/158fcb87576c3fe547cb96c75e3bd74c29b32ed1))
+
 # [1.19.0](https://github.com/fbuireu/github-star-tracker/compare/v1.18.0...v1.19.0) (2026-06-26)
 
 
