@@ -25,6 +25,7 @@ export function generateHtmlReport({
   stargazerDiff = null,
   forecastData = null,
   topRepos: topReposCount = 10,
+  smoothing = true,
 }: GenerateReportParams): string {
   const { summary } = results;
   const t = getTranslations(locale);
@@ -72,13 +73,19 @@ export function generateHtmlReport({
           repoNames: topRepos,
           title: t.report.topRepositories,
           locale,
+          smoothing,
         })
       : null;
 
   const individualRepoChartsHtml = hasChartHistory
     ? topRepos
         .map((repoName) => {
-          const chartUrl = generatePerRepoChartUrl({ history, repoFullName: repoName, locale });
+          const chartUrl = generatePerRepoChartUrl({
+            history,
+            repoFullName: repoName,
+            locale,
+            smoothing,
+          });
           if (!chartUrl) return '';
           return `
         <div style="margin-top:16px;">
@@ -94,7 +101,7 @@ export function generateHtmlReport({
     ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">📈 ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
         ${
           comparisonChartUrl
             ? `
@@ -160,7 +167,7 @@ export function generateHtmlReport({
         ${
           hasChartHistory
             ? `<div style="margin-top:16px;text-align:center;">
-          <img src="${generateForecastChartUrl({ history, forecastData, locale })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`
             : ''
         }

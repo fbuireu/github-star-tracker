@@ -499,4 +499,50 @@ describe('chart', () => {
       }
     });
   });
+
+  describe('smoothing', () => {
+    const tensionOf = (url: string): number => {
+      const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+      return config.data.datasets[0].tension;
+    };
+
+    it('curves the line with a positive tension by default', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en' });
+
+      expect(url).not.toBeNull();
+      if (url) expect(tensionOf(url)).toBe(0.4);
+    });
+
+    it('curves the line when smoothing is enabled', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en', smoothing: true });
+
+      expect(url).not.toBeNull();
+      if (url) expect(tensionOf(url)).toBe(0.4);
+    });
+
+    it('draws straight segments when smoothing is disabled', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en', smoothing: false });
+
+      expect(url).not.toBeNull();
+      if (url) expect(tensionOf(url)).toBe(0);
+    });
+
+    it('applies the smoothing setting to comparison datasets', () => {
+      const url = generateComparisonChartUrl({
+        history: mockHistory,
+        repoNames: ['user/repo-a', 'user/repo-b'],
+        locale: 'en',
+        smoothing: false,
+      });
+
+      expect(url).not.toBeNull();
+      if (url) {
+        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+
+        expect(
+          config.data.datasets.every((dataset: { tension: number }) => dataset.tension === 0),
+        ).toBe(true);
+      }
+    });
+  });
 });

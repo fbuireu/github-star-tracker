@@ -5,11 +5,16 @@ import { getTranslations, interpolate, type Locale } from '@i18n';
 import {
   CHART,
   CHART_COMPARISON_COLORS,
+  CHART_TENSION,
   COLORS,
   MILESTONE_THRESHOLDS,
   MIN_SNAPSHOTS_FOR_CHART,
 } from './constants';
 import { buildForecastChartSeries } from './shared';
+
+function tensionFor(smoothing: boolean): number {
+  return smoothing ? CHART_TENSION.smooth : CHART_TENSION.straight;
+}
 
 interface ChartConfig {
   type: 'line';
@@ -170,14 +175,19 @@ function buildChartOptions({
   };
 }
 
-function buildStarsDataset(data: number[]): Dataset {
+interface BuildStarsDatasetParams {
+  data: number[];
+  tension: number;
+}
+
+function buildStarsDataset({ data, tension }: BuildStarsDatasetParams): Dataset {
   return {
     label: 'Stars',
     data,
     borderColor: COLORS.accent,
     backgroundColor: `${COLORS.accent}33`,
     fill: true,
-    tension: 0.4,
+    tension,
     pointRadius: 3,
     pointHoverRadius: 6,
   };
@@ -232,21 +242,24 @@ interface GenerateChartUrlParams {
   history: History;
   title?: string;
   locale: Locale;
+  smoothing?: boolean;
 }
 
 export function generateChartUrl({
   history,
   title,
   locale,
+  smoothing = true,
 }: GenerateChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
   const t = getTranslations(locale);
+  const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData({ history, locale });
-  const datasets: Dataset[] = [buildStarsDataset(data)];
+  const datasets: Dataset[] = [buildStarsDataset({ data, tension })];
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
   const annotation = buildMilestoneAnnotations({ minStars, maxStars });
@@ -266,6 +279,7 @@ interface GeneratePerRepoChartUrlParams {
   repoFullName: string;
   title?: string;
   locale: Locale;
+  smoothing?: boolean;
 }
 
 export function generatePerRepoChartUrl({
@@ -273,11 +287,13 @@ export function generatePerRepoChartUrl({
   repoFullName,
   title,
   locale,
+  smoothing = true,
 }: GeneratePerRepoChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
+  const tension = tensionFor(smoothing);
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
   const data = snapshots.map((snapshot) => {
@@ -286,7 +302,7 @@ export function generatePerRepoChartUrl({
     return repo?.stars ?? 0;
   });
   const chartTitle = title ?? `${repoFullName} Star History`;
-  const datasets: Dataset[] = [buildStarsDataset(data)];
+  const datasets: Dataset[] = [buildStarsDataset({ data, tension })];
 
   const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: false });
 
@@ -298,6 +314,7 @@ interface GenerateComparisonChartUrlParams {
   repoNames: string[];
   title?: string;
   locale: Locale;
+  smoothing?: boolean;
 }
 
 export function generateComparisonChartUrl({
@@ -305,6 +322,7 @@ export function generateComparisonChartUrl({
   repoNames,
   title,
   locale,
+  smoothing = true,
 }: GenerateComparisonChartUrlParams): string | null {
   if (
     !history.snapshots ||
@@ -315,6 +333,7 @@ export function generateComparisonChartUrl({
   }
 
   const t = getTranslations(locale);
+  const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.topRepositories;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
@@ -334,7 +353,7 @@ export function generateComparisonChartUrl({
       borderColor: color,
       backgroundColor: `${color}33`,
       fill: false,
-      tension: 0.4,
+      tension,
       pointRadius: 2,
       pointHoverRadius: 5,
     };
@@ -349,6 +368,7 @@ interface GenerateForecastChartUrlParams {
   forecastData: ForecastData;
   locale: Locale;
   title?: string;
+  smoothing?: boolean;
 }
 
 export function generateForecastChartUrl({
@@ -356,12 +376,14 @@ export function generateForecastChartUrl({
   forecastData,
   locale,
   title,
+  smoothing = true,
 }: GenerateForecastChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
   const t = getTranslations(locale);
+  const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.forecast.sectionTitle;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const historicalLabels = snapshots.map((snapshot) =>
@@ -380,7 +402,7 @@ export function generateForecastChartUrl({
       borderColor: COLORS.accent,
       backgroundColor: `${COLORS.accent}33`,
       fill: true,
-      tension: 0.4,
+      tension,
       pointRadius: 3,
       pointHoverRadius: 6,
     },
@@ -390,7 +412,7 @@ export function generateForecastChartUrl({
       borderColor: COLORS.positive,
       backgroundColor: 'transparent',
       fill: false,
-      tension: 0.4,
+      tension,
       pointRadius: 2,
       pointHoverRadius: 5,
       borderDash: [8, 4],
@@ -401,7 +423,7 @@ export function generateForecastChartUrl({
       borderColor: COLORS.negative,
       backgroundColor: 'transparent',
       fill: false,
-      tension: 0.4,
+      tension,
       pointRadius: 2,
       pointHoverRadius: 5,
       borderDash: [4, 4],

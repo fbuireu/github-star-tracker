@@ -54,6 +54,11 @@ export const CHART = {
   maxComparison: 10,
 } as const;
 
+export const CHART_TENSION = {
+  smooth: 0.4,
+  straight: 0,
+} as const;
+
 export const BADGE = {
   labelCharWidth: 6.5,
   valueCharWidth: 7,

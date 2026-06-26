@@ -227,7 +227,7 @@ The chart appearance is configurable via these inputs:
 | `chart-line-width` | `2.5` | Stroke width in px of data lines across all charts. |
 | `chart-max-points` | `30` | Max data points to plot; `0` plots the full reconstructed history. |
 | `chart-y-axis-side` | `left` | Y-axis label side: `left` or `right`. |
-| `chart-smoothing` | `true` | `true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. |
+| `chart-smoothing` | `true` | `true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. Applies to email charts too. |
 
 ```yaml
 with:

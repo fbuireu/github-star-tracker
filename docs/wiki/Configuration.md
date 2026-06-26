@@ -386,7 +386,7 @@ Curve style between points.
 | **Type** | `boolean` |
 | **Default** | `true` |
 
-`true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes.
+`true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. Applies to every chart, including the ones embedded in the email report.
 
 ---
 
