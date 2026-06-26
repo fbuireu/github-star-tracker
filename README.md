@@ -143,7 +143,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `chart-line-width`       | `2.5`                 | Stroke width (px, >0) of data lines in all charts             |
 | `chart-max-points`       | `30`                  | Recent points to plot; `0` plots the full history             |
 | `chart-y-axis-side`      | `left`                | Y-axis labels side: `left` or `right`                         |
-| `chart-smoothing`        | `true`                | Smooth curve (`true`) or straight segments to show spikes      |
+| `chart-smoothing`        | `true`                | Smooth curve (`true`) or straight segments to show spikes; applies to email charts too |
 | `track-stargazers`       | `false`               | Track individual stargazers                                   |
 | `smart-sampling`         | `false`               | Sample stargazer pages for high-star repos (avoids rate limits) |
 | `smart-sampling-threshold` | `1500`              | Star count above which a repo is sampled                      |

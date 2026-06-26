@@ -157,6 +157,7 @@ export async function trackStars(): Promise<void> {
           stargazerDiff,
           forecastData,
           topRepos: config.topRepos,
+          smoothing: config.chartSmoothing,
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport(reportParams);

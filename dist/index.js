@@ -32987,10 +32987,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -35282,7 +35282,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35405,7 +35405,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -38529,6 +38529,10 @@ var CHART = {
   maxDataPoints: 30,
   maxComparison: 10
 };
+var CHART_TENSION = {
+  smooth: 0.4,
+  straight: 0
+};
 var BADGE = {
   labelCharWidth: 6.5,
   valueCharWidth: 7,
@@ -39252,6 +39256,9 @@ function buildForecastChartSeries({
 }
 
 // src/presentation/chart.ts
+function tensionFor(smoothing) {
+  return smoothing ? CHART_TENSION.smooth : CHART_TENSION.straight;
+}
 function buildMilestoneAnnotations({
   minStars,
   maxStars
@@ -39319,14 +39326,14 @@ function buildChartOptions({
     }
   };
 }
-function buildStarsDataset(data) {
+function buildStarsDataset({ data, tension }) {
   return {
     label: "Stars",
     data,
     borderColor: COLORS.accent,
     backgroundColor: `${COLORS.accent}33`,
     fill: true,
-    tension: 0.4,
+    tension,
     pointRadius: 3,
     pointHoverRadius: 6
   };
@@ -39358,15 +39365,17 @@ function buildChartConfig({
 function generateChartUrl({
   history,
   title,
-  locale
+  locale,
+  smoothing = true
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
   const t = getTranslations(locale);
+  const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData({ history, locale });
-  const datasets = [buildStarsDataset(data)];
+  const datasets = [buildStarsDataset({ data, tension })];
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
   const annotation = buildMilestoneAnnotations({ minStars, maxStars });
@@ -39383,11 +39392,13 @@ function generatePerRepoChartUrl({
   history,
   repoFullName,
   title,
-  locale
+  locale,
+  smoothing = true
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
+  const tension = tensionFor(smoothing);
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
   const data = snapshots.map((snapshot) => {
@@ -39395,7 +39406,7 @@ function generatePerRepoChartUrl({
     return repo?.stars ?? 0;
   });
   const chartTitle = title ?? `${repoFullName} Star History`;
-  const datasets = [buildStarsDataset(data)];
+  const datasets = [buildStarsDataset({ data, tension })];
   const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: false });
   return buildChartUrl(config);
 }
@@ -39403,12 +39414,14 @@ function generateComparisonChartUrl({
   history,
   repoNames,
   title,
-  locale
+  locale,
+  smoothing = true
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
   }
   const t = getTranslations(locale);
+  const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.topRepositories;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
@@ -39427,7 +39440,7 @@ function generateComparisonChartUrl({
       borderColor: color,
       backgroundColor: `${color}33`,
       fill: false,
-      tension: 0.4,
+      tension,
       pointRadius: 2,
       pointHoverRadius: 5
     };
@@ -39439,12 +39452,14 @@ function generateForecastChartUrl({
   history,
   forecastData,
   locale,
-  title
+  title,
+  smoothing = true
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
   const t = getTranslations(locale);
+  const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.forecast.sectionTitle;
   const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
   const historicalLabels = snapshots.map(
@@ -39463,7 +39478,7 @@ function generateForecastChartUrl({
       borderColor: COLORS.accent,
       backgroundColor: `${COLORS.accent}33`,
       fill: true,
-      tension: 0.4,
+      tension,
       pointRadius: 3,
       pointHoverRadius: 6
     },
@@ -39473,7 +39488,7 @@ function generateForecastChartUrl({
       borderColor: COLORS.positive,
       backgroundColor: "transparent",
       fill: false,
-      tension: 0.4,
+      tension,
       pointRadius: 2,
       pointHoverRadius: 5,
       borderDash: [8, 4]
@@ -39484,7 +39499,7 @@ function generateForecastChartUrl({
       borderColor: COLORS.negative,
       backgroundColor: "transparent",
       fill: false,
-      tension: 0.4,
+      tension,
       pointRadius: 2,
       pointHoverRadius: 5,
       borderDash: [4, 4]
@@ -39513,7 +39528,8 @@ function generateHtmlReport({
   includeCharts = true,
   stargazerDiff = null,
   forecastData = null,
-  topRepos: topReposCount = 10
+  topRepos: topReposCount = 10,
+  smoothing = true
 }) {
   const { summary: summary2 } = results;
   const t = getTranslations(locale);
@@ -39546,10 +39562,16 @@ function generateHtmlReport({
     history,
     repoNames: topRepos,
     title: t.report.topRepositories,
-    locale
+    locale,
+    smoothing
   }) : null;
   const individualRepoChartsHtml = hasChartHistory ? topRepos.map((repoName) => {
-    const chartUrl = generatePerRepoChartUrl({ history, repoFullName: repoName, locale });
+    const chartUrl = generatePerRepoChartUrl({
+      history,
+      repoFullName: repoName,
+      locale,
+      smoothing
+    });
     if (!chartUrl) return "";
     return `
         <div style="margin-top:16px;">
@@ -39560,7 +39582,7 @@ function generateHtmlReport({
   const chartSection = hasChartHistory ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F4C8} ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
         ${comparisonChartUrl ? `
         <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
         <img src="${comparisonChartUrl}" alt="${t.report.topRepositories}" style="max-width:100%;height:auto;border-radius:4px;">` : ""}
@@ -39599,7 +39621,7 @@ function generateHtmlReport({
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F52E} ${t.forecast.sectionTitle}</h2>
         ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t })}
         ${hasChartHistory ? `<div style="margin-top:16px;text-align:center;">
-          <img src="${generateForecastChartUrl({ history, forecastData, locale })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>` : ""}
         ${forecastData.repos.map(
     (repo) => `
@@ -40384,7 +40406,8 @@ async function trackStars() {
           includeCharts: config.includeCharts,
           stargazerDiff,
           forecastData,
-          topRepos: config.topRepos
+          topRepos: config.topRepos,
+          smoothing: config.chartSmoothing
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport(reportParams);
