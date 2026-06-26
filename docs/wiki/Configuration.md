@@ -464,7 +464,18 @@ Custom star counts to use as milestone reference lines instead of the built-in d
 | **Type** | `string` (comma-separated integers) |
 | **Default** | _(empty)_ |
 
-A comma-separated list of positive star counts (e.g. `"250, 750, 2500"`) that replaces the built-in milestone thresholds. Values are sorted and de-duplicated; non-positive or non-numeric entries are ignored. When empty, the default milestones (10, 50, 100, 500, 1k, 5k, 10k) are used. Only the milestones that fall within the chart's visible range are drawn. Requires [`chart-milestones`](#chart-milestones) to be enabled — when milestones are turned off, no reference lines are drawn regardless of this value.
+A comma-separated list of positive star counts (e.g. `"250, 750, 2500"`) that replaces the built-in milestone thresholds. Values are sorted and de-duplicated; non-positive or non-numeric entries are ignored, and an input with no valid numbers logs a warning and falls back to the built-in milestones. When empty, the default milestones (10, 50, 100, 500, 1k, 5k, 10k) are used. Only the milestones that fall within the chart's visible range are drawn. Requires [`chart-milestones`](#chart-milestones) to be enabled — when milestones are turned off, no reference lines are drawn regardless of this value.
+
+In a config file you can provide either a quoted comma-separated string or a YAML list:
+
+```yaml
+chart_custom_milestones: "250, 750, 2500"
+# or
+chart_custom_milestones:
+  - 250
+  - 750
+  - 2500
+```
 
 ```yaml
 with:

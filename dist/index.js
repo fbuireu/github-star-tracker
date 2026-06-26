@@ -38241,7 +38241,12 @@ function loadConfig() {
       `Invalid visibility "${visibility}". Must be one of: ${Object.keys(VISIBILITY_CONFIG).join(", ")}`
     );
   }
-  const fileCustomMilestones = Array.isArray(fileConfig.chartCustomMilestones) ? parseNumberList(fileConfig.chartCustomMilestones.join(",")) : [];
+  const fileCustomMilestones = Array.isArray(fileConfig.chartCustomMilestones) ? parseNumberList(fileConfig.chartCustomMilestones.join(",")) : parseNumberList(fileConfig.chartCustomMilestones);
+  if (inputChartCustomMilestones && parseNumberList(inputChartCustomMilestones).length === 0) {
+    warning(
+      `Invalid chart-custom-milestones "${inputChartCustomMilestones}". Expected a comma-separated list of positive numbers. Falling back to the built-in milestones.`
+    );
+  }
   const locale = inputLocale || fileConfig.locale || DEFAULTS2.locale;
   if (!isValidLocale(locale)) {
     warning(`Invalid locale "${locale}". Falling back to "en"`);

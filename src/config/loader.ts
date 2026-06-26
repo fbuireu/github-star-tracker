@@ -45,7 +45,7 @@ interface FileConfig {
   chartMilestones?: boolean;
   chartBeginAtZero?: boolean;
   chartTheme?: string;
-  chartCustomMilestones?: number[];
+  chartCustomMilestones?: number[] | string;
 }
 
 interface ParseConfigYamlParams {
@@ -165,7 +165,13 @@ export function loadConfig(): Config {
 
   const fileCustomMilestones = Array.isArray(fileConfig.chartCustomMilestones)
     ? parseNumberList(fileConfig.chartCustomMilestones.join(','))
-    : [];
+    : parseNumberList(fileConfig.chartCustomMilestones);
+
+  if (inputChartCustomMilestones && parseNumberList(inputChartCustomMilestones).length === 0) {
+    core.warning(
+      `Invalid chart-custom-milestones "${inputChartCustomMilestones}". Expected a comma-separated list of positive numbers. Falling back to the built-in milestones.`,
+    );
+  }
 
   const locale = inputLocale || fileConfig.locale || DEFAULTS.locale;
   if (!isValidLocale(locale)) {

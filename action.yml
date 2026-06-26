@@ -197,7 +197,7 @@ inputs:
     default: 'auto'
 
   chart-custom-milestones:
-    description: 'Comma-separated star counts to use as milestone reference lines instead of the built-in defaults (e.g. "250, 750, 2500"). Values are sorted and de-duplicated; non-positive or non-numeric entries are ignored. Requires chart-milestones to be enabled. When empty, the built-in milestones are used. (default empty)'
+    description: 'Comma-separated star counts to use as milestone reference lines instead of the built-in defaults (e.g. "250, 750, 2500"). Values are sorted and de-duplicated; non-positive or non-numeric entries are ignored, and an input with no valid numbers warns and falls back to the built-in milestones. Requires chart-milestones to be enabled. When empty, the built-in milestones are used. (default empty)'
     required: false
     default: ''
 
