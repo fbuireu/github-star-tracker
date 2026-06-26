@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/fbuireu/github-star-tracker/compare/v1.16.3...v1.17.0) (2026-06-26)
+
+
+### Features
+
+* add chart-show-points option ([#122](https://github.com/fbuireu/github-star-tracker/issues/122)) ([b6b2fbb](https://github.com/fbuireu/github-star-tracker/commit/b6b2fbb5fc7e48823df9a26e99a1a0093108cc73))
+
 ## [1.16.3](https://github.com/fbuireu/github-star-tracker/compare/v1.16.2...v1.16.3) (2026-06-26)
 
 
