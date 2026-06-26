@@ -38,7 +38,8 @@ export function filterRepos({ repos, config }: FilterReposParams): GitHubRepo[] 
   }
 
   if (config.onlyRepos.length > 0) {
-    const filtered = candidates.filter((repo) => config.onlyRepos.includes(repo.name));
+    const onlyRepoNames = new Set(config.onlyRepos);
+    const filtered = candidates.filter((repo) => onlyRepoNames.has(repo.name));
     core.info(`After only_repos filter: ${filtered.length} repos`);
     return filtered;
   }

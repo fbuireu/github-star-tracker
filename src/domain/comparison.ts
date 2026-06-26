@@ -9,9 +9,9 @@ export function compareStars({
   currentRepos,
   previousSnapshot,
 }: CompareStarsParams): ComparisonResults {
-  const prevMap: Record<string, number> = {};
+  const previousStars = new Map<string, number>();
   for (const repo of previousSnapshot?.repos ?? []) {
-    prevMap[repo.fullName] = repo.stars;
+    previousStars.set(repo.fullName, repo.stars);
   }
 
   const currentNames = new Set(currentRepos.map((repo) => repo.fullName));
@@ -19,7 +19,7 @@ export function compareStars({
   const repoResults: RepoResult[] = [];
 
   for (const repo of currentRepos) {
-    const previous = prevMap[repo.fullName] ?? null;
+    const previous = previousStars.get(repo.fullName) ?? null;
     const current = repo.stars;
     const delta = previous === null ? 0 : current - previous;
 

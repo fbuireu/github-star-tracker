@@ -1,6 +1,7 @@
+import { ChartTheme } from '@config/types';
 import type { ComparisonResults } from '@domain/types';
 import { describe, expect, it, vi } from 'vitest';
-import { prepareReportData } from './shared';
+import { colorSchemeFor, prepareReportData } from './shared';
 
 function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResults {
   return {
@@ -57,6 +58,17 @@ function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResu
     ...overrides,
   };
 }
+
+describe('colorSchemeFor', () => {
+  it('allows both schemes for the auto theme', () => {
+    expect(colorSchemeFor(ChartTheme.AUTO)).toBe('light dark');
+  });
+
+  it('locks to the forced theme otherwise', () => {
+    expect(colorSchemeFor(ChartTheme.DARK)).toBe('dark');
+    expect(colorSchemeFor(ChartTheme.LIGHT)).toBe('light');
+  });
+});
 
 describe('prepareReportData', () => {
   it('filters out removed repos from activeRepos', () => {

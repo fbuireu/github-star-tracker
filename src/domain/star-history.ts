@@ -1,7 +1,7 @@
 import type { RepoStargazers } from './stargazers';
+import { MS_PER_DAY } from './time';
 import type { History, Snapshot } from './types';
 
-const DAY_MS = 86_400_000;
 // GitHub only lets us page through the oldest 40,000 stargazers, so for larger
 // repos the most recent stars are unreachable and the fetched dates stop well
 // before "now". Those repos need a ramped tail instead of a flat one (#114).
@@ -113,7 +113,7 @@ export function buildStarHistory({
   const end = (now ?? new Date()).getTime();
   const edges =
     earliest >= end
-      ? [earliest - DAY_MS, end]
+      ? [earliest - MS_PER_DAY, end]
       : (() => {
           const buckets = Math.max(2, Math.floor(maxPoints));
           const step = (end - earliest) / (buckets - 1);

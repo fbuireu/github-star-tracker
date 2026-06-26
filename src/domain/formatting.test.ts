@@ -6,6 +6,7 @@ import {
   deltaIndicator,
   formatCount,
   formatDate,
+  formatSignedPercent,
   trendIcon,
   UP_ARROW,
 } from './formatting';
@@ -39,6 +40,17 @@ describe('deltaIndicator', () => {
 
   it('returns 0 for zero delta', () => {
     expect(deltaIndicator(0)).toBe('0');
+  });
+});
+
+describe('formatSignedPercent', () => {
+  it('prefixes a plus sign for non-negative values', () => {
+    expect(formatSignedPercent(25)).toBe('+25%');
+    expect(formatSignedPercent(0)).toBe('+0%');
+  });
+
+  it('keeps the inherent minus sign for negative values', () => {
+    expect(formatSignedPercent(-25)).toBe('-25%');
   });
 });
 
