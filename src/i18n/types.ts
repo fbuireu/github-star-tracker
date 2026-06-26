@@ -44,6 +44,12 @@ export interface Translations {
     down: string;
     stable: string;
   };
+  velocity: {
+    sectionTitle: string;
+    starsPerDay: string;
+    growth: string;
+    projection: string;
+  };
   footer: {
     generated: string;
     madeBy: string;

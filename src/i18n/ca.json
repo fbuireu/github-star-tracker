@@ -39,6 +39,12 @@
     "down": "baixant",
     "stable": "estable"
   },
+  "velocity": {
+    "sectionTitle": "Velocitat de creixement",
+    "starsPerDay": "Estrelles per dia",
+    "growth": "Creixement",
+    "projection": "~{days} dies per a {milestone} ★"
+  },
   "footer": {
     "generated": "Generat per {project} el {date}",
     "madeBy": "Fet amb 🤘 per {author}"

@@ -165,6 +165,7 @@ export async function trackStars(): Promise<void> {
           customMilestones: config.chartCustomMilestones,
           range: config.chartRange,
           trendLine: config.chartTrendLine,
+          velocityMetrics: config.velocityMetrics,
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport(reportParams);

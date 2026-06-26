@@ -723,6 +723,26 @@ describe('loadConfig', () => {
     expect(config.chartTrendLine).toBe(true);
   });
 
+  it('defaults velocity-metrics to false', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.velocityMetrics).toBe(false);
+  });
+
+  it('parses velocity-metrics input as true', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'velocity-metrics') return 'true';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.velocityMetrics).toBe(true);
+  });
+
   it('defaults track-stargazers to false', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 

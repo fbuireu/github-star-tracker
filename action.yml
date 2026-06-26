@@ -211,6 +211,11 @@ inputs:
     required: false
     default: 'false'
 
+  velocity-metrics:
+    description: 'Add a growth-velocity section to the report (stars/day, percent growth, and projected days to the next star milestone), computed from the tracked history (true) or omit it (false). (default false)'
+    required: false
+    default: 'false'
+
 outputs:
   report:
     description: 'Markdown report of star changes'

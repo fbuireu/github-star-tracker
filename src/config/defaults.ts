@@ -55,4 +55,5 @@ export const DEFAULTS: Config = {
   chartCustomMilestones: [],
   chartRange: ChartRange.ALL,
   chartTrendLine: false,
+  velocityMetrics: false,
 } as const;

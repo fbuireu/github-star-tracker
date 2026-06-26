@@ -68,6 +68,27 @@ describe('generateMarkdownReport', () => {
     expect(report).toContain('-2');
   });
 
+  const velocityHistory = {
+    snapshots: [
+      { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 100, repos: [] },
+      { timestamp: '2025-01-11T00:00:00.000Z', totalStars: 200, repos: [] },
+    ],
+  };
+
+  it('renders the velocity section when velocity-metrics is enabled', () => {
+    const report = renderMarkdown({ history: velocityHistory, velocityMetrics: true });
+
+    expect(report).toContain('Growth Velocity');
+    expect(report).toContain('Stars per day');
+    expect(report).toContain('Growth');
+  });
+
+  it('omits the velocity section by default', () => {
+    const report = renderMarkdown({ history: velocityHistory });
+
+    expect(report).not.toContain('Growth Velocity');
+  });
+
   it('handles first run with no previous timestamp', () => {
     const report = renderMarkdown({ previousTimestamp: null });
 
