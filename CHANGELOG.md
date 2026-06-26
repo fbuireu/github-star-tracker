@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/fbuireu/github-star-tracker/compare/v1.20.0...v1.21.0) (2026-06-26)
+
+
+### Features
+
+* add chart-trend-line option ([#128](https://github.com/fbuireu/github-star-tracker/issues/128)) ([ca22a1c](https://github.com/fbuireu/github-star-tracker/commit/ca22a1c58f5998fe4e23437b3bba0dece657c138)), closes [#129](https://github.com/fbuireu/github-star-tracker/issues/129)
+
 # [1.20.0](https://github.com/fbuireu/github-star-tracker/compare/v1.19.0...v1.20.0) (2026-06-26)
 
 
