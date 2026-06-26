@@ -181,6 +181,7 @@ const defaultConfig = {
   chartTheme: 'auto' as const,
   chartCustomMilestones: [],
   chartRange: 'all' as const,
+  chartTrendLine: false,
 };
 
 const defaultSummary = {
@@ -241,6 +242,7 @@ const defaultTranslations = {
     topRepositories: 'Top Repos',
     byRepository: 'By Repo',
     individualRepoCharts: 'Individual Repository Charts',
+    trendLine: 'Trend',
     badges: { new: 'NEW' },
   },
   email: {

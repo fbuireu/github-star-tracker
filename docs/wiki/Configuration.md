@@ -497,6 +497,19 @@ Keeps only the snapshots within the selected window before applying [`chart-max-
 
 ---
 
+### `chart-trend-line`
+
+Whether to overlay a moving-average trend line on the main star-history chart.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `false` |
+
+When `true`, a dashed line is drawn over the main chart showing a 7-point simple moving average of the total, smoothing out short-term noise to highlight the underlying direction. Applies to the main chart in both the SVG output and the email report.
+
+---
+
 ## Filtering Options
 
 ### `include-archived`

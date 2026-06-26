@@ -206,6 +206,11 @@ inputs:
     required: false
     default: 'all'
 
+  chart-trend-line:
+    description: 'Overlay a dashed moving-average trend line on the main star-history chart to smooth out noise and show the underlying direction (true) or hide it (false). (default false)'
+    required: false
+    default: 'false'
+
 outputs:
   report:
     description: 'Markdown report of star changes'

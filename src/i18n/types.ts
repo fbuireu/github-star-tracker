@@ -29,6 +29,7 @@ export interface Translations {
     topRepositories: string;
     byRepository: string;
     individualRepoCharts: string;
+    trendLine: string;
     badges: {
       new: string;
     };

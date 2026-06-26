@@ -35641,7 +35641,8 @@ var DEFAULTS2 = {
   chartBeginAtZero: false,
   chartTheme: ChartTheme.AUTO,
   chartCustomMilestones: [],
-  chartRange: ChartRange.ALL
+  chartRange: ChartRange.ALL,
+  chartTrendLine: false
 };
 
 // src/i18n/ca.json
@@ -35671,6 +35672,7 @@ var ca_default = {
     topRepositories: "Repositoris Principals",
     byRepository: "Per Repositori",
     individualRepoCharts: "Gr\xE0fics per Repositori",
+    trendLine: "Tend\xE8ncia",
     badges: {
       new: "NOU"
     }
@@ -35738,6 +35740,7 @@ var en_default = {
     topRepositories: "Top Repositories",
     byRepository: "By Repository",
     individualRepoCharts: "Individual Repository Charts",
+    trendLine: "Trend",
     badges: {
       new: "NEW"
     }
@@ -35805,6 +35808,7 @@ var es_default = {
     topRepositories: "Repositorios Principales",
     byRepository: "Por Repositorio",
     individualRepoCharts: "Gr\xE1ficos por Repositorio",
+    trendLine: "Tendencia",
     badges: {
       new: "NUEVO"
     }
@@ -35872,6 +35876,7 @@ var it_default = {
     topRepositories: "Repository Principali",
     byRepository: "Per Repository",
     individualRepoCharts: "Grafici per Repository",
+    trendLine: "Tendenza",
     badges: {
       new: "NUOVO"
     }
@@ -38208,7 +38213,8 @@ function loadConfigFile(configPath) {
     chartBeginAtZero: read("chart_begin_at_zero"),
     chartTheme: read("chart_theme"),
     chartCustomMilestones: read("chart_custom_milestones"),
-    chartRange: read("chart_range")
+    chartRange: read("chart_range"),
+    chartTrendLine: read("chart_trend_line")
   };
 }
 function loadConfig() {
@@ -38244,6 +38250,7 @@ function loadConfig() {
   const inputChartTheme = getInput("chart-theme");
   const inputChartCustomMilestones = getInput("chart-custom-milestones");
   const inputChartRange = getInput("chart-range");
+  const inputChartTrendLine = getInput("chart-trend-line");
   const visibility = inputVisibility || fileConfig.visibility || DEFAULTS2.visibility;
   if (!(visibility in VISIBILITY_CONFIG)) {
     throw new Error(
@@ -38327,7 +38334,8 @@ function loadConfig() {
     chartBeginAtZero: parseBool(inputChartBeginAtZero) ?? fileConfig.chartBeginAtZero ?? DEFAULTS2.chartBeginAtZero,
     chartTheme,
     chartCustomMilestones: inputChartCustomMilestones ? parseNumberList(inputChartCustomMilestones) : fileCustomMilestones.length > 0 ? fileCustomMilestones : DEFAULTS2.chartCustomMilestones,
-    chartRange
+    chartRange,
+    chartTrendLine: parseBool(inputChartTrendLine) ?? fileConfig.chartTrendLine ?? DEFAULTS2.chartTrendLine
   };
   info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`
@@ -38601,6 +38609,7 @@ var CHART_TENSION = {
   smooth: 0.4,
   straight: 0
 };
+var TREND_WINDOW = 7;
 var CHART_POINT = {
   hidden: 0,
   primaryRadius: 3,
@@ -39302,6 +39311,13 @@ function filterSnapshotsByRange({
   const cutoff = lastTimestamp - days * MS_PER_DAY;
   return snapshots.filter((snapshot) => new Date(snapshot.timestamp).getTime() >= cutoff);
 }
+function movingAverageSeries({ values, window }) {
+  return values.map((_, index) => {
+    const slice = values.slice(Math.max(0, index - window + 1), index + 1);
+    const sum = slice.reduce((total, value) => total + value, 0);
+    return Math.round(sum / slice.length);
+  });
+}
 function prepareReportData({
   results,
   previousTimestamp,
@@ -39479,7 +39495,8 @@ function generateChartUrl({
   beginAtZero = false,
   theme = ChartTheme.AUTO,
   customMilestones,
-  range = ChartRange.ALL
+  range = ChartRange.ALL,
+  trendLine = false
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -39490,6 +39507,19 @@ function generateChartUrl({
   const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData({ history, locale, range });
   const datasets = [buildStarsDataset({ data, tension, showPoints, palette })];
+  if (trendLine) {
+    datasets.push({
+      label: t.report.trendLine,
+      data: movingAverageSeries({ values: data, window: TREND_WINDOW }),
+      borderColor: palette.neutral,
+      backgroundColor: "transparent",
+      fill: false,
+      tension,
+      pointRadius: CHART_POINT.hidden,
+      pointHoverRadius: CHART_POINT.hidden,
+      borderDash: [6, 4]
+    });
+  }
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
   const thresholds = customMilestones && customMilestones.length > 0 ? customMilestones : MILESTONE_THRESHOLDS;
@@ -39689,7 +39719,8 @@ function generateHtmlReport({
   beginAtZero = false,
   theme = ChartTheme.AUTO,
   customMilestones,
-  range = ChartRange.ALL
+  range = ChartRange.ALL,
+  trendLine = false
 }) {
   const { summary: summary2 } = results;
   const t = getTranslations(locale);
@@ -39751,7 +39782,7 @@ function generateHtmlReport({
   const chartSection = hasChartHistory ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F4C8} ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, beginAtZero, theme, customMilestones, range })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, beginAtZero, theme, customMilestones, range, trendLine })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
 
         ${comparisonChartUrl ? `
         <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
@@ -40348,11 +40379,13 @@ function generateSvgChart({
   beginAtZero,
   theme,
   customMilestones,
-  range
+  range,
+  trendLine = false
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
+  const t = getTranslations(locale);
   const snapshots = sliceForChart({
     items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
     maxPoints
@@ -40362,9 +40395,19 @@ function generateSvgChart({
     locale
   });
   const data = snapshots.map((snapshot) => snapshot.totalStars);
+  const datasets = [{ label: "Stars", data, color: lineColor ?? COLORS.accent }];
+  if (trendLine) {
+    datasets.push({
+      label: t.report.trendLine,
+      data: movingAverageSeries({ values: data, window: TREND_WINDOW }),
+      color: COLORS.neutral,
+      dashed: true,
+      fill: false
+    });
+  }
   return renderSvg({
     labels,
-    datasets: [{ label: "Stars", data, color: lineColor ?? COLORS.accent }],
+    datasets,
     title: title ?? "Star History",
     showLegend: false,
     milestones,
@@ -40647,7 +40690,8 @@ async function trackStars() {
           beginAtZero: config.chartBeginAtZero,
           theme: config.chartTheme,
           customMilestones: config.chartCustomMilestones,
-          range: config.chartRange
+          range: config.chartRange,
+          trendLine: config.chartTrendLine
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport(reportParams);
@@ -40682,7 +40726,8 @@ async function trackStars() {
             theme: config.chartTheme,
             milestones: config.chartMilestones,
             customMilestones: config.chartCustomMilestones,
-            range: config.chartRange
+            range: config.chartRange,
+            trendLine: config.chartTrendLine
           });
           if (svgChart) {
             writeChart({ dataDir, filename: "star-history.svg", svg: svgChart });

@@ -166,6 +166,15 @@ describe('generateSvgChart', () => {
     expect(circleCount).toBe(5);
   });
 
+  it('overlays a dashed trend line when trendLine is enabled', () => {
+    const history = makeHistory([10, 20, 30, 40, 50]);
+    const plain = expectSvg(generateSvgChart({ history, locale: 'en' }));
+    const withTrend = expectSvg(generateSvgChart({ history, locale: 'en', trendLine: true }));
+
+    expect(plain).not.toContain('stroke-dasharray="8,4"');
+    expect(withTrend).toContain('stroke-dasharray="8,4"');
+  });
+
   it('omits data point circles when showPoints is disabled', () => {
     const history = makeHistory([10, 20, 30, 40, 50]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en', showPoints: false }));
