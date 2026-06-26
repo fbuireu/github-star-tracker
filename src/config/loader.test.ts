@@ -551,6 +551,26 @@ describe('loadConfig', () => {
     expect(config.chartMilestones).toBe(false);
   });
 
+  it('defaults chart-begin-at-zero to false', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartBeginAtZero).toBe(false);
+  });
+
+  it('parses chart-begin-at-zero input as true', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-begin-at-zero') return 'true';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartBeginAtZero).toBe(true);
+  });
+
   it('defaults track-stargazers to false', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 

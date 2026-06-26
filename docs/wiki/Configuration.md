@@ -429,6 +429,19 @@ Whether to draw milestone reference lines on the main star-history chart.
 
 ---
 
+### `chart-begin-at-zero`
+
+Where the chart Y-axis starts.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `false` |
+
+`false` (the default) zooms the Y-axis into the data range so day-to-day changes are visible; `true` anchors the Y-axis at zero for an absolute view of scale. Applies to all charts (SVG and email).
+
+---
+
 ## Filtering Options
 
 ### `include-archived`

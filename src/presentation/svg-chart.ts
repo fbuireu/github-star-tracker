@@ -166,6 +166,7 @@ interface RenderSvgParams {
   smoothing?: boolean;
   showPoints?: boolean;
   animate?: boolean;
+  beginAtZero?: boolean;
 }
 
 function renderSvg({
@@ -179,6 +180,7 @@ function renderSvg({
   smoothing = true,
   showPoints = true,
   animate = true,
+  beginAtZero = false,
 }: RenderSvgParams): string {
   const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
   const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
@@ -194,7 +196,7 @@ function renderSvg({
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
   const padding = Math.max(1, Math.ceil((maxData - minData) * 0.1));
-  const minValue = Math.max(0, minData - padding);
+  const minValue = beginAtZero ? 0 : Math.max(0, minData - padding);
   const maxValue = maxData + padding;
   const ySteps = niceAxisSteps({ min: minValue, max: maxValue, count: 5 });
 
@@ -413,6 +415,7 @@ interface GenerateSvgChartParams {
   showPoints?: boolean;
   animate?: boolean;
   milestones?: boolean;
+  beginAtZero?: boolean;
 }
 
 export function generateSvgChart({
@@ -427,6 +430,7 @@ export function generateSvgChart({
   showPoints,
   animate,
   milestones = true,
+  beginAtZero,
 }: GenerateSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -450,6 +454,7 @@ export function generateSvgChart({
     smoothing,
     showPoints,
     animate,
+    beginAtZero,
   });
 }
 
@@ -465,6 +470,7 @@ interface GeneratePerRepoSvgChartParams {
   smoothing?: boolean;
   showPoints?: boolean;
   animate?: boolean;
+  beginAtZero?: boolean;
 }
 
 export function generatePerRepoSvgChart({
@@ -479,6 +485,7 @@ export function generatePerRepoSvgChart({
   smoothing,
   showPoints,
   animate,
+  beginAtZero,
 }: GeneratePerRepoSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -505,6 +512,7 @@ export function generatePerRepoSvgChart({
     smoothing,
     showPoints,
     animate,
+    beginAtZero,
   });
 }
 
@@ -519,6 +527,7 @@ interface GenerateComparisonSvgChartParams {
   smoothing?: boolean;
   showPoints?: boolean;
   animate?: boolean;
+  beginAtZero?: boolean;
 }
 
 export function generateComparisonSvgChart({
@@ -532,6 +541,7 @@ export function generateComparisonSvgChart({
   smoothing,
   showPoints,
   animate,
+  beginAtZero,
 }: GenerateComparisonSvgChartParams): string | null {
   if (
     !history.snapshots ||
@@ -577,6 +587,7 @@ export function generateComparisonSvgChart({
     smoothing,
     showPoints,
     animate,
+    beginAtZero,
   });
 }
 
@@ -592,6 +603,7 @@ interface GenerateForecastSvgChartParams {
   smoothing?: boolean;
   showPoints?: boolean;
   animate?: boolean;
+  beginAtZero?: boolean;
 }
 
 export function generateForecastSvgChart({
@@ -606,6 +618,7 @@ export function generateForecastSvgChart({
   smoothing,
   showPoints,
   animate,
+  beginAtZero,
 }: GenerateForecastSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -656,5 +669,6 @@ export function generateForecastSvgChart({
     smoothing,
     showPoints,
     animate,
+    beginAtZero,
   });
 }

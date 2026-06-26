@@ -62,6 +62,7 @@ const defaultConfig: Config = {
   chartShowPoints: true,
   chartAnimation: true,
   chartMilestones: true,
+  chartBeginAtZero: false,
 };
 
 describe('filterRepos', () => {

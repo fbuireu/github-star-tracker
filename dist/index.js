@@ -35626,7 +35626,8 @@ var DEFAULTS2 = {
   chartSmoothing: true,
   chartShowPoints: true,
   chartAnimation: true,
-  chartMilestones: true
+  chartMilestones: true,
+  chartBeginAtZero: false
 };
 
 // src/i18n/ca.json
@@ -38182,7 +38183,8 @@ function loadConfigFile(configPath) {
     chartSmoothing: read("chart_smoothing"),
     chartShowPoints: read("chart_show_points"),
     chartAnimation: read("chart_animation"),
-    chartMilestones: read("chart_milestones")
+    chartMilestones: read("chart_milestones"),
+    chartBeginAtZero: read("chart_begin_at_zero")
   };
 }
 function loadConfig() {
@@ -38214,6 +38216,7 @@ function loadConfig() {
   const inputChartShowPoints = getInput("chart-show-points");
   const inputChartAnimation = getInput("chart-animation");
   const inputChartMilestones = getInput("chart-milestones");
+  const inputChartBeginAtZero = getInput("chart-begin-at-zero");
   const visibility = inputVisibility || fileConfig.visibility || DEFAULTS2.visibility;
   if (!(visibility in VISIBILITY_CONFIG)) {
     throw new Error(
@@ -38271,7 +38274,8 @@ function loadConfig() {
     chartSmoothing: parseBool(inputChartSmoothing) ?? fileConfig.chartSmoothing ?? DEFAULTS2.chartSmoothing,
     chartShowPoints: parseBool(inputChartShowPoints) ?? fileConfig.chartShowPoints ?? DEFAULTS2.chartShowPoints,
     chartAnimation: parseBool(inputChartAnimation) ?? fileConfig.chartAnimation ?? DEFAULTS2.chartAnimation,
-    chartMilestones: parseBool(inputChartMilestones) ?? fileConfig.chartMilestones ?? DEFAULTS2.chartMilestones
+    chartMilestones: parseBool(inputChartMilestones) ?? fileConfig.chartMilestones ?? DEFAULTS2.chartMilestones,
+    chartBeginAtZero: parseBool(inputChartBeginAtZero) ?? fileConfig.chartBeginAtZero ?? DEFAULTS2.chartBeginAtZero
   };
   info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`
@@ -39310,6 +39314,7 @@ function buildMilestoneAnnotations({
 function buildChartOptions({
   title,
   showLegend,
+  beginAtZero,
   annotation
 }) {
   return {
@@ -39340,7 +39345,7 @@ function buildChartOptions({
       y: {
         grid: { color: COLORS.cellBorder },
         ticks: { color: COLORS.neutral },
-        beginAtZero: false
+        beginAtZero
       }
     }
   };
@@ -39373,12 +39378,13 @@ function buildChartConfig({
   datasets,
   title,
   showLegend,
+  beginAtZero,
   annotation
 }) {
   return {
     type: "line",
     data: { labels, datasets },
-    options: buildChartOptions({ title, showLegend, annotation })
+    options: buildChartOptions({ title, showLegend, beginAtZero, annotation })
   };
 }
 function generateChartUrl({
@@ -39387,7 +39393,8 @@ function generateChartUrl({
   locale,
   smoothing = true,
   showPoints = true,
-  milestones = true
+  milestones = true,
+  beginAtZero = false
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -39405,6 +39412,7 @@ function generateChartUrl({
     datasets,
     title: chartTitle,
     showLegend: false,
+    beginAtZero,
     annotation
   });
   return buildChartUrl(config);
@@ -39415,7 +39423,8 @@ function generatePerRepoChartUrl({
   title,
   locale,
   smoothing = true,
-  showPoints = true
+  showPoints = true,
+  beginAtZero = false
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -39429,7 +39438,13 @@ function generatePerRepoChartUrl({
   });
   const chartTitle = title ?? `${repoFullName} Star History`;
   const datasets = [buildStarsDataset({ data, tension, showPoints })];
-  const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: false });
+  const config = buildChartConfig({
+    labels,
+    datasets,
+    title: chartTitle,
+    showLegend: false,
+    beginAtZero
+  });
   return buildChartUrl(config);
 }
 function generateComparisonChartUrl({
@@ -39438,7 +39453,8 @@ function generateComparisonChartUrl({
   title,
   locale,
   smoothing = true,
-  showPoints = true
+  showPoints = true,
+  beginAtZero = false
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
@@ -39468,7 +39484,13 @@ function generateComparisonChartUrl({
       pointHoverRadius: CHART_POINT.secondaryHoverRadius
     };
   });
-  const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: true });
+  const config = buildChartConfig({
+    labels,
+    datasets,
+    title: chartTitle,
+    showLegend: true,
+    beginAtZero
+  });
   return buildChartUrl(config);
 }
 function generateForecastChartUrl({
@@ -39477,7 +39499,8 @@ function generateForecastChartUrl({
   locale,
   title,
   smoothing = true,
-  showPoints = true
+  showPoints = true,
+  beginAtZero = false
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -39533,7 +39556,8 @@ function generateForecastChartUrl({
     labels: allLabels,
     datasets,
     title: chartTitle,
-    showLegend: true
+    showLegend: true,
+    beginAtZero
   });
   return buildChartUrl(config);
 }
@@ -39555,7 +39579,8 @@ function generateHtmlReport({
   topRepos: topReposCount = 10,
   smoothing = true,
   showPoints = true,
-  milestones = true
+  milestones = true,
+  beginAtZero = false
 }) {
   const { summary: summary2 } = results;
   const t = getTranslations(locale);
@@ -39590,7 +39615,8 @@ function generateHtmlReport({
     title: t.report.topRepositories,
     locale,
     smoothing,
-    showPoints
+    showPoints,
+    beginAtZero
   }) : null;
   const individualRepoChartsHtml = hasChartHistory ? topRepos.map((repoName) => {
     const chartUrl = generatePerRepoChartUrl({
@@ -39598,7 +39624,8 @@ function generateHtmlReport({
       repoFullName: repoName,
       locale,
       smoothing,
-      showPoints
+      showPoints,
+      beginAtZero
     });
     if (!chartUrl) return "";
     return `
@@ -39610,7 +39637,7 @@ function generateHtmlReport({
   const chartSection = hasChartHistory ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F4C8} ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, beginAtZero })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
         ${comparisonChartUrl ? `
         <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
         <img src="${comparisonChartUrl}" alt="${t.report.topRepositories}" style="max-width:100%;height:auto;border-radius:4px;">` : ""}
@@ -39649,7 +39676,7 @@ function generateHtmlReport({
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F52E} ${t.forecast.sectionTitle}</h2>
         ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t })}
         ${hasChartHistory ? `<div style="margin-top:16px;text-align:center;">
-          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, showPoints })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, showPoints, beginAtZero })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>` : ""}
         ${forecastData.repos.map(
     (repo) => `
@@ -40014,7 +40041,8 @@ function renderSvg({
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
   showPoints = true,
-  animate = true
+  animate = true,
+  beginAtZero = false
 }) {
   const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
   const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
@@ -40030,7 +40058,7 @@ function renderSvg({
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
   const padding = Math.max(1, Math.ceil((maxData - minData) * 0.1));
-  const minValue = Math.max(0, minData - padding);
+  const minValue = beginAtZero ? 0 : Math.max(0, minData - padding);
   const maxValue = maxData + padding;
   const ySteps = niceAxisSteps({ min: minValue, max: maxValue, count: 5 });
   const gridLines = ySteps.map((value) => {
@@ -40192,7 +40220,8 @@ function generateSvgChart({
   smoothing,
   showPoints,
   animate,
-  milestones = true
+  milestones = true,
+  beginAtZero
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -40213,7 +40242,8 @@ function generateSvgChart({
     yAxisSide,
     smoothing,
     showPoints,
-    animate
+    animate,
+    beginAtZero
   });
 }
 function generatePerRepoSvgChart({
@@ -40227,7 +40257,8 @@ function generatePerRepoSvgChart({
   yAxisSide,
   smoothing,
   showPoints,
-  animate
+  animate,
+  beginAtZero
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -40251,7 +40282,8 @@ function generatePerRepoSvgChart({
     yAxisSide,
     smoothing,
     showPoints,
-    animate
+    animate,
+    beginAtZero
   });
 }
 function generateComparisonSvgChart({
@@ -40264,7 +40296,8 @@ function generateComparisonSvgChart({
   yAxisSide,
   smoothing,
   showPoints,
-  animate
+  animate,
+  beginAtZero
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
@@ -40301,7 +40334,8 @@ function generateComparisonSvgChart({
     yAxisSide,
     smoothing,
     showPoints,
-    animate
+    animate,
+    beginAtZero
   });
 }
 function generateForecastSvgChart({
@@ -40315,7 +40349,8 @@ function generateForecastSvgChart({
   yAxisSide,
   smoothing,
   showPoints,
-  animate
+  animate,
+  beginAtZero
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -40363,7 +40398,8 @@ function generateForecastSvgChart({
     yAxisSide,
     smoothing,
     showPoints,
-    animate
+    animate,
+    beginAtZero
   });
 }
 
@@ -40457,7 +40493,8 @@ async function trackStars() {
           topRepos: config.topRepos,
           smoothing: config.chartSmoothing,
           showPoints: config.chartShowPoints,
-          milestones: config.chartMilestones
+          milestones: config.chartMilestones,
+          beginAtZero: config.chartBeginAtZero
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport(reportParams);
@@ -40488,6 +40525,7 @@ async function trackStars() {
             smoothing: config.chartSmoothing,
             showPoints: config.chartShowPoints,
             animate: config.chartAnimation,
+            beginAtZero: config.chartBeginAtZero,
             milestones: config.chartMilestones
           });
           if (svgChart) {
@@ -40514,7 +40552,8 @@ async function trackStars() {
               yAxisSide: config.chartYAxisSide,
               smoothing: config.chartSmoothing,
               showPoints: config.chartShowPoints,
-              animate: config.chartAnimation
+              animate: config.chartAnimation,
+              beginAtZero: config.chartBeginAtZero
             });
             if (repoChart) {
               const filename = `${repoName.replace("/", "-")}.svg`;
@@ -40532,7 +40571,8 @@ async function trackStars() {
               yAxisSide: config.chartYAxisSide,
               smoothing: config.chartSmoothing,
               showPoints: config.chartShowPoints,
-              animate: config.chartAnimation
+              animate: config.chartAnimation,
+              beginAtZero: config.chartBeginAtZero
             });
             if (comparisonChart) {
               writeChart({ dataDir, filename: "comparison.svg", svg: comparisonChart });
@@ -40549,7 +40589,8 @@ async function trackStars() {
               yAxisSide: config.chartYAxisSide,
               smoothing: config.chartSmoothing,
               showPoints: config.chartShowPoints,
-              animate: config.chartAnimation
+              animate: config.chartAnimation,
+              beginAtZero: config.chartBeginAtZero
             });
             if (forecastChart) {
               writeChart({ dataDir, filename: "forecast.svg", svg: forecastChart });

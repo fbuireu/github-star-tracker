@@ -28,6 +28,7 @@ export function generateHtmlReport({
   smoothing = true,
   showPoints = true,
   milestones = true,
+  beginAtZero = false,
 }: GenerateReportParams): string {
   const { summary } = results;
   const t = getTranslations(locale);
@@ -77,6 +78,7 @@ export function generateHtmlReport({
           locale,
           smoothing,
           showPoints,
+          beginAtZero,
         })
       : null;
 
@@ -89,6 +91,7 @@ export function generateHtmlReport({
             locale,
             smoothing,
             showPoints,
+            beginAtZero,
           });
           if (!chartUrl) return '';
           return `
@@ -105,7 +108,7 @@ export function generateHtmlReport({
     ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">📈 ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, beginAtZero })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
         ${
           comparisonChartUrl
             ? `
@@ -171,7 +174,7 @@ export function generateHtmlReport({
         ${
           hasChartHistory
             ? `<div style="margin-top:16px;text-align:center;">
-          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, showPoints })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, showPoints, beginAtZero })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`
             : ''
         }

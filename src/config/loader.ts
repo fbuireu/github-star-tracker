@@ -42,6 +42,7 @@ interface FileConfig {
   chartShowPoints?: boolean;
   chartAnimation?: boolean;
   chartMilestones?: boolean;
+  chartBeginAtZero?: boolean;
 }
 
 interface ParseConfigYamlParams {
@@ -109,6 +110,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     chartShowPoints: read('chart_show_points'),
     chartAnimation: read('chart_animation'),
     chartMilestones: read('chart_milestones'),
+    chartBeginAtZero: read('chart_begin_at_zero'),
   };
 }
 
@@ -142,6 +144,7 @@ export function loadConfig(): Config {
   const inputChartShowPoints = core.getInput('chart-show-points');
   const inputChartAnimation = core.getInput('chart-animation');
   const inputChartMilestones = core.getInput('chart-milestones');
+  const inputChartBeginAtZero = core.getInput('chart-begin-at-zero');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -240,6 +243,8 @@ export function loadConfig(): Config {
       parseBool(inputChartAnimation) ?? fileConfig.chartAnimation ?? DEFAULTS.chartAnimation,
     chartMilestones:
       parseBool(inputChartMilestones) ?? fileConfig.chartMilestones ?? DEFAULTS.chartMilestones,
+    chartBeginAtZero:
+      parseBool(inputChartBeginAtZero) ?? fileConfig.chartBeginAtZero ?? DEFAULTS.chartBeginAtZero,
   };
 
   core.info(

@@ -194,6 +194,15 @@ describe('generateSvgChart', () => {
     expect(result).toContain('stroke-dasharray="6,6"');
   });
 
+  it('floors the Y-axis at zero when beginAtZero is enabled', () => {
+    const history = makeHistory([80, 120, 150]);
+    const zoomed = expectSvg(generateSvgChart({ history, locale: 'en' }));
+    const fromZero = expectSvg(generateSvgChart({ history, locale: 'en', beginAtZero: true }));
+
+    expect(zoomed).not.toContain('>0</text>');
+    expect(fromZero).toContain('>0</text>');
+  });
+
   it('omits milestone lines when milestones are disabled', () => {
     const history = makeHistory([80, 120, 150]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en', milestones: false }));

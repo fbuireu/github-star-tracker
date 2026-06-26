@@ -231,6 +231,7 @@ The chart appearance is configurable via these inputs:
 | `chart-show-points` | `true` | `true` marks each data point with a dot; `false` hides them for a cleaner dense line. Applies to email charts too. |
 | `chart-animation` | `true` | `true` animates the SVG charts; `false` renders them static for email/static contexts. SVG-only. |
 | `chart-milestones` | `true` | `true` draws milestone reference lines on the main chart; `false` hides them. Applies to email charts too. |
+| `chart-begin-at-zero` | `false` | `false` zooms the Y-axis into the data range; `true` anchors it at zero. Applies to all charts. |
 
 ```yaml
 with:

@@ -130,6 +130,7 @@ chart_smoothing: true
 chart_show_points: true
 chart_animation: true
 chart_milestones: true
+chart_begin_at_zero: false
 ```
 
 ---

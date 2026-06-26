@@ -177,6 +177,7 @@ const defaultConfig = {
   chartShowPoints: true,
   chartAnimation: true,
   chartMilestones: true,
+  chartBeginAtZero: false,
 };
 
 const defaultSummary = {

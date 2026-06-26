@@ -17,6 +17,7 @@ export interface GenerateReportParams {
   smoothing?: boolean;
   showPoints?: boolean;
   milestones?: boolean;
+  beginAtZero?: boolean;
 }
 
 export interface ReportData {

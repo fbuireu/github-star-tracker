@@ -50,4 +50,5 @@ export const DEFAULTS: Config = {
   chartShowPoints: true,
   chartAnimation: true,
   chartMilestones: true,
+  chartBeginAtZero: false,
 } as const;

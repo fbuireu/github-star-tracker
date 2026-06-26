@@ -186,6 +186,11 @@ inputs:
     required: false
     default: 'true'
 
+  chart-begin-at-zero:
+    description: 'Start the chart Y-axis at zero (true) for absolute scale, or zoom into the data range (false) to emphasize recent changes. Applies to all charts. (default false)'
+    required: false
+    default: 'false'
+
 outputs:
   report:
     description: 'Markdown report of star changes'

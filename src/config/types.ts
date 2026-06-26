@@ -45,4 +45,5 @@ export interface Config {
   chartShowPoints: boolean;
   chartAnimation: boolean;
   chartMilestones: boolean;
+  chartBeginAtZero: boolean;
 }

@@ -134,12 +134,14 @@ export function buildMilestoneAnnotations({
 interface BuildChartOptionsParams {
   title: string;
   showLegend: boolean;
+  beginAtZero: boolean;
   annotation?: AnnotationPlugin | null;
 }
 
 function buildChartOptions({
   title,
   showLegend,
+  beginAtZero,
   annotation,
 }: BuildChartOptionsParams): ChartOptions {
   return {
@@ -170,7 +172,7 @@ function buildChartOptions({
       y: {
         grid: { color: COLORS.cellBorder },
         ticks: { color: COLORS.neutral },
-        beginAtZero: false,
+        beginAtZero,
       },
     },
   };
@@ -223,6 +225,7 @@ interface BuildChartConfigParams {
   datasets: Dataset[];
   title: string;
   showLegend: boolean;
+  beginAtZero: boolean;
   annotation?: AnnotationPlugin | null;
 }
 
@@ -231,12 +234,13 @@ function buildChartConfig({
   datasets,
   title,
   showLegend,
+  beginAtZero,
   annotation,
 }: BuildChartConfigParams): ChartConfig {
   return {
     type: 'line',
     data: { labels, datasets },
-    options: buildChartOptions({ title, showLegend, annotation }),
+    options: buildChartOptions({ title, showLegend, beginAtZero, annotation }),
   };
 }
 
@@ -247,6 +251,7 @@ interface GenerateChartUrlParams {
   smoothing?: boolean;
   showPoints?: boolean;
   milestones?: boolean;
+  beginAtZero?: boolean;
 }
 
 export function generateChartUrl({
@@ -256,6 +261,7 @@ export function generateChartUrl({
   smoothing = true,
   showPoints = true,
   milestones = true,
+  beginAtZero = false,
 }: GenerateChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -274,6 +280,7 @@ export function generateChartUrl({
     datasets,
     title: chartTitle,
     showLegend: false,
+    beginAtZero,
     annotation,
   });
 
@@ -287,6 +294,7 @@ interface GeneratePerRepoChartUrlParams {
   locale: Locale;
   smoothing?: boolean;
   showPoints?: boolean;
+  beginAtZero?: boolean;
 }
 
 export function generatePerRepoChartUrl({
@@ -296,6 +304,7 @@ export function generatePerRepoChartUrl({
   locale,
   smoothing = true,
   showPoints = true,
+  beginAtZero = false,
 }: GeneratePerRepoChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -312,7 +321,13 @@ export function generatePerRepoChartUrl({
   const chartTitle = title ?? `${repoFullName} Star History`;
   const datasets: Dataset[] = [buildStarsDataset({ data, tension, showPoints })];
 
-  const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: false });
+  const config = buildChartConfig({
+    labels,
+    datasets,
+    title: chartTitle,
+    showLegend: false,
+    beginAtZero,
+  });
 
   return buildChartUrl(config);
 }
@@ -324,6 +339,7 @@ interface GenerateComparisonChartUrlParams {
   locale: Locale;
   smoothing?: boolean;
   showPoints?: boolean;
+  beginAtZero?: boolean;
 }
 
 export function generateComparisonChartUrl({
@@ -333,6 +349,7 @@ export function generateComparisonChartUrl({
   locale,
   smoothing = true,
   showPoints = true,
+  beginAtZero = false,
 }: GenerateComparisonChartUrlParams): string | null {
   if (
     !history.snapshots ||
@@ -368,7 +385,13 @@ export function generateComparisonChartUrl({
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
     };
   });
-  const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: true });
+  const config = buildChartConfig({
+    labels,
+    datasets,
+    title: chartTitle,
+    showLegend: true,
+    beginAtZero,
+  });
 
   return buildChartUrl(config);
 }
@@ -380,6 +403,7 @@ interface GenerateForecastChartUrlParams {
   title?: string;
   smoothing?: boolean;
   showPoints?: boolean;
+  beginAtZero?: boolean;
 }
 
 export function generateForecastChartUrl({
@@ -389,6 +413,7 @@ export function generateForecastChartUrl({
   title,
   smoothing = true,
   showPoints = true,
+  beginAtZero = false,
 }: GenerateForecastChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -447,6 +472,7 @@ export function generateForecastChartUrl({
     datasets,
     title: chartTitle,
     showLegend: true,
+    beginAtZero,
   });
 
   return buildChartUrl(config);
