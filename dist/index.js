@@ -32987,10 +32987,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -35282,7 +35282,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35405,7 +35405,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -35589,6 +35589,12 @@ var ChartTheme = {
   LIGHT: "light",
   DARK: "dark"
 };
+var ChartRange = {
+  D30: "30d",
+  D90: "90d",
+  Y1: "1y",
+  ALL: "all"
+};
 
 // src/config/defaults.ts
 var LOCALE_MAP = {
@@ -35634,7 +35640,8 @@ var DEFAULTS2 = {
   chartMilestones: true,
   chartBeginAtZero: false,
   chartTheme: ChartTheme.AUTO,
-  chartCustomMilestones: []
+  chartCustomMilestones: [],
+  chartRange: ChartRange.ALL
 };
 
 // src/i18n/ca.json
@@ -38200,7 +38207,8 @@ function loadConfigFile(configPath) {
     chartMilestones: read("chart_milestones"),
     chartBeginAtZero: read("chart_begin_at_zero"),
     chartTheme: read("chart_theme"),
-    chartCustomMilestones: read("chart_custom_milestones")
+    chartCustomMilestones: read("chart_custom_milestones"),
+    chartRange: read("chart_range")
   };
 }
 function loadConfig() {
@@ -38235,6 +38243,7 @@ function loadConfig() {
   const inputChartBeginAtZero = getInput("chart-begin-at-zero");
   const inputChartTheme = getInput("chart-theme");
   const inputChartCustomMilestones = getInput("chart-custom-milestones");
+  const inputChartRange = getInput("chart-range");
   const visibility = inputVisibility || fileConfig.visibility || DEFAULTS2.visibility;
   if (!(visibility in VISIBILITY_CONFIG)) {
     throw new Error(
@@ -38279,6 +38288,14 @@ function loadConfig() {
       `Invalid chart-theme "${rawChartTheme}". Must be "auto", "light", or "dark". Falling back to "${DEFAULTS2.chartTheme}"`
     );
   }
+  const rawChartRange = inputChartRange || fileConfig.chartRange;
+  const isValidRange = (value) => value === ChartRange.D30 || value === ChartRange.D90 || value === ChartRange.Y1 || value === ChartRange.ALL;
+  const chartRange = isValidRange(rawChartRange) ? rawChartRange : DEFAULTS2.chartRange;
+  if (rawChartRange && !isValidRange(rawChartRange)) {
+    warning(
+      `Invalid chart-range "${rawChartRange}". Must be "30d", "90d", "1y", or "all". Falling back to "${DEFAULTS2.chartRange}"`
+    );
+  }
   const config = {
     visibility,
     includeArchived: parseBool(inputIncludeArchived) ?? fileConfig.includeArchived ?? DEFAULTS2.includeArchived,
@@ -38309,7 +38326,8 @@ function loadConfig() {
     chartMilestones: parseBool(inputChartMilestones) ?? fileConfig.chartMilestones ?? DEFAULTS2.chartMilestones,
     chartBeginAtZero: parseBool(inputChartBeginAtZero) ?? fileConfig.chartBeginAtZero ?? DEFAULTS2.chartBeginAtZero,
     chartTheme,
-    chartCustomMilestones: inputChartCustomMilestones ? parseNumberList(inputChartCustomMilestones) : fileCustomMilestones.length > 0 ? fileCustomMilestones : DEFAULTS2.chartCustomMilestones
+    chartCustomMilestones: inputChartCustomMilestones ? parseNumberList(inputChartCustomMilestones) : fileCustomMilestones.length > 0 ? fileCustomMilestones : DEFAULTS2.chartCustomMilestones,
+    chartRange
   };
   info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`
@@ -39267,6 +39285,23 @@ function generateCsvReport({ repos }) {
 function resolvePalette(theme = ChartTheme.AUTO) {
   return theme === ChartTheme.DARK ? DARK_PALETTE : LIGHT_PALETTE;
 }
+var MS_PER_DAY = 864e5;
+var CHART_RANGE_DAYS = {
+  [ChartRange.D30]: 30,
+  [ChartRange.D90]: 90,
+  [ChartRange.Y1]: 365,
+  [ChartRange.ALL]: Number.POSITIVE_INFINITY
+};
+function filterSnapshotsByRange({
+  snapshots,
+  range = ChartRange.ALL
+}) {
+  const days = CHART_RANGE_DAYS[range];
+  if (!Number.isFinite(days) || snapshots.length === 0) return snapshots;
+  const lastTimestamp = new Date(snapshots[snapshots.length - 1].timestamp).getTime();
+  const cutoff = lastTimestamp - days * MS_PER_DAY;
+  return snapshots.filter((snapshot) => new Date(snapshot.timestamp).getTime() >= cutoff);
+}
 function prepareReportData({
   results,
   previousTimestamp,
@@ -39410,8 +39445,10 @@ function buildChartUrl({ config, palette }) {
   const backgroundColor = encodeURIComponent(palette.white);
   return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&backgroundColor=${backgroundColor}&c=${encodedConfig}`;
 }
-function prepareChartData({ history, locale }) {
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+function prepareChartData({ history, locale, range }) {
+  const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
+    -CHART.maxDataPoints
+  );
   return {
     labels: snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale })),
     data: snapshots.map((snapshot) => snapshot.totalStars)
@@ -39441,7 +39478,8 @@ function generateChartUrl({
   milestones = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
-  customMilestones
+  customMilestones,
+  range = ChartRange.ALL
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -39450,7 +39488,7 @@ function generateChartUrl({
   const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.starHistory;
-  const { labels, data } = prepareChartData({ history, locale });
+  const { labels, data } = prepareChartData({ history, locale, range });
   const datasets = [buildStarsDataset({ data, tension, showPoints, palette })];
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
@@ -39475,14 +39513,17 @@ function generatePerRepoChartUrl({
   smoothing = true,
   showPoints = true,
   beginAtZero = false,
-  theme = ChartTheme.AUTO
+  theme = ChartTheme.AUTO,
+  range = ChartRange.ALL
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
   const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
+    -CHART.maxDataPoints
+  );
   const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
   const data = snapshots.map((snapshot) => {
     const repo = snapshot.repos.find((candidate) => candidate.fullName === repoFullName);
@@ -39508,7 +39549,8 @@ function generateComparisonChartUrl({
   smoothing = true,
   showPoints = true,
   beginAtZero = false,
-  theme = ChartTheme.AUTO
+  theme = ChartTheme.AUTO,
+  range = ChartRange.ALL
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
@@ -39517,7 +39559,9 @@ function generateComparisonChartUrl({
   const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.topRepositories;
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
+    -CHART.maxDataPoints
+  );
   const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split("/")[0]));
@@ -39557,7 +39601,8 @@ function generateForecastChartUrl({
   smoothing = true,
   showPoints = true,
   beginAtZero = false,
-  theme = ChartTheme.AUTO
+  theme = ChartTheme.AUTO,
+  range = ChartRange.ALL
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -39566,7 +39611,9 @@ function generateForecastChartUrl({
   const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.forecast.sectionTitle;
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
+    -CHART.maxDataPoints
+  );
   const historicalLabels = snapshots.map(
     (snapshot) => formatDate({ timestamp: snapshot.timestamp, locale })
   );
@@ -39641,7 +39688,8 @@ function generateHtmlReport({
   milestones = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
-  customMilestones
+  customMilestones,
+  range = ChartRange.ALL
 }) {
   const { summary: summary2 } = results;
   const t = getTranslations(locale);
@@ -39679,7 +39727,8 @@ function generateHtmlReport({
     smoothing,
     showPoints,
     beginAtZero,
-    theme
+    theme,
+    range
   }) : null;
   const individualRepoChartsHtml = hasChartHistory ? topRepos.map((repoName) => {
     const chartUrl = generatePerRepoChartUrl({
@@ -39689,7 +39738,8 @@ function generateHtmlReport({
       smoothing,
       showPoints,
       beginAtZero,
-      theme
+      theme,
+      range
     });
     if (!chartUrl) return "";
     return `
@@ -39701,7 +39751,8 @@ function generateHtmlReport({
   const chartSection = hasChartHistory ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F4C8} ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, beginAtZero, theme, customMilestones })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, beginAtZero, theme, customMilestones, range })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+
         ${comparisonChartUrl ? `
         <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
         <img src="${comparisonChartUrl}" alt="${t.report.topRepositories}" style="max-width:100%;height:auto;border-radius:4px;">` : ""}
@@ -39740,7 +39791,7 @@ function generateHtmlReport({
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F52E} ${t.forecast.sectionTitle}</h2>
         ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t, palette })}
         ${hasChartHistory ? `<div style="margin-top:16px;text-align:center;">
-          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, showPoints, beginAtZero, theme })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, showPoints, beginAtZero, theme, range })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>` : ""}
         ${forecastData.repos.map(
     (repo) => `
@@ -40296,12 +40347,16 @@ function generateSvgChart({
   milestones = true,
   beginAtZero,
   theme,
-  customMilestones
+  customMilestones,
+  range
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
-  const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
+  const snapshots = sliceForChart({
+    items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
+    maxPoints
+  });
   const labels = buildAxisLabels({
     timestamps: snapshots.map((snapshot) => snapshot.timestamp),
     locale
@@ -40336,12 +40391,16 @@ function generatePerRepoSvgChart({
   showPoints,
   animate,
   beginAtZero,
-  theme
+  theme,
+  range
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
-  const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
+  const snapshots = sliceForChart({
+    items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
+    maxPoints
+  });
   const labels = buildAxisLabels({
     timestamps: snapshots.map((snapshot) => snapshot.timestamp),
     locale
@@ -40377,13 +40436,17 @@ function generateComparisonSvgChart({
   showPoints,
   animate,
   beginAtZero,
-  theme
+  theme,
+  range
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
   }
   const t = getTranslations(locale);
-  const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
+  const snapshots = sliceForChart({
+    items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
+    maxPoints
+  });
   const labels = buildAxisLabels({
     timestamps: snapshots.map((snapshot) => snapshot.timestamp),
     locale
@@ -40432,13 +40495,17 @@ function generateForecastSvgChart({
   showPoints,
   animate,
   beginAtZero,
-  theme
+  theme,
+  range
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
   const t = getTranslations(locale);
-  const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
+  const snapshots = sliceForChart({
+    items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
+    maxPoints
+  });
   const historicalLabels = snapshots.map(
     (snapshot) => formatDate({ timestamp: snapshot.timestamp, locale })
   );
@@ -40579,7 +40646,8 @@ async function trackStars() {
           milestones: config.chartMilestones,
           beginAtZero: config.chartBeginAtZero,
           theme: config.chartTheme,
-          customMilestones: config.chartCustomMilestones
+          customMilestones: config.chartCustomMilestones,
+          range: config.chartRange
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport(reportParams);
@@ -40613,7 +40681,8 @@ async function trackStars() {
             beginAtZero: config.chartBeginAtZero,
             theme: config.chartTheme,
             milestones: config.chartMilestones,
-            customMilestones: config.chartCustomMilestones
+            customMilestones: config.chartCustomMilestones,
+            range: config.chartRange
           });
           if (svgChart) {
             writeChart({ dataDir, filename: "star-history.svg", svg: svgChart });
@@ -40641,7 +40710,8 @@ async function trackStars() {
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
               beginAtZero: config.chartBeginAtZero,
-              theme: config.chartTheme
+              theme: config.chartTheme,
+              range: config.chartRange
             });
             if (repoChart) {
               const filename = `${repoName.replace("/", "-")}.svg`;
@@ -40661,7 +40731,8 @@ async function trackStars() {
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
               beginAtZero: config.chartBeginAtZero,
-              theme: config.chartTheme
+              theme: config.chartTheme,
+              range: config.chartRange
             });
             if (comparisonChart) {
               writeChart({ dataDir, filename: "comparison.svg", svg: comparisonChart });
@@ -40680,7 +40751,8 @@ async function trackStars() {
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
               beginAtZero: config.chartBeginAtZero,
-              theme: config.chartTheme
+              theme: config.chartTheme,
+              range: config.chartRange
             });
             if (forecastChart) {
               writeChart({ dataDir, filename: "forecast.svg", svg: forecastChart });

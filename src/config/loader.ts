@@ -14,7 +14,7 @@ import {
   parseNumberList,
 } from './parsers';
 import type { Config, Visibility } from './types';
-import { ChartAxisSide, ChartTheme } from './types';
+import { ChartAxisSide, ChartRange, ChartTheme } from './types';
 
 interface FileConfig {
   visibility?: string;
@@ -46,6 +46,7 @@ interface FileConfig {
   chartBeginAtZero?: boolean;
   chartTheme?: string;
   chartCustomMilestones?: number[] | string;
+  chartRange?: string;
 }
 
 interface ParseConfigYamlParams {
@@ -116,6 +117,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     chartBeginAtZero: read('chart_begin_at_zero'),
     chartTheme: read('chart_theme'),
     chartCustomMilestones: read('chart_custom_milestones'),
+    chartRange: read('chart_range'),
   };
 }
 
@@ -152,6 +154,7 @@ export function loadConfig(): Config {
   const inputChartBeginAtZero = core.getInput('chart-begin-at-zero');
   const inputChartTheme = core.getInput('chart-theme');
   const inputChartCustomMilestones = core.getInput('chart-custom-milestones');
+  const inputChartRange = core.getInput('chart-range');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -218,6 +221,19 @@ export function loadConfig(): Config {
     );
   }
 
+  const rawChartRange = inputChartRange || fileConfig.chartRange;
+  const isValidRange = (value: string | undefined): value is ChartRange =>
+    value === ChartRange.D30 ||
+    value === ChartRange.D90 ||
+    value === ChartRange.Y1 ||
+    value === ChartRange.ALL;
+  const chartRange = isValidRange(rawChartRange) ? rawChartRange : DEFAULTS.chartRange;
+  if (rawChartRange && !isValidRange(rawChartRange)) {
+    core.warning(
+      `Invalid chart-range "${rawChartRange}". Must be "30d", "90d", "1y", or "all". Falling back to "${DEFAULTS.chartRange}"`,
+    );
+  }
+
   const config: Config = {
     visibility,
     includeArchived:
@@ -278,6 +294,7 @@ export function loadConfig(): Config {
       : fileCustomMilestones.length > 0
         ? fileCustomMilestones
         : DEFAULTS.chartCustomMilestones,
+    chartRange,
   };
 
   core.info(

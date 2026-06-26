@@ -484,6 +484,19 @@ with:
 
 ---
 
+### `chart-range`
+
+Time window of history to plot.
+
+| Property | Value |
+|---|---|
+| **Type** | `30d`, `90d`, `1y`, `all` |
+| **Default** | `all` |
+
+Keeps only the snapshots within the selected window before applying [`chart-max-points`](#chart-max-points). The window is measured back from the most recent data point (not wall-clock time), so it is deterministic across runs. `all` plots the full reconstructed history. Applies to all charts (SVG and email).
+
+---
+
 ## Filtering Options
 
 ### `include-archived`

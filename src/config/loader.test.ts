@@ -670,6 +670,39 @@ describe('loadConfig', () => {
     );
   });
 
+  it('defaults chart-range to all', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartRange).toBe('all');
+  });
+
+  it('parses chart-range input as 90d', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-range') return '90d';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartRange).toBe('90d');
+  });
+
+  it('warns and falls back to all for an invalid chart-range', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-range') return '7d';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartRange).toBe('all');
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid chart-range'));
+  });
+
   it('defaults track-stargazers to false', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 

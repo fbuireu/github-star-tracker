@@ -201,6 +201,11 @@ inputs:
     required: false
     default: ''
 
+  chart-range:
+    description: 'Time window of history to plot: 30d, 90d, 1y or all. Filters snapshots to the most recent window (relative to the latest data point) before applying chart-max-points. (default all)'
+    required: false
+    default: 'all'
+
 outputs:
   report:
     description: 'Markdown report of star changes'

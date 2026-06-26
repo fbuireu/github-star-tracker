@@ -234,6 +234,7 @@ The chart appearance is configurable via these inputs:
 | `chart-begin-at-zero` | `false` | `false` zooms the Y-axis into the data range; `true` anchors it at zero. Applies to all charts. |
 | `chart-theme` | `auto` | `auto` follows `prefers-color-scheme` in SVG charts; `light`/`dark` force the palette. Email falls back to light under `auto`. |
 | `chart-custom-milestones` | _(empty)_ | Comma-separated star counts (e.g. `250, 750, 2500`) that replace the built-in milestone thresholds. When empty, the defaults are used. Requires `chart-milestones`. Applies to email charts too. |
+| `chart-range` | `all` | Time window plotted (`30d`, `90d`, `1y`, `all`), measured back from the latest data point, before `chart-max-points`. |
 
 ```yaml
 with:

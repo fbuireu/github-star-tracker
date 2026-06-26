@@ -180,6 +180,7 @@ const defaultConfig = {
   chartBeginAtZero: false,
   chartTheme: 'auto' as const,
   chartCustomMilestones: [],
+  chartRange: 'all' as const,
 };
 
 const defaultSummary = {

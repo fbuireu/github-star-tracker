@@ -1,4 +1,4 @@
-import { ChartAxisSide, ChartTheme } from '@config/types';
+import { ChartAxisSide, type ChartRange, ChartTheme } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { buildAxisLabels, formatCount, formatDate } from '@domain/formatting';
 import type { History } from '@domain/types';
@@ -13,7 +13,7 @@ import {
   MIN_SNAPSHOTS_FOR_CHART,
   SVG_CHART,
 } from './constants';
-import { buildForecastChartSeries } from './shared';
+import { buildForecastChartSeries, filterSnapshotsByRange } from './shared';
 
 const XML_ESCAPE_MAP: Record<string, string> = {
   '&': '&amp;',
@@ -429,6 +429,7 @@ interface GenerateSvgChartParams {
   beginAtZero?: boolean;
   theme?: ChartTheme;
   customMilestones?: readonly number[];
+  range?: ChartRange;
 }
 
 export function generateSvgChart({
@@ -446,12 +447,16 @@ export function generateSvgChart({
   beginAtZero,
   theme,
   customMilestones,
+  range,
 }: GenerateSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
-  const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
+  const snapshots = sliceForChart({
+    items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
+    maxPoints,
+  });
   const labels = buildAxisLabels({
     timestamps: snapshots.map((snapshot) => snapshot.timestamp),
     locale,
@@ -490,6 +495,7 @@ interface GeneratePerRepoSvgChartParams {
   animate?: boolean;
   beginAtZero?: boolean;
   theme?: ChartTheme;
+  range?: ChartRange;
 }
 
 export function generatePerRepoSvgChart({
@@ -506,12 +512,16 @@ export function generatePerRepoSvgChart({
   animate,
   beginAtZero,
   theme,
+  range,
 }: GeneratePerRepoSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
-  const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
+  const snapshots = sliceForChart({
+    items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
+    maxPoints,
+  });
   const labels = buildAxisLabels({
     timestamps: snapshots.map((snapshot) => snapshot.timestamp),
     locale,
@@ -550,6 +560,7 @@ interface GenerateComparisonSvgChartParams {
   animate?: boolean;
   beginAtZero?: boolean;
   theme?: ChartTheme;
+  range?: ChartRange;
 }
 
 export function generateComparisonSvgChart({
@@ -565,6 +576,7 @@ export function generateComparisonSvgChart({
   animate,
   beginAtZero,
   theme,
+  range,
 }: GenerateComparisonSvgChartParams): string | null {
   if (
     !history.snapshots ||
@@ -575,7 +587,10 @@ export function generateComparisonSvgChart({
   }
 
   const t = getTranslations(locale);
-  const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
+  const snapshots = sliceForChart({
+    items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
+    maxPoints,
+  });
   const labels = buildAxisLabels({
     timestamps: snapshots.map((snapshot) => snapshot.timestamp),
     locale,
@@ -629,6 +644,7 @@ interface GenerateForecastSvgChartParams {
   animate?: boolean;
   beginAtZero?: boolean;
   theme?: ChartTheme;
+  range?: ChartRange;
 }
 
 export function generateForecastSvgChart({
@@ -645,13 +661,17 @@ export function generateForecastSvgChart({
   animate,
   beginAtZero,
   theme,
+  range,
 }: GenerateForecastSvgChartParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
   const t = getTranslations(locale);
-  const snapshots = sliceForChart({ items: history.snapshots, maxPoints });
+  const snapshots = sliceForChart({
+    items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
+    maxPoints,
+  });
   const historicalLabels = snapshots.map((snapshot) =>
     formatDate({ timestamp: snapshot.timestamp, locale }),
   );

@@ -1,4 +1,4 @@
-import { ChartTheme } from '@config/types';
+import { ChartRange, ChartTheme } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { formatDate } from '@domain/formatting';
 import type { History } from '@domain/types';
@@ -12,7 +12,7 @@ import {
   MILESTONE_THRESHOLDS,
   MIN_SNAPSHOTS_FOR_CHART,
 } from './constants';
-import { buildForecastChartSeries, resolvePalette } from './shared';
+import { buildForecastChartSeries, filterSnapshotsByRange, resolvePalette } from './shared';
 import type { ColorPalette } from './types';
 
 function tensionFor(smoothing: boolean): number {
@@ -224,13 +224,16 @@ function buildChartUrl({ config, palette }: BuildChartUrlParams): string {
 interface PrepareChartDataParams {
   history: History;
   locale: Locale;
+  range?: ChartRange;
 }
 
-function prepareChartData({ history, locale }: PrepareChartDataParams): {
+function prepareChartData({ history, locale, range }: PrepareChartDataParams): {
   labels: string[];
   data: number[];
 } {
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
+    -CHART.maxDataPoints,
+  );
 
   return {
     labels: snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale })),
@@ -274,6 +277,7 @@ interface GenerateChartUrlParams {
   beginAtZero?: boolean;
   theme?: ChartTheme;
   customMilestones?: readonly number[];
+  range?: ChartRange;
 }
 
 export function generateChartUrl({
@@ -286,6 +290,7 @@ export function generateChartUrl({
   beginAtZero = false,
   theme = ChartTheme.AUTO,
   customMilestones,
+  range = ChartRange.ALL,
 }: GenerateChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -295,7 +300,7 @@ export function generateChartUrl({
   const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.starHistory;
-  const { labels, data } = prepareChartData({ history, locale });
+  const { labels, data } = prepareChartData({ history, locale, range });
   const datasets: Dataset[] = [buildStarsDataset({ data, tension, showPoints, palette })];
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
@@ -326,6 +331,7 @@ interface GeneratePerRepoChartUrlParams {
   showPoints?: boolean;
   beginAtZero?: boolean;
   theme?: ChartTheme;
+  range?: ChartRange;
 }
 
 export function generatePerRepoChartUrl({
@@ -337,6 +343,7 @@ export function generatePerRepoChartUrl({
   showPoints = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
+  range = ChartRange.ALL,
 }: GeneratePerRepoChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -344,7 +351,9 @@ export function generatePerRepoChartUrl({
 
   const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
+    -CHART.maxDataPoints,
+  );
   const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
   const data = snapshots.map((snapshot) => {
     const repo = snapshot.repos.find((candidate) => candidate.fullName === repoFullName);
@@ -375,6 +384,7 @@ interface GenerateComparisonChartUrlParams {
   showPoints?: boolean;
   beginAtZero?: boolean;
   theme?: ChartTheme;
+  range?: ChartRange;
 }
 
 export function generateComparisonChartUrl({
@@ -386,6 +396,7 @@ export function generateComparisonChartUrl({
   showPoints = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
+  range = ChartRange.ALL,
 }: GenerateComparisonChartUrlParams): string | null {
   if (
     !history.snapshots ||
@@ -399,7 +410,9 @@ export function generateComparisonChartUrl({
   const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.topRepositories;
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
+    -CHART.maxDataPoints,
+  );
   const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split('/')[0]));
@@ -443,6 +456,7 @@ interface GenerateForecastChartUrlParams {
   showPoints?: boolean;
   beginAtZero?: boolean;
   theme?: ChartTheme;
+  range?: ChartRange;
 }
 
 export function generateForecastChartUrl({
@@ -454,6 +468,7 @@ export function generateForecastChartUrl({
   showPoints = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
+  range = ChartRange.ALL,
 }: GenerateForecastChartUrlParams): string | null {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -463,7 +478,9 @@ export function generateForecastChartUrl({
   const palette = resolvePalette(theme);
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.forecast.sectionTitle;
-  const snapshots = [...history.snapshots].slice(-CHART.maxDataPoints);
+  const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
+    -CHART.maxDataPoints,
+  );
   const historicalLabels = snapshots.map((snapshot) =>
     formatDate({ timestamp: snapshot.timestamp, locale }),
   );

@@ -34,6 +34,7 @@ Complete reference for all inputs, outputs, and data formats.
 | `chart-begin-at-zero` | `boolean` | `false` | Start the Y-axis at zero (`true`) or zoom into the data range (`false`) |
 | `chart-theme` | `string` | `auto` | Color theme: `auto` (follows `prefers-color-scheme`), `light` or `dark` |
 | `chart-custom-milestones` | `string` | _(empty)_ | Comma-separated star counts for the milestone reference lines, replacing the built-in defaults (e.g. `250, 750, 2500`). Requires `chart-milestones` |
+| `chart-range` | `string` | `all` | Time window plotted: `30d`, `90d`, `1y` or `all` |
 
 ### Stargazer Sampling
 
@@ -283,6 +284,7 @@ chart_animation: true         # boolean
 chart_milestones: true        # boolean
 chart_begin_at_zero: false    # boolean
 chart_theme: auto             # auto | light | dark
+chart_range: all              # 30d | 90d | 1y | all
 ```
 
 ---

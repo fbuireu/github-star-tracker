@@ -1,4 +1,4 @@
-import { ChartTheme } from '@config/types';
+import { ChartRange, ChartTheme } from '@config/types';
 import { deltaIndicator } from '@domain/formatting';
 import { getTranslations, interpolate } from '@i18n';
 import {
@@ -43,6 +43,7 @@ export function generateHtmlReport({
   beginAtZero = false,
   theme = ChartTheme.AUTO,
   customMilestones,
+  range = ChartRange.ALL,
 }: GenerateReportParams): string {
   const { summary } = results;
   const t = getTranslations(locale);
@@ -95,6 +96,7 @@ export function generateHtmlReport({
           showPoints,
           beginAtZero,
           theme,
+          range,
         })
       : null;
 
@@ -109,6 +111,7 @@ export function generateHtmlReport({
             showPoints,
             beginAtZero,
             theme,
+            range,
           });
           if (!chartUrl) return '';
           return `
@@ -125,7 +128,8 @@ export function generateHtmlReport({
     ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">📈 ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, beginAtZero, theme, customMilestones })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, beginAtZero, theme, customMilestones, range })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+
         ${
           comparisonChartUrl
             ? `
@@ -191,7 +195,7 @@ export function generateHtmlReport({
         ${
           hasChartHistory
             ? `<div style="margin-top:16px;text-align:center;">
-          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, showPoints, beginAtZero, theme })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, showPoints, beginAtZero, theme, range })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`
             : ''
         }
