@@ -545,4 +545,45 @@ describe('chart', () => {
       }
     });
   });
+
+  describe('showPoints', () => {
+    const pointRadiusOf = (url: string): number => {
+      const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+      return config.data.datasets[0].pointRadius;
+    };
+
+    it('draws point markers by default', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en' });
+
+      expect(url).not.toBeNull();
+      if (url) expect(pointRadiusOf(url)).toBeGreaterThan(0);
+    });
+
+    it('hides point markers when disabled', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en', showPoints: false });
+
+      expect(url).not.toBeNull();
+      if (url) expect(pointRadiusOf(url)).toBe(0);
+    });
+
+    it('hides markers on every comparison dataset when disabled', () => {
+      const url = generateComparisonChartUrl({
+        history: mockHistory,
+        repoNames: ['user/repo-a', 'user/repo-b'],
+        locale: 'en',
+        showPoints: false,
+      });
+
+      expect(url).not.toBeNull();
+      if (url) {
+        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+
+        expect(
+          config.data.datasets.every(
+            (dataset: { pointRadius: number }) => dataset.pointRadius === 0,
+          ),
+        ).toBe(true);
+      }
+    });
+  });
 });

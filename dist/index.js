@@ -32987,10 +32987,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -35282,7 +35282,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35405,7 +35405,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -35623,7 +35623,8 @@ var DEFAULTS2 = {
   chartLineWidth: 2.5,
   chartMaxPoints: 30,
   chartYAxisSide: ChartAxisSide.LEFT,
-  chartSmoothing: true
+  chartSmoothing: true,
+  chartShowPoints: true
 };
 
 // src/i18n/ca.json
@@ -38176,7 +38177,8 @@ function loadConfigFile(configPath) {
     chartLineWidth: read("chart_line_width"),
     chartMaxPoints: read("chart_max_points"),
     chartYAxisSide: read("chart_y_axis_side"),
-    chartSmoothing: read("chart_smoothing")
+    chartSmoothing: read("chart_smoothing"),
+    chartShowPoints: read("chart_show_points")
   };
 }
 function loadConfig() {
@@ -38205,6 +38207,7 @@ function loadConfig() {
   const inputChartMaxPoints = getInput("chart-max-points");
   const inputChartYAxisSide = getInput("chart-y-axis-side");
   const inputChartSmoothing = getInput("chart-smoothing");
+  const inputChartShowPoints = getInput("chart-show-points");
   const visibility = inputVisibility || fileConfig.visibility || DEFAULTS2.visibility;
   if (!(visibility in VISIBILITY_CONFIG)) {
     throw new Error(
@@ -38259,7 +38262,8 @@ function loadConfig() {
     chartLineWidth,
     chartMaxPoints: parseNumber(inputChartMaxPoints) ?? fileConfig.chartMaxPoints ?? DEFAULTS2.chartMaxPoints,
     chartYAxisSide,
-    chartSmoothing: parseBool(inputChartSmoothing) ?? fileConfig.chartSmoothing ?? DEFAULTS2.chartSmoothing
+    chartSmoothing: parseBool(inputChartSmoothing) ?? fileConfig.chartSmoothing ?? DEFAULTS2.chartSmoothing,
+    chartShowPoints: parseBool(inputChartShowPoints) ?? fileConfig.chartShowPoints ?? DEFAULTS2.chartShowPoints
   };
   info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`
@@ -38532,6 +38536,13 @@ var CHART = {
 var CHART_TENSION = {
   smooth: 0.4,
   straight: 0
+};
+var CHART_POINT = {
+  hidden: 0,
+  primaryRadius: 3,
+  secondaryRadius: 2,
+  primaryHoverRadius: 6,
+  secondaryHoverRadius: 5
 };
 var BADGE = {
   labelCharWidth: 6.5,
@@ -39326,7 +39337,7 @@ function buildChartOptions({
     }
   };
 }
-function buildStarsDataset({ data, tension }) {
+function buildStarsDataset({ data, tension, showPoints }) {
   return {
     label: "Stars",
     data,
@@ -39334,8 +39345,8 @@ function buildStarsDataset({ data, tension }) {
     backgroundColor: `${COLORS.accent}33`,
     fill: true,
     tension,
-    pointRadius: 3,
-    pointHoverRadius: 6
+    pointRadius: showPoints ? CHART_POINT.primaryRadius : CHART_POINT.hidden,
+    pointHoverRadius: CHART_POINT.primaryHoverRadius
   };
 }
 function buildChartUrl(config) {
@@ -39366,7 +39377,8 @@ function generateChartUrl({
   history,
   title,
   locale,
-  smoothing = true
+  smoothing = true,
+  showPoints = true
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -39375,7 +39387,7 @@ function generateChartUrl({
   const tension = tensionFor(smoothing);
   const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData({ history, locale });
-  const datasets = [buildStarsDataset({ data, tension })];
+  const datasets = [buildStarsDataset({ data, tension, showPoints })];
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
   const annotation = buildMilestoneAnnotations({ minStars, maxStars });
@@ -39393,7 +39405,8 @@ function generatePerRepoChartUrl({
   repoFullName,
   title,
   locale,
-  smoothing = true
+  smoothing = true,
+  showPoints = true
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -39406,7 +39419,7 @@ function generatePerRepoChartUrl({
     return repo?.stars ?? 0;
   });
   const chartTitle = title ?? `${repoFullName} Star History`;
-  const datasets = [buildStarsDataset({ data, tension })];
+  const datasets = [buildStarsDataset({ data, tension, showPoints })];
   const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: false });
   return buildChartUrl(config);
 }
@@ -39415,7 +39428,8 @@ function generateComparisonChartUrl({
   repoNames,
   title,
   locale,
-  smoothing = true
+  smoothing = true,
+  showPoints = true
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
@@ -39441,8 +39455,8 @@ function generateComparisonChartUrl({
       backgroundColor: `${color}33`,
       fill: false,
       tension,
-      pointRadius: 2,
-      pointHoverRadius: 5
+      pointRadius: showPoints ? CHART_POINT.secondaryRadius : CHART_POINT.hidden,
+      pointHoverRadius: CHART_POINT.secondaryHoverRadius
     };
   });
   const config = buildChartConfig({ labels, datasets, title: chartTitle, showLegend: true });
@@ -39453,7 +39467,8 @@ function generateForecastChartUrl({
   forecastData,
   locale,
   title,
-  smoothing = true
+  smoothing = true,
+  showPoints = true
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -39479,8 +39494,8 @@ function generateForecastChartUrl({
       backgroundColor: `${COLORS.accent}33`,
       fill: true,
       tension,
-      pointRadius: 3,
-      pointHoverRadius: 6
+      pointRadius: showPoints ? CHART_POINT.primaryRadius : CHART_POINT.hidden,
+      pointHoverRadius: CHART_POINT.primaryHoverRadius
     },
     {
       label: t.forecast.linearRegression,
@@ -39489,8 +39504,8 @@ function generateForecastChartUrl({
       backgroundColor: "transparent",
       fill: false,
       tension,
-      pointRadius: 2,
-      pointHoverRadius: 5,
+      pointRadius: showPoints ? CHART_POINT.secondaryRadius : CHART_POINT.hidden,
+      pointHoverRadius: CHART_POINT.secondaryHoverRadius,
       borderDash: [8, 4]
     },
     {
@@ -39500,8 +39515,8 @@ function generateForecastChartUrl({
       backgroundColor: "transparent",
       fill: false,
       tension,
-      pointRadius: 2,
-      pointHoverRadius: 5,
+      pointRadius: showPoints ? CHART_POINT.secondaryRadius : CHART_POINT.hidden,
+      pointHoverRadius: CHART_POINT.secondaryHoverRadius,
       borderDash: [4, 4]
     }
   ];
@@ -39529,7 +39544,8 @@ function generateHtmlReport({
   stargazerDiff = null,
   forecastData = null,
   topRepos: topReposCount = 10,
-  smoothing = true
+  smoothing = true,
+  showPoints = true
 }) {
   const { summary: summary2 } = results;
   const t = getTranslations(locale);
@@ -39563,14 +39579,16 @@ function generateHtmlReport({
     repoNames: topRepos,
     title: t.report.topRepositories,
     locale,
-    smoothing
+    smoothing,
+    showPoints
   }) : null;
   const individualRepoChartsHtml = hasChartHistory ? topRepos.map((repoName) => {
     const chartUrl = generatePerRepoChartUrl({
       history,
       repoFullName: repoName,
       locale,
-      smoothing
+      smoothing,
+      showPoints
     });
     if (!chartUrl) return "";
     return `
@@ -39582,7 +39600,7 @@ function generateHtmlReport({
   const chartSection = hasChartHistory ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F4C8} ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
         ${comparisonChartUrl ? `
         <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
         <img src="${comparisonChartUrl}" alt="${t.report.topRepositories}" style="max-width:100%;height:auto;border-radius:4px;">` : ""}
@@ -39621,7 +39639,7 @@ function generateHtmlReport({
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F52E} ${t.forecast.sectionTitle}</h2>
         ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t })}
         ${hasChartHistory ? `<div style="margin-top:16px;text-align:center;">
-          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, showPoints })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>` : ""}
         ${forecastData.repos.map(
     (repo) => `
@@ -39984,7 +40002,8 @@ function renderSvg({
   milestones = false,
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
-  smoothing = true
+  smoothing = true,
+  showPoints = true
 }) {
   const { margin, pointRadius, gridOpacity, fontSize, animation, font } = SVG_CHART;
   const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
@@ -40061,7 +40080,7 @@ function renderSvg({
       const dashAttr = dataset.dashed ? ' stroke-dasharray="8,4"' : "";
       const lineClass = dataset.dashed ? "" : ` class="data-line-${datasetIndex}"`;
       const pathEl = `<path d="${pathD}" fill="none" stroke="${dataset.color}" stroke-width="${lineWidth}"${dashAttr}${lineClass} />`;
-      const circles = dataset.dashed ? "" : segment.points.map(
+      const circles = dataset.dashed || !showPoints ? "" : segment.points.map(
         (point, pointIndex) => `<circle cx="${point.x}" cy="${point.y}" r="${pointRadius}" fill="${dataset.color}" class="data-point" style="animation-delay: ${((segment.startIndex + pointIndex) * animation.pointStagger + animation.pointDelay).toFixed(2)}s" />`
       ).join("\n    ");
       const animationStyle = dataset.dashed ? "" : `
@@ -40158,7 +40177,8 @@ function generateSvgChart({
   lineWidth,
   maxPoints,
   yAxisSide,
-  smoothing
+  smoothing,
+  showPoints
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -40177,7 +40197,8 @@ function generateSvgChart({
     milestones: true,
     lineWidth,
     yAxisSide,
-    smoothing
+    smoothing,
+    showPoints
   });
 }
 function generatePerRepoSvgChart({
@@ -40189,7 +40210,8 @@ function generatePerRepoSvgChart({
   lineWidth,
   maxPoints,
   yAxisSide,
-  smoothing
+  smoothing,
+  showPoints
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -40211,7 +40233,8 @@ function generatePerRepoSvgChart({
     milestones: false,
     lineWidth,
     yAxisSide,
-    smoothing
+    smoothing,
+    showPoints
   });
 }
 function generateComparisonSvgChart({
@@ -40222,7 +40245,8 @@ function generateComparisonSvgChart({
   lineWidth,
   maxPoints,
   yAxisSide,
-  smoothing
+  smoothing,
+  showPoints
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
@@ -40257,7 +40281,8 @@ function generateComparisonSvgChart({
     milestones: false,
     lineWidth,
     yAxisSide,
-    smoothing
+    smoothing,
+    showPoints
   });
 }
 function generateForecastSvgChart({
@@ -40269,7 +40294,8 @@ function generateForecastSvgChart({
   lineWidth,
   maxPoints,
   yAxisSide,
-  smoothing
+  smoothing,
+  showPoints
 }) {
   if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
@@ -40315,7 +40341,8 @@ function generateForecastSvgChart({
     milestones: false,
     lineWidth,
     yAxisSide,
-    smoothing
+    smoothing,
+    showPoints
   });
 }
 
@@ -40407,7 +40434,8 @@ async function trackStars() {
           stargazerDiff,
           forecastData,
           topRepos: config.topRepos,
-          smoothing: config.chartSmoothing
+          smoothing: config.chartSmoothing,
+          showPoints: config.chartShowPoints
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport(reportParams);
@@ -40435,7 +40463,8 @@ async function trackStars() {
             lineWidth: config.chartLineWidth,
             maxPoints: config.chartMaxPoints,
             yAxisSide: config.chartYAxisSide,
-            smoothing: config.chartSmoothing
+            smoothing: config.chartSmoothing,
+            showPoints: config.chartShowPoints
           });
           if (svgChart) {
             writeChart({ dataDir, filename: "star-history.svg", svg: svgChart });
@@ -40459,7 +40488,8 @@ async function trackStars() {
               lineWidth: config.chartLineWidth,
               maxPoints: config.chartMaxPoints,
               yAxisSide: config.chartYAxisSide,
-              smoothing: config.chartSmoothing
+              smoothing: config.chartSmoothing,
+              showPoints: config.chartShowPoints
             });
             if (repoChart) {
               const filename = `${repoName.replace("/", "-")}.svg`;
@@ -40475,7 +40505,8 @@ async function trackStars() {
               lineWidth: config.chartLineWidth,
               maxPoints: config.chartMaxPoints,
               yAxisSide: config.chartYAxisSide,
-              smoothing: config.chartSmoothing
+              smoothing: config.chartSmoothing,
+              showPoints: config.chartShowPoints
             });
             if (comparisonChart) {
               writeChart({ dataDir, filename: "comparison.svg", svg: comparisonChart });
@@ -40490,7 +40521,8 @@ async function trackStars() {
               lineWidth: config.chartLineWidth,
               maxPoints: config.chartMaxPoints,
               yAxisSide: config.chartYAxisSide,
-              smoothing: config.chartSmoothing
+              smoothing: config.chartSmoothing,
+              showPoints: config.chartShowPoints
             });
             if (forecastChart) {
               writeChart({ dataDir, filename: "forecast.svg", svg: forecastChart });

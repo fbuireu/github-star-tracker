@@ -42,4 +42,5 @@ export interface Config {
   chartMaxPoints: number;
   chartYAxisSide: ChartAxisSide;
   chartSmoothing: boolean;
+  chartShowPoints: boolean;
 }

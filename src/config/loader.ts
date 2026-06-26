@@ -39,6 +39,7 @@ interface FileConfig {
   chartMaxPoints?: number;
   chartYAxisSide?: string;
   chartSmoothing?: boolean;
+  chartShowPoints?: boolean;
 }
 
 interface ParseConfigYamlParams {
@@ -103,6 +104,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     chartMaxPoints: read('chart_max_points'),
     chartYAxisSide: read('chart_y_axis_side'),
     chartSmoothing: read('chart_smoothing'),
+    chartShowPoints: read('chart_show_points'),
   };
 }
 
@@ -133,6 +135,7 @@ export function loadConfig(): Config {
   const inputChartMaxPoints = core.getInput('chart-max-points');
   const inputChartYAxisSide = core.getInput('chart-y-axis-side');
   const inputChartSmoothing = core.getInput('chart-smoothing');
+  const inputChartShowPoints = core.getInput('chart-show-points');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -225,6 +228,8 @@ export function loadConfig(): Config {
     chartYAxisSide,
     chartSmoothing:
       parseBool(inputChartSmoothing) ?? fileConfig.chartSmoothing ?? DEFAULTS.chartSmoothing,
+    chartShowPoints:
+      parseBool(inputChartShowPoints) ?? fileConfig.chartShowPoints ?? DEFAULTS.chartShowPoints,
   };
 
   core.info(

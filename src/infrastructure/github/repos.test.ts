@@ -59,6 +59,7 @@ const defaultConfig: Config = {
   chartMaxPoints: 30,
   chartYAxisSide: 'left',
   chartSmoothing: true,
+  chartShowPoints: true,
 };
 
 describe('filterRepos', () => {

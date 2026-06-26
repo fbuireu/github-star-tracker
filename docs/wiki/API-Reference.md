@@ -28,6 +28,7 @@ Complete reference for all inputs, outputs, and data formats.
 | `chart-max-points` | `number` | `30` | Max recent data points to plot; `0` plots the full history from the beginning |
 | `chart-y-axis-side` | `string` | `left` | Y-axis label side: `left` or `right` |
 | `chart-smoothing` | `boolean` | `true` | Smooth curve (`true`) or straight segments between points to reveal small spikes (`false`) |
+| `chart-show-points` | `boolean` | `true` | Draw a marker on each data point (`true`) or hide them for a cleaner dense line (`false`) |
 
 ### Stargazer Sampling
 
@@ -272,6 +273,7 @@ chart_line_width: 2.5         # number
 chart_max_points: 30          # number (0 = full history)
 chart_y_axis_side: left       # left | right
 chart_smoothing: true         # boolean
+chart_show_points: true       # boolean
 ```
 
 ---
