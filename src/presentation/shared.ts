@@ -25,6 +25,7 @@ export interface GenerateReportParams {
   customMilestones?: readonly number[];
   range?: ChartRange;
   trendLine?: boolean;
+  velocityMetrics?: boolean;
 }
 
 export function resolvePalette(theme: ChartTheme = ChartTheme.AUTO): ColorPalette {

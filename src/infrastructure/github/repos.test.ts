@@ -67,6 +67,7 @@ const defaultConfig: Config = {
   chartCustomMilestones: [],
   chartRange: 'all',
   chartTrendLine: false,
+  velocityMetrics: false,
 };
 
 describe('filterRepos', () => {

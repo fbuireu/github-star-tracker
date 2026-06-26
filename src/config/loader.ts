@@ -48,6 +48,7 @@ interface FileConfig {
   chartCustomMilestones?: number[] | string;
   chartRange?: string;
   chartTrendLine?: boolean;
+  velocityMetrics?: boolean;
 }
 
 interface ParseConfigYamlParams {
@@ -120,6 +121,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     chartCustomMilestones: read('chart_custom_milestones'),
     chartRange: read('chart_range'),
     chartTrendLine: read('chart_trend_line'),
+    velocityMetrics: read('velocity_metrics'),
   };
 }
 
@@ -158,6 +160,7 @@ export function loadConfig(): Config {
   const inputChartCustomMilestones = core.getInput('chart-custom-milestones');
   const inputChartRange = core.getInput('chart-range');
   const inputChartTrendLine = core.getInput('chart-trend-line');
+  const inputVelocityMetrics = core.getInput('velocity-metrics');
 
   const visibility = (inputVisibility ||
     fileConfig.visibility ||
@@ -300,6 +303,8 @@ export function loadConfig(): Config {
     chartRange,
     chartTrendLine:
       parseBool(inputChartTrendLine) ?? fileConfig.chartTrendLine ?? DEFAULTS.chartTrendLine,
+    velocityMetrics:
+      parseBool(inputVelocityMetrics) ?? fileConfig.velocityMetrics ?? DEFAULTS.velocityMetrics,
   };
 
   core.info(

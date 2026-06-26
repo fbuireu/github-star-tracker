@@ -67,4 +67,5 @@ export interface Config {
   chartCustomMilestones: number[];
   chartRange: ChartRange;
   chartTrendLine: boolean;
+  velocityMetrics: boolean;
 }

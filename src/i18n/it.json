@@ -39,6 +39,12 @@
     "down": "in diminuzione",
     "stable": "stabile"
   },
+  "velocity": {
+    "sectionTitle": "Velocità di crescita",
+    "starsPerDay": "Stelle al giorno",
+    "growth": "Crescita",
+    "projection": "~{days} giorni a {milestone} ★"
+  },
   "footer": {
     "generated": "Generato da {project} il {date}",
     "madeBy": "Realizzato con 🤘 da {author}"

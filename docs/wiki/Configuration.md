@@ -510,6 +510,19 @@ When `true`, a dashed line is drawn over the main chart showing a 7-point simple
 
 ---
 
+### `velocity-metrics`
+
+Whether to add a growth-velocity section to the Markdown and HTML reports.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `false` |
+
+When `true`, the report includes a "Growth Velocity" section computed from the tracked history: the average stars gained per day, the percent growth over the tracked window, and a projection of how many days remain until the next star milestone at the current pace. Needs at least two snapshots spanning some time.
+
+---
+
 ## Filtering Options
 
 ### `include-archived`

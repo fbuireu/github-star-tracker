@@ -53,6 +53,55 @@ function renderHtml(overrides: Partial<GenerateReportParams> = {}): string {
 }
 
 describe('generateHtmlReport', () => {
+  const velocityHistory = {
+    snapshots: [
+      { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 100, repos: [] },
+      { timestamp: '2025-01-11T00:00:00.000Z', totalStars: 200, repos: [] },
+    ],
+  };
+
+  it('renders the velocity section when velocity-metrics is enabled', () => {
+    const html = renderHtml({ history: velocityHistory, velocityMetrics: true });
+
+    expect(html).toContain('Growth Velocity');
+    expect(html).toContain('Stars per day');
+  });
+
+  it('omits the velocity section by default', () => {
+    const html = renderHtml({ history: velocityHistory });
+
+    expect(html).not.toContain('Growth Velocity');
+  });
+
+  it('renders velocity with only the daily rate when growth and projection are unavailable', () => {
+    const flatHistory = {
+      snapshots: [
+        { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 0, repos: [] },
+        { timestamp: '2025-01-11T00:00:00.000Z', totalStars: 0, repos: [] },
+      ],
+    };
+
+    const html = renderHtml({ history: flatHistory, velocityMetrics: true });
+
+    expect(html).toContain('Growth Velocity');
+    expect(html).toContain('Stars per day');
+    expect(html).not.toContain('Growth:</strong>');
+  });
+
+  it('shows negative growth without a plus sign', () => {
+    const decliningHistory = {
+      snapshots: [
+        { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 200, repos: [] },
+        { timestamp: '2025-01-11T00:00:00.000Z', totalStars: 150, repos: [] },
+      ],
+    };
+
+    const html = renderHtml({ history: decliningHistory, velocityMetrics: true });
+
+    expect(html).toContain('-25%');
+    expect(html).not.toContain('+-25%');
+  });
+
   it('generates valid HTML structure', () => {
     const html = renderHtml();
 
