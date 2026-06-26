@@ -593,6 +593,30 @@ describe('loadConfig', () => {
     expect(config.chartCustomMilestones).toEqual([42]);
   });
 
+  it('reads chart-custom-milestones from the config file as a quoted string', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('chart_custom_milestones: "300, 100, 300"');
+
+    const config = loadConfig();
+
+    expect(config.chartCustomMilestones).toEqual([100, 300]);
+  });
+
+  it('warns and falls back when chart-custom-milestones input has no valid numbers', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-custom-milestones') return 'abc, -5, 0';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartCustomMilestones).toEqual([]);
+    expect(core.warning).toHaveBeenCalledWith(
+      expect.stringContaining('Invalid chart-custom-milestones'),
+    );
+  });
+
   it('defaults track-stargazers to false', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
 
