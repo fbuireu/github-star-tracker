@@ -1,5 +1,5 @@
 import type { Config, Locale } from './types';
-import { ChartAxisSide, ChartTheme, Visibility } from './types';
+import { ChartAxisSide, ChartRange, ChartTheme, Visibility } from './types';
 
 export const LOCALE_MAP = {
   en: 'en-US',
@@ -53,4 +53,5 @@ export const DEFAULTS: Config = {
   chartBeginAtZero: false,
   chartTheme: ChartTheme.AUTO,
   chartCustomMilestones: [],
+  chartRange: ChartRange.ALL,
 } as const;

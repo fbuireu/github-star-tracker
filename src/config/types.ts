@@ -25,6 +25,15 @@ export const ChartTheme = {
 
 export type ChartTheme = (typeof ChartTheme)[keyof typeof ChartTheme];
 
+export const ChartRange = {
+  D30: '30d',
+  D90: '90d',
+  Y1: '1y',
+  ALL: 'all',
+} as const;
+
+export type ChartRange = (typeof ChartRange)[keyof typeof ChartRange];
+
 export interface Config {
   visibility: Visibility;
   includeArchived: boolean;
@@ -56,4 +65,5 @@ export interface Config {
   chartBeginAtZero: boolean;
   chartTheme: ChartTheme;
   chartCustomMilestones: number[];
+  chartRange: ChartRange;
 }

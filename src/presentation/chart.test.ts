@@ -622,6 +622,37 @@ describe('chart', () => {
     });
   });
 
+  describe('range', () => {
+    const weeklyHistory: History = {
+      snapshots: Array.from({ length: 40 }, (_, index) => ({
+        timestamp: new Date(2025, 0, 1 + index * 7).toISOString(),
+        totalStars: 100 + index * 10,
+        repos: [],
+      })),
+    };
+    const dataLength = (url: string): number =>
+      JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]).data.datasets[0].data.length;
+
+    it('plots the full history by default', () => {
+      const url = generateChartUrl({ history: weeklyHistory, locale: 'en' });
+
+      expect(url).not.toBeNull();
+      if (url) expect(dataLength(url)).toBe(30);
+    });
+
+    it('limits the plotted history to the selected time window', () => {
+      const all = generateChartUrl({ history: weeklyHistory, locale: 'en' });
+      const recent = generateChartUrl({ history: weeklyHistory, locale: 'en', range: '90d' });
+
+      expect(all).not.toBeNull();
+      expect(recent).not.toBeNull();
+      if (all && recent) {
+        expect(dataLength(recent)).toBeLessThan(dataLength(all));
+        expect(dataLength(recent)).toBeLessThanOrEqual(14);
+      }
+    });
+  });
+
   describe('theme', () => {
     it('uses a light background by default', () => {
       const url = generateChartUrl({ history: mockHistory, locale: 'en' });

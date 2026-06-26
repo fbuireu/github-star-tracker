@@ -1,4 +1,4 @@
-import { ChartTheme } from '@config/types';
+import { ChartRange, ChartTheme } from '@config/types';
 import { FORECAST_WEEKS, type ForecastData, ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
 import type { ComparisonResults, History, RepoResult } from '@domain/types';
@@ -23,10 +23,38 @@ export interface GenerateReportParams {
   beginAtZero?: boolean;
   theme?: ChartTheme;
   customMilestones?: readonly number[];
+  range?: ChartRange;
 }
 
 export function resolvePalette(theme: ChartTheme = ChartTheme.AUTO): ColorPalette {
   return theme === ChartTheme.DARK ? DARK_PALETTE : LIGHT_PALETTE;
+}
+
+const MS_PER_DAY = 86_400_000;
+
+const CHART_RANGE_DAYS: Record<ChartRange, number> = {
+  [ChartRange.D30]: 30,
+  [ChartRange.D90]: 90,
+  [ChartRange.Y1]: 365,
+  [ChartRange.ALL]: Number.POSITIVE_INFINITY,
+};
+
+interface FilterSnapshotsByRangeParams<T> {
+  snapshots: T[];
+  range?: ChartRange;
+}
+
+export function filterSnapshotsByRange<T extends { timestamp: string }>({
+  snapshots,
+  range = ChartRange.ALL,
+}: FilterSnapshotsByRangeParams<T>): T[] {
+  const days = CHART_RANGE_DAYS[range];
+  if (!Number.isFinite(days) || snapshots.length === 0) return snapshots;
+
+  const lastTimestamp = new Date(snapshots[snapshots.length - 1].timestamp).getTime();
+  const cutoff = lastTimestamp - days * MS_PER_DAY;
+
+  return snapshots.filter((snapshot) => new Date(snapshot.timestamp).getTime() >= cutoff);
 }
 
 export interface ReportData {
