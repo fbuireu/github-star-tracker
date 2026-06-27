@@ -60,9 +60,16 @@ function scaleY({ value, minValue, maxValue, chartTop, chartHeight }: ScaleYPara
 interface GenerateSmoothPathParams {
   points: Point[];
   smooth?: boolean;
+  clampMinY?: number;
+  clampMaxY?: number;
 }
 
-function generateSmoothPath({ points, smooth = true }: GenerateSmoothPathParams): string {
+function generateSmoothPath({
+  points,
+  smooth = true,
+  clampMinY = Number.NEGATIVE_INFINITY,
+  clampMaxY = Number.POSITIVE_INFINITY,
+}: GenerateSmoothPathParams): string {
   if (points.length === 0) return '';
   if (points.length === 1) return `M${points[0].x},${points[0].y}`;
 
@@ -87,19 +94,17 @@ function generateSmoothPath({ points, smooth = true }: GenerateSmoothPathParams)
     const cp1x = startPoint.x + ((endPoint.x - previousPoint.x) * tension) / BEZIER_CONTROL_DIVISOR;
     const cp2x = endPoint.x - ((nextPoint.x - startPoint.x) * tension) / BEZIER_CONTROL_DIVISOR;
 
-    const segMinY = Math.min(startPoint.y, endPoint.y);
-    const segMaxY = Math.max(startPoint.y, endPoint.y);
     const cp1y = Math.min(
-      segMaxY,
+      clampMaxY,
       Math.max(
-        segMinY,
+        clampMinY,
         startPoint.y + ((endPoint.y - previousPoint.y) * tension) / BEZIER_CONTROL_DIVISOR,
       ),
     );
     const cp2y = Math.min(
-      segMaxY,
+      clampMaxY,
       Math.max(
-        segMinY,
+        clampMinY,
         endPoint.y - ((nextPoint.y - startPoint.y) * tension) / BEZIER_CONTROL_DIVISOR,
       ),
     );
@@ -308,7 +313,12 @@ function renderSvg({
         const startsFromBaseline =
           dataset.fill !== false && !dataset.dashed && segment.startIndex === 0;
         const firstPoint = segment.points[0];
-        const smoothPath = generateSmoothPath({ points: segment.points, smooth: smoothing });
+        const smoothPath = generateSmoothPath({
+          points: segment.points,
+          smooth: smoothing,
+          clampMinY: margin.top,
+          clampMaxY: bottomY,
+        });
         const pathD = startsFromBaseline
           ? `M${firstPoint.x},${bottomY} L${firstPoint.x},${firstPoint.y}${smoothPath.slice(`M${firstPoint.x},${firstPoint.y}`.length)}`
           : smoothPath;

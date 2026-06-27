@@ -462,6 +462,22 @@ describe('generateSvgChart', () => {
     expect(linePath).toContain(' L');
     expect(linePath).not.toContain(' C');
   });
+
+  it('rounds the curve past the data point at an asymmetric valley when smoothing', () => {
+    const history = makeHistory([100, 5, 200]);
+    const curveYs = (svg: string): number[] => {
+      const d = svg.match(/<path d="([^"]+)" fill="none"/)?.[1] ?? '';
+      const body = d.replace(/^M[\d.]+,[\d.]+ L[\d.]+,[\d.]+/, '');
+      return [...body.matchAll(/,(\d+(?:\.\d+)?)/g)].map((coordinate) => Number(coordinate[1]));
+    };
+    const smooth = curveYs(expectSvg(generateSvgChart({ history, locale: 'en', smoothing: true })));
+    const straight = curveYs(
+      expectSvg(generateSvgChart({ history, locale: 'en', smoothing: false })),
+    );
+
+    expect(Math.max(...smooth)).toBeGreaterThan(Math.max(...straight));
+    expect(Math.max(...smooth)).toBeLessThanOrEqual(350);
+  });
 });
 
 describe('generatePerRepoSvgChart', () => {
