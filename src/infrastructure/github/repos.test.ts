@@ -1,5 +1,5 @@
 import type { Config } from '@config/types';
-import { Visibility } from '@config/types';
+import { ChartCurve, Visibility } from '@config/types';
 import { describe, expect, it, vi } from 'vitest';
 import { fetchRepos } from './client';
 import { filterRepos, getRepos, mapRepos } from './filters';
@@ -59,6 +59,7 @@ const defaultConfig: Config = {
   chartMaxPoints: 30,
   chartYAxisSide: 'left',
   chartSmoothing: true,
+  chartCurve: ChartCurve.MONOTONE,
   chartShowPoints: true,
   chartAnimation: true,
   chartMilestones: true,

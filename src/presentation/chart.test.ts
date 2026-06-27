@@ -1,3 +1,4 @@
+import { ChartCurve } from '@config/types';
 import { ForecastMethod } from '@domain/forecast';
 import type { History } from '@domain/types';
 import { describe, expect, it } from 'vitest';
@@ -619,6 +620,59 @@ describe('chart', () => {
         expect(
           config.data.datasets.every((dataset: { tension: number }) => dataset.tension === 0),
         ).toBe(true);
+      }
+    });
+  });
+
+  describe('curve', () => {
+    const firstDataset = (url: string): { tension: number; cubicInterpolationMode?: string } => {
+      const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+      return config.data.datasets[0];
+    };
+
+    it('renders the monotone curve as a monotone cubic interpolation by default', () => {
+      const url = generateChartUrl({ history: mockHistory, locale: 'en' });
+
+      expect(url).not.toBeNull();
+      if (url) expect(firstDataset(url).cubicInterpolationMode).toBe(ChartCurve.MONOTONE);
+    });
+
+    it('renders catmull-rom as a tensioned spline without monotone interpolation', () => {
+      const url = generateChartUrl({
+        history: mockHistory,
+        locale: 'en',
+        curve: ChartCurve.CATMULL_ROM,
+      });
+
+      expect(url).not.toBeNull();
+      if (url) {
+        expect(firstDataset(url).tension).toBe(CHART_TENSION.smooth);
+        expect(firstDataset(url).cubicInterpolationMode).toBeUndefined();
+      }
+    });
+
+    it('falls back to monotone interpolation for the rounded-step curve', () => {
+      const url = generateChartUrl({
+        history: mockHistory,
+        locale: 'en',
+        curve: ChartCurve.ROUNDED_STEP,
+      });
+
+      expect(url).not.toBeNull();
+      if (url) expect(firstDataset(url).cubicInterpolationMode).toBe(ChartCurve.MONOTONE);
+    });
+
+    it('renders cubic-bezier as a tensioned spline without monotone interpolation', () => {
+      const url = generateChartUrl({
+        history: mockHistory,
+        locale: 'en',
+        curve: ChartCurve.CUBIC_BEZIER,
+      });
+
+      expect(url).not.toBeNull();
+      if (url) {
+        expect(firstDataset(url).tension).toBe(CHART_TENSION.smooth);
+        expect(firstDataset(url).cubicInterpolationMode).toBeUndefined();
       }
     });
   });

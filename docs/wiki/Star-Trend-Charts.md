@@ -77,6 +77,10 @@ GitHub Star Tracker uses two complementary chart systems:
 - **SVG charts** use CSS animations (`@keyframes`) that render beautifully in GitHub Markdown but are not supported by email clients
 - **QuickChart URLs** generate static PNG images via [QuickChart.io](https://quickchart.io) that work in all email clients
 
+### Curve fidelity
+
+The SVG charts implement every [`chart-curve`](Configuration#chart-curve) option exactly. QuickChart can only draw the curves Chart.js supports natively, so the email charts approximate: `monotone` is exact, `rounded-step` falls back to `monotone`, and `catmull-rom` and `cubic-bezier` both render as a tensioned spline. Everything else (colors, points, milestones, range) matches between the two systems.
+
 ---
 
 ## Enabling Charts
@@ -231,6 +235,7 @@ The chart appearance is configurable via these inputs:
 | `chart-max-points` | `30` | Curve granularity: points sampled across the full span (capped at `365`); `0` reconstructs at weekly resolution. Resolution, not a time window (see `chart-range`). Email is always 30. |
 | `chart-y-axis-side` | `left` | Y-axis label side: `left` or `right`. |
 | `chart-smoothing` | `true` | `true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. Applies to email charts too. |
+| `chart-curve` | `monotone` | Curve used when smoothing is on: `monotone` (no overshoot, best for stars), `catmull-rom` (natural spline, can overshoot), `cubic-bezier` (eased S-curves), `rounded-step` (straight segments, rounded corners). Email approximates the non-monotone curves (see [Two Chart Systems](#two-chart-systems)). |
 | `chart-show-points` | `true` | `true` marks each data point with a dot; `false` hides them for a cleaner dense line. Applies to email charts too. |
 | `chart-animation` | `true` | `true` animates the SVG charts; `false` renders them static for email/static contexts. SVG-only. |
 | `chart-milestones` | `true` | `true` draws milestone reference lines on the main chart; `false` hides them. Applies to email charts too. |
@@ -246,7 +251,8 @@ with:
   chart-line-width: 2.5
   chart-max-points: 0
   chart-y-axis-side: right
-  chart-smoothing: false
+  chart-smoothing: true
+  chart-curve: monotone
   chart-custom-milestones: "250, 750, 2500"
 ```
 

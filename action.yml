@@ -171,6 +171,11 @@ inputs:
     required: false
     default: 'true'
 
+  chart-curve:
+    description: 'Curve used when chart-smoothing is true: "monotone" (smooth, never overshoots, best for star data), "catmull-rom" (natural spline, can overshoot on sharp steps), "cubic-bezier" (eased S-curves, flat at every point), or "rounded-step" (flat segments with rounded corners). Email charts render monotone and rounded-step as monotone, and catmull-rom and cubic-bezier as a smooth spline. (default monotone)'
+    required: false
+    default: 'monotone'
+
   chart-show-points:
     description: 'Draw a marker on each data point (true) or hide them for a cleaner line on dense charts (false). (default true)'
     required: false

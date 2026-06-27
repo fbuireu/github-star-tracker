@@ -50,6 +50,7 @@ chart_line_width: 2.5
 chart_max_points: 30          # granularity, capped at 365; 0 = weekly resolution
 chart_y_axis_side: left
 chart_smoothing: true
+chart_curve: monotone         # monotone | catmull-rom | cubic-bezier | rounded-step
 ```
 
 Point to a custom path with `config-path`:
@@ -386,7 +387,28 @@ Curve style between points.
 | **Type** | `boolean` |
 | **Default** | `true` |
 
-`true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. Applies to every chart, including the ones embedded in the email report.
+`true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. Applies to every chart, including the ones embedded in the email report. When `true`, the exact curve is chosen by [`chart-curve`](#chart-curve).
+
+---
+
+### `chart-curve`
+
+The curve used to connect points when [`chart-smoothing`](#chart-smoothing) is `true`. Ignored when smoothing is `false` (the line is always straight then).
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | `monotone` |
+| **Options** | `monotone`, `catmull-rom`, `cubic-bezier`, `rounded-step` |
+
+- **`monotone`** (default): a monotone cubic spline. It is smooth but never overshoots, so plateaus stay flat and the line never dips below a value. This is the best fit for star counts, which only ever go up.
+- **`catmull-rom`**: a natural spline through every point. Looks organic but can overshoot on sharp steps, briefly drawing the line below the previous value.
+- **`cubic-bezier`**: eased S-curves that are flat at every point. Similar to `monotone` but with more pronounced, symmetric transitions.
+- **`rounded-step`**: keeps the segments straight and only rounds the corners with a fixed radius, so the chart reads as a step chart with softened edges.
+
+See the **[rendered comparison](../../examples/README.md#curve-styles)** in the examples gallery.
+
+**Email charts** (rendered via QuickChart) respect this setting with one caveat, since QuickChart cannot draw every curve natively: `monotone` is reproduced exactly, `rounded-step` falls back to `monotone`, and `catmull-rom` and `cubic-bezier` both render as a tensioned spline. The SVG charts on the data branch always use the exact curve.
 
 ---
 

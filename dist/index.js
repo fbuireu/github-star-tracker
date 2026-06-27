@@ -32987,10 +32987,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -35282,7 +35282,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35405,7 +35405,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -35595,6 +35595,12 @@ var ChartRange = {
   Y1: "1y",
   ALL: "all"
 };
+var ChartCurve = {
+  CATMULL_ROM: "catmull-rom",
+  MONOTONE: "monotone",
+  CUBIC_BEZIER: "cubic-bezier",
+  ROUNDED_STEP: "rounded-step"
+};
 
 // src/config/defaults.ts
 var LOCALE_MAP = {
@@ -35635,6 +35641,7 @@ var DEFAULTS2 = {
   chartMaxPoints: 30,
   chartYAxisSide: ChartAxisSide.LEFT,
   chartSmoothing: true,
+  chartCurve: ChartCurve.MONOTONE,
   chartShowPoints: true,
   chartAnimation: true,
   chartMilestones: true,
@@ -38232,6 +38239,7 @@ function loadConfigFile(configPath) {
     chartMaxPoints: read("chart_max_points"),
     chartYAxisSide: read("chart_y_axis_side"),
     chartSmoothing: read("chart_smoothing"),
+    chartCurve: read("chart_curve"),
     chartShowPoints: read("chart_show_points"),
     chartAnimation: read("chart_animation"),
     chartMilestones: read("chart_milestones"),
@@ -38269,6 +38277,7 @@ function loadConfig() {
   const inputChartMaxPoints = getInput("chart-max-points");
   const inputChartYAxisSide = getInput("chart-y-axis-side");
   const inputChartSmoothing = getInput("chart-smoothing");
+  const inputChartCurve = getInput("chart-curve");
   const inputChartShowPoints = getInput("chart-show-points");
   const inputChartAnimation = getInput("chart-animation");
   const inputChartMilestones = getInput("chart-milestones");
@@ -38330,6 +38339,14 @@ function loadConfig() {
       `Invalid chart-range "${rawChartRange}". Must be "30d", "90d", "1y", or "all". Falling back to "${DEFAULTS2.chartRange}"`
     );
   }
+  const rawChartCurve = inputChartCurve || fileConfig.chartCurve;
+  const isValidCurve = (value) => value === ChartCurve.CATMULL_ROM || value === ChartCurve.MONOTONE || value === ChartCurve.CUBIC_BEZIER || value === ChartCurve.ROUNDED_STEP;
+  const chartCurve = isValidCurve(rawChartCurve) ? rawChartCurve : DEFAULTS2.chartCurve;
+  if (rawChartCurve && !isValidCurve(rawChartCurve)) {
+    warning(
+      `Invalid chart-curve "${rawChartCurve}". Must be "catmull-rom", "monotone", "cubic-bezier", or "rounded-step". Falling back to "${DEFAULTS2.chartCurve}"`
+    );
+  }
   const config = {
     visibility,
     includeArchived: parseBool(inputIncludeArchived) ?? fileConfig.includeArchived ?? DEFAULTS2.includeArchived,
@@ -38355,6 +38372,7 @@ function loadConfig() {
     chartMaxPoints: parseNumber(inputChartMaxPoints) ?? fileConfig.chartMaxPoints ?? DEFAULTS2.chartMaxPoints,
     chartYAxisSide,
     chartSmoothing: parseBool(inputChartSmoothing) ?? fileConfig.chartSmoothing ?? DEFAULTS2.chartSmoothing,
+    chartCurve,
     chartShowPoints: parseBool(inputChartShowPoints) ?? fileConfig.chartShowPoints ?? DEFAULTS2.chartShowPoints,
     chartAnimation: parseBool(inputChartAnimation) ?? fileConfig.chartAnimation ?? DEFAULTS2.chartAnimation,
     chartMilestones: parseBool(inputChartMilestones) ?? fileConfig.chartMilestones ?? DEFAULTS2.chartMilestones,
@@ -39480,8 +39498,12 @@ var CHART_STYLE = {
   linearRegressionDash: [8, 4],
   weightedMovingAverageDash: [4, 4]
 };
-function tensionFor(smoothing) {
-  return smoothing ? CHART_TENSION.smooth : CHART_TENSION.straight;
+function curvePropsFor({ smoothing, curve }) {
+  if (!smoothing) return { tension: CHART_TENSION.straight };
+  if (curve === ChartCurve.MONOTONE || curve === ChartCurve.ROUNDED_STEP) {
+    return { tension: CHART_TENSION.smooth, cubicInterpolationMode: ChartCurve.MONOTONE };
+  }
+  return { tension: CHART_TENSION.smooth };
 }
 function pointRadiusFor({ showPoints, radius }) {
   return showPoints ? radius : CHART_POINT.hidden;
@@ -39559,7 +39581,7 @@ function buildChartOptions({
 }
 function buildStarsDataset({
   data,
-  tension,
+  curveProps,
   showPoints,
   palette
 }) {
@@ -39569,7 +39591,7 @@ function buildStarsDataset({
     borderColor: palette.accent,
     backgroundColor: `${palette.accent}${CHART_STYLE.translucentAlpha}`,
     fill: true,
-    tension,
+    ...curveProps,
     pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
     pointHoverRadius: CHART_POINT.primaryHoverRadius
   };
@@ -39608,6 +39630,7 @@ function generateChartUrl({
   title,
   locale,
   smoothing = true,
+  curve = ChartCurve.MONOTONE,
   showPoints = true,
   milestones = true,
   beginAtZero = false,
@@ -39621,10 +39644,10 @@ function generateChartUrl({
   }
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const tension = tensionFor(smoothing);
+  const curveProps = curvePropsFor({ smoothing, curve });
   const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData({ history, locale, range });
-  const datasets = [buildStarsDataset({ data, tension, showPoints, palette })];
+  const datasets = [buildStarsDataset({ data, curveProps, showPoints, palette })];
   if (trendLine) {
     datasets.push({
       label: t.report.trendLine,
@@ -39632,7 +39655,7 @@ function generateChartUrl({
       borderColor: palette.neutral,
       backgroundColor: "transparent",
       fill: false,
-      tension,
+      ...curveProps,
       pointRadius: CHART_POINT.hidden,
       pointHoverRadius: CHART_POINT.hidden,
       borderDash: CHART_STYLE.trendDash
@@ -39659,6 +39682,7 @@ function generatePerRepoChartUrl({
   title,
   locale,
   smoothing = true,
+  curve = ChartCurve.MONOTONE,
   showPoints = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
@@ -39668,7 +39692,7 @@ function generatePerRepoChartUrl({
     return null;
   }
   const palette = resolvePalette(theme);
-  const tension = tensionFor(smoothing);
+  const curveProps = curvePropsFor({ smoothing, curve });
   const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
     -CHART.maxDataPoints
   );
@@ -39678,7 +39702,7 @@ function generatePerRepoChartUrl({
     return repo?.stars ?? 0;
   });
   const chartTitle = title ?? `${repoFullName} Star History`;
-  const datasets = [buildStarsDataset({ data, tension, showPoints, palette })];
+  const datasets = [buildStarsDataset({ data, curveProps, showPoints, palette })];
   const config = buildChartConfig({
     labels,
     datasets,
@@ -39695,6 +39719,7 @@ function generateComparisonChartUrl({
   title,
   locale,
   smoothing = true,
+  curve = ChartCurve.MONOTONE,
   showPoints = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
@@ -39705,7 +39730,7 @@ function generateComparisonChartUrl({
   }
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const tension = tensionFor(smoothing);
+  const curveProps = curvePropsFor({ smoothing, curve });
   const chartTitle = title ?? t.report.topRepositories;
   const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
     -CHART.maxDataPoints
@@ -39726,7 +39751,7 @@ function generateComparisonChartUrl({
       borderColor: color,
       backgroundColor: `${color}${CHART_STYLE.translucentAlpha}`,
       fill: false,
-      tension,
+      ...curveProps,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius
     };
@@ -39747,6 +39772,7 @@ function generateForecastChartUrl({
   locale,
   title,
   smoothing = true,
+  curve = ChartCurve.MONOTONE,
   showPoints = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
@@ -39757,7 +39783,7 @@ function generateForecastChartUrl({
   }
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const tension = tensionFor(smoothing);
+  const curveProps = curvePropsFor({ smoothing, curve });
   const chartTitle = title ?? t.forecast.sectionTitle;
   const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
     -CHART.maxDataPoints
@@ -39778,7 +39804,7 @@ function generateForecastChartUrl({
       borderColor: palette.accent,
       backgroundColor: `${palette.accent}${CHART_STYLE.translucentAlpha}`,
       fill: true,
-      tension,
+      ...curveProps,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
       pointHoverRadius: CHART_POINT.primaryHoverRadius
     },
@@ -39788,7 +39814,7 @@ function generateForecastChartUrl({
       borderColor: palette.positive,
       backgroundColor: "transparent",
       fill: false,
-      tension,
+      ...curveProps,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
       borderDash: CHART_STYLE.linearRegressionDash
@@ -39799,7 +39825,7 @@ function generateForecastChartUrl({
       borderColor: palette.negative,
       backgroundColor: "transparent",
       fill: false,
-      tension,
+      ...curveProps,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
       borderDash: CHART_STYLE.weightedMovingAverageDash
@@ -39832,6 +39858,7 @@ function generateHtmlReport({
   forecastData = null,
   topRepos: topReposCount = 10,
   smoothing = true,
+  curve = ChartCurve.MONOTONE,
   showPoints = true,
   milestones = true,
   beginAtZero = false,
@@ -39875,6 +39902,7 @@ function generateHtmlReport({
     title: t.report.topRepositories,
     locale,
     smoothing,
+    curve,
     showPoints,
     beginAtZero,
     theme,
@@ -39886,6 +39914,7 @@ function generateHtmlReport({
       repoFullName: repoName,
       locale,
       smoothing,
+      curve,
       showPoints,
       beginAtZero,
       theme,
@@ -39901,7 +39930,7 @@ function generateHtmlReport({
   const chartSection = hasChartHistory ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F4C8} ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, showPoints, milestones, beginAtZero, theme, customMilestones, range, trendLine })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, curve, showPoints, milestones, beginAtZero, theme, customMilestones, range, trendLine })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
 
         ${comparisonChartUrl ? `
         <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
@@ -39948,7 +39977,7 @@ function generateHtmlReport({
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F52E} ${t.forecast.sectionTitle}</h2>
         ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t, palette })}
         ${hasChartHistory ? `<div style="margin-top:16px;text-align:center;">
-          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, showPoints, beginAtZero, theme, range })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, curve, showPoints, beginAtZero, theme, range })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>` : ""}
         ${forecastData.repos.map(
     (repo) => `
@@ -40260,6 +40289,11 @@ var XML_ESCAPE_MAP = {
   '"': "&quot;"
 };
 var BEZIER_CONTROL_DIVISOR = 3;
+var MONOTONE_TANGENT_LIMIT = 3;
+var TANGENT_AVERAGE_DIVISOR = 2;
+var ROUNDED_STEP_RADIUS = 16;
+var ROUNDED_STEP_RADIUS_DIVISOR = 2;
+var MIN_POINTS_FOR_ROUNDED_CORNERS = 3;
 var PATH_LENGTH_SAFETY_FACTOR = 1.5;
 var Y_AXIS_PADDING_RATIO = 0.1;
 var Y_AXIS_MIN_PADDING = 1;
@@ -40276,22 +40310,16 @@ function scaleY({ value, minValue, maxValue, chartTop, chartHeight }) {
   if (maxValue === minValue) return chartTop + chartHeight / 2;
   return chartTop + chartHeight - (value - minValue) / (maxValue - minValue) * chartHeight;
 }
-function generateSmoothPath({
-  points,
-  smooth = true,
-  clampMinY = Number.NEGATIVE_INFINITY,
-  clampMaxY = Number.POSITIVE_INFINITY
-}) {
-  if (points.length === 0) return "";
-  if (points.length === 1) return `M${points[0].x},${points[0].y}`;
+function straightPath(points) {
   let path4 = `M${points[0].x},${points[0].y}`;
-  if (!smooth) {
-    for (let index = 1; index < points.length; index++) {
-      path4 += ` L${points[index].x},${points[index].y}`;
-    }
-    return path4;
+  for (let index = 1; index < points.length; index++) {
+    path4 += ` L${points[index].x},${points[index].y}`;
   }
+  return path4;
+}
+function catmullRomPath(points, { clampMinY, clampMaxY }) {
   const tension = CHART_TENSION.smooth;
+  let path4 = `M${points[0].x},${points[0].y}`;
   for (let index = 0; index < points.length - 1; index++) {
     const previousPoint = points[Math.max(0, index - 1)];
     const startPoint = points[index];
@@ -40316,6 +40344,104 @@ function generateSmoothPath({
     path4 += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${endPoint.x},${endPoint.y}`;
   }
   return path4;
+}
+function monotonePath(points) {
+  const count = points.length;
+  const dx = [];
+  const slope = [];
+  for (let index = 0; index < count - 1; index++) {
+    const deltaX = points[index + 1].x - points[index].x;
+    dx.push(deltaX);
+    slope.push(deltaX === 0 ? 0 : (points[index + 1].y - points[index].y) / deltaX);
+  }
+  const tangent = new Array(count);
+  tangent[0] = slope[0];
+  tangent[count - 1] = slope[count - 2];
+  for (let index = 1; index < count - 1; index++) {
+    tangent[index] = slope[index - 1] * slope[index] <= 0 ? 0 : (slope[index - 1] + slope[index]) / TANGENT_AVERAGE_DIVISOR;
+  }
+  for (let index = 0; index < count - 1; index++) {
+    if (slope[index] === 0) {
+      tangent[index] = 0;
+      tangent[index + 1] = 0;
+      continue;
+    }
+    const alpha = tangent[index] / slope[index];
+    const beta = tangent[index + 1] / slope[index];
+    const magnitude = Math.hypot(alpha, beta);
+    if (magnitude > MONOTONE_TANGENT_LIMIT) {
+      const factor = MONOTONE_TANGENT_LIMIT / magnitude;
+      tangent[index] = factor * alpha * slope[index];
+      tangent[index + 1] = factor * beta * slope[index];
+    }
+  }
+  let path4 = `M${points[0].x},${points[0].y}`;
+  for (let index = 0; index < count - 1; index++) {
+    const start = points[index];
+    const end = points[index + 1];
+    const cp1x = start.x + dx[index] / BEZIER_CONTROL_DIVISOR;
+    const cp1y = start.y + tangent[index] * dx[index] / BEZIER_CONTROL_DIVISOR;
+    const cp2x = end.x - dx[index] / BEZIER_CONTROL_DIVISOR;
+    const cp2y = end.y - tangent[index + 1] * dx[index] / BEZIER_CONTROL_DIVISOR;
+    path4 += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${end.x},${end.y}`;
+  }
+  return path4;
+}
+function cubicBezierPath(points) {
+  let path4 = `M${points[0].x},${points[0].y}`;
+  for (let index = 0; index < points.length - 1; index++) {
+    const start = points[index];
+    const end = points[index + 1];
+    const offset = (end.x - start.x) / BEZIER_CONTROL_DIVISOR;
+    path4 += ` C${start.x + offset},${start.y} ${end.x - offset},${end.y} ${end.x},${end.y}`;
+  }
+  return path4;
+}
+function roundedStepPath(points, radius) {
+  if (points.length < MIN_POINTS_FOR_ROUNDED_CORNERS) return straightPath(points);
+  let path4 = `M${points[0].x},${points[0].y}`;
+  for (let index = 1; index < points.length - 1; index++) {
+    const before = points[index - 1];
+    const vertex = points[index];
+    const after = points[index + 1];
+    const lengthBefore = Math.hypot(vertex.x - before.x, vertex.y - before.y);
+    const lengthAfter = Math.hypot(after.x - vertex.x, after.y - vertex.y);
+    if (lengthBefore === 0 || lengthAfter === 0) {
+      path4 += ` L${vertex.x},${vertex.y}`;
+      continue;
+    }
+    const radiusBefore = Math.min(radius, lengthBefore / ROUNDED_STEP_RADIUS_DIVISOR);
+    const radiusAfter = Math.min(radius, lengthAfter / ROUNDED_STEP_RADIUS_DIVISOR);
+    const entryX = vertex.x + (before.x - vertex.x) / lengthBefore * radiusBefore;
+    const entryY = vertex.y + (before.y - vertex.y) / lengthBefore * radiusBefore;
+    const exitX = vertex.x + (after.x - vertex.x) / lengthAfter * radiusAfter;
+    const exitY = vertex.y + (after.y - vertex.y) / lengthAfter * radiusAfter;
+    path4 += ` L${entryX},${entryY} Q${vertex.x},${vertex.y} ${exitX},${exitY}`;
+  }
+  const last = points[points.length - 1];
+  path4 += ` L${last.x},${last.y}`;
+  return path4;
+}
+function generateCurvePath({
+  points,
+  smoothing,
+  curve,
+  clampMinY = Number.NEGATIVE_INFINITY,
+  clampMaxY = Number.POSITIVE_INFINITY
+}) {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M${points[0].x},${points[0].y}`;
+  if (!smoothing) return straightPath(points);
+  switch (curve) {
+    case ChartCurve.MONOTONE:
+      return monotonePath(points);
+    case ChartCurve.CUBIC_BEZIER:
+      return cubicBezierPath(points);
+    case ChartCurve.ROUNDED_STEP:
+      return roundedStepPath(points, ROUNDED_STEP_RADIUS);
+    default:
+      return catmullRomPath(points, { clampMinY, clampMaxY });
+  }
 }
 function calculatePathLength(points) {
   let length = 0;
@@ -40361,6 +40487,7 @@ function renderSvg({
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
+  curve = ChartCurve.MONOTONE,
   showPoints = true,
   animate = true,
   beginAtZero = false,
@@ -40447,9 +40574,10 @@ function renderSvg({
       const bottomY = CHART.height - margin.bottom;
       const startsFromBaseline = dataset.fill !== false && !dataset.dashed && segment.startIndex === 0;
       const firstPoint = segment.points[0];
-      const smoothPath = generateSmoothPath({
+      const smoothPath = generateCurvePath({
         points: segment.points,
-        smooth: smoothing,
+        smoothing,
+        curve,
         clampMinY: margin.top,
         clampMaxY: bottomY
       });
@@ -40566,6 +40694,7 @@ function generateSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
+  curve,
   showPoints,
   animate,
   milestones = true,
@@ -40608,6 +40737,7 @@ function generateSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
+    curve,
     showPoints,
     animate,
     beginAtZero,
@@ -40624,6 +40754,7 @@ function generatePerRepoSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
+  curve,
   showPoints,
   animate,
   beginAtZero,
@@ -40654,6 +40785,7 @@ function generatePerRepoSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
+    curve,
     showPoints,
     animate,
     beginAtZero,
@@ -40669,6 +40801,7 @@ function generateComparisonSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
+  curve,
   showPoints,
   animate,
   beginAtZero,
@@ -40712,6 +40845,7 @@ function generateComparisonSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
+    curve,
     showPoints,
     animate,
     beginAtZero,
@@ -40728,6 +40862,7 @@ function generateForecastSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
+  curve,
   showPoints,
   animate,
   beginAtZero,
@@ -40782,6 +40917,7 @@ function generateForecastSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
+    curve,
     showPoints,
     animate,
     beginAtZero,
@@ -40874,6 +41010,7 @@ async function trackStars() {
           forecastData,
           topRepos: config.topRepos,
           smoothing: config.chartSmoothing,
+          curve: config.chartCurve,
           showPoints: config.chartShowPoints,
           milestones: config.chartMilestones,
           beginAtZero: config.chartBeginAtZero,
@@ -40910,6 +41047,7 @@ async function trackStars() {
             maxPoints: config.chartMaxPoints,
             yAxisSide: config.chartYAxisSide,
             smoothing: config.chartSmoothing,
+            curve: config.chartCurve,
             showPoints: config.chartShowPoints,
             animate: config.chartAnimation,
             beginAtZero: config.chartBeginAtZero,
@@ -40942,6 +41080,7 @@ async function trackStars() {
               maxPoints: config.chartMaxPoints,
               yAxisSide: config.chartYAxisSide,
               smoothing: config.chartSmoothing,
+              curve: config.chartCurve,
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
               beginAtZero: config.chartBeginAtZero,
@@ -40963,6 +41102,7 @@ async function trackStars() {
               maxPoints: config.chartMaxPoints,
               yAxisSide: config.chartYAxisSide,
               smoothing: config.chartSmoothing,
+              curve: config.chartCurve,
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
               beginAtZero: config.chartBeginAtZero,
@@ -40983,6 +41123,7 @@ async function trackStars() {
               maxPoints: config.chartMaxPoints,
               yAxisSide: config.chartYAxisSide,
               smoothing: config.chartSmoothing,
+              curve: config.chartCurve,
               showPoints: config.chartShowPoints,
               animate: config.chartAnimation,
               beginAtZero: config.chartBeginAtZero,
