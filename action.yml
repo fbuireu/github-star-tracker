@@ -157,7 +157,7 @@ inputs:
     default: ''
 
   chart-max-points:
-    description: 'Maximum number of recent data points (snapshots) to plot in charts. Set to 0 to plot the full history from the beginning. (default 30)'
+    description: 'How many points to plot across the full reconstructed history, i.e. the curve granularity (capped at 365). Higher means a more detailed curve over the same span; this is resolution, not the time window (use chart-range for that). Set to 0 to reconstruct the full history at weekly resolution. Email charts are always limited to 30 points. (default 30)'
     required: false
     default: '30'
 

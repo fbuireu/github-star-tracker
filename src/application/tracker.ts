@@ -27,7 +27,7 @@ import {
   writeStargazers,
 } from '@infrastructure/persistence/storage';
 import { generateBadge } from '@presentation/badge';
-import { CHART, MIN_SNAPSHOTS_FOR_CHART } from '@presentation/constants';
+import { MIN_SNAPSHOTS_FOR_CHART } from '@presentation/constants';
 import { generateCsvReport } from '@presentation/csv';
 import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
@@ -124,10 +124,6 @@ export async function trackStars(): Promise<void> {
         const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
 
         const chartNow = new Date();
-        const chartMaxPoints = Math.min(
-          config.chartMaxPoints || CHART.maxDataPoints,
-          CHART.maxDataPoints,
-        );
         const repoTotals = repos.map((repo) => ({
           fullName: repo.fullName,
           name: repo.name,
@@ -139,7 +135,7 @@ export async function trackStars(): Promise<void> {
           ? buildStarHistory({
               repoStargazers,
               repos: repoTotals,
-              maxPoints: chartMaxPoints,
+              maxPoints: config.chartMaxPoints,
               now: chartNow,
             })
           : { snapshots: [] };
@@ -219,7 +215,7 @@ export async function trackStars(): Promise<void> {
                     (stargazerEntry) => stargazerEntry.repoFullName === repoName,
                   ),
                   repos: [repoTotal],
-                  maxPoints: chartMaxPoints,
+                  maxPoints: config.chartMaxPoints,
                   now: chartNow,
                 })
               : { snapshots: [] };

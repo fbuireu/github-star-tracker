@@ -3,6 +3,8 @@ import type { RepoStargazers } from './stargazers';
 import type { History, Snapshot } from './types';
 
 const MIN_HISTORY_BUCKETS = 2;
+const MAX_HISTORY_BUCKETS = 365;
+const FULL_HISTORY_CADENCE_MS = 7 * MS_PER_DAY;
 
 export interface RepoTotal {
   fullName: string;
@@ -112,7 +114,11 @@ export function buildStarHistory({
     earliest >= end
       ? [earliest - MS_PER_DAY, end]
       : (() => {
-          const buckets = Math.max(MIN_HISTORY_BUCKETS, Math.floor(maxPoints));
+          const requested =
+            maxPoints > 0
+              ? Math.floor(maxPoints)
+              : Math.ceil((end - earliest) / FULL_HISTORY_CADENCE_MS) + 1;
+          const buckets = Math.min(MAX_HISTORY_BUCKETS, Math.max(MIN_HISTORY_BUCKETS, requested));
           const step = (end - earliest) / (buckets - 1);
 
           return Array.from({ length: buckets }, (_, bucketIndex) =>

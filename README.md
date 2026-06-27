@@ -141,7 +141,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `top-repos`              | `10`                  | Top repos in charts/forecasts                                 |
 | `chart-line-color`       | `#dfb317`             | Hex color of primary chart line/fill/points (not comparison)  |
 | `chart-line-width`       | `2.5`                 | Stroke width (px, >0) of data lines in all charts             |
-| `chart-max-points`       | `30`                  | Recent points to plot; `0` plots the full history             |
+| `chart-max-points`       | `30`                  | Curve granularity: points across the full span (capped at 365); `0` reconstructs at weekly resolution. Not a time window (see `chart-range`) |
 | `chart-y-axis-side`      | `left`                | Y-axis labels side: `left` or `right`                         |
 | `chart-smoothing`        | `true`                | Smooth curve (`true`) or straight segments to show spikes; applies to email charts too |
 | `chart-show-points`      | `true`                | Draw a marker on each data point (`true`) or hide them for a cleaner dense line (`false`) |

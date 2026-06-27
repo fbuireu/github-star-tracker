@@ -25,7 +25,7 @@ Complete reference for all inputs, outputs, and data formats.
 | `track-stargazers` | `boolean` | `false` | Track individual stargazers per repo |
 | `chart-line-color` | `string` | `#dfb317` | Hex color for the primary chart line/fill/points (not the comparison palette); accepts 3/4/6/8-digit hex with or without a leading `#` |
 | `chart-line-width` | `number` | `2.5` | Stroke width in px (>0) of data lines across all charts |
-| `chart-max-points` | `number` | `30` | Max recent data points to plot; `0` plots the full history from the beginning |
+| `chart-max-points` | `number` | `30` | Curve granularity: how many points are sampled across the full reconstructed history (capped at 365); `0` reconstructs at weekly resolution. Controls resolution, not the time window (see `chart-range`). Email charts are always limited to 30 |
 | `chart-y-axis-side` | `string` | `left` | Y-axis label side: `left` or `right` |
 | `chart-smoothing` | `boolean` | `true` | Smooth curve (`true`) or straight segments between points to reveal small spikes (`false`) |
 | `chart-show-points` | `boolean` | `true` | Draw a marker on each data point (`true`) or hide them for a cleaner dense line (`false`) |
@@ -278,7 +278,7 @@ smart_sampling_threshold: 1500 # number
 smart_sampling_pages: 30      # number
 chart_line_color: "#dfb317"   # string (hex)
 chart_line_width: 2.5         # number
-chart_max_points: 30          # number (0 = full history)
+chart_max_points: 30          # number (granularity, capped at 365; 0 = weekly resolution)
 chart_y_axis_side: left       # left | right
 chart_smoothing: true         # boolean
 chart_show_points: true       # boolean

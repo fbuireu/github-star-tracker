@@ -261,7 +261,7 @@ When `include-charts: true`, the HTML email includes chart images via QuickChart
 ### Limitations
 
 - Some email clients block external images by default (user must click "Show images")
-- Maximum 30 data points per chart
+- Maximum 30 data points per chart (email charts ignore `chart-max-points` above 30)
 - If QuickChart.io is unreachable, charts appear as broken images; report text is unaffected
 
 ---
