@@ -102,6 +102,37 @@ describe('generateHtmlReport', () => {
     expect(html).not.toContain('+-25%');
   });
 
+  it('nests velocity under the forecast section when both are present', () => {
+    const forecastData: ForecastData = {
+      aggregate: {
+        forecasts: [
+          {
+            method: ForecastMethod.LINEAR_REGRESSION,
+            points: [
+              { weekOffset: 1, predicted: 25 },
+              { weekOffset: 2, predicted: 27 },
+              { weekOffset: 3, predicted: 29 },
+              { weekOffset: 4, predicted: 31 },
+            ],
+          },
+        ],
+      },
+      repos: [],
+    };
+
+    const html = renderHtml({
+      history: velocityHistory,
+      velocityMetrics: true,
+      forecastData,
+    });
+
+    expect(html).toContain('<h3 style="font-size:16px;margin-bottom:8px;">🚀 Growth Velocity</h3>');
+    expect(html).not.toContain(
+      '<h2 style="font-size:18px;margin-bottom:12px;">🚀 Growth Velocity</h2>',
+    );
+    expect(html.indexOf('Growth Forecast')).toBeLessThan(html.indexOf('Growth Velocity'));
+  });
+
   it('generates valid HTML structure', () => {
     const html = renderHtml();
 

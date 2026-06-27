@@ -31,17 +31,17 @@ export function computeVelocity({ history }: { history: History }): VelocityMetr
   const snapshots = history.snapshots;
   if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
 
-  const first = snapshots[0];
+  const previous = snapshots[snapshots.length - 2];
   const last = snapshots[snapshots.length - 1];
   const elapsedDays =
-    (new Date(last.timestamp).getTime() - new Date(first.timestamp).getTime()) / MS_PER_DAY;
+    (new Date(last.timestamp).getTime() - new Date(previous.timestamp).getTime()) / MS_PER_DAY;
   if (elapsedDays <= 0) return null;
 
-  const gained = last.totalStars - first.totalStars;
+  const gained = last.totalStars - previous.totalStars;
   const starsPerDay = roundTo(gained / elapsedDays, STARS_PER_DAY_DECIMALS);
   const growthPercent =
-    first.totalStars > 0
-      ? roundTo((gained / first.totalStars) * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS)
+    previous.totalStars > 0
+      ? roundTo((gained / previous.totalStars) * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS)
       : null;
 
   const nextMilestone = nextMilestoneAbove(last.totalStars);
