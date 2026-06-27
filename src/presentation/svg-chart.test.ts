@@ -10,6 +10,17 @@ import {
   generateSvgChart,
 } from './svg-chart';
 
+const LINE_PATH_D = /<path d="([^"]+)" fill="none"/;
+const PATH_OPENING = /<path d="M/g;
+const PATH_MOVE_AND_FIRST_SEGMENT = /^M[\d.]+,[\d.]+ L[\d.]+,[\d.]+/;
+const COORDINATE_PAIR = /(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)/g;
+const Y_COORDINATE = /,(\d+(?:\.\d+)?)/g;
+const DATA_POINT_CIRCLE = /<circle/g;
+const CUBIC_BEZIER_COMMAND = / C[\d.]+,[\d.]+ [\d.]+,[\d.]+ [\d.]+,[\d.]+/;
+const THOUSANDS_AXIS_LABEL = />\d+(\.\d+)?K<\/text>/;
+const FEBRUARY_AXIS_LABEL = />Feb \d/;
+const CONSECUTIVE_XML_ATTRIBUTES = /="[^"]*"="[^"]*"/;
+
 function makeSnapshot(timestamp: string, totalStars: number): Snapshot {
   return {
     timestamp,
@@ -53,12 +64,10 @@ function expectSvg(result: string | null): string {
 }
 
 function linePathYs(svg: string): number[] {
-  const match = svg.match(/<path d="([^"]+)" fill="none"/);
+  const match = svg.match(LINE_PATH_D);
   const d = match?.[1] ?? '';
 
-  return [...d.matchAll(/(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)/g)].map((coordinate) =>
-    Number(coordinate[2]),
-  );
+  return [...d.matchAll(COORDINATE_PAIR)].map((coordinate) => Number(coordinate[2]));
 }
 
 describe('generateSvgChart', () => {
@@ -88,7 +97,7 @@ describe('generateSvgChart', () => {
     expect(svg).toContain('>2023<');
     expect(svg).toContain('>2024<');
     expect(svg).toContain('>2025<');
-    expect(svg).not.toMatch(/>Feb \d/);
+    expect(svg).not.toMatch(FEBRUARY_AXIS_LABEL);
   });
 
   it('generates valid SVG structure', () => {
@@ -161,7 +170,7 @@ describe('generateSvgChart', () => {
   it('includes data points as circles', () => {
     const history = makeHistory([10, 20, 30, 40, 50]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
-    const circleCount = (result.match(/<circle/g) || []).length;
+    const circleCount = (result.match(DATA_POINT_CIRCLE) || []).length;
 
     expect(circleCount).toBe(5);
   });
@@ -187,7 +196,7 @@ describe('generateSvgChart', () => {
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
 
     expect(result).toContain('<path');
-    expect(result).toMatch(/ C[\d.]+,[\d.]+ [\d.]+,[\d.]+ [\d.]+,[\d.]+/);
+    expect(result).toMatch(CUBIC_BEZIER_COMMAND);
   });
 
   it('uses project accent color', () => {
@@ -275,7 +284,7 @@ describe('generateSvgChart', () => {
     const history = makeHistory([10_000, 30_000, 50_000]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
 
-    expect(result).toMatch(/>\d+(\.\d+)?K<\/text>/);
+    expect(result).toMatch(THOUSANDS_AXIS_LABEL);
     expect(result).not.toContain('50,000');
   });
 
@@ -291,7 +300,7 @@ describe('generateSvgChart', () => {
     const stars = Array.from({ length: 50 }, (_, index) => 10 + index);
     const history = makeHistory(stars);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
-    const circleCount = (result.match(/<circle/g) || []).length;
+    const circleCount = (result.match(DATA_POINT_CIRCLE) || []).length;
 
     expect(circleCount).toBe(30);
   });
@@ -304,7 +313,7 @@ describe('generateSvgChart', () => {
 
     expect(ys[0]).toBe(baselineY);
     expect(ys[1]).toBeLessThan(baselineY);
-    expect((result.match(/<circle/g) || []).length).toBe(3);
+    expect((result.match(DATA_POINT_CIRCLE) || []).length).toBe(3);
   });
 
   it('handles equal star counts without errors', () => {
@@ -418,7 +427,7 @@ describe('generateSvgChart', () => {
     const history = makeHistory([10, 20, 30, 40, 50]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en', maxPoints: 3 }));
 
-    expect((result.match(/<circle/g) || []).length).toBe(3);
+    expect((result.match(DATA_POINT_CIRCLE) || []).length).toBe(3);
   });
 
   it('plots the full history when maxPoints is 0', () => {
@@ -426,7 +435,7 @@ describe('generateSvgChart', () => {
     const history = makeHistory(stars);
     const result = expectSvg(generateSvgChart({ history, locale: 'en', maxPoints: 0 }));
 
-    expect((result.match(/<circle/g) || []).length).toBe(40);
+    expect((result.match(DATA_POINT_CIRCLE) || []).length).toBe(40);
   });
 
   it('renders y-axis labels on the left by default', () => {
@@ -451,13 +460,13 @@ describe('generateSvgChart', () => {
     const history = makeHistory([10, 20, 30, 40]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
 
-    expect(result).toMatch(/ C[\d.]+,[\d.]+ [\d.]+,[\d.]+ [\d.]+,[\d.]+/);
+    expect(result).toMatch(CUBIC_BEZIER_COMMAND);
   });
 
   it('draws straight segments when smoothing is disabled', () => {
     const history = makeHistory([10, 20, 30, 40]);
     const result = expectSvg(generateSvgChart({ history, locale: 'en', smoothing: false }));
-    const linePath = result.match(/<path d="([^"]+)" fill="none"/)?.[1] ?? '';
+    const linePath = result.match(LINE_PATH_D)?.[1] ?? '';
 
     expect(linePath).toContain(' L');
     expect(linePath).not.toContain(' C');
@@ -466,9 +475,9 @@ describe('generateSvgChart', () => {
   it('rounds the curve past the data point at an asymmetric valley when smoothing', () => {
     const history = makeHistory([100, 5, 200]);
     const curveYs = (svg: string): number[] => {
-      const d = svg.match(/<path d="([^"]+)" fill="none"/)?.[1] ?? '';
-      const body = d.replace(/^M[\d.]+,[\d.]+ L[\d.]+,[\d.]+/, '');
-      return [...body.matchAll(/,(\d+(?:\.\d+)?)/g)].map((coordinate) => Number(coordinate[1]));
+      const d = svg.match(LINE_PATH_D)?.[1] ?? '';
+      const body = d.replace(PATH_MOVE_AND_FIRST_SEGMENT, '');
+      return [...body.matchAll(Y_COORDINATE)].map((coordinate) => Number(coordinate[1]));
     };
     const smooth = curveYs(expectSvg(generateSvgChart({ history, locale: 'en', smoothing: true })));
     const straight = curveYs(
@@ -699,7 +708,7 @@ describe('generateComparisonSvgChart', () => {
     ]);
 
     const result = expectSvg(generateComparisonSvgChart({ history, repoNames, locale: 'en' }));
-    const pathCount = (result.match(/<path d="M/g) || []).length;
+    const pathCount = (result.match(PATH_OPENING) || []).length;
 
     expect(pathCount).toBeLessThanOrEqual(10);
   });
@@ -822,7 +831,6 @@ describe('generateForecastSvgChart', () => {
   it('generates valid XML attributes in legend for dashed datasets', () => {
     const history = makeHistory([10, 20, 30]);
     const result = expectSvg(generateForecastSvgChart({ history, forecastData, locale: 'en' }));
-    const CONSECUTIVE_XML_ATTRIBUTES = /="[^"]*"="[^"]*"/;
 
     expect(result).not.toMatch(CONSECUTIVE_XML_ATTRIBUTES);
   });
