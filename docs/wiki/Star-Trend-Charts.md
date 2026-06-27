@@ -37,6 +37,8 @@ Each per-repo chart uses that repository's own timeline, starting at its first s
 - One chart per top repo
 - Collapsible in the Markdown report via `<details>`
 
+![Per-Repo Chart](../../examples/per-repo.svg)
+
 ### 3. Comparison Chart
 
 **File:** `charts/comparison.svg`
@@ -60,6 +62,8 @@ Historical data + projected growth for the next 4 weeks.
 - Dashed green line for linear regression forecast
 - Dashed red line for weighted moving average forecast
 - Legend distinguishing methods
+
+![Forecast Chart](../../examples/forecast.svg)
 
 ---
 
@@ -259,6 +263,49 @@ with:
 ### Large repos
 
 GitHub caps the stargazers listing at roughly 40,000 per repo. For very large repos the earliest part of the curve is approximated (the cumulative total is scaled up to the true star count). Pair charts with `smart-sampling` to keep the request cost bounded on big repos.
+
+---
+
+## Comparing Options
+
+A side-by-side look at how the main settings change the chart, to help you pick. Rendered images for all of these live in the **[examples gallery](../../examples/README.md)**.
+
+### Curve styles (`chart-curve`)
+
+All four use the same stepped data so the differences are clear. `monotone` (the default), `cubic-bezier` and `rounded-step` keep the plateaus flat; only `catmull-rom` overshoots at the foot of a step, briefly drawing the line below the previous value.
+
+| `monotone` (default) | `catmull-rom` |
+|---|---|
+| ![monotone](../../examples/curve-monotone.svg) | ![catmull-rom](../../examples/curve-catmull-rom.svg) |
+| **`cubic-bezier`** | **`rounded-step`** |
+| ![cubic-bezier](../../examples/curve-cubic-bezier.svg) | ![rounded-step](../../examples/curve-rounded-step.svg) |
+
+| Curve | Overshoots? | Best for |
+|---|---|---|
+| `monotone` | no | star counts, which only go up (the default) |
+| `catmull-rom` | yes | an organic look where slight overshoot is fine |
+| `cubic-bezier` | no | pronounced, symmetric easing between points |
+| `rounded-step` | no | discrete data you want to read as soft steps |
+
+### On / off toggles
+
+| Option | Default | Alternative | Choose the alternative when |
+|---|---|---|---|
+| `chart-smoothing` | `true` (smooth curve) | `false` (straight segments) | you need to see exact week-to-week spikes |
+| `chart-show-points` | `true` (dot per point) | `false` (line only) | the chart is dense and dots add noise |
+| `chart-milestones` | `true` (threshold lines) | `false` (none) | you want a cleaner chart |
+| `chart-begin-at-zero` | `false` (zoom to data range) | `true` (anchor at zero) | you want an honest absolute scale |
+| `chart-animation` | `true` (draws in on load) | `false` (static render) | embedding in email or a static context |
+| `chart-trend-line` | `false` (raw line only) | `true` (+ moving-average overlay) | the data is noisy and you want the direction |
+
+### Value choices
+
+| Option | Options | Effect |
+|---|---|---|
+| `chart-theme` | `auto` / `light` / `dark` | `auto` follows the viewer's color scheme; the others force a palette |
+| `chart-y-axis-side` | `left` / `right` | moves the axis labels, e.g. to avoid overlap with the start of the line |
+| `chart-range` | `30d` / `90d` / `1y` / `all` | narrows the time window, measured back from the latest point |
+| `chart-max-points` | `0` / `N` (capped at 365) | curve resolution across the span; `0` reconstructs at weekly cadence |
 
 ---
 
