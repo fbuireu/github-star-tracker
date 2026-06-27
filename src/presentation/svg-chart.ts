@@ -1,4 +1,4 @@
-import { ChartAxisSide, type ChartRange, ChartTheme } from '@config/types';
+import { ChartAxisSide, ChartCurve, type ChartRange, ChartTheme } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { buildAxisLabels, formatCount, formatDate } from '@domain/formatting';
 import type { History } from '@domain/types';
@@ -25,6 +25,11 @@ const XML_ESCAPE_MAP: Record<string, string> = {
 };
 
 const BEZIER_CONTROL_DIVISOR = 3;
+const MONOTONE_TANGENT_LIMIT = 3;
+const TANGENT_AVERAGE_DIVISOR = 2;
+const ROUNDED_STEP_RADIUS = 16;
+const ROUNDED_STEP_RADIUS_DIVISOR = 2;
+const MIN_POINTS_FOR_ROUNDED_CORNERS = 3;
 const PATH_LENGTH_SAFETY_FACTOR = 1.5;
 const Y_AXIS_PADDING_RATIO = 0.1;
 const Y_AXIS_MIN_PADDING = 1;
@@ -57,33 +62,23 @@ function scaleY({ value, minValue, maxValue, chartTop, chartHeight }: ScaleYPara
   return chartTop + chartHeight - ((value - minValue) / (maxValue - minValue)) * chartHeight;
 }
 
-interface GenerateSmoothPathParams {
-  points: Point[];
-  smooth?: boolean;
-  clampMinY?: number;
-  clampMaxY?: number;
-}
-
-function generateSmoothPath({
-  points,
-  smooth = true,
-  clampMinY = Number.NEGATIVE_INFINITY,
-  clampMaxY = Number.POSITIVE_INFINITY,
-}: GenerateSmoothPathParams): string {
-  if (points.length === 0) return '';
-  if (points.length === 1) return `M${points[0].x},${points[0].y}`;
-
+function straightPath(points: Point[]): string {
   let path = `M${points[0].x},${points[0].y}`;
-
-  if (!smooth) {
-    for (let index = 1; index < points.length; index++) {
-      path += ` L${points[index].x},${points[index].y}`;
-    }
-
-    return path;
+  for (let index = 1; index < points.length; index++) {
+    path += ` L${points[index].x},${points[index].y}`;
   }
 
+  return path;
+}
+
+interface ClampParams {
+  clampMinY: number;
+  clampMaxY: number;
+}
+
+function catmullRomPath(points: Point[], { clampMinY, clampMaxY }: ClampParams): string {
   const tension = CHART_TENSION.smooth;
+  let path = `M${points[0].x},${points[0].y}`;
 
   for (let index = 0; index < points.length - 1; index++) {
     const previousPoint = points[Math.max(0, index - 1)];
@@ -113,6 +108,130 @@ function generateSmoothPath({
   }
 
   return path;
+}
+
+function monotonePath(points: Point[]): string {
+  const count = points.length;
+  const dx: number[] = [];
+  const slope: number[] = [];
+  for (let index = 0; index < count - 1; index++) {
+    const deltaX = points[index + 1].x - points[index].x;
+    dx.push(deltaX);
+    slope.push(deltaX === 0 ? 0 : (points[index + 1].y - points[index].y) / deltaX);
+  }
+
+  const tangent: number[] = new Array(count);
+  tangent[0] = slope[0];
+  tangent[count - 1] = slope[count - 2];
+  for (let index = 1; index < count - 1; index++) {
+    tangent[index] =
+      slope[index - 1] * slope[index] <= 0
+        ? 0
+        : (slope[index - 1] + slope[index]) / TANGENT_AVERAGE_DIVISOR;
+  }
+
+  for (let index = 0; index < count - 1; index++) {
+    if (slope[index] === 0) {
+      tangent[index] = 0;
+      tangent[index + 1] = 0;
+      continue;
+    }
+    const alpha = tangent[index] / slope[index];
+    const beta = tangent[index + 1] / slope[index];
+    const magnitude = Math.hypot(alpha, beta);
+    if (magnitude > MONOTONE_TANGENT_LIMIT) {
+      const factor = MONOTONE_TANGENT_LIMIT / magnitude;
+      tangent[index] = factor * alpha * slope[index];
+      tangent[index + 1] = factor * beta * slope[index];
+    }
+  }
+
+  let path = `M${points[0].x},${points[0].y}`;
+  for (let index = 0; index < count - 1; index++) {
+    const start = points[index];
+    const end = points[index + 1];
+    const cp1x = start.x + dx[index] / BEZIER_CONTROL_DIVISOR;
+    const cp1y = start.y + (tangent[index] * dx[index]) / BEZIER_CONTROL_DIVISOR;
+    const cp2x = end.x - dx[index] / BEZIER_CONTROL_DIVISOR;
+    const cp2y = end.y - (tangent[index + 1] * dx[index]) / BEZIER_CONTROL_DIVISOR;
+    path += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${end.x},${end.y}`;
+  }
+
+  return path;
+}
+
+function cubicBezierPath(points: Point[]): string {
+  let path = `M${points[0].x},${points[0].y}`;
+  for (let index = 0; index < points.length - 1; index++) {
+    const start = points[index];
+    const end = points[index + 1];
+    const offset = (end.x - start.x) / BEZIER_CONTROL_DIVISOR;
+    path += ` C${start.x + offset},${start.y} ${end.x - offset},${end.y} ${end.x},${end.y}`;
+  }
+
+  return path;
+}
+
+function roundedStepPath(points: Point[], radius: number): string {
+  if (points.length < MIN_POINTS_FOR_ROUNDED_CORNERS) return straightPath(points);
+
+  let path = `M${points[0].x},${points[0].y}`;
+  for (let index = 1; index < points.length - 1; index++) {
+    const before = points[index - 1];
+    const vertex = points[index];
+    const after = points[index + 1];
+    const lengthBefore = Math.hypot(vertex.x - before.x, vertex.y - before.y);
+    const lengthAfter = Math.hypot(after.x - vertex.x, after.y - vertex.y);
+
+    if (lengthBefore === 0 || lengthAfter === 0) {
+      path += ` L${vertex.x},${vertex.y}`;
+      continue;
+    }
+
+    const radiusBefore = Math.min(radius, lengthBefore / ROUNDED_STEP_RADIUS_DIVISOR);
+    const radiusAfter = Math.min(radius, lengthAfter / ROUNDED_STEP_RADIUS_DIVISOR);
+    const entryX = vertex.x + ((before.x - vertex.x) / lengthBefore) * radiusBefore;
+    const entryY = vertex.y + ((before.y - vertex.y) / lengthBefore) * radiusBefore;
+    const exitX = vertex.x + ((after.x - vertex.x) / lengthAfter) * radiusAfter;
+    const exitY = vertex.y + ((after.y - vertex.y) / lengthAfter) * radiusAfter;
+    path += ` L${entryX},${entryY} Q${vertex.x},${vertex.y} ${exitX},${exitY}`;
+  }
+
+  const last = points[points.length - 1];
+  path += ` L${last.x},${last.y}`;
+
+  return path;
+}
+
+interface GenerateCurvePathParams {
+  points: Point[];
+  smoothing: boolean;
+  curve: ChartCurve;
+  clampMinY?: number;
+  clampMaxY?: number;
+}
+
+function generateCurvePath({
+  points,
+  smoothing,
+  curve,
+  clampMinY = Number.NEGATIVE_INFINITY,
+  clampMaxY = Number.POSITIVE_INFINITY,
+}: GenerateCurvePathParams): string {
+  if (points.length === 0) return '';
+  if (points.length === 1) return `M${points[0].x},${points[0].y}`;
+  if (!smoothing) return straightPath(points);
+
+  switch (curve) {
+    case ChartCurve.MONOTONE:
+      return monotonePath(points);
+    case ChartCurve.CUBIC_BEZIER:
+      return cubicBezierPath(points);
+    case ChartCurve.ROUNDED_STEP:
+      return roundedStepPath(points, ROUNDED_STEP_RADIUS);
+    default:
+      return catmullRomPath(points, { clampMinY, clampMaxY });
+  }
 }
 
 function calculatePathLength(points: Point[]): number {
@@ -191,6 +310,7 @@ interface RenderSvgParams {
   lineWidth?: number;
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
+  curve?: ChartCurve;
   showPoints?: boolean;
   animate?: boolean;
   beginAtZero?: boolean;
@@ -207,6 +327,7 @@ function renderSvg({
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
+  curve = ChartCurve.MONOTONE,
   showPoints = true,
   animate = true,
   beginAtZero = false,
@@ -313,9 +434,10 @@ function renderSvg({
         const startsFromBaseline =
           dataset.fill !== false && !dataset.dashed && segment.startIndex === 0;
         const firstPoint = segment.points[0];
-        const smoothPath = generateSmoothPath({
+        const smoothPath = generateCurvePath({
           points: segment.points,
-          smooth: smoothing,
+          smoothing,
+          curve,
           clampMinY: margin.top,
           clampMaxY: bottomY,
         });
@@ -470,6 +592,7 @@ interface GenerateSvgChartParams {
   maxPoints?: number;
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
+  curve?: ChartCurve;
   showPoints?: boolean;
   animate?: boolean;
   milestones?: boolean;
@@ -489,6 +612,7 @@ export function generateSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
+  curve,
   showPoints,
   animate,
   milestones = true,
@@ -535,6 +659,7 @@ export function generateSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
+    curve,
     showPoints,
     animate,
     beginAtZero,
@@ -552,6 +677,7 @@ interface GeneratePerRepoSvgChartParams {
   maxPoints?: number;
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
+  curve?: ChartCurve;
   showPoints?: boolean;
   animate?: boolean;
   beginAtZero?: boolean;
@@ -569,6 +695,7 @@ export function generatePerRepoSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
+  curve,
   showPoints,
   animate,
   beginAtZero,
@@ -601,6 +728,7 @@ export function generatePerRepoSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
+    curve,
     showPoints,
     animate,
     beginAtZero,
@@ -617,6 +745,7 @@ interface GenerateComparisonSvgChartParams {
   maxPoints?: number;
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
+  curve?: ChartCurve;
   showPoints?: boolean;
   animate?: boolean;
   beginAtZero?: boolean;
@@ -633,6 +762,7 @@ export function generateComparisonSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
+  curve,
   showPoints,
   animate,
   beginAtZero,
@@ -684,6 +814,7 @@ export function generateComparisonSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
+    curve,
     showPoints,
     animate,
     beginAtZero,
@@ -701,6 +832,7 @@ interface GenerateForecastSvgChartParams {
   maxPoints?: number;
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
+  curve?: ChartCurve;
   showPoints?: boolean;
   animate?: boolean;
   beginAtZero?: boolean;
@@ -718,6 +850,7 @@ export function generateForecastSvgChart({
   maxPoints,
   yAxisSide,
   smoothing,
+  curve,
   showPoints,
   animate,
   beginAtZero,
@@ -774,6 +907,7 @@ export function generateForecastSvgChart({
     lineWidth,
     yAxisSide,
     smoothing,
+    curve,
     showPoints,
     animate,
     beginAtZero,

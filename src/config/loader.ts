@@ -14,7 +14,7 @@ import {
   parseNumberList,
 } from './parsers';
 import type { Config, Visibility } from './types';
-import { ChartAxisSide, ChartRange, ChartTheme } from './types';
+import { ChartAxisSide, ChartCurve, ChartRange, ChartTheme } from './types';
 
 interface FileConfig {
   visibility?: string;
@@ -40,6 +40,7 @@ interface FileConfig {
   chartMaxPoints?: number;
   chartYAxisSide?: string;
   chartSmoothing?: boolean;
+  chartCurve?: string;
   chartShowPoints?: boolean;
   chartAnimation?: boolean;
   chartMilestones?: boolean;
@@ -113,6 +114,7 @@ export function loadConfigFile(configPath: string): FileConfig {
     chartMaxPoints: read('chart_max_points'),
     chartYAxisSide: read('chart_y_axis_side'),
     chartSmoothing: read('chart_smoothing'),
+    chartCurve: read('chart_curve'),
     chartShowPoints: read('chart_show_points'),
     chartAnimation: read('chart_animation'),
     chartMilestones: read('chart_milestones'),
@@ -152,6 +154,7 @@ export function loadConfig(): Config {
   const inputChartMaxPoints = core.getInput('chart-max-points');
   const inputChartYAxisSide = core.getInput('chart-y-axis-side');
   const inputChartSmoothing = core.getInput('chart-smoothing');
+  const inputChartCurve = core.getInput('chart-curve');
   const inputChartShowPoints = core.getInput('chart-show-points');
   const inputChartAnimation = core.getInput('chart-animation');
   const inputChartMilestones = core.getInput('chart-milestones');
@@ -240,6 +243,19 @@ export function loadConfig(): Config {
     );
   }
 
+  const rawChartCurve = inputChartCurve || fileConfig.chartCurve;
+  const isValidCurve = (value: string | undefined): value is ChartCurve =>
+    value === ChartCurve.CATMULL_ROM ||
+    value === ChartCurve.MONOTONE ||
+    value === ChartCurve.CUBIC_BEZIER ||
+    value === ChartCurve.ROUNDED_STEP;
+  const chartCurve = isValidCurve(rawChartCurve) ? rawChartCurve : DEFAULTS.chartCurve;
+  if (rawChartCurve && !isValidCurve(rawChartCurve)) {
+    core.warning(
+      `Invalid chart-curve "${rawChartCurve}". Must be "catmull-rom", "monotone", "cubic-bezier", or "rounded-step". Falling back to "${DEFAULTS.chartCurve}"`,
+    );
+  }
+
   const config: Config = {
     visibility,
     includeArchived:
@@ -286,6 +302,7 @@ export function loadConfig(): Config {
     chartYAxisSide,
     chartSmoothing:
       parseBool(inputChartSmoothing) ?? fileConfig.chartSmoothing ?? DEFAULTS.chartSmoothing,
+    chartCurve,
     chartShowPoints:
       parseBool(inputChartShowPoints) ?? fileConfig.chartShowPoints ?? DEFAULTS.chartShowPoints,
     chartAnimation:

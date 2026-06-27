@@ -61,7 +61,7 @@ Every run, Star Tracker commits these artifacts to a dedicated data branch:
 - :globe_with_meridians: **Multi-language:** English, Spanish, Catalan, Italian
 - :bar_chart: **CSV export:** Machine-readable output for data pipelines
 - :jigsaw: **Action outputs:** `total-stars`, `new-stars`, `new-stars`, `lost-stars`, `new-stargazers` (and much more) for workflow chaining
-- :shield: **Zero runtime deps:** Bundled TypeScript action, 95%+ test coverage, 490+ tests
+- :shield: **Zero runtime deps:** Bundled TypeScript action, 98%+ test coverage, 500+ tests
 
 ---
 
@@ -144,6 +144,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `chart-max-points`       | `30`                  | Curve granularity: points across the full span (capped at 365); `0` reconstructs at weekly resolution. Not a time window (see `chart-range`) |
 | `chart-y-axis-side`      | `left`                | Y-axis labels side: `left` or `right`                         |
 | `chart-smoothing`        | `true`                | Smooth curve (`true`) or straight segments to show spikes; applies to email charts too |
+| `chart-curve`            | `monotone`            | Curve when smoothing: `monotone` (no overshoot, best for stars), `catmull-rom`, `cubic-bezier`, `rounded-step`. Email approximates non-monotone curves |
 | `chart-show-points`      | `true`                | Draw a marker on each data point (`true`) or hide them for a cleaner dense line (`false`) |
 | `chart-animation`        | `true`                | Animate SVG charts (`true`) or render them static (`false`) for email/static contexts |
 | `chart-milestones`       | `true`                | Show milestone reference lines on the main star-history chart (`true`) or hide them (`false`) |
@@ -270,6 +271,8 @@ The charts plot the **real historical curve**: every star is placed on the date 
 The per-run snapshots on the data branch are still kept for the report's delta tables and notifications ("how many stars changed since the last run"), but the charts themselves no longer depend on them.
 
 One caveat: GitHub caps the stargazers listing at roughly **40,000 per repo** (oldest first), so for very large repos the most recent stars are unreachable. The reachable history is drawn accurately and the recent tail is bridged with a straight ramp up to the true current total, so the early curve stays accurate and the chart never goes flat at the end. Pair this with `smart-sampling` to keep the request cost bounded on big repos.
+
+The line style is configurable via `chart-curve` (`monotone` by default, plus `catmull-rom`, `cubic-bezier` and `rounded-step`), along with theme, colors, milestones, point markers, the time window and more. See the **[examples gallery](examples/)** for a rendered comparison of every option.
 
 ---
 

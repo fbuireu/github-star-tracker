@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { loadConfig } from '@config/loader';
-import { Visibility } from '@config/types';
+import { ChartCurve, Visibility } from '@config/types';
 import { compareStars, createSnapshot } from '@domain/comparison';
 import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
@@ -174,6 +174,7 @@ const defaultConfig = {
   chartMaxPoints: 30,
   chartYAxisSide: 'left' as const,
   chartSmoothing: true,
+  chartCurve: ChartCurve.MONOTONE,
   chartShowPoints: true,
   chartAnimation: true,
   chartMilestones: true,

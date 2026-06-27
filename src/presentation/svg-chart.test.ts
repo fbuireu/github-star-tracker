@@ -1,3 +1,4 @@
+import { ChartCurve } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
 import type { History, Snapshot } from '@domain/types';
@@ -472,20 +473,75 @@ describe('generateSvgChart', () => {
     expect(linePath).not.toContain(' C');
   });
 
-  it('rounds the curve past the data point at an asymmetric valley when smoothing', () => {
+  const curveYsOf = (svg: string): number[] => {
+    const d = svg.match(LINE_PATH_D)?.[1] ?? '';
+    const body = d.replace(PATH_MOVE_AND_FIRST_SEGMENT, '');
+    return [...body.matchAll(Y_COORDINATE)].map((coordinate) => Number(coordinate[1]));
+  };
+
+  it('rounds the catmull-rom curve past the data point at an asymmetric valley', () => {
     const history = makeHistory([100, 5, 200]);
-    const curveYs = (svg: string): number[] => {
-      const d = svg.match(LINE_PATH_D)?.[1] ?? '';
-      const body = d.replace(PATH_MOVE_AND_FIRST_SEGMENT, '');
-      return [...body.matchAll(Y_COORDINATE)].map((coordinate) => Number(coordinate[1]));
-    };
-    const smooth = curveYs(expectSvg(generateSvgChart({ history, locale: 'en', smoothing: true })));
-    const straight = curveYs(
+    const smooth = curveYsOf(
+      expectSvg(generateSvgChart({ history, locale: 'en', curve: ChartCurve.CATMULL_ROM })),
+    );
+    const straight = curveYsOf(
       expectSvg(generateSvgChart({ history, locale: 'en', smoothing: false })),
     );
 
     expect(Math.max(...smooth)).toBeGreaterThan(Math.max(...straight));
     expect(Math.max(...smooth)).toBeLessThanOrEqual(350);
+  });
+
+  it('does not overshoot the data point at a valley with the monotone curve', () => {
+    const history = makeHistory([100, 5, 200]);
+    const smooth = curveYsOf(
+      expectSvg(generateSvgChart({ history, locale: 'en', curve: ChartCurve.MONOTONE })),
+    );
+    const straight = curveYsOf(
+      expectSvg(generateSvgChart({ history, locale: 'en', smoothing: false })),
+    );
+
+    expect(Math.max(...smooth)).toBeLessThanOrEqual(Math.max(...straight) + 0.01);
+  });
+
+  it('defaults to the monotone curve, which does not overshoot', () => {
+    const history = makeHistory([100, 5, 200]);
+    const defaulted = curveYsOf(expectSvg(generateSvgChart({ history, locale: 'en' })));
+    const monotone = curveYsOf(
+      expectSvg(generateSvgChart({ history, locale: 'en', curve: ChartCurve.MONOTONE })),
+    );
+
+    expect(defaulted).toEqual(monotone);
+  });
+
+  it('keeps plateaus flat and never dips below them with the monotone curve', () => {
+    const history = makeHistory([1, 1, 1, 2, 3, 3, 3]);
+    const ys = curveYsOf(
+      expectSvg(generateSvgChart({ history, locale: 'en', curve: ChartCurve.MONOTONE })),
+    );
+
+    expect(Math.max(...ys)).toBeLessThanOrEqual(350);
+  });
+
+  it('rounds corners with quadratic segments for the rounded-step curve', () => {
+    const history = makeHistory([1, 1, 1, 2, 3, 3, 3]);
+    const result = expectSvg(
+      generateSvgChart({ history, locale: 'en', curve: ChartCurve.ROUNDED_STEP }),
+    );
+    const linePath = result.match(LINE_PATH_D)?.[1] ?? '';
+
+    expect(linePath).toContain(' Q');
+  });
+
+  it('uses cubic segments without overshoot for the cubic-bezier curve', () => {
+    const history = makeHistory([1, 1, 1, 2, 3, 3, 3]);
+    const result = expectSvg(
+      generateSvgChart({ history, locale: 'en', curve: ChartCurve.CUBIC_BEZIER }),
+    );
+    const linePath = result.match(LINE_PATH_D)?.[1] ?? '';
+
+    expect(linePath).toContain(' C');
+    expect(Math.max(...curveYsOf(result))).toBeLessThanOrEqual(350);
   });
 });
 

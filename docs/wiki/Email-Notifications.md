@@ -262,6 +262,7 @@ When `include-charts: true`, the HTML email includes chart images via QuickChart
 
 - Some email clients block external images by default (user must click "Show images")
 - Maximum 30 data points per chart (email charts ignore `chart-max-points` above 30)
+- QuickChart cannot draw every [`chart-curve`](Configuration#chart-curve) natively: `monotone` is exact, `rounded-step` falls back to `monotone`, and `catmull-rom` and `cubic-bezier` both render as a tensioned spline. The SVG charts on the data branch always use the exact curve.
 - If QuickChart.io is unreachable, charts appear as broken images; report text is unaffected
 
 ---

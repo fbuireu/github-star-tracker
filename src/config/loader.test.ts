@@ -11,7 +11,7 @@ import {
   parseNotificationThreshold,
   parseNumber,
 } from './parsers';
-import { Visibility } from './types';
+import { ChartCurve, Visibility } from './types';
 
 vi.mock('@actions/core', () => ({
   getInput: vi.fn().mockReturnValue(''),
@@ -701,6 +701,39 @@ describe('loadConfig', () => {
 
     expect(config.chartRange).toBe('all');
     expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid chart-range'));
+  });
+
+  it('defaults chart-curve to monotone', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    const config = loadConfig();
+
+    expect(config.chartCurve).toBe(ChartCurve.MONOTONE);
+  });
+
+  it('parses chart-curve input as rounded-step', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-curve') return ChartCurve.ROUNDED_STEP;
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartCurve).toBe(ChartCurve.ROUNDED_STEP);
+  });
+
+  it('warns and falls back to monotone for an invalid chart-curve', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+    vi.mocked(core.getInput).mockImplementation((name: string) => {
+      if (name === 'chart-curve') return 'wavy';
+      return '';
+    });
+
+    const config = loadConfig();
+
+    expect(config.chartCurve).toBe(ChartCurve.MONOTONE);
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid chart-curve'));
   });
 
   it('defaults chart-trend-line to false', () => {

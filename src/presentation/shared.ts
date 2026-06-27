@@ -1,4 +1,4 @@
-import { ChartRange, ChartTheme } from '@config/types';
+import { type ChartCurve, ChartRange, ChartTheme } from '@config/types';
 import { FORECAST_WEEKS, MS_PER_DAY } from '@domain/constants';
 import { type ForecastData, ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
@@ -19,6 +19,7 @@ export interface GenerateReportParams {
   forecastData?: ForecastData | null;
   topRepos?: number;
   smoothing?: boolean;
+  curve?: ChartCurve;
   showPoints?: boolean;
   milestones?: boolean;
   beginAtZero?: boolean;

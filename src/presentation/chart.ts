@@ -1,4 +1,4 @@
-import { ChartRange, ChartTheme } from '@config/types';
+import { ChartCurve, ChartRange, ChartTheme } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { formatDate } from '@domain/formatting';
 import type { History } from '@domain/types';
@@ -34,8 +34,23 @@ const CHART_STYLE = {
   weightedMovingAverageDash: [4, 4],
 };
 
-function tensionFor(smoothing: boolean): number {
-  return smoothing ? CHART_TENSION.smooth : CHART_TENSION.straight;
+interface CurveProps {
+  tension: number;
+  cubicInterpolationMode?: typeof ChartCurve.MONOTONE;
+}
+
+interface CurvePropsForParams {
+  smoothing: boolean;
+  curve: ChartCurve;
+}
+
+function curvePropsFor({ smoothing, curve }: CurvePropsForParams): CurveProps {
+  if (!smoothing) return { tension: CHART_TENSION.straight };
+  if (curve === ChartCurve.MONOTONE || curve === ChartCurve.ROUNDED_STEP) {
+    return { tension: CHART_TENSION.smooth, cubicInterpolationMode: ChartCurve.MONOTONE };
+  }
+
+  return { tension: CHART_TENSION.smooth };
 }
 
 interface PointRadiusForParams {
@@ -63,6 +78,7 @@ interface Dataset {
   backgroundColor: string;
   fill: boolean;
   tension: number;
+  cubicInterpolationMode?: typeof ChartCurve.MONOTONE;
   pointRadius: number;
   pointHoverRadius: number;
   borderDash?: number[];
@@ -216,14 +232,14 @@ function buildChartOptions({
 
 interface BuildStarsDatasetParams {
   data: number[];
-  tension: number;
+  curveProps: CurveProps;
   showPoints: boolean;
   palette: ColorPalette;
 }
 
 function buildStarsDataset({
   data,
-  tension,
+  curveProps,
   showPoints,
   palette,
 }: BuildStarsDatasetParams): Dataset {
@@ -233,7 +249,7 @@ function buildStarsDataset({
     borderColor: palette.accent,
     backgroundColor: `${palette.accent}${CHART_STYLE.translucentAlpha}`,
     fill: true,
-    tension,
+    ...curveProps,
     pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
     pointHoverRadius: CHART_POINT.primaryHoverRadius,
   };
@@ -302,6 +318,7 @@ interface GenerateChartUrlParams {
   title?: string;
   locale: Locale;
   smoothing?: boolean;
+  curve?: ChartCurve;
   showPoints?: boolean;
   milestones?: boolean;
   beginAtZero?: boolean;
@@ -316,6 +333,7 @@ export function generateChartUrl({
   title,
   locale,
   smoothing = true,
+  curve = ChartCurve.MONOTONE,
   showPoints = true,
   milestones = true,
   beginAtZero = false,
@@ -330,10 +348,10 @@ export function generateChartUrl({
 
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const tension = tensionFor(smoothing);
+  const curveProps = curvePropsFor({ smoothing, curve });
   const chartTitle = title ?? t.report.starHistory;
   const { labels, data } = prepareChartData({ history, locale, range });
-  const datasets: Dataset[] = [buildStarsDataset({ data, tension, showPoints, palette })];
+  const datasets: Dataset[] = [buildStarsDataset({ data, curveProps, showPoints, palette })];
 
   if (trendLine) {
     datasets.push({
@@ -342,7 +360,7 @@ export function generateChartUrl({
       borderColor: palette.neutral,
       backgroundColor: 'transparent',
       fill: false,
-      tension,
+      ...curveProps,
       pointRadius: CHART_POINT.hidden,
       pointHoverRadius: CHART_POINT.hidden,
       borderDash: CHART_STYLE.trendDash,
@@ -375,6 +393,7 @@ interface GeneratePerRepoChartUrlParams {
   title?: string;
   locale: Locale;
   smoothing?: boolean;
+  curve?: ChartCurve;
   showPoints?: boolean;
   beginAtZero?: boolean;
   theme?: ChartTheme;
@@ -387,6 +406,7 @@ export function generatePerRepoChartUrl({
   title,
   locale,
   smoothing = true,
+  curve = ChartCurve.MONOTONE,
   showPoints = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
@@ -397,7 +417,7 @@ export function generatePerRepoChartUrl({
   }
 
   const palette = resolvePalette(theme);
-  const tension = tensionFor(smoothing);
+  const curveProps = curvePropsFor({ smoothing, curve });
   const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
     -CHART.maxDataPoints,
   );
@@ -408,7 +428,7 @@ export function generatePerRepoChartUrl({
     return repo?.stars ?? 0;
   });
   const chartTitle = title ?? `${repoFullName} Star History`;
-  const datasets: Dataset[] = [buildStarsDataset({ data, tension, showPoints, palette })];
+  const datasets: Dataset[] = [buildStarsDataset({ data, curveProps, showPoints, palette })];
 
   const config = buildChartConfig({
     labels,
@@ -428,6 +448,7 @@ interface GenerateComparisonChartUrlParams {
   title?: string;
   locale: Locale;
   smoothing?: boolean;
+  curve?: ChartCurve;
   showPoints?: boolean;
   beginAtZero?: boolean;
   theme?: ChartTheme;
@@ -440,6 +461,7 @@ export function generateComparisonChartUrl({
   title,
   locale,
   smoothing = true,
+  curve = ChartCurve.MONOTONE,
   showPoints = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
@@ -455,7 +477,7 @@ export function generateComparisonChartUrl({
 
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const tension = tensionFor(smoothing);
+  const curveProps = curvePropsFor({ smoothing, curve });
   const chartTitle = title ?? t.report.topRepositories;
   const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
     -CHART.maxDataPoints,
@@ -477,7 +499,7 @@ export function generateComparisonChartUrl({
       borderColor: color,
       backgroundColor: `${color}${CHART_STYLE.translucentAlpha}`,
       fill: false,
-      tension,
+      ...curveProps,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
     };
@@ -500,6 +522,7 @@ interface GenerateForecastChartUrlParams {
   locale: Locale;
   title?: string;
   smoothing?: boolean;
+  curve?: ChartCurve;
   showPoints?: boolean;
   beginAtZero?: boolean;
   theme?: ChartTheme;
@@ -512,6 +535,7 @@ export function generateForecastChartUrl({
   locale,
   title,
   smoothing = true,
+  curve = ChartCurve.MONOTONE,
   showPoints = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
@@ -523,7 +547,7 @@ export function generateForecastChartUrl({
 
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const tension = tensionFor(smoothing);
+  const curveProps = curvePropsFor({ smoothing, curve });
   const chartTitle = title ?? t.forecast.sectionTitle;
   const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
     -CHART.maxDataPoints,
@@ -544,7 +568,7 @@ export function generateForecastChartUrl({
       borderColor: palette.accent,
       backgroundColor: `${palette.accent}${CHART_STYLE.translucentAlpha}`,
       fill: true,
-      tension,
+      ...curveProps,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
       pointHoverRadius: CHART_POINT.primaryHoverRadius,
     },
@@ -554,7 +578,7 @@ export function generateForecastChartUrl({
       borderColor: palette.positive,
       backgroundColor: 'transparent',
       fill: false,
-      tension,
+      ...curveProps,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
       borderDash: CHART_STYLE.linearRegressionDash,
@@ -565,7 +589,7 @@ export function generateForecastChartUrl({
       borderColor: palette.negative,
       backgroundColor: 'transparent',
       fill: false,
-      tension,
+      ...curveProps,
       pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
       pointHoverRadius: CHART_POINT.secondaryHoverRadius,
       borderDash: CHART_STYLE.weightedMovingAverageDash,

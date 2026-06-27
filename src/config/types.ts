@@ -34,6 +34,15 @@ export const ChartRange = {
 
 export type ChartRange = (typeof ChartRange)[keyof typeof ChartRange];
 
+export const ChartCurve = {
+  CATMULL_ROM: 'catmull-rom',
+  MONOTONE: 'monotone',
+  CUBIC_BEZIER: 'cubic-bezier',
+  ROUNDED_STEP: 'rounded-step',
+} as const;
+
+export type ChartCurve = (typeof ChartCurve)[keyof typeof ChartCurve];
+
 export interface Config {
   visibility: Visibility;
   includeArchived: boolean;
@@ -59,6 +68,7 @@ export interface Config {
   chartMaxPoints: number;
   chartYAxisSide: ChartAxisSide;
   chartSmoothing: boolean;
+  chartCurve: ChartCurve;
   chartShowPoints: boolean;
   chartAnimation: boolean;
   chartMilestones: boolean;
