@@ -55,7 +55,7 @@ export const CHART = {
 } as const;
 
 export const CHART_TENSION = {
-  smooth: 0.4,
+  smooth: 0.6,
   straight: 0,
 } as const;
 

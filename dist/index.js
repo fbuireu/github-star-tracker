@@ -32987,10 +32987,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -35282,7 +35282,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35405,7 +35405,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -38641,7 +38641,7 @@ var CHART = {
   maxComparison: 10
 };
 var CHART_TENSION = {
-  smooth: 0.4,
+  smooth: 0.6,
   straight: 0
 };
 var TREND_WINDOW = 7;
@@ -40273,7 +40273,12 @@ function scaleY({ value, minValue, maxValue, chartTop, chartHeight }) {
   if (maxValue === minValue) return chartTop + chartHeight / 2;
   return chartTop + chartHeight - (value - minValue) / (maxValue - minValue) * chartHeight;
 }
-function generateSmoothPath({ points, smooth = true }) {
+function generateSmoothPath({
+  points,
+  smooth = true,
+  clampMinY = Number.NEGATIVE_INFINITY,
+  clampMaxY = Number.POSITIVE_INFINITY
+}) {
   if (points.length === 0) return "";
   if (points.length === 1) return `M${points[0].x},${points[0].y}`;
   let path4 = `M${points[0].x},${points[0].y}`;
@@ -40291,19 +40296,17 @@ function generateSmoothPath({ points, smooth = true }) {
     const nextPoint = points[Math.min(points.length - 1, index + 2)];
     const cp1x = startPoint.x + (endPoint.x - previousPoint.x) * tension / BEZIER_CONTROL_DIVISOR;
     const cp2x = endPoint.x - (nextPoint.x - startPoint.x) * tension / BEZIER_CONTROL_DIVISOR;
-    const segMinY = Math.min(startPoint.y, endPoint.y);
-    const segMaxY = Math.max(startPoint.y, endPoint.y);
     const cp1y = Math.min(
-      segMaxY,
+      clampMaxY,
       Math.max(
-        segMinY,
+        clampMinY,
         startPoint.y + (endPoint.y - previousPoint.y) * tension / BEZIER_CONTROL_DIVISOR
       )
     );
     const cp2y = Math.min(
-      segMaxY,
+      clampMaxY,
       Math.max(
-        segMinY,
+        clampMinY,
         endPoint.y - (nextPoint.y - startPoint.y) * tension / BEZIER_CONTROL_DIVISOR
       )
     );
@@ -40441,7 +40444,12 @@ function renderSvg({
       const bottomY = CHART.height - margin.bottom;
       const startsFromBaseline = dataset.fill !== false && !dataset.dashed && segment.startIndex === 0;
       const firstPoint = segment.points[0];
-      const smoothPath = generateSmoothPath({ points: segment.points, smooth: smoothing });
+      const smoothPath = generateSmoothPath({
+        points: segment.points,
+        smooth: smoothing,
+        clampMinY: margin.top,
+        clampMaxY: bottomY
+      });
       const pathD = startsFromBaseline ? `M${firstPoint.x},${bottomY} L${firstPoint.x},${firstPoint.y}${smoothPath.slice(`M${firstPoint.x},${firstPoint.y}`.length)}` : smoothPath;
       const pathLength = calculatePathLength(
         startsFromBaseline ? [{ x: firstPoint.x, y: bottomY }, ...segment.points] : segment.points

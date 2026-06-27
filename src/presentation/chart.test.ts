@@ -8,6 +8,7 @@ import {
   generateForecastChartUrl,
   generatePerRepoChartUrl,
 } from './chart';
+import { CHART_TENSION } from './constants';
 
 const CHART_CONFIG_PARAM = '&c=';
 const CHART_HEIGHT = '&h=';
@@ -586,14 +587,14 @@ describe('chart', () => {
       const url = generateChartUrl({ history: mockHistory, locale: 'en' });
 
       expect(url).not.toBeNull();
-      if (url) expect(tensionOf(url)).toBe(0.4);
+      if (url) expect(tensionOf(url)).toBe(CHART_TENSION.smooth);
     });
 
     it('curves the line when smoothing is enabled', () => {
       const url = generateChartUrl({ history: mockHistory, locale: 'en', smoothing: true });
 
       expect(url).not.toBeNull();
-      if (url) expect(tensionOf(url)).toBe(0.4);
+      if (url) expect(tensionOf(url)).toBe(CHART_TENSION.smooth);
     });
 
     it('draws straight segments when smoothing is disabled', () => {
