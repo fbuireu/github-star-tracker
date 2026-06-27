@@ -406,7 +406,7 @@ The curve used to connect points when [`chart-smoothing`](#chart-smoothing) is `
 - **`cubic-bezier`**: eased S-curves that are flat at every point. Similar to `monotone` but with more pronounced, symmetric transitions.
 - **`rounded-step`**: keeps the segments straight and only rounds the corners with a fixed radius, so the chart reads as a step chart with softened edges.
 
-See the **[examples gallery](https://github.com/fbuireu/github-star-tracker/tree/main/examples#curve-styles-chart-curve)** for a rendered comparison.
+See the **[examples gallery](https://github.com/fbuireu/github-star-tracker/blob/main/examples/README.md#curve-styles-chart-curve)** for a rendered comparison.
 
 **Email charts** (rendered via QuickChart) respect this setting with one caveat, since QuickChart cannot draw every curve natively: `monotone` is reproduced exactly, `rounded-step` falls back to `monotone`, and `catmull-rom` and `cubic-bezier` both render as a tensioned spline. The SVG charts on the data branch always use the exact curve.
 

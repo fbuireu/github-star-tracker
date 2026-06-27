@@ -268,7 +268,7 @@ GitHub caps the stargazers listing at roughly 40,000 per repo. For very large re
 
 ## Comparing Options
 
-A look at how the main settings change the chart, to help you pick. For a rendered side-by-side of every option (default vs on/off vs variants), see the **[examples gallery](https://github.com/fbuireu/github-star-tracker/tree/main/examples)**.
+A look at how the main settings change the chart, to help you pick. For a rendered side-by-side of every option (default vs on/off vs variants), see the **[examples gallery](https://github.com/fbuireu/github-star-tracker/blob/main/examples/README.md)**.
 
 ### Curve styles (`chart-curve`)
 
