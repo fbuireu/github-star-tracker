@@ -1,3 +1,10 @@
+## [1.21.3](https://github.com/fbuireu/github-star-tracker/compare/v1.21.2...v1.21.3) (2026-06-27)
+
+
+### Bug Fixes
+
+* make chart smoothing visibly round corners ([#134](https://github.com/fbuireu/github-star-tracker/issues/134)) ([#136](https://github.com/fbuireu/github-star-tracker/issues/136)) ([972a67e](https://github.com/fbuireu/github-star-tracker/commit/972a67eab9ef21500e5e06ed5d9f2b819c62b009))
+
 ## [1.21.2](https://github.com/fbuireu/github-star-tracker/compare/v1.21.1...v1.21.2) (2026-06-27)
 
 
