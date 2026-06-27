@@ -1,3 +1,10 @@
+## [1.21.2](https://github.com/fbuireu/github-star-tracker/compare/v1.21.1...v1.21.2) (2026-06-27)
+
+
+### Bug Fixes
+
+* measure growth velocity period-over-period and nest it under forecast ([#133](https://github.com/fbuireu/github-star-tracker/issues/133)) ([72881a5](https://github.com/fbuireu/github-star-tracker/commit/72881a56e4580c545f6d3b406cc7350de66d36a1)), closes [#132](https://github.com/fbuireu/github-star-tracker/issues/132)
+
 ## [1.21.1](https://github.com/fbuireu/github-star-tracker/compare/v1.21.0...v1.21.1) (2026-06-26)
 
 
