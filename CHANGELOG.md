@@ -1,3 +1,10 @@
+## [1.21.4](https://github.com/fbuireu/github-star-tracker/compare/v1.21.3...v1.21.4) (2026-06-27)
+
+
+### Bug Fixes
+
+* make chart-max-points control curve resolution ([#135](https://github.com/fbuireu/github-star-tracker/issues/135)) ([#137](https://github.com/fbuireu/github-star-tracker/issues/137)) ([c8e74c1](https://github.com/fbuireu/github-star-tracker/commit/c8e74c15f85e6a420d16bc2d37ae5a3559d303e2))
+
 ## [1.21.3](https://github.com/fbuireu/github-star-tracker/compare/v1.21.2...v1.21.3) (2026-06-27)
 
 
