@@ -160,9 +160,10 @@ Charts are produced on the first run, since the curve is reconstructed from hist
 
 ### Data Point Limits
 
-- By default charts plot up to **30 points** (`chart-max-points`, default `30`).
-- Set `chart-max-points: 0` to plot the full reconstructed history.
-- The points are sampled across the real time span of the star history.
+- `chart-max-points` sets the curve granularity: how many points are sampled across the **full** time span of the star history (first star to now). It is not a time window, so raising it does not show more history, only a finer line over the same span. Use `chart-range` to narrow the window.
+- By default charts plot **30 points** (`chart-max-points`, default `30`). Higher values are allowed and capped at **365**.
+- Set `chart-max-points: 0` to reconstruct the full history at **weekly** resolution, so the point count scales with the repository's age.
+- Email charts are always limited to 30 points.
 - JSON data still contains all snapshots up to `max-history`
 
 ### Localization
@@ -227,7 +228,7 @@ The chart appearance is configurable via these inputs:
 |---|---|---|
 | `chart-line-color` | `#dfb317` | Hex color for the primary chart line/fill/points (star-history, per-repo and forecast historical series; not the comparison palette or forecast trend lines). A bare `#` starts a YAML comment, so quote it (`"#6b63ff"`) or drop the `#` (`6b63ff`). |
 | `chart-line-width` | `2.5` | Stroke width in px of data lines across all charts. |
-| `chart-max-points` | `30` | Max data points to plot; `0` plots the full reconstructed history. |
+| `chart-max-points` | `30` | Curve granularity: points sampled across the full span (capped at `365`); `0` reconstructs at weekly resolution. Resolution, not a time window (see `chart-range`). Email is always 30. |
 | `chart-y-axis-side` | `left` | Y-axis label side: `left` or `right`. |
 | `chart-smoothing` | `true` | `true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. Applies to email charts too. |
 | `chart-show-points` | `true` | `true` marks each data point with a dot; `false` hides them for a cleaner dense line. Applies to email charts too. |

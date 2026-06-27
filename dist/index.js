@@ -32987,10 +32987,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -35282,7 +35282,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35405,7 +35405,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -38728,6 +38728,8 @@ function addSnapshot({ history, snapshot, maxHistory }) {
 
 // src/domain/star-history.ts
 var MIN_HISTORY_BUCKETS = 2;
+var MAX_HISTORY_BUCKETS = 365;
+var FULL_HISTORY_CADENCE_MS = 7 * MS_PER_DAY;
 function cumulativeCounts(sortedTimes, edges) {
   const counts = [];
   let pointer = 0;
@@ -38797,7 +38799,8 @@ function buildStarHistory({
   }
   const end = (now ?? /* @__PURE__ */ new Date()).getTime();
   const edges = earliest >= end ? [earliest - MS_PER_DAY, end] : (() => {
-    const buckets = Math.max(MIN_HISTORY_BUCKETS, Math.floor(maxPoints));
+    const requested = maxPoints > 0 ? Math.floor(maxPoints) : Math.ceil((end - earliest) / FULL_HISTORY_CADENCE_MS) + 1;
+    const buckets = Math.min(MAX_HISTORY_BUCKETS, Math.max(MIN_HISTORY_BUCKETS, requested));
     const step = (end - earliest) / (buckets - 1);
     return Array.from(
       { length: buckets },
@@ -40847,10 +40850,6 @@ async function trackStars() {
         const sorted = [...results.repos].filter((repo) => !repo.isRemoved).sort((repoA, repoB) => repoB.current - repoA.current);
         const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
         const chartNow = /* @__PURE__ */ new Date();
-        const chartMaxPoints = Math.min(
-          config.chartMaxPoints || CHART.maxDataPoints,
-          CHART.maxDataPoints
-        );
         const repoTotals = repos.map((repo) => ({
           fullName: repo.fullName,
           name: repo.name,
@@ -40860,7 +40859,7 @@ async function trackStars() {
         const starHistory = config.includeCharts ? buildStarHistory({
           repoStargazers,
           repos: repoTotals,
-          maxPoints: chartMaxPoints,
+          maxPoints: config.chartMaxPoints,
           now: chartNow
         }) : { snapshots: [] };
         const history = starHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? starHistory : updatedHistory;
@@ -40930,7 +40929,7 @@ async function trackStars() {
                 (stargazerEntry) => stargazerEntry.repoFullName === repoName
               ),
               repos: [repoTotal],
-              maxPoints: chartMaxPoints,
+              maxPoints: config.chartMaxPoints,
               now: chartNow
             }) : { snapshots: [] };
             const repoHistory = repoStarHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? repoStarHistory : history;

@@ -47,7 +47,7 @@ smart_sampling_threshold: 1500
 smart_sampling_pages: 30
 chart_line_color: "#dfb317"   # quote the # or drop it (6b63ff) - a bare # starts a YAML comment
 chart_line_width: 2.5
-chart_max_points: 30          # 0 = full history
+chart_max_points: 30          # granularity, capped at 365; 0 = weekly resolution
 chart_y_axis_side: left
 chart_smoothing: true
 ```
@@ -358,14 +358,14 @@ Stroke width in px (>0) of data lines across all charts.
 
 ### `chart-max-points`
 
-Max data points to plot.
+How many points are sampled across the full reconstructed history. This is the curve's granularity, not a time window: every chart already spans the whole history (from the first star to now), and a higher value just samples that same span more finely for a more detailed line. To narrow the time window instead, use [`chart-range`](#chart-range).
 
 | Property | Value |
 |---|---|
 | **Type** | `number` |
 | **Default** | `30` |
 
-Set to `0` to plot the full reconstructed history.
+Values above `30` are allowed and capped at `365`. Set to `0` to reconstruct the full history at weekly resolution (the number of points then scales with the repository's age). Email charts are always limited to 30 points regardless of this setting.
 
 ### `chart-y-axis-side`
 

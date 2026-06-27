@@ -209,4 +209,44 @@ describe('buildStarHistory', () => {
     expect(result.snapshots.length).toBeLessThanOrEqual(30);
     expect(result.snapshots[0].timestamp.startsWith('2021')).toBe(true);
   });
+
+  it('reconstructs a weekly-cadence full history when maxPoints is 0', () => {
+    const earliest = '2026-01-01T00:00:00Z';
+    const result = buildStarHistory({
+      repoStargazers: [repoStargazers('user/a', [earliest, '2026-06-01T00:00:00Z'])],
+      repos: [repoTotal('user/a', 2)],
+      maxPoints: 0,
+      now: NOW,
+    });
+
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+    const expectedBuckets = Math.ceil((NOW.getTime() - Date.parse(earliest)) / weekMs) + 1;
+    expect(result.snapshots).toHaveLength(expectedBuckets);
+
+    const firstGap =
+      Date.parse(result.snapshots[1].timestamp) - Date.parse(result.snapshots[0].timestamp);
+    expect(Math.round(firstGap / weekMs)).toBe(1);
+  });
+
+  it('caps the full-history reconstruction for very old repositories', () => {
+    const result = buildStarHistory({
+      repoStargazers: [repoStargazers('user/a', ['2000-01-01T00:00:00Z', '2026-06-01T00:00:00Z'])],
+      repos: [repoTotal('user/a', 2)],
+      maxPoints: 0,
+      now: NOW,
+    });
+
+    expect(result.snapshots).toHaveLength(365);
+  });
+
+  it('honors a maxPoints value above the legacy 30-point limit', () => {
+    const result = buildStarHistory({
+      repoStargazers: [repoStargazers('user/a', ['2024-01-01T00:00:00Z', '2026-06-01T00:00:00Z'])],
+      repos: [repoTotal('user/a', 2)],
+      maxPoints: 50,
+      now: NOW,
+    });
+
+    expect(result.snapshots).toHaveLength(50);
+  });
 });
