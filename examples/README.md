@@ -78,7 +78,7 @@ Default on the left, the changed option on the right.
 
 ### `chart-custom-milestones`
 
-| default thresholds | `100, 200, 300` |
+| default thresholds | `100, 200` |
 |---|---|
 | ![default milestones](option-default.svg) | ![custom milestones](option-custom-milestones.svg) |
 
