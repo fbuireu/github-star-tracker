@@ -519,7 +519,7 @@ Whether to add a growth-velocity section to the Markdown and HTML reports.
 | **Type** | `boolean` |
 | **Default** | `false` |
 
-When `true`, the report includes a "Growth Velocity" section computed from the tracked history: the average stars gained per day, the percent growth over the tracked window, and a projection of how many days remain until the next star milestone at the current pace. Needs at least two snapshots spanning some time.
+When `true`, the report includes a "Growth Velocity" section measured period over period (the latest snapshot against the previous one): the stars gained per day, the percent growth, and a projection of how many days remain until the next star milestone at the current pace. Measuring against the previous snapshot keeps the figures tied to recent momentum rather than an arbitrary all-time baseline. The section is nested under the Growth Forecast section when forecasts are enabled. Needs at least two snapshots spanning some time.
 
 ---
 
