@@ -349,7 +349,7 @@ on:
 
 ### Customized Charts
 
-Tune the chart appearance: the curve style, theme, colors, milestones, trend line and time window. See **[Star Trend Charts](Star-Trend-Charts#comparing-options)** for a side-by-side comparison of every option.
+Tune the chart appearance: the curve style, theme, colors, milestones, trend line and time window. To see what each option looks like, browse the rendered side-by-side comparisons in the **[examples gallery](https://github.com/fbuireu/github-star-tracker/tree/main/examples)**.
 
 ```yaml
 - uses: fbuireu/github-star-tracker@v1

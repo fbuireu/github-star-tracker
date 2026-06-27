@@ -30,7 +30,7 @@
     }
   </style>
   <rect width="800" height="400" class="chart-bg" />
-  <text x="400" y="14" text-anchor="middle" class="chart-text" font-size="16" font-weight="bold" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">Last 90 days (chart-range: 90d)</text>
+  <text x="400" y="14" text-anchor="middle" class="chart-text" font-size="16" font-weight="bold" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"></text>
   
   <g class="grid">
     <line x1="60" y1="331.25" x2="770" y2="331.25" class="chart-grid" stroke-opacity="0.3" />

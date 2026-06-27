@@ -23,7 +23,7 @@ Shows the **total star count** across all tracked repositories over time.
 - X-axis date labels scaled to the time span: years for multi-year histories (e.g. `2023 2024 2025`), day-level labels for shorter ranges
 - Optional **trend line**: when `chart-trend-line` is enabled, a dashed neutral-gray line (`#6a737d`) is overlaid on top of the gold star line. It is a 7-point moving average that smooths week-to-week noise so the underlying growth direction is easier to read. This chart has no legend, so the gray dashed line is the trend line (the solid gold line is the actual star count).
 
-![Total Stars Chart](https://quickchart.io/chart?c=%7Btype%3A%27line%27%2Cdata%3A%7Blabels%3A%5B%27Jan%201%27%2C%27Jan%208%27%2C%27Jan%2015%27%5D%2Cdatasets%3A%5B%7Blabel%3A%27Total%20Stars%27%2Cdata%3A%5B100%2C105%2C112%5D%2CbackgroundColor%3A%27rgba%2875%2C192%2C192%2C0.2%29%27%2CborderColor%3A%27rgba%2875%2C192%2C192%2C1%29%27%7D%5D%7D%7D)
+![Star History](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/examples/star-history.svg)
 
 ### 2. Per-Repo Charts
 
@@ -37,7 +37,7 @@ Each per-repo chart uses that repository's own timeline, starting at its first s
 - One chart per top repo
 - Collapsible in the Markdown report via `<details>`
 
-![Per-Repo Chart](../../examples/per-repo.svg)
+![Per-Repo Chart](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/examples/per-repo.svg)
 
 ### 3. Comparison Chart
 
@@ -49,7 +49,7 @@ Top N repositories overlaid on a single chart for comparison.
 - Legend showing repo names (short names when all repos share the same owner)
 - Up to 10 repos (limited by `CHART.maxComparison`)
 
-![Comparison Chart](https://quickchart.io/chart?c=%7Btype%3A%27line%27%2Cdata%3A%7Blabels%3A%5B%27Jan%201%27%2C%27Jan%208%27%5D%2Cdatasets%3A%5B%7Blabel%3A%27repo-a%27%2Cdata%3A%5B50%2C55%5D%2CborderColor%3A%27%2336A2EB%27%7D%2C%7Blabel%3A%27repo-b%27%2Cdata%3A%5B30%2C32%5D%2CborderColor%3A%27%23FF6384%27%7D%5D%7D%7D)
+![Comparison Chart](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/examples/comparison.svg)
 
 
 ### 4. Forecast Chart
@@ -63,7 +63,7 @@ Historical data + projected growth for the next 4 weeks.
 - Dashed red line for weighted moving average forecast
 - Legend distinguishing methods
 
-![Forecast Chart](../../examples/forecast.svg)
+![Forecast Chart](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/examples/forecast.svg)
 
 ---
 
@@ -268,17 +268,11 @@ GitHub caps the stargazers listing at roughly 40,000 per repo. For very large re
 
 ## Comparing Options
 
-A side-by-side look at how the main settings change the chart, to help you pick. Rendered images for all of these live in the **[examples gallery](../../examples/README.md)**.
+A look at how the main settings change the chart, to help you pick. For a rendered side-by-side of every option (default vs on/off vs variants), see the **[examples gallery](https://github.com/fbuireu/github-star-tracker/tree/main/examples)**.
 
 ### Curve styles (`chart-curve`)
 
-All four use the same stepped data so the differences are clear. `monotone` (the default), `cubic-bezier` and `rounded-step` keep the plateaus flat; only `catmull-rom` overshoots at the foot of a step, briefly drawing the line below the previous value.
-
-| `monotone` (default) | `catmull-rom` |
-|---|---|
-| ![monotone](../../examples/curve-monotone.svg) | ![catmull-rom](../../examples/curve-catmull-rom.svg) |
-| **`cubic-bezier`** | **`rounded-step`** |
-| ![cubic-bezier](../../examples/curve-cubic-bezier.svg) | ![rounded-step](../../examples/curve-rounded-step.svg) |
+All four curves keep the plateaus flat except `catmull-rom`, which overshoots at the foot of a step, briefly drawing the line below the previous value.
 
 | Curve | Overshoots? | Best for |
 |---|---|---|
