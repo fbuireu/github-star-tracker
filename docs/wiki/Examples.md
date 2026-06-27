@@ -347,6 +347,26 @@ on:
     top-repos: '5'
 ```
 
+### Customized Charts
+
+Tune the chart appearance: the curve style, theme, colors, milestones, trend line and time window. See **[Star Trend Charts](Star-Trend-Charts#comparing-options)** for a side-by-side comparison of every option.
+
+```yaml
+- uses: fbuireu/github-star-tracker@v1
+  with:
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+    include-charts: true
+    chart-curve: monotone              # monotone | catmull-rom | cubic-bezier | rounded-step
+    chart-theme: dark                  # auto | light | dark
+    chart-line-color: '6b63ff'         # drop the # (a bare # starts a YAML comment) or quote it
+    chart-line-width: '3'
+    chart-milestones: true
+    chart-custom-milestones: '250, 750, 2500'
+    chart-trend-line: true
+    chart-range: 1y                    # 30d | 90d | 1y | all
+    chart-begin-at-zero: false
+```
+
 ### YAML Configuration File
 
 ```yaml
@@ -368,6 +388,7 @@ exclude_repos:
   - deprecated-project
 locale: en
 include_charts: true
+chart_curve: monotone
 track_stargazers: true
 top_repos: 5
 notification_threshold: auto
@@ -385,6 +406,9 @@ notification_threshold: auto
     min-stars: '5'
     locale: 'en'
     include-charts: true
+    chart-curve: monotone
+    chart-theme: auto
+    chart-trend-line: true
     track-stargazers: true
     top-repos: '5'
     max-history: '52'
