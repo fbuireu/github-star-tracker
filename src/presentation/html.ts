@@ -191,6 +191,24 @@ export function generateHtmlReport({
       </div>`
         : '';
 
+  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
+  const velocityList = velocity
+    ? `
+        <ul style="margin:0;padding-left:20px;">
+          <li><strong>${t.velocity.starsPerDay}:</strong> ${velocity.starsPerDay}</li>
+          ${
+            velocity.growthPercent !== null
+              ? `<li><strong>${t.velocity.growth}:</strong> <span style="color:${deltaColor({ delta: velocity.growthPercent, palette })};">${formatSignedPercent(velocity.growthPercent)}</span></li>`
+              : ''
+          }
+          ${
+            velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null
+              ? `<li>${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}</li>`
+              : ''
+          }
+        </ul>`
+    : '';
+
   const forecastSection = forecastData
     ? `
       <div style="margin-top:24px;">
@@ -211,29 +229,25 @@ export function generateHtmlReport({
         </div>`,
           )
           .join('')}
+        ${
+          velocityList
+            ? `<div style="margin-top:16px;">
+          <h3 style="font-size:16px;margin-bottom:8px;">🚀 ${t.velocity.sectionTitle}</h3>
+          ${velocityList}
+        </div>`
+            : ''
+        }
       </div>`
     : '';
 
-  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
-  const velocitySection = velocity
-    ? `
+  const velocitySection =
+    !forecastData && velocityList
+      ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">🚀 ${t.velocity.sectionTitle}</h2>
-        <ul style="margin:0;padding-left:20px;">
-          <li><strong>${t.velocity.starsPerDay}:</strong> ${velocity.starsPerDay}</li>
-          ${
-            velocity.growthPercent !== null
-              ? `<li><strong>${t.velocity.growth}:</strong> <span style="color:${deltaColor({ delta: velocity.growthPercent, palette })};">${formatSignedPercent(velocity.growthPercent)}</span></li>`
-              : ''
-          }
-          ${
-            velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null
-              ? `<li>${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}</li>`
-              : ''
-          }
-        </ul>
+        ${velocityList}
       </div>`
-    : '';
+      : '';
 
   return `<!DOCTYPE html>
 <html>

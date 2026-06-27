@@ -118,6 +118,35 @@ describe('generateMarkdownReport', () => {
     expect(report).not.toContain('+-25%');
   });
 
+  it('nests velocity under the forecast section when both are present', () => {
+    const forecastData: ForecastData = {
+      aggregate: {
+        forecasts: [
+          {
+            method: ForecastMethod.LINEAR_REGRESSION,
+            points: [
+              { weekOffset: 1, predicted: 25 },
+              { weekOffset: 2, predicted: 27 },
+              { weekOffset: 3, predicted: 29 },
+              { weekOffset: 4, predicted: 31 },
+            ],
+          },
+        ],
+      },
+      repos: [],
+    };
+
+    const report = renderMarkdown({
+      history: velocityHistory,
+      velocityMetrics: true,
+      forecastData,
+    });
+
+    expect(report).toContain('\n### 🚀 Growth Velocity\n');
+    expect(report).not.toContain('\n## 🚀 Growth Velocity\n');
+    expect(report.indexOf('Growth Forecast')).toBeLessThan(report.indexOf('Growth Velocity'));
+  });
+
   it('handles first run with no previous timestamp', () => {
     const report = renderMarkdown({ previousTimestamp: null });
 

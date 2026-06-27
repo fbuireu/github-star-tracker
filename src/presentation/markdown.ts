@@ -176,6 +176,21 @@ export function generateMarkdownReport({
           ]
         : [];
 
+  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
+  const velocityLines = velocity
+    ? [
+        `- **${t.velocity.starsPerDay}:** ${velocity.starsPerDay}`,
+        ...(velocity.growthPercent !== null
+          ? [`- **${t.velocity.growth}:** ${formatSignedPercent(velocity.growthPercent)}`]
+          : []),
+        ...(velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null
+          ? [
+              `- ${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}`,
+            ]
+          : []),
+      ]
+    : [];
+
   const forecastSection = forecastData
     ? [
         `## 🔮 ${t.forecast.sectionTitle}`,
@@ -207,26 +222,16 @@ export function generateMarkdownReport({
               ]),
             ]
           : []),
+        ...(velocityLines.length > 0
+          ? [`### 🚀 ${t.velocity.sectionTitle}`, '', ...velocityLines, '']
+          : []),
       ]
     : [];
 
-  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
-  const velocitySection = velocity
-    ? [
-        `## 🚀 ${t.velocity.sectionTitle}`,
-        '',
-        `- **${t.velocity.starsPerDay}:** ${velocity.starsPerDay}`,
-        ...(velocity.growthPercent !== null
-          ? [`- **${t.velocity.growth}:** ${formatSignedPercent(velocity.growthPercent)}`]
-          : []),
-        ...(velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null
-          ? [
-              `- ${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}`,
-            ]
-          : []),
-        '',
-      ]
-    : [];
+  const velocitySection =
+    !forecastData && velocityLines.length > 0
+      ? [`## 🚀 ${t.velocity.sectionTitle}`, '', ...velocityLines, '']
+      : [];
 
   const footer = [
     '---',

@@ -37,6 +37,32 @@ describe('computeVelocity', () => {
     expect(result?.growthPercent).toBe(100);
   });
 
+  it('measures growth over the latest period, not the all-time baseline', () => {
+    const history = makeHistory([
+      { day: 0, totalStars: 1 },
+      { day: 100, totalStars: 40_000 },
+      { day: 107, totalStars: 40_500 },
+    ]);
+
+    const result = computeVelocity({ history });
+
+    expect(result?.starsPerDay).toBeCloseTo(71.43, 2);
+    expect(result?.growthPercent).toBeCloseTo(1.3, 1);
+  });
+
+  it('uses only the two most recent snapshots', () => {
+    const history = makeHistory([
+      { day: 0, totalStars: 100 },
+      { day: 5, totalStars: 1_000 },
+      { day: 15, totalStars: 1_100 },
+    ]);
+
+    const result = computeVelocity({ history });
+
+    expect(result?.starsPerDay).toBe(10);
+    expect(result?.growthPercent).toBe(10);
+  });
+
   it('projects days to the next milestone', () => {
     const history = makeHistory([
       { day: 0, totalStars: 400 },

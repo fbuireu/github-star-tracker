@@ -32987,10 +32987,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -35282,7 +35282,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -35405,7 +35405,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -39374,13 +39374,13 @@ function nextMilestoneAbove(value) {
 function computeVelocity({ history }) {
   const snapshots = history.snapshots;
   if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
-  const first = snapshots[0];
+  const previous = snapshots[snapshots.length - 2];
   const last = snapshots[snapshots.length - 1];
-  const elapsedDays = (new Date(last.timestamp).getTime() - new Date(first.timestamp).getTime()) / MS_PER_DAY;
+  const elapsedDays = (new Date(last.timestamp).getTime() - new Date(previous.timestamp).getTime()) / MS_PER_DAY;
   if (elapsedDays <= 0) return null;
-  const gained = last.totalStars - first.totalStars;
+  const gained = last.totalStars - previous.totalStars;
   const starsPerDay = roundTo(gained / elapsedDays, STARS_PER_DAY_DECIMALS);
-  const growthPercent = first.totalStars > 0 ? roundTo(gained / first.totalStars * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS) : null;
+  const growthPercent = previous.totalStars > 0 ? roundTo(gained / previous.totalStars * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS) : null;
   const nextMilestone = nextMilestoneAbove(last.totalStars);
   const daysToNextMilestone = nextMilestone !== null && starsPerDay > 0 ? Math.ceil((nextMilestone - last.totalStars) / starsPerDay) : null;
   return { starsPerDay, growthPercent, nextMilestone, daysToNextMilestone };
@@ -39933,6 +39933,13 @@ function generateHtmlReport({
         ${sampledNoteHtml}
         <p style="color:${palette.neutral};">${t.stargazers.noNewStargazers}</p>
       </div>` : "";
+  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
+  const velocityList = velocity ? `
+        <ul style="margin:0;padding-left:20px;">
+          <li><strong>${t.velocity.starsPerDay}:</strong> ${velocity.starsPerDay}</li>
+          ${velocity.growthPercent !== null ? `<li><strong>${t.velocity.growth}:</strong> <span style="color:${deltaColor({ delta: velocity.growthPercent, palette })};">${formatSignedPercent(velocity.growthPercent)}</span></li>` : ""}
+          ${velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null ? `<li>${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}</li>` : ""}
+        </ul>` : "";
   const forecastSection = forecastData ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F52E} ${t.forecast.sectionTitle}</h2>
@@ -39946,16 +39953,15 @@ function generateHtmlReport({
           ${buildHtmlForecastTable({ title: repo.repoFullName, forecasts: repo.forecasts, t, palette })}
         </div>`
   ).join("")}
+        ${velocityList ? `<div style="margin-top:16px;">
+          <h3 style="font-size:16px;margin-bottom:8px;">\u{1F680} ${t.velocity.sectionTitle}</h3>
+          ${velocityList}
+        </div>` : ""}
       </div>` : "";
-  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
-  const velocitySection = velocity ? `
+  const velocitySection = !forecastData && velocityList ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F680} ${t.velocity.sectionTitle}</h2>
-        <ul style="margin:0;padding-left:20px;">
-          <li><strong>${t.velocity.starsPerDay}:</strong> ${velocity.starsPerDay}</li>
-          ${velocity.growthPercent !== null ? `<li><strong>${t.velocity.growth}:</strong> <span style="color:${deltaColor({ delta: velocity.growthPercent, palette })};">${formatSignedPercent(velocity.growthPercent)}</span></li>` : ""}
-          ${velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null ? `<li>${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}</li>` : ""}
-        </ul>
+        ${velocityList}
       </div>` : "";
   return `<!DOCTYPE html>
 <html>
@@ -40169,6 +40175,14 @@ function generateMarkdownReport({
     t.stargazers.noNewStargazers,
     ""
   ] : [];
+  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
+  const velocityLines = velocity ? [
+    `- **${t.velocity.starsPerDay}:** ${velocity.starsPerDay}`,
+    ...velocity.growthPercent !== null ? [`- **${t.velocity.growth}:** ${formatSignedPercent(velocity.growthPercent)}`] : [],
+    ...velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null ? [
+      `- ${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}`
+    ] : []
+  ] : [];
   const forecastSection = forecastData ? [
     `## \u{1F52E} ${t.forecast.sectionTitle}`,
     "",
@@ -40194,19 +40208,10 @@ function generateMarkdownReport({
         "</details>",
         ""
       ])
-    ] : []
-  ] : [];
-  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
-  const velocitySection = velocity ? [
-    `## \u{1F680} ${t.velocity.sectionTitle}`,
-    "",
-    `- **${t.velocity.starsPerDay}:** ${velocity.starsPerDay}`,
-    ...velocity.growthPercent !== null ? [`- **${t.velocity.growth}:** ${formatSignedPercent(velocity.growthPercent)}`] : [],
-    ...velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null ? [
-      `- ${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}`
     ] : [],
-    ""
+    ...velocityLines.length > 0 ? [`### \u{1F680} ${t.velocity.sectionTitle}`, "", ...velocityLines, ""] : []
   ] : [];
+  const velocitySection = !forecastData && velocityLines.length > 0 ? [`## \u{1F680} ${t.velocity.sectionTitle}`, "", ...velocityLines, ""] : [];
   const footer = [
     "---",
     `*${interpolate({ template: t.footer.generated, params: { project: "[GitHub Star Tracker](https://github.com/fbuireu/github-star-tracker)", date: (/* @__PURE__ */ new Date()).toISOString() } })}*`,
