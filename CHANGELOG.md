@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/fbuireu/github-star-tracker/compare/v1.21.4...v1.22.0) (2026-06-27)
+
+
+### Features
+
+* add chart-curve to choose the line interpolation ([#134](https://github.com/fbuireu/github-star-tracker/issues/134)) ([#138](https://github.com/fbuireu/github-star-tracker/issues/138)) ([c0c2048](https://github.com/fbuireu/github-star-tracker/commit/c0c20489ac2290ff4342bbb4ed4dafc0cd1e502a))
+
 ## [1.21.4](https://github.com/fbuireu/github-star-tracker/compare/v1.21.3...v1.21.4) (2026-06-27)
 
 
