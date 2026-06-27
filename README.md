@@ -61,7 +61,7 @@ Every run, Star Tracker commits these artifacts to a dedicated data branch:
 - :globe_with_meridians: **Multi-language:** English, Spanish, Catalan, Italian
 - :bar_chart: **CSV export:** Machine-readable output for data pipelines
 - :jigsaw: **Action outputs:** `total-stars`, `new-stars`, `new-stars`, `lost-stars`, `new-stargazers` (and much more) for workflow chaining
-- :shield: **Zero runtime deps:** Bundled TypeScript action, 95%+ test coverage, 300+ tests
+- :shield: **Zero runtime deps:** Bundled TypeScript action, 95%+ test coverage, 490+ tests
 
 ---
 

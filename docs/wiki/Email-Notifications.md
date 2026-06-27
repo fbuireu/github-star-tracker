@@ -52,7 +52,7 @@ jobs:
 
       - name: Send email
         if: steps.tracker.outputs.stars-changed == 'true'
-        uses: dawidd6/action-send-mail@v9
+        uses: dawidd6/action-send-mail@62a2d05b79935ad4fb90ce9079928099579c14ac # v9
         with:
           server_address: smtp.gmail.com
           server_port: 587
@@ -70,7 +70,7 @@ jobs:
 > ```yaml
 >       - name: Send email
 >         if: steps.tracker.outputs.stars-changed == 'true'
->         uses: dawidd6/action-send-mail@v9
+>         uses: dawidd6/action-send-mail@62a2d05b79935ad4fb90ce9079928099579c14ac # v9
 >         with:
 >           server_address: smtp.gmail.com
 >           server_port: 587
@@ -96,7 +96,7 @@ Only send email when accumulated changes reach a threshold:
 
 - name: Send email when threshold reached
   if: steps.tracker.outputs.should-notify == 'true'
-  uses: dawidd6/action-send-mail@v9
+  uses: dawidd6/action-send-mail@62a2d05b79935ad4fb90ce9079928099579c14ac # v9
   with:
     server_address: smtp.gmail.com
     server_port: 587
@@ -217,7 +217,7 @@ smtp-password: ${{ secrets.SENDGRID_API_KEY }}
 ```yaml
 - name: Send email
   if: steps.tracker.outputs.stars-changed == 'true'
-  uses: dawidd6/action-send-mail@v9
+  uses: dawidd6/action-send-mail@62a2d05b79935ad4fb90ce9079928099579c14ac # v9
 ```
 
 ### Weekly Digest
@@ -233,7 +233,7 @@ on:
 ```yaml
 - name: Send email for big changes
   if: steps.tracker.outputs.new-stars >= 10 || steps.tracker.outputs.lost-stars >= 5
-  uses: dawidd6/action-send-mail@v9
+  uses: dawidd6/action-send-mail@62a2d05b79935ad4fb90ce9079928099579c14ac # v9
 ```
 
 ### Always (Including No Changes)

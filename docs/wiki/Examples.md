@@ -174,7 +174,7 @@ When the workflow runs on a GHES runner, the API URL is auto-detected from the `
 
 - name: Send email when threshold reached
   if: steps.tracker.outputs.should-notify == 'true'
-  uses: dawidd6/action-send-mail@v9
+  uses: dawidd6/action-send-mail@62a2d05b79935ad4fb90ce9079928099579c14ac # v9
   with:
     server_address: smtp.gmail.com
     server_port: 587
@@ -218,7 +218,7 @@ When the workflow runs on a GHES runner, the API URL is auto-detected from the `
 
 - name: Post to Slack
   if: steps.tracker.outputs.stars-changed == 'true'
-  uses: slackapi/slack-github-action@v1
+  uses: slackapi/slack-github-action@fcfb566f8b0aab22203f066d80ca1d7e4b5d05b3 # v1.27.1
   with:
     payload: |
       {
@@ -239,7 +239,7 @@ When the workflow runs on a GHES runner, the API URL is auto-detected from the `
 
 - name: Create issue on star loss
   if: steps.tracker.outputs.lost-stars > 0
-  uses: actions/github-script@v7
+  uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
   with:
     script: |
       await github.rest.issues.create({
@@ -411,7 +411,7 @@ notification_threshold: auto
   run: echo "${{ steps.tracker.outputs.report-csv }}" > star-data.csv
 
 - name: Upload CSV
-  uses: actions/upload-artifact@v4
+  uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
   with:
     name: star-data-csv
     path: star-data.csv
@@ -430,7 +430,7 @@ notification_threshold: auto
   run: echo "${{ steps.tracker.outputs.report }}" > star-report.md
 
 - name: Upload artifact
-  uses: actions/upload-artifact@v4
+  uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
   with:
     name: star-report
     path: star-report.md

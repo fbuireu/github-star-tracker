@@ -167,7 +167,7 @@ Replace `star-tracker-data` with your `data-branch` value if customized.
 ```yaml
 - name: Send email
   if: steps.tracker.outputs.stars-changed == 'true'
-  uses: dawidd6/action-send-mail@v9
+  uses: dawidd6/action-send-mail@62a2d05b79935ad4fb90ce9079928099579c14ac # v9
 ```
 
 Or use `notification-threshold` with the built-in email to control frequency.
