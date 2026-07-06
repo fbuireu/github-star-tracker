@@ -1,3 +1,10 @@
+## [1.22.1](https://github.com/fbuireu/github-star-tracker/compare/v1.22.0...v1.22.1) (2026-07-06)
+
+
+### Bug Fixes
+
+* make growth forecast time-aware and surface velocity first ([#143](https://github.com/fbuireu/github-star-tracker/issues/143)) ([#144](https://github.com/fbuireu/github-star-tracker/issues/144)) ([ef877ed](https://github.com/fbuireu/github-star-tracker/commit/ef877eda1bb1fea61f5290a7cff376591059a173))
+
 # [1.22.0](https://github.com/fbuireu/github-star-tracker/compare/v1.21.4...v1.22.0) (2026-06-27)
 
 
