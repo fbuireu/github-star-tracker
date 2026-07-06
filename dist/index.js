@@ -38477,42 +38477,46 @@ var FORECAST_WEEKS = 4;
 var MAX_REACHABLE_STARGAZERS = 4e4;
 
 // src/domain/forecast.ts
+var DAYS_PER_WEEK = 7;
 var ForecastMethod = {
   LINEAR_REGRESSION: "linear-regression",
   WEIGHTED_MOVING_AVERAGE: "weighted-moving-average"
 };
-function linearRegression(values) {
-  const pointCount = values.length;
+function linearRegression(points) {
+  const pointCount = points.length;
   let sumX = 0;
   let sumY = 0;
   let sumXY = 0;
   let sumXX = 0;
-  for (let index = 0; index < pointCount; index++) {
-    sumX += index;
-    sumY += values[index];
-    sumXY += index * values[index];
-    sumXX += index * index;
+  for (const point of points) {
+    sumX += point.day;
+    sumY += point.value;
+    sumXY += point.day * point.value;
+    sumXX += point.day * point.day;
   }
   const denominator = pointCount * sumXX - sumX * sumX;
   if (denominator === 0) {
-    return { slope: 0, intercept: values[0] ?? 0 };
+    return { slope: 0, intercept: points.at(-1)?.value ?? 0 };
   }
   const slope = (pointCount * sumXY - sumX * sumY) / denominator;
   const intercept = (sumY - slope * sumX) / pointCount;
   return { slope, intercept };
 }
-var MIN_VALUES_FOR_WEIGHTED_AVERAGE = 2;
-function weightedMovingAverage(values) {
-  if (values.length < MIN_VALUES_FOR_WEIGHTED_AVERAGE) return 0;
-  const deltas = [];
-  for (let index = 1; index < values.length; index++) {
-    deltas.push(values[index] - values[index - 1]);
+var MIN_POINTS_FOR_WEIGHTED_AVERAGE = 2;
+function weightedMovingAverage(points) {
+  if (points.length < MIN_POINTS_FOR_WEIGHTED_AVERAGE) return 0;
+  const dailyRates = [];
+  for (let index = 1; index < points.length; index++) {
+    const elapsedDays = points[index].day - points[index - 1].day;
+    if (elapsedDays <= 0) continue;
+    dailyRates.push((points[index].value - points[index - 1].value) / elapsedDays);
   }
+  if (dailyRates.length === 0) return 0;
   let weightedSum = 0;
   let totalWeight = 0;
-  for (let index = 0; index < deltas.length; index++) {
+  for (let index = 0; index < dailyRates.length; index++) {
     const weight = index + 1;
-    weightedSum += deltas[index] * weight;
+    weightedSum += dailyRates[index] * weight;
     totalWeight += weight;
   }
   return weightedSum / totalWeight;
@@ -38520,29 +38524,35 @@ function weightedMovingAverage(values) {
 function clampPrediction(value) {
   return Math.max(0, Math.round(value));
 }
-function forecastFromValues(values) {
-  const lastValue = values.at(-1) ?? 0;
-  const pointCount = values.length;
-  const regression = linearRegression(values);
-  const wmaAvgDelta = weightedMovingAverage(values);
+function forecastFromSeries(points) {
+  const last = points.at(-1) ?? { day: 0, value: 0 };
+  const regression = linearRegression(points);
+  const wmaDailyRate = weightedMovingAverage(points);
   const lrPoints = [];
   const wmaPoints = [];
   for (let weekOffset = 1; weekOffset <= FORECAST_WEEKS; weekOffset++) {
+    const forecastDays = weekOffset * DAYS_PER_WEEK;
     lrPoints.push({
       weekOffset,
-      predicted: clampPrediction(
-        regression.slope * (pointCount - 1 + weekOffset) + regression.intercept
-      )
+      predicted: clampPrediction(last.value + regression.slope * forecastDays)
     });
     wmaPoints.push({
       weekOffset,
-      predicted: clampPrediction(lastValue + wmaAvgDelta * weekOffset)
+      predicted: clampPrediction(last.value + wmaDailyRate * forecastDays)
     });
   }
   return [
     { method: ForecastMethod.LINEAR_REGRESSION, points: lrPoints },
     { method: ForecastMethod.WEIGHTED_MOVING_AVERAGE, points: wmaPoints }
   ];
+}
+function snapshotDays(history) {
+  const times = history.snapshots.map((snapshot) => Date.parse(snapshot.timestamp));
+  if (times.some((timeMs) => !Number.isFinite(timeMs))) {
+    return history.snapshots.map((_, index) => index * DAYS_PER_WEEK);
+  }
+  const first = times[0];
+  return times.map((timeMs) => (timeMs - first) / MS_PER_DAY);
 }
 function computeForecast({
   history,
@@ -38551,14 +38561,16 @@ function computeForecast({
   if (history.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) {
     return null;
   }
+  const days = snapshotDays(history);
+  const toSeries = (values) => values.map((value, index) => ({ day: days[index], value }));
   const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
-  const aggregateForecasts = forecastFromValues(totalValues);
+  const aggregateForecasts = forecastFromSeries(toSeries(totalValues));
   const repos = topRepoNames.map((repoFullName) => {
     const values = history.snapshots.map((snapshot) => {
       const repo = snapshot.repos.find((candidate) => candidate.fullName === repoFullName);
       return repo?.stars ?? 0;
     });
-    return { repoFullName, forecasts: forecastFromValues(values) };
+    return { repoFullName, forecasts: forecastFromSeries(toSeries(values)) };
   });
   return { aggregate: { forecasts: aggregateForecasts }, repos };
 }
@@ -39975,6 +39987,10 @@ function generateHtmlReport({
   const forecastSection = forecastData ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">\u{1F52E} ${t.forecast.sectionTitle}</h2>
+        ${velocityList ? `<div style="margin-bottom:16px;">
+          <h3 style="font-size:16px;margin-bottom:8px;">\u{1F680} ${t.velocity.sectionTitle}</h3>
+          ${velocityList}
+        </div>` : ""}
         ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t, palette })}
         ${hasChartHistory ? `<div style="margin-top:16px;text-align:center;">
           <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, curve, showPoints, beginAtZero, theme, range })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
@@ -39985,10 +40001,6 @@ function generateHtmlReport({
           ${buildHtmlForecastTable({ title: repo.repoFullName, forecasts: repo.forecasts, t, palette })}
         </div>`
   ).join("")}
-        ${velocityList ? `<div style="margin-top:16px;">
-          <h3 style="font-size:16px;margin-bottom:8px;">\u{1F680} ${t.velocity.sectionTitle}</h3>
-          ${velocityList}
-        </div>` : ""}
       </div>` : "";
   const velocitySection = !forecastData && velocityList ? `
       <div style="margin-top:24px;">
@@ -40218,6 +40230,7 @@ function generateMarkdownReport({
   const forecastSection = forecastData ? [
     `## \u{1F52E} ${t.forecast.sectionTitle}`,
     "",
+    ...velocityLines.length > 0 ? [`### \u{1F680} ${t.velocity.sectionTitle}`, "", ...velocityLines, ""] : [],
     buildForecastTable({
       title: t.forecast.aggregate,
       forecasts: forecastData.aggregate.forecasts,
@@ -40240,8 +40253,7 @@ function generateMarkdownReport({
         "</details>",
         ""
       ])
-    ] : [],
-    ...velocityLines.length > 0 ? [`### \u{1F680} ${t.velocity.sectionTitle}`, "", ...velocityLines, ""] : []
+    ] : []
   ] : [];
   const velocitySection = !forecastData && velocityLines.length > 0 ? [`## \u{1F680} ${t.velocity.sectionTitle}`, "", ...velocityLines, ""] : [];
   const footer = [

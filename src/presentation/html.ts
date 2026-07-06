@@ -216,6 +216,14 @@ export function generateHtmlReport({
     ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">🔮 ${t.forecast.sectionTitle}</h2>
+        ${
+          velocityList
+            ? `<div style="margin-bottom:16px;">
+          <h3 style="font-size:16px;margin-bottom:8px;">🚀 ${t.velocity.sectionTitle}</h3>
+          ${velocityList}
+        </div>`
+            : ''
+        }
         ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t, palette })}
         ${
           hasChartHistory
@@ -232,14 +240,6 @@ export function generateHtmlReport({
         </div>`,
           )
           .join('')}
-        ${
-          velocityList
-            ? `<div style="margin-top:16px;">
-          <h3 style="font-size:16px;margin-bottom:8px;">🚀 ${t.velocity.sectionTitle}</h3>
-          ${velocityList}
-        </div>`
-            : ''
-        }
       </div>`
     : '';
 

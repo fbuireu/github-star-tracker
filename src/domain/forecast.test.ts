@@ -1,6 +1,6 @@
 import type { History } from '@domain/types';
 import { describe, expect, it } from 'vitest';
-import type { ForecastData } from './forecast';
+import type { ForecastData, SeriesPoint } from './forecast';
 import {
   computeForecast,
   ForecastMethod,
@@ -13,59 +13,86 @@ function expectForecast(result: ForecastData | null): ForecastData {
   return result ?? { aggregate: { forecasts: [] }, repos: [] };
 }
 
+function series(values: number[], step = 1): SeriesPoint[] {
+  return values.map((value, index) => ({ day: index * step, value }));
+}
+
 describe('linearRegression', () => {
   it('returns slope=0 for constant values', () => {
-    const result = linearRegression([10, 10, 10, 10]);
+    const result = linearRegression(series([10, 10, 10, 10]));
 
     expect(result.slope).toBeCloseTo(0);
     expect(result.intercept).toBeCloseTo(10);
   });
 
   it('computes correct slope for linear growth', () => {
-    const result = linearRegression([10, 20, 30, 40]);
+    const result = linearRegression(series([10, 20, 30, 40]));
 
     expect(result.slope).toBeCloseTo(10);
     expect(result.intercept).toBeCloseTo(10);
   });
 
   it('computes correct slope for decreasing values', () => {
-    const result = linearRegression([40, 30, 20, 10]);
+    const result = linearRegression(series([40, 30, 20, 10]));
 
     expect(result.slope).toBeCloseTo(-10);
     expect(result.intercept).toBeCloseTo(40);
   });
 
   it('handles single value', () => {
-    const result = linearRegression([42]);
+    const result = linearRegression(series([42]));
 
     expect(result.slope).toBe(0);
     expect(result.intercept).toBe(42);
+  });
+
+  it('normalizes slope by real day spacing', () => {
+    const result = linearRegression(series([10, 20, 30, 40], 10));
+
+    expect(result.slope).toBeCloseTo(1);
+    expect(result.intercept).toBeCloseTo(10);
   });
 });
 
 describe('weightedMovingAverage', () => {
   it('returns 0 for fewer than 2 values', () => {
-    expect(weightedMovingAverage([10])).toBe(0);
-    expect(weightedMovingAverage([])).toBe(0);
+    expect(weightedMovingAverage(series([10]))).toBe(0);
+    expect(weightedMovingAverage(series([]))).toBe(0);
   });
 
   it('computes weighted average for constant deltas', () => {
-    const result = weightedMovingAverage([10, 20, 30, 40]);
+    const result = weightedMovingAverage(series([10, 20, 30, 40]));
 
     expect(result).toBeCloseTo(10);
   });
 
   it('weights recent deltas more heavily (accelerating)', () => {
-    const result = weightedMovingAverage([10, 11, 13, 18]);
+    const result = weightedMovingAverage(series([10, 11, 13, 18]));
 
     expect(result).toBeGreaterThan(2);
   });
 
   it('weights recent deltas more heavily (decelerating)', () => {
-    const resultAccel = weightedMovingAverage([10, 20, 25, 26]);
-    const resultConst = weightedMovingAverage([10, 14, 18, 22]);
+    const resultAccel = weightedMovingAverage(series([10, 20, 25, 26]));
+    const resultConst = weightedMovingAverage(series([10, 14, 18, 22]));
 
     expect(resultAccel).toBeLessThan(resultConst);
+  });
+
+  it('normalizes the rate by real day spacing', () => {
+    const result = weightedMovingAverage(series([10, 20, 30, 40], 10));
+
+    expect(result).toBeCloseTo(1);
+  });
+
+  it('skips zero-duration intervals', () => {
+    const result = weightedMovingAverage([
+      { day: 0, value: 10 },
+      { day: 0, value: 20 },
+      { day: 1, value: 30 },
+    ]);
+
+    expect(result).toBeCloseTo(10);
   });
 });
 
@@ -166,6 +193,23 @@ describe('computeForecast', () => {
       for (const point of forecast.points) {
         expect(point.predicted).toBeGreaterThanOrEqual(0);
       }
+    }
+  });
+
+  it('projects calendar weeks regardless of snapshot spacing (#143)', () => {
+    const history: History = {
+      snapshots: [
+        { timestamp: '2026-01-01', totalStars: 100, repos: [] },
+        { timestamp: '2026-01-29', totalStars: 380, repos: [] },
+        { timestamp: '2026-02-26', totalStars: 660, repos: [] },
+      ],
+    };
+
+    const result = expectForecast(computeForecast({ history, topRepoNames: [] }));
+
+    for (const forecast of result.aggregate.forecasts) {
+      expect(forecast.points[0].predicted).toBe(730);
+      expect(forecast.points[3].predicted).toBe(940);
     }
   });
 

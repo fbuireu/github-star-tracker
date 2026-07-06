@@ -195,6 +195,9 @@ export function generateMarkdownReport({
     ? [
         `## 🔮 ${t.forecast.sectionTitle}`,
         '',
+        ...(velocityLines.length > 0
+          ? [`### 🚀 ${t.velocity.sectionTitle}`, '', ...velocityLines, '']
+          : []),
         buildForecastTable({
           title: t.forecast.aggregate,
           forecasts: forecastData.aggregate.forecasts,
@@ -221,9 +224,6 @@ export function generateMarkdownReport({
                 '',
               ]),
             ]
-          : []),
-        ...(velocityLines.length > 0
-          ? [`### 🚀 ${t.velocity.sectionTitle}`, '', ...velocityLines, '']
           : []),
       ]
     : [];

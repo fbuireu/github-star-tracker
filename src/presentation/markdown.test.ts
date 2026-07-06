@@ -145,6 +145,7 @@ describe('generateMarkdownReport', () => {
     expect(report).toContain('\n### 🚀 Growth Velocity\n');
     expect(report).not.toContain('\n## 🚀 Growth Velocity\n');
     expect(report.indexOf('Growth Forecast')).toBeLessThan(report.indexOf('Growth Velocity'));
+    expect(report.indexOf('Growth Velocity')).toBeLessThan(report.indexOf('Aggregate Forecast'));
   });
 
   it('handles first run with no previous timestamp', () => {

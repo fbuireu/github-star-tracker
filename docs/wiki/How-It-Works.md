@@ -264,16 +264,18 @@ GitHub caps stargazer listing at roughly **40,000 per repo**. For repos above th
 
 **File:** `src/domain/forecast.ts` > `computeForecast()`
 
-Requires at least **3 points** (`MIN_SNAPSHOTS`). Projects **4 weeks ahead** (`FORECAST_WEEKS`). When charts are enabled, the History passed to forecast generation is the real reconstructed star history (cumulative over actual star dates), not the per-run snapshot list - so the 3-point minimum refers to points in that reconstructed history.
+Requires at least **3 points** (`MIN_SNAPSHOTS`). Projects **4 calendar weeks ahead** (`FORECAST_WEEKS`): "Week 1" means 7 real days after the latest data point, "Week 4" means 28 days after it. When charts are enabled, the History passed to forecast generation is the real reconstructed star history (cumulative over actual star dates), not the per-run snapshot list - so the 3-point minimum refers to points in that reconstructed history.
+
+Both methods are **time-aware**: they use each point's real timestamp to derive a stars-per-day rate, so predictions do not depend on how far apart the data points happen to be (reconstructed chart history spreads its points across the repo's entire lifetime, and run-cadence snapshots follow your workflow schedule).
 
 Two methods are computed in parallel:
 
 | Method | Description | Strength |
 |---|---|---|
-| **Linear Regression** | Least-squares fit through all data points | Resilient to noise, captures long-term trends |
-| **Weighted Moving Average** | Recent deltas weighted higher | Responsive to acceleration/deceleration |
+| **Linear Regression** | Least-squares fit of stars over elapsed days, across all data points | Resilient to noise, captures long-term trends |
+| **Weighted Moving Average** | Per-day growth rates between consecutive points, recent intervals weighted higher | Responsive to acceleration/deceleration |
 
-Both methods clamp predictions to `Math.max(0, Math.round(value))`.
+Both methods anchor their projection on the latest real total (they answer "starting from today's count, where does this trend land in N weeks?") and clamp predictions to `Math.max(0, Math.round(value))`.
 
 Forecasts are computed for:
 
@@ -303,7 +305,7 @@ Produces GitHub Flavored Markdown with:
 5. New / removed repository sections
 6. Summary metrics
 7. Stargazer section (collapsible `<details>` per repo)
-8. Forecast tables (collapsible per repo)
+8. Forecast section (growth velocity first, then aggregate table and collapsible per-repo tables)
 9. Footer
 
 **Output:** committed as `README.md` on the data branch.
