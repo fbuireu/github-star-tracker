@@ -131,6 +131,7 @@ describe('generateHtmlReport', () => {
       '<h2 style="font-size:18px;margin-bottom:12px;">🚀 Growth Velocity</h2>',
     );
     expect(html.indexOf('Growth Forecast')).toBeLessThan(html.indexOf('Growth Velocity'));
+    expect(html.indexOf('Growth Velocity')).toBeLessThan(html.indexOf('Aggregate Forecast'));
   });
 
   it('generates valid HTML structure', () => {
