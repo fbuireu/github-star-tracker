@@ -103,6 +103,7 @@ git push origin --delete star-tracker-data
 - `include-charts: false`
 - The repo has no stargazers with valid `starred_at` dates
 - All repos filtered out
+- The stargazers endpoint returned empty or `403` for repos where you are not an admin or collaborator, per GitHub's [2026 API access restrictions](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/)
 
 **Fix:** Ensure `include-charts` is true (default) and that tracked repos have stargazers. Charts are reconstructed from real stargazer history and do not require multiple runs.
 

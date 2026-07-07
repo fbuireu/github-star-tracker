@@ -64,6 +64,26 @@ For those repos the reachable history is drawn accurately (scaled to the reachab
 
 ---
 
+## 🔐 Stargazers API Access Restriction (2026)
+
+### Limitation
+
+GitHub [restricted](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/) the stargazers list endpoint (`GET /repos/{owner}/{repo}/stargazers`) to repository **admins and collaborators**. Anyone else receives empty responses or `403` errors, which is why third-party tools that chart stars for repositories they don't own (Star History, Starchart.cc, etc.) stop working.
+
+For this action the only affected case is organization repositories where you are a **member with read access only** (neither admin nor direct collaborator): the stargazers list may come back empty or `403` for those repos, so charts and stargazer tracking degrade there. Star counts and delta reports keep working everywhere, since `stargazers_count` is not part of the restriction.
+
+### Why
+
+GitHub applied the restriction platform-wide to prevent stargazer lists from being scraped for spam. It is not specific to this action.
+
+### Approach
+
+- The action authenticates with **your own PAT** and tracks repositories from **your own account**, where you are the admin, so the normal use case is unaffected.
+- **Per-repo error tolerance** already applies: if fetching stargazers fails for one repository, the action logs a warning and continues with the rest.
+- Star counts, reports, badges and notifications never depend on the stargazers list, only charts and `track-stargazers` do.
+
+---
+
 ## 🔮 Forecast Accuracy
 
 ### Limitation
@@ -260,7 +280,7 @@ To compute the diff between runs (who is new since last time), the action needs 
 - **Minimal data stored**: `stargazers.json` contains only `{ "owner/repo": ["login1", "login2"] }` - login names, no avatars, no dates. Full user details (avatar, profile URL, starred_at) are only shown in reports, not persisted.
 - **Data branch isolation**: Stargazer data is stored on a separate `star-tracker-data` branch, not on `main`. This keeps the main branch clean.
 - **Opt-in only**: `track-stargazers` defaults to `false`. Users must explicitly enable it.
-- **All data is already public**: GitHub stargazer lists are publicly visible on any repository. The action stores the same information that's already accessible via the GitHub UI.
+- **No new exposure for you**: the action stores the same information you can already see as the repository's admin. Note that since GitHub's [2026 API restrictions](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/), stargazer lists are no longer publicly accessible (only admins and collaborators can list them), so publishing `stargazers.json` on a public data branch does re-expose those login names. Keep the data branch in a private repository or leave `track-stargazers` disabled if that is a concern.
 
 ---
 
