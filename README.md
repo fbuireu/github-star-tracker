@@ -13,6 +13,13 @@
 
 </div>
 
+> [!IMPORTANT]
+> **Coming from Star History, Starchart.cc or similar? You're in the right place.**
+>
+> GitHub [announced](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/) that access to the stargazers API is being restricted to repository admins and collaborators. Tools that chart stars for repositories they don't own will start receiving empty responses or `403` errors.
+>
+> **GitHub Star Tracker is not affected.** It runs inside *your* workflow, with *your* token, against *your* repositories: exactly the access GitHub is keeping. Star history charts, stargazer tracking, forecasts and badges keep working as always.
+
 ---
 
 ## Table of Contents
@@ -62,6 +69,7 @@ Every run, Star Tracker commits these artifacts to a dedicated data branch:
 - :bar_chart: **CSV export:** Machine-readable output for data pipelines
 - :jigsaw: **Action outputs:** `total-stars`, `new-stars`, `new-stars`, `lost-stars`, `new-stargazers` (and much more) for workflow chaining
 - :shield: **Zero runtime deps:** Bundled TypeScript action, 98%+ test coverage, 500+ tests
+- :lock: **Future-proof:** Unaffected by GitHub's 2026 stargazers API restrictions, since it uses your own credentials on your own repositories
 
 ---
 
