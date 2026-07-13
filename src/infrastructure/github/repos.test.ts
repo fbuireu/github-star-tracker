@@ -379,7 +379,7 @@ describe('fetchRepos', () => {
     await expect(
       fetchRepos({ octokit: createMockOctokit(mockOctokit), config: defaultConfig }),
     ).rejects.toThrow(
-      'Failed to fetch repositories from GitHub API (HTTP 401): API Error. Verify that your github-token has the correct permissions.',
+      'Failed to fetch repositories from GitHub API: HTTP 401 API Error. Verify that your github-token has the correct permissions.',
     );
   });
 
@@ -397,6 +397,22 @@ describe('fetchRepos', () => {
       fetchRepos({ octokit: createMockOctokit(mockOctokit), config: defaultConfig }),
     ).rejects.toThrow(
       'Failed to fetch repositories from GitHub API: Network Error. Verify that your github-token has the correct permissions.',
+    );
+  });
+
+  it('never throws a blank error description when the API error has no message', async () => {
+    const mockOctokit: MockOctokit = {
+      rest: {
+        repos: {
+          listForAuthenticatedUser: vi.fn().mockRejectedValue(new Error('')),
+        },
+      },
+    };
+
+    await expect(
+      fetchRepos({ octokit: createMockOctokit(mockOctokit), config: defaultConfig }),
+    ).rejects.toThrow(
+      'Failed to fetch repositories from GitHub API: Error. Verify that your github-token has the correct permissions.',
     );
   });
 });

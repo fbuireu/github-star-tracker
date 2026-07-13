@@ -2,6 +2,7 @@ import * as core from '@actions/core';
 import { MAX_REACHABLE_STARGAZERS } from '@domain/constants';
 import type { RepoStargazers, Stargazer } from '@domain/stargazers';
 import type { RepoInfo } from '@domain/types';
+import { describeFetchError } from './errors';
 import type { GitHubStargazerRow, Octokit } from './types';
 
 const STARGAZERS_PER_PAGE = 100;
@@ -68,7 +69,7 @@ function warnWhenHistoryIsUnreconstructable(repo: RepoInfo, stargazers: Stargaze
 
   if (stargazers.length === 0) {
     core.warning(
-      `Stargazers for ${repo.fullName} came back empty even though it has ${repo.stars} stars. GitHub restricts the stargazers API to repository admins and collaborators, so its star history cannot be reconstructed with this token.`,
+      `Stargazers for ${repo.fullName} came back empty even though it has ${repo.stars} stars, so its star history cannot be reconstructed. This can happen if the token's user isn't an admin or collaborator on the repo, or from a transient GitHub API error; see the Troubleshooting guide.`,
     );
     return;
   }
@@ -78,15 +79,6 @@ function warnWhenHistoryIsUnreconstructable(repo: RepoInfo, stargazers: Stargaze
   core.warning(
     `Stargazers for ${repo.fullName} came back without usable starred_at dates, so its star history cannot be reconstructed.`,
   );
-}
-
-function describeFetchError(error: unknown): string {
-  const { status, message } = error as { status?: number; message?: string };
-  const parts = [typeof status === 'number' ? `HTTP ${status}` : '', message?.trim() ?? ''].filter(
-    Boolean,
-  );
-
-  return parts.length > 0 ? parts.join(' ') : String(error);
 }
 
 interface FetchStargazerPageParams {

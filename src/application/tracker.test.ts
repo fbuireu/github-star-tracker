@@ -23,6 +23,7 @@ import {
   writeReport,
   writeStargazers,
 } from '@infrastructure/persistence/storage';
+import { retry } from '@octokit/plugin-retry';
 import { generateBadge } from '@presentation/badge';
 import { generateCsvReport } from '@presentation/csv';
 import { generateHtmlReport } from '@presentation/html';
@@ -768,7 +769,7 @@ describe('trackStars', () => {
     it('calls getOctokit without baseUrl when no API URL is configured', async () => {
       await trackStars();
 
-      expect(github.getOctokit).toHaveBeenCalledWith('fake-token');
+      expect(github.getOctokit).toHaveBeenCalledWith('fake-token', undefined, retry);
     });
 
     it('passes baseUrl when github-api-url input is set', async () => {
@@ -780,9 +781,11 @@ describe('trackStars', () => {
 
       await trackStars();
 
-      expect(github.getOctokit).toHaveBeenCalledWith('fake-token', {
-        baseUrl: 'https://github.example.com/api/v3',
-      });
+      expect(github.getOctokit).toHaveBeenCalledWith(
+        'fake-token',
+        { baseUrl: 'https://github.example.com/api/v3' },
+        retry,
+      );
     });
 
     it('falls back to GITHUB_API_URL env var when input is empty', async () => {
@@ -790,9 +793,11 @@ describe('trackStars', () => {
 
       await trackStars();
 
-      expect(github.getOctokit).toHaveBeenCalledWith('fake-token', {
-        baseUrl: 'https://ghes.corp.com/api/v3',
-      });
+      expect(github.getOctokit).toHaveBeenCalledWith(
+        'fake-token',
+        { baseUrl: 'https://ghes.corp.com/api/v3' },
+        retry,
+      );
     });
 
     it('prefers input over GITHUB_API_URL env var', async () => {
@@ -805,9 +810,11 @@ describe('trackStars', () => {
 
       await trackStars();
 
-      expect(github.getOctokit).toHaveBeenCalledWith('fake-token', {
-        baseUrl: 'https://ghes-input.corp.com/api/v3',
-      });
+      expect(github.getOctokit).toHaveBeenCalledWith(
+        'fake-token',
+        { baseUrl: 'https://ghes-input.corp.com/api/v3' },
+        retry,
+      );
     });
   });
 
