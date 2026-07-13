@@ -169,6 +169,33 @@ describe('buildStarHistory', () => {
     expect(restricted.every((starCount) => starCount === 54_000)).toBe(true);
   });
 
+  it('anchors a partially covered repo at its real coverage instead of the 40k cap', () => {
+    const entry = repoStargazers('user/deep', [
+      '2024-02-01T00:00:00Z',
+      '2024-08-01T00:00:00Z',
+      '2025-02-01T00:00:00Z',
+      '2025-06-01T00:00:00Z',
+    ]);
+
+    const result = buildStarHistory({
+      repoStargazers: [{ ...entry, coveredStars: 20_000 }],
+      repos: [repoTotal('user/deep', 54_000)],
+      maxPoints: 10,
+      now: NOW,
+    });
+
+    const stars = result.snapshots.map((snapshot) => snapshot.repos[0].stars);
+    expect(stars.at(-1)).toBe(54_000);
+    for (let index = 1; index < stars.length; index++) {
+      expect(stars[index]).toBeGreaterThanOrEqual(stars[index - 1]);
+    }
+    expect(stars).toContain(20_000);
+    expect(stars.filter((count) => count < 20_000).every((count) => count % 5_000 === 0)).toBe(
+      true,
+    );
+    expect(stars).not.toContain(40_000);
+  });
+
   it('keeps a zero-star repo at 0 in every snapshot', () => {
     const result = buildStarHistory({
       repoStargazers: [
