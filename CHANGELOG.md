@@ -1,3 +1,10 @@
+## [1.22.2](https://github.com/fbuireu/github-star-tracker/compare/v1.22.1...v1.22.2) (2026-07-13)
+
+
+### Bug Fixes
+
+* stop fabricating star history for repos with unreachable stargazers ([#149](https://github.com/fbuireu/github-star-tracker/issues/149)) ([8b7335d](https://github.com/fbuireu/github-star-tracker/commit/8b7335da56e7558f6d66fb1153a233f6231b1337))
+
 ## [1.22.1](https://github.com/fbuireu/github-star-tracker/compare/v1.22.0...v1.22.1) (2026-07-06)
 
 
