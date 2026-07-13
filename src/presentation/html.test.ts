@@ -1,51 +1,15 @@
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
-import type { ComparisonResults } from '@domain/types';
+import { makeComparisonResults, makeHistory, makeMultiRepoHistory } from '@shared/testing';
 import { describe, expect, it } from 'vitest';
 import { COLORS } from './constants';
 import { generateHtmlReport } from './html';
 import type { GenerateReportParams } from './shared';
 
-function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResults {
-  return {
-    repos: [
-      {
-        name: 'repo-a',
-        fullName: 'user/repo-a',
-        owner: 'user',
-        current: 15,
-        previous: 10,
-        delta: 5,
-        isNew: false,
-        isRemoved: false,
-      },
-      {
-        name: 'repo-b',
-        fullName: 'user/repo-b',
-        owner: 'user',
-        current: 8,
-        previous: 10,
-        delta: -2,
-        isNew: false,
-        isRemoved: false,
-      },
-    ],
-    summary: {
-      totalStars: 23,
-      totalPrevious: 20,
-      totalDelta: 3,
-      newStars: 5,
-      lostStars: 2,
-      changed: true,
-    },
-    ...overrides,
-  };
-}
-
 function renderHtml(overrides: Partial<GenerateReportParams> = {}): string {
   return generateHtmlReport({
-    results: makeResults(),
+    results: makeComparisonResults(),
     previousTimestamp: '2026-01-01T00:00:00Z',
     locale: 'en',
     ...overrides,
@@ -53,12 +17,7 @@ function renderHtml(overrides: Partial<GenerateReportParams> = {}): string {
 }
 
 describe('generateHtmlReport', () => {
-  const velocityHistory = {
-    snapshots: [
-      { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 100, repos: [] },
-      { timestamp: '2025-01-11T00:00:00.000Z', totalStars: 200, repos: [] },
-    ],
-  };
+  const velocityHistory = makeHistory([100, 200], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
   it('renders the velocity section when velocity-metrics is enabled', () => {
     const html = renderHtml({ history: velocityHistory, velocityMetrics: true });
@@ -74,12 +33,7 @@ describe('generateHtmlReport', () => {
   });
 
   it('renders velocity with only the daily rate when growth and projection are unavailable', () => {
-    const flatHistory = {
-      snapshots: [
-        { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 0, repos: [] },
-        { timestamp: '2025-01-11T00:00:00.000Z', totalStars: 0, repos: [] },
-      ],
-    };
+    const flatHistory = makeHistory([0, 0], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
     const html = renderHtml({ history: flatHistory, velocityMetrics: true });
 
@@ -89,12 +43,10 @@ describe('generateHtmlReport', () => {
   });
 
   it('shows negative growth without a plus sign', () => {
-    const decliningHistory = {
-      snapshots: [
-        { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 200, repos: [] },
-        { timestamp: '2025-01-11T00:00:00.000Z', totalStars: 150, repos: [] },
-      ],
-    };
+    const decliningHistory = makeHistory([200, 150], {
+      startMs: Date.UTC(2025, 0, 1),
+      stepDays: 10,
+    });
 
     const html = renderHtml({ history: decliningHistory, velocityMetrics: true });
 
@@ -169,7 +121,7 @@ describe('generateHtmlReport', () => {
   });
 
   it('shows removed repos section when applicable', () => {
-    const results = makeResults();
+    const results = makeComparisonResults();
 
     results.repos.push({
       name: 'gone',
@@ -188,20 +140,9 @@ describe('generateHtmlReport', () => {
   });
 
   it('includes charts when history has multiple snapshots', () => {
-    const history = {
-      snapshots: [
-        {
-          timestamp: '2026-01-01T00:00:00Z',
-          totalStars: 20,
-          repos: [{ name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 20 }],
-        },
-        {
-          timestamp: '2026-01-02T00:00:00Z',
-          totalStars: 23,
-          repos: [{ name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 23 }],
-        },
-      ],
-    };
+    const history = makeMultiRepoHistory([{ 'user/repo-a': 20 }, { 'user/repo-a': 23 }], {
+      stepDays: 1,
+    });
 
     const html = renderHtml({ history, includeCharts: true });
 
@@ -210,26 +151,13 @@ describe('generateHtmlReport', () => {
   });
 
   it('includes comparison chart for top repositories', () => {
-    const history = {
-      snapshots: [
-        {
-          timestamp: '2026-01-01T00:00:00Z',
-          totalStars: 20,
-          repos: [
-            { name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 10 },
-            { name: 'repo-b', owner: 'user', fullName: 'user/repo-b', stars: 10 },
-          ],
-        },
-        {
-          timestamp: '2026-01-02T00:00:00Z',
-          totalStars: 25,
-          repos: [
-            { name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 15 },
-            { name: 'repo-b', owner: 'user', fullName: 'user/repo-b', stars: 10 },
-          ],
-        },
+    const history = makeMultiRepoHistory(
+      [
+        { 'user/repo-a': 10, 'user/repo-b': 10 },
+        { 'user/repo-a': 15, 'user/repo-b': 10 },
       ],
-    };
+      { stepDays: 1 },
+    );
 
     const html = renderHtml({ history, includeCharts: true });
 
@@ -238,26 +166,13 @@ describe('generateHtmlReport', () => {
   });
 
   it('includes individual repo charts section', () => {
-    const history = {
-      snapshots: [
-        {
-          timestamp: '2026-01-01T00:00:00Z',
-          totalStars: 20,
-          repos: [
-            { name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 10 },
-            { name: 'repo-b', owner: 'user', fullName: 'user/repo-b', stars: 10 },
-          ],
-        },
-        {
-          timestamp: '2026-01-02T00:00:00Z',
-          totalStars: 25,
-          repos: [
-            { name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 15 },
-            { name: 'repo-b', owner: 'user', fullName: 'user/repo-b', stars: 10 },
-          ],
-        },
+    const history = makeMultiRepoHistory(
+      [
+        { 'user/repo-a': 10, 'user/repo-b': 10 },
+        { 'user/repo-a': 15, 'user/repo-b': 10 },
       ],
-    };
+      { stepDays: 1 },
+    );
 
     const html = renderHtml({ history, includeCharts: true });
 
@@ -268,20 +183,9 @@ describe('generateHtmlReport', () => {
   });
 
   it('does not include charts when includeCharts is false', () => {
-    const history = {
-      snapshots: [
-        {
-          timestamp: '2026-01-01T00:00:00Z',
-          totalStars: 20,
-          repos: [{ name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 20 }],
-        },
-        {
-          timestamp: '2026-01-02T00:00:00Z',
-          totalStars: 23,
-          repos: [{ name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 23 }],
-        },
-      ],
-    };
+    const history = makeMultiRepoHistory([{ 'user/repo-a': 20 }, { 'user/repo-a': 23 }], {
+      stepDays: 1,
+    });
 
     const html = renderHtml({ history, includeCharts: false });
 
@@ -290,15 +194,7 @@ describe('generateHtmlReport', () => {
   });
 
   it('does not include charts when history has only one snapshot', () => {
-    const history = {
-      snapshots: [
-        {
-          timestamp: '2026-01-01T00:00:00Z',
-          totalStars: 20,
-          repos: [{ name: 'repo-a', owner: 'user', fullName: 'user/repo-a', stars: 20 }],
-        },
-      ],
-    };
+    const history = makeMultiRepoHistory([{ 'user/repo-a': 20 }]);
 
     const html = renderHtml({ history, includeCharts: true });
 
@@ -451,7 +347,7 @@ describe('generateHtmlReport', () => {
 
   it('uses neutral color for zero delta', () => {
     const html = renderHtml({
-      results: makeResults({
+      results: makeComparisonResults({
         repos: [
           {
             name: 'repo-a',

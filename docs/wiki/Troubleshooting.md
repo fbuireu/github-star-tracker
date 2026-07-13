@@ -107,6 +107,18 @@ git push origin --delete star-tracker-data
 
 **Fix:** Ensure `include-charts` is true (default) and that tracked repos have stargazers. Charts are reconstructed from real stargazer history and do not require multiple runs.
 
+### Chart Is a Flat or Straight Line
+
+**Cause:** The stargazers fetch for that repository came back empty or failed, so its history cannot be reconstructed. The run log includes a warning naming the affected repository and, for failures, the API error. Common reasons:
+
+- **Rate limiting on large repositories.** A repository above 40,000 stars costs 400 API requests per run without smart sampling; a handful of large repos can exhaust the 5,000 requests/hour REST quota mid-run.
+- **A fine-grained PAT that does not cover the repository.** Fine-grained tokens are scoped per organization; repos under other orgs you belong to are not included unless granted.
+- **Organization repositories where you are a member with read access only** (neither admin nor direct collaborator), per GitHub's [2026 API access restrictions](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/). Classic PATs over your own repositories are unaffected.
+
+The per-repo chart then falls back to the stored per-run snapshots, which only cover the period the action has been running.
+
+**Fix:** Check the run log warning for the actual reason. Enable `smart-sampling` to cut large-repo fetches from 400 requests to a few dozen, or use a token that covers the repository. Star counts, reports and badges are unaffected either way.
+
 ### No Forecast Chart
 
 **Cause:** Forecasts require at least 3 snapshots.

@@ -224,7 +224,7 @@ export async function trackStars(): Promise<void> {
             const repoHistory =
               repoStarHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART
                 ? repoStarHistory
-                : history;
+                : updatedHistory;
             const repoChart = generatePerRepoSvgChart({
               history: repoHistory,
               repoFullName: repoName,

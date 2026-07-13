@@ -1,6 +1,7 @@
 import { ChartCurve } from '@config/types';
 import { ForecastMethod } from '@domain/forecast';
 import type { History } from '@domain/types';
+import { makeMultiRepoHistory } from '@shared/testing';
 import { describe, expect, it } from 'vitest';
 import {
   buildMilestoneAnnotations,
@@ -15,34 +16,14 @@ const CHART_CONFIG_PARAM = '&c=';
 const CHART_HEIGHT = '&h=';
 const CHART_WIDTH = 'w=';
 
-const mockHistory: History = {
-  snapshots: [
-    {
-      timestamp: '2025-01-01T00:00:00.000Z',
-      totalStars: 100,
-      repos: [
-        { fullName: 'user/repo-a', name: 'repo-a', owner: 'user', stars: 50 },
-        { fullName: 'user/repo-b', name: 'repo-b', owner: 'user', stars: 50 },
-      ],
-    },
-    {
-      timestamp: '2025-01-08T00:00:00.000Z',
-      totalStars: 120,
-      repos: [
-        { fullName: 'user/repo-a', name: 'repo-a', owner: 'user', stars: 70 },
-        { fullName: 'user/repo-b', name: 'repo-b', owner: 'user', stars: 50 },
-      ],
-    },
-    {
-      timestamp: '2025-01-15T00:00:00.000Z',
-      totalStars: 150,
-      repos: [
-        { fullName: 'user/repo-a', name: 'repo-a', owner: 'user', stars: 90 },
-        { fullName: 'user/repo-b', name: 'repo-b', owner: 'user', stars: 60 },
-      ],
-    },
+const mockHistory: History = makeMultiRepoHistory(
+  [
+    { 'user/repo-a': 50, 'user/repo-b': 50 },
+    { 'user/repo-a': 70, 'user/repo-b': 50 },
+    { 'user/repo-a': 90, 'user/repo-b': 60 },
   ],
-};
+  { startMs: Date.UTC(2025, 0, 1) },
+);
 
 describe('chart', () => {
   describe('generateChartUrl', () => {

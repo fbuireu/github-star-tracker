@@ -39,6 +39,12 @@ export async function fetchAllStargazers({
           })
         : await fetchRepoStargazers({ octokit, owner: repo.owner, name: repo.name });
 
+      if (stargazers.length === 0 && repo.stars > 0) {
+        core.warning(
+          `Stargazers for ${repo.fullName} came back empty even though it has ${repo.stars} stars. GitHub restricts the stargazers API to repository admins and collaborators, so its star history cannot be reconstructed with this token.`,
+        );
+      }
+
       results.push({ repoFullName: repo.fullName, stargazers, sampled: shouldSample });
 
       if (shouldSample) sampled.push(repo.fullName);

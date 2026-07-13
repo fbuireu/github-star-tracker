@@ -128,11 +128,14 @@ export function buildStarHistory({
 
   const cumulativeByRepo = new Map<string, number[]>();
   for (const repo of repos) {
-    const counts = cumulativeCounts(eventsByRepo.get(repo.fullName) ?? [], edges);
+    const events = eventsByRepo.get(repo.fullName) ?? [];
+    const counts = cumulativeCounts(events, edges);
     const scaled =
-      repo.stars > MAX_REACHABLE_STARGAZERS
-        ? scaleCappedToTrueTotal(counts, repo.stars)
-        : scaleToTrueTotal(counts, repo.stars);
+      events.length === 0
+        ? edges.map(() => repo.stars)
+        : repo.stars > MAX_REACHABLE_STARGAZERS
+          ? scaleCappedToTrueTotal(counts, repo.stars)
+          : scaleToTrueTotal(counts, repo.stars);
     cumulativeByRepo.set(repo.fullName, scaled);
   }
 

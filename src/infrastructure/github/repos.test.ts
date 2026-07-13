@@ -1,5 +1,6 @@
 import type { Config } from '@config/types';
-import { ChartCurve, Visibility } from '@config/types';
+import { Visibility } from '@config/types';
+import { makeConfig } from '@shared/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { fetchRepos } from './client';
 import { filterRepos, getRepos, mapRepos } from './filters';
@@ -34,42 +35,7 @@ function makeRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
   };
 }
 
-const defaultConfig: Config = {
-  visibility: Visibility.ALL,
-  includeArchived: false,
-  includeForks: false,
-  excludeRepos: [],
-  onlyRepos: [],
-  excludeOrgs: [],
-  onlyOrgs: [],
-  minStars: 0,
-  dataBranch: 'star-tracker-data',
-  maxHistory: 52,
-  sendOnNoChanges: false,
-  includeCharts: false,
-  locale: 'en',
-  notificationThreshold: 0,
-  trackStargazers: false,
-  topRepos: 10,
-  smartSampling: false,
-  smartSamplingThreshold: 1500,
-  smartSamplingPages: 30,
-  chartLineColor: '#dfb317',
-  chartLineWidth: 2.5,
-  chartMaxPoints: 30,
-  chartYAxisSide: 'left',
-  chartSmoothing: true,
-  chartCurve: ChartCurve.MONOTONE,
-  chartShowPoints: true,
-  chartAnimation: true,
-  chartMilestones: true,
-  chartBeginAtZero: false,
-  chartTheme: 'auto',
-  chartCustomMilestones: [],
-  chartRange: 'all',
-  chartTrendLine: false,
-  velocityMetrics: false,
-};
+const defaultConfig: Config = makeConfig({ includeCharts: false, notificationThreshold: 0 });
 
 describe('filterRepos', () => {
   it('returns all repos with default config', () => {
