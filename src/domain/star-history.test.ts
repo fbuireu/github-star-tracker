@@ -189,9 +189,6 @@ describe('buildStarHistory', () => {
     for (let index = 1; index < stars.length; index++) {
       expect(stars[index]).toBeGreaterThanOrEqual(stars[index - 1]);
     }
-    // The fetched portion peaks at the known coverage, then ramps to the total;
-    // it must not be inflated to the 40k reachable cap. With 4 events anchored
-    // at 20k coverage, every pre-ramp value is a multiple of 20000/4 = 5000.
     expect(stars).toContain(20_000);
     expect(stars.filter((count) => count < 20_000).every((count) => count % 5_000 === 0)).toBe(
       true,

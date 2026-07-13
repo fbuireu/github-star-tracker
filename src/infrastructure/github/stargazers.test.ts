@@ -158,7 +158,6 @@ describe('fetchAllStargazers', () => {
       smartSamplingPages: 5,
     });
 
-    // sampled pages for 50 total pages are [1, 13, 26, 38, 50]; the last success is page 13
     expect(result[0].stargazers).toHaveLength(2);
     expect(result[0].coveredStars).toBe(1300);
   });

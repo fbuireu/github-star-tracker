@@ -58,10 +58,6 @@ function scaleCappedToTrueTotal(counts: number[], trueTotal: number, reachable: 
   const scale = fetchedTotal > 0 ? reachable / fetchedTotal : 0;
   const scaled = counts.map((count) => Math.round(count * scale));
 
-  // The fetched stargazers only cover the oldest reachable stars, so the curve
-  // goes flat once their dates run out. Replace that flat tail with a straight
-  // ramp from the reachable count up to the repo's real current total at the
-  // last edge.
   let tailStart = scaled.length - 1;
   while (tailStart > 0 && counts[tailStart - 1] === fetchedTotal) {
     tailStart--;
