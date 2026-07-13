@@ -39202,15 +39202,19 @@ async function fetchAllStargazers({
         totalStars: repo.stars,
         maxPages: smartSamplingPages
       }) : await fetchRepoStargazers({ octokit, owner: repo.owner, name: repo.name });
-      if (stargazers.length === 0 && repo.stars > 0) {
+      if (repo.stars > 0 && stargazers.length === 0) {
         warning(
           `Stargazers for ${repo.fullName} came back empty even though it has ${repo.stars} stars. GitHub restricts the stargazers API to repository admins and collaborators, so its star history cannot be reconstructed with this token.`
+        );
+      } else if (repo.stars > 0 && stargazers.length > 0 && !stargazers.some((stargazer) => Number.isFinite(Date.parse(stargazer.starredAt)))) {
+        warning(
+          `Stargazers for ${repo.fullName} came back without usable starred_at dates, so its star history cannot be reconstructed.`
         );
       }
       results.push({ repoFullName: repo.fullName, stargazers, sampled: shouldSample });
       if (shouldSample) sampled.push(repo.fullName);
     } catch (error2) {
-      warning(`Failed to fetch stargazers for ${repo.fullName}: ${error2.message}`);
+      warning(`Failed to fetch stargazers for ${repo.fullName}: ${describeFetchError(error2)}`);
       results.push({ repoFullName: repo.fullName, stargazers: [], sampled: shouldSample });
     }
   }
@@ -39218,6 +39222,13 @@ async function fetchAllStargazers({
     info(`Smart sampling applied to ${sampled.length} repo(s): ${sampled.join(", ")}`);
   }
   return results;
+}
+function describeFetchError(error2) {
+  const { status, message } = error2;
+  const parts = [typeof status === "number" ? `HTTP ${status}` : "", message?.trim() ?? ""].filter(
+    Boolean
+  );
+  return parts.length > 0 ? parts.join(" ") : String(error2);
 }
 async function fetchStargazerPage({
   octokit,
@@ -39251,7 +39262,16 @@ async function fetchRepoStargazers({
   let page = 1;
   let itemCount;
   do {
-    const items = await fetchStargazerPage({ octokit, owner, name, page });
+    let items;
+    try {
+      items = await fetchStargazerPage({ octokit, owner, name, page });
+    } catch (error2) {
+      if (stargazers.length === 0) throw error2;
+      warning(
+        `Stopped fetching stargazers for ${owner}/${name} at page ${page} (${describeFetchError(error2)}); keeping the ${stargazers.length} fetched so far`
+      );
+      return stargazers;
+    }
     itemCount = items.length;
     stargazers.push(...items);
     page++;
@@ -39283,9 +39303,21 @@ async function fetchSampledStargazers({
   );
   const pages = selectSampledPages({ totalPages, maxPages });
   const stargazers = [];
+  const failures = [];
   for (const page of pages) {
-    const items = await fetchStargazerPage({ octokit, owner, name, page });
-    stargazers.push(...items);
+    try {
+      const items = await fetchStargazerPage({ octokit, owner, name, page });
+      stargazers.push(...items);
+    } catch (error2) {
+      failures.push({ page, error: error2 });
+    }
+  }
+  if (failures.length > 0) {
+    if (stargazers.length === 0) throw failures[0].error;
+    const failedPages = failures.map((failure) => failure.page).join(", ");
+    warning(
+      `Skipped ${failures.length}/${pages.length} sampled stargazer pages for ${owner}/${name} (pages ${failedPages}; first error: ${describeFetchError(failures[0].error)}); reconstructing from the ${stargazers.length} fetched`
+    );
   }
   return stargazers;
 }
