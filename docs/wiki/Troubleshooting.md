@@ -111,12 +111,13 @@ git push origin --delete star-tracker-data
 
 **Cause:** The stargazers fetch for that repository came back empty or failed, so its history cannot be reconstructed. The run log includes a warning naming the affected repository and, for failures, the API error. Common reasons:
 
-- **The token is not an admin or direct collaborator on the repository**, per GitHub's [2026 API access restrictions](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/): the list comes back empty (`200 []`) silently. Typical setups: a fine-grained PAT that does not cover the repository's organization (fine-grained tokens are granted per org), or org repositories where you are a member with read access only. See [Known Limitations](Known-Limitations#-stargazers-api-access-restriction-2026).
+- **Transient GitHub-side failures.** The [2026 stargazers restriction](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/) rollout (~July 5–13, 2026) intermittently returned `404` or empty lists **even to repository admins**. Verify with `curl -i -H "Authorization: Bearer <token>" -H "Accept: application/vnd.github.star+json" "https://api.github.com/repos/<owner>/<repo>/stargazers?per_page=1"` — if it returns `200` with data, just re-run the workflow: charts are reconstructed from scratch on every run.
+- **The token's user is not an admin or collaborator on the repository**, per the same restriction: the list comes back `404` or empty (`200 []`) silently. Note this is about the user's *role*, not token scopes (implicit admin through org ownership works with a classic PAT). Typical setups: a fine-grained PAT without a grant on the repository's organization, or org repositories where you are a member with read access only. See [Known Limitations](Known-Limitations#-stargazers-api-access-restriction-2026).
 - **Rate limiting on large repositories.** A repository above 40,000 stars costs 400 API requests per run without smart sampling; a handful of large repos can exhaust the 5,000 requests/hour REST quota mid-run. A failed fetch discards that repository's partial data, leaving the same empty list.
 
 The per-repo chart then falls back to the stored per-run snapshots, which only cover the period the action has been running.
 
-**Fix:** Check the run log warning for the actual reason. Use a token with admin or collaborator access to every tracked repository (a classic PAT of the owning account works); for rate limits, enable `smart-sampling` to cut large-repo fetches from 400 requests to a few dozen. Star counts, reports and badges are unaffected either way.
+**Fix:** Check the run log warning for the actual reason, and verify the endpoint with the `curl` above. If the token's access is healthy, re-run — transient enforcement failures recover on their own. Otherwise use a token whose user has admin or collaborator access to every tracked repository; for rate limits, enable `smart-sampling` to cut large-repo fetches from 400 requests to a few dozen. Star counts, reports and badges are unaffected either way.
 
 ### No Forecast Chart
 

@@ -70,13 +70,15 @@ For those repos the reachable history is drawn accurately (scaled to the reachab
 
 GitHub [restricted](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/) the stargazers list endpoint (`GET /repos/{owner}/{repo}/stargazers`) to repository **admins and collaborators**. Anyone else receives empty responses or `403` errors, which is why third-party tools that chart stars for repositories they don't own (Star History, Starchart.cc, etc.) stop working.
 
-For this action, any tracked repository where the **token** is not an admin or direct collaborator is affected — being the owner of the repository is not enough if the token itself does not carry that access. In practice this covers:
+The restriction is evaluated on the **user's role on the repository, not on token scopes**: the endpoint accepts any scope (`x-accepted-oauth-scopes` is empty), so adding scopes to a classic token neither helps nor hurts. A classic PAT carries its owner's full role — including **implicit admin through organization ownership**, which has been verified to keep stargazers access. In practice the affected cases are:
 
 - **Organization repositories where you are a member with read access only** (neither admin nor direct collaborator).
-- **Fine-grained PATs that do not cover the repository's organization.** Fine-grained tokens are granted per organization: a token that can *list* a repository (and therefore track its star count) may still lack access to its stargazers list. This bites setups where the workflow runs in one organization but tracks repositories under others.
-- **Tokens with reduced scopes** used instead of your own classic PAT.
+- **Fine-grained PATs without an explicit grant on the repository's organization.** Fine-grained tokens are granted per resource owner: a token that can *list* a public repository (and therefore track its star count) may still lack the `Metadata (read)` grant that the stargazers endpoint checks.
 
-For those repos the stargazers list comes back **empty (`200 []`) or `403`** — the empty case is silent at the API level, so since v1.22.2 the action logs a warning naming each starred repository whose list came back empty. Charts for affected repos fall back to the per-run snapshot history instead of the reconstructed curve, and stargazer tracking degrades there. Star counts and delta reports keep working everywhere, since `stargazers_count` is not part of the restriction.
+For those repos the stargazers list comes back **`404`, `403` or empty (`200 []`)** — the empty case is silent at the API level, so since v1.22.2 the action logs a warning naming each starred repository whose list came back empty. Charts for affected repos fall back to the per-run snapshot history instead of the reconstructed curve, and stargazer tracking degrades there. Star counts and delta reports keep working everywhere, since `stargazers_count` is not part of the restriction.
+
+> [!NOTE]
+> **Rollout instability (July 2026).** During the restriction's initial rollout (~July 5–13, 2026) GitHub's enforcement was observed over-restricting intermittently, returning `404` or empty lists **even to repository admins** — stargazers pages 404'd platform-wide for a period ([community report](https://github.com/orgs/community/discussions/201178)). Charts generated during that window degraded silently on pre-v1.22.2 versions. If yours did, simply re-run once access behaves again: charts are reconstructed from scratch on every run.
 
 ### Why
 
