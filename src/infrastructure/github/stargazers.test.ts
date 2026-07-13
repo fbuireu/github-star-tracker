@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { makeRepoInfo } from '@test-utils';
+import { makeRepoInfo } from '@shared/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchAllStargazers } from './stargazers';
 import type { Octokit } from './types';

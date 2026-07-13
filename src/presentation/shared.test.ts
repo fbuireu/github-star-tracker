@@ -1,6 +1,6 @@
 import { ChartTheme } from '@config/types';
 import type { ComparisonResults } from '@domain/types';
-import { makeComparisonResults, makeRepoResult } from '@test-utils';
+import { makeComparisonResults, makeRepoResult } from '@shared/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { colorSchemeFor, prepareReportData } from './shared';
 

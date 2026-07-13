@@ -20,7 +20,7 @@
       "@i18n": ["./src/i18n/index.ts"],
       "@infrastructure/*": ["./src/infrastructure/*"],
       "@presentation/*": ["./src/presentation/*"],
-      "@test-utils": ["./src/test-utils/index.ts"]
+      "@shared/*": ["./src/shared/*"]
     }
   },
   "include": ["src/**/*", "esbuild.config.ts", "vitest.config.ts", "commitlint.config.ts"],

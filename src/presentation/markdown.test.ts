@@ -1,7 +1,7 @@
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
-import { makeComparisonResults, makeHistory, makeMultiRepoHistory } from '@test-utils';
+import { makeComparisonResults, makeHistory, makeMultiRepoHistory } from '@shared/testing';
 import { describe, expect, it } from 'vitest';
 import { generateMarkdownReport } from './markdown';
 import type { GenerateReportParams } from './shared';

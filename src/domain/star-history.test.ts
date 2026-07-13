@@ -1,4 +1,4 @@
-import { makeStargazer } from '@test-utils';
+import { makeStargazer } from '@shared/testing';
 import { describe, expect, it } from 'vitest';
 import { buildStarHistory, type RepoTotal } from './star-history';
 import type { RepoStargazers } from './stargazers';

@@ -1,7 +1,7 @@
 import { ChartCurve } from '@config/types';
 import { ForecastMethod } from '@domain/forecast';
 import type { History } from '@domain/types';
-import { makeMultiRepoHistory } from '@test-utils';
+import { makeMultiRepoHistory } from '@shared/testing';
 import { describe, expect, it } from 'vitest';
 import {
   buildMilestoneAnnotations,

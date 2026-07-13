@@ -1,6 +1,6 @@
 import type { Config } from '@config/types';
 import { Visibility } from '@config/types';
-import { makeConfig } from '@test-utils';
+import { makeConfig } from '@shared/testing';
 import { describe, expect, it, vi } from 'vitest';
 import { fetchRepos } from './client';
 import { filterRepos, getRepos, mapRepos } from './filters';
