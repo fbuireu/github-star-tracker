@@ -1,3 +1,10 @@
+## [1.22.4](https://github.com/fbuireu/github-star-tracker/compare/v1.22.3...v1.22.4) (2026-07-13)
+
+
+### Bug Fixes
+
+* retry transient stargazers/repo fetch errors and stop misattributing them to token restrictions ([#151](https://github.com/fbuireu/github-star-tracker/issues/151)) ([dd43563](https://github.com/fbuireu/github-star-tracker/commit/dd43563a50b5e8f46ab752bbe58ce28daf7e8c8a))
+
 ## [1.22.3](https://github.com/fbuireu/github-star-tracker/compare/v1.22.2...v1.22.3) (2026-07-13)
 
 
