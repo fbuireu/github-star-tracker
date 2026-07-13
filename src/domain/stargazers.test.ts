@@ -1,15 +1,11 @@
+import { makeStargazer } from '@test-utils';
 import { describe, expect, it } from 'vitest';
 import type { RepoStargazers, Stargazer, StargazerMap } from './stargazers';
-import { buildStargazerMap, diffStargazers } from './stargazers';
 
-function makeStar(login: string, date = '2026-01-15'): Stargazer {
-  return {
-    login,
-    avatarUrl: `https://avatars.githubusercontent.com/u/${login}`,
-    profileUrl: `https://github.com/${login}`,
-    starredAt: date,
-  };
-}
+const makeStar = (login: string, starredAt = '2026-01-15'): Stargazer =>
+  makeStargazer({ login, starredAt });
+
+import { buildStargazerMap, diffStargazers } from './stargazers';
 
 describe('diffStargazers', () => {
   it('treats all as new when previous map is empty (first run)', () => {

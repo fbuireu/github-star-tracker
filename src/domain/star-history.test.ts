@@ -1,18 +1,10 @@
+import { makeStargazer } from '@test-utils';
 import { describe, expect, it } from 'vitest';
 import { buildStarHistory, type RepoTotal } from './star-history';
-import type { RepoStargazers, Stargazer } from './stargazers';
+import type { RepoStargazers } from './stargazers';
 
 const NOW = new Date('2026-06-25T00:00:00Z');
 const MAX_REACHABLE_STARS = 40_000;
-
-function star(starredAt: string): Stargazer {
-  return {
-    login: `u-${starredAt}`,
-    avatarUrl: '',
-    profileUrl: '',
-    starredAt,
-  };
-}
 
 function repoTotal(fullName: string, stars: number): RepoTotal {
   const [owner, name] = fullName.split('/');
@@ -21,7 +13,11 @@ function repoTotal(fullName: string, stars: number): RepoTotal {
 }
 
 function repoStargazers(fullName: string, dates: string[], sampled = false): RepoStargazers {
-  return { repoFullName: fullName, stargazers: dates.map(star), sampled };
+  return {
+    repoFullName: fullName,
+    stargazers: dates.map((starredAt) => makeStargazer({ starredAt })),
+    sampled,
+  };
 }
 
 describe('buildStarHistory', () => {

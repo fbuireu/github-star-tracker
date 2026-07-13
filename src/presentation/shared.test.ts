@@ -1,51 +1,16 @@
 import { ChartTheme } from '@config/types';
 import type { ComparisonResults } from '@domain/types';
+import { makeComparisonResults, makeRepoResult } from '@test-utils';
 import { describe, expect, it, vi } from 'vitest';
 import { colorSchemeFor, prepareReportData } from './shared';
 
 function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResults {
-  return {
+  return makeComparisonResults({
     repos: [
-      {
-        name: 'repo-a',
-        fullName: 'user/repo-a',
-        owner: 'user',
-        current: 15,
-        previous: 10,
-        delta: 5,
-        isNew: false,
-        isRemoved: false,
-      },
-      {
-        name: 'repo-b',
-        fullName: 'user/repo-b',
-        owner: 'user',
-        current: 8,
-        previous: 10,
-        delta: -2,
-        isNew: false,
-        isRemoved: false,
-      },
-      {
-        name: 'repo-c',
-        fullName: 'user/repo-c',
-        owner: 'user',
-        current: 0,
-        previous: 3,
-        delta: -3,
-        isNew: false,
-        isRemoved: true,
-      },
-      {
-        name: 'repo-d',
-        fullName: 'user/repo-d',
-        owner: 'user',
-        current: 5,
-        previous: null,
-        delta: 5,
-        isNew: true,
-        isRemoved: false,
-      },
+      makeRepoResult('repo-a', { current: 15, previous: 10, delta: 5 }),
+      makeRepoResult('repo-b', { current: 8, previous: 10, delta: -2 }),
+      makeRepoResult('repo-c', { current: 0, previous: 3, delta: -3, isRemoved: true }),
+      makeRepoResult('repo-d', { current: 5, previous: null, delta: 5, isNew: true }),
     ],
     summary: {
       totalStars: 28,
@@ -56,7 +21,7 @@ function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResu
       changed: true,
     },
     ...overrides,
-  };
+  });
 }
 
 describe('colorSchemeFor', () => {

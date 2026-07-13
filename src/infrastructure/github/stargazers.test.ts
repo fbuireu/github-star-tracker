@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import type { RepoInfo } from '@domain/types';
+import { makeRepoInfo } from '@test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchAllStargazers } from './stargazers';
 import type { Octokit } from './types';
@@ -14,18 +14,6 @@ const samplingOff = {
   smartSamplingThreshold: 1500,
   smartSamplingPages: 30,
 };
-
-function makeRepo(name: string, stars = 10): RepoInfo {
-  return {
-    owner: 'user',
-    name,
-    fullName: `user/${name}`,
-    private: false,
-    archived: false,
-    fork: false,
-    stars,
-  };
-}
 
 function makeStargazerResponse(login: string, date = '2026-01-15T00:00:00Z') {
   return {
@@ -51,7 +39,7 @@ describe('fetchAllStargazers', () => {
     };
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
-      repos: [makeRepo('repo-a')],
+      repos: [makeRepoInfo('repo-a')],
       ...samplingOff,
     });
 
@@ -73,7 +61,7 @@ describe('fetchAllStargazers', () => {
     };
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
-      repos: [makeRepo('repo-a')],
+      repos: [makeRepoInfo('repo-a')],
       ...samplingOff,
     });
 
@@ -91,7 +79,7 @@ describe('fetchAllStargazers', () => {
 
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
-      repos: [makeRepo('repo-a'), makeRepo('repo-b')],
+      repos: [makeRepoInfo('repo-a'), makeRepoInfo('repo-b')],
       ...samplingOff,
     });
 
@@ -110,7 +98,7 @@ describe('fetchAllStargazers', () => {
 
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
-      repos: [makeRepo('repo-a')],
+      repos: [makeRepoInfo('repo-a')],
       ...samplingOff,
     });
 
@@ -124,7 +112,7 @@ describe('fetchAllStargazers', () => {
 
     await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
-      repos: [makeRepo('restricted', 54000)],
+      repos: [makeRepoInfo('restricted', 54000)],
       ...samplingOff,
     });
 
@@ -140,7 +128,7 @@ describe('fetchAllStargazers', () => {
 
     await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
-      repos: [makeRepo('empty', 0)],
+      repos: [makeRepoInfo('empty', 0)],
       ...samplingOff,
     });
 
@@ -154,7 +142,7 @@ describe('fetchAllStargazers', () => {
 
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
-      repos: [makeRepo('huge', 5000)],
+      repos: [makeRepoInfo('huge', 5000)],
       smartSampling: true,
       smartSamplingThreshold: 1500,
       smartSamplingPages: 5,
@@ -175,7 +163,7 @@ describe('fetchAllStargazers', () => {
 
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
-      repos: [makeRepo('mid', 1000)],
+      repos: [makeRepoInfo('mid', 1000)],
       smartSampling: true,
       smartSamplingThreshold: 1500,
       smartSamplingPages: 5,
@@ -192,7 +180,7 @@ describe('fetchAllStargazers', () => {
 
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
-      repos: [makeRepo('huge', 50000)],
+      repos: [makeRepoInfo('huge', 50000)],
       ...samplingOff,
     });
 
@@ -206,7 +194,7 @@ describe('fetchAllStargazers', () => {
 
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
-      repos: [makeRepo('huge', 2000)],
+      repos: [makeRepoInfo('huge', 2000)],
       smartSampling: true,
       smartSamplingThreshold: 100,
       smartSamplingPages: 50,
@@ -223,7 +211,7 @@ describe('fetchAllStargazers', () => {
 
     await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
-      repos: [makeRepo('massive', 50000)],
+      repos: [makeRepoInfo('massive', 50000)],
       smartSampling: true,
       smartSamplingThreshold: 1500,
       smartSamplingPages: 30,
@@ -242,7 +230,7 @@ describe('fetchAllStargazers', () => {
 
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
-      repos: [makeRepo('massive', 50000)],
+      repos: [makeRepoInfo('massive', 50000)],
       ...samplingOff,
     });
 
@@ -260,7 +248,7 @@ describe('fetchAllStargazers', () => {
 
     await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
-      repos: [makeRepo('huge', 5000)],
+      repos: [makeRepoInfo('huge', 5000)],
       smartSampling: true,
       smartSamplingThreshold: 1500,
       smartSamplingPages: 1,

@@ -16,6 +16,7 @@ export default defineConfig({
         'src/presentation/index.ts',
         'src/**/{types,defaults,constants}.ts',
         'src/**/*.test.ts',
+        'src/test-utils/**',
       ],
       thresholds: {
         lines: MIN_THRESHOLD,

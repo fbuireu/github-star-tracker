@@ -1,7 +1,6 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { loadConfig } from '@config/loader';
-import { ChartCurve, Visibility } from '@config/types';
 import { compareStars, createSnapshot } from '@domain/comparison';
 import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
@@ -34,6 +33,7 @@ import {
   generatePerRepoSvgChart,
   generateSvgChart,
 } from '@presentation/svg-chart';
+import { makeConfig, makeRepoInfo, makeStargazerSeries } from '@test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { trackStars } from './tracker';
 
@@ -149,42 +149,7 @@ vi.mock('@presentation/svg-chart', () => ({
   generateForecastSvgChart: vi.fn(),
 }));
 
-const defaultConfig = {
-  visibility: Visibility.ALL,
-  includeArchived: false,
-  includeForks: false,
-  excludeRepos: [],
-  onlyRepos: [],
-  excludeOrgs: [],
-  onlyOrgs: [],
-  minStars: 0,
-  dataBranch: 'star-data',
-  maxHistory: 52,
-  sendOnNoChanges: false,
-  includeCharts: true,
-  locale: 'en' as const,
-  notificationThreshold: 0,
-  trackStargazers: false,
-  topRepos: 10,
-  smartSampling: false,
-  smartSamplingThreshold: 1500,
-  smartSamplingPages: 30,
-  chartLineColor: '#dfb317',
-  chartLineWidth: 2.5,
-  chartMaxPoints: 30,
-  chartYAxisSide: 'left' as const,
-  chartSmoothing: true,
-  chartCurve: ChartCurve.MONOTONE,
-  chartShowPoints: true,
-  chartAnimation: true,
-  chartMilestones: true,
-  chartBeginAtZero: false,
-  chartTheme: 'auto' as const,
-  chartCustomMilestones: [],
-  chartRange: 'all' as const,
-  chartTrendLine: false,
-  velocityMetrics: false,
-};
+const defaultConfig = makeConfig({ dataBranch: 'star-data', notificationThreshold: 0 });
 
 const defaultSummary = {
   totalStars: 100,
@@ -195,26 +160,7 @@ const defaultSummary = {
   changed: true,
 };
 
-const defaultRepos = [
-  {
-    owner: 'user',
-    name: 'repo-a',
-    fullName: 'user/repo-a',
-    private: false,
-    archived: false,
-    fork: false,
-    stars: 60,
-  },
-  {
-    owner: 'user',
-    name: 'repo-b',
-    fullName: 'user/repo-b',
-    private: false,
-    archived: false,
-    fork: false,
-    stars: 40,
-  },
-];
+const defaultRepos = [makeRepoInfo('repo-a', 60), makeRepoInfo('repo-b', 40)];
 
 const defaultHistory = { snapshots: [] };
 const defaultSnapshot = { timestamp: '2026-01-01T00:00:00Z', totalStars: 100, repos: [] };
@@ -580,24 +526,8 @@ describe('trackStars', () => {
 
     it('draws each per-repo chart on its own timeline, not the shared global one', async () => {
       vi.mocked(getRepos).mockResolvedValue([
-        {
-          owner: 'u',
-          name: 'old',
-          fullName: 'u/old',
-          private: false,
-          archived: false,
-          fork: false,
-          stars: 100,
-        },
-        {
-          owner: 'u',
-          name: 'new',
-          fullName: 'u/new',
-          private: false,
-          archived: false,
-          fork: false,
-          stars: 30,
-        },
+        makeRepoInfo('old', 100, { owner: 'u', fullName: 'u/old' }),
+        makeRepoInfo('new', 30, { owner: 'u', fullName: 'u/new' }),
       ]);
       vi.mocked(compareStars).mockReturnValue({
         repos: [
@@ -607,16 +537,19 @@ describe('trackStars', () => {
         summary: defaultSummary,
         // biome-ignore lint/suspicious/noExplicitAny: partial fixture stands in for full ComparisonResults
       } as any);
-      const sg = (prefix: string, count: number, startMs: number, stepDays: number) =>
-        Array.from({ length: count }, (_, index) => ({
-          login: `${prefix}${index}`,
-          avatarUrl: '',
-          profileUrl: '',
-          starredAt: new Date(startMs + index * stepDays * 86_400_000).toISOString(),
-        }));
       vi.mocked(fetchAllStargazers).mockResolvedValue([
-        { repoFullName: 'u/old', stargazers: sg('o', 100, Date.UTC(2025, 0, 1), 5) },
-        { repoFullName: 'u/new', stargazers: sg('n', 30, Date.UTC(2026, 4, 25), 1) },
+        {
+          repoFullName: 'u/old',
+          stargazers: makeStargazerSeries({
+            count: 100,
+            startMs: Date.UTC(2025, 0, 1),
+            stepDays: 5,
+          }),
+        },
+        {
+          repoFullName: 'u/new',
+          stargazers: makeStargazerSeries({ count: 30, startMs: Date.UTC(2026, 4, 25) }),
+        },
       ]);
       const perRepo: Record<string, { snapshots: { timestamp: string; totalStars: number }[] }> =
         {};
@@ -635,24 +568,8 @@ describe('trackStars', () => {
 
     it('falls back to stored snapshots for a repo whose stargazers were unreachable (#148)', async () => {
       vi.mocked(getRepos).mockResolvedValue([
-        {
-          owner: 'u',
-          name: 'reachable',
-          fullName: 'u/reachable',
-          private: false,
-          archived: false,
-          fork: false,
-          stars: 100,
-        },
-        {
-          owner: 'u',
-          name: 'restricted',
-          fullName: 'u/restricted',
-          private: false,
-          archived: false,
-          fork: false,
-          stars: 54_000,
-        },
+        makeRepoInfo('reachable', 100, { owner: 'u', fullName: 'u/reachable' }),
+        makeRepoInfo('restricted', 54_000, { owner: 'u', fullName: 'u/restricted' }),
       ]);
       vi.mocked(compareStars).mockReturnValue({
         repos: [
@@ -680,12 +597,11 @@ describe('trackStars', () => {
       vi.mocked(fetchAllStargazers).mockResolvedValue([
         {
           repoFullName: 'u/reachable',
-          stargazers: Array.from({ length: 100 }, (_, index) => ({
-            login: `r${index}`,
-            avatarUrl: '',
-            profileUrl: '',
-            starredAt: new Date(Date.UTC(2025, 0, 1) + index * 5 * 86_400_000).toISOString(),
-          })),
+          stargazers: makeStargazerSeries({
+            count: 100,
+            startMs: Date.UTC(2025, 0, 1),
+            stepDays: 5,
+          }),
         },
         { repoFullName: 'u/restricted', stargazers: [] },
       ]);
