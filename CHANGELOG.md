@@ -1,3 +1,10 @@
+## [1.22.3](https://github.com/fbuireu/github-star-tracker/compare/v1.22.2...v1.22.3) (2026-07-13)
+
+
+### Bug Fixes
+
+* tolerate stargazer page failures and stop swallowing fetch errors ([#150](https://github.com/fbuireu/github-star-tracker/issues/150)) ([a302833](https://github.com/fbuireu/github-star-tracker/commit/a3028339b0ea465528e0733c983731dbc9558797))
+
 ## [1.22.2](https://github.com/fbuireu/github-star-tracker/compare/v1.22.1...v1.22.2) (2026-07-13)
 
 
