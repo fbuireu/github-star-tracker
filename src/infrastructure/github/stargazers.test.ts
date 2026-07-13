@@ -117,6 +117,36 @@ describe('fetchAllStargazers', () => {
     expect(result[0].stargazers).toHaveLength(0);
   });
 
+  it('warns when a starred repo returns an empty stargazers list', async () => {
+    const octokit = {
+      request: vi.fn().mockResolvedValue({ data: [] }),
+    };
+
+    await fetchAllStargazers({
+      octokit: octokit as unknown as Octokit,
+      repos: [makeRepo('restricted', 54000)],
+      ...samplingOff,
+    });
+
+    expect(core.warning).toHaveBeenCalledWith(
+      expect.stringContaining('Stargazers for user/restricted came back empty'),
+    );
+  });
+
+  it('does not warn about an empty stargazers list for a zero-star repo', async () => {
+    const octokit = {
+      request: vi.fn().mockResolvedValue({ data: [] }),
+    };
+
+    await fetchAllStargazers({
+      octokit: octokit as unknown as Octokit,
+      repos: [makeRepo('empty', 0)],
+      ...samplingOff,
+    });
+
+    expect(core.warning).not.toHaveBeenCalled();
+  });
+
   it('samples evenly-spaced pages when stars exceed the threshold', async () => {
     const octokit = {
       request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse('alice')] }),

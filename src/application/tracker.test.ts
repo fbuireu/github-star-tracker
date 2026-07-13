@@ -633,6 +633,76 @@ describe('trackStars', () => {
       expect(series.at(-1)).toBe(30);
     });
 
+    it('falls back to stored snapshots for a repo whose stargazers were unreachable (#148)', async () => {
+      vi.mocked(getRepos).mockResolvedValue([
+        {
+          owner: 'u',
+          name: 'reachable',
+          fullName: 'u/reachable',
+          private: false,
+          archived: false,
+          fork: false,
+          stars: 100,
+        },
+        {
+          owner: 'u',
+          name: 'restricted',
+          fullName: 'u/restricted',
+          private: false,
+          archived: false,
+          fork: false,
+          stars: 54_000,
+        },
+      ]);
+      vi.mocked(compareStars).mockReturnValue({
+        repos: [
+          { fullName: 'u/reachable', current: 100, isRemoved: false },
+          { fullName: 'u/restricted', current: 54_000, isRemoved: false },
+        ],
+        summary: defaultSummary,
+        // biome-ignore lint/suspicious/noExplicitAny: partial fixture stands in for full ComparisonResults
+      } as any);
+      const storedSnapshots = {
+        snapshots: [
+          {
+            timestamp: '2026-06-01T00:00:00Z',
+            totalStars: 53_950,
+            repos: [{ fullName: 'u/restricted', name: 'restricted', owner: 'u', stars: 53_900 }],
+          },
+          {
+            timestamp: '2026-06-08T00:00:00Z',
+            totalStars: 54_100,
+            repos: [{ fullName: 'u/restricted', name: 'restricted', owner: 'u', stars: 54_000 }],
+          },
+        ],
+      };
+      vi.mocked(addSnapshot).mockReturnValue(storedSnapshots);
+      vi.mocked(fetchAllStargazers).mockResolvedValue([
+        {
+          repoFullName: 'u/reachable',
+          stargazers: Array.from({ length: 100 }, (_, index) => ({
+            login: `r${index}`,
+            avatarUrl: '',
+            profileUrl: '',
+            starredAt: new Date(Date.UTC(2025, 0, 1) + index * 5 * 86_400_000).toISOString(),
+          })),
+        },
+        { repoFullName: 'u/restricted', stargazers: [] },
+      ]);
+      const perRepo: Record<string, { snapshots: { totalStars: number }[] }> = {};
+      vi.mocked(generatePerRepoSvgChart).mockImplementation((params) => {
+        perRepo[params.repoFullName] = params.history;
+        return '<svg/>';
+      });
+
+      await trackStars();
+
+      // The restricted repo's chart must use the real stored snapshots, not the
+      // reconstructed global history (which has no signal for it).
+      expect(perRepo['u/restricted']).toBe(storedSnapshots);
+      expect(perRepo['u/reachable']).not.toBe(storedSnapshots);
+    });
+
     it('skips SVG chart when includeCharts is false', async () => {
       vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, includeCharts: false });
       const historyWithSnapshots = {

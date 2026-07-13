@@ -107,6 +107,12 @@ git push origin --delete star-tracker-data
 
 **Fix:** Ensure `include-charts` is true (default) and that tracked repos have stargazers. Charts are reconstructed from real stargazer history and do not require multiple runs.
 
+### Chart Is a Flat or Straight Line
+
+**Cause:** The stargazers list for that repository came back empty, so its history cannot be reconstructed. This typically means the token is not an admin or collaborator on the repository, per GitHub's [2026 API access restrictions](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/). The run log includes a warning naming the affected repository. The per-repo chart then falls back to the stored per-run snapshots, which only cover the period the action has been running.
+
+**Fix:** Use a token with admin or collaborator access to the tracked repository. Star counts, reports and badges are unaffected either way.
+
 ### No Forecast Chart
 
 **Cause:** Forecasts require at least 3 snapshots.

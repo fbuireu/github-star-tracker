@@ -139,7 +139,7 @@ describe('buildStarHistory', () => {
     expect(stars.some((starCount) => starCount > 0 && starCount <= MAX_REACHABLE_STARS)).toBe(true);
   });
 
-  it('handles a repo with stars but no fetched dates (ends at the true total)', () => {
+  it('holds a repo with stars but no fetched dates flat at its true total', () => {
     const result = buildStarHistory({
       repoStargazers: [
         repoStargazers('user/a', ['2026-01-01T00:00:00Z']),
@@ -153,9 +153,26 @@ describe('buildStarHistory', () => {
     const repoB = result.snapshots.map(
       (snapshot) => snapshot.repos.find((repo) => repo.fullName === 'user/b')?.stars,
     );
-    expect(repoB.every((starCount) => Number.isFinite(starCount))).toBe(true);
-    expect(repoB.at(-1)).toBe(500);
-    expect(repoB.slice(0, -1).every((starCount) => starCount === 0)).toBe(true);
+    expect(repoB.every((starCount) => starCount === 500)).toBe(true);
+  });
+
+  it('does not fabricate a straight 0→total ramp for a >40k repo with no fetched dates (#148)', () => {
+    const result = buildStarHistory({
+      repoStargazers: [
+        repoStargazers('user/reachable', ['2023-10-01T00:00:00Z', '2026-06-01T00:00:00Z']),
+        repoStargazers('user/restricted', []),
+      ],
+      repos: [repoTotal('user/reachable', 2), repoTotal('user/restricted', 54_000)],
+      maxPoints: 30,
+      now: NOW,
+    });
+
+    const restricted = result.snapshots.map(
+      (snapshot) => snapshot.repos.find((repo) => repo.fullName === 'user/restricted')?.stars,
+    );
+    // Before the guard, the capped-repo ramp treated the all-zero counts as a flat
+    // tail starting at the first bucket and drew a perfectly linear 0→54000 line.
+    expect(restricted.every((starCount) => starCount === 54_000)).toBe(true);
   });
 
   it('keeps a zero-star repo at 0 in every snapshot', () => {
