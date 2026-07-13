@@ -70,7 +70,13 @@ For those repos the reachable history is drawn accurately (scaled to the reachab
 
 GitHub [restricted](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/) the stargazers list endpoint (`GET /repos/{owner}/{repo}/stargazers`) to repository **admins and collaborators**. Anyone else receives empty responses or `403` errors, which is why third-party tools that chart stars for repositories they don't own (Star History, Starchart.cc, etc.) stop working.
 
-For this action the only affected case is organization repositories where you are a **member with read access only** (neither admin nor direct collaborator): the stargazers list may come back empty or `403` for those repos, so charts and stargazer tracking degrade there. Star counts and delta reports keep working everywhere, since `stargazers_count` is not part of the restriction.
+For this action, any tracked repository where the **token** is not an admin or direct collaborator is affected — being the owner of the repository is not enough if the token itself does not carry that access. In practice this covers:
+
+- **Organization repositories where you are a member with read access only** (neither admin nor direct collaborator).
+- **Fine-grained PATs that do not cover the repository's organization.** Fine-grained tokens are granted per organization: a token that can *list* a repository (and therefore track its star count) may still lack access to its stargazers list. This bites setups where the workflow runs in one organization but tracks repositories under others.
+- **Tokens with reduced scopes** used instead of your own classic PAT.
+
+For those repos the stargazers list comes back **empty (`200 []`) or `403`** — the empty case is silent at the API level, so since v1.22.2 the action logs a warning naming each starred repository whose list came back empty. Charts for affected repos fall back to the per-run snapshot history instead of the reconstructed curve, and stargazer tracking degrades there. Star counts and delta reports keep working everywhere, since `stargazers_count` is not part of the restriction.
 
 ### Why
 
@@ -78,9 +84,11 @@ GitHub applied the restriction platform-wide to prevent stargazer lists from bei
 
 ### Approach
 
-- The action authenticates with **your own PAT** and tracks repositories from **your own account**, where you are the admin, so the normal use case is unaffected.
-- **Per-repo error tolerance** already applies: if fetching stargazers fails for one repository, the action logs a warning and continues with the rest.
+- The action authenticates with **your own PAT** and tracks repositories from **your own account**, where you are the admin, so the single-account use case with a classic PAT is unaffected.
+- For cross-organization setups, use a **classic PAT** of an account that is admin/collaborator on every tracked repository, or grant your fine-grained PAT access to each tracked organization.
+- **Per-repo error tolerance** already applies: if fetching stargazers fails or comes back empty for one repository, the action logs a warning naming it and continues with the rest.
 - Star counts, reports, badges and notifications never depend on the stargazers list, only charts and `track-stargazers` do.
+- If a chart renders as a straight or flat line, see [Troubleshooting](Troubleshooting#chart-is-a-flat-or-straight-line).
 
 ---
 
