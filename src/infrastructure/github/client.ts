@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 import { VISIBILITY_CONFIG } from '@config/defaults';
 import type { Config } from '@config/types';
+import { describeFetchError } from './errors';
 import type { GitHubRepo, Octokit } from './types';
 
 const REPOS_PER_PAGE = 100;
@@ -39,11 +40,8 @@ export async function fetchRepos({ octokit, config }: FetchReposParams): Promise
       page++;
     } while (dataLength >= REPOS_PER_PAGE);
   } catch (error) {
-    const err = error as Error & { status?: number };
-    const status = err.status ? ` (HTTP ${err.status})` : '';
-
     throw new Error(
-      `Failed to fetch repositories from GitHub API${status}: ${err.message}. Verify that your github-token has the correct permissions.`,
+      `Failed to fetch repositories from GitHub API: ${describeFetchError(error)}. Verify that your github-token has the correct permissions.`,
     );
   }
 

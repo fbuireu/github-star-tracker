@@ -26,6 +26,7 @@ import {
   writeReport,
   writeStargazers,
 } from '@infrastructure/persistence/storage';
+import { retry } from '@octokit/plugin-retry';
 import { generateBadge } from '@presentation/badge';
 import { MIN_SNAPSHOTS_FOR_CHART } from '@presentation/constants';
 import { generateCsvReport } from '@presentation/csv';
@@ -57,7 +58,7 @@ export async function trackStars(): Promise<void> {
     const config = loadConfig();
     const token = core.getInput('github-token', { required: true });
     const apiUrl = core.getInput('github-api-url') || process.env.GITHUB_API_URL || '';
-    const octokit = github.getOctokit(token, ...(apiUrl ? [{ baseUrl: apiUrl }] : []));
+    const octokit = github.getOctokit(token, apiUrl ? { baseUrl: apiUrl } : undefined, retry);
     const t = getTranslations(config.locale);
 
     core.info('Fetching repositories...');
