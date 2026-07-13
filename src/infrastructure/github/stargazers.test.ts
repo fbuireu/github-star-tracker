@@ -121,9 +121,46 @@ describe('fetchAllStargazers', () => {
     });
 
     expect(result[0].stargazers).toHaveLength(100);
+    expect(result[0].coveredStars).toBe(100);
     expect(core.warning).toHaveBeenCalledWith(
       expect.stringContaining('Stopped fetching stargazers for user/repo-a at page 2 (HTTP 403)'),
     );
+  });
+
+  it('reports no coverage limit when the fetch completes', async () => {
+    const octokit = {
+      request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse('alice')] }),
+    };
+
+    const result = await fetchAllStargazers({
+      octokit: octokit as unknown as Octokit,
+      repos: [makeRepoInfo('repo-a')],
+      ...samplingOff,
+    });
+
+    expect(result[0].coveredStars).toBeUndefined();
+  });
+
+  it('reports coverage up to the last successful page when deep sampled pages fail', async () => {
+    const octokit = {
+      request: vi
+        .fn()
+        .mockResolvedValueOnce({ data: [makeStargazerResponse('alice')] })
+        .mockResolvedValueOnce({ data: [makeStargazerResponse('bob')] })
+        .mockRejectedValue(Object.assign(new Error(''), { status: 403 })),
+    };
+
+    const result = await fetchAllStargazers({
+      octokit: octokit as unknown as Octokit,
+      repos: [makeRepoInfo('huge', 5000)],
+      smartSampling: true,
+      smartSamplingThreshold: 1500,
+      smartSamplingPages: 5,
+    });
+
+    // sampled pages for 50 total pages are [1, 13, 26, 38, 50]; the last success is page 13
+    expect(result[0].stargazers).toHaveLength(2);
+    expect(result[0].coveredStars).toBe(1300);
   });
 
   it('keeps the successful sampled pages when some pages fail', async () => {

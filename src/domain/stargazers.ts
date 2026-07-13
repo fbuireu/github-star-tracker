@@ -9,6 +9,7 @@ export interface RepoStargazers {
   repoFullName: string;
   stargazers: Stargazer[];
   sampled?: boolean;
+  coveredStars?: number;
 }
 
 export type StargazerMap = Record<string, string[]>;
