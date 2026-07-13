@@ -613,8 +613,6 @@ describe('trackStars', () => {
 
       await trackStars();
 
-      // The restricted repo's chart must use the real stored snapshots, not the
-      // reconstructed global history (which has no signal for it).
       expect(perRepo['u/restricted']).toBe(storedSnapshots);
       expect(perRepo['u/reachable']).not.toBe(storedSnapshots);
     });

@@ -166,8 +166,6 @@ describe('buildStarHistory', () => {
     const restricted = result.snapshots.map(
       (snapshot) => snapshot.repos.find((repo) => repo.fullName === 'user/restricted')?.stars,
     );
-    // Before the guard, the capped-repo ramp treated the all-zero counts as a flat
-    // tail starting at the first bucket and drew a perfectly linear 0→54000 line.
     expect(restricted.every((starCount) => starCount === 54_000)).toBe(true);
   });
 

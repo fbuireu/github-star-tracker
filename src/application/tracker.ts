@@ -221,9 +221,6 @@ export async function trackStars(): Promise<void> {
                   now: chartNow,
                 })
               : { snapshots: [] };
-            // When this repo's stargazers were unreachable, the reconstructed global
-            // history carries no real signal for it, so fall back to the stored
-            // per-run snapshots, which hold observed counts.
             const repoHistory =
               repoStarHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART
                 ? repoStarHistory

@@ -130,12 +130,6 @@ export function buildStarHistory({
   for (const repo of repos) {
     const events = eventsByRepo.get(repo.fullName) ?? [];
     const counts = cumulativeCounts(events, edges);
-    // A repo whose stargazer fetch came back empty (e.g. 403/empty responses since
-    // GitHub restricted the stargazers API to admins and collaborators) has no
-    // reconstructable history. Without this guard the scalers fabricate one: with a
-    // fetched total of 0 every count matches it, so the >40k flat-tail ramp spans
-    // the whole chart and draws a straight 0→total line (#148). Hold the known
-    // current total instead of inventing growth.
     const scaled =
       events.length === 0
         ? edges.map(() => repo.stars)
