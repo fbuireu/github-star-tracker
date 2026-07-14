@@ -147,7 +147,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `data-branch`            | `star-tracker-data`   | Branch for tracking data                                      |
 | `max-history`            | `52`                  | Max snapshots to keep                                         |
 | `top-repos`              | `10`                  | Top repos in charts/forecasts                                 |
-| `chart-line-color`       | `#dfb317`             | Hex color of primary chart line/fill/points (not comparison)  |
+| `chart-line-color`       | `#dfb317`             | Hex color of primary chart line/fill/points (not comparison). Accepts hex with or without a leading `#`  |
 | `chart-line-width`       | `2.5`                 | Stroke width (px, >0) of data lines in all charts             |
 | `chart-max-points`       | `30`                  | Curve granularity: points across the full span (capped at 365); `0` reconstructs at weekly resolution. Not a time window (see `chart-range`) |
 | `chart-y-axis-side`      | `left`                | Y-axis labels side: `left` or `right`                         |
@@ -183,9 +183,6 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `notification-threshold` | `0`                   | `0` (every run), N (threshold), or `auto` (adaptive)          |
 
 In the YAML config file, option keys may be written with either dashes or underscores - `include-charts` and `include_charts` are both accepted - so you can copy option names straight from this table without rewriting the separators.
-
-> [!TIP]
-> `chart-line-color` accepts hex with or without a leading `#`. Because a bare `#` starts a comment in YAML, either quote the value (`chart-line-color: '#6b63ff'`) or drop the `#` (`chart-line-color: 6b63ff`).
 
 </details>
 
