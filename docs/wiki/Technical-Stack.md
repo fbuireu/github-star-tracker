@@ -45,7 +45,7 @@ Aliases are configured in `tsconfig.json` paths, resolved by `vite-tsconfig-path
 
 ### Language & Runtime
 
-**TypeScript** (strict mode) on **Node.js 24+** - native GitHub Actions runtime support, first-class type safety.
+**TypeScript 7** on **Node.js 24+** - native GitHub Actions runtime support, first-class type safety.
 
 ### Tooling
 
