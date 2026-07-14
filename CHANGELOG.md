@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/fbuireu/github-star-tracker/compare/v1.22.4...v1.23.0) (2026-07-14)
+
+
+### Features
+
+* migrate to ts 7 ([deb5105](https://github.com/fbuireu/github-star-tracker/commit/deb51057062edfc5d601aa260fe47f2a80d04edd))
+
 ## [1.22.4](https://github.com/fbuireu/github-star-tracker/compare/v1.22.3...v1.22.4) (2026-07-13)
 
 
