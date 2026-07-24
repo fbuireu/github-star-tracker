@@ -1,3 +1,10 @@
+## [1.23.1](https://github.com/fbuireu/github-star-tracker/compare/v1.23.0...v1.23.1) (2026-07-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency js-yaml to v5.2.2 [security] ([#159](https://github.com/fbuireu/github-star-tracker/issues/159)) ([44b60bf](https://github.com/fbuireu/github-star-tracker/commit/44b60bf8020ca53873956819ebcfe5a679892cf9))
+
 # [1.23.0](https://github.com/fbuireu/github-star-tracker/compare/v1.22.4...v1.23.0) (2026-07-14)
 
 
