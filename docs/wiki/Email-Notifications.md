@@ -196,7 +196,7 @@ Both inputs drive the built-in email and the `should-notify` output, so the same
 Notes:
 
 - `notification-threshold: '0'` still means "notify on every run that has changes", in both modes. `should-notify` also requires that something actually changed.
-- The first run after enabling a threshold has no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so it fires once immediately and then settles into the threshold rhythm.
+- Whether raising the threshold fires an email straight away depends on whether a notification has ever fired on the data branch. If none has, `starsAtLastNotification` is absent and treated as `0`, so the first run fires once immediately and then settles into the threshold rhythm. If you have been running with the default `notification-threshold: '0'`, every changed run has already been notifying, so `starsAtLastNotification` is stored at your current total - raising the threshold does **not** fire immediately, and the next email waits for the full threshold to accumulate from that total.
 - In `net` mode a large **loss** of stars also reaches the threshold, because the absolute change is what is measured. Use `gains` if you only want to hear about growth.
 
 See **[Configuration > notification-threshold](Configuration)** for details on adaptive thresholds.
@@ -278,6 +278,8 @@ smtp-password: ${{ secrets.SENDGRID_API_KEY }}
 > A weekly cron alone does **not** make the report cover a week. With the default `compare-against: 'last-run'` the report compares the current counts against the previous stored snapshot, so a weekly workflow that shares a data branch with a daily one produces a Monday email covering only what changed since Sunday. Use `compare-against: '7d'` to pin the baseline to a snapshot at least seven days old, whatever the run cadence.
 >
 > Pair it with `read-only: true`. This workflow reads the same `star-tracker-data` branch that your tracking workflow maintains, and without `read-only` it would append its own snapshot to that branch and could race the run that writes it. A read-only run still builds the report, sets every output and sends the email - it just never commits or pushes.
+>
+> Because of that, leave `notification-threshold` at its default `0` here and gate the digest on `stars-changed`, as the example below does. A threshold other than `0` accumulates against `starsAtLastNotification`, which lives on the data branch a read-only run never writes, so it would either fire on every run or never fire. The action logs a warning if you set both.
 
 ```yaml
 name: Weekly Star Digest
@@ -414,7 +416,8 @@ The built-in email auto-generates localized subject lines:
 | Multiple emails | Check for duplicate workflows; add `if: stars-changed == 'true'` condition |
 | Email arrives almost every day | The mailer is probably gated on `new-stars`/`lost-stars`, which are per-run values, or `notification-threshold` is still `0` (the default). Set a `notification-threshold`, add `notification-mode: 'gains'` and gate the step on `should-notify == 'true'` |
 | Weekly digest workflow fights the daily one over the data branch | Add `read-only: true` to the digest workflow. It then reads the branch and reports from it without committing a snapshot of its own |
-| No email at all after raising `notification-threshold` | `should-notify` accumulates against `starsAtLastNotification` and only resets when a notification fires, so a high threshold simply takes longer. Make sure the step is gated on `should-notify == 'true'` and not on `new-stars >= N`, which would need the whole threshold to arrive within a single run |
+| No email at all after raising `notification-threshold` | `should-notify` accumulates against `starsAtLastNotification` and only resets when a notification fires, so a high threshold simply takes longer. If you were previously on the default `notification-threshold: '0'`, that value is already stored at your current total, so the counter restarts from there rather than firing once immediately. Make sure the step is gated on `should-notify == 'true'` and not on `new-stars >= N`, which would need the whole threshold to arrive within a single run |
+| `notification-threshold` ignored on a `read-only` run | A threshold other than `0` cannot work with `read-only: true` - its counter (`starsAtLastNotification`) lives on the data branch, which a read-only run never writes, so it either fires on every run or never fires. The action logs a warning when both are set. Keep `notification-threshold: '0'` there and gate the mailer on `stars-changed == 'true'` instead |
 | Email sent on no changes | Set `send-on-no-changes: false` or add conditional `if` step |
 
 ---

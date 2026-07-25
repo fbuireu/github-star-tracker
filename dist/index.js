@@ -37271,6 +37271,18 @@ function getOctokit(token, options, ...additionalPlugins) {
 var fs3 = __toESM(require("node:fs"));
 var path = __toESM(require("node:path"));
 
+// src/domain/types.ts
+var CompareAgainst = {
+  LAST_RUN: "last-run",
+  H24: "24h",
+  D7: "7d",
+  D30: "30d"
+};
+var NotificationMode = {
+  NET: "net",
+  GAINS: "gains"
+};
+
 // src/i18n/ca.json
 var ca_default = {
   badge: {
@@ -39816,18 +39828,6 @@ var DEFAULT_DUMP_OPTIONS = {
   }
 };
 
-// src/domain/types.ts
-var CompareAgainst = {
-  LAST_RUN: "last-run",
-  H24: "24h",
-  D7: "7d",
-  D30: "30d"
-};
-var NotificationMode = {
-  NET: "net",
-  GAINS: "gains"
-};
-
 // src/config/types.ts
 var Visibility = {
   PUBLIC: "public",
@@ -39957,6 +39957,10 @@ function parseHexColor(value) {
   const match = HEX_COLOR_PATTERN.exec(value.trim());
   return match ? `#${match[1].toLowerCase()}` : void 0;
 }
+function parseFileHexColor(value) {
+  if (typeof value === "string") return parseHexColor(value);
+  return void 0;
+}
 function parseDecimal(value) {
   if (isBlank(value)) return void 0;
   const parsed = typeof value === "number" ? value : Number.parseFloat(value);
@@ -39972,13 +39976,22 @@ function parseNotificationThreshold(value) {
 var FILE_CONFIG_KEYS = Object.keys(DEFAULTS2).filter(
   (key) => key !== "sendOnNoChanges"
 );
-var DATA_BRANCH_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;
+var DATA_BRANCH_FORBIDDEN_PATTERN = /[\s~^:?*[\\]/;
+var DATA_BRANCH_FORBIDDEN_SEQUENCES = ["..", "//", "/.", "@{"];
+var ASCII_CONTROL_MAX = 31;
+var ASCII_DELETE = 127;
 var UPPERCASE_LETTER_PATTERN = /[A-Z]/g;
+function hasControlCharacter(value) {
+  return [...value].some((char) => {
+    const code = char.codePointAt(0) ?? 0;
+    return code <= ASCII_CONTROL_MAX || code === ASCII_DELETE;
+  });
+}
 function assertValidDataBranch(dataBranch) {
-  const isValid = DATA_BRANCH_PATTERN.test(dataBranch) && !dataBranch.includes("..") && !dataBranch.endsWith("/") && !dataBranch.endsWith(".lock");
+  const isValid = dataBranch !== "" && dataBranch !== "@" && !DATA_BRANCH_FORBIDDEN_PATTERN.test(dataBranch) && !hasControlCharacter(dataBranch) && !DATA_BRANCH_FORBIDDEN_SEQUENCES.some((sequence) => dataBranch.includes(sequence)) && !["-", ".", "/"].some((prefix) => dataBranch.startsWith(prefix)) && !["/", ".", ".lock"].some((suffix) => dataBranch.endsWith(suffix));
   if (!isValid) {
     throw new Error(
-      `Invalid data-branch "${dataBranch}". Use only letters, digits, ".", "-", "_" and "/", starting with a letter or digit.`
+      `Invalid data-branch "${dataBranch}". It must be a valid git branch name: no whitespace and none of ~^:?*[\\, no "..", "//", "/." or "@{", it cannot start with "-", "." or "/", and it cannot end with "/", "." or ".lock".`
     );
   }
 }
@@ -40004,16 +40017,10 @@ function resolveEnum({
   );
   return fallback;
 }
-function parseOrWarn({
-  input,
-  inputName,
-  parse: parse3,
-  fallback
-}) {
+function parseOrWarn({ input, inputName, parse: parse3 }) {
   const parsed = parse3(input);
   if (input !== "" && parsed === void 0) {
-    const shown = typeof fallback === "string" ? `"${fallback}"` : fallback;
-    warning(`Invalid ${inputName} "${input}". Falling back to ${shown}`);
+    warning(`Invalid ${inputName} "${input}". Ignoring it.`);
   }
   return parsed;
 }
@@ -40109,7 +40116,7 @@ function loadConfig() {
     fallback: DEFAULTS2.locale,
     inputName: "locale"
   });
-  const chartLineColor = parseHexColor(inputChartLineColor) ?? parseHexColor(fileConfig.chartLineColor) ?? DEFAULTS2.chartLineColor;
+  const chartLineColor = parseHexColor(inputChartLineColor) ?? parseFileHexColor(fileConfig.chartLineColor) ?? DEFAULTS2.chartLineColor;
   if (inputChartLineColor && !parseHexColor(inputChartLineColor)) {
     warning(
       `Invalid chart-line-color "${inputChartLineColor}". Falling back to "${DEFAULTS2.chartLineColor}"`
@@ -40159,8 +40166,12 @@ function loadConfig() {
   });
   const config = {
     visibility,
-    includeArchived: parseBool(inputIncludeArchived) ?? parseFileBool(fileConfig.includeArchived) ?? DEFAULTS2.includeArchived,
-    includeForks: parseBool(inputIncludeForks) ?? parseFileBool(fileConfig.includeForks) ?? DEFAULTS2.includeForks,
+    includeArchived: parseOrWarn({
+      input: inputIncludeArchived,
+      inputName: "include-archived",
+      parse: parseBool
+    }) ?? parseFileBool(fileConfig.includeArchived) ?? DEFAULTS2.includeArchived,
+    includeForks: parseOrWarn({ input: inputIncludeForks, inputName: "include-forks", parse: parseBool }) ?? parseFileBool(fileConfig.includeForks) ?? DEFAULTS2.includeForks,
     excludeRepos: parseList(inputExcludeRepos) ?? toStringList(fileConfig.excludeRepos) ?? DEFAULTS2.excludeRepos,
     onlyRepos: parseList(inputOnlyRepos) ?? toStringList(fileConfig.onlyRepos) ?? DEFAULTS2.onlyRepos,
     excludeOrgs: parseList(inputExcludeOrgs) ?? toStringList(fileConfig.excludeOrgs) ?? DEFAULTS2.excludeOrgs,
@@ -40168,68 +40179,85 @@ function loadConfig() {
     minStars: parseOrWarn({
       input: inputMinStars,
       inputName: "min-stars",
-      parse: parseNumber,
-      fallback: DEFAULTS2.minStars
+      parse: parseNumber
     }) ?? parseNumber(fileConfig.minStars) ?? DEFAULTS2.minStars,
     dataBranch,
     maxHistory: parseOrWarn({
       input: inputMaxHistory,
       inputName: "max-history",
-      parse: parseNumber,
-      fallback: DEFAULTS2.maxHistory
+      parse: parseNumber
     }) ?? parseNumber(fileConfig.maxHistory) ?? DEFAULTS2.maxHistory,
     compareAgainst,
-    readOnly: parseBool(inputReadOnly) ?? parseFileBool(fileConfig.readOnly) ?? DEFAULTS2.readOnly,
+    readOnly: parseOrWarn({ input: inputReadOnly, inputName: "read-only", parse: parseBool }) ?? parseFileBool(fileConfig.readOnly) ?? DEFAULTS2.readOnly,
     sendOnNoChanges: parseBool(getInput("send-on-no-changes")) ?? DEFAULTS2.sendOnNoChanges,
-    includeCharts: parseBool(inputIncludeCharts) ?? parseFileBool(fileConfig.includeCharts) ?? DEFAULTS2.includeCharts,
+    includeCharts: parseOrWarn({ input: inputIncludeCharts, inputName: "include-charts", parse: parseBool }) ?? parseFileBool(fileConfig.includeCharts) ?? DEFAULTS2.includeCharts,
     locale,
     notificationThreshold: parseOrWarn({
       input: inputNotificationThreshold,
       inputName: "notification-threshold",
-      parse: parseNotificationThreshold,
-      fallback: DEFAULTS2.notificationThreshold
+      parse: parseNotificationThreshold
     }) ?? parseNotificationThreshold(fileConfig.notificationThreshold) ?? DEFAULTS2.notificationThreshold,
     notificationMode,
-    trackStargazers: parseBool(inputTrackStargazers) ?? parseFileBool(fileConfig.trackStargazers) ?? DEFAULTS2.trackStargazers,
+    trackStargazers: parseOrWarn({
+      input: inputTrackStargazers,
+      inputName: "track-stargazers",
+      parse: parseBool
+    }) ?? parseFileBool(fileConfig.trackStargazers) ?? DEFAULTS2.trackStargazers,
     topRepos: parseOrWarn({
       input: inputTopRepos,
       inputName: "top-repos",
-      parse: parseNumber,
-      fallback: DEFAULTS2.topRepos
+      parse: parseNumber
     }) ?? parseNumber(fileConfig.topRepos) ?? DEFAULTS2.topRepos,
-    smartSampling: parseBool(inputSmartSampling) ?? parseFileBool(fileConfig.smartSampling) ?? DEFAULTS2.smartSampling,
+    smartSampling: parseOrWarn({ input: inputSmartSampling, inputName: "smart-sampling", parse: parseBool }) ?? parseFileBool(fileConfig.smartSampling) ?? DEFAULTS2.smartSampling,
     smartSamplingThreshold: parseOrWarn({
       input: inputSmartSamplingThreshold,
       inputName: "smart-sampling-threshold",
-      parse: parseNumber,
-      fallback: DEFAULTS2.smartSamplingThreshold
+      parse: parseNumber
     }) ?? parseNumber(fileConfig.smartSamplingThreshold) ?? DEFAULTS2.smartSamplingThreshold,
     smartSamplingPages: parseOrWarn({
       input: inputSmartSamplingPages,
       inputName: "smart-sampling-pages",
-      parse: parseNumber,
-      fallback: DEFAULTS2.smartSamplingPages
+      parse: parseNumber
     }) ?? parseNumber(fileConfig.smartSamplingPages) ?? DEFAULTS2.smartSamplingPages,
     chartLineColor,
     chartLineWidth,
     chartMaxPoints: parseOrWarn({
       input: inputChartMaxPoints,
       inputName: "chart-max-points",
-      parse: parseNumber,
-      fallback: DEFAULTS2.chartMaxPoints
+      parse: parseNumber
     }) ?? parseNumber(fileConfig.chartMaxPoints) ?? DEFAULTS2.chartMaxPoints,
     chartYAxisSide,
-    chartSmoothing: parseBool(inputChartSmoothing) ?? parseFileBool(fileConfig.chartSmoothing) ?? DEFAULTS2.chartSmoothing,
+    chartSmoothing: parseOrWarn({ input: inputChartSmoothing, inputName: "chart-smoothing", parse: parseBool }) ?? parseFileBool(fileConfig.chartSmoothing) ?? DEFAULTS2.chartSmoothing,
     chartCurve,
-    chartShowPoints: parseBool(inputChartShowPoints) ?? parseFileBool(fileConfig.chartShowPoints) ?? DEFAULTS2.chartShowPoints,
-    chartAnimation: parseBool(inputChartAnimation) ?? parseFileBool(fileConfig.chartAnimation) ?? DEFAULTS2.chartAnimation,
-    chartMilestones: parseBool(inputChartMilestones) ?? parseFileBool(fileConfig.chartMilestones) ?? DEFAULTS2.chartMilestones,
-    chartBeginAtZero: parseBool(inputChartBeginAtZero) ?? parseFileBool(fileConfig.chartBeginAtZero) ?? DEFAULTS2.chartBeginAtZero,
+    chartShowPoints: parseOrWarn({
+      input: inputChartShowPoints,
+      inputName: "chart-show-points",
+      parse: parseBool
+    }) ?? parseFileBool(fileConfig.chartShowPoints) ?? DEFAULTS2.chartShowPoints,
+    chartAnimation: parseOrWarn({ input: inputChartAnimation, inputName: "chart-animation", parse: parseBool }) ?? parseFileBool(fileConfig.chartAnimation) ?? DEFAULTS2.chartAnimation,
+    chartMilestones: parseOrWarn({
+      input: inputChartMilestones,
+      inputName: "chart-milestones",
+      parse: parseBool
+    }) ?? parseFileBool(fileConfig.chartMilestones) ?? DEFAULTS2.chartMilestones,
+    chartBeginAtZero: parseOrWarn({
+      input: inputChartBeginAtZero,
+      inputName: "chart-begin-at-zero",
+      parse: parseBool
+    }) ?? parseFileBool(fileConfig.chartBeginAtZero) ?? DEFAULTS2.chartBeginAtZero,
     chartTheme,
     chartCustomMilestones: inputChartCustomMilestones ? parseNumberList(inputChartCustomMilestones) : fileCustomMilestones.length > 0 ? fileCustomMilestones : DEFAULTS2.chartCustomMilestones,
     chartRange,
-    chartTrendLine: parseBool(inputChartTrendLine) ?? parseFileBool(fileConfig.chartTrendLine) ?? DEFAULTS2.chartTrendLine,
-    velocityMetrics: parseBool(inputVelocityMetrics) ?? parseFileBool(fileConfig.velocityMetrics) ?? DEFAULTS2.velocityMetrics
+    chartTrendLine: parseOrWarn({
+      input: inputChartTrendLine,
+      inputName: "chart-trend-line",
+      parse: parseBool
+    }) ?? parseFileBool(fileConfig.chartTrendLine) ?? DEFAULTS2.chartTrendLine,
+    velocityMetrics: parseOrWarn({
+      input: inputVelocityMetrics,
+      inputName: "velocity-metrics",
+      parse: parseBool
+    }) ?? parseFileBool(fileConfig.velocityMetrics) ?? DEFAULTS2.velocityMetrics
   };
   if (config.readOnly && config.notificationThreshold !== 0) {
     warning(
@@ -40324,10 +40352,6 @@ function createSnapshot({ currentRepos, summary: summary2 }) {
 
 // src/domain/constants.ts
 var MS_PER_DAY = 864e5;
-function toEpochMs(timestamp) {
-  const parsed = new Date(timestamp).getTime();
-  return Number.isFinite(parsed) ? parsed : null;
-}
 var MS_PER_YEAR = 365 * MS_PER_DAY;
 var MIN_SNAPSHOTS_FOR_FORECAST = 3;
 var FORECAST_WEEKS = 4;
@@ -40339,12 +40363,19 @@ var NOTIFICATION_THRESHOLDS = [
 var NOTIFICATION_THRESHOLD_MAX_PACE = 20;
 var MAX_REACHABLE_STARGAZERS = 4e4;
 
+// src/domain/time.ts
+function toEpochMs(timestamp) {
+  const parsed = new Date(timestamp).getTime();
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 // src/domain/snapshot.ts
 var COMPARE_WINDOW_DAYS = {
   [CompareAgainst.H24]: 1,
   [CompareAgainst.D7]: 7,
   [CompareAgainst.D30]: 30
 };
+var COMPARE_WINDOW_TOLERANCE_MS = 6 * 60 * 60 * 1e3;
 function getLastSnapshot(history) {
   return history.snapshots.at(-1) ?? null;
 }
@@ -40356,12 +40387,13 @@ function getBaselineSnapshot({
   const snapshots = history.snapshots;
   if (snapshots.length === 0) return null;
   if (compareAgainst === CompareAgainst.LAST_RUN) return getLastSnapshot(history);
-  const cutoff = now.getTime() - COMPARE_WINDOW_DAYS[compareAgainst] * MS_PER_DAY;
-  const olderThanCutoff = snapshots.filter((snapshot) => {
-    const timestamp = toEpochMs(snapshot.timestamp);
-    return timestamp !== null && timestamp <= cutoff;
-  });
-  return olderThanCutoff.at(-1) ?? snapshots[0];
+  const window2 = COMPARE_WINDOW_DAYS[compareAgainst] * MS_PER_DAY;
+  const cutoff = now.getTime() - window2 + COMPARE_WINDOW_TOLERANCE_MS;
+  const datable = snapshots.filter((snapshot) => toEpochMs(snapshot.timestamp) !== null);
+  const olderThanCutoff = datable.filter(
+    (snapshot) => toEpochMs(snapshot.timestamp) <= cutoff
+  );
+  return olderThanCutoff.at(-1) ?? datable[0] ?? null;
 }
 function repoStarSeries({ snapshots, repoFullName }) {
   return snapshots.map(
@@ -40702,7 +40734,10 @@ function ensureGitRepository() {
     );
   }
 }
-function initializeDataBranch(dataBranch) {
+function initializeDataBranch({
+  dataBranch,
+  readOnly = false
+}) {
   const dataDir = `.${dataBranch}`;
   ensureGitRepository();
   execute({ args: ["config", "user.name", "github-actions[bot]"] });
@@ -40720,6 +40755,11 @@ function initializeDataBranch(dataBranch) {
     } catch {
       debug(`Could not remove existing worktree at ${dataDir}, proceeding anyway`);
     }
+  }
+  if (!branchExists && readOnly) {
+    throw new Error(
+      `Branch "${dataBranch}" does not exist on the remote and this is a read-only run, so it cannot be created. Point data-branch at the branch your tracking workflow maintains, or drop read-only so this run can create it.`
+    );
   }
   if (!branchExists) {
     info(`Creating new orphan branch: ${dataBranch}`);
@@ -41077,8 +41117,9 @@ function readJsonFile({ filePath, fallback }) {
   if (!fs5.existsSync(filePath)) {
     return fallback;
   }
+  const contents = fs5.readFileSync(filePath, "utf8");
   try {
-    return JSON.parse(fs5.readFileSync(filePath, "utf8"));
+    return JSON.parse(contents);
   } catch (error2) {
     throw new Error(
       `${path3.basename(filePath)} on the data branch is not valid JSON (${error2.message}). Fix or delete the file on that branch and re-run.`
@@ -43010,8 +43051,8 @@ function buildForecastTable({ title, forecasts, t }) {
 }
 
 // src/application/tracker.ts
-async function withDataDir({ branch, fn }) {
-  const dataDir = initializeDataBranch(branch);
+async function withDataDir({ branch, readOnly, fn }) {
+  const dataDir = initializeDataBranch({ dataBranch: branch, readOnly });
   try {
     await fn(dataDir);
   } finally {
@@ -43034,6 +43075,7 @@ async function trackStars() {
     }
     await withDataDir({
       branch: config.dataBranch,
+      readOnly: config.readOnly,
       fn: async (dataDir) => {
         info(`Tracking ${repos.length} repositories...`);
         const storedHistory = readHistory(dataDir);
@@ -43059,6 +43101,12 @@ async function trackStars() {
           info(`Found ${stargazerDiff.totalNew} new stargazers`);
         }
         const snapshot = createSnapshot({ currentRepos: repos, summary: summary2 });
+        const prunedCount = storedHistory.snapshots.length + 1 - config.maxHistory;
+        if (prunedCount > 0) {
+          warning(
+            `max-history is ${config.maxHistory} but ${storedHistory.snapshots.length} snapshots are stored, so this run drops the oldest ${prunedCount}. Raise max-history before this run if you want to keep them.`
+          );
+        }
         const updatedHistory = addSnapshot({
           history: storedHistory,
           snapshot,

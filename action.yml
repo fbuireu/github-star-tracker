@@ -107,9 +107,9 @@ inputs:
     default: ''
 
   email-from:
-    description: 'Email sender name or address'
+    description: 'Email sender name or address. Defaults to a localized sender name derived from the locale input'
     required: false
-    default: 'GitHub Star Tracker'
+    default: ''
 
   send-on-no-changes:
     description: 'Send email even when no star changes are detected'

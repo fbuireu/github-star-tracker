@@ -1,14 +1,7 @@
+import { CompareAgainst, NotificationMode } from '@domain/types';
 import type { Locale } from '@i18n';
 import type { Config } from './types';
-import {
-  ChartAxisSide,
-  ChartCurve,
-  ChartRange,
-  ChartTheme,
-  CompareAgainst,
-  NotificationMode,
-  Visibility,
-} from './types';
+import { ChartAxisSide, ChartCurve, ChartRange, ChartTheme, Visibility } from './types';
 
 interface VisibilityApiParams {
   visibility: Exclude<Visibility, typeof Visibility.OWNED>;

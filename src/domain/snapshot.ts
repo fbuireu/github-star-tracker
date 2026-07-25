@@ -1,4 +1,5 @@
-import { MS_PER_DAY, toEpochMs } from './constants';
+import { MS_PER_DAY } from './constants';
+import { toEpochMs } from './time';
 import { CompareAgainst, type History, type Snapshot } from './types';
 
 const COMPARE_WINDOW_DAYS: Record<
@@ -9,6 +10,8 @@ const COMPARE_WINDOW_DAYS: Record<
   [CompareAgainst.D7]: 7,
   [CompareAgainst.D30]: 30,
 };
+
+const COMPARE_WINDOW_TOLERANCE_MS = 6 * 60 * 60 * 1000;
 
 export function getLastSnapshot(history: History): Snapshot | null {
   return history.snapshots.at(-1) ?? null;
@@ -30,14 +33,14 @@ export function getBaselineSnapshot({
   if (snapshots.length === 0) return null;
   if (compareAgainst === CompareAgainst.LAST_RUN) return getLastSnapshot(history);
 
-  const cutoff = now.getTime() - COMPARE_WINDOW_DAYS[compareAgainst] * MS_PER_DAY;
-  const olderThanCutoff = snapshots.filter((snapshot) => {
-    const timestamp = toEpochMs(snapshot.timestamp);
+  const window = COMPARE_WINDOW_DAYS[compareAgainst] * MS_PER_DAY;
+  const cutoff = now.getTime() - window + COMPARE_WINDOW_TOLERANCE_MS;
+  const datable = snapshots.filter((snapshot) => toEpochMs(snapshot.timestamp) !== null);
+  const olderThanCutoff = datable.filter(
+    (snapshot) => (toEpochMs(snapshot.timestamp) as number) <= cutoff,
+  );
 
-    return timestamp !== null && timestamp <= cutoff;
-  });
-
-  return olderThanCutoff.at(-1) ?? snapshots[0];
+  return olderThanCutoff.at(-1) ?? datable[0] ?? null;
 }
 
 interface RepoStarSeriesParams {

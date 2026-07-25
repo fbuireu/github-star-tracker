@@ -70,12 +70,12 @@ Complete reference for all inputs, outputs, and data formats.
 | `smtp-username` | `string` | - | SMTP auth username |
 | `smtp-password` | `string` (secret) | - | SMTP auth password |
 | `email-to` | `string` | - | Recipient email address |
-| `email-from` | `string` | `GitHub Star Tracker` | Sender name or address |
+| `email-from` | `string` | localized | Sender name or address. When unset it falls back to a sender name localized from the `locale` input |
 | `send-on-no-changes` | `boolean` | `false` | Send email even with no star changes |
 | `notification-threshold` | `number` or `"auto"` | `0` | Accumulated star change required to notify: `0` = every run that has changes, N = notify once the total has moved by at least N since the last notification, `auto` = adaptive threshold derived from the total star count (see [Configuration](Configuration#notification-threshold)) |
 | `notification-mode` | `string` | `net` | How `notification-threshold` measures that change: `net` (absolute change in total stars - gains and losses cancel out, and a large drop also reaches the threshold) or `gains` (only upward movement counts; a drop never notifies) |
 
-Both modes measure against `starsAtLastNotification` in `stars-data.json`, which is only updated when a notification actually fires. The counter therefore accumulates across runs that do not notify instead of resetting. On the first run after enabling a threshold there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so it fires once immediately and then settles.
+Both modes measure against `starsAtLastNotification` in `stars-data.json`, which is only updated when a notification actually fires. The counter therefore accumulates across runs that do not notify instead of resetting. On a data branch that has never sent a notification there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so the first run fires immediately and then settles. That is not the case if you were already running with the default `notification-threshold: 0`: every changed run has been notifying, so `starsAtLastNotification` already holds your current total and raising the threshold fires nothing immediately - the next email waits until the total actually moves by at least the threshold.
 
 ---
 
@@ -94,7 +94,7 @@ All outputs are strings (GitHub Actions requirement). Available in subsequent wo
 | `new-stars` | `string` | Per-run. Stars gained against the `compare-against` baseline |
 | `lost-stars` | `string` | Per-run. Stars lost against the `compare-against` baseline |
 | `should-notify` | `string` | Cumulative. Whether `notification-threshold` was reached under `notification-mode` since the last notification fired, and something changed: `true` or `false` |
-| `new-stargazers` | `string` | Number of new stargazers detected (0 if tracking disabled) |
+| `new-stargazers` | `string` | Number of new stargazers detected by diffing against the stored `stargazers.json`, which every writing run rewrites - unlike its siblings it is not affected by `compare-against` (0 if tracking disabled) |
 
 `new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the comparison baseline. They are not cumulative and carry no memory of whether an email was sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: its counter only resets when a notification actually fires.
 

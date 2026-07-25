@@ -99,11 +99,11 @@ describe('getBaselineSnapshot', () => {
     expect(baseline?.totalStars).toBe(1000);
   });
 
-  it('picks a snapshot exactly on the window boundary', () => {
+  it('picks the newest snapshot still inside the tolerated window', () => {
     const history: History = {
       snapshots: [
-        { timestamp: '2026-03-24T00:00:00Z', totalStars: 100, repos: [] },
-        { timestamp: '2026-03-24T00:00:01Z', totalStars: 200, repos: [] },
+        { timestamp: '2026-03-24T05:00:00Z', totalStars: 100, repos: [] },
+        { timestamp: '2026-03-24T07:00:00Z', totalStars: 200, repos: [] },
       ],
     };
     const baseline = getBaselineSnapshot({
@@ -113,6 +113,48 @@ describe('getBaselineSnapshot', () => {
     });
 
     expect(baseline?.totalStars).toBe(100);
+  });
+
+  it('tolerates cron jitter that pushes a snapshot just under the window', () => {
+    const history: History = {
+      snapshots: [
+        { timestamp: '2026-03-17T00:00:00Z', totalStars: 100, repos: [] },
+        { timestamp: '2026-03-24T00:05:00Z', totalStars: 200, repos: [] },
+      ],
+    };
+    const baseline = getBaselineSnapshot({
+      history,
+      compareAgainst: CompareAgainst.D7,
+      now: NOW,
+    });
+
+    expect(baseline?.totalStars).toBe(200);
+  });
+
+  it('never falls back to a snapshot whose timestamp is unparseable', () => {
+    const history: History = {
+      snapshots: [
+        { timestamp: 'not-a-date', totalStars: 100, repos: [] },
+        { timestamp: '2026-03-30T00:00:00Z', totalStars: 200, repos: [] },
+      ],
+    };
+    const baseline = getBaselineSnapshot({
+      history,
+      compareAgainst: CompareAgainst.D7,
+      now: NOW,
+    });
+
+    expect(baseline?.totalStars).toBe(200);
+  });
+
+  it('returns null when every snapshot has an unparseable timestamp', () => {
+    const history: History = {
+      snapshots: [{ timestamp: 'not-a-date', totalStars: 100, repos: [] }],
+    };
+
+    expect(
+      getBaselineSnapshot({ history, compareAgainst: CompareAgainst.D7, now: NOW }),
+    ).toBeNull();
   });
 
   it('ignores snapshots with unparseable timestamps', () => {

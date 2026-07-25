@@ -41,11 +41,6 @@ describe('action.yml inputs', () => {
       .map(([name]) => name);
 
     expect(withDefaults.filter((name) => overridableInputs.has(name))).toEqual([]);
-    expect(withDefaults.sort()).toEqual([
-      'config-path',
-      'email-from',
-      'send-on-no-changes',
-      'smtp-port',
-    ]);
+    expect(withDefaults.sort()).toEqual(['config-path', 'send-on-no-changes', 'smtp-port']);
   });
 });

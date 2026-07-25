@@ -68,7 +68,7 @@ Every run, Star Tracker commits these artifacts to a dedicated data branch:
 - :globe_with_meridians: **Multi-language:** English, Spanish, Catalan, Italian
 - :bar_chart: **CSV export:** Machine-readable output for data pipelines
 - :jigsaw: **Action outputs:** `total-stars`, `new-stars`, `lost-stars`, `should-notify`, `new-stargazers` (and much more) for workflow chaining
-- :shield: **Zero runtime deps:** Bundled TypeScript action, 98%+ test coverage, 670+ tests
+- :shield: **Zero runtime deps:** Bundled TypeScript action, 98%+ test coverage, 710+ tests
 - :lock: **Future-proof:** Unaffected by GitHub's 2026 stargazers API restrictions, since it uses your own credentials on your own repositories
 
 ---
@@ -182,12 +182,12 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `smtp-username`          | -                     | SMTP username                                                 |
 | `smtp-password`          | -                     | SMTP password                                                 |
 | `email-to`               | -                     | Recipient address                                             |
-| `email-from`             | `GitHub Star Tracker` | Sender name                                                   |
+| `email-from`             | localized             | Sender name or address; defaults to a localized sender name   |
 | `send-on-no-changes`     | `false`               | Email even with no changes                                    |
 | `notification-threshold` | `0`                   | `0` (every run with changes), N (accumulated change since the last notification), or `auto` (adaptive) |
 | `notification-mode`      | `net`                 | How the threshold measures that change: `net` (absolute change, so a large drop also fires) or `gains` (upward movement only) |
 
-The threshold counter is measured against the star total at the last notification and only resets when a notification actually fires, so it accumulates across runs until it trips. The first run after enabling a threshold has no stored baseline (treated as `0`), so it fires once and then settles.
+The threshold counter is measured against the star total at the last notification and only resets when a notification actually fires, so it accumulates across runs until it trips. On a data branch that has never sent a notification there is no stored baseline (treated as `0`), so the first run fires immediately and then settles. If you were already running with the default `notification-threshold: 0`, notifications have been firing on every changed run, so the baseline already sits at your current total and raising the threshold fires nothing immediately - it waits until the total actually moves by that much.
 
 > [!IMPORTANT]
 > `notification-threshold` decides **when** you get an email. `compare-against` decides **what period the report body covers**. They are independent: the threshold accumulates against the star total at the last notification, while the report diffs against a stored snapshot. A threshold that trips after several runs still produces a report covering only the `compare-against` window, so set the two to match if you want the email body to span what the threshold accumulated. `notification-threshold` also does not work on a `read-only` run, because the counter it advances lives on the data branch.
@@ -206,7 +206,7 @@ In the YAML config file, option keys may be written with either dashes or unders
 | `new-stars`        | Stars gained vs. the comparison baseline. Per run, not cumulative |
 | `lost-stars`       | Stars lost vs. the comparison baseline. Per run, not cumulative   |
 | `should-notify`    | `true` / `false` - the **cumulative** threshold signal, driven by `notification-threshold` and `notification-mode` (and requires an actual change) |
-| `new-stargazers`   | New stargazers count                                              |
+| `new-stargazers`   | New stargazers vs. the stored stargazer list, which every writing run rewrites - not driven by `compare-against` |
 | `report`           | Full Markdown report                                              |
 | `report-html`      | HTML report (for email)                                          |
 | `report-html-path` | File path to the HTML report (for large reports / custom mailers) |

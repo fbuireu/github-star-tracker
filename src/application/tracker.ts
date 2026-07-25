@@ -35,11 +35,12 @@ import { generateMarkdownReport } from '@presentation/markdown';
 
 interface WithDataDirParams {
   branch: string;
+  readOnly: boolean;
   fn: (dataDir: string) => Promise<void>;
 }
 
-async function withDataDir({ branch, fn }: WithDataDirParams): Promise<void> {
-  const dataDir = initializeDataBranch(branch);
+async function withDataDir({ branch, readOnly, fn }: WithDataDirParams): Promise<void> {
+  const dataDir = initializeDataBranch({ dataBranch: branch, readOnly });
   try {
     await fn(dataDir);
   } finally {
@@ -68,6 +69,7 @@ export async function trackStars(): Promise<void> {
 
     await withDataDir({
       branch: config.dataBranch,
+      readOnly: config.readOnly,
       fn: async (dataDir) => {
         core.info(`Tracking ${repos.length} repositories...`);
 
@@ -104,6 +106,14 @@ export async function trackStars(): Promise<void> {
         }
 
         const snapshot = createSnapshot({ currentRepos: repos, summary });
+        const prunedCount = storedHistory.snapshots.length + 1 - config.maxHistory;
+
+        if (prunedCount > 0) {
+          core.warning(
+            `max-history is ${config.maxHistory} but ${storedHistory.snapshots.length} snapshots are stored, so this run drops the oldest ${prunedCount}. Raise max-history before this run if you want to keep them.`,
+          );
+        }
+
         const updatedHistory = addSnapshot({
           history: storedHistory,
           snapshot,

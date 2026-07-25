@@ -84,7 +84,7 @@ Access data in subsequent workflow steps for custom integrations.
 | `new-stars` | Stars gained against the comparison baseline (per run, not cumulative) |
 | `lost-stars` | Stars lost against the comparison baseline (per run, not cumulative) |
 | `should-notify` | Whether the notification threshold was reached (cumulative across runs) |
-| `new-stargazers` | New stargazers detected |
+| `new-stargazers` | New stargazers detected against the stored stargazer list, which every writing run rewrites - not affected by `compare-against` |
 
 > [!NOTE]
 > The comparison baseline is the previous run by default, and [`compare-against`](Configuration#compare-against) can move it to 24h, 7d or 30d ago. `new-stars` and `lost-stars` describe a single run and carry no memory of whether a notification was sent - gate recurring emails on `should-notify`, which accumulates until it fires. See **[Email Notifications](Email-Notifications)**.

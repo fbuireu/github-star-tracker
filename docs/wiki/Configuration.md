@@ -847,11 +847,11 @@ Star change threshold before sending a notification.
 | 0 – 50 | 1 star |
 | 51 – 200 | 5 stars |
 | 201 – 500 | 10 stars |
-| 500+ | 20 stars |
+| 501+ | 20 stars |
 
 The threshold is **cumulative, not per-run**. It is measured against `starsAtLastNotification`, persisted in `stars-data.json` on the data branch and updated **only when a notification actually fires**. Runs that do not notify leave that baseline untouched, so the accumulated change keeps growing across runs until it trips the threshold. How that accumulated change is measured is controlled by [`notification-mode`](#notification-mode).
 
-On the first run after enabling a threshold there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so the notification fires once immediately and settles into the cumulative rhythm from then on.
+On a data branch that has never sent a notification there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so the first run fires immediately and then settles into the cumulative rhythm. That is not the case if you were already running with the default `notification-threshold: '0'`: every changed run has been notifying, so `starsAtLastNotification` already holds your current total and raising the threshold fires nothing immediately - the next email waits until the total actually moves by at least the threshold.
 
 This is what drives the `should-notify` output, which additionally requires that something actually changed. The `new-stars` and `lost-stars` outputs are **per-run** figures measured against the comparison baseline (see [`compare-against`](#compare-against)); they are not cumulative and carry no memory of whether an email was sent. To express "email me every N stars", gate on `should-notify` - not on `new-stars >= N`, which would require N stars within a single run and would almost never fire on a daily schedule.
 

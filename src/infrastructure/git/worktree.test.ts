@@ -24,7 +24,7 @@ describe('initializeDataBranch', () => {
     vi.mocked(fs.existsSync).mockReturnValue(false);
     vi.mocked(execFileSync).mockReturnValue('');
 
-    const result = initializeDataBranch('star-tracker-data');
+    const result = initializeDataBranch({ dataBranch: 'star-tracker-data' });
 
     expect(execFileSync).toHaveBeenCalledWith(
       'git',
@@ -49,7 +49,7 @@ describe('initializeDataBranch', () => {
       throw new Error('fatal: not in a git directory');
     });
 
-    expect(() => initializeDataBranch('star-tracker-data')).toThrow(
+    expect(() => initializeDataBranch({ dataBranch: 'star-tracker-data' })).toThrow(
       'This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.',
     );
   });
@@ -65,7 +65,7 @@ describe('initializeDataBranch', () => {
       .mockReturnValueOnce('')
       .mockReturnValueOnce('');
 
-    initializeDataBranch('star-tracker-data');
+    initializeDataBranch({ dataBranch: 'star-tracker-data' });
 
     expect(execFileSync).toHaveBeenCalledWith(
       'git',
@@ -91,7 +91,7 @@ describe('initializeDataBranch', () => {
       .mockReturnValueOnce('')
       .mockReturnValueOnce('');
 
-    initializeDataBranch('star-tracker-data');
+    initializeDataBranch({ dataBranch: 'star-tracker-data' });
 
     expect(core.info).toHaveBeenCalledWith(
       'Branch "star-tracker-data" does not exist on remote, will create it',
@@ -100,6 +100,27 @@ describe('initializeDataBranch', () => {
       'git',
       ['checkout', '--orphan', 'star-tracker-data'],
       expect.objectContaining({ cwd: expect.any(String) }),
+    );
+  });
+
+  it('refuses to create the branch on a read-only run', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    vi.mocked(execFileSync)
+      .mockReturnValueOnce('')
+      .mockReturnValueOnce('')
+      .mockReturnValueOnce('')
+      .mockImplementationOnce(() => {
+        throw new Error('Branch not found');
+      });
+
+    expect(() => initializeDataBranch({ dataBranch: 'star-tracker-data', readOnly: true })).toThrow(
+      /does not exist on the remote and this is a read-only run/,
+    );
+    expect(execFileSync).not.toHaveBeenCalledWith(
+      'git',
+      ['checkout', '--orphan', 'star-tracker-data'],
+      expect.anything(),
     );
   });
 
@@ -119,7 +140,7 @@ describe('initializeDataBranch', () => {
       .mockReturnValueOnce('')
       .mockReturnValueOnce('');
 
-    expect(() => initializeDataBranch('star-tracker-data')).not.toThrow();
+    expect(() => initializeDataBranch({ dataBranch: 'star-tracker-data' })).not.toThrow();
     expect(core.debug).toHaveBeenCalledWith(
       'Could not remove existing worktree at .star-tracker-data, proceeding anyway',
     );

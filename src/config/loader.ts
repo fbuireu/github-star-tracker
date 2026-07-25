@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as core from '@actions/core';
+import { CompareAgainst, NotificationMode } from '@domain/types';
 import { LOCALES } from '@i18n';
 import * as yaml from 'js-yaml';
 import { DEFAULTS } from './defaults';
@@ -8,6 +9,7 @@ import {
   parseBool,
   parseDecimal,
   parseFileBool,
+  parseFileHexColor,
   parseHexColor,
   parseList,
   parseNotificationThreshold,
@@ -16,15 +18,7 @@ import {
   toStringList,
 } from './parsers';
 import type { Config } from './types';
-import {
-  ChartAxisSide,
-  ChartCurve,
-  ChartRange,
-  ChartTheme,
-  CompareAgainst,
-  NotificationMode,
-  Visibility,
-} from './types';
+import { ChartAxisSide, ChartCurve, ChartRange, ChartTheme, Visibility } from './types';
 
 type FileConfigKey = Exclude<keyof Config, 'sendOnNoChanges'>;
 
@@ -39,19 +33,33 @@ const FILE_CONFIG_KEYS = Object.keys(DEFAULTS).filter(
   (key): key is FileConfigKey => key !== 'sendOnNoChanges',
 );
 
-const DATA_BRANCH_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;
+const DATA_BRANCH_FORBIDDEN_PATTERN = /[\s~^:?*[\\]/;
+const DATA_BRANCH_FORBIDDEN_SEQUENCES = ['..', '//', '/.', '@{'];
+const ASCII_CONTROL_MAX = 31;
+const ASCII_DELETE = 127;
 const UPPERCASE_LETTER_PATTERN = /[A-Z]/g;
+
+function hasControlCharacter(value: string): boolean {
+  return [...value].some((char) => {
+    const code = char.codePointAt(0) ?? 0;
+
+    return code <= ASCII_CONTROL_MAX || code === ASCII_DELETE;
+  });
+}
 
 function assertValidDataBranch(dataBranch: string): void {
   const isValid =
-    DATA_BRANCH_PATTERN.test(dataBranch) &&
-    !dataBranch.includes('..') &&
-    !dataBranch.endsWith('/') &&
-    !dataBranch.endsWith('.lock');
+    dataBranch !== '' &&
+    dataBranch !== '@' &&
+    !DATA_BRANCH_FORBIDDEN_PATTERN.test(dataBranch) &&
+    !hasControlCharacter(dataBranch) &&
+    !DATA_BRANCH_FORBIDDEN_SEQUENCES.some((sequence) => dataBranch.includes(sequence)) &&
+    !['-', '.', '/'].some((prefix) => dataBranch.startsWith(prefix)) &&
+    !['/', '.', '.lock'].some((suffix) => dataBranch.endsWith(suffix));
 
   if (!isValid) {
     throw new Error(
-      `Invalid data-branch "${dataBranch}". Use only letters, digits, ".", "-", "_" and "/", starting with a letter or digit.`,
+      `Invalid data-branch "${dataBranch}". It must be a valid git branch name: no whitespace and none of ~^:?*[\\, no "..", "//", "/." or "@{", it cannot start with "-", "." or "/", and it cannot end with "/", "." or ".lock".`,
     );
   }
 }
@@ -98,20 +106,13 @@ interface ParseOrWarnParams<T> {
   input: string;
   inputName: string;
   parse: (value: string) => T | undefined;
-  fallback: T;
 }
 
-function parseOrWarn<T>({
-  input,
-  inputName,
-  parse,
-  fallback,
-}: ParseOrWarnParams<T>): T | undefined {
+function parseOrWarn<T>({ input, inputName, parse }: ParseOrWarnParams<T>): T | undefined {
   const parsed = parse(input);
 
   if (input !== '' && parsed === undefined) {
-    const shown = typeof fallback === 'string' ? `"${fallback}"` : fallback;
-    core.warning(`Invalid ${inputName} "${input}". Falling back to ${shown}`);
+    core.warning(`Invalid ${inputName} "${input}". Ignoring it.`);
   }
 
   return parsed;
@@ -234,7 +235,7 @@ export function loadConfig(): Config {
 
   const chartLineColor =
     parseHexColor(inputChartLineColor) ??
-    parseHexColor(fileConfig.chartLineColor) ??
+    parseFileHexColor(fileConfig.chartLineColor) ??
     DEFAULTS.chartLineColor;
   if (inputChartLineColor && !parseHexColor(inputChartLineColor)) {
     core.warning(
@@ -297,11 +298,15 @@ export function loadConfig(): Config {
   const config: Config = {
     visibility,
     includeArchived:
-      parseBool(inputIncludeArchived) ??
+      parseOrWarn({
+        input: inputIncludeArchived,
+        inputName: 'include-archived',
+        parse: parseBool,
+      }) ??
       parseFileBool(fileConfig.includeArchived) ??
       DEFAULTS.includeArchived,
     includeForks:
-      parseBool(inputIncludeForks) ??
+      parseOrWarn({ input: inputIncludeForks, inputName: 'include-forks', parse: parseBool }) ??
       parseFileBool(fileConfig.includeForks) ??
       DEFAULTS.includeForks,
     excludeRepos:
@@ -318,7 +323,6 @@ export function loadConfig(): Config {
         input: inputMinStars,
         inputName: 'min-stars',
         parse: parseNumber,
-        fallback: DEFAULTS.minStars,
       }) ??
       parseNumber(fileConfig.minStars) ??
       DEFAULTS.minStars,
@@ -328,15 +332,17 @@ export function loadConfig(): Config {
         input: inputMaxHistory,
         inputName: 'max-history',
         parse: parseNumber,
-        fallback: DEFAULTS.maxHistory,
       }) ??
       parseNumber(fileConfig.maxHistory) ??
       DEFAULTS.maxHistory,
     compareAgainst,
-    readOnly: parseBool(inputReadOnly) ?? parseFileBool(fileConfig.readOnly) ?? DEFAULTS.readOnly,
+    readOnly:
+      parseOrWarn({ input: inputReadOnly, inputName: 'read-only', parse: parseBool }) ??
+      parseFileBool(fileConfig.readOnly) ??
+      DEFAULTS.readOnly,
     sendOnNoChanges: parseBool(core.getInput('send-on-no-changes')) ?? DEFAULTS.sendOnNoChanges,
     includeCharts:
-      parseBool(inputIncludeCharts) ??
+      parseOrWarn({ input: inputIncludeCharts, inputName: 'include-charts', parse: parseBool }) ??
       parseFileBool(fileConfig.includeCharts) ??
       DEFAULTS.includeCharts,
     locale,
@@ -345,13 +351,16 @@ export function loadConfig(): Config {
         input: inputNotificationThreshold,
         inputName: 'notification-threshold',
         parse: parseNotificationThreshold,
-        fallback: DEFAULTS.notificationThreshold,
       }) ??
       parseNotificationThreshold(fileConfig.notificationThreshold) ??
       DEFAULTS.notificationThreshold,
     notificationMode,
     trackStargazers:
-      parseBool(inputTrackStargazers) ??
+      parseOrWarn({
+        input: inputTrackStargazers,
+        inputName: 'track-stargazers',
+        parse: parseBool,
+      }) ??
       parseFileBool(fileConfig.trackStargazers) ??
       DEFAULTS.trackStargazers,
     topRepos:
@@ -359,12 +368,11 @@ export function loadConfig(): Config {
         input: inputTopRepos,
         inputName: 'top-repos',
         parse: parseNumber,
-        fallback: DEFAULTS.topRepos,
       }) ??
       parseNumber(fileConfig.topRepos) ??
       DEFAULTS.topRepos,
     smartSampling:
-      parseBool(inputSmartSampling) ??
+      parseOrWarn({ input: inputSmartSampling, inputName: 'smart-sampling', parse: parseBool }) ??
       parseFileBool(fileConfig.smartSampling) ??
       DEFAULTS.smartSampling,
     smartSamplingThreshold:
@@ -372,7 +380,6 @@ export function loadConfig(): Config {
         input: inputSmartSamplingThreshold,
         inputName: 'smart-sampling-threshold',
         parse: parseNumber,
-        fallback: DEFAULTS.smartSamplingThreshold,
       }) ??
       parseNumber(fileConfig.smartSamplingThreshold) ??
       DEFAULTS.smartSamplingThreshold,
@@ -381,7 +388,6 @@ export function loadConfig(): Config {
         input: inputSmartSamplingPages,
         inputName: 'smart-sampling-pages',
         parse: parseNumber,
-        fallback: DEFAULTS.smartSamplingPages,
       }) ??
       parseNumber(fileConfig.smartSamplingPages) ??
       DEFAULTS.smartSamplingPages,
@@ -392,30 +398,41 @@ export function loadConfig(): Config {
         input: inputChartMaxPoints,
         inputName: 'chart-max-points',
         parse: parseNumber,
-        fallback: DEFAULTS.chartMaxPoints,
       }) ??
       parseNumber(fileConfig.chartMaxPoints) ??
       DEFAULTS.chartMaxPoints,
     chartYAxisSide,
     chartSmoothing:
-      parseBool(inputChartSmoothing) ??
+      parseOrWarn({ input: inputChartSmoothing, inputName: 'chart-smoothing', parse: parseBool }) ??
       parseFileBool(fileConfig.chartSmoothing) ??
       DEFAULTS.chartSmoothing,
     chartCurve,
     chartShowPoints:
-      parseBool(inputChartShowPoints) ??
+      parseOrWarn({
+        input: inputChartShowPoints,
+        inputName: 'chart-show-points',
+        parse: parseBool,
+      }) ??
       parseFileBool(fileConfig.chartShowPoints) ??
       DEFAULTS.chartShowPoints,
     chartAnimation:
-      parseBool(inputChartAnimation) ??
+      parseOrWarn({ input: inputChartAnimation, inputName: 'chart-animation', parse: parseBool }) ??
       parseFileBool(fileConfig.chartAnimation) ??
       DEFAULTS.chartAnimation,
     chartMilestones:
-      parseBool(inputChartMilestones) ??
+      parseOrWarn({
+        input: inputChartMilestones,
+        inputName: 'chart-milestones',
+        parse: parseBool,
+      }) ??
       parseFileBool(fileConfig.chartMilestones) ??
       DEFAULTS.chartMilestones,
     chartBeginAtZero:
-      parseBool(inputChartBeginAtZero) ??
+      parseOrWarn({
+        input: inputChartBeginAtZero,
+        inputName: 'chart-begin-at-zero',
+        parse: parseBool,
+      }) ??
       parseFileBool(fileConfig.chartBeginAtZero) ??
       DEFAULTS.chartBeginAtZero,
     chartTheme,
@@ -426,11 +443,19 @@ export function loadConfig(): Config {
         : DEFAULTS.chartCustomMilestones,
     chartRange,
     chartTrendLine:
-      parseBool(inputChartTrendLine) ??
+      parseOrWarn({
+        input: inputChartTrendLine,
+        inputName: 'chart-trend-line',
+        parse: parseBool,
+      }) ??
       parseFileBool(fileConfig.chartTrendLine) ??
       DEFAULTS.chartTrendLine,
     velocityMetrics:
-      parseBool(inputVelocityMetrics) ??
+      parseOrWarn({
+        input: inputVelocityMetrics,
+        inputName: 'velocity-metrics',
+        parse: parseBool,
+      }) ??
       parseFileBool(fileConfig.velocityMetrics) ??
       DEFAULTS.velocityMetrics,
   };

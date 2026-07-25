@@ -13,7 +13,15 @@ function ensureGitRepository(): void {
   }
 }
 
-export function initializeDataBranch(dataBranch: string): string {
+interface InitializeDataBranchParams {
+  dataBranch: string;
+  readOnly?: boolean;
+}
+
+export function initializeDataBranch({
+  dataBranch,
+  readOnly = false,
+}: InitializeDataBranchParams): string {
   const dataDir = `.${dataBranch}`;
 
   ensureGitRepository();
@@ -36,6 +44,12 @@ export function initializeDataBranch(dataBranch: string): string {
     } catch {
       core.debug(`Could not remove existing worktree at ${dataDir}, proceeding anyway`);
     }
+  }
+
+  if (!branchExists && readOnly) {
+    throw new Error(
+      `Branch "${dataBranch}" does not exist on the remote and this is a read-only run, so it cannot be created. Point data-branch at the branch your tracking workflow maintains, or drop read-only so this run can create it.`,
+    );
   }
 
   if (!branchExists) {

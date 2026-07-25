@@ -428,7 +428,7 @@ Idempotent: no empty commits if data hasn't changed.
 | `new-stars` | Per-run: stars gained since the comparison baseline |
 | `lost-stars` | Per-run: stars lost since the comparison baseline |
 | `should-notify` | Cumulative: whether the notification threshold was reached since the last notification fired |
-| `new-stargazers` | New stargazers detected (0 if tracking disabled) |
+| `new-stargazers` | New stargazers detected by diffing against the stored `stargazers.json`, which every writing run rewrites - not affected by `compare-against` (0 if tracking disabled) |
 
 **Per-run vs cumulative.** `new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the baseline selected in Phase 4. They are not cumulative across runs and carry no memory of whether an email was ever sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: it is driven by `notification-threshold` plus `notification-mode` against `starsAtLastNotification`, and its counter only resets when a notification actually fires.
 
@@ -457,7 +457,7 @@ The `notification-mode` input (config key `notification_mode`) decides how that 
 
 `notification-threshold: '0'` still means "notify on every run with changes", regardless of mode.
 
-On the first run after enabling a threshold there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so the notification fires once immediately and settles from there.
+On a data branch that has never sent a notification there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so the first run fires immediately and then settles from there. That is not the case if you were already running with the default `notification-threshold: '0'`: every changed run has been notifying, so `starsAtLastNotification` already holds your current total and raising the threshold fires nothing immediately - the next notification waits until the total actually moves by at least the threshold.
 
 ### Email
 

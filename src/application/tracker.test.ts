@@ -1,13 +1,13 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { loadConfig } from '@config/loader';
-import { CompareAgainst, NotificationMode } from '@config/types';
 import { compareStars, createSnapshot } from '@domain/comparison';
 import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
 import { shouldNotify } from '@domain/notification';
 import { addSnapshot, getBaselineSnapshot } from '@domain/snapshot';
 import { buildStargazerMap, diffStargazers } from '@domain/stargazers';
+import { CompareAgainst, NotificationMode } from '@domain/types';
 import { cleanup, initializeDataBranch } from '@infrastructure/git/worktree';
 import { getRepos } from '@infrastructure/github/filters';
 import { fetchAllStargazers } from '@infrastructure/github/stargazers';
@@ -202,7 +202,10 @@ describe('trackStars', () => {
 
     expect(loadConfig).toHaveBeenCalled();
     expect(getRepos).toHaveBeenCalled();
-    expect(initializeDataBranch).toHaveBeenCalledWith('star-data');
+    expect(initializeDataBranch).toHaveBeenCalledWith({
+      dataBranch: 'star-data',
+      readOnly: false,
+    });
     expect(readHistory).toHaveBeenCalledWith('.star-data');
     expect(compareStars).toHaveBeenCalled();
     expect(generateMarkdownReport).toHaveBeenCalled();

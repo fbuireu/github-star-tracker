@@ -1,10 +1,5 @@
 export const MS_PER_DAY = 86_400_000;
 
-export function toEpochMs(timestamp: string): number | null {
-  const parsed = new Date(timestamp).getTime();
-
-  return Number.isFinite(parsed) ? parsed : null;
-}
 export const MS_PER_YEAR = 365 * MS_PER_DAY;
 
 export const MIN_SNAPSHOTS_FOR_FORECAST = 3;

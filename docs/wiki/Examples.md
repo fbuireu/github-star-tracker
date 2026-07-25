@@ -228,7 +228,9 @@ Use `should-notify`, not `new-stars`. They answer different questions:
 
 `if: steps.tracker.outputs.new-stars >= 500` would demand 500 stars inside a single run and would almost never fire on a daily schedule.
 
-`notification-mode` picks how that accumulated change is measured: `net` (default) uses the absolute change in total stars since the last notification, so gains and losses across repos cancel out and a large drop also reaches the threshold; `gains` only counts upward movement. The first run after enabling a threshold has no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so it fires once immediately and then settles into the configured cadence.
+`notification-mode` picks how that accumulated change is measured: `net` (default) uses the absolute change in total stars since the last notification, so gains and losses across repos cancel out and a large drop also reaches the threshold; `gains` only counts upward movement.
+
+Whether the threshold fires an email straight away depends on the data branch. If no notification has ever fired there, `starsAtLastNotification` is absent and treated as `0`, so the first run fires once immediately and then settles into the configured cadence. If you have been running with the default `notification-threshold: '0'`, every changed run has already been notifying, so `starsAtLastNotification` is stored at your current total - raising the threshold does **not** fire immediately, and the next email only arrives once the full threshold has accumulated from that total.
 
 ### Weekly Digest
 

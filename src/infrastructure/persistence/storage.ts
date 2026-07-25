@@ -25,8 +25,10 @@ function readJsonFile<T>({ filePath, fallback }: ReadJsonFileParams<T>): T {
     return fallback;
   }
 
+  const contents = fs.readFileSync(filePath, 'utf8');
+
   try {
-    return JSON.parse(fs.readFileSync(filePath, 'utf8')) as T;
+    return JSON.parse(contents) as T;
   } catch (error) {
     throw new Error(
       `${path.basename(filePath)} on the data branch is not valid JSON (${(error as Error).message}). Fix or delete the file on that branch and re-run.`,

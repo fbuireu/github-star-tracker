@@ -1,7 +1,6 @@
 import type { CompareAgainst, NotificationMode } from '@domain/types';
 import type { Locale } from '@i18n';
 
-export type { Locale } from '@i18n';
 export const Visibility = {
   PUBLIC: 'public',
   PRIVATE: 'private',
@@ -43,8 +42,6 @@ export const ChartCurve = {
 } as const;
 
 export type ChartCurve = (typeof ChartCurve)[keyof typeof ChartCurve];
-
-export { CompareAgainst, NotificationMode } from '@domain/types';
 
 export interface Config {
   visibility: Visibility;

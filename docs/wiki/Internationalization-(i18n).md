@@ -119,7 +119,7 @@ To contribute a new language:
 3. Keep `{placeholder}` tokens untranslated
 4. Add the import in `src/i18n/index.ts`
 5. Add the locale and its Intl code to `LOCALE_MAP` in `src/i18n/index.ts` (`LOCALES` and the `Locale` type derive from it)
-6. Add the code to `Locale` type in `src/config/types.ts`
+6. Register the imported bundle in the `TRANSLATIONS` map in `src/i18n/index.ts`
 7. Run `pnpm run validate` to check everything passes
 
 See **[Contributing](https://github.com/fbuireu/github-star-tracker/blob/main/CONTRIBUTING.md)** for development setup.

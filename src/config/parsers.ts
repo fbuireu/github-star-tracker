@@ -80,6 +80,12 @@ export function parseHexColor(value: string | null | undefined): string | undefi
   return match ? `#${match[1].toLowerCase()}` : undefined;
 }
 
+export function parseFileHexColor(value: unknown): string | undefined {
+  if (typeof value === 'string') return parseHexColor(value);
+
+  return undefined;
+}
+
 export function parseDecimal(value: string | number | null | undefined): number | undefined {
   if (isBlank(value)) return undefined;
 
