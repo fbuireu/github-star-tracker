@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { makeRepoInfo } from '@shared/testing';
+import { makeConfig, makeRepoInfo } from '@shared/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchAllStargazers } from './stargazers';
 import type { Octokit } from './types';
@@ -9,11 +9,11 @@ vi.mock('@actions/core', () => ({
   info: vi.fn(),
 }));
 
-const samplingOff = {
+const samplingOff = makeConfig({
   smartSampling: false,
   smartSamplingThreshold: 1500,
   smartSamplingPages: 30,
-};
+});
 
 function makeStargazerResponse(login: string, date = '2026-01-15T00:00:00Z') {
   return {
@@ -40,7 +40,7 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('repo-a')],
-      ...samplingOff,
+      config: samplingOff,
     });
 
     expect(result).toHaveLength(1);
@@ -62,7 +62,7 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('repo-a')],
-      ...samplingOff,
+      config: samplingOff,
     });
 
     expect(result[0].stargazers).toHaveLength(101);
@@ -80,7 +80,7 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('repo-a'), makeRepoInfo('repo-b')],
-      ...samplingOff,
+      config: samplingOff,
     });
 
     expect(result).toHaveLength(2);
@@ -99,7 +99,7 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('repo-a')],
-      ...samplingOff,
+      config: samplingOff,
     });
 
     expect(result[0].stargazers).toHaveLength(0);
@@ -117,7 +117,7 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('repo-a', 150)],
-      ...samplingOff,
+      config: samplingOff,
     });
 
     expect(result[0].stargazers).toHaveLength(100);
@@ -135,7 +135,7 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('repo-a')],
-      ...samplingOff,
+      config: samplingOff,
     });
 
     expect(result[0].coveredStars).toBeUndefined();
@@ -153,9 +153,11 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('huge', 5000)],
-      smartSampling: true,
-      smartSamplingThreshold: 1500,
-      smartSamplingPages: 5,
+      config: makeConfig({
+        smartSampling: true,
+        smartSamplingThreshold: 1500,
+        smartSamplingPages: 5,
+      }),
     });
 
     expect(result[0].stargazers).toHaveLength(2);
@@ -174,9 +176,11 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('huge', 5000)],
-      smartSampling: true,
-      smartSamplingThreshold: 1500,
-      smartSamplingPages: 5,
+      config: makeConfig({
+        smartSampling: true,
+        smartSamplingThreshold: 1500,
+        smartSamplingPages: 5,
+      }),
     });
 
     expect(result[0].stargazers).toHaveLength(4);
@@ -194,9 +198,11 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('huge', 5000)],
-      smartSampling: true,
-      smartSamplingThreshold: 1500,
-      smartSamplingPages: 5,
+      config: makeConfig({
+        smartSampling: true,
+        smartSamplingThreshold: 1500,
+        smartSamplingPages: 5,
+      }),
     });
 
     expect(result[0].stargazers).toHaveLength(0);
@@ -213,7 +219,7 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('repo-a')],
-      ...samplingOff,
+      config: samplingOff,
     });
 
     expect(result[0].stargazers).toHaveLength(0);
@@ -232,7 +238,7 @@ describe('fetchAllStargazers', () => {
     await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('repo-a', 2)],
-      ...samplingOff,
+      config: samplingOff,
     });
 
     expect(core.warning).toHaveBeenCalledWith(
@@ -250,7 +256,7 @@ describe('fetchAllStargazers', () => {
     await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('restricted', 54000)],
-      ...samplingOff,
+      config: samplingOff,
     });
 
     expect(core.warning).toHaveBeenCalledWith(
@@ -266,7 +272,7 @@ describe('fetchAllStargazers', () => {
     await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('empty', 0)],
-      ...samplingOff,
+      config: samplingOff,
     });
 
     expect(core.warning).not.toHaveBeenCalled();
@@ -280,9 +286,11 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('huge', 5000)],
-      smartSampling: true,
-      smartSamplingThreshold: 1500,
-      smartSamplingPages: 5,
+      config: makeConfig({
+        smartSampling: true,
+        smartSamplingThreshold: 1500,
+        smartSamplingPages: 5,
+      }),
     });
 
     expect(octokit.request).toHaveBeenCalledTimes(5);
@@ -301,9 +309,11 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('mid', 1000)],
-      smartSampling: true,
-      smartSamplingThreshold: 1500,
-      smartSamplingPages: 5,
+      config: makeConfig({
+        smartSampling: true,
+        smartSamplingThreshold: 1500,
+        smartSamplingPages: 5,
+      }),
     });
 
     expect(octokit.request).toHaveBeenCalledTimes(1);
@@ -318,7 +328,7 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('huge', 50000)],
-      ...samplingOff,
+      config: samplingOff,
     });
 
     expect(result[0].sampled).toBe(false);
@@ -332,9 +342,11 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('huge', 2000)],
-      smartSampling: true,
-      smartSamplingThreshold: 100,
-      smartSamplingPages: 50,
+      config: makeConfig({
+        smartSampling: true,
+        smartSamplingThreshold: 100,
+        smartSamplingPages: 50,
+      }),
     });
 
     expect(octokit.request).toHaveBeenCalledTimes(20);
@@ -349,9 +361,11 @@ describe('fetchAllStargazers', () => {
     await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('massive', 50000)],
-      smartSampling: true,
-      smartSamplingThreshold: 1500,
-      smartSamplingPages: 30,
+      config: makeConfig({
+        smartSampling: true,
+        smartSamplingThreshold: 1500,
+        smartSamplingPages: 30,
+      }),
     });
 
     const pages = octokit.request.mock.calls.map((call) => call[1].page);
@@ -368,7 +382,7 @@ describe('fetchAllStargazers', () => {
     const result = await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('massive', 50000)],
-      ...samplingOff,
+      config: samplingOff,
     });
 
     expect(octokit.request).toHaveBeenCalledTimes(400);
@@ -386,9 +400,11 @@ describe('fetchAllStargazers', () => {
     await fetchAllStargazers({
       octokit: octokit as unknown as Octokit,
       repos: [makeRepoInfo('huge', 5000)],
-      smartSampling: true,
-      smartSamplingThreshold: 1500,
-      smartSamplingPages: 1,
+      config: makeConfig({
+        smartSampling: true,
+        smartSamplingThreshold: 1500,
+        smartSamplingPages: 1,
+      }),
     });
 
     expect(octokit.request).toHaveBeenCalledTimes(1);

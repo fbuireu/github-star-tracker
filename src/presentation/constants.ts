@@ -111,12 +111,17 @@ export const SVG_CHART = {
 
 export const MIN_SNAPSHOTS_FOR_CHART = 2;
 
+export const SECTION_ICON = {
+  starTrend: '📈',
+  forecast: '🔮',
+  velocity: '🚀',
+  stargazers: '👤',
+} as const;
+
+export const CHART_FILES = {
+  starHistory: 'star-history.svg',
+  comparison: 'comparison.svg',
+  forecast: 'forecast.svg',
+} as const;
+
 export const MILESTONE_THRESHOLDS = [10, 50, 100, 500, 1_000, 5_000, 10_000] as const;
-
-export const THRESHOLDS = [
-  { limit: 50, value: 1 },
-  { limit: 200, value: 5 },
-  { limit: 500, value: 10 },
-];
-
-export const THRESHOLD_MAX_PACE = 20;

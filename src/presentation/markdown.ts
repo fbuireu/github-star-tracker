@@ -1,9 +1,15 @@
+import type { ForecastResult } from '@domain/forecast';
 import { deltaIndicator, formatSignedPercent, trendIcon } from '@domain/formatting';
 import { computeVelocity } from '@domain/velocity';
 import { getTranslations, interpolate } from '@i18n';
-import { MIN_SNAPSHOTS_FOR_CHART } from './constants';
+import { CHART_FILES, MIN_SNAPSHOTS_FOR_CHART, SECTION_ICON } from './constants';
 import type { GenerateReportParams } from './shared';
-import { buildForecastWeekHeaders, forecastMethodLabel, prepareReportData } from './shared';
+import {
+  buildForecastWeekHeaders,
+  forecastMethodLabel,
+  perRepoChartFile,
+  prepareReportData,
+} from './shared';
 
 export function generateMarkdownReport({
   results,
@@ -43,23 +49,25 @@ export function generateMarkdownReport({
   const hasComparisonChart = hasChartHistory && topRepos.length > 0;
 
   const individualRepoCharts = hasChartHistory
-    ? topRepos.flatMap((repoName) => {
-        const filename = `${repoName.replace('/', '-')}.svg`;
-        return [`#### ${repoName}`, '', `![${repoName}](./charts/${filename})`, ''];
-      })
+    ? topRepos.flatMap((repoName) => [
+        `#### ${repoName}`,
+        '',
+        `![${repoName}](./charts/${perRepoChartFile(repoName)})`,
+        '',
+      ])
     : [];
 
   const chartSection = hasChartHistory
     ? [
-        `## 📈 ${t.report.starTrend}`,
+        `## ${SECTION_ICON.starTrend} ${t.report.starTrend}`,
         '',
-        `![Star History](./charts/star-history.svg)`,
+        `![Star History](./charts/${CHART_FILES.starHistory})`,
         '',
         ...(hasComparisonChart
           ? [
               `### ${t.report.byRepository}`,
               '',
-              `![${t.report.topRepositories}](./charts/comparison.svg)`,
+              `![${t.report.topRepositories}](./charts/${CHART_FILES.comparison})`,
               '',
             ]
           : []),
@@ -145,7 +153,7 @@ export function generateMarkdownReport({
   const stargazerSection =
     stargazerDiff && stargazerDiff.totalNew > 0
       ? [
-          `## 👤 ${t.stargazers.sectionTitle}`,
+          `## ${SECTION_ICON.stargazers} ${t.stargazers.sectionTitle}`,
           '',
           interpolate({
             template: t.stargazers.newStargazers,
@@ -168,7 +176,7 @@ export function generateMarkdownReport({
         ]
       : stargazerDiff
         ? [
-            `## 👤 ${t.stargazers.sectionTitle}`,
+            `## ${SECTION_ICON.stargazers} ${t.stargazers.sectionTitle}`,
             '',
             ...sampledNote,
             t.stargazers.noNewStargazers,
@@ -193,10 +201,10 @@ export function generateMarkdownReport({
 
   const forecastSection = forecastData
     ? [
-        `## 🔮 ${t.forecast.sectionTitle}`,
+        `## ${SECTION_ICON.forecast} ${t.forecast.sectionTitle}`,
         '',
         ...(velocityLines.length > 0
-          ? [`### 🚀 ${t.velocity.sectionTitle}`, '', ...velocityLines, '']
+          ? [`### ${SECTION_ICON.velocity} ${t.velocity.sectionTitle}`, '', ...velocityLines, '']
           : []),
         buildForecastTable({
           title: t.forecast.aggregate,
@@ -204,7 +212,7 @@ export function generateMarkdownReport({
           t,
         }),
         ...(hasChartHistory
-          ? ['', `![${t.forecast.sectionTitle}](./charts/forecast.svg)`, '']
+          ? ['', `![${t.forecast.sectionTitle}](./charts/${CHART_FILES.forecast})`, '']
           : []),
         ...(forecastData.repos.length > 0
           ? [
@@ -230,7 +238,7 @@ export function generateMarkdownReport({
 
   const velocitySection =
     !forecastData && velocityLines.length > 0
-      ? [`## 🚀 ${t.velocity.sectionTitle}`, '', ...velocityLines, '']
+      ? [`## ${SECTION_ICON.velocity} ${t.velocity.sectionTitle}`, '', ...velocityLines, '']
       : [];
 
   const footer = [
@@ -260,7 +268,7 @@ export function generateMarkdownReport({
 
 interface BuildForecastTableParams {
   title: string;
-  forecasts: { method: string; points: { weekOffset: number; predicted: number }[] }[];
+  forecasts: ForecastResult[];
   t: ReturnType<typeof getTranslations>;
 }
 

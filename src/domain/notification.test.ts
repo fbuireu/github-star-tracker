@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getAdaptiveThreshold, shouldNotify } from './notification';
+import { NotificationMode } from './types';
 
 describe('getAdaptiveThreshold', () => {
   it('returns 1 for 0 stars', () => {
@@ -90,5 +91,100 @@ describe('shouldNotify', () => {
     expect(shouldNotify({ totalStars: 105, starsAtLastNotification: 100, threshold: 'auto' })).toBe(
       true,
     );
+  });
+
+  it('defaults to net mode', () => {
+    expect(shouldNotify({ totalStars: 95, starsAtLastNotification: 100, threshold: 5 })).toBe(
+      shouldNotify({
+        totalStars: 95,
+        starsAtLastNotification: 100,
+        threshold: 5,
+        mode: NotificationMode.NET,
+      }),
+    );
+  });
+
+  it('ignores star loss in gains mode', () => {
+    expect(
+      shouldNotify({
+        totalStars: 95,
+        starsAtLastNotification: 100,
+        threshold: 5,
+        mode: NotificationMode.GAINS,
+      }),
+    ).toBe(false);
+  });
+
+  it('returns true in gains mode when the total rises by the threshold', () => {
+    expect(
+      shouldNotify({
+        totalStars: 600,
+        starsAtLastNotification: 100,
+        threshold: 500,
+        mode: NotificationMode.GAINS,
+      }),
+    ).toBe(true);
+  });
+
+  it('returns false in gains mode when the rise is below the threshold', () => {
+    expect(
+      shouldNotify({
+        totalStars: 599,
+        starsAtLastNotification: 100,
+        threshold: 500,
+        mode: NotificationMode.GAINS,
+      }),
+    ).toBe(false);
+  });
+
+  it('accumulates across runs in gains mode until the threshold trips', () => {
+    const starsAtLastNotification = 40_000;
+
+    expect(
+      shouldNotify({
+        totalStars: 40_300,
+        starsAtLastNotification,
+        threshold: 500,
+        mode: NotificationMode.GAINS,
+      }),
+    ).toBe(false);
+    expect(
+      shouldNotify({
+        totalStars: 40_500,
+        starsAtLastNotification,
+        threshold: 500,
+        mode: NotificationMode.GAINS,
+      }),
+    ).toBe(true);
+  });
+
+  it('returns true when threshold is 0 regardless of mode', () => {
+    expect(
+      shouldNotify({
+        totalStars: 95,
+        starsAtLastNotification: 100,
+        threshold: 0,
+        mode: NotificationMode.GAINS,
+      }),
+    ).toBe(true);
+  });
+
+  it('uses adaptive threshold in gains mode', () => {
+    expect(
+      shouldNotify({
+        totalStars: 1000,
+        starsAtLastNotification: 1015,
+        threshold: 'auto',
+        mode: NotificationMode.GAINS,
+      }),
+    ).toBe(false);
+    expect(
+      shouldNotify({
+        totalStars: 1020,
+        starsAtLastNotification: 1000,
+        threshold: 'auto',
+        mode: NotificationMode.GAINS,
+      }),
+    ).toBe(true);
   });
 });

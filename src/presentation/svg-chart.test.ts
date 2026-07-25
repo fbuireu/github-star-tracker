@@ -1,4 +1,4 @@
-import { ChartCurve } from '@config/types';
+import { ChartCurve, ChartTheme } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
 import type { History, Snapshot } from '@domain/types';
@@ -183,6 +183,16 @@ describe('generateSvgChart', () => {
 
     expect(plain).not.toContain('stroke-dasharray="8,4"');
     expect(withTrend).toContain('stroke-dasharray="8,4"');
+  });
+
+  it('draws the trend line with the dark neutral when theme is dark', () => {
+    const history = makeHistory([10, 20, 30, 40, 50]);
+    const result = expectSvg(
+      generateSvgChart({ history, locale: 'en', trendLine: true, theme: ChartTheme.DARK }),
+    );
+
+    expect(result).toContain(DARK_PALETTE.neutral);
+    expect(result).not.toContain(`stroke="${LIGHT_PALETTE.neutral}"`);
   });
 
   it('omits data point circles when showPoints is disabled', () => {
@@ -832,6 +842,20 @@ describe('generateForecastSvgChart', () => {
     },
     repos: [],
   };
+
+  it('draws the forecast series with the dark palette when theme is dark', () => {
+    const result = generateForecastSvgChart({
+      history: makeHistory([10, 20, 30]),
+      forecastData,
+      locale: 'en',
+      theme: ChartTheme.DARK,
+    });
+
+    expect(result).toContain(DARK_PALETTE.positive);
+    expect(result).toContain(DARK_PALETTE.negative);
+    expect(result).not.toContain(LIGHT_PALETTE.positive);
+    expect(result).not.toContain(LIGHT_PALETTE.negative);
+  });
 
   it('returns null for empty history', () => {
     const result = generateForecastSvgChart({

@@ -1,4 +1,5 @@
 import { ChartCurve, ChartRange, ChartTheme } from '@config/types';
+import type { ForecastResult } from '@domain/forecast';
 import { deltaIndicator, formatSignedPercent } from '@domain/formatting';
 import { computeVelocity } from '@domain/velocity';
 import { getTranslations, interpolate } from '@i18n';
@@ -8,7 +9,7 @@ import {
   generateForecastChartUrl,
   generatePerRepoChartUrl,
 } from './chart';
-import { MIN_SNAPSHOTS_FOR_CHART } from './constants';
+import { MIN_SNAPSHOTS_FOR_CHART, SECTION_ICON } from './constants';
 import type { GenerateReportParams } from './shared';
 import {
   buildForecastWeekHeaders,
@@ -134,7 +135,7 @@ export function generateHtmlReport({
   const chartSection = hasChartHistory
     ? `
       <div style="margin-top:24px;text-align:center;">
-        <h2 style="font-size:18px;margin-bottom:12px;">📈 ${t.report.starTrend}</h2>
+        <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.starTrend} ${t.report.starTrend}</h2>
         <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, curve, showPoints, milestones, beginAtZero, theme, customMilestones, range, trendLine })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
 
         ${
@@ -163,7 +164,7 @@ export function generateHtmlReport({
     stargazerDiff && stargazerDiff.totalNew > 0
       ? `
       <div style="margin-top:24px;">
-        <h2 style="font-size:18px;margin-bottom:12px;">👤 ${t.stargazers.sectionTitle}</h2>
+        <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.stargazers} ${t.stargazers.sectionTitle}</h2>
         <p>${interpolate({ template: t.stargazers.newStargazers, params: { count: stargazerDiff.totalNew } })}</p>
         ${sampledNoteHtml}
         ${stargazerDiff.entries
@@ -188,7 +189,7 @@ export function generateHtmlReport({
       : stargazerDiff
         ? `
       <div style="margin-top:24px;">
-        <h2 style="font-size:18px;margin-bottom:12px;">👤 ${t.stargazers.sectionTitle}</h2>
+        <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.stargazers} ${t.stargazers.sectionTitle}</h2>
         ${sampledNoteHtml}
         <p style="color:${palette.neutral};">${t.stargazers.noNewStargazers}</p>
       </div>`
@@ -215,11 +216,11 @@ export function generateHtmlReport({
   const forecastSection = forecastData
     ? `
       <div style="margin-top:24px;">
-        <h2 style="font-size:18px;margin-bottom:12px;">🔮 ${t.forecast.sectionTitle}</h2>
+        <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.forecast} ${t.forecast.sectionTitle}</h2>
         ${
           velocityList
             ? `<div style="margin-bottom:16px;">
-          <h3 style="font-size:16px;margin-bottom:8px;">🚀 ${t.velocity.sectionTitle}</h3>
+          <h3 style="font-size:16px;margin-bottom:8px;">${SECTION_ICON.velocity} ${t.velocity.sectionTitle}</h3>
           ${velocityList}
         </div>`
             : ''
@@ -247,7 +248,7 @@ export function generateHtmlReport({
     !forecastData && velocityList
       ? `
       <div style="margin-top:24px;">
-        <h2 style="font-size:18px;margin-bottom:12px;">🚀 ${t.velocity.sectionTitle}</h2>
+        <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.velocity} ${t.velocity.sectionTitle}</h2>
         ${velocityList}
       </div>`
       : '';
@@ -314,7 +315,7 @@ export function generateHtmlReport({
 
 interface BuildHtmlForecastTableParams {
   title: string;
-  forecasts: { method: string; points: { weekOffset: number; predicted: number }[] }[];
+  forecasts: ForecastResult[];
   t: ReturnType<typeof getTranslations>;
   palette: ColorPalette;
 }

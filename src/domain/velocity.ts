@@ -1,4 +1,4 @@
-import { MS_PER_DAY } from './constants';
+import { MS_PER_DAY, toEpochMs } from './constants';
 import type { History } from './types';
 
 const VELOCITY_MILESTONES = [
@@ -33,8 +33,11 @@ export function computeVelocity({ history }: { history: History }): VelocityMetr
 
   const previous = snapshots[snapshots.length - 2];
   const last = snapshots[snapshots.length - 1];
-  const elapsedDays =
-    (new Date(last.timestamp).getTime() - new Date(previous.timestamp).getTime()) / MS_PER_DAY;
+  const lastMs = toEpochMs(last.timestamp);
+  const previousMs = toEpochMs(previous.timestamp);
+  if (lastMs === null || previousMs === null) return null;
+
+  const elapsedDays = (lastMs - previousMs) / MS_PER_DAY;
   if (elapsedDays <= 0) return null;
 
   const gained = last.totalStars - previous.totalStars;

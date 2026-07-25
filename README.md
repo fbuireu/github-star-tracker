@@ -67,8 +67,8 @@ Every run, Star Tracker commits these artifacts to a dedicated data branch:
 - :office: **GitHub Enterprise:** GHES support, auto-detected or explicit API URL
 - :globe_with_meridians: **Multi-language:** English, Spanish, Catalan, Italian
 - :bar_chart: **CSV export:** Machine-readable output for data pipelines
-- :jigsaw: **Action outputs:** `total-stars`, `new-stars`, `new-stars`, `lost-stars`, `new-stargazers` (and much more) for workflow chaining
-- :shield: **Zero runtime deps:** Bundled TypeScript action, 98%+ test coverage, 500+ tests
+- :jigsaw: **Action outputs:** `total-stars`, `new-stars`, `lost-stars`, `should-notify`, `new-stargazers` (and much more) for workflow chaining
+- :shield: **Zero runtime deps:** Bundled TypeScript action, 98%+ test coverage, 670+ tests
 - :lock: **Future-proof:** Unaffected by GitHub's 2026 stargazers API restrictions, since it uses your own credentials on your own repositories
 
 ---
@@ -130,7 +130,9 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
     track-stargazers: true
     min-stars: '5'
     exclude-repos: 'test-repo,/^demo-.*/'
-    notification-threshold: '0' # 0 | N | auto
+    compare-against: 'last-run' # last-run | 24h | 7d | 30d
+    notification-threshold: '500' # 0 | N | auto
+    notification-mode: 'gains' # net | gains
 ```
 
 <details>
@@ -146,6 +148,8 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `include-charts`         | `true`                | Generate star trend charts                                    |
 | `data-branch`            | `star-tracker-data`   | Branch for tracking data                                      |
 | `max-history`            | `52`                  | Max snapshots to keep                                         |
+| `compare-against`        | `last-run`            | Snapshot used as comparison baseline: `last-run`, `24h`, `7d` or `30d`. If history is shorter than the window, the oldest stored snapshot is used and the report's date shows how far back it really goes |
+| `read-only`              | `false`               | Run without writing to the data branch. Still fetches, reports, sets outputs and emails - it just never commits or pushes. Use it for a second workflow that shares a data branch with your tracking one |
 | `top-repos`              | `10`                  | Top repos in charts/forecasts                                 |
 | `chart-line-color`       | `#dfb317`             | Hex color of primary chart line/fill/points (not comparison). Accepts hex with or without a leading `#`  |
 | `chart-line-width`       | `2.5`                 | Stroke width (px, >0) of data lines in all charts             |
@@ -180,7 +184,13 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `email-to`               | -                     | Recipient address                                             |
 | `email-from`             | `GitHub Star Tracker` | Sender name                                                   |
 | `send-on-no-changes`     | `false`               | Email even with no changes                                    |
-| `notification-threshold` | `0`                   | `0` (every run), N (threshold), or `auto` (adaptive)          |
+| `notification-threshold` | `0`                   | `0` (every run with changes), N (accumulated change since the last notification), or `auto` (adaptive) |
+| `notification-mode`      | `net`                 | How the threshold measures that change: `net` (absolute change, so a large drop also fires) or `gains` (upward movement only) |
+
+The threshold counter is measured against the star total at the last notification and only resets when a notification actually fires, so it accumulates across runs until it trips. The first run after enabling a threshold has no stored baseline (treated as `0`), so it fires once and then settles.
+
+> [!IMPORTANT]
+> `notification-threshold` decides **when** you get an email. `compare-against` decides **what period the report body covers**. They are independent: the threshold accumulates against the star total at the last notification, while the report diffs against a stored snapshot. A threshold that trips after several runs still produces a report covering only the `compare-against` window, so set the two to match if you want the email body to span what the threshold accumulated. `notification-threshold` also does not work on a `read-only` run, because the counter it advances lives on the data branch.
 
 In the YAML config file, option keys may be written with either dashes or underscores - `include-charts` and `include_charts` are both accepted - so you can copy option names straight from this table without rewriting the separators.
 
@@ -192,15 +202,17 @@ In the YAML config file, option keys may be written with either dashes or unders
 | Output             | Description                                                        |
 | ------------------ | ----------------------------------------------------------------- |
 | `total-stars`      | Total star count                                                  |
-| `stars-changed`    | `true` / `false`                                                  |
-| `new-stars`        | Stars gained                                                      |
-| `lost-stars`       | Stars lost                                                        |
-| `should-notify`    | Threshold reached: `true` / `false`                              |
+| `stars-changed`    | `true` / `false` - anything changed vs. the comparison baseline (per run) |
+| `new-stars`        | Stars gained vs. the comparison baseline. Per run, not cumulative |
+| `lost-stars`       | Stars lost vs. the comparison baseline. Per run, not cumulative   |
+| `should-notify`    | `true` / `false` - the **cumulative** threshold signal, driven by `notification-threshold` and `notification-mode` (and requires an actual change) |
 | `new-stargazers`   | New stargazers count                                              |
 | `report`           | Full Markdown report                                              |
 | `report-html`      | HTML report (for email)                                          |
 | `report-html-path` | File path to the HTML report (for large reports / custom mailers) |
 | `report-csv`       | CSV report (for data pipelines)                                  |
+
+To email on every N stars, use `notification-threshold: 'N'` with `notification-mode: 'gains'` and gate the step on `if: steps.tracker.outputs.should-notify == 'true'`. Gating on `new-stars >= N` would require N stars inside a single run, which on a daily schedule almost never happens.
 
 </details>
 
@@ -273,7 +285,7 @@ flowchart TD
 
 The charts plot the **real historical curve**: every star is placed on the date it was actually given. Each stargazer carries a `starred_at` timestamp (GitHub's `application/vnd.github.star+json` media type), and the action reconstructs the cumulative star count over real time from those dates, so the timeline runs from a repo's very first star up to now, regardless of when you started running the action.
 
-The per-run snapshots on the data branch are still kept for the report's delta tables and notifications ("how many stars changed since the last run"), but the charts themselves no longer depend on them.
+The per-run snapshots on the data branch are still kept for the report's delta tables and notifications ("how many stars changed against the comparison baseline", which `compare-against` selects), but the charts themselves no longer depend on them.
 
 One caveat: GitHub caps the stargazers listing at roughly **40,000 per repo** (oldest first), so for very large repos the most recent stars are unreachable. The reachable history is drawn accurately and the recent tail is bridged with a straight ramp up to the true current total, so the early curve stays accurate and the chart never goes flat at the end. Pair this with `smart-sampling` to keep the request cost bounded on big repos.
 

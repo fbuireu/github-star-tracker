@@ -374,17 +374,26 @@ describe('generateHtmlReport', () => {
     expect(html).toContain(COLORS.neutral);
   });
 
-  it('renders unknown forecast method name as-is', () => {
+  it('renders a translated label for every forecast method', () => {
     const forecastData: ForecastData = {
       aggregate: {
         forecasts: [
           {
-            method: 'custom-method' as ForecastMethod,
+            method: ForecastMethod.LINEAR_REGRESSION,
             points: [
               { weekOffset: 1, predicted: 25 },
               { weekOffset: 2, predicted: 27 },
               { weekOffset: 3, predicted: 29 },
               { weekOffset: 4, predicted: 31 },
+            ],
+          },
+          {
+            method: ForecastMethod.WEIGHTED_MOVING_AVERAGE,
+            points: [
+              { weekOffset: 1, predicted: 24 },
+              { weekOffset: 2, predicted: 26 },
+              { weekOffset: 3, predicted: 28 },
+              { weekOffset: 4, predicted: 30 },
             ],
           },
         ],
@@ -394,7 +403,10 @@ describe('generateHtmlReport', () => {
 
     const html = renderHtml({ forecastData });
 
-    expect(html).toContain('custom-method');
+    expect(html).toContain('Linear Regression');
+    expect(html).toContain('Weighted Moving Average');
+    expect(html).not.toContain(ForecastMethod.LINEAR_REGRESSION);
+    expect(html).not.toContain(ForecastMethod.WEIGHTED_MOVING_AVERAGE);
   });
 
   it('excludes forecast section when forecastData is null', () => {

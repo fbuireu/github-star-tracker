@@ -1,55 +1,120 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as core from '@actions/core';
-import { isValidLocale } from '@i18n';
+import { LOCALES } from '@i18n';
 import * as yaml from 'js-yaml';
-import { DEFAULTS, VISIBILITY_CONFIG } from './defaults';
+import { DEFAULTS } from './defaults';
 import {
   parseBool,
   parseDecimal,
+  parseFileBool,
   parseHexColor,
   parseList,
   parseNotificationThreshold,
   parseNumber,
   parseNumberList,
+  toStringList,
 } from './parsers';
-import type { Config, Visibility } from './types';
-import { ChartAxisSide, ChartCurve, ChartRange, ChartTheme } from './types';
+import type { Config } from './types';
+import {
+  ChartAxisSide,
+  ChartCurve,
+  ChartRange,
+  ChartTheme,
+  CompareAgainst,
+  NotificationMode,
+  Visibility,
+} from './types';
 
-interface FileConfig {
-  visibility?: string;
-  includeArchived?: boolean;
-  includeForks?: boolean;
-  excludeRepos?: string[];
-  onlyRepos?: string[];
-  excludeOrgs?: string[];
-  onlyOrgs?: string[];
-  minStars?: number;
-  dataBranch?: string;
-  maxHistory?: number;
-  includeCharts?: boolean;
-  locale?: string;
-  notificationThreshold?: number | 'auto';
-  trackStargazers?: boolean;
-  topRepos?: number;
-  smartSampling?: boolean;
-  smartSamplingThreshold?: number;
-  smartSamplingPages?: number;
-  chartLineColor?: string;
-  chartLineWidth?: number;
-  chartMaxPoints?: number;
-  chartYAxisSide?: string;
-  chartSmoothing?: boolean;
-  chartCurve?: string;
-  chartShowPoints?: boolean;
-  chartAnimation?: boolean;
-  chartMilestones?: boolean;
-  chartBeginAtZero?: boolean;
-  chartTheme?: string;
-  chartCustomMilestones?: number[] | string;
-  chartRange?: string;
-  chartTrendLine?: boolean;
-  velocityMetrics?: boolean;
+type FileConfigKey = Exclude<keyof Config, 'sendOnNoChanges'>;
+
+type FileConfig = Partial<
+  Omit<
+    { [K in FileConfigKey]: Config[K] extends string ? string : Config[K] },
+    'chartCustomMilestones'
+  >
+> & { chartCustomMilestones?: number[] | string };
+
+const FILE_CONFIG_KEYS = Object.keys(DEFAULTS).filter(
+  (key): key is FileConfigKey => key !== 'sendOnNoChanges',
+);
+
+const DATA_BRANCH_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;
+const UPPERCASE_LETTER_PATTERN = /[A-Z]/g;
+
+function assertValidDataBranch(dataBranch: string): void {
+  const isValid =
+    DATA_BRANCH_PATTERN.test(dataBranch) &&
+    !dataBranch.includes('..') &&
+    !dataBranch.endsWith('/') &&
+    !dataBranch.endsWith('.lock');
+
+  if (!isValid) {
+    throw new Error(
+      `Invalid data-branch "${dataBranch}". Use only letters, digits, ".", "-", "_" and "/", starting with a letter or digit.`,
+    );
+  }
+}
+
+function toSnakeCase(key: string): string {
+  return key.replaceAll(UPPERCASE_LETTER_PATTERN, (letter) => `_${letter.toLowerCase()}`);
+}
+
+function formatChoices(choices: readonly string[]): string {
+  const quoted = choices.map((choice) => `"${choice}"`);
+
+  if (quoted.length <= 2) return quoted.join(' or ');
+
+  return `${quoted.slice(0, -1).join(', ')}, or ${quoted.at(-1)}`;
+}
+
+interface ResolveEnumParams<T extends string> {
+  value: string | undefined;
+  allowed: readonly T[];
+  fallback: NoInfer<T>;
+  inputName: string;
+}
+
+function resolveEnum<T extends string>({
+  value,
+  allowed,
+  fallback,
+  inputName,
+}: ResolveEnumParams<T>): T {
+  if (!value) return fallback;
+
+  const match = allowed.find((choice) => choice === value);
+
+  if (match !== undefined) return match;
+
+  core.warning(
+    `Invalid ${inputName} "${value}". Must be ${formatChoices(allowed)}. Falling back to "${fallback}"`,
+  );
+
+  return fallback;
+}
+
+interface ParseOrWarnParams<T> {
+  input: string;
+  inputName: string;
+  parse: (value: string) => T | undefined;
+  fallback: T;
+}
+
+function parseOrWarn<T>({
+  input,
+  inputName,
+  parse,
+  fallback,
+}: ParseOrWarnParams<T>): T | undefined {
+  const parsed = parse(input);
+
+  if (input !== '' && parsed === undefined) {
+    const shown = typeof fallback === 'string' ? `"${fallback}"` : fallback;
+    core.warning(`Invalid ${inputName} "${input}". Falling back to ${shown}`);
+  }
+
+  return parsed;
 }
 
 interface ParseConfigYamlParams {
@@ -87,44 +152,13 @@ export function loadConfigFile(configPath: string): FileConfig {
     return {};
   }
 
-  const read = <T>(snakeKey: string): T | undefined =>
-    (parsed[snakeKey] ?? parsed[snakeKey.replaceAll('_', '-')]) as T | undefined;
+  return Object.fromEntries(
+    FILE_CONFIG_KEYS.map((key) => {
+      const snakeKey = toSnakeCase(key);
 
-  return {
-    visibility: read('visibility'),
-    includeArchived: read('include_archived'),
-    includeForks: read('include_forks'),
-    excludeRepos: read('exclude_repos'),
-    onlyRepos: read('only_repos'),
-    excludeOrgs: read('exclude_orgs'),
-    onlyOrgs: read('only_orgs'),
-    minStars: read('min_stars'),
-    dataBranch: read('data_branch'),
-    maxHistory: read('max_history'),
-    includeCharts: read('include_charts'),
-    locale: read('locale'),
-    notificationThreshold: read('notification_threshold'),
-    trackStargazers: read('track_stargazers'),
-    topRepos: read('top_repos'),
-    smartSampling: read('smart_sampling'),
-    smartSamplingThreshold: read('smart_sampling_threshold'),
-    smartSamplingPages: read('smart_sampling_pages'),
-    chartLineColor: read('chart_line_color'),
-    chartLineWidth: read('chart_line_width'),
-    chartMaxPoints: read('chart_max_points'),
-    chartYAxisSide: read('chart_y_axis_side'),
-    chartSmoothing: read('chart_smoothing'),
-    chartCurve: read('chart_curve'),
-    chartShowPoints: read('chart_show_points'),
-    chartAnimation: read('chart_animation'),
-    chartMilestones: read('chart_milestones'),
-    chartBeginAtZero: read('chart_begin_at_zero'),
-    chartTheme: read('chart_theme'),
-    chartCustomMilestones: read('chart_custom_milestones'),
-    chartRange: read('chart_range'),
-    chartTrendLine: read('chart_trend_line'),
-    velocityMetrics: read('velocity_metrics'),
-  };
+      return [key, parsed[snakeKey] ?? parsed[snakeKey.replaceAll('_', '-')]] as const;
+    }),
+  ) as FileConfig;
 }
 
 export function loadConfig(): Config {
@@ -141,9 +175,12 @@ export function loadConfig(): Config {
   const inputMinStars = core.getInput('min-stars');
   const inputDataBranch = core.getInput('data-branch');
   const inputMaxHistory = core.getInput('max-history');
+  const inputReadOnly = core.getInput('read-only');
   const inputIncludeCharts = core.getInput('include-charts');
   const inputLocale = core.getInput('locale');
   const inputNotificationThreshold = core.getInput('notification-threshold');
+  const inputNotificationMode = core.getInput('notification-mode');
+  const inputCompareAgainst = core.getInput('compare-against');
   const inputTrackStargazers = core.getInput('track-stargazers');
   const inputTopRepos = core.getInput('top-repos');
   const inputSmartSampling = core.getInput('smart-sampling');
@@ -165,15 +202,18 @@ export function loadConfig(): Config {
   const inputChartTrendLine = core.getInput('chart-trend-line');
   const inputVelocityMetrics = core.getInput('velocity-metrics');
 
-  const visibility = (inputVisibility ||
-    fileConfig.visibility ||
-    DEFAULTS.visibility) as Visibility;
+  const rawVisibility = inputVisibility || fileConfig.visibility || DEFAULTS.visibility;
+  const visibilityOptions = Object.values(Visibility);
+  const visibility = visibilityOptions.find((option) => option === rawVisibility);
 
-  if (!(visibility in VISIBILITY_CONFIG)) {
+  if (visibility === undefined) {
     throw new Error(
-      `Invalid visibility "${visibility}". Must be one of: ${Object.keys(VISIBILITY_CONFIG).join(', ')}`,
+      `Invalid visibility "${rawVisibility}". Must be one of: ${visibilityOptions.join(', ')}`,
     );
   }
+
+  const dataBranch = inputDataBranch || fileConfig.dataBranch || DEFAULTS.dataBranch;
+  assertValidDataBranch(dataBranch);
 
   const fileCustomMilestones = Array.isArray(fileConfig.chartCustomMilestones)
     ? parseNumberList(fileConfig.chartCustomMilestones.join(','))
@@ -185,10 +225,12 @@ export function loadConfig(): Config {
     );
   }
 
-  const locale = inputLocale || fileConfig.locale || DEFAULTS.locale;
-  if (!isValidLocale(locale)) {
-    core.warning(`Invalid locale "${locale}". Falling back to "en"`);
-  }
+  const locale = resolveEnum({
+    value: inputLocale || fileConfig.locale,
+    allowed: LOCALES,
+    fallback: DEFAULTS.locale,
+    inputName: 'locale',
+  });
 
   const chartLineColor =
     parseHexColor(inputChartLineColor) ??
@@ -201,116 +243,181 @@ export function loadConfig(): Config {
   }
 
   const chartLineWidth =
-    parseDecimal(inputChartLineWidth) ?? fileConfig.chartLineWidth ?? DEFAULTS.chartLineWidth;
+    parseDecimal(inputChartLineWidth) ??
+    parseDecimal(fileConfig.chartLineWidth) ??
+    DEFAULTS.chartLineWidth;
   if (inputChartLineWidth && parseDecimal(inputChartLineWidth) === undefined) {
     core.warning(
       `Invalid chart-line-width "${inputChartLineWidth}". Falling back to ${DEFAULTS.chartLineWidth}`,
     );
   }
 
-  const rawChartYAxisSide = inputChartYAxisSide || fileConfig.chartYAxisSide;
-  const isValidAxisSide = (value: string | undefined): value is ChartAxisSide =>
-    value === ChartAxisSide.LEFT || value === ChartAxisSide.RIGHT;
-  const chartYAxisSide = isValidAxisSide(rawChartYAxisSide)
-    ? rawChartYAxisSide
-    : DEFAULTS.chartYAxisSide;
-  if (rawChartYAxisSide && !isValidAxisSide(rawChartYAxisSide)) {
-    core.warning(
-      `Invalid chart-y-axis-side "${rawChartYAxisSide}". Must be "left" or "right". Falling back to "${DEFAULTS.chartYAxisSide}"`,
-    );
-  }
+  const chartYAxisSide = resolveEnum({
+    value: inputChartYAxisSide || fileConfig.chartYAxisSide,
+    allowed: Object.values(ChartAxisSide),
+    fallback: DEFAULTS.chartYAxisSide,
+    inputName: 'chart-y-axis-side',
+  });
 
-  const rawChartTheme = inputChartTheme || fileConfig.chartTheme;
-  const isValidTheme = (value: string | undefined): value is ChartTheme =>
-    value === ChartTheme.AUTO || value === ChartTheme.LIGHT || value === ChartTheme.DARK;
-  const chartTheme = isValidTheme(rawChartTheme) ? rawChartTheme : DEFAULTS.chartTheme;
-  if (rawChartTheme && !isValidTheme(rawChartTheme)) {
-    core.warning(
-      `Invalid chart-theme "${rawChartTheme}". Must be "auto", "light", or "dark". Falling back to "${DEFAULTS.chartTheme}"`,
-    );
-  }
+  const chartTheme = resolveEnum({
+    value: inputChartTheme || fileConfig.chartTheme,
+    allowed: Object.values(ChartTheme),
+    fallback: DEFAULTS.chartTheme,
+    inputName: 'chart-theme',
+  });
 
-  const rawChartRange = inputChartRange || fileConfig.chartRange;
-  const isValidRange = (value: string | undefined): value is ChartRange =>
-    value === ChartRange.D30 ||
-    value === ChartRange.D90 ||
-    value === ChartRange.Y1 ||
-    value === ChartRange.ALL;
-  const chartRange = isValidRange(rawChartRange) ? rawChartRange : DEFAULTS.chartRange;
-  if (rawChartRange && !isValidRange(rawChartRange)) {
-    core.warning(
-      `Invalid chart-range "${rawChartRange}". Must be "30d", "90d", "1y", or "all". Falling back to "${DEFAULTS.chartRange}"`,
-    );
-  }
+  const chartRange = resolveEnum({
+    value: inputChartRange || fileConfig.chartRange,
+    allowed: Object.values(ChartRange),
+    fallback: DEFAULTS.chartRange,
+    inputName: 'chart-range',
+  });
 
-  const rawChartCurve = inputChartCurve || fileConfig.chartCurve;
-  const isValidCurve = (value: string | undefined): value is ChartCurve =>
-    value === ChartCurve.CATMULL_ROM ||
-    value === ChartCurve.MONOTONE ||
-    value === ChartCurve.CUBIC_BEZIER ||
-    value === ChartCurve.ROUNDED_STEP;
-  const chartCurve = isValidCurve(rawChartCurve) ? rawChartCurve : DEFAULTS.chartCurve;
-  if (rawChartCurve && !isValidCurve(rawChartCurve)) {
-    core.warning(
-      `Invalid chart-curve "${rawChartCurve}". Must be "catmull-rom", "monotone", "cubic-bezier", or "rounded-step". Falling back to "${DEFAULTS.chartCurve}"`,
-    );
-  }
+  const chartCurve = resolveEnum({
+    value: inputChartCurve || fileConfig.chartCurve,
+    allowed: Object.values(ChartCurve),
+    fallback: DEFAULTS.chartCurve,
+    inputName: 'chart-curve',
+  });
+
+  const compareAgainst = resolveEnum({
+    value: inputCompareAgainst || fileConfig.compareAgainst,
+    allowed: Object.values(CompareAgainst),
+    fallback: DEFAULTS.compareAgainst,
+    inputName: 'compare-against',
+  });
+
+  const notificationMode = resolveEnum({
+    value: inputNotificationMode || fileConfig.notificationMode,
+    allowed: Object.values(NotificationMode),
+    fallback: DEFAULTS.notificationMode,
+    inputName: 'notification-mode',
+  });
 
   const config: Config = {
     visibility,
     includeArchived:
-      parseBool(inputIncludeArchived) ?? fileConfig.includeArchived ?? DEFAULTS.includeArchived,
-    includeForks: parseBool(inputIncludeForks) ?? fileConfig.includeForks ?? DEFAULTS.includeForks,
-    excludeRepos: inputExcludeRepos
-      ? parseList(inputExcludeRepos)
-      : fileConfig.excludeRepos || DEFAULTS.excludeRepos,
-    onlyRepos: inputOnlyRepos
-      ? parseList(inputOnlyRepos)
-      : fileConfig.onlyRepos || DEFAULTS.onlyRepos,
-    excludeOrgs: inputExcludeOrgs
-      ? parseList(inputExcludeOrgs)
-      : fileConfig.excludeOrgs || DEFAULTS.excludeOrgs,
-    onlyOrgs: inputOnlyOrgs ? parseList(inputOnlyOrgs) : fileConfig.onlyOrgs || DEFAULTS.onlyOrgs,
-    minStars: parseNumber(inputMinStars) ?? fileConfig.minStars ?? DEFAULTS.minStars,
-    dataBranch: inputDataBranch || fileConfig.dataBranch || DEFAULTS.dataBranch,
-    maxHistory: parseNumber(inputMaxHistory) ?? fileConfig.maxHistory ?? DEFAULTS.maxHistory,
-    sendOnNoChanges: parseBool(core.getInput('send-on-no-changes')) ?? false,
+      parseBool(inputIncludeArchived) ??
+      parseFileBool(fileConfig.includeArchived) ??
+      DEFAULTS.includeArchived,
+    includeForks:
+      parseBool(inputIncludeForks) ??
+      parseFileBool(fileConfig.includeForks) ??
+      DEFAULTS.includeForks,
+    excludeRepos:
+      parseList(inputExcludeRepos) ??
+      toStringList(fileConfig.excludeRepos) ??
+      DEFAULTS.excludeRepos,
+    onlyRepos:
+      parseList(inputOnlyRepos) ?? toStringList(fileConfig.onlyRepos) ?? DEFAULTS.onlyRepos,
+    excludeOrgs:
+      parseList(inputExcludeOrgs) ?? toStringList(fileConfig.excludeOrgs) ?? DEFAULTS.excludeOrgs,
+    onlyOrgs: parseList(inputOnlyOrgs) ?? toStringList(fileConfig.onlyOrgs) ?? DEFAULTS.onlyOrgs,
+    minStars:
+      parseOrWarn({
+        input: inputMinStars,
+        inputName: 'min-stars',
+        parse: parseNumber,
+        fallback: DEFAULTS.minStars,
+      }) ??
+      parseNumber(fileConfig.minStars) ??
+      DEFAULTS.minStars,
+    dataBranch,
+    maxHistory:
+      parseOrWarn({
+        input: inputMaxHistory,
+        inputName: 'max-history',
+        parse: parseNumber,
+        fallback: DEFAULTS.maxHistory,
+      }) ??
+      parseNumber(fileConfig.maxHistory) ??
+      DEFAULTS.maxHistory,
+    compareAgainst,
+    readOnly: parseBool(inputReadOnly) ?? parseFileBool(fileConfig.readOnly) ?? DEFAULTS.readOnly,
+    sendOnNoChanges: parseBool(core.getInput('send-on-no-changes')) ?? DEFAULTS.sendOnNoChanges,
     includeCharts:
-      parseBool(inputIncludeCharts) ?? fileConfig.includeCharts ?? DEFAULTS.includeCharts,
-    locale: isValidLocale(locale) ? locale : DEFAULTS.locale,
+      parseBool(inputIncludeCharts) ??
+      parseFileBool(fileConfig.includeCharts) ??
+      DEFAULTS.includeCharts,
+    locale,
     notificationThreshold:
-      parseNotificationThreshold(inputNotificationThreshold) ??
-      fileConfig.notificationThreshold ??
+      parseOrWarn({
+        input: inputNotificationThreshold,
+        inputName: 'notification-threshold',
+        parse: parseNotificationThreshold,
+        fallback: DEFAULTS.notificationThreshold,
+      }) ??
+      parseNotificationThreshold(fileConfig.notificationThreshold) ??
       DEFAULTS.notificationThreshold,
+    notificationMode,
     trackStargazers:
-      parseBool(inputTrackStargazers) ?? fileConfig.trackStargazers ?? DEFAULTS.trackStargazers,
-    topRepos: parseNumber(inputTopRepos) ?? fileConfig.topRepos ?? DEFAULTS.topRepos,
+      parseBool(inputTrackStargazers) ??
+      parseFileBool(fileConfig.trackStargazers) ??
+      DEFAULTS.trackStargazers,
+    topRepos:
+      parseOrWarn({
+        input: inputTopRepos,
+        inputName: 'top-repos',
+        parse: parseNumber,
+        fallback: DEFAULTS.topRepos,
+      }) ??
+      parseNumber(fileConfig.topRepos) ??
+      DEFAULTS.topRepos,
     smartSampling:
-      parseBool(inputSmartSampling) ?? fileConfig.smartSampling ?? DEFAULTS.smartSampling,
+      parseBool(inputSmartSampling) ??
+      parseFileBool(fileConfig.smartSampling) ??
+      DEFAULTS.smartSampling,
     smartSamplingThreshold:
-      parseNumber(inputSmartSamplingThreshold) ??
-      fileConfig.smartSamplingThreshold ??
+      parseOrWarn({
+        input: inputSmartSamplingThreshold,
+        inputName: 'smart-sampling-threshold',
+        parse: parseNumber,
+        fallback: DEFAULTS.smartSamplingThreshold,
+      }) ??
+      parseNumber(fileConfig.smartSamplingThreshold) ??
       DEFAULTS.smartSamplingThreshold,
     smartSamplingPages:
-      parseNumber(inputSmartSamplingPages) ??
-      fileConfig.smartSamplingPages ??
+      parseOrWarn({
+        input: inputSmartSamplingPages,
+        inputName: 'smart-sampling-pages',
+        parse: parseNumber,
+        fallback: DEFAULTS.smartSamplingPages,
+      }) ??
+      parseNumber(fileConfig.smartSamplingPages) ??
       DEFAULTS.smartSamplingPages,
     chartLineColor,
     chartLineWidth,
     chartMaxPoints:
-      parseNumber(inputChartMaxPoints) ?? fileConfig.chartMaxPoints ?? DEFAULTS.chartMaxPoints,
+      parseOrWarn({
+        input: inputChartMaxPoints,
+        inputName: 'chart-max-points',
+        parse: parseNumber,
+        fallback: DEFAULTS.chartMaxPoints,
+      }) ??
+      parseNumber(fileConfig.chartMaxPoints) ??
+      DEFAULTS.chartMaxPoints,
     chartYAxisSide,
     chartSmoothing:
-      parseBool(inputChartSmoothing) ?? fileConfig.chartSmoothing ?? DEFAULTS.chartSmoothing,
+      parseBool(inputChartSmoothing) ??
+      parseFileBool(fileConfig.chartSmoothing) ??
+      DEFAULTS.chartSmoothing,
     chartCurve,
     chartShowPoints:
-      parseBool(inputChartShowPoints) ?? fileConfig.chartShowPoints ?? DEFAULTS.chartShowPoints,
+      parseBool(inputChartShowPoints) ??
+      parseFileBool(fileConfig.chartShowPoints) ??
+      DEFAULTS.chartShowPoints,
     chartAnimation:
-      parseBool(inputChartAnimation) ?? fileConfig.chartAnimation ?? DEFAULTS.chartAnimation,
+      parseBool(inputChartAnimation) ??
+      parseFileBool(fileConfig.chartAnimation) ??
+      DEFAULTS.chartAnimation,
     chartMilestones:
-      parseBool(inputChartMilestones) ?? fileConfig.chartMilestones ?? DEFAULTS.chartMilestones,
+      parseBool(inputChartMilestones) ??
+      parseFileBool(fileConfig.chartMilestones) ??
+      DEFAULTS.chartMilestones,
     chartBeginAtZero:
-      parseBool(inputChartBeginAtZero) ?? fileConfig.chartBeginAtZero ?? DEFAULTS.chartBeginAtZero,
+      parseBool(inputChartBeginAtZero) ??
+      parseFileBool(fileConfig.chartBeginAtZero) ??
+      DEFAULTS.chartBeginAtZero,
     chartTheme,
     chartCustomMilestones: inputChartCustomMilestones
       ? parseNumberList(inputChartCustomMilestones)
@@ -319,10 +426,20 @@ export function loadConfig(): Config {
         : DEFAULTS.chartCustomMilestones,
     chartRange,
     chartTrendLine:
-      parseBool(inputChartTrendLine) ?? fileConfig.chartTrendLine ?? DEFAULTS.chartTrendLine,
+      parseBool(inputChartTrendLine) ??
+      parseFileBool(fileConfig.chartTrendLine) ??
+      DEFAULTS.chartTrendLine,
     velocityMetrics:
-      parseBool(inputVelocityMetrics) ?? fileConfig.velocityMetrics ?? DEFAULTS.velocityMetrics,
+      parseBool(inputVelocityMetrics) ??
+      parseFileBool(fileConfig.velocityMetrics) ??
+      DEFAULTS.velocityMetrics,
   };
+
+  if (config.readOnly && config.notificationThreshold !== 0) {
+    core.warning(
+      `notification-threshold is set to "${config.notificationThreshold}" on a read-only run. The threshold accumulates against a value stored on ${config.dataBranch}, which a read-only run never updates, so it will either fire on every run or never fire. Use notification-threshold 0 here and gate on the stars-changed output instead.`,
+    );
+  }
 
   core.info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`,

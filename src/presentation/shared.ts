@@ -1,10 +1,10 @@
 import { type ChartCurve, ChartRange, ChartTheme } from '@config/types';
-import { FORECAST_WEEKS, MS_PER_DAY } from '@domain/constants';
+import { FORECAST_WEEKS, MS_PER_DAY, toEpochMs } from '@domain/constants';
 import { type ForecastData, ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
 import type { ComparisonResults, History, RepoResult } from '@domain/types';
 import { getTranslations, interpolate, type Locale } from '@i18n';
-import { DARK_PALETTE, LIGHT_PALETTE } from './constants';
+import { CHART, DARK_PALETTE, LIGHT_PALETTE } from './constants';
 import type { ColorPalette } from './types';
 
 type Translations = ReturnType<typeof getTranslations>;
@@ -30,12 +30,18 @@ export interface GenerateReportParams {
   velocityMetrics?: boolean;
 }
 
+const THEME_CONFIG: Record<ChartTheme, { palette: ColorPalette; colorScheme: string }> = {
+  [ChartTheme.AUTO]: { palette: LIGHT_PALETTE, colorScheme: 'light dark' },
+  [ChartTheme.LIGHT]: { palette: LIGHT_PALETTE, colorScheme: ChartTheme.LIGHT },
+  [ChartTheme.DARK]: { palette: DARK_PALETTE, colorScheme: ChartTheme.DARK },
+};
+
 export function resolvePalette(theme: ChartTheme = ChartTheme.AUTO): ColorPalette {
-  return theme === ChartTheme.DARK ? DARK_PALETTE : LIGHT_PALETTE;
+  return THEME_CONFIG[theme].palette;
 }
 
 export function colorSchemeFor(theme: ChartTheme): string {
-  return theme === ChartTheme.AUTO ? 'light dark' : theme;
+  return THEME_CONFIG[theme].colorScheme;
 }
 
 const CHART_RANGE_DAYS: Record<ChartRange, number> = {
@@ -50,17 +56,40 @@ interface FilterSnapshotsByRangeParams<T> {
   range?: ChartRange;
 }
 
-export function filterSnapshotsByRange<T extends { timestamp: string }>({
+function filterSnapshotsByRange<T extends { timestamp: string }>({
   snapshots,
   range = ChartRange.ALL,
 }: FilterSnapshotsByRangeParams<T>): T[] {
   const days = CHART_RANGE_DAYS[range];
   if (!Number.isFinite(days) || snapshots.length === 0) return snapshots;
 
-  const lastTimestamp = new Date(snapshots[snapshots.length - 1].timestamp).getTime();
+  const lastTimestamp = toEpochMs(snapshots[snapshots.length - 1].timestamp);
+  if (lastTimestamp === null) return snapshots;
+
   const cutoff = lastTimestamp - days * MS_PER_DAY;
 
-  return snapshots.filter((snapshot) => new Date(snapshot.timestamp).getTime() >= cutoff);
+  return snapshots.filter((snapshot) => {
+    const timestamp = toEpochMs(snapshot.timestamp);
+
+    return timestamp !== null && timestamp >= cutoff;
+  });
+}
+
+interface SelectChartSnapshotsParams<T> {
+  snapshots: T[];
+  range?: ChartRange;
+  maxPoints?: number;
+}
+
+export function selectChartSnapshots<T extends { timestamp: string }>({
+  snapshots,
+  range,
+  maxPoints,
+}: SelectChartSnapshotsParams<T>): T[] {
+  const windowed = filterSnapshotsByRange({ snapshots, range });
+  const limit = maxPoints ?? CHART.maxDataPoints;
+
+  return limit > 0 ? windowed.slice(-limit) : [...windowed];
 }
 
 interface MovingAverageSeriesParams {
@@ -111,22 +140,29 @@ export function prepareReportData({
   };
 }
 
+export function perRepoChartFile(repoFullName: string): string {
+  return `${repoFullName.replace('/', '-')}.svg`;
+}
+
 export function buildForecastWeekHeaders(t: Translations): string[] {
   return Array.from({ length: FORECAST_WEEKS }, (_, index) =>
     interpolate({ template: t.forecast.week, params: { n: index + 1 } }),
   );
 }
 
+const FORECAST_METHOD_LABELS: Record<ForecastMethod, 'linearRegression' | 'weightedMovingAverage'> =
+  {
+    [ForecastMethod.LINEAR_REGRESSION]: 'linearRegression',
+    [ForecastMethod.WEIGHTED_MOVING_AVERAGE]: 'weightedMovingAverage',
+  };
+
 interface ForecastMethodLabelParams {
-  method: string;
+  method: ForecastMethod;
   t: Translations;
 }
 
 export function forecastMethodLabel({ method, t }: ForecastMethodLabelParams): string {
-  if (method === ForecastMethod.LINEAR_REGRESSION) return t.forecast.linearRegression;
-  if (method === ForecastMethod.WEIGHTED_MOVING_AVERAGE) return t.forecast.weightedMovingAverage;
-
-  return method;
+  return t.forecast[FORECAST_METHOD_LABELS[method]];
 }
 
 export interface ForecastChartSeries {

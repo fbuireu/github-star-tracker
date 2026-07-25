@@ -5,7 +5,7 @@ import { compareStars, createSnapshot } from '@domain/comparison';
 import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
 import { shouldNotify } from '@domain/notification';
-import { addSnapshot, getLastSnapshot } from '@domain/snapshot';
+import { addSnapshot, getBaselineSnapshot } from '@domain/snapshot';
 import { buildStarHistory } from '@domain/star-history';
 import { buildStargazerMap, diffStargazers, type RepoStargazers } from '@domain/stargazers';
 import type { Summary } from '@domain/types';
@@ -28,16 +28,10 @@ import {
 } from '@infrastructure/persistence/storage';
 import { retry } from '@octokit/plugin-retry';
 import { generateBadge } from '@presentation/badge';
-import { MIN_SNAPSHOTS_FOR_CHART } from '@presentation/constants';
+import { buildChartFiles, resolveChartHistory } from '@presentation/charts';
 import { generateCsvReport } from '@presentation/csv';
 import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
-import {
-  generateComparisonSvgChart,
-  generateForecastSvgChart,
-  generatePerRepoSvgChart,
-  generateSvgChart,
-} from '@presentation/svg-chart';
 
 interface WithDataDirParams {
   branch: string;
@@ -78,12 +72,15 @@ export async function trackStars(): Promise<void> {
         core.info(`Tracking ${repos.length} repositories...`);
 
         const storedHistory = readHistory(dataDir);
-        const lastSnapshot = getLastSnapshot(storedHistory);
-        const previousTimestamp = lastSnapshot ? lastSnapshot.timestamp : null;
+        const baselineSnapshot = getBaselineSnapshot({
+          history: storedHistory,
+          compareAgainst: config.compareAgainst,
+        });
+        const previousTimestamp = baselineSnapshot ? baselineSnapshot.timestamp : null;
 
-        core.info('Comparing star counts...');
+        core.info(`Comparing star counts (baseline: ${previousTimestamp ?? 'first run'})...`);
 
-        const results = compareStars({ currentRepos: repos, previousSnapshot: lastSnapshot });
+        const results = compareStars({ currentRepos: repos, previousSnapshot: baselineSnapshot });
         const { summary } = results;
 
         core.info(`Total: ${summary.totalStars} stars (${deltaIndicator(summary.totalDelta)})`);
@@ -92,13 +89,7 @@ export async function trackStars(): Promise<void> {
         if (config.includeCharts || config.trackStargazers) {
           core.info('Fetching stargazers...');
 
-          repoStargazers = await fetchAllStargazers({
-            octokit,
-            repos,
-            smartSampling: config.smartSampling,
-            smartSamplingThreshold: config.smartSamplingThreshold,
-            smartSamplingPages: config.smartSamplingPages,
-          });
+          repoStargazers = await fetchAllStargazers({ octokit, repos, config });
         }
 
         let stargazerDiff = null;
@@ -140,8 +131,10 @@ export async function trackStars(): Promise<void> {
               now: chartNow,
             })
           : { snapshots: [] };
-        const history =
-          starHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? starHistory : updatedHistory;
+        const history = resolveChartHistory({
+          candidate: starHistory,
+          fallback: updatedHistory,
+        });
 
         const forecastData = computeForecast({ history, topRepoNames });
 
@@ -174,6 +167,7 @@ export async function trackStars(): Promise<void> {
           totalStars: summary.totalStars,
           starsAtLastNotification: storedHistory.starsAtLastNotification,
           threshold: config.notificationThreshold,
+          mode: config.notificationMode,
         });
         const notify = summary.changed && thresholdReached;
 
@@ -186,118 +180,27 @@ export async function trackStars(): Promise<void> {
         writeBadge({ dataDir, svg: badge });
         writeCsv({ dataDir, csv: csvReport });
 
-        if (config.includeCharts && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART) {
-          const svgChart = generateSvgChart({
-            history,
-            title: t.report.starHistory,
-            locale: config.locale,
-            lineColor: config.chartLineColor,
-            lineWidth: config.chartLineWidth,
-            maxPoints: config.chartMaxPoints,
-            yAxisSide: config.chartYAxisSide,
-            smoothing: config.chartSmoothing,
-            curve: config.chartCurve,
-            showPoints: config.chartShowPoints,
-            animate: config.chartAnimation,
-            beginAtZero: config.chartBeginAtZero,
-            theme: config.chartTheme,
-            milestones: config.chartMilestones,
-            customMilestones: config.chartCustomMilestones,
-            range: config.chartRange,
-            trendLine: config.chartTrendLine,
-          });
-          if (svgChart) {
-            writeChart({ dataDir, filename: 'star-history.svg', svg: svgChart });
-          }
+        const chartFiles = buildChartFiles({
+          config,
+          history,
+          fallbackHistory: updatedHistory,
+          forecastData,
+          topRepoNames,
+          repoTotals,
+          repoStargazers,
+          now: chartNow,
+        });
 
-          for (const repoName of topRepoNames) {
-            const repoTotal = repoTotals.find((repo) => repo.fullName === repoName);
-            const repoStarHistory = repoTotal
-              ? buildStarHistory({
-                  repoStargazers: repoStargazers.filter(
-                    (stargazerEntry) => stargazerEntry.repoFullName === repoName,
-                  ),
-                  repos: [repoTotal],
-                  maxPoints: config.chartMaxPoints,
-                  now: chartNow,
-                })
-              : { snapshots: [] };
-            const repoHistory =
-              repoStarHistory.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART
-                ? repoStarHistory
-                : updatedHistory;
-            const repoChart = generatePerRepoSvgChart({
-              history: repoHistory,
-              repoFullName: repoName,
-              locale: config.locale,
-              lineColor: config.chartLineColor,
-              lineWidth: config.chartLineWidth,
-              maxPoints: config.chartMaxPoints,
-              yAxisSide: config.chartYAxisSide,
-              smoothing: config.chartSmoothing,
-              curve: config.chartCurve,
-              showPoints: config.chartShowPoints,
-              animate: config.chartAnimation,
-              beginAtZero: config.chartBeginAtZero,
-              theme: config.chartTheme,
-              range: config.chartRange,
-            });
-
-            if (repoChart) {
-              const filename = `${repoName.replace('/', '-')}.svg`;
-              writeChart({ dataDir, filename, svg: repoChart });
-            }
-          }
-
-          if (topRepoNames.length > 0) {
-            const comparisonChart = generateComparisonSvgChart({
-              history,
-              repoNames: topRepoNames,
-              title: t.report.topRepositories,
-              locale: config.locale,
-              lineWidth: config.chartLineWidth,
-              maxPoints: config.chartMaxPoints,
-              yAxisSide: config.chartYAxisSide,
-              smoothing: config.chartSmoothing,
-              curve: config.chartCurve,
-              showPoints: config.chartShowPoints,
-              animate: config.chartAnimation,
-              beginAtZero: config.chartBeginAtZero,
-              theme: config.chartTheme,
-              range: config.chartRange,
-            });
-
-            if (comparisonChart) {
-              writeChart({ dataDir, filename: 'comparison.svg', svg: comparisonChart });
-            }
-          }
-
-          if (forecastData) {
-            const forecastChart = generateForecastSvgChart({
-              history,
-              forecastData,
-              locale: config.locale,
-              lineColor: config.chartLineColor,
-              lineWidth: config.chartLineWidth,
-              maxPoints: config.chartMaxPoints,
-              yAxisSide: config.chartYAxisSide,
-              smoothing: config.chartSmoothing,
-              curve: config.chartCurve,
-              showPoints: config.chartShowPoints,
-              animate: config.chartAnimation,
-              beginAtZero: config.chartBeginAtZero,
-              theme: config.chartTheme,
-              range: config.chartRange,
-            });
-
-            if (forecastChart) {
-              writeChart({ dataDir, filename: 'forecast.svg', svg: forecastChart });
-            }
-          }
+        for (const chartFile of chartFiles) {
+          writeChart({ dataDir, filename: chartFile.filename, svg: chartFile.svg });
         }
 
-        const commitMsg = `Update star data: ${summary.totalStars} total (${deltaIndicator(summary.totalDelta)})`;
-        commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg, token });
+        if (config.readOnly) {
+          core.info(`Read-only run: leaving ${config.dataBranch} untouched`);
+        } else {
+          const commitMsg = `Update star data: ${summary.totalStars} total (${deltaIndicator(summary.totalDelta)})`;
+          commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg, token });
+        }
 
         setOutputs({
           summary,
@@ -338,17 +241,21 @@ export async function trackStars(): Promise<void> {
 }
 
 function setEmptyOutputs(): void {
-  core.setOutput('total-stars', '0');
-  core.setOutput('stars-changed', 'false');
-  core.setOutput('new-stars', '0');
-  core.setOutput('lost-stars', '0');
-  core.setOutput('should-notify', 'false');
-  core.setOutput('new-stargazers', '0');
-  core.setOutput('report', 'No repositories matched the configured filters.');
-  const htmlReport = '<p>No repositories matched the configured filters.</p>';
-  core.setOutput('report-html', htmlReport);
-  core.setOutput('report-html-path', writeHtmlReport({ htmlReport }));
-  core.setOutput('report-csv', '');
+  setOutputs({
+    summary: {
+      totalStars: 0,
+      totalPrevious: 0,
+      totalDelta: 0,
+      newStars: 0,
+      lostStars: 0,
+      changed: false,
+    },
+    markdownReport: 'No repositories matched the configured filters.',
+    htmlReport: '<p>No repositories matched the configured filters.</p>',
+    csvReport: '',
+    shouldNotify: false,
+    newStargazers: 0,
+  });
 }
 
 interface SetOutputsParams {

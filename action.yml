@@ -62,14 +62,24 @@ inputs:
     default: ''
 
   data-branch:
-    description: 'Branch name for storing tracking data'
+    description: 'Branch name for storing tracking data. (default star-tracker-data) (overrides config file)'
     required: false
-    default: 'star-tracker-data'
+    default: ''
 
   max-history:
-    description: 'Maximum number of snapshots to keep in history'
+    description: 'Maximum number of snapshots to keep in history. (default 52) (overrides config file)'
     required: false
-    default: '52'
+    default: ''
+
+  read-only:
+    description: 'Run without writing to the data branch (true/false). The run still fetches repositories, builds the report, sets every output and sends the email - it just never commits or pushes. Use it for a second workflow (e.g. a weekly digest with compare-against) that shares a data branch with your tracking workflow, so it cannot add snapshots to that branch or race the run that writes it. (default false) (overrides config file)'
+    required: false
+    default: ''
+
+  compare-against:
+    description: 'Which stored snapshot to compare the current star counts against: "last-run" (the most recent snapshot), or "24h", "7d" or "30d" (the most recent snapshot at least that old). Use this to get a true daily/weekly/monthly digest even when the tracker runs more frequently. Falls back to the oldest stored snapshot when history is shorter than the window. Only affects the comparison baseline - every run still appends its own snapshot, and charts, forecast and velocity always use the full history. (default last-run) (overrides config file)'
+    required: false
+    default: ''
 
   smtp-host:
     description: 'SMTP server host. Providing this enables built-in email notifications'
@@ -107,44 +117,49 @@ inputs:
     default: 'false'
 
   include-charts:
-    description: 'Include star trend charts in reports (true/false)'
+    description: 'Include star trend charts in reports (true/false). (default true) (overrides config file)'
     required: false
-    default: 'true'
+    default: ''
 
   notification-threshold:
-    description: 'Star change threshold before sending notification: 0 (every run), a number (e.g. 5), or "auto" (adaptive)'
+    description: 'Star change threshold before sending a notification: 0 (every run with changes), a number (e.g. 500), or "auto" (adaptive to total stars). The change accumulates across runs against the star total captured when the last notification fired, and only resets when a notification actually fires - it is not a per-run figure. (default 0) (overrides config file)'
     required: false
-    default: '0'
+    default: ''
+
+  notification-mode:
+    description: 'How notification-threshold measures accumulated change: "net" counts the absolute change in total stars, so gains and losses cancel out and a large drop also reaches the threshold; "gains" only counts upward movement, so a drop never notifies. (default net) (overrides config file)'
+    required: false
+    default: ''
 
   locale:
-    description: 'Language for reports and emails: en, es, ca, it'
+    description: 'Language for reports and emails: en, es, ca, it. (default en) (overrides config file)'
     required: false
-    default: 'en'
+    default: ''
 
   top-repos:
-    description: 'Number of top repositories to feature in charts and forecasts (by star count)'
+    description: 'Number of top repositories to feature in charts and forecasts (by star count). (default 10) (overrides config file)'
     required: false
-    default: '10'
+    default: ''
 
   track-stargazers:
-    description: 'Track individual stargazers and show new ones in reports (true/false)'
+    description: 'Track individual stargazers and show new ones in reports (true/false). (default false) (overrides config file)'
     required: false
-    default: 'false'
+    default: ''
 
   smart-sampling:
-    description: 'Sample stargazer pages for high-star repos instead of fetching every page, to avoid API rate limits (true/false). Sampled repos lose exact new-stargazer lists.'
+    description: 'Sample stargazer pages for high-star repos instead of fetching every page, to avoid API rate limits (true/false). Sampled repos lose exact new-stargazer lists. (default false) (overrides config file)'
     required: false
-    default: 'false'
+    default: ''
 
   smart-sampling-threshold:
-    description: 'Star count above which a repo is sampled instead of fully fetched (only when smart-sampling is enabled)'
+    description: 'Star count above which a repo is sampled instead of fully fetched (only when smart-sampling is enabled). (default 1500) (overrides config file)'
     required: false
-    default: '1500'
+    default: ''
 
   smart-sampling-pages:
-    description: 'Maximum number of evenly-spaced stargazer pages (100 stargazers each) to fetch per sampled repo'
+    description: 'Maximum number of evenly-spaced stargazer pages (100 stargazers each) to fetch per sampled repo. (default 30) (overrides config file)'
     required: false
-    default: '30'
+    default: ''
 
   chart-line-color:
     description: 'Hex color for the primary chart line, fill and points (star-history, per-repo and forecast historical series); does not affect the comparison palette or forecast trend lines. Accepts 3/4/6/8-digit hex with or without a leading #. In YAML a bare # starts a comment, so either omit it (chart-line-color: 6b63ff) or quote it (chart-line-color: "#6b63ff"). (default #dfb317)'
@@ -159,47 +174,47 @@ inputs:
   chart-max-points:
     description: 'How many points to plot across the full reconstructed history, i.e. the curve granularity (capped at 365). Higher means a more detailed curve over the same span; this is resolution, not the time window (use chart-range for that). Set to 0 to reconstruct the full history at weekly resolution. Email charts are always limited to 30 points. (default 30)'
     required: false
-    default: '30'
+    default: ''
 
   chart-y-axis-side:
     description: 'Which side to render the Y-axis value labels on: left or right. (default left)'
     required: false
-    default: 'left'
+    default: ''
 
   chart-smoothing:
     description: 'Smooth chart lines with a curve (true) or draw straight segments between points to reveal small spikes (false). (default true)'
     required: false
-    default: 'true'
+    default: ''
 
   chart-curve:
     description: 'Curve used when chart-smoothing is true: "monotone" (smooth, never overshoots, best for star data), "catmull-rom" (natural spline, can overshoot on sharp steps), "cubic-bezier" (eased S-curves, flat at every point), or "rounded-step" (flat segments with rounded corners). Email charts render monotone and rounded-step as monotone, and catmull-rom and cubic-bezier as a smooth spline. (default monotone)'
     required: false
-    default: 'monotone'
+    default: ''
 
   chart-show-points:
     description: 'Draw a marker on each data point (true) or hide them for a cleaner line on dense charts (false). (default true)'
     required: false
-    default: 'true'
+    default: ''
 
   chart-animation:
     description: 'Animate the SVG charts with a draw-on line and fading points (true) or render them static (false). Static is better for email and other contexts that do not play CSS animations. (default true)'
     required: false
-    default: 'true'
+    default: ''
 
   chart-milestones:
     description: 'Draw milestone reference lines (10, 50, 100, 500, 1k, 5k, 10k stars) on the main star-history chart (true) or hide them (false). (default true)'
     required: false
-    default: 'true'
+    default: ''
 
   chart-begin-at-zero:
     description: 'Start the chart Y-axis at zero (true) for absolute scale, or zoom into the data range (false) to emphasize recent changes. Applies to all charts. (default false)'
     required: false
-    default: 'false'
+    default: ''
 
   chart-theme:
     description: 'Color theme for the charts and email report: auto, light or dark. auto follows the readers prefers-color-scheme in the SVG charts; email clients that ignore it fall back to light. Force light or dark to override. (default auto)'
     required: false
-    default: 'auto'
+    default: ''
 
   chart-custom-milestones:
     description: 'Comma-separated star counts to use as milestone reference lines instead of the built-in defaults (e.g. "250, 750, 2500"). Values are sorted and de-duplicated; non-positive or non-numeric entries are ignored, and an input with no valid numbers warns and falls back to the built-in milestones. Requires chart-milestones to be enabled. When empty, the built-in milestones are used. (default empty)'
@@ -209,17 +224,17 @@ inputs:
   chart-range:
     description: 'Time window of history to plot: 30d, 90d, 1y or all. Filters snapshots to the most recent window (relative to the latest data point) before applying chart-max-points. (default all)'
     required: false
-    default: 'all'
+    default: ''
 
   chart-trend-line:
     description: 'Overlay a dashed moving-average trend line on the main star-history chart to smooth out noise and show the underlying direction (true) or hide it (false). (default false)'
     required: false
-    default: 'false'
+    default: ''
 
   velocity-metrics:
     description: 'Add a growth-velocity section to the report (stars/day, percent growth, and projected days to the next star milestone), computed from the tracked history (true) or omit it (false). (default false)'
     required: false
-    default: 'false'
+    default: ''
 
 outputs:
   report:
@@ -235,16 +250,16 @@ outputs:
     description: 'Total star count across all tracked repositories'
 
   stars-changed:
-    description: 'Whether any star counts changed since last run (true/false)'
+    description: 'Whether any star counts changed against the compare-against baseline (true/false)'
 
   new-stars:
-    description: 'Number of new stars gained since last run'
+    description: 'Stars gained against the compare-against baseline (last run by default). Per-run figure: it does not accumulate across runs and has no memory of whether a notification was sent - use should-notify for that'
 
   lost-stars:
-    description: 'Number of stars lost since last run'
+    description: 'Stars lost against the compare-against baseline (last run by default). Per-run figure, like new-stars'
 
   should-notify:
-    description: 'Whether the notification threshold was reached (true/false)'
+    description: 'Whether the notification threshold was reached (true/false). Unlike new-stars, this accumulates across runs and only resets when a notification actually fires'
 
   report-csv:
     description: 'CSV report of star changes'

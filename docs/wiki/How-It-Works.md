@@ -17,6 +17,7 @@ flowchart TD
     filter["Apply filter criteria"]
     init["Initialize orphan branch"]
     read["Deserialize previous  state snapshot"]
+    baseline["Select comparison baseline (compare-against)"]
     compare["Compute delta metrics"]
     stargazers["Fetch stargazers (starred_at)"]
     history["Build real star history"]
@@ -33,7 +34,7 @@ flowchart TD
     send["Dispatch notification"]
 
     trigger --> config --> fetch --> filter
-    filter --> init --> read --> compare
+    filter --> init --> read --> baseline --> compare
     compare --> stargazers --> history --> forecast
     forecast --> md & json & csv & svg & html & charts
     md & json & csv & svg & html & charts --> commit --> setout --> email
@@ -45,6 +46,7 @@ flowchart TD
     style filter fill:#fff3e0,stroke:#e65100,stroke-width:2px
     style init fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style read fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    style baseline fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style compare fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style stargazers fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
     style history fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
@@ -116,7 +118,9 @@ data_branch: star-tracker-data
 max_history: 52
 include_charts: true
 locale: en
-notification_threshold: auto
+notification_threshold: 0
+notification_mode: net
+compare_against: last-run
 track_stargazers: false
 top_repos: 10
 smart_sampling: false
@@ -208,14 +212,38 @@ Runs in a `finally` block, removing the worktree with `--force` regardless of su
 
 ## Phase 4: State Comparison
 
+### Baseline Selection
+
+**File:** `src/domain/snapshot.ts` > `getBaselineSnapshot()`
+
+Before any diffing happens, the stored history is deserialized from `stars-data.json` and one snapshot is picked as the **comparison baseline**. The `compare-against` input (config key `compare_against`) decides which one:
+
+| Value | Baseline Snapshot |
+|---|---|
+| `last-run` (default) | The most recent stored snapshot |
+| `24h` | The most recent snapshot that is at least 24 hours old |
+| `7d` | The most recent snapshot that is at least 7 days old |
+| `30d` | The most recent snapshot that is at least 30 days old |
+
+The current star counts are then diffed against that snapshot, so the baseline defines the `new-stars`, `lost-stars` and `stars-changed` outputs, the total delta, and the "Compared to snapshot from ..." line in the report.
+
+**Edge cases:**
+
+- **History shorter than the window:** falls back to the oldest snapshot available. The reported period is then *shorter* than the one requested, and the report's "Compared to" date shows exactly how far back it really goes
+- **First run:** there is no history, therefore no baseline (see the `compareStars()` edge cases below)
+
+The time windows make a genuine daily, weekly or monthly digest possible even when the tracker runs more frequently than that.
+
+**The baseline choice only changes what the current run is compared against - it never changes what gets stored.** Every run still appends its own snapshot to the history, and the charts, forecast and velocity sections always work over the full history.
+
 ### Delta Computation
 
 **File:** `src/domain/comparison.ts` > `compareStars()`
 
-Pure function computing the diff between current repos and the previous snapshot:
+Pure function computing the diff between current repos and the selected baseline snapshot:
 
-1. Index previous state into a hash map
-2. Compute per-repo deltas (current - previous)
+1. Index the baseline state into a hash map
+2. Compute per-repo deltas (current - baseline)
 3. Detect new repos (`isNew`) and removed repos (`isRemoved`)
 4. Aggregate summary: `totalStars`, `totalDelta`, `newStars`, `lostStars`, `changed`
 
@@ -229,10 +257,10 @@ Pure function computing the diff between current repos and the previous snapshot
 
 **File:** `src/domain/snapshot.ts`
 
-- `getLastSnapshot(history)` - retrieves the most recent snapshot
+- `getLastSnapshot(history)` - retrieves the most recent snapshot (the `compare-against: last-run` baseline)
 - `addSnapshot({ history, snapshot, maxHistory })` - returns a new `History` with the snapshot appended and old entries pruned beyond `maxHistory`
 
-Both are pure functions returning new objects (no mutation).
+Both are pure functions returning new objects (no mutation). `addSnapshot()` runs on every execution regardless of `compare-against`, so the stored history is always the complete per-run series.
 
 ---
 
@@ -299,7 +327,7 @@ Pre-processes data for both Markdown and HTML reports: filters active/new/remove
 Produces GitHub Flavored Markdown with:
 
 1. Header (total stars, delta, date)
-2. Comparison note to previous snapshot
+2. Comparison note to the baseline snapshot ("Compared to snapshot from ...", dated per `compare-against`)
 3. Chart sections (SVG references: `./charts/star-history.svg`, etc.)
 4. Repository table (sorted, linked, with `NEW` badges)
 5. New / removed repository sections
@@ -396,25 +424,40 @@ Idempotent: no empty commits if data hasn't changed.
 | `report-html` | HTML report (for email) |
 | `report-csv` | CSV report (for data pipelines) |
 | `total-stars` | Total star count |
-| `stars-changed` | Whether any counts changed (`true`/`false`) |
-| `new-stars` | Stars gained since last run |
-| `lost-stars` | Stars lost since last run |
-| `should-notify` | Whether the notification threshold was reached |
+| `stars-changed` | Per-run: whether any counts changed against the baseline (`true`/`false`) |
+| `new-stars` | Per-run: stars gained since the comparison baseline |
+| `lost-stars` | Per-run: stars lost since the comparison baseline |
+| `should-notify` | Cumulative: whether the notification threshold was reached since the last notification fired |
 | `new-stargazers` | New stargazers detected (0 if tracking disabled) |
+
+**Per-run vs cumulative.** `new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the baseline selected in Phase 4. They are not cumulative across runs and carry no memory of whether an email was ever sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: it is driven by `notification-threshold` plus `notification-mode` against `starsAtLastNotification`, and its counter only resets when a notification actually fires.
+
+Because of that, "email me every 500 stars" is expressed as `notification-threshold: '500'` plus `notification-mode: 'gains'`, gated on `if: steps.tracker.outputs.should-notify == 'true'`. It is **not** `if: steps.tracker.outputs.new-stars >= 500`, which would require 500 stars inside a single run and would therefore almost never fire on a daily schedule.
 
 ### Notification Threshold
 
 **File:** `src/domain/notification.ts` > `shouldNotify()`
 
-Controls when notifications fire:
+Controls when notifications fire. A notification always requires that something actually changed:
 
 | Threshold Value | Behavior |
 |---|---|
-| `0` | Notify on every run with changes |
-| `N` (number) | Notify when accumulated delta since last notification >= N |
-| `auto` | Adaptive: 1 (< 50 stars), 5 (< 200), 10 (< 500), 20 (500+) |
+| `0` (default) | Notify on every run with changes |
+| `N` (number) | Notify when accumulated change since last notification >= N |
+| `auto` | Adaptive: 1 (<= 50 stars), 5 (<= 200), 10 (<= 500), 20 (> 500) |
 
-The `starsAtLastNotification` is persisted in `stars-data.json` and updated only when a notification is sent.
+The `starsAtLastNotification` is persisted in `stars-data.json` and updated only when a notification is sent. The accumulated change is therefore measured against that stored value, not against the previous run: the counter does **not** reset on runs that do not notify, it keeps accumulating until it trips.
+
+The `notification-mode` input (config key `notification_mode`) decides how that accumulated change is measured:
+
+| Mode | Behavior |
+|---|---|
+| `net` (default) | The absolute change in total stars since the last notification. Gains and losses across repos cancel out, and a large **drop** also reaches the threshold. Pre-existing behavior. |
+| `gains` | Only upward movement counts. The threshold is reached when the total has risen by at least N since the last notification; a drop never triggers a notification. |
+
+`notification-threshold: '0'` still means "notify on every run with changes", regardless of mode.
+
+On the first run after enabling a threshold there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so the notification fires once immediately and settles from there.
 
 ### Email
 
@@ -434,25 +477,26 @@ src/
 ├── application/
 │   └── tracker.ts                    # Orchestrator
 ├── config/
-│   ├── types.ts                      # Config, Visibility types
-│   ├── defaults.ts                   # DEFAULTS, LOCALES, VISIBILITY_CONFIG
-│   ├── parsers.ts                    # parseBool, parseNumber, parseList, parseNotificationThreshold
-│   └── loader.ts                     # loadConfig(), loadConfigFile()
+│   ├── types.ts                      # Config, Visibility, ChartCurve/Theme/Range types
+│   ├── defaults.ts                   # DEFAULTS, VISIBILITY_CONFIG
+│   ├── parsers.ts                    # parseBool, parseFileBool, parseNumber, parseList, toStringList
+│   └── loader.ts                     # loadConfig(), loadConfigFile(), resolveEnum()
 ├── domain/
-│   ├── types.ts                      # RepoInfo, Snapshot, History, Summary, ComparisonResults
+│   ├── types.ts                      # RepoInfo, Snapshot, History, Summary, CompareAgainst, NotificationMode
+│   ├── constants.ts                  # MS_PER_DAY, toEpochMs(), NOTIFICATION_THRESHOLDS
 │   ├── comparison.ts                 # compareStars(), createSnapshot()
-│   ├── snapshot.ts                   # getLastSnapshot(), addSnapshot()
+│   ├── snapshot.ts                   # getBaselineSnapshot(), getLastSnapshot(), addSnapshot(), repoStarSeries()
 │   ├── formatting.ts                 # formatCount(), deltaIndicator(), trendIcon(), formatDate()
 │   ├── notification.ts               # shouldNotify(), getAdaptiveThreshold()
 │   ├── forecast.ts                   # computeForecast(), linearRegression(), weightedMovingAverage()
 │   └── stargazers.ts                 # diffStargazers(), buildStargazerMap()
 ├── i18n/
-│   ├── index.ts                      # getTranslations(), interpolate(), isValidLocale()
+│   ├── index.ts                      # LOCALE_MAP, LOCALES, getTranslations(), interpolate()
 │   ├── types.ts                      # Translations interface
 │   └── {en,es,ca,it}.json            # Translation files
 ├── infrastructure/
 │   ├── git/
-│   │   ├── commands.ts               # execute() - execSync wrapper
+│   │   ├── commands.ts               # execute() - execFileSync('git', args), no shell
 │   │   └── worktree.ts               # initializeDataBranch(), cleanup()
 │   ├── github/
 │   │   ├── types.ts                  # Octokit, GitHubRepo types
@@ -464,15 +508,15 @@ src/
 │   └── persistence/
 │       └── storage.ts                # read/write History, Report, Badge, CSV, Chart, Stargazers; commitAndPush()
 └── presentation/
-    ├── constants.ts                  # COLORS, CHART, BADGE, SVG_CHART, THRESHOLDS
-    ├── shared.ts                     # prepareReportData()
+    ├── constants.ts                  # COLORS, CHART, BADGE, SVG_CHART, CHART_FILES, SECTION_ICON
+    ├── shared.ts                     # prepareReportData(), selectChartSnapshots(), resolvePalette()
     ├── markdown.ts                   # generateMarkdownReport()
     ├── html.ts                       # generateHtmlReport()
     ├── csv.ts                        # generateCsvReport()
     ├── chart.ts                      # generateChartUrl() (QuickChart for HTML emails)
     ├── svg-chart.ts                  # generateSvgChart() (animated SVGs for data branch)
-    ├── badge.ts                      # generateBadge()
-    └── index.ts                      # Re-exports
+    ├── charts.ts                     # buildChartFiles() - which charts a run produces
+    └── badge.ts                      # generateBadge()
 ```
 
 ---

@@ -158,7 +158,8 @@ Replace `star-tracker-data` with your `data-branch` value if customized.
 2. Verify SMTP credentials are correct
 3. For Gmail: ensure you're using an **app password** (not your account password) - requires 2FA enabled
 4. Check that `stars-changed` is `true` (no email sent if nothing changed, unless `send-on-no-changes: true`)
-5. Check the workflow run logs for email-related warnings
+5. If you set a `notification-threshold`, check that `should-notify` is `true` - the threshold accumulates against the star total at the last notification, so it may simply not have tripped yet
+6. Check the workflow run logs for email-related warnings
 
 ### "Invalid login" or SMTP Authentication Failed
 
@@ -184,6 +185,34 @@ Replace `star-tracker-data` with your `data-branch` value if customized.
 ```
 
 Or use `notification-threshold` with the built-in email to control frequency.
+
+### Email Received Almost Every Day
+
+A daily schedule with a condition like `if: steps.tracker.outputs.new-stars >= 10` emails you on almost every run, because `new-stars` is a **per-run** figure measured against the comparison baseline - it does not accumulate, and it does not know whether an email was already sent. Raising that number does not help either: it then requires that many stars within a single run, so it almost never fires.
+
+**Fix:** gate on `should-notify`, which accumulates across runs and only resets when a notification actually fires:
+
+```yaml
+- name: Track stars
+  id: tracker
+  uses: fbuireu/github-star-tracker@v1
+  with:
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+    notification-threshold: '500'
+    notification-mode: 'gains'
+
+- name: Send email
+  if: steps.tracker.outputs.should-notify == 'true'
+  uses: dawidd6/action-send-mail@62a2d05b79935ad4fb90ce9079928099579c14ac # v9
+```
+
+See **[Configuration > notification-threshold](Configuration#notification-threshold)** and **[notification-mode](Configuration#notification-mode)**.
+
+### Weekly Report Only Covers One Day
+
+A weekly `cron` on its own does not widen the reporting period. The report is diffed against the last stored snapshot, so if a more frequent workflow writes to the same data branch, the weekly run only covers the time since that last write.
+
+**Fix:** set [`compare-against`](Configuration#compare-against) to `7d` on the weekly workflow so it compares against the most recent snapshot at least seven days old.
 
 ### Charts Missing in Email
 

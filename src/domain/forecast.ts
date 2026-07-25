@@ -1,4 +1,5 @@
 import { FORECAST_WEEKS, MIN_SNAPSHOTS_FOR_FORECAST, MS_PER_DAY } from './constants';
+import { repoStarSeries } from './snapshot';
 import type { History } from './types';
 
 const DAYS_PER_WEEK = 7;
@@ -154,10 +155,7 @@ export function computeForecast({
   const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
   const aggregateForecasts = forecastFromSeries(toSeries(totalValues));
   const repos: RepoForecast[] = topRepoNames.map((repoFullName) => {
-    const values = history.snapshots.map((snapshot) => {
-      const repo = snapshot.repos.find((candidate) => candidate.fullName === repoFullName);
-      return repo?.stars ?? 0;
-    });
+    const values = repoStarSeries({ snapshots: history.snapshots, repoFullName });
 
     return { repoFullName, forecasts: forecastFromSeries(toSeries(values)) };
   });

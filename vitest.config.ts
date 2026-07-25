@@ -13,7 +13,6 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: [
         'src/index.ts',
-        'src/presentation/index.ts',
         'src/**/{types,defaults,constants}.ts',
         'src/**/*.test.ts',
         'src/shared/testing/**',

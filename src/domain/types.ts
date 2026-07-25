@@ -1,3 +1,19 @@
+export const CompareAgainst = {
+  LAST_RUN: 'last-run',
+  H24: '24h',
+  D7: '7d',
+  D30: '30d',
+} as const;
+
+export type CompareAgainst = (typeof CompareAgainst)[keyof typeof CompareAgainst];
+
+export const NotificationMode = {
+  NET: 'net',
+  GAINS: 'gains',
+} as const;
+
+export type NotificationMode = (typeof NotificationMode)[keyof typeof NotificationMode];
+
 export interface RepoInfo {
   owner: string;
   name: string;
