@@ -1,6 +1,7 @@
 import { ChartCurve, ChartRange, ChartTheme } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { formatDate } from '@domain/formatting';
+import { repoStarSeries } from '@domain/snapshot';
 import type { History } from '@domain/types';
 import { getTranslations, interpolate, type Locale } from '@i18n';
 import {
@@ -15,9 +16,9 @@ import {
 } from './constants';
 import {
   buildForecastChartSeries,
-  filterSnapshotsByRange,
   movingAverageSeries,
   resolvePalette,
+  selectChartSnapshots,
 } from './shared';
 import type { ColorPalette } from './types';
 
@@ -39,18 +40,26 @@ interface CurveProps {
   cubicInterpolationMode?: typeof ChartCurve.MONOTONE;
 }
 
+const CURVE_PROPS: Record<ChartCurve, CurveProps> = {
+  [ChartCurve.CATMULL_ROM]: { tension: CHART_TENSION.smooth },
+  [ChartCurve.CUBIC_BEZIER]: { tension: CHART_TENSION.smooth },
+  [ChartCurve.MONOTONE]: {
+    tension: CHART_TENSION.smooth,
+    cubicInterpolationMode: ChartCurve.MONOTONE,
+  },
+  [ChartCurve.ROUNDED_STEP]: {
+    tension: CHART_TENSION.smooth,
+    cubicInterpolationMode: ChartCurve.MONOTONE,
+  },
+};
+
 interface CurvePropsForParams {
   smoothing: boolean;
   curve: ChartCurve;
 }
 
 function curvePropsFor({ smoothing, curve }: CurvePropsForParams): CurveProps {
-  if (!smoothing) return { tension: CHART_TENSION.straight };
-  if (curve === ChartCurve.MONOTONE || curve === ChartCurve.ROUNDED_STEP) {
-    return { tension: CHART_TENSION.smooth, cubicInterpolationMode: ChartCurve.MONOTONE };
-  }
-
-  return { tension: CHART_TENSION.smooth };
+  return smoothing ? CURVE_PROPS[curve] : { tension: CHART_TENSION.straight };
 }
 
 interface PointRadiusForParams {
@@ -277,9 +286,7 @@ function prepareChartData({ history, locale, range }: PrepareChartDataParams): {
   labels: string[];
   data: number[];
 } {
-  const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
-    -CHART.maxDataPoints,
-  );
+  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range });
 
   return {
     labels: snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale })),
@@ -342,7 +349,7 @@ export function generateChartUrl({
   range = ChartRange.ALL,
   trendLine = false,
 }: GenerateChartUrlParams): string | null {
-  if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
+  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
@@ -412,21 +419,15 @@ export function generatePerRepoChartUrl({
   theme = ChartTheme.AUTO,
   range = ChartRange.ALL,
 }: GeneratePerRepoChartUrlParams): string | null {
-  if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
+  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
   const palette = resolvePalette(theme);
   const curveProps = curvePropsFor({ smoothing, curve });
-  const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
-    -CHART.maxDataPoints,
-  );
+  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range });
   const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
-  const data = snapshots.map((snapshot) => {
-    const repo = snapshot.repos.find((candidate) => candidate.fullName === repoFullName);
-
-    return repo?.stars ?? 0;
-  });
+  const data = repoStarSeries({ snapshots, repoFullName });
   const chartTitle = title ?? `${repoFullName} Star History`;
   const datasets: Dataset[] = [buildStarsDataset({ data, curveProps, showPoints, palette })];
 
@@ -467,11 +468,7 @@ export function generateComparisonChartUrl({
   theme = ChartTheme.AUTO,
   range = ChartRange.ALL,
 }: GenerateComparisonChartUrlParams): string | null {
-  if (
-    !history.snapshots ||
-    history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART ||
-    repoNames.length === 0
-  ) {
+  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
   }
 
@@ -479,18 +476,13 @@ export function generateComparisonChartUrl({
   const palette = resolvePalette(theme);
   const curveProps = curvePropsFor({ smoothing, curve });
   const chartTitle = title ?? t.report.topRepositories;
-  const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
-    -CHART.maxDataPoints,
-  );
+  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range });
   const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name) => name.split('/')[0]));
   const useShortLabels = owners.size === 1;
   const datasets: Dataset[] = capped.map((repoName, index) => {
-    const data = snapshots.map((snapshot) => {
-      const repo = snapshot.repos.find((candidate) => candidate.fullName === repoName);
-      return repo?.stars ?? 0;
-    });
+    const data = repoStarSeries({ snapshots, repoFullName: repoName });
     const color = CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length];
 
     return {
@@ -541,7 +533,7 @@ export function generateForecastChartUrl({
   theme = ChartTheme.AUTO,
   range = ChartRange.ALL,
 }: GenerateForecastChartUrlParams): string | null {
-  if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
+  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
@@ -549,9 +541,7 @@ export function generateForecastChartUrl({
   const palette = resolvePalette(theme);
   const curveProps = curvePropsFor({ smoothing, curve });
   const chartTitle = title ?? t.forecast.sectionTitle;
-  const snapshots = filterSnapshotsByRange({ snapshots: history.snapshots, range }).slice(
-    -CHART.maxDataPoints,
-  );
+  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range });
   const historicalLabels = snapshots.map((snapshot) =>
     formatDate({ timestamp: snapshot.timestamp, locale }),
   );

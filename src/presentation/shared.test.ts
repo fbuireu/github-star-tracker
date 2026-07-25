@@ -1,8 +1,8 @@
-import { ChartTheme } from '@config/types';
+import { ChartRange, ChartTheme } from '@config/types';
 import type { ComparisonResults } from '@domain/types';
 import { makeComparisonResults, makeRepoResult } from '@shared/testing';
 import { describe, expect, it, vi } from 'vitest';
-import { colorSchemeFor, prepareReportData } from './shared';
+import { colorSchemeFor, prepareReportData, selectChartSnapshots } from './shared';
 
 function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResults {
   return makeComparisonResults({
@@ -23,6 +23,52 @@ function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResu
     ...overrides,
   });
 }
+
+describe('selectChartSnapshots', () => {
+  const snapshots = [
+    { timestamp: '2026-01-01T00:00:00Z' },
+    { timestamp: '2026-02-01T00:00:00Z' },
+    { timestamp: '2026-03-01T00:00:00Z' },
+  ];
+
+  it('keeps every snapshot when the range is unbounded', () => {
+    expect(selectChartSnapshots({ snapshots, range: ChartRange.ALL })).toHaveLength(3);
+  });
+
+  it('drops snapshots outside the range window', () => {
+    const windowed = selectChartSnapshots({ snapshots, range: ChartRange.D30 });
+
+    expect(windowed).toEqual([{ timestamp: '2026-02-01T00:00:00Z' }, snapshots[2]]);
+  });
+
+  it('keeps the tail when maxPoints is smaller than the window', () => {
+    expect(selectChartSnapshots({ snapshots, maxPoints: 2 })).toEqual([snapshots[1], snapshots[2]]);
+  });
+
+  it('copies rather than aliases when maxPoints is 0', () => {
+    const result = selectChartSnapshots({ snapshots, maxPoints: 0 });
+
+    expect(result).toEqual(snapshots);
+    expect(result).not.toBe(snapshots);
+  });
+
+  it('skips a snapshot whose timestamp cannot be parsed', () => {
+    const withCorrupt = [{ timestamp: 'not-a-date' }, ...snapshots];
+
+    expect(selectChartSnapshots({ snapshots: withCorrupt, range: ChartRange.D30 })).toEqual([
+      snapshots[1],
+      snapshots[2],
+    ]);
+  });
+
+  it('leaves the series unfiltered when the newest timestamp is unparseable', () => {
+    const trailingCorrupt = [...snapshots, { timestamp: 'not-a-date' }];
+
+    expect(selectChartSnapshots({ snapshots: trailingCorrupt, range: ChartRange.D30 })).toEqual(
+      trailingCorrupt,
+    );
+  });
+});
 
 describe('colorSchemeFor', () => {
   it('allows both schemes for the auto theme', () => {

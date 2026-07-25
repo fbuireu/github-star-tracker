@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { getTranslations, interpolate, isValidLocale } from './index';
+import { getTranslations, interpolate, LOCALE_MAP, LOCALES } from './index';
+
+const INTL_LOCALE_CODE_PATTERN = /^[a-z]{2}-[A-Z]{2}$/;
 
 describe('interpolate', () => {
   it('replaces placeholders with params', () => {
@@ -60,17 +62,20 @@ describe('getTranslations', () => {
   });
 });
 
-describe('isValidLocale', () => {
-  it('returns true for valid locales', () => {
-    expect(isValidLocale('en')).toBe(true);
-    expect(isValidLocale('es')).toBe(true);
-    expect(isValidLocale('ca')).toBe(true);
-    expect(isValidLocale('it')).toBe(true);
+describe('LOCALES', () => {
+  it('lists every key of LOCALE_MAP', () => {
+    expect(LOCALES).toEqual(['en', 'es', 'ca', 'it']);
   });
 
-  it('returns false for invalid locales', () => {
-    expect(isValidLocale('fr')).toBe(false);
-    expect(isValidLocale('')).toBe(false);
-    expect(isValidLocale('EN')).toBe(false);
+  it('has a translation bundle for every listed locale', () => {
+    for (const locale of LOCALES) {
+      expect(getTranslations(locale).report.title).toBeTruthy();
+    }
+  });
+
+  it('maps every locale to an Intl code', () => {
+    for (const locale of LOCALES) {
+      expect(LOCALE_MAP[locale]).toMatch(INTL_LOCALE_CODE_PATTERN);
+    }
   });
 });

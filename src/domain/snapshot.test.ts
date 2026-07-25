@@ -1,16 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { addSnapshot, getLastSnapshot } from './snapshot';
-import type { History, Snapshot } from './types';
+import { addSnapshot, getBaselineSnapshot, getLastSnapshot } from './snapshot';
+import { CompareAgainst, type History, type Snapshot } from './types';
+
+const NOW = new Date('2026-03-31T00:00:00Z');
+
+function makeDailyHistory(days: number): History {
+  return {
+    snapshots: Array.from({ length: days }, (_, index) => ({
+      timestamp: new Date(NOW.getTime() - (days - 1 - index) * 86_400_000).toISOString(),
+      totalStars: 1000 + index,
+      repos: [],
+    })),
+  };
+}
 
 describe('getLastSnapshot', () => {
   it('returns null for empty history', () => {
     const history: History = { snapshots: [] };
-
-    expect(getLastSnapshot(history)).toBeNull();
-  });
-
-  it('returns null when snapshots is undefined', () => {
-    const history = {} as History;
 
     expect(getLastSnapshot(history)).toBeNull();
   });
@@ -29,6 +35,152 @@ describe('getLastSnapshot', () => {
     const history: History = { snapshots: [snapshot1, snapshot2] };
 
     expect(getLastSnapshot(history)).toEqual(snapshot2);
+  });
+});
+
+describe('getBaselineSnapshot', () => {
+  it('returns null for empty history', () => {
+    expect(
+      getBaselineSnapshot({
+        history: { snapshots: [] },
+        compareAgainst: CompareAgainst.D7,
+        now: NOW,
+      }),
+    ).toBeNull();
+  });
+
+  it('returns the most recent snapshot for last-run', () => {
+    const baseline = getBaselineSnapshot({
+      history: makeDailyHistory(30),
+      compareAgainst: CompareAgainst.LAST_RUN,
+      now: NOW,
+    });
+
+    expect(baseline?.totalStars).toBe(1029);
+  });
+
+  it('returns the most recent snapshot at least 24h old', () => {
+    const baseline = getBaselineSnapshot({
+      history: makeDailyHistory(30),
+      compareAgainst: CompareAgainst.H24,
+      now: NOW,
+    });
+
+    expect(baseline?.totalStars).toBe(1028);
+  });
+
+  it('returns the most recent snapshot at least 7 days old', () => {
+    const baseline = getBaselineSnapshot({
+      history: makeDailyHistory(30),
+      compareAgainst: CompareAgainst.D7,
+      now: NOW,
+    });
+
+    expect(baseline?.totalStars).toBe(1022);
+  });
+
+  it('falls back to the oldest snapshot when history is shorter than the window', () => {
+    const baseline = getBaselineSnapshot({
+      history: makeDailyHistory(30),
+      compareAgainst: CompareAgainst.D30,
+      now: NOW,
+    });
+
+    expect(baseline?.totalStars).toBe(1000);
+  });
+
+  it('falls back to the only snapshot available', () => {
+    const baseline = getBaselineSnapshot({
+      history: makeDailyHistory(1),
+      compareAgainst: CompareAgainst.D7,
+      now: NOW,
+    });
+
+    expect(baseline?.totalStars).toBe(1000);
+  });
+
+  it('picks the newest snapshot still inside the tolerated window', () => {
+    const history: History = {
+      snapshots: [
+        { timestamp: '2026-03-24T05:00:00Z', totalStars: 100, repos: [] },
+        { timestamp: '2026-03-24T07:00:00Z', totalStars: 200, repos: [] },
+      ],
+    };
+    const baseline = getBaselineSnapshot({
+      history,
+      compareAgainst: CompareAgainst.D7,
+      now: NOW,
+    });
+
+    expect(baseline?.totalStars).toBe(100);
+  });
+
+  it('tolerates cron jitter that pushes a snapshot just under the window', () => {
+    const history: History = {
+      snapshots: [
+        { timestamp: '2026-03-17T00:00:00Z', totalStars: 100, repos: [] },
+        { timestamp: '2026-03-24T00:05:00Z', totalStars: 200, repos: [] },
+      ],
+    };
+    const baseline = getBaselineSnapshot({
+      history,
+      compareAgainst: CompareAgainst.D7,
+      now: NOW,
+    });
+
+    expect(baseline?.totalStars).toBe(200);
+  });
+
+  it('never falls back to a snapshot whose timestamp is unparseable', () => {
+    const history: History = {
+      snapshots: [
+        { timestamp: 'not-a-date', totalStars: 100, repos: [] },
+        { timestamp: '2026-03-30T00:00:00Z', totalStars: 200, repos: [] },
+      ],
+    };
+    const baseline = getBaselineSnapshot({
+      history,
+      compareAgainst: CompareAgainst.D7,
+      now: NOW,
+    });
+
+    expect(baseline?.totalStars).toBe(200);
+  });
+
+  it('returns null when every snapshot has an unparseable timestamp', () => {
+    const history: History = {
+      snapshots: [{ timestamp: 'not-a-date', totalStars: 100, repos: [] }],
+    };
+
+    expect(
+      getBaselineSnapshot({ history, compareAgainst: CompareAgainst.D7, now: NOW }),
+    ).toBeNull();
+  });
+
+  it('ignores snapshots with unparseable timestamps', () => {
+    const history: History = {
+      snapshots: [
+        { timestamp: '2026-03-01T00:00:00Z', totalStars: 100, repos: [] },
+        { timestamp: 'not-a-date', totalStars: 200, repos: [] },
+      ],
+    };
+    const baseline = getBaselineSnapshot({
+      history,
+      compareAgainst: CompareAgainst.D7,
+      now: NOW,
+    });
+
+    expect(baseline?.totalStars).toBe(100);
+  });
+
+  it('does not consider the window for last-run', () => {
+    const baseline = getBaselineSnapshot({
+      history: makeDailyHistory(2),
+      compareAgainst: CompareAgainst.LAST_RUN,
+      now: NOW,
+    });
+
+    expect(baseline?.totalStars).toBe(1001);
   });
 });
 

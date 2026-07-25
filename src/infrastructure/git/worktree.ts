@@ -5,7 +5,7 @@ import { execute } from './commands';
 
 function ensureGitRepository(): void {
   try {
-    execute({ cmd: 'git rev-parse --is-inside-work-tree' });
+    execute({ args: ['rev-parse', '--is-inside-work-tree'] });
   } catch {
     throw new Error(
       'This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.',
@@ -13,18 +13,26 @@ function ensureGitRepository(): void {
   }
 }
 
-export function initializeDataBranch(dataBranch: string): string {
+interface InitializeDataBranchParams {
+  dataBranch: string;
+  readOnly?: boolean;
+}
+
+export function initializeDataBranch({
+  dataBranch,
+  readOnly = false,
+}: InitializeDataBranchParams): string {
   const dataDir = `.${dataBranch}`;
 
   ensureGitRepository();
 
-  execute({ cmd: 'git config user.name "github-actions[bot]"' });
-  execute({ cmd: 'git config user.email "github-actions[bot]@users.noreply.github.com"' });
+  execute({ args: ['config', 'user.name', 'github-actions[bot]'] });
+  execute({ args: ['config', 'user.email', 'github-actions[bot]@users.noreply.github.com'] });
 
   let branchExists = false;
 
   try {
-    execute({ cmd: `git ls-remote --exit-code --heads origin ${dataBranch}` });
+    execute({ args: ['ls-remote', '--exit-code', '--heads', 'origin', dataBranch] });
     branchExists = true;
   } catch {
     core.info(`Branch "${dataBranch}" does not exist on remote, will create it`);
@@ -32,38 +40,49 @@ export function initializeDataBranch(dataBranch: string): string {
 
   if (fs.existsSync(dataDir)) {
     try {
-      execute({ cmd: `git worktree remove ${dataDir} --force` });
+      execute({ args: ['worktree', 'remove', dataDir, '--force'] });
     } catch {
       core.debug(`Could not remove existing worktree at ${dataDir}, proceeding anyway`);
     }
   }
 
+  if (!branchExists && readOnly) {
+    throw new Error(
+      `Branch "${dataBranch}" does not exist on the remote and this is a read-only run, so it cannot be created. Point data-branch at the branch your tracking workflow maintains, or drop read-only so this run can create it.`,
+    );
+  }
+
   if (!branchExists) {
     core.info(`Creating new orphan branch: ${dataBranch}`);
 
-    execute({ cmd: `git worktree add --detach ${dataDir}` });
+    const cwd = path.resolve(dataDir);
+
+    execute({ args: ['worktree', 'add', '--detach', dataDir] });
+    execute({ args: ['checkout', '--orphan', dataBranch], options: { cwd } });
+
+    try {
+      execute({ args: ['rm', '-rf', '.'], options: { cwd } });
+    } catch {
+      core.debug('Nothing to remove on the new orphan branch, proceeding anyway');
+    }
+
     execute({
-      cmd: `git checkout --orphan ${dataBranch}`,
-      options: { cwd: path.resolve(dataDir) },
-    });
-    execute({ cmd: 'git rm -rf . || true', options: { cwd: path.resolve(dataDir) } });
-    execute({
-      cmd: 'git commit --allow-empty -m "Initialize star tracker data"',
-      options: { cwd: path.resolve(dataDir) },
+      args: ['commit', '--allow-empty', '-m', 'Initialize star tracker data'],
+      options: { cwd },
     });
 
     return dataDir;
   }
 
-  execute({ cmd: `git fetch origin ${dataBranch}` });
-  execute({ cmd: `git worktree add ${dataDir} origin/${dataBranch}` });
+  execute({ args: ['fetch', 'origin', dataBranch] });
+  execute({ args: ['worktree', 'add', dataDir, `origin/${dataBranch}`] });
 
   return dataDir;
 }
 
 export function cleanup(dataDir: string): void {
   try {
-    execute({ cmd: `git worktree remove ${dataDir} --force` });
+    execute({ args: ['worktree', 'remove', dataDir, '--force'] });
   } catch {
     core.debug(`Worktree cleanup for "${dataDir}" failed, it may have already been removed`);
   }

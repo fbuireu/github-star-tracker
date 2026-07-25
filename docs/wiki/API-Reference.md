@@ -21,6 +21,8 @@ Complete reference for all inputs, outputs, and data formats.
 | `include-charts` | `boolean` | `true` | Generate star trend charts |
 | `data-branch` | `string` | `star-tracker-data` | Branch name for storing tracking data |
 | `max-history` | `number` | `52` | Maximum snapshots to keep in history |
+| `compare-against` | `string` | `last-run` | Which stored snapshot is used as the comparison baseline: `last-run`, `24h`, `7d`, `30d`. Windowed values pick the most recent snapshot at least that old; if history is shorter, the oldest available snapshot is used, so the period reported is shorter than requested and the report's "Compared to" date shows how far back it really goes. Affects `new-stars`, `lost-stars`, `stars-changed` and the total delta only - every run still appends its own snapshot, and charts, forecast and velocity are unaffected |
+| `read-only` | `boolean` | `false` | Run without writing to the data branch: still fetches, reports, sets outputs and emails, but never commits or pushes. Pair with `compare-against` for a digest workflow that shares a data branch with your tracking workflow. Incompatible with a non-zero `notification-threshold`, whose counter lives on that branch |
 | `top-repos` | `number` | `10` | Number of top repos in charts and forecasts |
 | `track-stargazers` | `boolean` | `false` | Track individual stargazers per repo |
 | `chart-line-color` | `string` | `#dfb317` | Hex color for the primary chart line/fill/points (not the comparison palette); accepts 3/4/6/8-digit hex with or without a leading `#` |
@@ -68,9 +70,12 @@ Complete reference for all inputs, outputs, and data formats.
 | `smtp-username` | `string` | - | SMTP auth username |
 | `smtp-password` | `string` (secret) | - | SMTP auth password |
 | `email-to` | `string` | - | Recipient email address |
-| `email-from` | `string` | `GitHub Star Tracker` | Sender name or address |
+| `email-from` | `string` | localized | Sender name or address. When unset it falls back to a sender name localized from the `locale` input |
 | `send-on-no-changes` | `boolean` | `false` | Send email even with no star changes |
-| `notification-threshold` | `number` or `"auto"` | `0` | When to notify: `0` (every run), N (threshold), `auto` (adaptive) |
+| `notification-threshold` | `number` or `"auto"` | `0` | Accumulated star change required to notify: `0` = every run that has changes, N = notify once the total has moved by at least N since the last notification, `auto` = adaptive threshold derived from the total star count (see [Configuration](Configuration#notification-threshold)) |
+| `notification-mode` | `string` | `net` | How `notification-threshold` measures that change: `net` (absolute change in total stars - gains and losses cancel out, and a large drop also reaches the threshold) or `gains` (only upward movement counts; a drop never notifies) |
+
+Both modes measure against `starsAtLastNotification` in `stars-data.json`, which is only updated when a notification actually fires. The counter therefore accumulates across runs that do not notify instead of resetting. On a data branch that has never sent a notification there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so the first run fires immediately and then settles. That is not the case if you were already running with the default `notification-threshold: 0`: every changed run has been notifying, so `starsAtLastNotification` already holds your current total and raising the threshold fires nothing immediately - the next email waits until the total actually moves by at least the threshold.
 
 ---
 
@@ -85,11 +90,13 @@ All outputs are strings (GitHub Actions requirement). Available in subsequent wo
 | `report-html-path` | `string` | Filesystem path to the HTML report. Use this instead of `report-html` when piping into a custom mailer step - large reports can exceed the shell environment variable size limit |
 | `report-csv` | `string` | CSV report (for data pipelines) |
 | `total-stars` | `string` | Total star count across all tracked repos |
-| `stars-changed` | `string` | Whether any counts changed: `true` or `false` |
-| `new-stars` | `string` | Number of stars gained since last run |
-| `lost-stars` | `string` | Number of stars lost since last run |
-| `should-notify` | `string` | Whether the notification threshold was reached: `true` or `false` |
-| `new-stargazers` | `string` | Number of new stargazers detected (0 if tracking disabled) |
+| `stars-changed` | `string` | Per-run. Whether any counts changed against the `compare-against` baseline: `true` or `false` |
+| `new-stars` | `string` | Per-run. Stars gained against the `compare-against` baseline |
+| `lost-stars` | `string` | Per-run. Stars lost against the `compare-against` baseline |
+| `should-notify` | `string` | Cumulative. Whether `notification-threshold` was reached under `notification-mode` since the last notification fired, and something changed: `true` or `false` |
+| `new-stargazers` | `string` | Number of new stargazers detected by diffing against the stored `stargazers.json`, which every writing run rewrites - unlike its siblings it is not affected by `compare-against` (0 if tracking disabled) |
+
+`new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the comparison baseline. They are not cumulative and carry no memory of whether an email was sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: its counter only resets when a notification actually fires.
 
 ### Usage Example
 
@@ -122,10 +129,28 @@ All outputs are strings (GitHub Actions requirement). Available in subsequent wo
   if: steps.tracker.outputs.should-notify == 'true'
   run: echo "Threshold reached!"
 
-- name: Celebrate milestones
+- name: Celebrate a single-run jump
   if: steps.tracker.outputs.new-stars >= 10
-  run: echo "Gained ${{ steps.tracker.outputs.new-stars }} stars!"
+  run: echo "Gained ${{ steps.tracker.outputs.new-stars }} stars in this run!"
 ```
+
+To act every N stars overall (e.g. every 500), use the cumulative output with `notification-threshold: '500'` and `notification-mode: 'gains'`:
+
+```yaml
+- name: Track stars
+  id: tracker
+  uses: fbuireu/github-star-tracker@v1
+  with:
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+    notification-threshold: '500'
+    notification-mode: 'gains'
+
+- name: Every 500 stars
+  if: steps.tracker.outputs.should-notify == 'true'
+  run: echo "Another 500 stars!"
+```
+
+Do not use `if: steps.tracker.outputs.new-stars >= 500` for this - that requires 500 stars within a single run, which on a daily schedule would almost never fire.
 
 ---
 
@@ -136,7 +161,7 @@ All outputs are strings (GitHub Actions requirement). Available in subsequent wo
 ```typescript
 interface History {
   snapshots: Snapshot[];
-  starsAtLastNotification?: number;
+  starsAtLastNotification?: number;  // total stars captured when the last notification fired; absent until one does
 }
 
 interface Snapshot {
@@ -269,9 +294,12 @@ exclude_orgs: []              # string[]
 min_stars: 0                  # number
 data_branch: star-tracker-data # string
 max_history: 52               # number
+compare_against: last-run     # last-run | 24h | 7d | 30d
+read_only: false              # boolean
 include_charts: true          # boolean
 locale: en                    # en | es | ca | it
-notification_threshold: auto  # number | "auto"
+notification_threshold: 0     # number | "auto"
+notification_mode: net        # net | gains
 track_stargazers: false       # boolean
 top_repos: 10                 # number
 smart_sampling: false         # boolean

@@ -1,7 +1,13 @@
 import * as path from 'node:path';
 import { build } from 'esbuild';
+import tsconfig from './tsconfig.json';
 
-const src = path.resolve('src');
+const alias = Object.fromEntries(
+  Object.entries(tsconfig.compilerOptions.paths).map(([from, [to]]) => [
+    from.replace('/*', ''),
+    path.resolve(to.replace('/*', '')),
+  ]),
+);
 
 build({
   entryPoints: ['src/index.ts'],
@@ -11,12 +17,5 @@ build({
   format: 'cjs',
   outfile: 'dist/index.js',
   sourcemap: true,
-  alias: {
-    '@application': path.join(src, 'application'),
-    '@config': path.join(src, 'config'),
-    '@domain': path.join(src, 'domain'),
-    '@i18n': path.join(src, 'i18n', 'index.ts'),
-    '@infrastructure': path.join(src, 'infrastructure'),
-    '@presentation': path.join(src, 'presentation'),
-  },
+  alias,
 });

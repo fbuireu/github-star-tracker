@@ -1,6 +1,6 @@
-import type { LOCALE_MAP } from './defaults';
+import type { CompareAgainst, NotificationMode } from '@domain/types';
+import type { Locale } from '@i18n';
 
-export type Locale = keyof typeof LOCALE_MAP;
 export const Visibility = {
   PUBLIC: 'public',
   PRIVATE: 'private',
@@ -54,10 +54,13 @@ export interface Config {
   minStars: number;
   dataBranch: string;
   maxHistory: number;
+  compareAgainst: CompareAgainst;
+  readOnly: boolean;
   sendOnNoChanges: boolean;
   includeCharts: boolean;
   locale: Locale;
   notificationThreshold: number | 'auto';
+  notificationMode: NotificationMode;
   trackStargazers: boolean;
   topRepos: number;
   smartSampling: boolean;

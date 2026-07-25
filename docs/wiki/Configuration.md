@@ -37,9 +37,12 @@ exclude_orgs: []
 min_stars: 5
 data_branch: star-tracker-data
 max_history: 52
+compare_against: last-run   # last-run | 24h | 7d | 30d
+read_only: false            # skip writing to the data branch
 include_charts: true
 locale: en
-notification_threshold: auto
+notification_threshold: 0   # 0 = notify on every run with changes; N or auto to batch
+notification_mode: net      # net | gains
 track_stargazers: false
 top_repos: 10
 smart_sampling: false
@@ -249,6 +252,60 @@ Older snapshots are pruned when the limit is exceeded. With daily runs, `52` kee
 with:
   max-history: '104' # ~2 years of weekly data
 ```
+
+---
+
+### `compare-against`
+
+Which stored snapshot the current star counts are compared against. Config file key: `compare_against`.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | `last-run` |
+| **Options** | `last-run`, `24h`, `7d`, `30d` |
+
+| Value | Behavior |
+|---|---|
+| `last-run` | The most recent stored snapshot |
+| `24h`, `7d`, `30d` | The most recent snapshot that is at least that old |
+
+This is the baseline for the `new-stars`, `lost-stars` and `stars-changed` outputs, for the total delta, and for the "Compared to snapshot from ..." line in the report. The time windows make a genuine daily/weekly/monthly digest possible even when the tracker itself runs more frequently.
+
+If the stored history is shorter than the requested window, the oldest snapshot available is used instead. The reported period is then shorter than the one you asked for, and the report's "Compared to" date shows exactly how far back it really goes. On the very first run there is no history and therefore no baseline, exactly as with `last-run`.
+
+This input **only** changes the comparison baseline. Every run still appends its own snapshot to the history, and the charts, forecast and velocity sections are unaffected.
+
+```yaml
+with:
+  compare-against: '7d'
+```
+
+---
+
+### `read-only`
+
+Run without writing to the data branch. Config file key: `read_only`.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `false` |
+
+A read-only run does everything except touch the data branch: it fetches the repositories, picks the comparison baseline, builds the report, sets every output and sends the email. It simply never commits or pushes.
+
+Use it for a second workflow that shares a data branch with your tracking workflow - typically a weekly digest paired with [`compare-against`](#compare-against). Without it, the digest run would append its own snapshot to the branch and could race the run that actually maintains it.
+
+```yaml
+- uses: fbuireu/github-star-tracker@v1
+  with:
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+    compare-against: '7d'
+    read-only: true
+```
+
+> [!WARNING]
+> Do not combine `read-only` with a `notification-threshold` other than `0`. The threshold accumulates against `starsAtLastNotification`, which lives in `stars-data.json` on the data branch - and a read-only run never updates it. Depending on what else writes to that branch, the notification would either fire on every run forever or never fire at all. The action logs a warning if you set both. Gate a read-only digest on the `stars-changed` output instead.
 
 ---
 
@@ -790,14 +847,52 @@ Star change threshold before sending a notification.
 | 0 – 50 | 1 star |
 | 51 – 200 | 5 stars |
 | 201 – 500 | 10 stars |
-| 500+ | 20 stars |
+| 501+ | 20 stars |
+
+The threshold is **cumulative, not per-run**. It is measured against `starsAtLastNotification`, persisted in `stars-data.json` on the data branch and updated **only when a notification actually fires**. Runs that do not notify leave that baseline untouched, so the accumulated change keeps growing across runs until it trips the threshold. How that accumulated change is measured is controlled by [`notification-mode`](#notification-mode).
+
+On a data branch that has never sent a notification there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so the first run fires immediately and then settles into the cumulative rhythm. That is not the case if you were already running with the default `notification-threshold: '0'`: every changed run has been notifying, so `starsAtLastNotification` already holds your current total and raising the threshold fires nothing immediately - the next email waits until the total actually moves by at least the threshold.
+
+This is what drives the `should-notify` output, which additionally requires that something actually changed. The `new-stars` and `lost-stars` outputs are **per-run** figures measured against the comparison baseline (see [`compare-against`](#compare-against)); they are not cumulative and carry no memory of whether an email was sent. To express "email me every N stars", gate on `should-notify` - not on `new-stars >= N`, which would require N stars within a single run and would almost never fire on a daily schedule.
 
 ```yaml
 with:
   notification-threshold: 'auto'
 ```
 
+> [!IMPORTANT]
+> **The threshold and the report period are independent.** `notification-threshold` decides *when* an email goes out; [`compare-against`](#compare-against) decides *what period the report body covers*. If a threshold of `500` trips after ten daily runs, the email still contains a report diffed against whatever `compare-against` selects - by default the previous run, so a "+500 milestone" subject over a one-day table. Set `compare-against` to the window you expect the threshold to accumulate over if you want them to agree, or drive your own subject line from the `total-stars` output with an external mailer.
+>
+> The threshold also does not work on a [`read-only`](#read-only) run, because the counter it advances lives on the data branch that such a run never writes.
+
 See **[Email Notifications](Email-Notifications)** for complete setup.
+
+---
+
+### `notification-mode`
+
+How [`notification-threshold`](#notification-threshold) measures the accumulated change since the last notification. Config file key: `notification_mode`.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | `net` |
+| **Options** | `net`, `gains` |
+
+| Value | Behavior |
+|---|---|
+| `net` | The absolute value of the change in total stars since the last notification. Gains and losses across repos cancel out, and a large **drop** also reaches the threshold |
+| `gains` | Only upward movement counts. The threshold is reached when the total has risen by at least N since the last notification; a drop never triggers a notification |
+
+Both modes measure against `starsAtLastNotification`, which is only updated when a notification actually fires, so the counter accumulates across runs instead of resetting on every run. `notification-threshold: '0'` still means "notify on every run that has changes", regardless of mode.
+
+```yaml
+with:
+  notification-threshold: '500'
+  notification-mode: 'gains'
+```
+
+With that pair, guard the email step with `if: steps.tracker.outputs.should-notify == 'true'` to be notified once per 500 stars gained.
 
 ---
 

@@ -1,4 +1,5 @@
 import * as core from '@actions/core';
+import type { Config } from '@config/types';
 import { MAX_REACHABLE_STARGAZERS } from '@domain/constants';
 import type { RepoStargazers, Stargazer } from '@domain/stargazers';
 import type { RepoInfo } from '@domain/types';
@@ -11,23 +12,19 @@ const MAX_REACHABLE_PAGE = Math.floor(MAX_REACHABLE_STARGAZERS / STARGAZERS_PER_
 interface FetchAllStargazersParams {
   octokit: Octokit;
   repos: RepoInfo[];
-  smartSampling: boolean;
-  smartSamplingThreshold: number;
-  smartSamplingPages: number;
+  config: Config;
 }
 
 export async function fetchAllStargazers({
   octokit,
   repos,
-  smartSampling,
-  smartSamplingThreshold,
-  smartSamplingPages,
+  config,
 }: FetchAllStargazersParams): Promise<RepoStargazers[]> {
   const results: RepoStargazers[] = [];
   const sampled: string[] = [];
 
   for (const repo of repos) {
-    const shouldSample = smartSampling && repo.stars > smartSamplingThreshold;
+    const shouldSample = config.smartSampling && repo.stars > config.smartSamplingThreshold;
 
     try {
       const { stargazers, coveredStars } = shouldSample
@@ -36,7 +33,7 @@ export async function fetchAllStargazers({
             owner: repo.owner,
             name: repo.name,
             totalStars: repo.stars,
-            maxPages: smartSamplingPages,
+            maxPages: config.smartSamplingPages,
           })
         : await fetchRepoStargazers({ octokit, owner: repo.owner, name: repo.name });
 

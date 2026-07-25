@@ -164,6 +164,8 @@ When the workflow runs on a GHES runner, the API URL is auto-detected from the `
 
 ### External Email with Threshold
 
+`notification-threshold` defaults to `0` (notify on every run that has changes). Any other value accumulates across runs until it trips - here, five stars of net movement since the last email:
+
 ```yaml
 - name: Track stars
   id: tracker
@@ -188,7 +190,95 @@ When the workflow runs on a GHES runner, the API URL is auto-detected from the `
     html_body_file: ${{ steps.tracker.outputs.report-html-path }}
 ```
 
+### Notify Every N Stars
+
+Email once per 500 stars gained, not once per day. `notification-threshold` accumulates across runs until it trips, and `notification-mode: 'gains'` counts only upward movement, so a drop never triggers the email.
+
+> [!IMPORTANT]
+> The threshold decides **when** the email fires; it does not widen the report. With the default `compare-against: 'last-run'` the attached report still covers a single run, so a "+500 milestone" subject would sit above a one-day table. This example therefore drives its subject from `total-stars` and pairs the threshold with `compare-against: '30d'` so the body covers a period comparable to what the threshold accumulates. If you only care about the subject line, drop `compare-against` and ignore the body.
+
+```yaml
+- name: Track stars
+  id: tracker
+  uses: fbuireu/github-star-tracker@v1
+  with:
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+    notification-threshold: '500'
+    notification-mode: 'gains'
+    compare-against: '30d'
+
+- name: Send email every 500 stars
+  if: steps.tracker.outputs.should-notify == 'true'
+  uses: dawidd6/action-send-mail@62a2d05b79935ad4fb90ce9079928099579c14ac # v9
+  with:
+    server_address: smtp.gmail.com
+    server_port: 587
+    username: ${{ secrets.EMAIL_FROM }}
+    password: ${{ secrets.EMAIL_PASSWORD }}
+    subject: '⭐ Milestone reached: ${{ steps.tracker.outputs.total-stars }} stars'
+    to: ${{ secrets.EMAIL_TO }}
+    from: GitHub Star Tracker
+    html_body_file: ${{ steps.tracker.outputs.report-html-path }}
+```
+
+Use `should-notify`, not `new-stars`. They answer different questions:
+
+- **`new-stars` / `lost-stars`** - per-run figures measured against the comparison baseline. They are not cumulative and carry no memory of whether an email was sent. On a daily cron with `compare-against: 'last-run'` they mean "gained in the last 24 hours".
+- **`should-notify`** - the cumulative one. Driven by `notification-threshold` plus `notification-mode` against `starsAtLastNotification`, which is only updated when a notification actually fires, so the counter keeps accumulating across runs until it trips. It also requires that something actually changed.
+
+`if: steps.tracker.outputs.new-stars >= 500` would demand 500 stars inside a single run and would almost never fire on a daily schedule.
+
+`notification-mode` picks how that accumulated change is measured: `net` (default) uses the absolute change in total stars since the last notification, so gains and losses across repos cancel out and a large drop also reaches the threshold; `gains` only counts upward movement.
+
+Whether the threshold fires an email straight away depends on the data branch. If no notification has ever fired there, `starsAtLastNotification` is absent and treated as `0`, so the first run fires once immediately and then settles into the configured cadence. If you have been running with the default `notification-threshold: '0'`, every changed run has already been notifying, so `starsAtLastNotification` is stored at your current total - raising the threshold does **not** fire immediately, and the next email only arrives once the full threshold has accumulated from that total.
+
+### Weekly Digest
+
+Track daily so the history stays dense for charts and velocity, but compare against a snapshot at least seven days old and email only on Mondays:
+
+```yaml
+name: Weekly Star Digest
+on:
+  schedule:
+    - cron: '0 9 * * 1'      # Monday - track and send the digest
+    - cron: '0 9 * * 0,2-6'  # other days - track only
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - name: Track stars
+        id: tracker
+        uses: fbuireu/github-star-tracker@v1
+        with:
+          github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+          compare-against: '7d'
+          include-charts: true
+
+      - name: Send weekly digest
+        if: github.event.schedule == '0 9 * * 1' && steps.tracker.outputs.stars-changed == 'true'
+        uses: dawidd6/action-send-mail@62a2d05b79935ad4fb90ce9079928099579c14ac # v9
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_FROM }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: '⭐ This week: ${{ steps.tracker.outputs.total-stars }} stars (+${{ steps.tracker.outputs.new-stars }})'
+          to: ${{ secrets.EMAIL_TO }}
+          from: GitHub Star Tracker
+          html_body_file: ${{ steps.tracker.outputs.report-html-path }}
+```
+
+`compare-against` only changes the comparison baseline - the one used for `new-stars`, `lost-stars`, `stars-changed`, the total delta and the "Compared to snapshot from ..." line. Every run still appends its own snapshot, and charts, forecast and velocity are unaffected. If the stored history is shorter than the requested window, the oldest available snapshot is used instead, so the period covered is shorter than requested and the report's date shows how far back it really goes.
+
 ### Adaptive Notification Threshold
+
+`auto` is opt-in, not the default - set it explicitly to let the action derive the threshold instead of picking a fixed number:
 
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
@@ -392,6 +482,8 @@ chart_curve: monotone
 track_stargazers: true
 top_repos: 5
 notification_threshold: auto
+notification_mode: gains
+compare_against: 7d
 ```
 
 ### Complete Setup with All Features
@@ -413,6 +505,8 @@ notification_threshold: auto
     top-repos: '5'
     max-history: '52'
     notification-threshold: 'auto'
+    notification-mode: 'gains'
+    compare-against: 'last-run'
     smtp-host: smtp.gmail.com
     smtp-port: '587'
     smtp-username: ${{ secrets.EMAIL_FROM }}

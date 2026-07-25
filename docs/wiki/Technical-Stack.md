@@ -37,7 +37,7 @@ import { getTranslations } from '@i18n';
 
 Same-layer imports stay relative (`./commands`, `../git/commands`).
 
-Aliases are configured in `tsconfig.json` paths, resolved by `vite-tsconfig-paths` in Vitest, and mapped in `esbuild.config.ts` for the build.
+Aliases are declared once in `tsconfig.json` paths. Vitest resolves them natively via `resolve.tsconfigPaths`, and `esbuild.config.ts` derives its alias map from those same `tsconfig.json` entries instead of hand-maintaining a copy, so build and type-checking cannot drift apart.
 
 ---
 
@@ -47,13 +47,15 @@ Aliases are configured in `tsconfig.json` paths, resolved by `vite-tsconfig-path
 
 **TypeScript 7** on **Node.js 24+** - native GitHub Actions runtime support, first-class type safety.
 
+`tsconfig.json` targets ES2022 with `moduleResolution: bundler`, plus `isolatedModules` and `verbatimModuleSyntax` so every file transpiles standalone and import elision stays explicit. Strict type-checking is on by default in the pinned TypeScript version, so the config no longer declares it.
+
 ### Tooling
 
 | Tool | Purpose | Why |
 |---|---|---|
 | **Biome** | Linting + formatting | Single tool replaces ESLint + Prettier; significantly faster |
 | **esbuild** | Bundling | 10-100x faster than alternatives; tree shaking; single-file output |
-| **Vitest** | Testing | Modern, ESM-native, better DX than Jest; `vite-tsconfig-paths` integration |
+| **Vitest** | Testing | Modern, ESM-native, better DX than Jest; native `tsconfig` path resolution, no extra plugin |
 | **pnpm** | Package manager | Strict dependency resolution prevents phantom dependencies |
 | **Husky** | Git hooks | Pre-commit formatting and commit linting |
 | **semantic-release** | Versioning & releases | Automated from conventional commits |
@@ -67,6 +69,7 @@ Aliases are configured in `tsconfig.json` paths, resolved by `vite-tsconfig-path
 |---|---|
 | `@actions/core` | GitHub Actions I/O (inputs, outputs, logging) |
 | `@actions/github` | Octokit client for GitHub API |
+| `@octokit/plugin-retry` | Automatic retries for transient GitHub API failures |
 | `js-yaml` | YAML config file parsing |
 | `nodemailer` | SMTP email delivery |
 
@@ -116,9 +119,9 @@ Configurable sliding window (default 52 snapshots). Pruning is a pure domain fun
 
 ### Test Coverage
 
-- **490+ tests** across all layers
-- **95%+ statement coverage** (enforced via threshold in `vitest.config.ts`)
-- Coverage excludes: `src/index.ts`, type/constant/default files, test files
+- **710+ tests** across all layers
+- **98%+ statement coverage**, with a floor of 85% enforced via the threshold in `vitest.config.ts`
+- Coverage excludes: `src/index.ts`, type/constant/default files, test files, and the shared test helpers in `src/shared/testing/`
 - Philosophy: "Mock at the boundary, not in the middle" - real code paths are exercised; only external dependencies (GitHub API, filesystem, Git) are mocked
 
 ### Security
@@ -136,11 +139,11 @@ Configurable sliding window (default 52 snapshots). Pruning is a pure domain fun
 
 ```
 pnpm run validate
-  └── pnpm run check
-  │     ├── biome check .        (lint)
-  │     ├── tsc --noEmit         (typecheck)
-  │     └── vitest --coverage    (test + coverage)
-  └── pnpm run build             (esbuild bundle)
+  ├── pnpm run check
+  │     ├── pnpm run lint            (biome check --no-errors-on-unmatched .)
+  │     ├── pnpm run typecheck       (tsc --noEmit)
+  │     └── pnpm run test:coverage   (vitest run --coverage)
+  └── pnpm run build                 (tsx esbuild.config.ts)
 ```
 
 ### Release

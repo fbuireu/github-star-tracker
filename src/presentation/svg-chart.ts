@@ -1,21 +1,25 @@
 import { ChartAxisSide, ChartCurve, type ChartRange, ChartTheme } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { buildAxisLabels, formatCount, formatDate } from '@domain/formatting';
+import { repoStarSeries } from '@domain/snapshot';
 import type { History } from '@domain/types';
 import { getTranslations, interpolate, type Locale } from '@i18n';
 import {
   CHART,
   CHART_COMPARISON_COLORS,
   CHART_TENSION,
-  COLORS,
   DARK_PALETTE,
-  LIGHT_PALETTE,
   MILESTONE_THRESHOLDS,
   MIN_SNAPSHOTS_FOR_CHART,
   SVG_CHART,
   TREND_WINDOW,
 } from './constants';
-import { buildForecastChartSeries, filterSnapshotsByRange, movingAverageSeries } from './shared';
+import {
+  buildForecastChartSeries,
+  movingAverageSeries,
+  resolvePalette,
+  selectChartSnapshots,
+} from './shared';
 
 const XML_ESCAPE_MAP: Record<string, string> = {
   '&': '&amp;',
@@ -23,6 +27,8 @@ const XML_ESCAPE_MAP: Record<string, string> = {
   '>': '&gt;',
   '"': '&quot;',
 };
+
+const XML_ESCAPABLE_CHAR_PATTERN = /[&<>"]/g;
 
 const BEZIER_CONTROL_DIVISOR = 3;
 const MONOTONE_TANGENT_LIMIT = 3;
@@ -203,6 +209,13 @@ function roundedStepPath(points: Point[], radius: number): string {
   return path;
 }
 
+const CURVE_PATHS: Record<ChartCurve, (points: Point[], clamp: ClampParams) => string> = {
+  [ChartCurve.CATMULL_ROM]: (points, clamp) => catmullRomPath(points, clamp),
+  [ChartCurve.MONOTONE]: (points) => monotonePath(points),
+  [ChartCurve.CUBIC_BEZIER]: (points) => cubicBezierPath(points),
+  [ChartCurve.ROUNDED_STEP]: (points) => roundedStepPath(points, ROUNDED_STEP_RADIUS),
+};
+
 interface GenerateCurvePathParams {
   points: Point[];
   smoothing: boolean;
@@ -222,16 +235,7 @@ function generateCurvePath({
   if (points.length === 1) return `M${points[0].x},${points[0].y}`;
   if (!smoothing) return straightPath(points);
 
-  switch (curve) {
-    case ChartCurve.MONOTONE:
-      return monotonePath(points);
-    case ChartCurve.CUBIC_BEZIER:
-      return cubicBezierPath(points);
-    case ChartCurve.ROUNDED_STEP:
-      return roundedStepPath(points, ROUNDED_STEP_RADIUS);
-    default:
-      return catmullRomPath(points, { clampMinY, clampMaxY });
-  }
+  return CURVE_PATHS[curve](points, { clampMinY, clampMaxY });
 }
 
 function calculatePathLength(points: Point[]): number {
@@ -278,18 +282,7 @@ function niceAxisSteps({ min, max, count }: NiceAxisStepsParams): number[] {
   return steps;
 }
 function escapeXml(text: string): string {
-  return text.replaceAll(/[&<>"]/g, (char) => XML_ESCAPE_MAP[char]);
-}
-
-interface SliceForChartParams<T> {
-  items: T[];
-  maxPoints?: number;
-}
-
-function sliceForChart<T>({ items, maxPoints }: SliceForChartParams<T>): T[] {
-  const limit = maxPoints ?? CHART.maxDataPoints;
-
-  return limit > 0 ? items.slice(-limit) : [...items];
+  return text.replaceAll(XML_ESCAPABLE_CHAR_PATTERN, (char) => XML_ESCAPE_MAP[char]);
 }
 
 interface SvgDataset {
@@ -300,13 +293,7 @@ interface SvgDataset {
   fill?: boolean;
 }
 
-interface RenderSvgParams {
-  labels: string[];
-  datasets: SvgDataset[];
-  title: string;
-  showLegend: boolean;
-  milestones?: boolean;
-  milestoneThresholds?: readonly number[];
+interface SvgChartStyle {
   lineWidth?: number;
   yAxisSide?: ChartAxisSide;
   smoothing?: boolean;
@@ -315,6 +302,15 @@ interface RenderSvgParams {
   animate?: boolean;
   beginAtZero?: boolean;
   theme?: ChartTheme;
+}
+
+interface RenderSvgParams extends SvgChartStyle {
+  labels: string[];
+  datasets: SvgDataset[];
+  title: string;
+  showLegend: boolean;
+  milestones?: boolean;
+  milestoneThresholds?: readonly number[];
 }
 
 function renderSvg({
@@ -540,7 +536,7 @@ function renderSvg({
     `
     : '';
 
-  const basePalette = theme === ChartTheme.DARK ? DARK_PALETTE : LIGHT_PALETTE;
+  const basePalette = resolvePalette(theme);
   const darkModeStyles =
     theme === ChartTheme.AUTO
       ? `
@@ -583,21 +579,13 @@ function renderSvg({
 </svg>`;
 }
 
-interface GenerateSvgChartParams {
+interface GenerateSvgChartParams extends SvgChartStyle {
   history: History;
   title?: string;
   locale: Locale;
   lineColor?: string;
-  lineWidth?: number;
   maxPoints?: number;
-  yAxisSide?: ChartAxisSide;
-  smoothing?: boolean;
-  curve?: ChartCurve;
-  showPoints?: boolean;
-  animate?: boolean;
   milestones?: boolean;
-  beginAtZero?: boolean;
-  theme?: ChartTheme;
   customMilestones?: readonly number[];
   range?: ChartRange;
   trendLine?: boolean;
@@ -608,47 +596,39 @@ export function generateSvgChart({
   title,
   locale,
   lineColor,
-  lineWidth,
   maxPoints,
-  yAxisSide,
-  smoothing,
-  curve,
-  showPoints,
-  animate,
   milestones = true,
-  beginAtZero,
-  theme,
   customMilestones,
   range,
   trendLine = false,
+  ...style
 }: GenerateSvgChartParams): string | null {
-  if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
+  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
   const t = getTranslations(locale);
-  const snapshots = sliceForChart({
-    items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
-    maxPoints,
-  });
+  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
   const labels = buildAxisLabels({
     timestamps: snapshots.map((snapshot) => snapshot.timestamp),
     locale,
   });
+  const palette = resolvePalette(style.theme);
   const data = snapshots.map((snapshot) => snapshot.totalStars);
-  const datasets: SvgDataset[] = [{ label: 'Stars', data, color: lineColor ?? COLORS.accent }];
+  const datasets: SvgDataset[] = [{ label: 'Stars', data, color: lineColor ?? palette.accent }];
 
   if (trendLine) {
     datasets.push({
       label: t.report.trendLine,
       data: movingAverageSeries({ values: data, window: TREND_WINDOW }),
-      color: COLORS.neutral,
+      color: palette.neutral,
       dashed: true,
       fill: false,
     });
   }
 
   return renderSvg({
+    ...style,
     labels,
     datasets,
     title: title ?? 'Star History',
@@ -656,32 +636,16 @@ export function generateSvgChart({
     milestones,
     milestoneThresholds:
       customMilestones && customMilestones.length > 0 ? customMilestones : MILESTONE_THRESHOLDS,
-    lineWidth,
-    yAxisSide,
-    smoothing,
-    curve,
-    showPoints,
-    animate,
-    beginAtZero,
-    theme,
   });
 }
 
-interface GeneratePerRepoSvgChartParams {
+interface GeneratePerRepoSvgChartParams extends SvgChartStyle {
   history: History;
   repoFullName: string;
   title?: string;
   locale: Locale;
   lineColor?: string;
-  lineWidth?: number;
   maxPoints?: number;
-  yAxisSide?: ChartAxisSide;
-  smoothing?: boolean;
-  curve?: ChartCurve;
-  showPoints?: boolean;
-  animate?: boolean;
-  beginAtZero?: boolean;
-  theme?: ChartTheme;
   range?: ChartRange;
 }
 
@@ -691,65 +655,37 @@ export function generatePerRepoSvgChart({
   title,
   locale,
   lineColor,
-  lineWidth,
   maxPoints,
-  yAxisSide,
-  smoothing,
-  curve,
-  showPoints,
-  animate,
-  beginAtZero,
-  theme,
   range,
+  ...style
 }: GeneratePerRepoSvgChartParams): string | null {
-  if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
+  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
-  const snapshots = sliceForChart({
-    items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
-    maxPoints,
-  });
+  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
   const labels = buildAxisLabels({
     timestamps: snapshots.map((snapshot) => snapshot.timestamp),
     locale,
   });
-  const data = snapshots.map((snapshot) => {
-    const repo = snapshot.repos.find((candidate) => candidate.fullName === repoFullName);
-    return repo?.stars ?? 0;
-  });
+  const data = repoStarSeries({ snapshots, repoFullName });
 
   return renderSvg({
+    ...style,
     labels,
-    datasets: [{ label: 'Stars', data, color: lineColor ?? COLORS.accent }],
+    datasets: [{ label: 'Stars', data, color: lineColor ?? resolvePalette(style.theme).accent }],
     title: title ?? `${repoFullName} Star History`,
     showLegend: false,
     milestones: false,
-    lineWidth,
-    yAxisSide,
-    smoothing,
-    curve,
-    showPoints,
-    animate,
-    beginAtZero,
-    theme,
   });
 }
 
-interface GenerateComparisonSvgChartParams {
+interface GenerateComparisonSvgChartParams extends SvgChartStyle {
   history: History;
   repoNames: string[];
   title?: string;
   locale: Locale;
-  lineWidth?: number;
   maxPoints?: number;
-  yAxisSide?: ChartAxisSide;
-  smoothing?: boolean;
-  curve?: ChartCurve;
-  showPoints?: boolean;
-  animate?: boolean;
-  beginAtZero?: boolean;
-  theme?: ChartTheme;
   range?: ChartRange;
 }
 
@@ -758,30 +694,16 @@ export function generateComparisonSvgChart({
   repoNames,
   title,
   locale,
-  lineWidth,
   maxPoints,
-  yAxisSide,
-  smoothing,
-  curve,
-  showPoints,
-  animate,
-  beginAtZero,
-  theme,
   range,
+  ...style
 }: GenerateComparisonSvgChartParams): string | null {
-  if (
-    !history.snapshots ||
-    history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART ||
-    repoNames.length === 0
-  ) {
+  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
   }
 
   const t = getTranslations(locale);
-  const snapshots = sliceForChart({
-    items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
-    maxPoints,
-  });
+  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
   const labels = buildAxisLabels({
     timestamps: snapshots.map((snapshot) => snapshot.timestamp),
     locale,
@@ -790,10 +712,7 @@ export function generateComparisonSvgChart({
   const owners = new Set(capped.map((name) => name.split('/')[0]));
   const useShortLabels = owners.size === 1;
   const datasets: SvgDataset[] = capped.map((repoName, index) => {
-    const data = snapshots.map((snapshot) => {
-      const repo = snapshot.repos.find((candidate) => candidate.fullName === repoName);
-      return repo?.stars ?? 0;
-    });
+    const data = repoStarSeries({ snapshots, repoFullName: repoName });
 
     const color = CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length];
 
@@ -806,37 +725,22 @@ export function generateComparisonSvgChart({
   });
 
   return renderSvg({
+    ...style,
     labels,
     datasets,
     title: title ?? t.report.topRepositories,
     showLegend: true,
     milestones: false,
-    lineWidth,
-    yAxisSide,
-    smoothing,
-    curve,
-    showPoints,
-    animate,
-    beginAtZero,
-    theme,
   });
 }
 
-interface GenerateForecastSvgChartParams {
+interface GenerateForecastSvgChartParams extends SvgChartStyle {
   history: History;
   forecastData: ForecastData;
   locale: Locale;
   title?: string;
   lineColor?: string;
-  lineWidth?: number;
   maxPoints?: number;
-  yAxisSide?: ChartAxisSide;
-  smoothing?: boolean;
-  curve?: ChartCurve;
-  showPoints?: boolean;
-  animate?: boolean;
-  beginAtZero?: boolean;
-  theme?: ChartTheme;
   range?: ChartRange;
 }
 
@@ -846,26 +750,16 @@ export function generateForecastSvgChart({
   locale,
   title,
   lineColor,
-  lineWidth,
   maxPoints,
-  yAxisSide,
-  smoothing,
-  curve,
-  showPoints,
-  animate,
-  beginAtZero,
-  theme,
   range,
+  ...style
 }: GenerateForecastSvgChartParams): string | null {
-  if (!history.snapshots || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
+  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return null;
   }
 
   const t = getTranslations(locale);
-  const snapshots = sliceForChart({
-    items: filterSnapshotsByRange({ snapshots: history.snapshots, range }),
-    maxPoints,
-  });
+  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
   const historicalLabels = snapshots.map((snapshot) =>
     formatDate({ timestamp: snapshot.timestamp, locale }),
   );
@@ -875,42 +769,36 @@ export function generateForecastSvgChart({
   );
   const allLabels = [...historicalLabels, ...forecastLabels];
   const series = buildForecastChartSeries({ historicalData, forecastData });
+  const palette = resolvePalette(style.theme);
   const datasets: SvgDataset[] = [
     {
       label: t.report.starHistory,
       data: series.historical,
-      color: lineColor ?? COLORS.accent,
+      color: lineColor ?? palette.accent,
       fill: true,
     },
     {
       label: t.forecast.linearRegression,
       data: series.linearRegression,
-      color: COLORS.positive,
+      color: palette.positive,
       dashed: true,
       fill: false,
     },
     {
       label: t.forecast.weightedMovingAverage,
       data: series.weightedMovingAverage,
-      color: COLORS.negative,
+      color: palette.negative,
       dashed: true,
       fill: false,
     },
   ];
 
   return renderSvg({
+    ...style,
     labels: allLabels,
     datasets,
     title: title ?? t.forecast.sectionTitle,
     showLegend: true,
     milestones: false,
-    lineWidth,
-    yAxisSide,
-    smoothing,
-    curve,
-    showPoints,
-    animate,
-    beginAtZero,
-    theme,
   });
 }

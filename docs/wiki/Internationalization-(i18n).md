@@ -104,7 +104,7 @@ The `interpolate()` function replaces placeholders with provided values at rende
 
 If an invalid locale is provided:
 
-1. The action logs a warning: `Invalid locale "xx", falling back to "en"`
+1. The action logs a warning: `Invalid locale "xx". Must be "en", "es", "ca", or "it". Falling back to "en"`
 2. English translations are used for the entire run
 3. The workflow does **not** fail
 
@@ -118,8 +118,8 @@ To contribute a new language:
 2. Translate all values (keys stay in English)
 3. Keep `{placeholder}` tokens untranslated
 4. Add the import in `src/i18n/index.ts`
-5. Add the code to `LOCALES` in `src/config/defaults.ts`
-6. Add the code to `Locale` type in `src/config/types.ts`
+5. Add the locale and its Intl code to `LOCALE_MAP` in `src/i18n/index.ts` (`LOCALES` and the `Locale` type derive from it)
+6. Register the imported bundle in the `TRANSLATIONS` map in `src/i18n/index.ts`
 7. Run `pnpm run validate` to check everything passes
 
 See **[Contributing](https://github.com/fbuireu/github-star-tracker/blob/main/CONTRIBUTING.md)** for development setup.

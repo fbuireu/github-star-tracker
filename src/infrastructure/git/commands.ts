@@ -1,13 +1,13 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 interface ExecuteParams {
-  cmd: string;
+  args: string[];
   options?: Record<string, unknown>;
 }
 
-export function execute({ cmd, options = {} }: ExecuteParams): string {
+export function execute({ args, options = {} }: ExecuteParams): string {
   try {
-    return execSync(cmd, {
+    return execFileSync('git', args, {
       encoding: 'utf8',
       stdio: ['pipe', 'pipe', 'pipe'],
       ...options,
@@ -17,6 +17,6 @@ export function execute({ cmd, options = {} }: ExecuteParams): string {
     const stderr = err.stderr?.trim() || '';
     const detail = stderr || err.message || 'Unknown error';
 
-    throw new Error(`Git command failed: "${cmd}"\n${detail}`);
+    throw new Error(`Git command failed: "git ${args.join(' ')}"\n${detail}`);
   }
 }

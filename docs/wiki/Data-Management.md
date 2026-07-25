@@ -69,7 +69,7 @@ Each run creates a snapshot appended to the `snapshots` array in `stars-data.jso
 - `timestamp` - ISO 8601 datetime of when the run occurred
 - `totalStars` - sum of all tracked repos' stars
 - `repos[]` - per-repo data (fullName, name, owner, stars)
-- `starsAtLastNotification` - used by the notification threshold system; updated only when a notification is sent
+- `starsAtLastNotification` - the star total captured when the last notification fired; used by the notification threshold system and updated only when a notification is actually sent, so the accumulated change keeps growing across runs that do not notify. How it is compared depends on [`notification-mode`](Configuration#notification-mode): `net` uses the absolute change, `gains` only counts upward movement
 
 ---
 

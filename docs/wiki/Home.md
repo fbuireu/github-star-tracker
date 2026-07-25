@@ -66,7 +66,7 @@ GitHub Star Tracker is a GitHub Action that monitors star counts across all your
 - Multi-language: English, Spanish, Catalan, Italian
 - Flexible config: action inputs, YAML file, or both
 - Action outputs for downstream workflow steps
-- 100% TypeScript with strict mode, 95%+ test coverage, zero runtime deps (bundled)
+- 100% TypeScript with strict mode, 98%+ test coverage, zero runtime deps (bundled)
 
 ---
 

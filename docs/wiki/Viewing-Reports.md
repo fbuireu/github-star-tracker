@@ -80,11 +80,14 @@ Access data in subsequent workflow steps for custom integrations.
 | `report-html` | HTML report (for email) |
 | `report-html-path` | File path to the HTML report (for large reports / custom mailers) |
 | `total-stars` | Total star count |
-| `stars-changed` | Whether stars changed (`true`/`false`) |
-| `new-stars` | Stars gained since last run |
-| `lost-stars` | Stars lost since last run |
-| `should-notify` | Whether notification threshold reached |
-| `new-stargazers` | New stargazers detected |
+| `stars-changed` | Whether stars changed against the comparison baseline (`true`/`false`) |
+| `new-stars` | Stars gained against the comparison baseline (per run, not cumulative) |
+| `lost-stars` | Stars lost against the comparison baseline (per run, not cumulative) |
+| `should-notify` | Whether the notification threshold was reached (cumulative across runs) |
+| `new-stargazers` | New stargazers detected against the stored stargazer list, which every writing run rewrites - not affected by `compare-against` |
+
+> [!NOTE]
+> The comparison baseline is the previous run by default, and [`compare-against`](Configuration#compare-against) can move it to 24h, 7d or 30d ago. `new-stars` and `lost-stars` describe a single run and carry no memory of whether a notification was sent - gate recurring emails on `should-notify`, which accumulates until it fires. See **[Email Notifications](Email-Notifications)**.
 
 ### Example
 

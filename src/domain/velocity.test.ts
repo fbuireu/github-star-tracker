@@ -11,6 +11,17 @@ const makeHistory = (points: { day: number; totalStars: number }[]): History => 
 });
 
 describe('computeVelocity', () => {
+  it('returns null instead of NaN when a timestamp is unparseable', () => {
+    const history: History = {
+      snapshots: [
+        { timestamp: 'not-a-date', totalStars: 100, repos: [] },
+        { timestamp: '2026-01-08T00:00:00Z', totalStars: 150, repos: [] },
+      ],
+    };
+
+    expect(computeVelocity({ history })).toBeNull();
+  });
+
   it('returns null with fewer than two snapshots', () => {
     expect(computeVelocity({ history: { snapshots: [] } })).toBeNull();
     expect(computeVelocity({ history: makeHistory([{ day: 0, totalStars: 100 }]) })).toBeNull();

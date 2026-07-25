@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as core from '@actions/core';
@@ -60,6 +60,34 @@ describe('readHistory', () => {
 
     expect(result).toEqual(history);
     expect(fs.readFileSync).toHaveBeenCalledWith(path.join('/data', 'stars-data.json'), 'utf8');
+  });
+
+  it('guarantees an array when the stored file has no snapshots key', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('{}');
+
+    expect(readHistory('/data')).toEqual({ snapshots: [] });
+  });
+
+  it('guarantees an array when snapshots is not an array', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('{"snapshots":"garbage"}');
+
+    expect(readHistory('/data')).toEqual({ snapshots: [] });
+  });
+
+  it('preserves starsAtLastNotification while coercing snapshots', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('{"starsAtLastNotification":520}');
+
+    expect(readHistory('/data')).toEqual({ snapshots: [], starsAtLastNotification: 520 });
+  });
+
+  it('fails with an actionable message when the stored file is not valid JSON', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('{ not json');
+
+    expect(() => readHistory('/data')).toThrow(/stars-data\.json on the data branch/);
   });
 });
 
@@ -238,7 +266,7 @@ describe('commitAndPush', () => {
   });
 
   it('commits and pushes changes when there are staged changes', () => {
-    vi.mocked(execSync)
+    vi.mocked(execFileSync)
       .mockReturnValueOnce('')
       .mockImplementationOnce(() => {
         throw new Error('Changes detected');
@@ -256,18 +284,52 @@ describe('commitAndPush', () => {
     const basicCredential = Buffer.from('x-access-token:fake-token').toString('base64');
 
     expect(result).toBe(true);
-    expect(execSync).toHaveBeenCalledWith('git add -A', expect.any(Object));
-    expect(execSync).toHaveBeenCalledWith('git commit -m "Update data"', expect.any(Object));
+    expect(execFileSync).toHaveBeenCalledWith('git', ['add', '-A'], expect.any(Object));
+    expect(execFileSync).toHaveBeenCalledWith(
+      'git',
+      ['commit', '-m', 'Update data'],
+      expect.any(Object),
+    );
     expect(core.setSecret).toHaveBeenCalledWith(basicCredential);
-    expect(execSync).toHaveBeenCalledWith(
-      `git -c http.extraheader="AUTHORIZATION: basic ${basicCredential}" push origin HEAD:star-tracker-data`,
+    expect(execFileSync).toHaveBeenCalledWith(
+      'git',
+      [
+        '-c',
+        `http.extraheader=AUTHORIZATION: basic ${basicCredential}`,
+        'push',
+        'origin',
+        'HEAD:star-tracker-data',
+      ],
       expect.any(Object),
     );
     expect(core.info).toHaveBeenCalledWith('Data committed and pushed to star-tracker-data');
   });
 
+  it('passes a commit message with quotes through without breaking the command', () => {
+    vi.mocked(execFileSync)
+      .mockReturnValueOnce('')
+      .mockImplementationOnce(() => {
+        throw new Error('Changes detected');
+      })
+      .mockReturnValueOnce('')
+      .mockReturnValueOnce('');
+
+    commitAndPush({
+      dataDir: '/data',
+      dataBranch: 'star-tracker-data',
+      message: 'Update star data: 12 "total" (+3)',
+      token: 'fake-token',
+    });
+
+    expect(execFileSync).toHaveBeenCalledWith(
+      'git',
+      ['commit', '-m', 'Update star data: 12 "total" (+3)'],
+      expect.any(Object),
+    );
+  });
+
   it('returns false when there are no changes to commit', () => {
-    vi.mocked(execSync).mockReturnValueOnce('').mockReturnValueOnce('');
+    vi.mocked(execFileSync).mockReturnValueOnce('').mockReturnValueOnce('');
 
     const result = commitAndPush({
       dataDir: '/data',
@@ -278,8 +340,9 @@ describe('commitAndPush', () => {
 
     expect(result).toBe(false);
     expect(core.info).toHaveBeenCalledWith('No data changes to commit');
-    expect(execSync).not.toHaveBeenCalledWith(
-      expect.stringContaining('git commit'),
+    expect(execFileSync).not.toHaveBeenCalledWith(
+      'git',
+      expect.arrayContaining(['commit']),
       expect.any(Object),
     );
   });
