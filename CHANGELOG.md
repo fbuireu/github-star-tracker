@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/fbuireu/github-star-tracker/compare/v1.23.1...v1.24.0) (2026-07-25)
+
+
+### Features
+
+* add new apis + refactor + tests ([#161](https://github.com/fbuireu/github-star-tracker/issues/161)) ([fa68596](https://github.com/fbuireu/github-star-tracker/commit/fa6859660a6e388cb3f32c640096e9f8aff8c900))
+
 ## [1.23.1](https://github.com/fbuireu/github-star-tracker/compare/v1.23.0...v1.23.1) (2026-07-24)
 
 
