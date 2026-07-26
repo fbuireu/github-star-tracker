@@ -93,9 +93,11 @@ alias (`"@i18n": ["./src/i18n/index.ts"]`), not a glob: `@i18n/types` does not r
 - **No explanatory comments in `.ts` files**, without exception — the tree contains none. These `CLAUDE.md`
   files carry the explanation instead. If something needs explaining it goes in the folder's *Invariants* or
   *Gotchas* section, not above the line.
-- **`domain` and `presentation` must stay pure.** No `@actions/*`, no `node:*`, no network, no fs. Every I/O
-  call in the tree lives under `src/infrastructure/`. Rendering returns strings; writing files is
-  `application`'s job.
+- **`domain`, `presentation` and `i18n` must stay pure.** No `@actions/*`, no `node:*`, no network, no fs, and
+  no clock beyond an injectable `now`. Rendering returns strings; writing files is `application`'s job. The
+  impure layers each own a different side effect: `config` reads the action inputs and the YAML file
+  (`node:fs`), `infrastructure` owns everything outbound, and `application` writes the Action log and the
+  outputs. `infrastructure` is the only layer that reaches the network — not the only one that does I/O.
 - **Conventional commits** (commitlint + husky). semantic-release owns versioning. Do NOT add a
   Co-Authored-By / Claude trailer to commits or PRs.
 

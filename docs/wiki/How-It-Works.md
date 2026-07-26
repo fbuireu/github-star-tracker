@@ -194,7 +194,7 @@ Transforms GitHub API objects into the domain `RepoInfo` schema, flattening `own
 
 Creates or accesses a Git worktree for the data branch, isolating persistence from the source code checkout.
 
-**Directory derivation:** `.${dataBranch}` - e.g. `data-branch: my-stars` produces `.my-stars/`.
+**Directory derivation:** a dot followed by the branch name - e.g. `data-branch: my-stars` produces `.my-stars/`.
 
 **Workflow:**
 

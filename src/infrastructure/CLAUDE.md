@@ -1,7 +1,9 @@
 # src/infrastructure
 
-The only layer allowed to perform I/O: the GitHub REST API, the `git` CLI, the filesystem and SMTP. Four
-adapters, no framework. None of them decide *when* work happens — `@application/tracker` is the composition
+The layer that owns every outbound side effect: the GitHub REST API, the `git` CLI, the filesystem and SMTP.
+It is the only layer that reaches the network, though not the only one that performs I/O at all — `@config`
+reads the action inputs and one YAML file via `node:fs`, and `@application` writes the Action log and the
+outputs. Four adapters, no framework. None of them decide *when* work happens — `@application/tracker` is the composition
 root and their only consumer. They hold no business logic and build no user-facing strings.
 
 | Folder | Owns | Side effects |

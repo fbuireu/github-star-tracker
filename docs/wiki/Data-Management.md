@@ -13,7 +13,7 @@ with:
   data-branch: 'my-star-data'
 ```
 
-The working directory for the branch is derived from the name: `.${dataBranch}` (e.g. `.star-tracker-data/`).
+The working directory for the branch is derived from the name: a dot followed by the branch name (e.g. `.star-tracker-data/`).
 
 ---
 
@@ -144,7 +144,7 @@ If no star counts change between runs, the action detects this via `git diff --c
 The data branch uses Git worktrees for isolation:
 
 - **Primary worktree:** your main repo checkout (`GITHUB_WORKSPACE`)
-- **Secondary worktree:** created at `.${dataBranch}/` pointing to the data branch
+- **Secondary worktree:** created at the dot-prefixed branch name (e.g. `.star-tracker-data/`), pointing to the data branch
 - Same `.git` directory but independent working trees
 - Worktree is created at the start and removed in a `finally` block
 

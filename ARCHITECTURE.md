@@ -41,13 +41,18 @@ flowchart TD
     test -.-> dom
 
     classDef pure fill:#8a6a0f,stroke:#dfb317,stroke-width:2px,color:#fff
-    classDef io fill:#9b2530,stroke:#d73a49,stroke-width:2px,color:#fff
-    class dom,pres pure
-    class infra io
+    classDef shell fill:#9b2530,stroke:#d73a49,stroke-width:2px,color:#fff
+    class dom,pres,i18n,test pure
+    class idx,app,cfg,infra shell
 ```
 
-Every arrow is an import a layer is allowed to make; anything not drawn is forbidden. Gold = pure (no I/O),
-red = the I/O boundary.
+Every arrow is an import a layer is allowed to make; anything not drawn is forbidden. **Gold is the
+functional core** — no I/O, no network, no filesystem, and no clock beyond an injectable `now`. **Red is the
+imperative shell**, and each red layer owns a different side effect: `@config` reads the action inputs and one
+YAML file, `@infrastructure` owns everything outbound (REST, `git`, the filesystem, SMTP), `@application`
+writes the Action log and the outputs, and `src/index.ts` starts the run. `@config` reading `node:fs` is the
+detail most easily missed — `@infrastructure` is the only layer that reaches the *network*, not the only one
+that performs I/O at all.
 
 | Layer | Alias | Responsibility | May import | Must not import |
 | --- | --- | --- | --- | --- |
@@ -60,7 +65,7 @@ red = the I/O boundary.
 | presentation | `@presentation/*` | Pure rendering: data in, string out (markdown/HTML/SVG/CSV/badge) | `@config/types`, domain, i18n | infrastructure, `@actions/*`, `node:fs`, any network |
 | shared | `@shared/*` | Cross-cutting non-layer code; today only `shared/testing` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only) | used from `*.test.ts` only |
 
-Two hard rules govern this diagram: **domain and presentation are pure** (every I/O call in the tree lives under `src/infrastructure/`), and **cross-layer imports always go through path aliases while same-layer imports stay relative**.
+Two hard rules govern this diagram: **`domain`, `presentation` and `i18n` are pure** — no `node:*`, no `@actions/*`, no network — and **cross-layer imports always go through path aliases while same-layer imports stay relative**.
 
 The table above is the normative statement of the layer boundaries — the diagram is its picture, and anything the table forbids is forbidden however convenient. The codebase-wide conventions those boundaries sit inside (aliases, named params, no comments, purity) are stated once in [CLAUDE.md](./CLAUDE.md#conventions), and what each layer actually guarantees is that layer's own `CLAUDE.md`, linked in [§6](#6-where-things-live).
 
@@ -75,7 +80,7 @@ All step numbers refer to `src/application/tracker.ts`.
 | 3 | `core.getInput('github-token' / 'github-api-url')`, `github.getOctokit(token, baseUrl?, retry)` | application | The only place an Octokit instance is built; `@octokit/plugin-retry` attached here |
 | 4 | `getRepos({ octokit, config })` | infrastructure/github | Paginates, filters, maps; result sorted by `full_name`. Fetch failure is fatal |
 | 5 | empty result -> `setEmptyOutputs()` and `return` | application | Returns **before** `withDataDir`, so no worktree, no commit, no email |
-| 6 | `withDataDir` -> `initializeDataBranch({ dataBranch, readOnly })` | infrastructure/git | Returns `dataDir` = `.${dataBranch}`; `cleanup(dataDir)` runs in `finally` |
+| 6 | `withDataDir` -> `initializeDataBranch({ dataBranch, readOnly })` | infrastructure/git | Returns `dataDir`, the template literal `` `.${dataBranch}` ``. `cleanup(dataDir)` runs in `finally` |
 | 7 | `readHistory(dataDir)` | infrastructure/persistence | Normalizes to `{ ...raw, snapshots: Array.isArray(raw.snapshots) ? raw.snapshots : [] }` — a non-array `snapshots` becomes `[]`, everything else survives; invalid JSON throws rather than resetting |
 | 8 | `getBaselineSnapshot({ history, compareAgainst })` | domain/snapshot | `last-run` or the newest snapshot at least 24h/7d/30d old (6h cron-jitter tolerance), else oldest parseable |
 | 9 | `compareStars({ currentRepos, previousSnapshot })` | domain/comparison | New repos get delta 0; removed repos are excluded from `totalStars` but counted in `lostStars` |
