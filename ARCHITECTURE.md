@@ -154,7 +154,7 @@ The eleven action outputs: `report`, `report-html`, `report-html-path`, `report-
 ## 6. Where things live
 
 Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain glossary — what the words
-**mean**. The per-folder `CLAUDE.md` files below are **structure**. [docs/adr/](./docs/adr/) is **why**:
+**mean**. The `CLAUDE.md` files below — one at the root, one per layer — are **structure**. [docs/adr/](./docs/adr/) is **why**:
 
 | ADR | Decision |
 | --- | --- |
