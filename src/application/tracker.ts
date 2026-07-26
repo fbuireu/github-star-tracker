@@ -16,6 +16,7 @@ import { fetchAllStargazers } from '@infrastructure/github/stargazers';
 import { getEmailConfig, sendEmail } from '@infrastructure/notification/email';
 import {
   commitAndPush,
+  pruneCharts,
   readHistory,
   readStargazers,
   writeBadge,
@@ -234,6 +235,8 @@ export async function trackStars(): Promise<void> {
           writeChart({ dataDir, filename: chartFile.filename, svg: chartFile.svg });
         }
 
+        pruneCharts({ dataDir, keep: chartFiles.map((chartFile) => chartFile.filename) });
+
         if (config.readOnly) {
           core.info(`Read-only run: leaving ${config.dataBranch} untouched`);
         } else {
@@ -247,6 +250,7 @@ export async function trackStars(): Promise<void> {
           htmlReport,
           csvReport,
           shouldNotify: notify,
+          notificationSent: notificationDelivered && emailConfig !== null,
           newStargazers: stargazerDiff?.totalNew ?? 0,
         });
       },
@@ -273,6 +277,7 @@ function setEmptyOutputs(): void {
     htmlReport: '<p>No repositories matched the configured filters.</p>',
     csvReport: '',
     shouldNotify: false,
+    notificationSent: false,
     newStargazers: 0,
   });
 }
@@ -283,6 +288,7 @@ interface SetOutputsParams {
   htmlReport: string;
   csvReport: string;
   shouldNotify: boolean;
+  notificationSent: boolean;
   newStargazers: number;
 }
 
@@ -292,6 +298,7 @@ function setOutputs({
   htmlReport,
   csvReport,
   shouldNotify,
+  notificationSent,
   newStargazers,
 }: SetOutputsParams): void {
   core.setOutput('report', markdownReport);
@@ -303,5 +310,6 @@ function setOutputs({
   core.setOutput('new-stars', String(summary.newStars));
   core.setOutput('lost-stars', String(summary.lostStars));
   core.setOutput('should-notify', String(shouldNotify));
+  core.setOutput('notification-sent', String(notificationSent));
   core.setOutput('new-stargazers', String(newStargazers));
 }

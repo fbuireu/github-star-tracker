@@ -39921,6 +39921,14 @@ function parseNumberList(value) {
     )
   ].sort((a, b) => a - b);
 }
+function parsePositiveNumber(value) {
+  const parsed = parseNumber(value);
+  return parsed !== void 0 && parsed > 0 ? parsed : void 0;
+}
+function parseNonNegativeNumber(value) {
+  const parsed = parseNumber(value);
+  return parsed !== void 0 && parsed >= 0 ? parsed : void 0;
+}
 function parseBool(value) {
   if (isBlank(value)) return void 0;
   if (typeof value === "boolean") return value;
@@ -39976,6 +39984,7 @@ function parseNotificationThreshold(value) {
 var FILE_CONFIG_KEYS = Object.keys(DEFAULTS2).filter(
   (key) => key !== "sendOnNoChanges"
 );
+var DEFAULT_CONFIG_PATH = "star-tracker.yml";
 var DATA_BRANCH_FORBIDDEN_PATTERN = /[\s~^:?*[\\]/;
 var DATA_BRANCH_FORBIDDEN_SEQUENCES = ["..", "//", "/.", "@{"];
 var ASCII_CONTROL_MAX = 31;
@@ -40056,7 +40065,7 @@ function loadConfigFile(configPath) {
   );
 }
 function loadConfig() {
-  const configPath = getInput("config-path") || "star-tracker.yml";
+  const configPath = getInput("config-path") || DEFAULT_CONFIG_PATH;
   const fileConfig = loadConfigFile(configPath);
   const inputVisibility = getInput("visibility");
   const inputIncludeArchived = getInput("include-archived");
@@ -40179,14 +40188,14 @@ function loadConfig() {
     minStars: parseOrWarn({
       input: inputMinStars,
       inputName: "min-stars",
-      parse: parseNumber
-    }) ?? parseNumber(fileConfig.minStars) ?? DEFAULTS2.minStars,
+      parse: parseNonNegativeNumber
+    }) ?? parseNonNegativeNumber(fileConfig.minStars) ?? DEFAULTS2.minStars,
     dataBranch,
     maxHistory: parseOrWarn({
       input: inputMaxHistory,
       inputName: "max-history",
-      parse: parseNumber
-    }) ?? parseNumber(fileConfig.maxHistory) ?? DEFAULTS2.maxHistory,
+      parse: parsePositiveNumber
+    }) ?? parsePositiveNumber(fileConfig.maxHistory) ?? DEFAULTS2.maxHistory,
     compareAgainst,
     readOnly: parseOrWarn({ input: inputReadOnly, inputName: "read-only", parse: parseBool }) ?? parseFileBool(fileConfig.readOnly) ?? DEFAULTS2.readOnly,
     sendOnNoChanges: parseBool(getInput("send-on-no-changes")) ?? DEFAULTS2.sendOnNoChanges,
@@ -40206,26 +40215,26 @@ function loadConfig() {
     topRepos: parseOrWarn({
       input: inputTopRepos,
       inputName: "top-repos",
-      parse: parseNumber
-    }) ?? parseNumber(fileConfig.topRepos) ?? DEFAULTS2.topRepos,
+      parse: parsePositiveNumber
+    }) ?? parsePositiveNumber(fileConfig.topRepos) ?? DEFAULTS2.topRepos,
     smartSampling: parseOrWarn({ input: inputSmartSampling, inputName: "smart-sampling", parse: parseBool }) ?? parseFileBool(fileConfig.smartSampling) ?? DEFAULTS2.smartSampling,
     smartSamplingThreshold: parseOrWarn({
       input: inputSmartSamplingThreshold,
       inputName: "smart-sampling-threshold",
-      parse: parseNumber
-    }) ?? parseNumber(fileConfig.smartSamplingThreshold) ?? DEFAULTS2.smartSamplingThreshold,
+      parse: parseNonNegativeNumber
+    }) ?? parseNonNegativeNumber(fileConfig.smartSamplingThreshold) ?? DEFAULTS2.smartSamplingThreshold,
     smartSamplingPages: parseOrWarn({
       input: inputSmartSamplingPages,
       inputName: "smart-sampling-pages",
-      parse: parseNumber
-    }) ?? parseNumber(fileConfig.smartSamplingPages) ?? DEFAULTS2.smartSamplingPages,
+      parse: parsePositiveNumber
+    }) ?? parsePositiveNumber(fileConfig.smartSamplingPages) ?? DEFAULTS2.smartSamplingPages,
     chartLineColor,
     chartLineWidth,
     chartMaxPoints: parseOrWarn({
       input: inputChartMaxPoints,
       inputName: "chart-max-points",
-      parse: parseNumber
-    }) ?? parseNumber(fileConfig.chartMaxPoints) ?? DEFAULTS2.chartMaxPoints,
+      parse: parseNonNegativeNumber
+    }) ?? parseNonNegativeNumber(fileConfig.chartMaxPoints) ?? DEFAULTS2.chartMaxPoints,
     chartYAxisSide,
     chartSmoothing: parseOrWarn({ input: inputChartSmoothing, inputName: "chart-smoothing", parse: parseBool }) ?? parseFileBool(fileConfig.chartSmoothing) ?? DEFAULTS2.chartSmoothing,
     chartCurve,
@@ -40391,7 +40400,10 @@ var COMPARE_WINDOW_DAYS = {
 };
 var COMPARE_WINDOW_TOLERANCE_MS = 6 * 60 * 60 * 1e3;
 function getLastSnapshot(history) {
-  return history.snapshots.at(-1) ?? null;
+  for (let index = history.snapshots.length - 1; index >= 0; index--) {
+    if (toEpochMs(history.snapshots[index].timestamp) !== null) return history.snapshots[index];
+  }
+  return null;
 }
 function getBaselineSnapshot({
   history,
@@ -40519,12 +40531,21 @@ function computeForecast({
 var UP_ARROW = "\u2B06\uFE0F";
 var DOWN_ARROW = "\u2B07\uFE0F";
 var DASH = "\u2796";
-var compactFormatter = new Intl.NumberFormat("en", {
-  notation: "compact",
-  maximumFractionDigits: 1
-});
-function formatCount(count) {
-  return compactFormatter.format(count);
+var COMPACT_MAX_FRACTION_DIGITS = 1;
+var compactFormatters = /* @__PURE__ */ new Map();
+function compactFormatter(locale) {
+  const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
+  const cached = compactFormatters.get(localeCode);
+  if (cached) return cached;
+  const formatter = new Intl.NumberFormat(localeCode, {
+    notation: "compact",
+    maximumFractionDigits: COMPACT_MAX_FRACTION_DIGITS
+  });
+  compactFormatters.set(localeCode, formatter);
+  return formatter;
+}
+function formatCount({ count, locale }) {
+  return compactFormatter(locale).format(count);
 }
 function deltaIndicator(delta) {
   if (delta > 0) return `+${delta}`;
@@ -40883,8 +40904,9 @@ function filterRepos({ repos, config }) {
     info(`After only_orgs filter: ${candidates.length} repos`);
   }
   if (config.onlyRepos.length > 0) {
-    const onlyRepoNames = new Set(config.onlyRepos);
-    const filtered2 = candidates.filter((repo) => onlyRepoNames.has(repo.name));
+    const filtered2 = candidates.filter(
+      (repo) => matchesPattern({ name: repo.name, patterns: config.onlyRepos })
+    );
     info(`After only_repos filter: ${filtered2.length} repos`);
     return filtered2;
   }
@@ -41203,6 +41225,19 @@ function writeChart({ dataDir, filename, svg }) {
   const filePath = path3.join(chartsDir, filename);
   fs5.writeFileSync(filePath, svg);
 }
+function pruneCharts({ dataDir, keep }) {
+  const chartsDir = path3.join(dataDir, DATA_FILES.chartsDir);
+  if (!fs5.existsSync(chartsDir)) return [];
+  const kept = new Set(keep);
+  const removed = fs5.readdirSync(chartsDir).filter((filename) => filename.endsWith(".svg") && !kept.has(filename));
+  for (const filename of removed) {
+    fs5.rmSync(path3.join(chartsDir, filename));
+  }
+  if (removed.length > 0) {
+    info(`Removed ${removed.length} chart(s) no longer produced: ${removed.join(", ")}`);
+  }
+  return removed;
+}
 function readStargazers(dataDir) {
   return readJsonFile({
     filePath: path3.join(dataDir, DATA_FILES.stargazers),
@@ -41445,7 +41480,7 @@ var CHART_FILES = {
 function generateBadge({ totalStars, locale }) {
   const t = getTranslations(locale);
   const label = t.badge.totalStars;
-  const value = `\u2605 ${formatCount(totalStars)}`;
+  const value = `\u2605 ${formatCount({ count: totalStars, locale })}`;
   const labelWidth = label.length * BADGE.labelCharWidth + BADGE.horizontalPadding;
   const valueWidth = value.length * BADGE.valueCharWidth + BADGE.horizontalPadding;
   const totalWidth = labelWidth + valueWidth;
@@ -41771,6 +41806,7 @@ function renderSvg({
   datasets,
   title,
   showLegend,
+  locale,
   milestones = false,
   milestoneThresholds = STAR_MILESTONES,
   lineWidth: lineWidthParam,
@@ -41821,12 +41857,12 @@ function renderSvg({
   const gridLines = ySteps.map((value) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
-    <text x="${yLabelX}" y="${y + yAxis.labelBaselineOffset}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount(value)}</text>`;
+    <text x="${yLabelX}" y="${y + yAxis.labelBaselineOffset}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount({ count: value, locale })}</text>`;
   }).join("\n    ");
   const milestoneLines = milestones ? milestoneThresholds.filter((milestone) => milestone > minData && milestone < maxData).map((value) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="${milestoneStyle.strokeWidth}" stroke-dasharray="${milestoneStyle.dashArray}" />
-    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount(value)} \u2605</text>`;
+    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount({ count: value, locale })} \u2605</text>`;
   }).join("\n    ") : "";
   const maxLabels = xAxis.maxLabels;
   const nonEmptyLabelIndices = labels.reduce((indices, label, labelIndex) => {
@@ -42008,6 +42044,7 @@ function generateSvgChart({
     });
   }
   return renderSvg({
+    locale,
     ...style,
     labels,
     datasets,
@@ -42037,6 +42074,7 @@ function generatePerRepoSvgChart({
   });
   const data = repoStarSeries({ snapshots, repoFullName });
   return renderSvg({
+    locale,
     ...style,
     labels,
     datasets: [{ label: "Stars", data, color: lineColor ?? resolvePalette(style.theme).accent }],
@@ -42077,6 +42115,7 @@ function generateComparisonSvgChart({
     };
   });
   return renderSvg({
+    locale,
     ...style,
     labels,
     datasets,
@@ -42133,6 +42172,7 @@ function generateForecastSvgChart({
     }
   ];
   return renderSvg({
+    locale,
     ...style,
     labels: allLabels,
     datasets,
@@ -43255,6 +43295,7 @@ async function trackStars() {
         for (const chartFile of chartFiles) {
           writeChart({ dataDir, filename: chartFile.filename, svg: chartFile.svg });
         }
+        pruneCharts({ dataDir, keep: chartFiles.map((chartFile) => chartFile.filename) });
         if (config.readOnly) {
           info(`Read-only run: leaving ${config.dataBranch} untouched`);
         } else {
@@ -43267,6 +43308,7 @@ async function trackStars() {
           htmlReport,
           csvReport,
           shouldNotify: notify,
+          notificationSent: notificationDelivered && emailConfig !== null,
           newStargazers: stargazerDiff?.totalNew ?? 0
         });
       }
@@ -43291,6 +43333,7 @@ function setEmptyOutputs() {
     htmlReport: "<p>No repositories matched the configured filters.</p>",
     csvReport: "",
     shouldNotify: false,
+    notificationSent: false,
     newStargazers: 0
   });
 }
@@ -43300,6 +43343,7 @@ function setOutputs({
   htmlReport,
   csvReport,
   shouldNotify: shouldNotify2,
+  notificationSent,
   newStargazers
 }) {
   setOutput("report", markdownReport);
@@ -43311,6 +43355,7 @@ function setOutputs({
   setOutput("new-stars", String(summary2.newStars));
   setOutput("lost-stars", String(summary2.lostStars));
   setOutput("should-notify", String(shouldNotify2));
+  setOutput("notification-sent", String(notificationSent));
   setOutput("new-stargazers", String(newStargazers));
 }
 

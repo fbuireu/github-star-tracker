@@ -174,7 +174,7 @@ imports must be written `import type { … }` or `import { type X }`, or the bui
   `DEFAULTS` (except `sendOnNoChanges`) has a kebab-cased input with an **empty** default, and that only
   `config-path`, `send-on-no-changes` and `smtp-port` carry a non-empty default. Adding a config key without
   touching `action.yml` fails the suite.
-- Two test files are not named after a source file: `src/infrastructure/github/repos.test.ts` covers
+- One test file covers two modules: `src/infrastructure/github/filters.test.ts` covers
   `client.ts` + `filters.ts`, and `src/config/action-inputs.test.ts` covers the manifest, not a module.
 - Coverage thresholds are global and set to 85% for lines/functions/branches/statements. Excluded from
   coverage: `src/index.ts`, `src/**/{types,defaults,constants}.ts`, `src/**/*.test.ts`, `src/shared/testing/**`.

@@ -93,7 +93,7 @@ Both interfaces are local to `tracker.ts` and are not exported.
     `core.debug(err.stack)` when a stack exists.
 
 ## Outputs
-Ten keys, matching the `outputs:` block of the repo-root `action.yml` exactly (no extra, none missing).
+Eleven keys, matching the `outputs:` block of the repo-root `action.yml` exactly (no extra, none missing).
 The four report values are passed through as-is; the six numeric/boolean ones are wrapped in `String()`.
 
 | Key | Value |
@@ -106,10 +106,11 @@ The four report values are passed through as-is; the six numeric/boolean ones ar
 | `stars-changed` | `summary.changed` |
 | `new-stars` | `summary.newStars` |
 | `lost-stars` | `summary.lostStars` |
-| `should-notify` | `notify` (`summary.changed && thresholdReached`) |
+| `should-notify` | `notify` (`summary.changed && thresholdReached`) — the *decision* |
+| `notification-sent` | `notificationDelivered && emailConfig !== null` — whether mail actually went out |
 | `new-stargazers` | `stargazerDiff?.totalNew ?? 0` |
 
-`setEmptyOutputs()` emits the same ten keys with a zeroed `Summary`,
+`setEmptyOutputs()` emits the same eleven keys with a zeroed `Summary`,
 `'No repositories matched the configured filters.'` as markdown,
 `'<p>No repositories matched the configured filters.</p>'` as HTML, `''` as CSV, and `false`/`0`.
 
@@ -187,7 +188,7 @@ It mocks `@actions/core`, `@actions/github`, `@config/loader`, `@domain/{compari
 which is why the chart tests can assert on the params reaching `generatePerRepoSvgChart`.
 
 What it pins down: the happy path call set (each step asserted as called, not its order); the empty-repos
-early return (`initializeDataBranch` not called); nine of the ten outputs on the normal path (`report-csv`
+early return (`initializeDataBranch` not called); most of the eleven outputs on the normal path (`report-csv`
 is not asserted) and four of them on the empty path; `cleanup` running when `readHistory` throws;
 the `setFailed` message and `core.debug(stack)`; email send/skip across `changed`, `sendOnNoChanges`,
 threshold and null-config combinations, plus the warning on `sendEmail` rejection; GHES `baseUrl`

@@ -14,7 +14,11 @@ const COMPARE_WINDOW_DAYS: Record<
 const COMPARE_WINDOW_TOLERANCE_MS = 6 * 60 * 60 * 1000;
 
 export function getLastSnapshot(history: History): Snapshot | null {
-  return history.snapshots.at(-1) ?? null;
+  for (let index = history.snapshots.length - 1; index >= 0; index--) {
+    if (toEpochMs(history.snapshots[index].timestamp) !== null) return history.snapshots[index];
+  }
+
+  return null;
 }
 
 interface GetBaselineSnapshotParams {

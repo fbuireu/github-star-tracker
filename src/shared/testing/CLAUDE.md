@@ -177,7 +177,7 @@ tree, and a side-effecting import here would leak into all of them.
 ## Testing
 No `*.test.ts` in this folder — it has none by design. It is exercised by
 `src/application/tracker.test.ts`, `src/domain/comparison.test.ts`, `src/domain/stargazers.test.ts`,
-`src/domain/star-history.test.ts`, `src/infrastructure/github/repos.test.ts`,
+`src/domain/star-history.test.ts`, `src/infrastructure/github/filters.test.ts`,
 `src/infrastructure/github/stargazers.test.ts`, `src/presentation/chart.test.ts`,
 `src/presentation/html.test.ts`, `src/presentation/markdown.test.ts` and `src/presentation/shared.test.ts`.
 After changing a factory default, run the whole suite — the blast radius is every layer:

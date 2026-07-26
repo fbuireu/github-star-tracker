@@ -12,9 +12,11 @@ import {
   parseFileHexColor,
   parseHexColor,
   parseList,
+  parseNonNegativeNumber,
   parseNotificationThreshold,
   parseNumber,
   parseNumberList,
+  parsePositiveNumber,
   toStringList,
 } from './parsers';
 import type { Config } from './types';
@@ -32,6 +34,8 @@ type FileConfig = Partial<
 const FILE_CONFIG_KEYS = Object.keys(DEFAULTS).filter(
   (key): key is FileConfigKey => key !== 'sendOnNoChanges',
 );
+
+export const DEFAULT_CONFIG_PATH = 'star-tracker.yml';
 
 const DATA_BRANCH_FORBIDDEN_PATTERN = /[\s~^:?*[\\]/;
 const DATA_BRANCH_FORBIDDEN_SEQUENCES = ['..', '//', '/.', '@{'];
@@ -163,7 +167,7 @@ export function loadConfigFile(configPath: string): FileConfig {
 }
 
 export function loadConfig(): Config {
-  const configPath = core.getInput('config-path') || 'star-tracker.yml';
+  const configPath = core.getInput('config-path') || DEFAULT_CONFIG_PATH;
   const fileConfig = loadConfigFile(configPath);
 
   const inputVisibility = core.getInput('visibility');
@@ -322,18 +326,18 @@ export function loadConfig(): Config {
       parseOrWarn({
         input: inputMinStars,
         inputName: 'min-stars',
-        parse: parseNumber,
+        parse: parseNonNegativeNumber,
       }) ??
-      parseNumber(fileConfig.minStars) ??
+      parseNonNegativeNumber(fileConfig.minStars) ??
       DEFAULTS.minStars,
     dataBranch,
     maxHistory:
       parseOrWarn({
         input: inputMaxHistory,
         inputName: 'max-history',
-        parse: parseNumber,
+        parse: parsePositiveNumber,
       }) ??
-      parseNumber(fileConfig.maxHistory) ??
+      parsePositiveNumber(fileConfig.maxHistory) ??
       DEFAULTS.maxHistory,
     compareAgainst,
     readOnly:
@@ -367,9 +371,9 @@ export function loadConfig(): Config {
       parseOrWarn({
         input: inputTopRepos,
         inputName: 'top-repos',
-        parse: parseNumber,
+        parse: parsePositiveNumber,
       }) ??
-      parseNumber(fileConfig.topRepos) ??
+      parsePositiveNumber(fileConfig.topRepos) ??
       DEFAULTS.topRepos,
     smartSampling:
       parseOrWarn({ input: inputSmartSampling, inputName: 'smart-sampling', parse: parseBool }) ??
@@ -379,17 +383,17 @@ export function loadConfig(): Config {
       parseOrWarn({
         input: inputSmartSamplingThreshold,
         inputName: 'smart-sampling-threshold',
-        parse: parseNumber,
+        parse: parseNonNegativeNumber,
       }) ??
-      parseNumber(fileConfig.smartSamplingThreshold) ??
+      parseNonNegativeNumber(fileConfig.smartSamplingThreshold) ??
       DEFAULTS.smartSamplingThreshold,
     smartSamplingPages:
       parseOrWarn({
         input: inputSmartSamplingPages,
         inputName: 'smart-sampling-pages',
-        parse: parseNumber,
+        parse: parsePositiveNumber,
       }) ??
-      parseNumber(fileConfig.smartSamplingPages) ??
+      parsePositiveNumber(fileConfig.smartSamplingPages) ??
       DEFAULTS.smartSamplingPages,
     chartLineColor,
     chartLineWidth,
@@ -397,9 +401,9 @@ export function loadConfig(): Config {
       parseOrWarn({
         input: inputChartMaxPoints,
         inputName: 'chart-max-points',
-        parse: parseNumber,
+        parse: parseNonNegativeNumber,
       }) ??
-      parseNumber(fileConfig.chartMaxPoints) ??
+      parseNonNegativeNumber(fileConfig.chartMaxPoints) ??
       DEFAULTS.chartMaxPoints,
     chartYAxisSide,
     chartSmoothing:

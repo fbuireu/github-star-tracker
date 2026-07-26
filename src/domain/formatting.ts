@@ -7,13 +7,32 @@ export const UP_ARROW = '\u2B06\uFE0F';
 export const DOWN_ARROW = '\u2B07\uFE0F';
 export const DASH = '\u2796';
 
-const compactFormatter = new Intl.NumberFormat('en', {
-  notation: 'compact',
-  maximumFractionDigits: 1,
-});
+const COMPACT_MAX_FRACTION_DIGITS = 1;
+const compactFormatters = new Map<string, Intl.NumberFormat>();
 
-export function formatCount(count: number): string {
-  return compactFormatter.format(count);
+function compactFormatter(locale: Locale): Intl.NumberFormat {
+  const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
+  const cached = compactFormatters.get(localeCode);
+
+  if (cached) return cached;
+
+  const formatter = new Intl.NumberFormat(localeCode, {
+    notation: 'compact',
+    maximumFractionDigits: COMPACT_MAX_FRACTION_DIGITS,
+  });
+
+  compactFormatters.set(localeCode, formatter);
+
+  return formatter;
+}
+
+interface FormatCountParams {
+  count: number;
+  locale: Locale;
+}
+
+export function formatCount({ count, locale }: FormatCountParams): string {
+  return compactFormatter(locale).format(count);
 }
 
 export function deltaIndicator(delta: number): string {

@@ -31,7 +31,7 @@ markdown/HTML/SVG belongs to `@presentation/*`, and orchestration belongs to `@a
 - `getBaselineSnapshot({ history, compareAgainst, now? }: { history: History; compareAgainst: CompareAgainst; now?: Date }): Snapshot | null` — resolves the `compare-against` input to the snapshot `compareStars` diffs against.
 - `addSnapshot({ history, snapshot, maxHistory }: { history: History; snapshot: Snapshot; maxHistory: number }): History` — returns a new history with the snapshot appended and trimmed.
 - `repoStarSeries({ snapshots, repoFullName }: { snapshots: Snapshot[]; repoFullName: string }): number[]` — per-repo star values aligned to `snapshots`; used by `@presentation/chart` and `@presentation/svg-chart`.
-- `getLastSnapshot(history: History): Snapshot | null` — exported but only consumed inside this folder (by `getBaselineSnapshot`) and its test.
+- `getLastSnapshot(history: History): Snapshot | null` — newest snapshot with a parseable timestamp; exported but only consumed inside this folder (by `getBaselineSnapshot`) and its test.
 
 ### `@domain/forecast`
 - `computeForecast({ history, topRepoNames }: { history: History; topRepoNames: string[] }): ForecastData | null` — the only forecast entry point used outside this folder.
@@ -53,7 +53,7 @@ markdown/HTML/SVG belongs to `@presentation/*`, and orchestration belongs to `@a
 - `getAdaptiveThreshold(totalStars: number): number` — exported but only called by `shouldNotify` and its test.
 
 ### `@domain/formatting`
-- `formatCount(count: number): string` — compact `1.5K` / `2.5M` form (`@presentation/badge`, `@presentation/svg-chart`).
+- `formatCount({ count, locale }: { count: number; locale: Locale }): string` — compact `1.5K` / `2.5M` form, rendered in the report locale (`@presentation/badge`, `@presentation/svg-chart`). Formatters are cached per locale.
 - `deltaIndicator(delta: number): string`, `formatSignedPercent(value: number): string`, `trendIcon(delta: number): string` — inline report cells.
 - `formatDate({ timestamp, locale }: { timestamp: string; locale: Locale }): string` — short `MMM D` date.
 - `buildAxisLabels({ timestamps, locale }: { timestamps: string[]; locale: Locale }): string[]` — chart x-axis tick labels.
@@ -124,14 +124,15 @@ markdown/HTML/SVG belongs to `@presentation/*`, and orchestration belongs to `@a
   repos always reports `changed: true`.
 
 **Snapshot store (`snapshot.ts`)**
-- Empty history → `null`. `last-run` short-circuits to the last element **without validating its
-  timestamp**; the windowed modes ignore unparseable snapshots entirely.
+- Empty history → `null`. Every mode ignores snapshots whose timestamp does not parse, including
+  `last-run`, which walks back to the newest snapshot that does.
 - Windowed modes pick the **newest** snapshot at or before `now - windowDays + 6h`. The
   `COMPARE_WINDOW_TOLERANCE_MS = 6h` slack exists so cron jitter does not push a run just under the window.
 - If no snapshot is old enough, it falls back to the **oldest parseable** snapshot; if none is parseable,
   `null`.
-- `addSnapshot` trims with `.slice(-maxHistory)`. `maxHistory: 0` yields `slice(-0) === slice(0)` and keeps
-  **the whole array** — callers must pass a positive number.
+- `addSnapshot` trims with `.slice(-maxHistory)`. `maxHistory: 0` would yield `slice(-0) === slice(0)` and
+  keep the whole array, which is why `@config/loader` rejects non-positive `max-history` before it ever
+  reaches here.
 - `repoStarSeries` yields `0` for snapshots where the repo is absent; a gap reads as a drop to zero, not a
   gap. The returned array always has the same length as `snapshots`.
 
@@ -204,15 +205,11 @@ markdown/HTML/SVG belongs to `@presentation/*`, and orchestration belongs to `@a
 - Same-folder imports stay relative (`./constants`, `./time`, `./types`), per the repo alias convention.
 
 ## Gotchas
-- `formatting.ts` builds `compactFormatter` with the hard-coded `'en'` locale, so `formatCount` emits
-  `K`/`M` suffixes regardless of the report locale — only `formatDate`/`buildAxisLabels` are localized.
 - `buildAxisLabels` keeps `lastYear` as closure state across the `.map` callback; it only works because
   `Array.prototype.map` runs in order and the input is sorted.
 - `formatDate` returns an **empty string** for an unparseable timestamp, matching `buildAxisLabels`, whose
   contract is already "an empty label is a tick that must not render". Callers must not assume a non-empty
   date.
-- `getLastSnapshot` (and therefore `compare-against: last-run`) returns a snapshot even if its timestamp is
-  garbage — the unparseable-timestamp guards only apply to the `24h`/`7d`/`30d` branches.
 - `buildStarHistory` handles a `starred_at` in the future relative to `now` by emitting just two edges
   (`earliest - 1 day`, `end`), which silently collapses the chart to two points.
 - `compareStars` keys the previous snapshot by `fullName` in a `Map`; duplicate `fullName` entries in a

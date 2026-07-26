@@ -120,11 +120,11 @@ Pattern matching (`matchesPattern`, `filters.ts:14`) accepts either an exact str
 - `filterRepos` never mutates its input; every step produces a new array via `filter`, and repo objects are
   passed through by reference.
 - `onlyRepos` is matched with a `Set` of **exact names only** — no regex support, unlike `onlyOrgs`,
-  `excludeOrgs` and `excludeRepos`. Exact-name matching is **case-sensitive** (`repos.test.ts:201`,
+  `excludeOrgs` and `excludeRepos`. Exact-name matching is **case-sensitive** (`filters.test.ts`,
   "matches orgs case-sensitively"); regex patterns honour their own flags, so `/^my/i` matches
-  case-insensitively (`repos.test.ts:109`).
+  case-insensitively (`filters.test.ts`).
 - `onlyRepos` overrides archived/fork/exclude/min-stars, but **not** `onlyOrgs`: a repo excluded by
-  `onlyOrgs` can never be brought back by `onlyRepos` (`repos.test.ts:208`).
+  `onlyOrgs` can never be brought back by `onlyRepos` (`filters.test.ts`).
 - Matching is on the short `repo.name`, not `full_name`; org matching is on `owner.login`. A repo with the
   same name in two orgs matches both unless `onlyOrgs`/`excludeOrgs` disambiguates.
 - A fresh `RegExp` is constructed per pattern per candidate, so a `g` flag never leaves stale `lastIndex`
@@ -134,7 +134,7 @@ Pattern matching (`matchesPattern`, `filters.ts:14`) accepts either an exact str
 - `fetchRepos` requests `sort: 'full_name'`, so downstream ordering of `RepoInfo[]` is GitHub's ascending
   full-name order. Anything relying on stable report ordering depends on this.
 - The loop stops on an empty page *or* on any page shorter than 100. A page of exactly 100 always triggers
-  one more request (`repos.test.ts:277`).
+  one more request (`filters.test.ts`).
 - Any failure aborts the whole fetch and throws
   `Failed to fetch repositories from GitHub API: <describeFetchError>. Verify that your github-token has the correct permissions.`
   There is no partial-repo-list mode. Callers treat this as fatal.
@@ -185,9 +185,8 @@ would create a cycle. Do not import `@config/loader`: config arrives as a parame
 reads action inputs. Do not import `node:fs` or `../persistence/*`; fetching and persisting stay separate.
 
 ## Gotchas
-- **`repos.test.ts` has no `repos.ts`.** It is the test file for `client.ts` *and* `filters.ts`. Adding a
-  `repos.ts` would be confusing; renaming the test would lose git history for the whole repo-filtering
-  spec.
+- **`filters.test.ts` also covers `client.ts`.** It is the spec for both modules, so a change to
+  `client.ts` that breaks nothing in `client`-named tests may still fail here.
 - **`GitHubRepo` is a hand-written structural subset**, not octokit's generated type. Reading a new field
   (e.g. `description`, `pushed_at`) means adding it here first, and the tests' `makeRepo` factory builds
   the same shape.
@@ -209,11 +208,11 @@ reads action inputs. Do not import `node:fs` or `../persistence/*`; fetching and
 ## Testing
 | Test file | Covers |
 | --- | --- |
-| `repos.test.ts` | `filterRepos` ordering/override rules, regex + flags, case sensitivity, `mapRepos` shape, `fetchRepos` pagination and visibility params, error message text, `getRepos` end-to-end |
+| `filters.test.ts` | `filterRepos` ordering/override rules, regex + flags, case sensitivity, `mapRepos` shape, `fetchRepos` pagination and visibility params, error message text, `getRepos` end-to-end |
 | `stargazers.test.ts` | Pagination, per-repo error isolation, mid-pagination and sampled partial failures, `coveredStars` values, the 400-page reachable cap, sampled page selection, the two unreconstructable-history warnings |
 | `errors.test.ts` | Every `describeFetchError` fallback branch |
 
-`repos.test.ts` and `stargazers.test.ts` mock `@actions/core` and cast a hand-rolled object to `Octokit`;
+`filters.test.ts` and `stargazers.test.ts` mock `@actions/core` and cast a hand-rolled object to `Octokit`;
 there is no HTTP in the tests. `errors.test.ts` is a plain unit test with no mocks. Fixtures come from
 `@shared/testing` (`makeConfig`, `makeRepoInfo`).
 

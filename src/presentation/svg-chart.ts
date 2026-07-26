@@ -309,6 +309,7 @@ interface RenderSvgParams extends SvgChartStyle {
   datasets: SvgDataset[];
   title: string;
   showLegend: boolean;
+  locale: Locale;
   milestones?: boolean;
   milestoneThresholds?: readonly number[];
 }
@@ -318,6 +319,7 @@ function renderSvg({
   datasets,
   title,
   showLegend,
+  locale,
   milestones = false,
   milestoneThresholds = STAR_MILESTONES,
   lineWidth: lineWidthParam,
@@ -372,7 +374,7 @@ function renderSvg({
     .map((value) => {
       const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
       return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
-    <text x="${yLabelX}" y="${y + yAxis.labelBaselineOffset}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount(value)}</text>`;
+    <text x="${yLabelX}" y="${y + yAxis.labelBaselineOffset}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount({ count: value, locale })}</text>`;
     })
     .join('\n    ');
 
@@ -382,7 +384,7 @@ function renderSvg({
         .map((value) => {
           const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
           return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="${milestoneStyle.strokeWidth}" stroke-dasharray="${milestoneStyle.dashArray}" />
-    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount(value)} ★</text>`;
+    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount({ count: value, locale })} ★</text>`;
         })
         .join('\n    ')
     : '';
@@ -628,6 +630,7 @@ export function generateSvgChart({
   }
 
   return renderSvg({
+    locale,
     ...style,
     labels,
     datasets,
@@ -671,6 +674,7 @@ export function generatePerRepoSvgChart({
   const data = repoStarSeries({ snapshots, repoFullName });
 
   return renderSvg({
+    locale,
     ...style,
     labels,
     datasets: [{ label: 'Stars', data, color: lineColor ?? resolvePalette(style.theme).accent }],
@@ -725,6 +729,7 @@ export function generateComparisonSvgChart({
   });
 
   return renderSvg({
+    locale,
     ...style,
     labels,
     datasets,
@@ -794,6 +799,7 @@ export function generateForecastSvgChart({
   ];
 
   return renderSvg({
+    locale,
     ...style,
     labels: allLabels,
     datasets,

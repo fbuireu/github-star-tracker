@@ -675,7 +675,7 @@ Comma-separated list of repository names to exclusively track.
 | **Type** | `string` (comma-separated) |
 | **Default** | - |
 
-When set, **only** these repos are tracked, and the archived/fork/exclude/min-stars filters are skipped. [`only-orgs`](#only-orgs) still applies first and narrows the set this selects from.
+When set, **only** these repos are tracked, and the archived/fork/exclude/min-stars filters are skipped. Accepts exact names or `/regex/` patterns, like `exclude-repos`. [`only-orgs`](#only-orgs) still applies first and narrows the set this selects from.
 
 ```yaml
 with:
@@ -909,7 +909,7 @@ The action validates inputs at startup:
 - `github-token` is provided
 - `visibility` is one of: `all`, `public`, `private`, `owned`
 - `locale` is one of: `en`, `es`, `ca`, `it` (falls back to `en` with a warning if invalid)
-- `visibility` and `data-branch` are the only inputs whose invalid values fail the run; a missing `github-token` fails it too. Every other invalid value logs a warning and falls back to its default
+- `visibility` and `data-branch` are the only inputs whose invalid values fail the run; a missing `github-token` fails it too. Every other invalid value logs a warning and falls back to its default, including non-positive `max-history`, `top-repos` and `smart-sampling-pages`, and negative `min-stars`, `smart-sampling-threshold` and `chart-max-points`
 
 ---
 

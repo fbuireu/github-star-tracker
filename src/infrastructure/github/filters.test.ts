@@ -40,6 +40,13 @@ function makeRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
 const defaultConfig: Config = makeConfig({ includeCharts: false, notificationThreshold: 0 });
 
 describe('filterRepos', () => {
+  it('matches only-repos by regex, like its sibling filters', () => {
+    const repos = [makeRepo({ name: 'app-web' }), makeRepo({ name: 'docs' })];
+    const config = makeConfig({ onlyRepos: ['/^app-/'] });
+
+    expect(filterRepos({ repos, config }).map((repo) => repo.name)).toEqual(['app-web']);
+  });
+
   it('warns and skips a malformed regex pattern instead of failing the run', () => {
     const repos = [makeRepo({ name: 'keep-me' }), makeRepo({ name: 'drop-me' })];
     const config = makeConfig({ excludeRepos: ['/[unclosed/', 'drop-me'] });

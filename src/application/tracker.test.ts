@@ -104,6 +104,7 @@ vi.mock('@infrastructure/persistence/storage', () => ({
   writeHtmlReport: vi.fn().mockReturnValue('/tmp/star-tracker-report.html'),
   writeBadge: vi.fn(),
   writeChart: vi.fn(),
+  pruneCharts: vi.fn().mockReturnValue([]),
   writeCsv: vi.fn(),
   writeStargazers: vi.fn(),
   commitAndPush: vi.fn(),

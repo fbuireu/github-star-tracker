@@ -37,7 +37,7 @@ Both take the same `GenerateReportParams` object; the tracker builds it once and
 
 ### `csv.ts`, `badge.ts` (consumed by `@application/tracker`)
 - `generateCsvReport({ repos }: ComparisonResults): string`
-- `generateBadge({ totalStars, locale }: GenerateBadgeParams): string`
+- `generateBadge({ totalStars, locale }: GenerateBadgeParams): string` — the count is rendered in `locale`.
 - `NEW_LINE = '\n'` — exported for the row separator; only `csv.test.ts` consumes it externally.
 
 ### `svg-chart.ts` (consumed by `charts.ts`; mocked wholesale in `tracker.test.ts`)
@@ -148,7 +148,7 @@ Forbidden: `@actions/core` and `@actions/github` (config/infrastructure own inpu
 ## Gotchas
 
 - `constants.ts` and `types.ts` are **coverage-excluded** (`vitest.config.ts`), so changing a constant produces no coverage signal — but many tests assert the resulting literals (`viewBox="0 0 800 400"`, `stroke-width="2.5"`, `x="778"`, `<line x1="770"`, `animation-delay: 1.55s`, `stroke-dasharray="6,6"`). Expect failures far from the edit.
-- `COLORS` in `constants.ts` is an alias for `LIGHT_PALETTE`. `badge.ts` uses `COLORS` unconditionally, so the badge is always light-themed and ignores `chart-theme`.
+- `COLORS` in `constants.ts` is an alias for `LIGHT_PALETTE`. `badge.ts` uses `COLORS` unconditionally, so the badge is always light-themed and ignores `chart-theme` — though its number *is* localized.
 - `perRepoChartFile` (`shared.ts`) replaces only the **first** `/`: `user/repo` → `user-repo.svg`. Nested-looking names would keep later slashes and produce an invalid filename.
 - `repoStarSeries` (`@domain/snapshot`) returns `0`, not `null`, for a repo missing from a snapshot — so a per-repo chart for an unknown repo renders a flat zero line rather than returning `null`. The `chart.test.ts` case named "returns null for non-existent repository" actually asserts `"data":[0,0,0]`.
 - `buildForecastChartSeries` indexes `forecastData.aggregate.forecasts[0]` without a guard; an empty `forecasts` array throws.

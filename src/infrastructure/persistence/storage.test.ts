@@ -7,6 +7,7 @@ import type { History } from '@domain/types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   commitAndPush,
+  pruneCharts,
   readHistory,
   readStargazers,
   writeBadge,
@@ -345,5 +346,33 @@ describe('commitAndPush', () => {
       expect.arrayContaining(['commit']),
       expect.any(Object),
     );
+  });
+});
+
+describe('pruneCharts', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('deletes chart files no longer produced and keeps the current ones', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readdirSync).mockReturnValue([
+      'star-history.svg',
+      'user-gone.svg',
+      'notes.txt',
+    ] as unknown as ReturnType<typeof fs.readdirSync>);
+
+    const removed = pruneCharts({ dataDir: '.data', keep: ['star-history.svg'] });
+
+    expect(removed).toEqual(['user-gone.svg']);
+    expect(fs.rmSync).toHaveBeenCalledWith(path.join('.data', 'charts', 'user-gone.svg'));
+    expect(fs.rmSync).toHaveBeenCalledTimes(1);
+  });
+
+  it('is a no-op when the charts directory does not exist', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(false);
+
+    expect(pruneCharts({ dataDir: '.data', keep: [] })).toEqual([]);
+    expect(fs.rmSync).not.toHaveBeenCalled();
   });
 });

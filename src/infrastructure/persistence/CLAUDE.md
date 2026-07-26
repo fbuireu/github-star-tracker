@@ -49,6 +49,7 @@ All exports are consumed by `@application/tracker`. `readJsonFile` and `writeJso
 ```ts
 export function readHistory(dataDir: string): History
 export function writeHistory({ dataDir, history }: WriteHistoryParams): void            // { dataDir: string; history: History }
+export function pruneCharts({ dataDir, keep }: { dataDir: string; keep: string[] }): string[]
 export function readStargazers(dataDir: string): StargazerMap
 export function writeStargazers({ dataDir, stargazerMap }: WriteStargazersParams): void // { dataDir: string; stargazerMap: StargazerMap }
 export function writeReport({ dataDir, markdown }: WriteReportParams): void             // -> <dataDir>/README.md

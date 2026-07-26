@@ -2,7 +2,7 @@
 
 ## 1. What this is
 
-`github-star-tracker` is a JavaScript GitHub Action (TypeScript sources, bundled by esbuild into `dist/index.js`, run with `runs.using: node24` per `action.yml`). A consumer adds it to a scheduled workflow with `permissions: contents: write`, a `actions/checkout` step and a PAT (`github-token`; the default `GITHUB_TOKEN` is not sufficient) — see the Quick Start in `README.md`. On each run it lists the token owner's repositories, compares their star counts against a stored snapshot, and commits a markdown report, JSON/CSV data, a badge and animated SVG charts to a dedicated data branch. It also exposes ten action outputs for workflow chaining and can send an HTML email over SMTP.
+`github-star-tracker` is a JavaScript GitHub Action (TypeScript sources, bundled by esbuild into `dist/index.js`, run with `runs.using: node24` per `action.yml`). A consumer adds it to a scheduled workflow with `permissions: contents: write`, a `actions/checkout` step and a PAT (`github-token`; the default `GITHUB_TOKEN` is not sufficient) — see the Quick Start in `README.md`. On each run it lists the token owner's repositories, compares their star counts against a stored snapshot, and commits a markdown report, JSON/CSV data, a badge and animated SVG charts to a dedicated data branch. It also exposes eleven action outputs for workflow chaining and can send an HTML email over SMTP.
 
 ## 2. Layer map
 
@@ -84,9 +84,9 @@ All step numbers refer to `src/application/tracker.ts`.
 | 19 | `getEmailConfig(locale)` + `sendEmail({ emailConfig, subject, htmlBody })` | infrastructure/notification | Sent when `emailConfig && (notify \|\| sendOnNoChanges)`; failures downgrade to `core.warning` and clear `notificationDelivered`. **Runs before persistence** — see [ADR 0011](./docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md) |
 | 20 | `updatedHistory.starsAtLastNotification = summary.totalStars` | application | Only when `notificationDelivered`, i.e. a send succeeded or no SMTP transport is configured at all |
 | 21 | `writeHistory` / `writeReport` / `writeBadge` / `writeCsv` | infrastructure/persistence | Written into `dataDir` |
-| 22 | `buildChartFiles({ config, history, fallbackHistory, forecastData, topRepoNames, repoTotals, repoStargazers, now: chartNow })` -> `writeChart` per file | presentation + persistence | One `chartNow` `Date` is shared with step 14 |
+| 22 | `buildChartFiles({ config, history, fallbackHistory, forecastData, topRepoNames, repoTotals, repoStargazers, now: chartNow })` -> `writeChart` per file, then `pruneCharts({ dataDir, keep })` | presentation + persistence | One `chartNow` `Date` is shared with step 14. Pruning deletes `charts/*.svg` this run did not produce, so a repo leaving `top-repos` does not strand its chart |
 | 23 | `commitAndPush({ dataDir, dataBranch, message, token })` | infrastructure/persistence | Skipped entirely when `config.readOnly` |
-| 24 | `setOutputs(...)` | application | Ten outputs, exactly matching the `outputs:` block of `action.yml` |
+| 24 | `setOutputs(...)` | application | Eleven outputs, exactly matching the `outputs:` block of `action.yml` |
 
 Failure policy: everything is wrapped in one `try/catch` that ends in `core.setFailed('Star Tracker failed: <msg>')` plus `core.debug(stack)`. Email is the only inner failure that is deliberately non-fatal.
 
@@ -125,7 +125,7 @@ State has to survive between runs of a stateless Action. Artifacts expire and ar
 | `charts/*.svg` | `@presentation/charts` -> `@presentation/svg-chart` | `writeChart` |
 | Email chart images | `@presentation/chart` (quickchart.io URLs, no SVG) | embedded by `html.ts` |
 | Email | `@presentation/html` body | `@infrastructure/notification/email` `sendEmail` |
-| Action outputs (10) | - | `setOutputs` in `tracker.ts` |
+| Action outputs (11) | - | `setOutputs` in `tracker.ts` |
 
 Action outputs: `report`, `report-html`, `report-html-path`, `report-csv`, `total-stars`, `stars-changed`, `new-stars`, `lost-stars`, `should-notify`, `new-stargazers`.
 
@@ -196,14 +196,8 @@ Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain gl
 
 ## 9. Known inconsistencies
 
-Verified against the source; each is a real mismatch, not a guess. Items resolved in the working tree have
-been removed rather than annotated — this list is only what is still true.
+None outstanding. Every mismatch this document previously listed has been resolved in the source; the
+history of what they were and why each was fixed is in the `fix:` commits and in `docs/adr/`.
 
-- **`maxHistory: 0` keeps everything.** `addSnapshot` trims with `.slice(-maxHistory)`, and `slice(-0)` is `slice(0)`. `parseNumber` also accepts negatives, so `max-history: -1`, `min-stars: -5`, `top-repos: -1` etc. pass validation with untested downstream behaviour. Left alone deliberately: clamping would change the meaning of configs already in use.
-- **`compare-against: last-run` is asymmetric.** `getLastSnapshot` returns the newest snapshot even when its `timestamp` is unparseable; the `24h`/`7d`/`30d` branches filter such snapshots out first. Making it symmetric would turn a usable comparison into "first run", so it is a design question rather than an oversight.
-- **`sendEmail`'s `boolean` return gates the notification baseline but nothing else.** "configured but not delivered" (empty `email-to`) correctly withholds the baseline advance, but is not reflected in any action output — `should-notify` reports the *decision*, not the delivery.
-- **Stale chart files are never pruned.** Nothing deletes from `<dataDir>/charts/`, so a repo that drops out of `top-repos` leaves its `<owner>-<repo>.svg` on the data branch permanently. Fixing it means deleting files on a user's branch, which needs an explicit decision.
-- **`only-repos` is exact-name-only** (a `Set`), unlike its regex-capable siblings `exclude-repos`, `only-orgs` and `exclude-orgs`.
-- **`star-tracker.yml` is defined twice** — in `action.yml`'s `config-path` default and in `loader.ts` — with no test pinning the copies together. (`587` is pinned, by `action-inputs.test.ts`.)
-- **`src/infrastructure/github/repos.test.ts` has no `repos.ts`.** It is the spec for both `client.ts` and `filters.ts`, apparently a leftover from a rename.
-- **`formatCount` is never localized.** `src/domain/formatting.ts` hardcodes `new Intl.NumberFormat('en', { notation: 'compact' })`, so K/M suffixes stay English while `formatDate` follows `LOCALE_MAP`. `action.yml`'s `locale` input now spells this out, so code and docs agree — but the behaviour is still a wart.
+When one is found again, record it here with the file:line that proves it, and delete the entry once the
+code changes — an entry that has quietly become false is worse than no list at all.

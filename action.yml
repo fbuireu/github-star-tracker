@@ -261,6 +261,8 @@ outputs:
   should-notify:
     description: 'Whether the notification threshold was reached (true/false). Unlike new-stars, this accumulates across runs and only resets when a notification actually fires'
 
+  notification-sent:
+    description: 'Whether an email was actually delivered this run (true/false). Unlike should-notify, which reports the threshold decision, this is false when SMTP is not configured, when email-to is empty, or when the send failed'
   report-csv:
     description: 'CSV report of star changes'
 
