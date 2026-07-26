@@ -72,6 +72,10 @@ describe('selectChartSnapshots', () => {
     expect(year[0]).not.toBe(everything[0]);
   });
 
+  it('returns only the newest entry when maxPoints is 1', () => {
+    expect(selectChartSnapshots({ snapshots, maxPoints: 1 })).toEqual([snapshots[2]]);
+  });
+
   it('copies rather than aliases when maxPoints is 0', () => {
     const result = selectChartSnapshots({ snapshots, maxPoints: 0 });
 

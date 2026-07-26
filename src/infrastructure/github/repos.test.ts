@@ -1,3 +1,4 @@
+import * as core from '@actions/core';
 import type { Config } from '@config/types';
 import { Visibility } from '@config/types';
 import { makeConfig } from '@shared/testing';
@@ -8,6 +9,7 @@ import type { GitHubRepo, Octokit } from './types';
 
 vi.mock('@actions/core', () => ({
   info: vi.fn(),
+  warning: vi.fn(),
 }));
 
 interface MockOctokit {
@@ -38,6 +40,16 @@ function makeRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
 const defaultConfig: Config = makeConfig({ includeCharts: false, notificationThreshold: 0 });
 
 describe('filterRepos', () => {
+  it('warns and skips a malformed regex pattern instead of failing the run', () => {
+    const repos = [makeRepo({ name: 'keep-me' }), makeRepo({ name: 'drop-me' })];
+    const config = makeConfig({ excludeRepos: ['/[unclosed/', 'drop-me'] });
+
+    const filtered = filterRepos({ repos, config });
+
+    expect(filtered.map((repo) => repo.name)).toEqual(['keep-me']);
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Ignoring invalid pattern'));
+  });
+
   it('returns all repos with default config', () => {
     const repos = [makeRepo(), makeRepo({ name: 'other' })];
 
