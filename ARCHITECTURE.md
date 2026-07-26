@@ -13,6 +13,11 @@ the project's own term, and the `(ish)` is load-bearing: these are *layers* shar
 bounded contexts with languages of their own. The domain vocabulary itself lives in [CONTEXT.md](./CONTEXT.md).
 
 ```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
 flowchart TD
     idx["src/index.ts"] --> app["@application<br/>tracker.ts — the only use case"]
 
