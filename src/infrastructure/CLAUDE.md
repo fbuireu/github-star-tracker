@@ -108,8 +108,9 @@ the caller catches and warns.
 
 - **`smtp-host` is the only mandatory switch.** An empty host returns `null` *before* reading any other input,
   and `null` is the caller's master on/off switch.
-- **`secure` is derived purely from the port** (`port === 465`). There is no `smtp-secure` input. The port is
-  parsed with no validation: a non-numeric value yields `NaN`, which silently makes `secure` false.
+- **`secure` is derived purely from the port** (`port === 465`). There is no `smtp-secure` input.
+- **The port is validated.** `resolvePort` requires an integer in `1..MAX_TCP_PORT`; anything else, including a
+  non-numeric string, warns and falls back to `587`. `NaN` never reaches nodemailer.
 - **Auth is all-or-nothing**: `auth` is set only when username *and* password are both truthy, otherwise
   literally `undefined` (a test asserts the value, not an absent key).
 - From-address resolution, in order: a `from` containing `@` is used verbatim; otherwise a `username`

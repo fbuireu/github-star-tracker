@@ -26,9 +26,13 @@ inputs (`@infrastructure/notification` does), does **not** read `github-token` /
   are **invalid** and warn. Config-file values accept the full YAML set (`true|yes|on|y|1` /
   `false|no|off|n|0`), and a quoted `"false"` is `false`, not a truthy string.
 - **Numbers are strict.** A string input must match `/^[+-]?\d+$/` after trimming, so `'3.7'` and `'42abc'`
-  are rejected outright with no partial parse. No bounds are enforced: negative `min-stars`, `max-history`,
-  `top-repos` and `chart-max-points` are all accepted. `chart-max-points: 0` is meaningful (full history at
-  weekly resolution) and must survive the `??`.
+  are rejected outright with no partial parse; a YAML number is truncated with `Math.trunc`.
+- **Sign is enforced per key, and which parser a key uses is load-bearing.** `max-history`, `top-repos` and
+  `smart-sampling-pages` use `parsePositiveNumber` (`> 0`), so `0` and negatives fall back to the default.
+  `min-stars`, `chart-max-points` and `smart-sampling-threshold` use `parseNonNegativeNumber` (`>= 0`), which
+  is what keeps `chart-max-points: 0` alive as a meaningful value — full history at weekly resolution — while
+  still rejecting negatives. Rejecting `max-history: 0` matters downstream: `addSnapshot` trims with
+  `.slice(-maxHistory)`, and `slice(-0)` would keep the entire array.
 - `chart-line-width` is the only decimal field and requires finite **and > 0**.
   `notification-threshold` matches `'auto'` **exactly** — no trim, no case-fold, so `'Auto'` is rejected.
 - **Lists**: `parseList` returns `undefined` (not `[]`) for empty input so the file value can still win, while
@@ -52,17 +56,19 @@ has a kebab-case input whose `default` is **empty**, and that only `config-path`
 `smtp-port` carry a non-empty default. **Never add a `default:` to an overridable input** — the test fails and
 the config file would stop working, because a non-empty default always beats it.
 
-Real defaults therefore live in `defaults.ts` and are only *described* in the `action.yml` prose, which drifts:
+Real defaults therefore live in `defaults.ts` and are only *described* in the `action.yml` prose. Every
+overridable input does state its default in that prose today, so check `defaults.ts` before trusting a
+description rather than assuming one is missing. Two of those descriptions promise behaviour this folder does
+not implement:
 
-- `visibility` never states its default (`'all'`), and `include-archived`, `include-forks`, `exclude-repos`,
-  `only-repos`, `only-orgs`, `exclude-orgs` and `min-stars` also omit theirs (`false`, `false`, `[]`, `[]`,
-  `[]`, `[]`, `0`).
-- `chart-max-points` claims to be "capped at 365" — that clamp is **not** applied here; it lives in
-  `@domain/star-history`.
-- `chart-custom-milestones` says it "Requires chart-milestones to be enabled" — that dependency is not
-  enforced anywhere; the two resolve independently.
-- `smtp-port`'s `'587'` and `config-path`'s `'star-tracker.yml'` are each duplicated in code, so changing
-  either in `action.yml` alone has no effect.
+- `chart-max-points` says "capped at 365". That clamp is **not** applied here — `loadConfig` passes the raw
+  integer through, and `MAX_HISTORY_BUCKETS` in `@domain/star-history` does the capping.
+- `chart-custom-milestones` says it "Requires chart-milestones to be enabled". Nothing enforces that; the two
+  resolve independently, so custom milestones combined with `chart-milestones: false` silently do nothing.
+
+Two literals are also duplicated between the manifest and code, so changing `action.yml` alone has no effect:
+`smtp-port`'s `'587'` (`DEFAULT_SMTP_PORT` in `@infrastructure/notification/email`) and `config-path`'s
+`'star-tracker.yml'` (`DEFAULT_CONFIG_PATH` in `loader.ts`).
 
 ## Gotchas
 
