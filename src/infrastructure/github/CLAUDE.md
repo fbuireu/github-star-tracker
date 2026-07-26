@@ -83,7 +83,7 @@ Order of operations in `filterRepos` — the sequence is part of the contract:
 
 1. `onlyOrgs` (if non-empty) narrows the candidate set by `repo.owner.login`.
 2. `onlyRepos` (if non-empty) **short-circuits**: it returns the org-narrowed candidates whose `repo.name`
-   is in the set, and skips steps 3-7 entirely.
+   matches, and skips steps 3-7 entirely.
 3. `includeArchived === false` drops `repo.archived`.
 4. `includeForks === false` drops `repo.fork`.
 5. `excludeRepos` drops matches on `repo.name`.
@@ -119,10 +119,10 @@ Pattern matching (`matchesPattern`, `filters.ts:14`) accepts either an exact str
 **Filtering**
 - `filterRepos` never mutates its input; every step produces a new array via `filter`, and repo objects are
   passed through by reference.
-- `onlyRepos` is matched with a `Set` of **exact names only** — no regex support, unlike `onlyOrgs`,
-  `excludeOrgs` and `excludeRepos`. Exact-name matching is **case-sensitive** (`filters.test.ts`,
-  "matches orgs case-sensitively"); regex patterns honour their own flags, so `/^my/i` matches
-  case-insensitively (`filters.test.ts`).
+- All four list filters (`onlyRepos`, `onlyOrgs`, `excludeOrgs`, `excludeRepos`) go through
+  `matchesPattern`, so each accepts an exact name or a `/body/flags` literal. Exact-name matching is
+  **case-sensitive**; regex patterns honour their own flags, so `/^my/i` matches case-insensitively
+  (`filters.test.ts`).
 - `onlyRepos` overrides archived/fork/exclude/min-stars, but **not** `onlyOrgs`: a repo excluded by
   `onlyOrgs` can never be brought back by `onlyRepos` (`filters.test.ts`).
 - Matching is on the short `repo.name`, not `full_name`; org matching is on `owner.login`. A repo with the
@@ -190,9 +190,9 @@ reads action inputs. Do not import `node:fs` or `../persistence/*`; fetching and
 - **`GitHubRepo` is a hand-written structural subset**, not octokit's generated type. Reading a new field
   (e.g. `description`, `pushed_at`) means adding it here first, and the tests' `makeRepo` factory builds
   the same shape.
-- **Invalid regex patterns throw at filter time.** `@config/*` does no `RegExp` validation, so a malformed
-  `/[/` in `exclude-repos` surfaces as an unhandled `SyntaxError` from `matchesPattern`, not as a config
-  error.
+- **An invalid regex is skipped, not fatal.** `@config/*` does no `RegExp` validation, so a malformed
+  `/[/` reaches `matchesPattern`, which catches the `SyntaxError`, warns `Ignoring invalid pattern "…"`
+  and treats that one pattern as non-matching. The run continues with the remaining patterns.
 - **`REGEX_PATTERN`'s body group is greedy** (`/^\/(.+)\/([gimsuy]*)$/`), so `/a/b/` is parsed as the body
   `a/b` with no flags rather than as `a` with an invalid flag.
 - **A plain string in `exclude-orgs` that happens to start and end with `/`** is treated as a regex, never
