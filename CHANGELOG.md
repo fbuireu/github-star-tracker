@@ -1,3 +1,10 @@
+## [1.24.1](https://github.com/fbuireu/github-star-tracker/compare/v1.24.0...v1.24.1) (2026-07-26)
+
+
+### Bug Fixes
+
+* correct four user-facing bugs, close every known inconsistency, and add a docs guard ([#162](https://github.com/fbuireu/github-star-tracker/issues/162)) ([6aade7b](https://github.com/fbuireu/github-star-tracker/commit/6aade7b4448f44e28250302ecc306d9d37237d1c))
+
 # [1.24.0](https://github.com/fbuireu/github-star-tracker/compare/v1.23.1...v1.24.0) (2026-07-25)
 
 
