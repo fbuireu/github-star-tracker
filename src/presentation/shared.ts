@@ -147,6 +147,20 @@ export function prepareReportData({
   };
 }
 
+const HTML_ESCAPE_MAP: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+const HTML_ESCAPABLE_CHAR_PATTERN = /[&<>"']/g;
+
+export function escapeHtml(text: string): string {
+  return text.replaceAll(HTML_ESCAPABLE_CHAR_PATTERN, (char) => HTML_ESCAPE_MAP[char]);
+}
+
 export function perRepoChartFile(repoFullName: string): string {
   return `${repoFullName.replace('/', '-')}.svg`;
 }
@@ -187,7 +201,7 @@ export function buildForecastChartSeries({
   historicalData,
   forecastData,
 }: BuildForecastChartSeriesParams): ForecastChartSeries {
-  const forecastLength = forecastData.aggregate.forecasts[0].points.length;
+  const forecastLength = forecastData.aggregate.forecasts[0]?.points.length ?? 0;
   const findPoints = (method: string): { predicted: number }[] | undefined =>
     forecastData.aggregate.forecasts.find((forecast) => forecast.method === method)?.points;
   const lastHistorical = historicalData.at(-1) ?? 0;

@@ -3,11 +3,23 @@ import type { ComparisonResults } from '@domain/types';
 const CSV_HEADER = 'repository,owner,name,stars,previous,delta,status';
 export const NEW_LINE = '\n';
 
+const FORMULA_TRIGGERS = ['=', '+', '-', '@'];
+
 function escapeCsvField(field: string): string {
-  if (field.includes(',') || field.includes('"') || field.includes(NEW_LINE)) {
-    return `"${field.replaceAll('"', '""')}"`;
+  const neutralized = FORMULA_TRIGGERS.some((trigger) => field.startsWith(trigger))
+    ? `'${field}`
+    : field;
+
+  if (
+    neutralized.includes(',') ||
+    neutralized.includes('"') ||
+    neutralized.includes(NEW_LINE) ||
+    neutralized !== field
+  ) {
+    return `"${neutralized.replaceAll('"', '""')}"`;
   }
-  return field;
+
+  return neutralized;
 }
 
 const REPO_STATUS = {

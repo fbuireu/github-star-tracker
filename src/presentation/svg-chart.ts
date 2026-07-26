@@ -330,7 +330,7 @@ function renderSvg({
   animate = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
-}: RenderSvgParams): string {
+}: RenderSvgParams): string | null {
   const {
     margin,
     pointRadius,
@@ -358,6 +358,8 @@ function renderSvg({
   const allValues = datasets.flatMap((dataset) =>
     dataset.data.filter((value): value is number => value !== null),
   );
+  if (allValues.length === 0) return null;
+
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
   const padding = Math.max(

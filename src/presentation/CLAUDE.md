@@ -60,6 +60,7 @@ Both take the same `GenerateReportParams` object; the tracker builds it once and
 - `selectChartSnapshots<T extends { timestamp: string }>({ snapshots, range?, maxPoints? }): T[]`
 - `movingAverageSeries({ values, window }): number[]`
 - `prepareReportData({ results, previousTimestamp, locale }): ReportData`
+- `escapeHtml(text: string): string` — escapes `& < > " '` for the HTML report.
 - `perRepoChartFile(repoFullName: string): string`
 - `buildForecastWeekHeaders(t: Translations): string[]`, `forecastMethodLabel({ method, t }): string`
 - `buildForecastChartSeries({ historicalData, forecastData }): ForecastChartSeries`
@@ -133,11 +134,11 @@ Config input (`action.yml`) → parameter → effect. Sample SVGs in `examples/`
 
 ## Escaping & injection safety
 
-- `svg-chart.ts` has the only escaper: `escapeXml` maps `& < > "` (not `'`, which is safe because every attribute uses double quotes). It is applied to **exactly three** things: the chart title, x-axis labels, and legend dataset labels. Colours, numbers and class names are generated internally and are not escaped — if you ever interpolate user text into a new attribute, wrap it in `escapeXml`.
+- `svg-chart.ts` has its own escaper for SVG: `escapeXml` maps `& < > "` (not `'`, which is safe because every attribute uses double quotes). It is applied to **exactly three** things: the chart title, x-axis labels, and legend dataset labels. Colours, numbers and class names are generated internally and are not escaped — if you ever interpolate user text into a new attribute, wrap it in `escapeXml`.
 - `chart.ts` needs no escaper: the whole Chart.js config goes through `JSON.stringify` + `encodeURIComponent`.
 - `badge.ts` performs **no** escaping. Its only dynamic values are an i18n label and `formatCount(totalStars)`.
-- `html.ts` and `markdown.ts` perform **no** escaping at all. Repo full names, stargazer logins, `avatarUrl` and `profileUrl` are interpolated raw into attributes and text. They currently come from the GitHub API, which constrains them; treat any new field from a less-constrained source as requiring an escaper before it lands in these templates.
-- `csv.ts` escapes CSV delimiters only. It does not neutralise spreadsheet formula injection (a leading `=`, `+`, `-` or `@`).
+- `html.ts` escapes every GitHub-sourced string it interpolates — repo full names, stargazer logins, `avatarUrl` and `profileUrl` — through `escapeHtml` (`shared.ts`), which covers `& < > " '`. `markdown.ts` still interpolates raw; its output is markdown on a data branch, where the same values cannot form a tag, but treat any new field from a less-constrained source as requiring an escaper.
+- `csv.ts` escapes CSV delimiters and neutralises spreadsheet formula injection: a field starting with `=`, `+`, `-` or `@` is prefixed with `'` and quoted.
 
 ## Dependencies
 
@@ -151,8 +152,8 @@ Forbidden: `@actions/core` and `@actions/github` (config/infrastructure own inpu
 - `COLORS` in `constants.ts` is an alias for `LIGHT_PALETTE`. `badge.ts` uses `COLORS` unconditionally, so the badge is always light-themed and ignores `chart-theme` — though its number *is* localized.
 - `perRepoChartFile` (`shared.ts`) replaces only the **first** `/`: `user/repo` → `user-repo.svg`. Nested-looking names would keep later slashes and produce an invalid filename.
 - `repoStarSeries` (`@domain/snapshot`) returns `0`, not `null`, for a repo missing from a snapshot — so a per-repo chart for an unknown repo renders a flat zero line rather than returning `null`. The `chart.test.ts` case named "returns null for non-existent repository" actually asserts `"data":[0,0,0]`.
-- `buildForecastChartSeries` indexes `forecastData.aggregate.forecasts[0]` without a guard; an empty `forecasts` array throws.
-- `renderSvg` computes `Math.min(...allValues)` over the flattened non-null values; a dataset set that is entirely `null` yields `Infinity`/`-Infinity` and NaN coordinates. The `< 2 snapshots` guard is the only thing preventing this today.
+- `buildForecastChartSeries` reads `forecastData.aggregate.forecasts[0]?.points.length ?? 0`, so an empty `forecasts` array yields a zero-length projection instead of throwing.
+- `renderSvg` returns `null` when every dataset value is `null`; previously `Math.min(...[])` yielded `Infinity`/`-Infinity` and emitted a chart with NaN coordinates.
 - `chart.ts` maps `rounded-step` to Chart.js `cubicInterpolationMode: 'monotone'`, and `catmull-rom` / `cubic-bezier` both to a plain `tension: 0.6` spline — email charts are deliberately a lower-fidelity approximation of the SVG curves.
 - `html.ts` builds QuickChart URLs at render time; the images are fetched by the mail client, not by the action. A very long history therefore lands in a very long URL.
 - `charts.ts` is the only logic-bearing file in the folder without a colocated test (`constants.ts` and `types.ts` have none either, but hold no logic); it is covered indirectly by `src/application/tracker.test.ts`, which mocks `@presentation/svg-chart` but not `@presentation/charts`.

@@ -14,6 +14,7 @@ import type { GenerateReportParams } from './shared';
 import {
   buildForecastWeekHeaders,
   colorSchemeFor,
+  escapeHtml,
   forecastMethodLabel,
   prepareReportData,
   resolvePalette,
@@ -72,7 +73,7 @@ export function generateHtmlReport({
       return `
       <tr>
         <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};">
-          <a href="https://github.com/${repo.fullName}" style="color:${palette.link};text-decoration:none;">${repo.fullName}</a>${badge}
+          <a href="https://github.com/${escapeHtml(repo.fullName)}" style="color:${palette.link};text-decoration:none;">${escapeHtml(repo.fullName)}</a>${badge}
         </td>
         <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};text-align:right;">${repo.current}</td>
         <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};text-align:right;color:${deltaColor({ delta: repo.delta, palette })};font-weight:600;">
@@ -87,7 +88,7 @@ export function generateHtmlReport({
       ? `
       <div style="margin-top:16px;">
         <h3 style="color:${palette.negative};font-size:14px;">${t.report.removedRepositories}</h3>
-        <ul>${removedRepos.map((repo) => `<li>${interpolate({ template: t.report.removedRepoText, params: { name: repo.fullName, count: repo.previous ?? 0 } })}</li>`).join('')}</ul>
+        <ul>${removedRepos.map((repo) => `<li>${interpolate({ template: t.report.removedRepoText, params: { name: escapeHtml(repo.fullName), count: repo.previous ?? 0 } })}</li>`).join('')}</ul>
       </div>`
       : '';
 
@@ -125,8 +126,8 @@ export function generateHtmlReport({
           if (!chartUrl) return '';
           return `
         <div style="margin-top:16px;">
-          <h4 style="font-size:14px;margin-bottom:8px;">${repoName}</h4>
-          <img src="${chartUrl}" alt="${repoName}" style="max-width:100%;height:auto;border-radius:4px;">
+          <h4 style="font-size:14px;margin-bottom:8px;">${escapeHtml(repoName)}</h4>
+          <img src="${chartUrl}" alt="${escapeHtml(repoName)}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
         })
         .filter(Boolean)
@@ -172,13 +173,13 @@ export function generateHtmlReport({
           .map(
             (entry) => `
         <div style="margin-top:12px;">
-          <h3 style="font-size:14px;margin-bottom:8px;">${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</h3>
+          <h3 style="font-size:14px;margin-bottom:8px;">${escapeHtml(entry.repoFullName)} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</h3>
           ${entry.newStargazers
             .map(
               (stargazer) => `
           <div style="display:flex;align-items:center;margin:4px 0;">
-            <img src="${stargazer.avatarUrl}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
-            <a href="${stargazer.profileUrl}" style="color:${palette.link};text-decoration:none;font-weight:600;">${stargazer.login}</a>
+            <img src="${escapeHtml(stargazer.avatarUrl)}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
+            <a href="${escapeHtml(stargazer.profileUrl)}" style="color:${palette.link};text-decoration:none;font-weight:600;">${escapeHtml(stargazer.login)}</a>
             <span style="color:${palette.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split('T')[0] } })}</span>
           </div>`,
             )

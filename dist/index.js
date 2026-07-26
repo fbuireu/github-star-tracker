@@ -37593,7 +37593,7 @@ var FALLBACK_LANG = TRANSLATIONS.en;
 function interpolate({ template, params }) {
   return template.replaceAll(
     PLACEHOLDER_PATTERN,
-    (match, key) => key in params ? String(params[key]) : match
+    (match, key) => Object.hasOwn(params, key) ? String(params[key]) : match
   );
 }
 function getTranslations(locale) {
@@ -41575,6 +41575,17 @@ function prepareReportData({
     prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun
   };
 }
+var HTML_ESCAPE_MAP = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+};
+var HTML_ESCAPABLE_CHAR_PATTERN = /[&<>"']/g;
+function escapeHtml(text) {
+  return text.replaceAll(HTML_ESCAPABLE_CHAR_PATTERN, (char) => HTML_ESCAPE_MAP[char]);
+}
 function perRepoChartFile(repoFullName) {
   return `${repoFullName.replace("/", "-")}.svg`;
 }
@@ -41595,7 +41606,7 @@ function buildForecastChartSeries({
   historicalData,
   forecastData
 }) {
-  const forecastLength = forecastData.aggregate.forecasts[0].points.length;
+  const forecastLength = forecastData.aggregate.forecasts[0]?.points.length ?? 0;
   const findPoints = (method) => forecastData.aggregate.forecasts.find((forecast) => forecast.method === method)?.points;
   const lastHistorical = historicalData.at(-1) ?? 0;
   const padLength = historicalData.length;
@@ -41843,6 +41854,7 @@ function renderSvg({
   const allValues = datasets.flatMap(
     (dataset) => dataset.data.filter((value) => value !== null)
   );
+  if (allValues.length === 0) return null;
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
   const padding = Math.max(
@@ -42274,11 +42286,13 @@ function buildChartFiles({
 // src/presentation/csv.ts
 var CSV_HEADER = "repository,owner,name,stars,previous,delta,status";
 var NEW_LINE = "\n";
+var FORMULA_TRIGGERS = ["=", "+", "-", "@"];
 function escapeCsvField(field) {
-  if (field.includes(",") || field.includes('"') || field.includes(NEW_LINE)) {
-    return `"${field.replaceAll('"', '""')}"`;
+  const neutralized = FORMULA_TRIGGERS.some((trigger) => field.startsWith(trigger)) ? `'${field}` : field;
+  if (neutralized.includes(",") || neutralized.includes('"') || neutralized.includes(NEW_LINE) || neutralized !== field) {
+    return `"${neutralized.replaceAll('"', '""')}"`;
   }
-  return field;
+  return neutralized;
 }
 var REPO_STATUS = {
   new: "new",
@@ -42735,7 +42749,7 @@ function generateHtmlReport({
     return `
       <tr>
         <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};">
-          <a href="https://github.com/${repo.fullName}" style="color:${palette.link};text-decoration:none;">${repo.fullName}</a>${badge}
+          <a href="https://github.com/${escapeHtml(repo.fullName)}" style="color:${palette.link};text-decoration:none;">${escapeHtml(repo.fullName)}</a>${badge}
         </td>
         <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};text-align:right;">${repo.current}</td>
         <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};text-align:right;color:${deltaColor({ delta: repo.delta, palette })};font-weight:600;">
@@ -42746,7 +42760,7 @@ function generateHtmlReport({
   const removedSection = removedRepos.length > 0 ? `
       <div style="margin-top:16px;">
         <h3 style="color:${palette.negative};font-size:14px;">${t.report.removedRepositories}</h3>
-        <ul>${removedRepos.map((repo) => `<li>${interpolate({ template: t.report.removedRepoText, params: { name: repo.fullName, count: repo.previous ?? 0 } })}</li>`).join("")}</ul>
+        <ul>${removedRepos.map((repo) => `<li>${interpolate({ template: t.report.removedRepoText, params: { name: escapeHtml(repo.fullName), count: repo.previous ?? 0 } })}</li>`).join("")}</ul>
       </div>` : "";
   const topRepos = sorted.slice(0, topReposCount).map((repo) => repo.fullName);
   const comparisonChartUrl = hasChartHistory && topRepos.length > 0 ? generateComparisonChartUrl({
@@ -42776,8 +42790,8 @@ function generateHtmlReport({
     if (!chartUrl) return "";
     return `
         <div style="margin-top:16px;">
-          <h4 style="font-size:14px;margin-bottom:8px;">${repoName}</h4>
-          <img src="${chartUrl}" alt="${repoName}" style="max-width:100%;height:auto;border-radius:4px;">
+          <h4 style="font-size:14px;margin-bottom:8px;">${escapeHtml(repoName)}</h4>
+          <img src="${chartUrl}" alt="${escapeHtml(repoName)}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
   }).filter(Boolean).join("") : "";
   const chartSection = hasChartHistory ? `
@@ -42801,12 +42815,12 @@ function generateHtmlReport({
         ${stargazerDiff.entries.map(
     (entry) => `
         <div style="margin-top:12px;">
-          <h3 style="font-size:14px;margin-bottom:8px;">${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</h3>
+          <h3 style="font-size:14px;margin-bottom:8px;">${escapeHtml(entry.repoFullName)} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</h3>
           ${entry.newStargazers.map(
       (stargazer) => `
           <div style="display:flex;align-items:center;margin:4px 0;">
-            <img src="${stargazer.avatarUrl}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
-            <a href="${stargazer.profileUrl}" style="color:${palette.link};text-decoration:none;font-weight:600;">${stargazer.login}</a>
+            <img src="${escapeHtml(stargazer.avatarUrl)}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
+            <a href="${escapeHtml(stargazer.profileUrl)}" style="color:${palette.link};text-decoration:none;font-weight:600;">${escapeHtml(stargazer.login)}</a>
             <span style="color:${palette.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split("T")[0] } })}</span>
           </div>`
     ).join("")}

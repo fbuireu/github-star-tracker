@@ -23,7 +23,7 @@ const FALLBACK_LANG = TRANSLATIONS.en;
 
 export function interpolate({ template, params }: InterpolateParams): string {
   return template.replaceAll(PLACEHOLDER_PATTERN, (match, key) =>
-    key in params ? String(params[key]) : match,
+    Object.hasOwn(params, key) ? String(params[key]) : match,
   );
 }
 

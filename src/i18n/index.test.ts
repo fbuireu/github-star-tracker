@@ -3,6 +3,13 @@ import { getTranslations, interpolate, LOCALE_MAP, LOCALES } from './index';
 
 const INTL_LOCALE_CODE_PATTERN = /^[a-z]{2}-[A-Z]{2}$/;
 
+describe('interpolate prototype safety', () => {
+  it('does not resolve a placeholder from the prototype chain', () => {
+    expect(interpolate({ template: '{constructor}', params: {} })).toBe('{constructor}');
+    expect(interpolate({ template: '{toString}', params: {} })).toBe('{toString}');
+  });
+});
+
 describe('interpolate', () => {
   it('replaces placeholders with params', () => {
     expect(interpolate({ template: 'Hello {name}!', params: { name: 'World' } })).toBe(

@@ -1,3 +1,4 @@
+import { makeComparisonResults } from '@shared/testing';
 import { describe, expect, it } from 'vitest';
 import { generateCsvReport, NEW_LINE } from './csv';
 
@@ -9,6 +10,18 @@ const baseSummary = {
   lostStars: 0,
   changed: true,
 };
+
+describe('formula injection', () => {
+  it('neutralises a field that would be read as a spreadsheet formula', () => {
+    const results = makeComparisonResults();
+    results.repos[0].fullName = '=cmd|calc';
+
+    const csv = generateCsvReport(results);
+
+    expect(csv).toContain(`"'=cmd|calc"`);
+    expect(csv).not.toContain(',=cmd|calc,');
+  });
+});
 
 describe('generateCsvReport', () => {
   it('generates CSV with header and repo rows', () => {

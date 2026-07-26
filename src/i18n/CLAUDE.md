@@ -72,7 +72,7 @@ Strings that carry placeholders, and the exact names they expect:
 - **Placeholder syntax is exactly `/\{(\w+)\}/g`**: a single brace pair around `[A-Za-z0-9_]+`. No spaces
   inside the braces, no dots, no nesting, no `{{ }}`. `{first name}` and `{user.name}` are not placeholders
   and pass through untouched.
-- **Unknown placeholders are left verbatim.** `interpolate` checks `key in params`; a miss returns the
+- **Unknown placeholders are left verbatim.** `interpolate` checks `Object.hasOwn(params, key)`; a miss returns the
   original `{key}` text rather than `undefined` or an empty string. Pinned by
   `'leaves unmatched placeholders intact'` in `index.test.ts`.
 - **Values are coerced with `String(...)`**, so `{count: 0}` renders `0`, not an empty string.

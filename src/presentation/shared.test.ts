@@ -2,7 +2,7 @@ import { ChartRange, ChartTheme } from '@config/types';
 import type { ComparisonResults } from '@domain/types';
 import { makeComparisonResults, makeRepoResult } from '@shared/testing';
 import { describe, expect, it, vi } from 'vitest';
-import { colorSchemeFor, prepareReportData, selectChartSnapshots } from './shared';
+import { colorSchemeFor, escapeHtml, prepareReportData, selectChartSnapshots } from './shared';
 
 function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResults {
   return makeComparisonResults({
@@ -23,6 +23,14 @@ function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResu
     ...overrides,
   });
 }
+
+describe('escapeHtml', () => {
+  it('neutralises every character that could break out of an attribute or a tag', () => {
+    expect(escapeHtml(`<img src="x" onerror='y'>&`)).toBe(
+      '&lt;img src=&quot;x&quot; onerror=&#39;y&#39;&gt;&amp;',
+    );
+  });
+});
 
 describe('selectChartSnapshots', () => {
   const snapshots = [
