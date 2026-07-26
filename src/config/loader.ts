@@ -14,7 +14,6 @@ import {
   parseList,
   parseNonNegativeNumber,
   parseNotificationThreshold,
-  parseNumber,
   parseNumberList,
   parsePositiveNumber,
   toStringList,
