@@ -92,10 +92,10 @@ markdown/HTML/SVG belongs to `@presentation/*`, and orchestration belongs to `@a
 - Every function here must stay free of I/O and of `@actions/*`. The only wall-clock reads are
   `createSnapshot` (`new Date().toISOString()`) and the *defaults* of `getBaselineSnapshot({ now })` and
   `buildStarHistory({ now })`. Never add a third; prefer an injectable `now`.
-- `toEpochMs` guarantees a **finite number or `null`** — never `NaN`. Only `snapshot.ts` and `velocity.ts`
-  go through it today; `forecast.ts` (`snapshotDays`), `formatting.ts` (`buildAxisLabels`) and
-  `star-history.ts` still call raw `Date.parse` behind their own explicit `Number.isFinite` guards — keep
-  those guards if you touch them.
+- `toEpochMs` guarantees a **finite number or `null`** — never `NaN`. It is the single timestamp entry
+  point for the whole layer: `snapshot.ts`, `velocity.ts`, `forecast.ts` (`snapshotDays`),
+  `star-history.ts` and `formatting.ts` (`formatDate`, `buildAxisLabels`) all go through it. Never
+  reintroduce a raw `Date.parse` here.
 - All internal arithmetic is in **milliseconds**; anything user-facing is converted to **days**
   (`MS_PER_DAY`). `MS_PER_YEAR` is a flat `365 * MS_PER_DAY` — no leap-year correction.
 
@@ -206,15 +206,11 @@ markdown/HTML/SVG belongs to `@presentation/*`, and orchestration belongs to `@a
 ## Gotchas
 - `formatting.ts` builds `compactFormatter` with the hard-coded `'en'` locale, so `formatCount` emits
   `K`/`M` suffixes regardless of the report locale — only `formatDate`/`buildAxisLabels` are localized.
-- Timezone is inconsistent by design-accident: `formatDate` uses `toLocaleDateString` with no `timeZone`
-  option (runner-local), while `buildAxisLabels` uses `getUTCFullYear`. A run near midnight can label a
-  day in local time under a UTC year.
 - `buildAxisLabels` keeps `lastYear` as closure state across the `.map` callback; it only works because
   `Array.prototype.map` runs in order and the input is sorted.
-- Timestamp parsing is split two ways: `snapshot.ts` / `velocity.ts` use `toEpochMs`, while `forecast.ts`,
-  `formatting.ts` and `star-history.ts` call `Date.parse` directly. They agree today but do not share a code
-  path. `formatDate` is the one place with **no** guard at all — an unparseable timestamp reaches
-  `toLocaleDateString` and renders as `Invalid Date`.
+- `formatDate` returns an **empty string** for an unparseable timestamp, matching `buildAxisLabels`, whose
+  contract is already "an empty label is a tick that must not render". Callers must not assume a non-empty
+  date.
 - `getLastSnapshot` (and therefore `compare-against: last-run`) returns a snapshot even if its timestamp is
   garbage — the unparseable-timestamp guards only apply to the `24h`/`7d`/`30d` branches.
 - `buildStarHistory` handles a `starred_at` in the future relative to `now` by emitting just two edges
