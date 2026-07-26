@@ -94,6 +94,7 @@ All outputs are strings (GitHub Actions requirement). Available in subsequent wo
 | `new-stars` | `string` | Per-run. Stars gained against the `compare-against` baseline |
 | `lost-stars` | `string` | Per-run. Stars lost against the `compare-against` baseline |
 | `should-notify` | `string` | Cumulative. Whether `notification-threshold` was reached under `notification-mode` since the last notification fired, and something changed: `true` or `false` |
+| `notification-sent` | `string` | Whether an email was actually delivered this run: `true` or `false`. Differs from `should-notify` when SMTP is unconfigured, `email-to` is empty, or the send failed |
 | `new-stargazers` | `string` | Number of new stargazers detected by diffing against the stored `stargazers.json`, which every writing run rewrites - unlike its siblings it is not affected by `compare-against` (0 if tracking disabled) |
 
 `new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the comparison baseline. They are not cumulative and carry no memory of whether an email was sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: its counter only resets when a notification actually fires. `notification-sent` is the delivery counterpart — `should-notify` is the decision, `notification-sent` is whether mail left the building.

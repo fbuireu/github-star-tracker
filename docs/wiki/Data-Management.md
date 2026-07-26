@@ -28,6 +28,8 @@ The working directory for the branch is derived from the name: `.${dataBranch}` 
 | `charts/comparison.svg` | Top repos comparison | Every run (charts on) |
 | `charts/forecast.svg` | Growth forecast | Every run (when enough history points exist) |
 | `charts/{owner}-{repo}.svg` | Per-repo charts | Every run (charts on) |
+
+Charts this run did not produce are deleted from `charts/`, so a repository that drops out of `top-repos` does not leave its file behind. Nothing outside `charts/` is ever removed, and only `.svg` files are considered.
 | `stargazers.json` | Stargazer login map | Only with `track-stargazers: true` |
 
 > Charts are reconstructed from the real star history (each stargazer's `starred_at` date), not from accumulated per-run snapshots, so they render on the first run.
@@ -108,6 +110,13 @@ When `track-stargazers: true`, the action maintains a separate `stargazers.json`
 ```
 
 This stores only login names (not avatars or dates) for efficient diffing between runs. Full stargazer details (avatar, profile URL, starred date) are only shown in reports.
+
+A repository whose stargazers could not be read — a failed request, an empty response for a repo that has
+stars, or a repo covered by `smart-sampling` — **keeps its previous login list** rather than being written
+as empty. Without that, one transient failure would wipe the entry and the next successful run would report
+every existing stargazer as new. The trade-off is that such an entry can be stale, and if the repository is
+permanently unreadable it will never report a new stargazer again. Each affected repository is named in a
+warning in the run log.
 
 ---
 
