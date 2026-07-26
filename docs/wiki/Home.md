@@ -92,7 +92,8 @@ jobs:
           github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
 
-> **Note:** `STAR_TRACKER_TOKEN` must be a [Personal Access Token](https://github.com/settings/tokens) with `repo` or `public_repo` scope. The default `GITHUB_TOKEN` is not sufficient.
+> [!NOTE]
+> `STAR_TRACKER_TOKEN` must be a [Personal Access Token](https://github.com/settings/tokens) with `repo` or `public_repo` scope. The default `GITHUB_TOKEN` is not sufficient.
 
 See **[Getting Started](Getting-Started)** for the full setup walkthrough.
 

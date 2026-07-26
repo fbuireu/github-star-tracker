@@ -1,10 +1,12 @@
 # Architecture
 
-## 1. What this is
+How the action is built, for contributors. What it does and how to configure it is the
+[README](./README.md) and the user guides in [docs/wiki/](./docs/wiki/) — in particular
+[How It Works](./docs/wiki/How-It-Works.md) and [Technical Stack](./docs/wiki/Technical-Stack.md); this
+document does not restate them. Conventions and the maintenance contract are [CLAUDE.md](./CLAUDE.md), the
+domain vocabulary is [CONTEXT.md](./CONTEXT.md).
 
-`github-star-tracker` is a JavaScript GitHub Action (TypeScript sources, bundled by esbuild into `dist/index.js`, run with `runs.using: node24` per `action.yml`). A consumer adds it to a scheduled workflow with `permissions: contents: write`, a `actions/checkout` step and a PAT (`github-token`; the default `GITHUB_TOKEN` is not sufficient) — see the Quick Start in `README.md`. On each run it lists the token owner's repositories, compares their star counts against a stored snapshot, and commits a markdown report, JSON/CSV data, a badge and animated SVG charts to a dedicated data branch. It also exposes eleven action outputs for workflow chaining and can send an HTML email over SMTP.
-
-## 2. Layer map
+## 1. Layer map
 
 The shape is **Domain-Driven Design<sub>(ish)</sub>** with a **Functional Core, Imperative Shell** pattern —
 the project's own term, and the `(ish)` is load-bearing: these are *layers* sharing one vocabulary, not DDD
@@ -55,9 +57,9 @@ red = the I/O boundary.
 
 Two hard rules govern this diagram: **domain and presentation are pure** (every I/O call in the tree lives under `src/infrastructure/`), and **cross-layer imports always go through path aliases while same-layer imports stay relative**.
 
-Those rules, the per-layer "may import / must not import" detail and the codebase-wide conventions are stated normatively once, in [src/CLAUDE.md](src/CLAUDE.md#invariants--rules). This section is the overview; when the two disagree, `src/CLAUDE.md` is right.
+The table above is the normative statement of the layer boundaries — the diagram is its picture, and anything the table forbids is forbidden however convenient. The codebase-wide conventions those boundaries sit inside (aliases, named params, no comments, purity) are stated once in [CLAUDE.md](./CLAUDE.md#conventions), and what each layer actually guarantees is that layer's own `CLAUDE.md`, linked in [§6](#6-where-things-live).
 
-## 3. A run, end to end
+## 2. A run, end to end
 
 All step numbers refer to `src/application/tracker.ts`.
 
@@ -90,7 +92,7 @@ All step numbers refer to `src/application/tracker.ts`.
 
 Failure policy: everything is wrapped in one `try/catch` that ends in `core.setFailed('Star Tracker failed: <msg>')` plus `core.debug(stack)`. Email is the only inner failure that is deliberately non-fatal.
 
-## 4. The data branch
+## 3. The data branch
 
 State has to survive between runs of a stateless Action. Artifacts expire and are not browsable; an external database would need credentials and hosting. A git branch in the same repository is free, versioned, diffable and directly linkable (raw URLs make the badge and charts embeddable in a README).
 
@@ -112,7 +114,7 @@ State has to survive between runs of a stateless Action. Artifacts expire and ar
 
 `read-only: true` runs everything — fetch, compare, render, all outputs, email — but skips `commitAndPush`, so a second workflow (e.g. a weekly digest using `compare-against`) can share a data branch without appending snapshots or racing the writer. The read-only guard lives in `tracker.ts`, not in the persistence layer.
 
-## 5. Outputs
+## 4. Outputs
 
 | Artefact | Rendered by | Written / emitted by |
 | --- | --- | --- |
@@ -127,9 +129,9 @@ State has to survive between runs of a stateless Action. Artifacts expire and ar
 | Email | `@presentation/html` body | `@infrastructure/notification/email` `sendEmail` |
 | Action outputs (11) | - | `setOutputs` in `tracker.ts` |
 
-Action outputs: `report`, `report-html`, `report-html-path`, `report-csv`, `total-stars`, `stars-changed`, `new-stars`, `lost-stars`, `should-notify`, `new-stargazers`.
+The eleven action outputs: `report`, `report-html`, `report-html-path`, `report-csv`, `total-stars`, `stars-changed`, `new-stars`, `lost-stars`, `should-notify`, `notification-sent`, `new-stargazers`. Their values, and the difference between `should-notify` (the decision) and `notification-sent` (whether mail went out), are in [src/application/CLAUDE.md](./src/application/CLAUDE.md).
 
-## 6. Build & release
+## 5. Build & release
 
 - **Bundling.** `esbuild.config.ts` (run via `tsx`) bundles `src/index.ts` -> `dist/index.js`, `platform: node`, `target: node24`, `format: cjs`, `sourcemap: true`, with the alias map derived from `tsconfig.json`. `dist/` is **committed** because GitHub runs a JS action straight from the repository at the referenced ref — there is no install step, so the bundle must be in the tree.
 - **Scripts** (`package.json`): `lint` = `biome check --no-errors-on-unmatched .`; `format` = `lint --write`; `typecheck` = `tsc --noEmit`; `test` / `test:coverage` = Vitest (v8 coverage, 85% threshold on lines/functions/branches/statements); `check` = lint + typecheck + test:coverage; `validate` = check + build. `pnpm run validate` is what the release job runs; `ci.yml` runs the same work as separate `check` / `test:coverage` / `build` steps.
@@ -149,7 +151,7 @@ Action outputs: `report`, `report-html`, `report-html-path`, `report-csv`, `tota
 | `renovate-auto-approve.yml` | Auto-approves Renovate PRs labelled patch/minor/pin/lock-maintenance |
 | `sync-wiki.yml` | Publishes `docs/wiki/` to the repository's GitHub Wiki |
 
-## 7. Where things live
+## 6. Where things live
 
 Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain glossary — what the words
 **mean**. The per-folder `CLAUDE.md` files below are **structure**. [docs/adr/](./docs/adr/) is **why**:
@@ -175,21 +177,18 @@ one from scratch.
 
 | Document | Covers |
 | --- | --- |
-| [src/CLAUDE.md](src/CLAUDE.md) | Entry point, alias wiring, verified whole-tree dependency graph |
-| [src/domain/CLAUDE.md](src/domain/CLAUDE.md) | Pure business core: comparison, snapshots, forecast, velocity, star-history, formatting |
-| [src/config/CLAUDE.md](src/config/CLAUDE.md) | Input + YAML parsing, precedence, defaults, what throws vs warns |
-| [src/application/CLAUDE.md](src/application/CLAUDE.md) | `trackStars()` orchestration, output contract, failure policy |
-| [src/i18n/CLAUDE.md](src/i18n/CLAUDE.md) | Locales, `getTranslations`, `interpolate` |
-| [src/presentation/CLAUDE.md](src/presentation/CLAUDE.md) | Markdown/HTML/CSV/badge rendering and the three chart modules |
-| [src/shared/CLAUDE.md](src/shared/CLAUDE.md) | Cross-cutting non-layer code |
-| [src/shared/testing/CLAUDE.md](src/shared/testing/CLAUDE.md) | Fixture factories used by tests |
-| [src/infrastructure/CLAUDE.md](src/infrastructure/CLAUDE.md) | I/O boundary rules shared by the four adapters |
-| [src/infrastructure/git/CLAUDE.md](src/infrastructure/git/CLAUDE.md) | `git` invocation and the data-branch worktree lifecycle |
-| [src/infrastructure/github/CLAUDE.md](src/infrastructure/github/CLAUDE.md) | Repo discovery, filtering, stargazer pagination |
-| [src/infrastructure/notification/CLAUDE.md](src/infrastructure/notification/CLAUDE.md) | SMTP config and nodemailer sending |
-| [src/infrastructure/persistence/CLAUDE.md](src/infrastructure/persistence/CLAUDE.md) | Data-branch filenames, reads/writes, commit & push |
+| [CLAUDE.md](./CLAUDE.md) | Commands, alias wiring, conventions, the maintenance contract — loaded into every agent session |
+| [src/application/CLAUDE.md](src/application/CLAUDE.md) | `trackStars()` invariants, the output contract, failure policy |
+| [src/config/CLAUDE.md](src/config/CLAUDE.md) | Input + YAML precedence, what throws vs warns, parser vocabularies |
+| [src/domain/CLAUDE.md](src/domain/CLAUDE.md) | Comparison semantics, snapshots, forecast/velocity maths, star-history |
+| [src/i18n/CLAUDE.md](src/i18n/CLAUDE.md) | Bundles, placeholder rules, adding a locale |
+| [src/infrastructure/CLAUDE.md](src/infrastructure/CLAUDE.md) | All four adapters: octokit, git worktree, persistence, SMTP |
+| [src/presentation/CLAUDE.md](src/presentation/CLAUDE.md) | Renderers, the chart trio, escaping and injection rules |
+| [src/shared/CLAUDE.md](src/shared/CLAUDE.md) | Fixture factories and why this folder stays almost empty |
 
-## 8. Extending it
+One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/testing` are sections inside their parent's guide rather than files of their own, because a guide in a subdirectory only reaches the agent once it reads a file in that exact folder.
+
+## 7. Extending it
 
 | Task | Files to touch |
 | --- | --- |
@@ -198,7 +197,7 @@ one from scratch.
 | **Add a report format** | New pure renderer in `src/presentation/` (data in, string out, no I/O) + colocated test; a `write<Format>` helper and filename in `@infrastructure/persistence/storage`; call both from `tracker.ts`; add an output to `action.yml` + `setOutputs`/`setEmptyOutputs` if it should be exposed. |
 | **Add a chart option** | Input plumbing as above; thread it through the `style` object in `src/presentation/charts.ts`; implement it in `src/presentation/svg-chart.ts` (all SVG primitives live behind the private `renderSvg`); mirror it in `src/presentation/chart.ts` if email charts should honour it; add a sample SVG under `examples/`. |
 
-## 9. Known inconsistencies
+## 8. Known inconsistencies
 
 None outstanding. Every mismatch this document previously listed has been resolved in the source; the
 history of what they were and why each was fixed is in the `fix:` commits and in `docs/adr/`.

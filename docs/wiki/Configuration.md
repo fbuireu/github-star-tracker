@@ -63,7 +63,8 @@ with:
   config-path: '.github/star-tracker.yml'
 ```
 
-> **Note:** In the config file, keys may be written with either underscores or dashes - `include_archived` and `include-archived` are both accepted. Action inputs always use `kebab-case` (e.g. `include-archived`).
+> [!NOTE]
+> In the config file, keys may be written with either underscores or dashes: `include_archived` and `include-archived` are both accepted. Action inputs always use `kebab-case` (e.g. `include-archived`).
 
 ---
 
@@ -339,7 +340,8 @@ Track individual stargazers and show new ones in reports.
 
 When enabled, the action fetches the full stargazer list for each repo, diffs against the previous run, and shows new stargazers with avatar, profile link, and starred date.
 
-> **Warning:** This is API-intensive. Each repo requires `ceil(stars / 100)` API calls. See **[Known Limitations](Known-Limitations)** for rate limit details.
+> [!WARNING]
+> This is API-intensive. Each repo requires `ceil(stars / 100)` API calls. See **[Known Limitations](Known-Limitations)** for rate limit details.
 
 ```yaml
 with:

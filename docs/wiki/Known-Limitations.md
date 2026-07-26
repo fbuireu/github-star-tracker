@@ -251,7 +251,8 @@ Email HTML rendering is notoriously inconsistent across clients. Outlook uses th
 
 Star data is captured **once per workflow run**. If the action runs daily, there is one data point per day. Intra-day changes (e.g., a repo gaining and then losing 5 stars within the same day) are invisible.
 
-> **Note:** This per-run snapshot granularity applies to the report delta tables and notification thresholds. Charts no longer plot one point per run - when charts are enabled (the default), the action fetches each repo's stargazers and reconstructs the real historical star curve from their `starred_at` dates, so the chart timeline reflects true history regardless of how often the action runs.
+> [!NOTE]
+> This per-run granularity applies to the report delta tables and notification thresholds. Charts do not plot one point per run: when charts are enabled (the default), the action fetches each repo's stargazers and reconstructs the real historical star curve from their `starred_at` dates, so the chart timeline reflects true history regardless of how often the action runs.
 
 ### Why
 

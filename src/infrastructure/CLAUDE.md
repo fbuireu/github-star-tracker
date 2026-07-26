@@ -1,44 +1,147 @@
-# src/infrastructure — the only layer allowed to perform I/O
+# src/infrastructure
 
-Everything that touches the outside world lives here: the GitHub REST API (octokit), the `git` CLI, the
-filesystem, and SMTP. It is a set of adapters, not a framework — the only cross-folder dependency is
-`persistence/storage.ts` importing `../git/commands`, and none of them decide *when* work happens. It
-holds no business logic: comparison, forecasting,
-snapshot pruning and star-history reconstruction all live in `@domain/*`, and every string a user reads is
-built in `@presentation/*`.
+The only layer allowed to perform I/O: the GitHub REST API, the `git` CLI, the filesystem and SMTP. Four
+adapters, no framework. None of them decide *when* work happens — `@application/tracker` is the composition
+root and their only consumer. They hold no business logic and build no user-facing strings.
 
-## Sub-folders
-| Folder | Responsibility | Side effects |
+| Folder | Owns | Side effects |
 | --- | --- | --- |
-| [`github/`](./github/CLAUDE.md) | Repository discovery, filtering and stargazer fetching over the GitHub REST API | Network (octokit) |
-| [`git/`](./git/CLAUDE.md) | `git` CLI wrapper and the data-branch worktree lifecycle | `child_process`, filesystem |
-| [`persistence/`](./persistence/CLAUDE.md) | Reads/writes history, stargazer maps, reports, badges and charts inside the worktree; commits and pushes | Filesystem, `git` (via `git/commands`) |
-| [`notification/`](./notification/CLAUDE.md) | SMTP config resolution from action inputs and sending the HTML digest | `@actions/core` inputs, nodemailer/SMTP |
+| `github/` | Repo discovery, filtering, stargazer pagination | Network (octokit) |
+| `git/` | `git` CLI wrapper and the data-branch worktree lifecycle | `child_process`, fs |
+| `persistence/` | Data-branch filenames, reads/writes, commit & push | fs, `git` (via `../git/commands`) |
+| `notification/` | SMTP config from action inputs, sending the digest | `@actions/core` inputs, SMTP |
 
-## Boundary rule
-The layer table, the allowed import directions and the repo-wide conventions (aliases across layers,
-relative imports within a layer, named params for 2+ arguments, no explanatory comments in `.ts` sources)
-are defined once in [`../CLAUDE.md`](../CLAUDE.md) and are not repeated here. What is specific to this
-layer:
+"Same layer" means all of `src/infrastructure`, not one adapter: `persistence/storage.ts` imports
+`../git/commands` relatively, exactly like `github/filters.ts` imports `./client`. That is the only
+cross-adapter dependency, and it is the only one allowed.
 
-- `@application/tracker` is the only consumer. It is the composition root: it builds the `Octokit`
-  instance, calls the adapters in order, and hands their results to domain/presentation.
-  Current import surface (`src/application/tracker.ts:13-28`):
-  `cleanup`, `initializeDataBranch` · `getRepos` · `fetchAllStargazers` · `getEmailConfig`, `sendEmail` ·
-  `commitAndPush`, `readHistory`, `readStargazers`, `writeBadge`, `writeChart`, `writeCsv`,
-  `writeHistory`, `writeHtmlReport`, `writeReport`, `writeStargazers`.
-- "Same layer" here means all of `src/infrastructure`, not one sub-folder: `persistence/storage.ts`
-  imports `../git/commands` relatively, exactly like `github/filters.ts` imports `./client`.
-- Single-argument adapters keep a positional parameter (`readHistory(dataDir)`, `cleanup(dataDir)`,
-  `getEmailConfig(locale)`, `mapRepos(repos)`) — the named-params rule starts at two arguments.
+**Failure policy.** Repository fetching and worktree setup are **fatal** — they throw wrapped errors with
+remediation text and fail the action. Per-repo stargazer failures are **degradable**: swallowed here and
+downgraded to `core.warning` so the run continues with partial data. `sendEmail` rejects on SMTP failure, but
+the caller catches and warns.
 
-## Failure policy
-- Fatal for the run: repository fetching (`github/client.ts`) and worktree setup (`git/worktree.ts`) throw
-  wrapped `Error`s with remediation text; `trackStars` lets them fail the action.
-- Degradable: per-repo stargazer failures are swallowed inside `github/stargazers.ts` and downgraded to
-  `core.warning`, so the run continues with partial data. `sendEmail` still rejects on SMTP failure, but
-  `trackStars` wraps the call in a try/catch and warns (`src/application/tracker.ts:235-239`).
+## github/
 
-## Testing
-Every sub-folder has colocated `*.test.ts`. Run the whole layer with `pnpm vitest run src/infrastructure`.
-Coverage includes this layer except `**/types.ts` (see `vitest.config.ts`).
+- **The `accept: application/vnd.github.star+json` header is load-bearing** and is set per request, not on
+  the client. Without it GitHub returns bare user objects with **no `starred_at`** and the whole star-history
+  reconstruction silently degrades. Any new stargazer request must set it too.
+- The token is always a user-supplied PAT, never the injected `GITHUB_TOKEN`, and the role it carries decides
+  whether the stargazer endpoint answers at all
+  ([ADR 0002](../../docs/adr/0002-require-a-personal-access-token.md)).
+- **`filterRepos`' order of operations is part of the contract**: `onlyOrgs` narrows first, then `onlyRepos`
+  **short-circuits** — it returns the org-narrowed matches and skips archived/fork/exclude/min-stars
+  entirely. `onlyRepos` can never bring back a repo `onlyOrgs` excluded.
+- Every list filter accepts an exact name **or** a `/body/flags` regex literal. Exact matching is
+  case-sensitive; regex patterns honour their own flags. Matching is on the short `repo.name`, org matching on
+  `owner.login`. An invalid regex is caught, warned about and treated as non-matching — never fatal.
+- `fetchRepos` requests `sort: 'full_name'`, so downstream ordering is GitHub's ascending full-name order.
+  Anything relying on stable report ordering depends on it. The loop stops on any page shorter than 100, so a
+  page of exactly 100 always triggers one more request.
+- **`fetchAllStargazers` returns exactly one entry per input repo, in input order**, even when the fetch
+  failed. Downstream code may assume 1:1 alignment.
+- `coveredStars` is `undefined` on a clean fetch and only set when coverage was cut short. It is the signal
+  `@domain/star-history` uses to decide the tail must be ramped. A page that succeeds but returns nothing does
+  not advance it.
+- Partial-failure semantics differ between the two paths: a **full** fetch rethrows if page 1 fails but keeps
+  what it has if a later page fails; a **sampled** fetch attempts every selected page regardless, then
+  rethrows only if nothing at all was collected. Sampled pages have no early break, so gaps in the page
+  sequence are expected.
+- `sampled` is decided *before* the request, so it stays `true` on failure. The threshold comparison is
+  strict: 1500 stars with threshold 1500 is not sampled. A sampled repo loses new-stargazer detection
+  downstream ([ADR 0008](../../docs/adr/0008-sampled-repositories-are-excluded-from-stargazer-diffing.md)).
+- `MAX_REACHABLE_PAGE` is 400 because GitHub only pages through a repo's oldest 40,000 stargazers.
+- **`fetchAllStargazers` is sequential on purpose** — parallelising would blow through the secondary rate
+  limit that `@octokit/plugin-retry` exists to absorb. Retries happen inside octokit; this folder only ever
+  sees the final failure, so its own handling is "give up on this page/repo", never "retry".
+- `starredAt` passes through verbatim as the raw ISO string. This folder never parses or normalizes it.
+- `GitHubRepo` is a hand-written structural subset, not octokit's generated type. Reading a new field means
+  adding it there first, and to the tests' `makeRepo` factory.
+
+## git/
+
+- **`dataDir` is derived, never hardcoded**: `` `.${dataBranch}` ``. Code that needs the directory must use
+  the value **returned** by `initializeDataBranch`. Why a branch at all is
+  [ADR 0001](../../docs/adr/0001-star-data-lives-on-a-dedicated-data-branch.md).
+- Subcommands that must run *in* the worktree get `cwd: path.resolve(dataDir)`; the resolve is required
+  because a relative `cwd` would be read against the process cwd, not the repo root.
+- **The order of operations in `initializeDataBranch` is load-bearing**: repo guard, commit identity, remote
+  probe, stale-worktree removal, read-only guard, then create-orphan or fetch+add. Identity and cleanup
+  therefore run even on a read-only run and even on a run about to throw.
+- **Branch missing + read-only → throw**, before any worktree exists. A read-only run may never bring the
+  data branch into existence. Branch missing + writable → an *orphan* branch, so data history shares no
+  ancestry with code history; it is local-only until the first push.
+- **Branch present → `worktree add` from `origin/<branch>`, leaving HEAD detached** — which is exactly why
+  `commitAndPush` pushes the refspec `HEAD:<dataBranch>` and not a branch name. Do not "fix" either half
+  in isolation.
+- `execute` uses `execFileSync` with an **argv array, never a shell**. Arguments containing `;`, quotes, `$`
+  or newlines pass verbatim to git (pinned by `commands.test.ts`). Commit messages and branch names are
+  user-controlled — never reintroduce string interpolation here.
+- `stdio` is all `pipe`, so git never writes to the Action log. Anything a user must see goes through
+  `@actions/core` explicitly. `cleanup` is best-effort and idempotent: it never rethrows, so it is safe in a
+  `finally`.
+
+## persistence/
+
+- **`readHistory` always returns a usable `History`.** Missing file → `{ snapshots: [] }`; a stored
+  `snapshots` that is not an array normalizes to `[]` while `starsAtLastNotification` survives untouched.
+  Downstream domain code never null-checks it.
+- **Invalid JSON throws and does not fall back.** Silently resetting corrupt history would destroy a user's
+  tracking record — keep it fatal. `readStargazers` does no normalization at all; missing file → `{}`.
+- **JSON formatting is part of the on-disk contract**: 2-space indent, no trailing newline. Changing it
+  rewrites the whole file and produces a full-file diff in every user's data branch.
+- `writeChart` is the only function that creates a directory (`charts/`); every other writer assumes the
+  worktree provides `dataDir`. **`writeHtmlReport` takes no `dataDir`** — it writes to
+  `RUNNER_TEMP || cwd`, deliberately off the data branch, so the HTML report never lands in a commit.
+- **`commitAndPush` is a no-op when nothing changed.** It runs `add -A`, then `diff --cached --quiet`; a
+  *successful* exit means no staged changes, so the commit path is the `catch` branch. Do not "fix" that
+  inverted-looking try/catch.
+- **`core.setSecret` on the push credential must stay before the push.** The base64 credential is passed as
+  `-c http.extraheader=…`, and `execute` embeds the whole argv in any thrown error — the mask is what keeps a
+  push failure from leaking the token. Any new call passing a secret in argv must do the same.
+- `commitAndPush` has **no read-only awareness**; calling it on a read-only run would push. The guard lives in
+  `@application/tracker`. All `write*` calls must complete before it, since `add -A` is what stages them.
+- Filenames are module-private but referenced by users' workflows and READMEs — renaming `stars-badge.svg`,
+  `stars-data.json`, `stars-data.csv`, `stargazers.json` or the report `README.md` is a breaking change to
+  consumers outside this repo.
+
+## notification/
+
+- **`smtp-host` is the only mandatory switch.** An empty host returns `null` *before* reading any other input,
+  and `null` is the caller's master on/off switch.
+- **`secure` is derived purely from the port** (`port === 465`). There is no `smtp-secure` input. The port is
+  parsed with no validation: a non-numeric value yields `NaN`, which silently makes `secure` false.
+- **Auth is all-or-nothing**: `auth` is set only when username *and* password are both truthy, otherwise
+  literally `undefined` (a test asserts the value, not an absent key).
+- From-address resolution, in order: a `from` containing `@` is used verbatim; otherwise a `username`
+  containing `@` becomes `` `${from} <${username}>` ``; otherwise the bare `from` as a display name.
+- **Three distinct "no email" outcomes**, and the log level is the difference: not configured (`info`, here),
+  configured but nothing to say (`info`, in the caller), configured but empty `email-to` (`warning`, here,
+  because it is almost certainly a misconfiguration). Rejected recipients warn but still count as delivered.
+- **Failures propagate as rejections, not warnings.** Do not add a local try/catch: it would swallow the error
+  before the caller can report it. Equally, do not let it escape the caller's try — that would turn a mail
+  outage into a red run.
+- `getEmailConfig` is one of the few infrastructure functions that reads `@actions/core` inputs directly
+  rather than receiving a parsed `Config`. Only `locale` is passed in, to resolve the default sender name —
+  so changing `locale` changes the visible sender.
+- **`smtp-password` is never passed to `core.setSecret`.** Masking relies on the user supplying it via
+  `secrets.*`, which GitHub masks itself. A password hardcoded in a workflow would appear unmasked in
+  nodemailer error text.
+- A non-null `EmailConfig` does **not** mean email will be sent — `to` is only checked at send time.
+
+## Gotchas
+
+- **`worktree.test.ts`, `storage.test.ts` and the `commitAndPush` tests drive `execFileSync` with positional
+  `mockReturnValueOnce` chains.** Adding, removing or reordering a single git call shifts every later mock and
+  breaks tests that look unrelated.
+- `storage.test.ts` mocks `@actions/core` with a factory exposing only `info`, `debug` and `setSecret`.
+  Adding a `core.warning(...)` to `storage.ts` fails the suite with "not a function", not a useful assertion.
+- **`filters.test.ts` is the spec for `client.ts` too**, so a change to `client.ts` can fail here.
+- **Stale charts are pruned, but not by the writer.** `writeChart` only writes; `pruneCharts({ dataDir, keep })`
+  deletes the `charts/*.svg` files the current run did not produce, and the tracker calls it immediately after
+  the write loop — which is what stops a repo dropping out of `top-repos` from stranding its chart forever.
+- `writeHtmlReport` falls back to `process.cwd()` when `RUNNER_TEMP` is unset, writing the report into the
+  checkout root on local runs.
+- The action **requires an `actions/checkout` step**; the repo guard converts git's opaque "not in a git
+  directory" into that instruction. Do not swallow it.
+- `.<dataBranch>` is a hidden directory inside the primary checkout for the duration of the run. Linters,
+  upload-artifact globs and other actions will see it until `cleanup`.

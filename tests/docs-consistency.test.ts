@@ -11,6 +11,7 @@ const OUTPUT_KEY_PATTERN = /^ {2}([a-z][a-z-]*):$/gm;
 
 const OUTPUT_SURFACES = [
   'README.md',
+  'ARCHITECTURE.md',
   'docs/wiki/API-Reference.md',
   'docs/wiki/Viewing-Reports.md',
   'src/application/CLAUDE.md',
@@ -43,15 +44,17 @@ function walk(dir: string, keep: (filename: string) => boolean): string[] {
 const isMarkdown = (filename: string): boolean => filename.endsWith('.md');
 
 const DOCS = [
-  ...['ARCHITECTURE.md', 'CONTEXT.md', 'README.md', 'examples/README.md'].filter((doc) =>
+  ...['CLAUDE.md', 'ARCHITECTURE.md', 'CONTEXT.md', 'README.md', 'examples/README.md'].filter((doc) =>
     fs.existsSync(doc),
   ),
   ...walk('docs', isMarkdown),
   ...walk('src', (filename) => filename === 'CLAUDE.md'),
 ];
 
+const isTestFile = (filename: string): boolean => filename.endsWith('.test.ts');
+
 const TEST_FILENAMES = new Set(
-  walk('src', (filename) => filename.endsWith('.test.ts')).map((file) => path.basename(file)),
+  [...walk('src', isTestFile), ...walk('tests', isTestFile)].map((file) => path.basename(file)),
 );
 
 const toPosix = (file: string): string => file.split(path.sep).join('/');

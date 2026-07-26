@@ -1,35 +1,52 @@
-# src/shared — cross-cutting code that belongs to no layer
+# src/shared
 
-`shared/` is the escape hatch for code that every layer may reach for but that is not domain logic,
-configuration, rendering or I/O. It is deliberately almost empty — putting something here is a statement
-that it has no owning layer, and that claim is usually wrong.
+The escape hatch for code every layer may reach for but that is not domain logic, configuration, rendering or
+I/O. It is deliberately almost empty — putting something here is a statement that no layer owns it, and that
+claim is usually wrong. Today it holds only `testing/`, a barrel of fixture factories.
 
-## Files
-| File | Responsibility |
-| --- | --- |
-| `testing/` | Fixture factories used by `*.test.ts` files across the whole tree — see [`testing/CLAUDE.md`](./testing/CLAUDE.md). |
-| `docs-consistency.test.ts` | Guards the documentation set against the repo: no dead markdown links, no citation of a source or test file that does not exist, no sample chart embedded in `examples/README.md` without the SVG, and every `action.yml` input and output named on the surfaces that list them. It also holds the ADR set to [`docs/adr/0000-adr-template.md`](../../docs/adr/0000-adr-template.md): sequential numbering from the template, `NNNN-kebab-title.md` filenames, the `# N. Title` / date / status / *Context* / *Decision* / *Consequences* shape, no reference to an ADR that does not exist, a row in the `ARCHITECTURE.md` index, and — the one that rots quietly — a link from some document **other** than that index, since an ADR only the index points at will not be read. It ships no production code and lives here because it belongs to no layer — it is about the repo as a whole. Keep its assertions **aggregated** (one failing list per rule) rather than `it.each` per document, so it stays a handful of tests instead of dominating the suite. |
+**Anything added here needs a reason why no existing layer owns it.** Formatting → `@domain/formatting`.
+Config parsing → `@config/parsers`. Rendering primitives → `@presentation/shared`. Git, fs or HTTP →
+`@infrastructure`. If one of those fits, use it. In particular, `shared` must never accumulate domain logic:
+a helper that reasons about stars, snapshots, deltas, forecasts or dates-as-business-data belongs in
+`@domain`.
 
-## Invariants & rules
-The alias convention itself (`@shared/*`, mapped to `./src/shared/*` in `tsconfig.json`) and the layer
-table live in [`../CLAUDE.md`](../CLAUDE.md). What is specific to this folder:
+## testing/
 
-- **Nothing in `shared` may import `@application/*`, `@infrastructure/*` or `@presentation/*`.** It sits
-  below them; importing upward would create a cycle and drag I/O into files that tests load eagerly.
-- **`shared` must not accumulate domain logic.** If a helper reasons about stars, snapshots, deltas,
-  forecasts or dates-as-business-data, it belongs in `@domain` — that is where the pure logic lives and where
-  the tests for it are expected to be. `shared` is for things with no business meaning.
-- **Anything added here needs a reason why no existing layer owns it.** Formatting → `@domain/formatting`.
-  Config parsing helpers → `@config/parsers`. Rendering primitives → `@presentation/shared`. Git/fs/HTTP →
-  `@infrastructure`. If one of those fits, use it.
+Pure factories that build `Config`, `RepoInfo`, `Stargazer`, `Snapshot`, `History`, `RepoResult` and
+`ComparisonResults` values with sensible defaults, so a test only spells out the fields it actually asserts
+on. No assertions, no mocks, no `vi.*` helpers, no setup — mocking stays in the test files that need it.
+Nothing outside a `*.test.ts` may import it.
 
-## Dependencies
-May import `@config/*`, `@domain/*` and `@i18n`. Today `testing/` actually imports only `@config/defaults`
-(a value), `@config/types` and `@domain/*` (types) — the list src/CLAUDE.md's layer table records. Must not
-import `@application/*`, `@infrastructure/*` or `@presentation/*`. External runtime packages should not
-appear here at all.
+- **All timestamps are UTC ISO-8601 strings.** `startMs` is epoch milliseconds — pass `Date.UTC(...)`, never
+  `new Date(2026, 0, 1)`, which is local time and makes the suite timezone-dependent. The default epoch is in
+  2026; tests that also build dates by hand must stay in the same era or comparisons silently fall outside
+  chart and forecast windows.
+- **`stepDays` defaults differ**: 1 in the stargazer-series factory, 7 in the history factories. Velocity and
+  forecast maths are per-day, so changing the spacing changes the expected numbers.
+- **Snapshots come out chronologically ascending**, index 0 oldest — which is what the domain layer assumes.
+- **`makeHistory` snapshots have empty `repos`.** Anything reading per-repo series gets nothing from it; reach
+  for `makeMultiRepoHistory` instead. Its keys must be `owner/name`, since `name` is taken from the second
+  segment — a bare `'repo-a'` key yields `name: undefined` and a broken fixture.
+- **Overrides are a shallow merge.** Replacing `summary` replaces the whole object — every field must be
+  supplied — and nothing is recomputed from `repos`. Keeping the two consistent is the test's job.
+- **`makeConfig` shares `DEFAULTS`' array instances.** The spread is shallow, so the list fields are the
+  *same arrays* on every config the factory ever returns. Pass a fresh array in the overrides; never `push`
+  into one. It does track `Config` automatically, so a new key needs no edit here — only in `@config/defaults`
+  and `action.yml`.
+- **No factory sets `History.starsAtLastNotification`.** Notification-threshold tests must set it explicitly.
+- The default stargazer `login` is derived from `starredAt`, so two stargazers built for the same date collide
+  unless you pass distinct logins.
 
-## Testing
-Nothing in `shared/` is production code, so it is excluded from coverage
-(`src/shared/testing/**` in `vitest.config.ts`) and has no tests of its own — it is exercised indirectly by
-every suite that imports a factory.
+## Gotchas
+
+- This folder is the sanctioned exception to the **named-params-for-2+-arguments** rule: the factories take
+  positional arguments, up to three of them. Follow the existing shape when adding one; do not "fix" the
+  current ones.
+- **Two test files define their own local factories** with the same names but different signatures:
+  `velocity.test.ts` has its own `makeHistory` and `svg-chart.test.ts` its own `makeSnapshot` /
+  `makeMultiRepoSnapshot`. Neither imports `@shared/testing` — do not assume the name means the shared factory.
+- `src/shared/testing/**` is excluded from coverage, so a broken or unused factory shows up as failing
+  assertions elsewhere, never as an uncovered-lines failure. After changing a default, run the whole suite:
+  the blast radius is every layer.
+- Nothing in `shared` may import `@application/*`, `@infrastructure/*` or `@presentation/*`. It sits below
+  them, and a side-effecting import here would leak into every suite that loads a factory.

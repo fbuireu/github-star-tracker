@@ -349,15 +349,17 @@ them lying:
 
 | Document | Answers | Update it when |
 | --- | --- | --- |
+| `CLAUDE.md` (root) | *How do I work in this repo?* Commands, aliases, conventions, the maintenance contract | You change a script, an alias, a convention, or a repo-wide invariant |
 | `CONTEXT.md` (root) | *What does this word mean?* A domain glossary, and nothing else — no file names, no libraries, no implementation detail | A domain term changes meaning, or a new one appears |
-| `src/**/CLAUDE.md` | *How is this folder built?* Files, public API, invariants, dependencies, gotchas | You change a signature, an invariant, or the files in that folder |
+| `src/<layer>/CLAUDE.md` | *What does this layer guarantee?* Invariants and gotchas, one guide per layer | You change an invariant, or a rule the guide states |
 | `ARCHITECTURE.md` | *How does it fit together?* Layer map, end-to-end run, data branch, build and release | You change the run order, the layering, or the pipeline |
 | `docs/adr/` | *Why is it like this?* One decision per file | You make a decision that is hard to reverse, surprising without context, **and** the result of a real trade-off |
 
 The source carries **no explanatory comments** by design — the `CLAUDE.md` files hold that explanation
 instead. That is why letting them drift costs more here than in a commented codebase.
 
-`src/CLAUDE.md` has the full table of what to update for a given change.
+The root [`CLAUDE.md`](./CLAUDE.md) has the full table of what to update for a given change, and
+`tests/docs-consistency.test.ts` fails the build when the mechanical half of it is broken.
 
 
 ## Development Tips
