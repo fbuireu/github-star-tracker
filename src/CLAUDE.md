@@ -139,6 +139,29 @@ imports `Config` and the chart enums (`ChartCurve`, `ChartRange`, `ChartTheme`, 
 - [`shared/CLAUDE.md`](./shared/CLAUDE.md)
   - [`shared/testing/CLAUDE.md`](./shared/testing/CLAUDE.md)
 
+## Maintenance contract
+
+These documents are not generated. Nothing verifies them, so a change that does not update them leaves
+the tree describing code that no longer exists. When you change code, update the docs **in the same
+commit** — a follow-up commit is a promise, not a fix.
+
+| If you change | Update |
+| --- | --- |
+| An exported signature, or what a symbol is used by | the *Public API* section of that folder's `CLAUDE.md` |
+| A behaviour a doc states as an invariant or a gotcha | that bullet, or delete it if it stopped being true |
+| A default, an input name, or an output | `action.yml`, `docs/wiki/Configuration.md`, `docs/wiki/API-Reference.md`, and the README table |
+| What a domain word means, or introduce a new one | [`../CONTEXT.md`](../CONTEXT.md) — the glossary, vocabulary only |
+| The run order, the layer map, or the build pipeline | [`../ARCHITECTURE.md`](../ARCHITECTURE.md) |
+| Add or remove a file | the *Files* table of that folder's `CLAUDE.md` |
+
+Propose an ADR in [`../docs/adr/`](../docs/adr/) when a decision is **hard to reverse**, **surprising
+without context** and **the result of a real trade-off**. All three, or it is not an ADR. Number it one
+above the highest existing file and add it to the index in `ARCHITECTURE.md`.
+
+Two traps worth naming, because both have already happened here: deleting a resolved entry from a
+"known inconsistencies" list is part of the fix, not tidying to do later; and a `file.ts:123` citation
+silently rots the moment anything above it moves — prefer naming the symbol.
+
 ## Invariants & rules
 - **Cross-layer imports use the alias; same-layer imports stay relative.** `@domain/snapshot` from
   `presentation`, `./snapshot` from inside `domain`. Mixed forms of the same module break Biome's import
@@ -147,9 +170,9 @@ imports `Config` and the chart enums (`ChartCurve`, `ChartRange`, `ChartTheme`, 
   object typed by an interface: `function foo({ a, b }: FooParams)`. The fixture factories in
   `shared/testing` are the only sanctioned exception — they take positional arguments, up to three of them
   (see [`shared/testing/CLAUDE.md`](./shared/testing/CLAUDE.md)).
-- **No explanatory comments in `.ts` files.** These `CLAUDE.md` files carry the explanation instead. Never
-  add comments to source. Two blocks are the whole of the existing exception: the `buildAxisLabels` JSDoc in
-  `@domain/formatting` and the note above `MAX_REACHABLE_STARGAZERS` in `@domain/constants`.
+- **No explanatory comments in `.ts` files**, without exception — the tree currently contains none. These
+  `CLAUDE.md` files carry the explanation instead. If something needs explaining, it goes in the *Gotchas*
+  or *Invariants* section of the folder's document, not above the line.
 - **`domain` must stay pure.** No `@actions/*`, no `node:*`, no fetch, no `Date.now()`-driven I/O, no
   mutation of caller-owned arrays. Same for `presentation`: it renders strings and never writes files —
   writing chart files is `application`'s job.

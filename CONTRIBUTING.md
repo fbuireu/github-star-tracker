@@ -41,7 +41,7 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
 
 - README updates
 - Wiki improvements
-- Code comments
+- Per-folder `CLAUDE.md` notes (the source itself stays comment-free)
 - Examples and tutorials
 
 ## Development Process
@@ -340,7 +340,24 @@ github-star-tracker/
 ```
 
 > [!TIP]
-> **Path aliases:** Cross-layer imports use `@application/*`, `@config/*`, `@domain/*`, `@i18n`, `@infrastructure/*`, `@presentation/*`. Same-layer imports use relative paths. Tests are co-located as `*.test.ts` files next to the source.
+> **Path aliases:** Cross-layer imports use `@application/*`, `@config/*`, `@domain/*`, `@i18n`, `@infrastructure/*`, `@presentation/*`, `@shared/*`. Same-layer imports use relative paths. Tests are co-located as `*.test.ts` files next to the source.
+
+### Documentation that ships with the code
+
+Four artefacts, four jobs. They are maintained by hand, so a code change that does not update them leaves
+them lying:
+
+| Document | Answers | Update it when |
+| --- | --- | --- |
+| `CONTEXT.md` (root) | *What does this word mean?* A domain glossary, and nothing else — no file names, no libraries, no implementation detail | A domain term changes meaning, or a new one appears |
+| `src/**/CLAUDE.md` | *How is this folder built?* Files, public API, invariants, dependencies, gotchas | You change a signature, an invariant, or the files in that folder |
+| `ARCHITECTURE.md` | *How does it fit together?* Layer map, end-to-end run, data branch, build and release | You change the run order, the layering, or the pipeline |
+| `docs/adr/` | *Why is it like this?* One decision per file | You make a decision that is hard to reverse, surprising without context, **and** the result of a real trade-off |
+
+The source carries **no explanatory comments** by design — the `CLAUDE.md` files hold that explanation
+instead. That is why letting them drift costs more here than in a commented codebase.
+
+`src/CLAUDE.md` has the full table of what to update for a given change.
 
 
 ## Development Tips
