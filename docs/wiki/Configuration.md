@@ -255,6 +255,9 @@ with:
 
 ---
 
+> [!NOTE]
+> Velocity metrics need at least two *stored* snapshots, so `max-history: 1` leaves exactly one after every run and [`velocity-metrics`](#velocity-metrics) renders nothing.
+
 ### `compare-against`
 
 Which stored snapshot the current star counts are compared against. Config file key: `compare_against`.
@@ -504,7 +507,7 @@ Whether to draw milestone reference lines on the main star-history chart.
 | **Type** | `boolean` |
 | **Default** | `true` |
 
-`true` draws dashed reference lines at the star milestones (10, 50, 100, 500, 1k, 5k, 10k) that fall within the visible range; `false` hides them. Applies to the main chart in both the SVG output and the email report.
+`true` draws dashed reference lines at the star milestones (10, 50, 100, 500, 1k, 5k, 10k, 50k, 100k, 500k, 1M) that fall strictly between the lowest and highest plotted values; `false` hides them. Applies to the main chart in both the SVG output and the email report.
 
 ---
 
@@ -543,7 +546,7 @@ Custom star counts to use as milestone reference lines instead of the built-in d
 | **Type** | `string` (comma-separated integers) |
 | **Default** | _(empty)_ |
 
-A comma-separated list of positive star counts (e.g. `"250, 750, 2500"`) that replaces the built-in milestone thresholds. Values are sorted and de-duplicated; non-positive or non-numeric entries are ignored, and an input with no valid numbers logs a warning and falls back to the built-in milestones. When empty, the default milestones (10, 50, 100, 500, 1k, 5k, 10k) are used. Only the milestones that fall within the chart's visible range are drawn. Requires [`chart-milestones`](#chart-milestones) to be enabled — when milestones are turned off, no reference lines are drawn regardless of this value.
+A comma-separated list of positive star counts (e.g. `"250, 750, 2500"`) that replaces the built-in milestone thresholds. Values are sorted and de-duplicated; non-positive or non-numeric entries are ignored, and an input with no valid numbers logs a warning and falls back to the built-in milestones. When empty, the default milestones (10, 50, 100, 500, 1k, 5k, 10k, 50k, 100k, 500k, 1M) are used. Only the milestones that fall strictly between the lowest and highest plotted values are drawn. Requires [`chart-milestones`](#chart-milestones) to be enabled — when milestones are turned off, no reference lines are drawn regardless of this value.
 
 In a config file you can provide either a quoted comma-separated string or a YAML list:
 
@@ -672,7 +675,7 @@ Comma-separated list of repository names to exclusively track.
 | **Type** | `string` (comma-separated) |
 | **Default** | - |
 
-When set, **only** these repos are tracked. All other filters are ignored.
+When set, **only** these repos are tracked, and the archived/fork/exclude/min-stars filters are skipped. Accepts exact names or `/regex/` patterns, like `exclude-repos`. [`only-orgs`](#only-orgs) still applies first and narrows the set this selects from.
 
 ```yaml
 with:
@@ -805,7 +808,7 @@ Sender name or email address.
 | Property | Value |
 |---|---|
 | **Type** | `string` |
-| **Default** | `GitHub Star Tracker` |
+| **Default** | _(localized)_ |
 
 ---
 
@@ -850,6 +853,9 @@ Star change threshold before sending a notification.
 | 501+ | 20 stars |
 
 The threshold is **cumulative, not per-run**. It is measured against `starsAtLastNotification`, persisted in `stars-data.json` on the data branch and updated **only when a notification actually fires**. Runs that do not notify leave that baseline untouched, so the accumulated change keeps growing across runs until it trips the threshold. How that accumulated change is measured is controlled by [`notification-mode`](#notification-mode).
+
+> [!NOTE]
+> The baseline advances only when the notification was actually delivered. If an SMTP send fails the action logs a warning, leaves the baseline untouched and keeps accumulating, so the change is not lost. When no SMTP transport is configured the `should-notify` output is the notification, so the baseline advances as soon as the threshold trips.
 
 On a data branch that has never sent a notification there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so the first run fires immediately and then settles into the cumulative rhythm. That is not the case if you were already running with the default `notification-threshold: '0'`: every changed run has been notifying, so `starsAtLastNotification` already holds your current total and raising the threshold fires nothing immediately - the next email waits until the total actually moves by at least the threshold.
 
@@ -903,7 +909,7 @@ The action validates inputs at startup:
 - `github-token` is provided
 - `visibility` is one of: `all`, `public`, `private`, `owned`
 - `locale` is one of: `en`, `es`, `ca`, `it` (falls back to `en` with a warning if invalid)
-- Invalid values cause the workflow to fail with a descriptive error message
+- `visibility` and `data-branch` are the only inputs whose invalid values fail the run; a missing `github-token` fails it too. Every other invalid value logs a warning and falls back to its default, including non-positive `max-history`, `top-repos` and `smart-sampling-pages`, and negative `min-stars`, `smart-sampling-threshold` and `chart-max-points`
 
 ---
 

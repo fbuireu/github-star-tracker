@@ -13,19 +13,27 @@ import {
 
 describe('formatCount', () => {
   it('formats small numbers as-is', () => {
-    expect(formatCount(42)).toBe('42');
+    expect(formatCount({ count: 42, locale: 'en' })).toBe('42');
   });
 
   it('formats thousands with K suffix', () => {
-    expect(formatCount(1500)).toBe('1.5K');
+    expect(formatCount({ count: 1500, locale: 'en' })).toBe('1.5K');
   });
 
   it('formats millions with M suffix', () => {
-    expect(formatCount(2_500_000)).toBe('2.5M');
+    expect(formatCount({ count: 2_500_000, locale: 'en' })).toBe('2.5M');
   });
 
   it('formats zero', () => {
-    expect(formatCount(0)).toBe('0');
+    expect(formatCount({ count: 0, locale: 'en' })).toBe('0');
+  });
+
+  it('follows the report locale instead of always using English', () => {
+    const english = formatCount({ count: 2_500_000, locale: 'en' });
+    const italian = formatCount({ count: 2_500_000, locale: 'it' });
+
+    expect(english).toBe('2.5M');
+    expect(italian).not.toBe(english);
   });
 });
 

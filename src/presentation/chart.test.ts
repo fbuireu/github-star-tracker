@@ -135,7 +135,7 @@ describe('chart', () => {
       }
     });
 
-    it('returns null for non-existent repository', () => {
+    it('renders a flat zero series for a repository absent from every snapshot', () => {
       const url = generatePerRepoChartUrl({
         history: mockHistory,
         repoFullName: 'user/non-existent',
@@ -428,6 +428,14 @@ describe('chart', () => {
       const result = buildMilestoneAnnotations({ minStars: 200, maxStars: 400 });
 
       expect(result).toBeNull();
+    });
+
+    it('returns annotations for repos above the ten-thousand mark', () => {
+      const result = buildMilestoneAnnotations({ minStars: 12_000, maxStars: 120_000 });
+
+      expect(result).not.toBeNull();
+      expect(result?.annotations).toHaveProperty('milestone50000');
+      expect(result?.annotations).toHaveProperty('milestone100000');
     });
 
     it('excludes boundary values (min and max)', () => {

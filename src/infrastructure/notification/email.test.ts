@@ -7,6 +7,7 @@ vi.mock('@actions/core', () => ({
   getInput: vi.fn().mockReturnValue(''),
   info: vi.fn(),
   warning: vi.fn(),
+  setSecret: vi.fn(),
 }));
 
 vi.mock('nodemailer', () => {
@@ -128,7 +129,7 @@ describe('sendEmail', () => {
     });
   });
 
-  it('logs the recipient address, not the message ID', async () => {
+  it('logs the recipient address alongside the message ID', async () => {
     await sendEmail({
       emailConfig,
       subject: 'Subject',
@@ -204,5 +205,24 @@ describe('sendEmail', () => {
     expect(nodemailer.createTransport).toHaveBeenCalledWith(
       expect.objectContaining({ auth: undefined }),
     );
+  });
+
+  it('falls back to 587 and warns when smtp-port is not a usable port', () => {
+    vi.mocked(core.getInput).mockImplementation((name: string) =>
+      name === 'smtp-host' ? 'smtp.test.com' : name === 'smtp-port' ? 'not-a-port' : '',
+    );
+
+    expect(getEmailConfig('en')?.port).toBe(587);
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid smtp-port'));
+  });
+
+  it('masks the SMTP password so it cannot leak through error text', () => {
+    vi.mocked(core.getInput).mockImplementation((name: string) =>
+      name === 'smtp-host' ? 'smtp.test.com' : name === 'smtp-password' ? 'hunter2' : '',
+    );
+
+    getEmailConfig('en');
+
+    expect(core.setSecret).toHaveBeenCalledWith('hunter2');
   });
 });

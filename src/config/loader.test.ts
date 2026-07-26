@@ -10,8 +10,10 @@ import {
   parseFileBool,
   parseHexColor,
   parseList,
+  parseNonNegativeNumber,
   parseNotificationThreshold,
   parseNumber,
+  parsePositiveNumber,
   toStringList,
 } from './parsers';
 import { ChartCurve, Visibility } from './types';
@@ -143,6 +145,21 @@ describe('toStringList', () => {
 
   it('returns undefined for other shapes', () => {
     expect(toStringList({})).toBeUndefined();
+  });
+});
+
+describe('parsePositiveNumber', () => {
+  it('rejects zero and negatives so callers fall back to their default', () => {
+    expect(parsePositiveNumber('0')).toBeUndefined();
+    expect(parsePositiveNumber('-1')).toBeUndefined();
+    expect(parsePositiveNumber('52')).toBe(52);
+  });
+});
+
+describe('parseNonNegativeNumber', () => {
+  it('accepts zero but rejects negatives', () => {
+    expect(parseNonNegativeNumber('0')).toBe(0);
+    expect(parseNonNegativeNumber('-5')).toBeUndefined();
   });
 });
 

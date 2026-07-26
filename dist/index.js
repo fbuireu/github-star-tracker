@@ -34685,10 +34685,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -36980,7 +36980,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -37103,7 +37103,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -37593,7 +37593,7 @@ var FALLBACK_LANG = TRANSLATIONS.en;
 function interpolate({ template, params }) {
   return template.replaceAll(
     PLACEHOLDER_PATTERN,
-    (match, key) => key in params ? String(params[key]) : match
+    (match, key) => Object.hasOwn(params, key) ? String(params[key]) : match
   );
 }
 function getTranslations(locale) {
@@ -39921,6 +39921,14 @@ function parseNumberList(value) {
     )
   ].sort((a, b) => a - b);
 }
+function parsePositiveNumber(value) {
+  const parsed = parseNumber(value);
+  return parsed !== void 0 && parsed > 0 ? parsed : void 0;
+}
+function parseNonNegativeNumber(value) {
+  const parsed = parseNumber(value);
+  return parsed !== void 0 && parsed >= 0 ? parsed : void 0;
+}
 function parseBool(value) {
   if (isBlank(value)) return void 0;
   if (typeof value === "boolean") return value;
@@ -39976,6 +39984,7 @@ function parseNotificationThreshold(value) {
 var FILE_CONFIG_KEYS = Object.keys(DEFAULTS2).filter(
   (key) => key !== "sendOnNoChanges"
 );
+var DEFAULT_CONFIG_PATH = "star-tracker.yml";
 var DATA_BRANCH_FORBIDDEN_PATTERN = /[\s~^:?*[\\]/;
 var DATA_BRANCH_FORBIDDEN_SEQUENCES = ["..", "//", "/.", "@{"];
 var ASCII_CONTROL_MAX = 31;
@@ -40056,7 +40065,7 @@ function loadConfigFile(configPath) {
   );
 }
 function loadConfig() {
-  const configPath = getInput("config-path") || "star-tracker.yml";
+  const configPath = getInput("config-path") || DEFAULT_CONFIG_PATH;
   const fileConfig = loadConfigFile(configPath);
   const inputVisibility = getInput("visibility");
   const inputIncludeArchived = getInput("include-archived");
@@ -40179,14 +40188,14 @@ function loadConfig() {
     minStars: parseOrWarn({
       input: inputMinStars,
       inputName: "min-stars",
-      parse: parseNumber
-    }) ?? parseNumber(fileConfig.minStars) ?? DEFAULTS2.minStars,
+      parse: parseNonNegativeNumber
+    }) ?? parseNonNegativeNumber(fileConfig.minStars) ?? DEFAULTS2.minStars,
     dataBranch,
     maxHistory: parseOrWarn({
       input: inputMaxHistory,
       inputName: "max-history",
-      parse: parseNumber
-    }) ?? parseNumber(fileConfig.maxHistory) ?? DEFAULTS2.maxHistory,
+      parse: parsePositiveNumber
+    }) ?? parsePositiveNumber(fileConfig.maxHistory) ?? DEFAULTS2.maxHistory,
     compareAgainst,
     readOnly: parseOrWarn({ input: inputReadOnly, inputName: "read-only", parse: parseBool }) ?? parseFileBool(fileConfig.readOnly) ?? DEFAULTS2.readOnly,
     sendOnNoChanges: parseBool(getInput("send-on-no-changes")) ?? DEFAULTS2.sendOnNoChanges,
@@ -40206,26 +40215,26 @@ function loadConfig() {
     topRepos: parseOrWarn({
       input: inputTopRepos,
       inputName: "top-repos",
-      parse: parseNumber
-    }) ?? parseNumber(fileConfig.topRepos) ?? DEFAULTS2.topRepos,
+      parse: parsePositiveNumber
+    }) ?? parsePositiveNumber(fileConfig.topRepos) ?? DEFAULTS2.topRepos,
     smartSampling: parseOrWarn({ input: inputSmartSampling, inputName: "smart-sampling", parse: parseBool }) ?? parseFileBool(fileConfig.smartSampling) ?? DEFAULTS2.smartSampling,
     smartSamplingThreshold: parseOrWarn({
       input: inputSmartSamplingThreshold,
       inputName: "smart-sampling-threshold",
-      parse: parseNumber
-    }) ?? parseNumber(fileConfig.smartSamplingThreshold) ?? DEFAULTS2.smartSamplingThreshold,
+      parse: parseNonNegativeNumber
+    }) ?? parseNonNegativeNumber(fileConfig.smartSamplingThreshold) ?? DEFAULTS2.smartSamplingThreshold,
     smartSamplingPages: parseOrWarn({
       input: inputSmartSamplingPages,
       inputName: "smart-sampling-pages",
-      parse: parseNumber
-    }) ?? parseNumber(fileConfig.smartSamplingPages) ?? DEFAULTS2.smartSamplingPages,
+      parse: parsePositiveNumber
+    }) ?? parsePositiveNumber(fileConfig.smartSamplingPages) ?? DEFAULTS2.smartSamplingPages,
     chartLineColor,
     chartLineWidth,
     chartMaxPoints: parseOrWarn({
       input: inputChartMaxPoints,
       inputName: "chart-max-points",
-      parse: parseNumber
-    }) ?? parseNumber(fileConfig.chartMaxPoints) ?? DEFAULTS2.chartMaxPoints,
+      parse: parseNonNegativeNumber
+    }) ?? parseNonNegativeNumber(fileConfig.chartMaxPoints) ?? DEFAULTS2.chartMaxPoints,
     chartYAxisSide,
     chartSmoothing: parseOrWarn({ input: inputChartSmoothing, inputName: "chart-smoothing", parse: parseBool }) ?? parseFileBool(fileConfig.chartSmoothing) ?? DEFAULTS2.chartSmoothing,
     chartCurve,
@@ -40355,6 +40364,20 @@ var MS_PER_DAY = 864e5;
 var MS_PER_YEAR = 365 * MS_PER_DAY;
 var MIN_SNAPSHOTS_FOR_FORECAST = 3;
 var FORECAST_WEEKS = 4;
+var MIN_RATE_INTERVAL_DAYS = 0.25;
+var STAR_MILESTONES = [
+  10,
+  50,
+  100,
+  500,
+  1e3,
+  5e3,
+  1e4,
+  5e4,
+  1e5,
+  5e5,
+  1e6
+];
 var NOTIFICATION_THRESHOLDS = [
   { limit: 50, value: 1 },
   { limit: 200, value: 5 },
@@ -40377,7 +40400,10 @@ var COMPARE_WINDOW_DAYS = {
 };
 var COMPARE_WINDOW_TOLERANCE_MS = 6 * 60 * 60 * 1e3;
 function getLastSnapshot(history) {
-  return history.snapshots.at(-1) ?? null;
+  for (let index = history.snapshots.length - 1; index >= 0; index--) {
+    if (toEpochMs(history.snapshots[index].timestamp) !== null) return history.snapshots[index];
+  }
+  return null;
 }
 function getBaselineSnapshot({
   history,
@@ -40437,7 +40463,7 @@ function weightedMovingAverage(points) {
   const dailyRates = [];
   for (let index = 1; index < points.length; index++) {
     const elapsedDays = points[index].day - points[index - 1].day;
-    if (elapsedDays <= 0) continue;
+    if (elapsedDays < MIN_RATE_INTERVAL_DAYS) continue;
     dailyRates.push((points[index].value - points[index - 1].value) / elapsedDays);
   }
   if (dailyRates.length === 0) return 0;
@@ -40476,8 +40502,8 @@ function forecastFromSeries(points) {
   ];
 }
 function snapshotDays(history) {
-  const times = history.snapshots.map((snapshot) => Date.parse(snapshot.timestamp));
-  if (times.some((timeMs) => !Number.isFinite(timeMs))) {
+  const times = history.snapshots.map((snapshot) => toEpochMs(snapshot.timestamp));
+  if (times.some((timeMs) => timeMs === null)) {
     return history.snapshots.map((_, index) => index * DAYS_PER_WEEK);
   }
   const first = times[0];
@@ -40505,12 +40531,21 @@ function computeForecast({
 var UP_ARROW = "\u2B06\uFE0F";
 var DOWN_ARROW = "\u2B07\uFE0F";
 var DASH = "\u2796";
-var compactFormatter = new Intl.NumberFormat("en", {
-  notation: "compact",
-  maximumFractionDigits: 1
-});
-function formatCount(count) {
-  return compactFormatter.format(count);
+var COMPACT_MAX_FRACTION_DIGITS = 1;
+var compactFormatters = /* @__PURE__ */ new Map();
+function compactFormatter(locale) {
+  const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
+  const cached = compactFormatters.get(localeCode);
+  if (cached) return cached;
+  const formatter = new Intl.NumberFormat(localeCode, {
+    notation: "compact",
+    maximumFractionDigits: COMPACT_MAX_FRACTION_DIGITS
+  });
+  compactFormatters.set(localeCode, formatter);
+  return formatter;
+}
+function formatCount({ count, locale }) {
+  return compactFormatter(locale).format(count);
 }
 function deltaIndicator(delta) {
   if (delta > 0) return `+${delta}`;
@@ -40526,19 +40561,24 @@ function trendIcon(delta) {
   return DASH;
 }
 function formatDate({ timestamp, locale }) {
-  const date = new Date(timestamp);
+  const epochMs = toEpochMs(timestamp);
+  if (epochMs === null) return "";
   const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
-  return date.toLocaleDateString(localeCode, { month: "short", day: "numeric" });
+  return new Date(epochMs).toLocaleDateString(localeCode, {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC"
+  });
 }
 function buildAxisLabels({ timestamps, locale }) {
-  const times = timestamps.map((timestamp) => Date.parse(timestamp)).filter(Number.isFinite);
+  const times = timestamps.map((timestamp) => toEpochMs(timestamp)).filter((timeMs) => timeMs !== null);
   if (times.length < 2 || Math.max(...times) - Math.min(...times) < MS_PER_YEAR) {
     return timestamps.map((timestamp) => formatDate({ timestamp, locale }));
   }
   let lastYear = null;
   return timestamps.map((timestamp) => {
-    const time = Date.parse(timestamp);
-    if (!Number.isFinite(time)) return "";
+    const time = toEpochMs(timestamp);
+    if (time === null) return "";
     const year = new Date(time).getUTCFullYear();
     if (year === lastYear) return "";
     lastYear = year;
@@ -40627,7 +40667,7 @@ function buildStarHistory({
   const eventsByRepo = /* @__PURE__ */ new Map();
   let earliest = Number.POSITIVE_INFINITY;
   for (const repo of repos) {
-    const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? []).map((stargazer) => Date.parse(stargazer.starredAt)).filter((timeMs) => Number.isFinite(timeMs)).sort((earlier, later) => earlier - later);
+    const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? []).map((stargazer) => toEpochMs(stargazer.starredAt)).filter((timeMs) => timeMs !== null).sort((earlier, later) => earlier - later);
     eventsByRepo.set(repo.fullName, times);
     if (times.length > 0 && times[0] < earliest) earliest = times[0];
   }
@@ -40684,6 +40724,7 @@ function diffStargazers({
       sampledRepos.push(repo.repoFullName);
       continue;
     }
+    if (repo.incomplete) continue;
     const previousLogins = new Set(previousMap[repo.repoFullName] ?? []);
     const newStargazers = repo.stargazers.filter((stargazer) => !previousLogins.has(stargazer.login)).sort((earlier, later) => later.starredAt.localeCompare(earlier.starredAt));
     if (newStargazers.length > 0) {
@@ -40693,10 +40734,17 @@ function diffStargazers({
   }
   return { entries, totalNew, sampledRepos: sampledRepos.length > 0 ? sampledRepos : void 0 };
 }
-function buildStargazerMap(repoStargazers) {
+function buildStargazerMap({
+  repoStargazers,
+  previousMap
+}) {
   const map = {};
   for (const repo of repoStargazers) {
-    if (repo.sampled) continue;
+    if (repo.sampled || repo.incomplete) {
+      const previousLogins = previousMap[repo.repoFullName];
+      if (previousLogins) map[repo.repoFullName] = previousLogins;
+      continue;
+    }
     map[repo.repoFullName] = repo.stargazers.map((stargazer) => stargazer.login);
   }
   return map;
@@ -40835,8 +40883,14 @@ function matchesPattern({ name, patterns }) {
   return patterns.some((pattern) => {
     const match = REGEX_PATTERN.exec(pattern);
     if (match) {
-      const regex = new RegExp(match[1], match[2]);
-      return regex.test(name);
+      try {
+        return new RegExp(match[1], match[2]).test(name);
+      } catch (error2) {
+        warning(
+          `Ignoring invalid pattern "${pattern}": ${error2.message}. Filters expect either an exact name or /pattern/flags.`
+        );
+        return false;
+      }
     }
     return name === pattern;
   });
@@ -40850,8 +40904,9 @@ function filterRepos({ repos, config }) {
     info(`After only_orgs filter: ${candidates.length} repos`);
   }
   if (config.onlyRepos.length > 0) {
-    const onlyRepoNames = new Set(config.onlyRepos);
-    const filtered2 = candidates.filter((repo) => onlyRepoNames.has(repo.name));
+    const filtered2 = candidates.filter(
+      (repo) => matchesPattern({ name: repo.name, patterns: config.onlyRepos })
+    );
     info(`After only_repos filter: ${filtered2.length} repos`);
     return filtered2;
   }
@@ -40920,12 +40975,18 @@ async function fetchAllStargazers({
         repoFullName: repo.fullName,
         stargazers,
         sampled: shouldSample,
-        coveredStars
+        coveredStars,
+        incomplete: repo.stars > 0 && stargazers.length === 0
       });
       if (shouldSample) sampled.push(repo.fullName);
     } catch (error2) {
       warning(`Failed to fetch stargazers for ${repo.fullName}: ${describeFetchError(error2)}`);
-      results.push({ repoFullName: repo.fullName, stargazers: [], sampled: shouldSample });
+      results.push({
+        repoFullName: repo.fullName,
+        stargazers: [],
+        sampled: shouldSample,
+        incomplete: true
+      });
     }
   }
   if (sampled.length > 0) {
@@ -41044,6 +41105,7 @@ async function fetchSampledStargazers({
 var import_nodemailer = __toESM(require_nodemailer());
 var SECURE_SMTP_PORT = 465;
 var DEFAULT_SMTP_PORT = "587";
+var MAX_TCP_PORT = 65535;
 function resolveFromAddress({ from, username }) {
   if (from.includes("@")) {
     return from;
@@ -41053,15 +41115,23 @@ function resolveFromAddress({ from, username }) {
   }
   return from;
 }
+function resolvePort(raw) {
+  const parsed = Number.parseInt(raw || DEFAULT_SMTP_PORT, 10);
+  if (Number.isInteger(parsed) && parsed > 0 && parsed <= MAX_TCP_PORT) return parsed;
+  warning(`Invalid smtp-port "${raw}". Falling back to ${DEFAULT_SMTP_PORT}.`);
+  return Number.parseInt(DEFAULT_SMTP_PORT, 10);
+}
 function getEmailConfig(locale) {
   const host = getInput("smtp-host");
   if (!host) return null;
   const t = getTranslations(locale);
+  const password = getInput("smtp-password");
+  if (password) setSecret(password);
   return {
     host,
-    port: Number.parseInt(getInput("smtp-port") || DEFAULT_SMTP_PORT, 10),
+    port: resolvePort(getInput("smtp-port")),
     username: getInput("smtp-username"),
-    password: getInput("smtp-password"),
+    password,
     to: getInput("email-to"),
     from: getInput("email-from") || t.email.defaultFrom
   };
@@ -41154,6 +41224,19 @@ function writeChart({ dataDir, filename, svg }) {
   }
   const filePath = path3.join(chartsDir, filename);
   fs5.writeFileSync(filePath, svg);
+}
+function pruneCharts({ dataDir, keep }) {
+  const chartsDir = path3.join(dataDir, DATA_FILES.chartsDir);
+  if (!fs5.existsSync(chartsDir)) return [];
+  const kept = new Set(keep);
+  const removed = fs5.readdirSync(chartsDir).filter((filename) => filename.endsWith(".svg") && !kept.has(filename));
+  for (const filename of removed) {
+    fs5.rmSync(path3.join(chartsDir, filename));
+  }
+  if (removed.length > 0) {
+    info(`Removed ${removed.length} chart(s) no longer produced: ${removed.join(", ")}`);
+  }
+  return removed;
 }
 function readStargazers(dataDir) {
   return readJsonFile({
@@ -41392,13 +41475,12 @@ var CHART_FILES = {
   comparison: "comparison.svg",
   forecast: "forecast.svg"
 };
-var MILESTONE_THRESHOLDS = [10, 50, 100, 500, 1e3, 5e3, 1e4];
 
 // src/presentation/badge.ts
 function generateBadge({ totalStars, locale }) {
   const t = getTranslations(locale);
   const label = t.badge.totalStars;
-  const value = `\u2605 ${formatCount(totalStars)}`;
+  const value = `\u2605 ${formatCount({ count: totalStars, locale })}`;
   const labelWidth = label.length * BADGE.labelCharWidth + BADGE.horizontalPadding;
   const valueWidth = value.length * BADGE.valueCharWidth + BADGE.horizontalPadding;
   const totalWidth = labelWidth + valueWidth;
@@ -41464,7 +41546,10 @@ function selectChartSnapshots({
 }) {
   const windowed = filterSnapshotsByRange({ snapshots, range });
   const limit = maxPoints ?? CHART.maxDataPoints;
-  return limit > 0 ? windowed.slice(-limit) : [...windowed];
+  if (limit <= 0 || windowed.length <= limit) return [...windowed];
+  if (limit === 1) return windowed.slice(-1);
+  const step = (windowed.length - 1) / (limit - 1);
+  return Array.from({ length: limit }, (_, index) => windowed[Math.round(index * step)]);
 }
 function movingAverageSeries({ values, window: window2 }) {
   return values.map((_, index) => {
@@ -41490,6 +41575,17 @@ function prepareReportData({
     prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun
   };
 }
+var HTML_ESCAPE_MAP = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+};
+var HTML_ESCAPABLE_CHAR_PATTERN = /[&<>"']/g;
+function escapeHtml(text) {
+  return text.replaceAll(HTML_ESCAPABLE_CHAR_PATTERN, (char) => HTML_ESCAPE_MAP[char]);
+}
 function perRepoChartFile(repoFullName) {
   return `${repoFullName.replace("/", "-")}.svg`;
 }
@@ -41510,7 +41606,7 @@ function buildForecastChartSeries({
   historicalData,
   forecastData
 }) {
-  const forecastLength = forecastData.aggregate.forecasts[0].points.length;
+  const forecastLength = forecastData.aggregate.forecasts[0]?.points.length ?? 0;
   const findPoints = (method) => forecastData.aggregate.forecasts.find((forecast) => forecast.method === method)?.points;
   const lastHistorical = historicalData.at(-1) ?? 0;
   const padLength = historicalData.length;
@@ -41711,7 +41807,7 @@ function niceAxisSteps({ min, max, count }) {
       steps.push(Math.round(step));
     }
   }
-  return steps;
+  return [...new Set(steps)];
 }
 function escapeXml(text) {
   return text.replaceAll(XML_ESCAPABLE_CHAR_PATTERN, (char) => XML_ESCAPE_MAP[char]);
@@ -41721,8 +41817,9 @@ function renderSvg({
   datasets,
   title,
   showLegend,
+  locale,
   milestones = false,
-  milestoneThresholds = MILESTONE_THRESHOLDS,
+  milestoneThresholds = STAR_MILESTONES,
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
@@ -41757,6 +41854,7 @@ function renderSvg({
   const allValues = datasets.flatMap(
     (dataset) => dataset.data.filter((value) => value !== null)
   );
+  if (allValues.length === 0) return null;
   const minData = Math.min(...allValues);
   const maxData = Math.max(...allValues);
   const padding = Math.max(
@@ -41771,12 +41869,12 @@ function renderSvg({
   const gridLines = ySteps.map((value) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
-    <text x="${yLabelX}" y="${y + yAxis.labelBaselineOffset}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount(value)}</text>`;
+    <text x="${yLabelX}" y="${y + yAxis.labelBaselineOffset}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount({ count: value, locale })}</text>`;
   }).join("\n    ");
   const milestoneLines = milestones ? milestoneThresholds.filter((milestone) => milestone > minData && milestone < maxData).map((value) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="${milestoneStyle.strokeWidth}" stroke-dasharray="${milestoneStyle.dashArray}" />
-    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount(value)} \u2605</text>`;
+    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount({ count: value, locale })} \u2605</text>`;
   }).join("\n    ") : "";
   const maxLabels = xAxis.maxLabels;
   const nonEmptyLabelIndices = labels.reduce((indices, label, labelIndex) => {
@@ -41958,13 +42056,14 @@ function generateSvgChart({
     });
   }
   return renderSvg({
+    locale,
     ...style,
     labels,
     datasets,
     title: title ?? "Star History",
     showLegend: false,
     milestones,
-    milestoneThresholds: customMilestones && customMilestones.length > 0 ? customMilestones : MILESTONE_THRESHOLDS
+    milestoneThresholds: customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES
   });
 }
 function generatePerRepoSvgChart({
@@ -41987,6 +42086,7 @@ function generatePerRepoSvgChart({
   });
   const data = repoStarSeries({ snapshots, repoFullName });
   return renderSvg({
+    locale,
     ...style,
     labels,
     datasets: [{ label: "Stars", data, color: lineColor ?? resolvePalette(style.theme).accent }],
@@ -42027,6 +42127,7 @@ function generateComparisonSvgChart({
     };
   });
   return renderSvg({
+    locale,
     ...style,
     labels,
     datasets,
@@ -42083,6 +42184,7 @@ function generateForecastSvgChart({
     }
   ];
   return renderSvg({
+    locale,
     ...style,
     labels: allLabels,
     datasets,
@@ -42184,11 +42286,13 @@ function buildChartFiles({
 // src/presentation/csv.ts
 var CSV_HEADER = "repository,owner,name,stars,previous,delta,status";
 var NEW_LINE = "\n";
+var FORMULA_TRIGGERS = ["=", "+", "-", "@"];
 function escapeCsvField(field) {
-  if (field.includes(",") || field.includes('"') || field.includes(NEW_LINE)) {
-    return `"${field.replaceAll('"', '""')}"`;
+  const neutralized = FORMULA_TRIGGERS.some((trigger) => field.startsWith(trigger)) ? `'${field}` : field;
+  if (neutralized.includes(",") || neutralized.includes('"') || neutralized.includes(NEW_LINE) || neutralized !== field) {
+    return `"${neutralized.replaceAll('"', '""')}"`;
   }
-  return field;
+  return neutralized;
 }
 var REPO_STATUS = {
   new: "new",
@@ -42216,19 +42320,6 @@ function generateCsvReport({ repos }) {
 }
 
 // src/domain/velocity.ts
-var VELOCITY_MILESTONES = [
-  10,
-  50,
-  100,
-  500,
-  1e3,
-  5e3,
-  1e4,
-  5e4,
-  1e5,
-  5e5,
-  1e6
-];
 var MIN_SNAPSHOTS_FOR_VELOCITY = 2;
 var PERCENT_MULTIPLIER = 100;
 var STARS_PER_DAY_DECIMALS = 2;
@@ -42238,18 +42329,26 @@ function roundTo(value, decimals) {
   return Math.round(value * factor) / factor;
 }
 function nextMilestoneAbove(value) {
-  return VELOCITY_MILESTONES.find((milestone) => milestone > value) ?? null;
+  return STAR_MILESTONES.find((milestone) => milestone > value) ?? null;
 }
 function computeVelocity({ history }) {
   const snapshots = history.snapshots;
   if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
-  const previous = snapshots[snapshots.length - 2];
   const last = snapshots[snapshots.length - 1];
   const lastMs = toEpochMs(last.timestamp);
-  const previousMs = toEpochMs(previous.timestamp);
-  if (lastMs === null || previousMs === null) return null;
-  const elapsedDays = (lastMs - previousMs) / MS_PER_DAY;
-  if (elapsedDays <= 0) return null;
+  if (lastMs === null) return null;
+  let previous = null;
+  let elapsedDays = 0;
+  for (let index = snapshots.length - 2; index >= 0; index--) {
+    const candidateMs = toEpochMs(snapshots[index].timestamp);
+    if (candidateMs === null) continue;
+    const candidateDays = (lastMs - candidateMs) / MS_PER_DAY;
+    if (candidateDays < MIN_RATE_INTERVAL_DAYS) continue;
+    previous = snapshots[index];
+    elapsedDays = candidateDays;
+    break;
+  }
+  if (previous === null) return null;
   const gained = last.totalStars - previous.totalStars;
   const starsPerDay = roundTo(gained / elapsedDays, STARS_PER_DAY_DECIMALS);
   const growthPercent = previous.totalStars > 0 ? roundTo(gained / previous.totalStars * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS) : null;
@@ -42293,7 +42392,7 @@ function buildMilestoneAnnotations({
   minStars,
   maxStars,
   palette = LIGHT_PALETTE,
-  thresholds = MILESTONE_THRESHOLDS
+  thresholds = STAR_MILESTONES
 }) {
   const visible = thresholds.filter((milestone) => milestone > minStars && milestone < maxStars);
   if (visible.length === 0) return null;
@@ -42442,7 +42541,7 @@ function generateChartUrl({
   }
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
-  const thresholds = customMilestones && customMilestones.length > 0 ? customMilestones : MILESTONE_THRESHOLDS;
+  const thresholds = customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
   const annotation = milestones ? buildMilestoneAnnotations({ minStars, maxStars, palette, thresholds }) : null;
   const config = buildChartConfig({
     labels,
@@ -42620,6 +42719,7 @@ function generateHtmlReport({
   previousTimestamp,
   locale,
   history = null,
+  velocityHistory = null,
   includeCharts = true,
   stargazerDiff = null,
   forecastData = null,
@@ -42649,7 +42749,7 @@ function generateHtmlReport({
     return `
       <tr>
         <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};">
-          <a href="https://github.com/${repo.fullName}" style="color:${palette.link};text-decoration:none;">${repo.fullName}</a>${badge}
+          <a href="https://github.com/${escapeHtml(repo.fullName)}" style="color:${palette.link};text-decoration:none;">${escapeHtml(repo.fullName)}</a>${badge}
         </td>
         <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};text-align:right;">${repo.current}</td>
         <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};text-align:right;color:${deltaColor({ delta: repo.delta, palette })};font-weight:600;">
@@ -42660,7 +42760,7 @@ function generateHtmlReport({
   const removedSection = removedRepos.length > 0 ? `
       <div style="margin-top:16px;">
         <h3 style="color:${palette.negative};font-size:14px;">${t.report.removedRepositories}</h3>
-        <ul>${removedRepos.map((repo) => `<li>${interpolate({ template: t.report.removedRepoText, params: { name: repo.fullName, count: repo.previous ?? 0 } })}</li>`).join("")}</ul>
+        <ul>${removedRepos.map((repo) => `<li>${interpolate({ template: t.report.removedRepoText, params: { name: escapeHtml(repo.fullName), count: repo.previous ?? 0 } })}</li>`).join("")}</ul>
       </div>` : "";
   const topRepos = sorted.slice(0, topReposCount).map((repo) => repo.fullName);
   const comparisonChartUrl = hasChartHistory && topRepos.length > 0 ? generateComparisonChartUrl({
@@ -42690,8 +42790,8 @@ function generateHtmlReport({
     if (!chartUrl) return "";
     return `
         <div style="margin-top:16px;">
-          <h4 style="font-size:14px;margin-bottom:8px;">${repoName}</h4>
-          <img src="${chartUrl}" alt="${repoName}" style="max-width:100%;height:auto;border-radius:4px;">
+          <h4 style="font-size:14px;margin-bottom:8px;">${escapeHtml(repoName)}</h4>
+          <img src="${chartUrl}" alt="${escapeHtml(repoName)}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
   }).filter(Boolean).join("") : "";
   const chartSection = hasChartHistory ? `
@@ -42715,12 +42815,12 @@ function generateHtmlReport({
         ${stargazerDiff.entries.map(
     (entry) => `
         <div style="margin-top:12px;">
-          <h3 style="font-size:14px;margin-bottom:8px;">${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</h3>
+          <h3 style="font-size:14px;margin-bottom:8px;">${escapeHtml(entry.repoFullName)} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</h3>
           ${entry.newStargazers.map(
       (stargazer) => `
           <div style="display:flex;align-items:center;margin:4px 0;">
-            <img src="${stargazer.avatarUrl}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
-            <a href="${stargazer.profileUrl}" style="color:${palette.link};text-decoration:none;font-weight:600;">${stargazer.login}</a>
+            <img src="${escapeHtml(stargazer.avatarUrl)}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
+            <a href="${escapeHtml(stargazer.profileUrl)}" style="color:${palette.link};text-decoration:none;font-weight:600;">${escapeHtml(stargazer.login)}</a>
             <span style="color:${palette.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split("T")[0] } })}</span>
           </div>`
     ).join("")}
@@ -42732,7 +42832,7 @@ function generateHtmlReport({
         ${sampledNoteHtml}
         <p style="color:${palette.neutral};">${t.stargazers.noNewStargazers}</p>
       </div>` : "";
-  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
+  const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
   const velocityList = velocity ? `
         <ul style="margin:0;padding-left:20px;">
           <li><strong>${t.velocity.starsPerDay}:</strong> ${velocity.starsPerDay}</li>
@@ -42855,6 +42955,7 @@ function generateMarkdownReport({
   previousTimestamp,
   locale,
   history = null,
+  velocityHistory = null,
   includeCharts = true,
   stargazerDiff = null,
   forecastData = null,
@@ -42976,7 +43077,7 @@ function generateMarkdownReport({
     t.stargazers.noNewStargazers,
     ""
   ] : [];
-  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
+  const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
   const velocityLines = velocity ? [
     `- **${t.velocity.starsPerDay}:** ${velocity.starsPerDay}`,
     ...velocity.growthPercent !== null ? [`- **${t.velocity.growth}:** ${formatSignedPercent(velocity.growthPercent)}`] : [],
@@ -43097,7 +43198,10 @@ async function trackStars() {
         if (config.trackStargazers) {
           const previousMap = readStargazers(dataDir);
           stargazerDiff = diffStargazers({ current: repoStargazers, previousMap });
-          writeStargazers({ dataDir, stargazerMap: buildStargazerMap(repoStargazers) });
+          writeStargazers({
+            dataDir,
+            stargazerMap: buildStargazerMap({ repoStargazers, previousMap })
+          });
           info(`Found ${stargazerDiff.totalNew} new stargazers`);
         }
         const snapshot = createSnapshot({ currentRepos: repos, summary: summary2 });
@@ -43137,6 +43241,7 @@ async function trackStars() {
           previousTimestamp,
           locale: config.locale,
           history,
+          velocityHistory: updatedHistory,
           includeCharts: config.includeCharts,
           stargazerDiff,
           forecastData,
@@ -43163,7 +43268,28 @@ async function trackStars() {
           mode: config.notificationMode
         });
         const notify = summary2.changed && thresholdReached;
-        if (notify) {
+        const emailConfig = getEmailConfig(config.locale);
+        let notificationDelivered = notify;
+        if (emailConfig && (notify || config.sendOnNoChanges)) {
+          const subject = interpolate({
+            template: t.email.subjectLine,
+            params: {
+              subject: t.email.subject,
+              totalStars: summary2.totalStars,
+              delta: deltaIndicator(summary2.totalDelta)
+            }
+          });
+          try {
+            const sent = await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
+            notificationDelivered = notify && sent;
+          } catch (error2) {
+            warning(`Failed to send email: ${error2.message}`);
+            notificationDelivered = false;
+          }
+        } else if (emailConfig) {
+          info("Notification threshold not reached, skipping email");
+        }
+        if (notificationDelivered) {
           updatedHistory.starsAtLastNotification = summary2.totalStars;
         }
         writeHistory({ dataDir, history: updatedHistory });
@@ -43183,6 +43309,7 @@ async function trackStars() {
         for (const chartFile of chartFiles) {
           writeChart({ dataDir, filename: chartFile.filename, svg: chartFile.svg });
         }
+        pruneCharts({ dataDir, keep: chartFiles.map((chartFile) => chartFile.filename) });
         if (config.readOnly) {
           info(`Read-only run: leaving ${config.dataBranch} untouched`);
         } else {
@@ -43195,26 +43322,9 @@ async function trackStars() {
           htmlReport,
           csvReport,
           shouldNotify: notify,
+          notificationSent: notificationDelivered && emailConfig !== null,
           newStargazers: stargazerDiff?.totalNew ?? 0
         });
-        const emailConfig = getEmailConfig(config.locale);
-        if (emailConfig && (notify || config.sendOnNoChanges)) {
-          const subject = interpolate({
-            template: t.email.subjectLine,
-            params: {
-              subject: t.email.subject,
-              totalStars: summary2.totalStars,
-              delta: deltaIndicator(summary2.totalDelta)
-            }
-          });
-          try {
-            await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
-          } catch (error2) {
-            warning(`Failed to send email: ${error2.message}`);
-          }
-        } else if (emailConfig) {
-          info("No star changes detected, skipping email");
-        }
       }
     });
   } catch (error2) {
@@ -43237,6 +43347,7 @@ function setEmptyOutputs() {
     htmlReport: "<p>No repositories matched the configured filters.</p>",
     csvReport: "",
     shouldNotify: false,
+    notificationSent: false,
     newStargazers: 0
   });
 }
@@ -43246,6 +43357,7 @@ function setOutputs({
   htmlReport,
   csvReport,
   shouldNotify: shouldNotify2,
+  notificationSent,
   newStargazers
 }) {
   setOutput("report", markdownReport);
@@ -43257,6 +43369,7 @@ function setOutputs({
   setOutput("new-stars", String(summary2.newStars));
   setOutput("lost-stars", String(summary2.lostStars));
   setOutput("should-notify", String(shouldNotify2));
+  setOutput("notification-sent", String(notificationSent));
   setOutput("new-stargazers", String(newStargazers));
 }
 

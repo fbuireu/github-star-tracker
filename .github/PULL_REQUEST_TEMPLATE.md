@@ -48,8 +48,9 @@ Fixes #<!-- issue number -->
 
 - [ ] My code follows the style guidelines of this project (`pnpm check`)
 - [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
+- [ ] I updated the *Public API*, *Invariants* or *Files* sections of any `CLAUDE.md` my change affects
+- [ ] Changed inputs, outputs or defaults are reflected in `action.yml`, the wiki and the README
+- [ ] New or redefined domain vocabulary is in `CONTEXT.md`; a hard-to-reverse decision has an ADR
 - [ ] My changes generate no new warnings or errors
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] New and existing unit tests pass locally with my changes

@@ -147,7 +147,7 @@ with:
   # 'auto' - adaptive, based on total stars
 ```
 
-The threshold is measured against `starsAtLastNotification`, a value persisted in `stars-data.json` on the data branch that is **only** updated when a notification actually fires. Runs that do not notify leave it untouched, so the accumulated change keeps growing across runs until it trips the threshold. This is what makes `should-notify` the cumulative output, unlike `new-stars` and `lost-stars`, which are per-run figures measured against the comparison baseline.
+The threshold is measured against `starsAtLastNotification`, a value persisted in `stars-data.json` on the data branch that is **only** updated when a notification is actually delivered — a failed SMTP send, or an `smtp-host` set with an empty `email-to`, leaves it untouched so the accumulated change is not lost. When no SMTP transport is configured at all, the `should-notify` output *is* the notification, so the baseline advances as soon as the threshold trips. The `notification-sent` output reports which of those happened. Runs that do not notify leave it untouched, so the accumulated change keeps growing across runs until it trips the threshold. This is what makes `should-notify` the cumulative output, unlike `new-stars` and `lost-stars`, which are per-run figures measured against the comparison baseline.
 
 #### Notification Mode
 

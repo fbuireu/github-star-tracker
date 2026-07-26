@@ -1,5 +1,11 @@
-import { FORECAST_WEEKS, MIN_SNAPSHOTS_FOR_FORECAST, MS_PER_DAY } from './constants';
+import {
+  FORECAST_WEEKS,
+  MIN_RATE_INTERVAL_DAYS,
+  MIN_SNAPSHOTS_FOR_FORECAST,
+  MS_PER_DAY,
+} from './constants';
 import { repoStarSeries } from './snapshot';
+import { toEpochMs } from './time';
 import type { History } from './types';
 
 const DAYS_PER_WEEK = 7;
@@ -76,7 +82,7 @@ export function weightedMovingAverage(points: SeriesPoint[]): number {
 
   for (let index = 1; index < points.length; index++) {
     const elapsedDays = points[index].day - points[index - 1].day;
-    if (elapsedDays <= 0) continue;
+    if (elapsedDays < MIN_RATE_INTERVAL_DAYS) continue;
     dailyRates.push((points[index].value - points[index - 1].value) / elapsedDays);
   }
 
@@ -129,15 +135,15 @@ function forecastFromSeries(points: SeriesPoint[]): ForecastResult[] {
 }
 
 function snapshotDays(history: History): number[] {
-  const times = history.snapshots.map((snapshot) => Date.parse(snapshot.timestamp));
+  const times = history.snapshots.map((snapshot) => toEpochMs(snapshot.timestamp));
 
-  if (times.some((timeMs) => !Number.isFinite(timeMs))) {
+  if (times.some((timeMs) => timeMs === null)) {
     return history.snapshots.map((_, index) => index * DAYS_PER_WEEK);
   }
 
-  const first = times[0];
+  const first = times[0] as number;
 
-  return times.map((timeMs) => (timeMs - first) / MS_PER_DAY);
+  return times.map((timeMs) => ((timeMs as number) - first) / MS_PER_DAY);
 }
 
 export function computeForecast({

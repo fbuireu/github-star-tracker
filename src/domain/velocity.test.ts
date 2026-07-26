@@ -11,6 +11,35 @@ const makeHistory = (points: { day: number; totalStars: number }[]): History => 
 });
 
 describe('computeVelocity', () => {
+  const HOUR_MS = 3_600_000;
+
+  it('ignores a pair closer together than the minimum rate interval', () => {
+    const base = Date.UTC(2026, 0, 10);
+    const history: History = {
+      snapshots: [
+        { timestamp: new Date(base).toISOString(), totalStars: 1000, repos: [] },
+        { timestamp: new Date(base + 2 * HOUR_MS).toISOString(), totalStars: 1001, repos: [] },
+      ],
+    };
+
+    expect(computeVelocity({ history })).toBeNull();
+  });
+
+  it('falls back to the newest snapshot far enough back instead of the adjacent one', () => {
+    const base = Date.UTC(2026, 0, 10);
+    const history: History = {
+      snapshots: [
+        { timestamp: new Date(base).toISOString(), totalStars: 1000, repos: [] },
+        { timestamp: new Date(base + 24 * HOUR_MS).toISOString(), totalStars: 1010, repos: [] },
+        { timestamp: new Date(base + 25 * HOUR_MS).toISOString(), totalStars: 1011, repos: [] },
+      ],
+    };
+
+    const velocity = computeVelocity({ history });
+
+    expect(velocity?.starsPerDay).toBeCloseTo(10.56, 2);
+  });
+
   it('returns null instead of NaN when a timestamp is unparseable', () => {
     const history: History = {
       snapshots: [

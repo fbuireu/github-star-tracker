@@ -1,5 +1,6 @@
 import { MAX_REACHABLE_STARGAZERS, MS_PER_DAY } from './constants';
 import type { RepoStargazers } from './stargazers';
+import { toEpochMs } from './time';
 import type { History, Snapshot } from './types';
 
 const MIN_HISTORY_BUCKETS = 2;
@@ -94,8 +95,8 @@ export function buildStarHistory({
 
   for (const repo of repos) {
     const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? [])
-      .map((stargazer) => Date.parse(stargazer.starredAt))
-      .filter((timeMs) => Number.isFinite(timeMs))
+      .map((stargazer) => toEpochMs(stargazer.starredAt))
+      .filter((timeMs): timeMs is number => timeMs !== null)
       .sort((earlier, later) => earlier - later);
 
     eventsByRepo.set(repo.fullName, times);

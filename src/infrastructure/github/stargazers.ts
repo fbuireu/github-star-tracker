@@ -44,13 +44,19 @@ export async function fetchAllStargazers({
         stargazers,
         sampled: shouldSample,
         coveredStars,
+        incomplete: repo.stars > 0 && stargazers.length === 0,
       });
 
       if (shouldSample) sampled.push(repo.fullName);
     } catch (error) {
       core.warning(`Failed to fetch stargazers for ${repo.fullName}: ${describeFetchError(error)}`);
 
-      results.push({ repoFullName: repo.fullName, stargazers: [], sampled: shouldSample });
+      results.push({
+        repoFullName: repo.fullName,
+        stargazers: [],
+        sampled: shouldSample,
+        incomplete: true,
+      });
     }
   }
 

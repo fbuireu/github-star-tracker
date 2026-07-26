@@ -35,7 +35,7 @@ describe('generateMarkdownReport', () => {
   const velocityHistory = makeHistory([100, 200], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
   it('renders the velocity section when velocity-metrics is enabled', () => {
-    const report = renderMarkdown({ history: velocityHistory, velocityMetrics: true });
+    const report = renderMarkdown({ velocityHistory, velocityMetrics: true });
 
     expect(report).toContain('Growth Velocity');
     expect(report).toContain('Stars per day');
@@ -43,7 +43,31 @@ describe('generateMarkdownReport', () => {
   });
 
   it('omits the velocity section by default', () => {
-    const report = renderMarkdown({ history: velocityHistory });
+    const report = renderMarkdown({ velocityHistory });
+
+    expect(report).not.toContain('Growth Velocity');
+  });
+
+  it('computes velocity from the tracked history, not the chart history', () => {
+    const chartHistory = makeHistory([100, 5_000], {
+      startMs: Date.UTC(2025, 0, 1),
+      stepDays: 100,
+    });
+
+    const report = renderMarkdown({
+      history: chartHistory,
+      velocityHistory,
+      velocityMetrics: true,
+    });
+
+    expect(report).toContain('**Stars per day:** 10');
+    expect(report).not.toContain('**Stars per day:** 49');
+  });
+
+  it('omits velocity when only a chart history is available', () => {
+    const chartHistory = makeHistory([100, 200], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
+
+    const report = renderMarkdown({ history: chartHistory, velocityMetrics: true });
 
     expect(report).not.toContain('Growth Velocity');
   });
@@ -51,7 +75,7 @@ describe('generateMarkdownReport', () => {
   it('renders velocity with only the daily rate when growth and projection are unavailable', () => {
     const flatHistory = makeHistory([0, 0], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
-    const report = renderMarkdown({ history: flatHistory, velocityMetrics: true });
+    const report = renderMarkdown({ velocityHistory: flatHistory, velocityMetrics: true });
 
     expect(report).toContain('Growth Velocity');
     expect(report).toContain('Stars per day');
@@ -64,7 +88,7 @@ describe('generateMarkdownReport', () => {
       stepDays: 10,
     });
 
-    const report = renderMarkdown({ history: decliningHistory, velocityMetrics: true });
+    const report = renderMarkdown({ velocityHistory: decliningHistory, velocityMetrics: true });
 
     expect(report).toContain('-25%');
     expect(report).not.toContain('+-25%');
@@ -89,7 +113,7 @@ describe('generateMarkdownReport', () => {
     };
 
     const report = renderMarkdown({
-      history: velocityHistory,
+      velocityHistory,
       velocityMetrics: true,
       forecastData,
     });

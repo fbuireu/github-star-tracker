@@ -1,4 +1,5 @@
 import { ChartCurve, ChartRange, ChartTheme } from '@config/types';
+import { STAR_MILESTONES } from '@domain/constants';
 import type { ForecastData } from '@domain/forecast';
 import { formatDate } from '@domain/formatting';
 import { repoStarSeries } from '@domain/snapshot';
@@ -10,7 +11,6 @@ import {
   CHART_POINT,
   CHART_TENSION,
   LIGHT_PALETTE,
-  MILESTONE_THRESHOLDS,
   MIN_SNAPSHOTS_FOR_CHART,
   TREND_WINDOW,
 } from './constants';
@@ -158,7 +158,7 @@ export function buildMilestoneAnnotations({
   minStars,
   maxStars,
   palette = LIGHT_PALETTE,
-  thresholds = MILESTONE_THRESHOLDS,
+  thresholds = STAR_MILESTONES,
 }: BuildMilestoneAnnotationsParams): AnnotationPlugin | null {
   const visible = thresholds.filter((milestone) => milestone > minStars && milestone < maxStars);
 
@@ -377,7 +377,7 @@ export function generateChartUrl({
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
   const thresholds =
-    customMilestones && customMilestones.length > 0 ? customMilestones : MILESTONE_THRESHOLDS;
+    customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
   const annotation = milestones
     ? buildMilestoneAnnotations({ minStars, maxStars, palette, thresholds })
     : null;

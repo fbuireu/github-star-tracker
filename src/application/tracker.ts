@@ -16,6 +16,7 @@ import { fetchAllStargazers } from '@infrastructure/github/stargazers';
 import { getEmailConfig, sendEmail } from '@infrastructure/notification/email';
 import {
   commitAndPush,
+  pruneCharts,
   readHistory,
   readStargazers,
   writeBadge,
@@ -100,7 +101,10 @@ export async function trackStars(): Promise<void> {
 
           stargazerDiff = diffStargazers({ current: repoStargazers, previousMap });
 
-          writeStargazers({ dataDir, stargazerMap: buildStargazerMap(repoStargazers) });
+          writeStargazers({
+            dataDir,
+            stargazerMap: buildStargazerMap({ repoStargazers, previousMap }),
+          });
 
           core.info(`Found ${stargazerDiff.totalNew} new stargazers`);
         }
@@ -153,6 +157,7 @@ export async function trackStars(): Promise<void> {
           previousTimestamp,
           locale: config.locale,
           history,
+          velocityHistory: updatedHistory,
           includeCharts: config.includeCharts,
           stargazerDiff,
           forecastData,
@@ -181,7 +186,32 @@ export async function trackStars(): Promise<void> {
         });
         const notify = summary.changed && thresholdReached;
 
-        if (notify) {
+        const emailConfig = getEmailConfig(config.locale);
+        let notificationDelivered = notify;
+
+        if (emailConfig && (notify || config.sendOnNoChanges)) {
+          const subject = interpolate({
+            template: t.email.subjectLine,
+            params: {
+              subject: t.email.subject,
+              totalStars: summary.totalStars,
+              delta: deltaIndicator(summary.totalDelta),
+            },
+          });
+
+          try {
+            const sent = await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
+
+            notificationDelivered = notify && sent;
+          } catch (error) {
+            core.warning(`Failed to send email: ${(error as Error).message}`);
+            notificationDelivered = false;
+          }
+        } else if (emailConfig) {
+          core.info('Notification threshold not reached, skipping email');
+        }
+
+        if (notificationDelivered) {
           updatedHistory.starsAtLastNotification = summary.totalStars;
         }
 
@@ -205,6 +235,8 @@ export async function trackStars(): Promise<void> {
           writeChart({ dataDir, filename: chartFile.filename, svg: chartFile.svg });
         }
 
+        pruneCharts({ dataDir, keep: chartFiles.map((chartFile) => chartFile.filename) });
+
         if (config.readOnly) {
           core.info(`Read-only run: leaving ${config.dataBranch} untouched`);
         } else {
@@ -218,28 +250,9 @@ export async function trackStars(): Promise<void> {
           htmlReport,
           csvReport,
           shouldNotify: notify,
+          notificationSent: notificationDelivered && emailConfig !== null,
           newStargazers: stargazerDiff?.totalNew ?? 0,
         });
-
-        const emailConfig = getEmailConfig(config.locale);
-        if (emailConfig && (notify || config.sendOnNoChanges)) {
-          const subject = interpolate({
-            template: t.email.subjectLine,
-            params: {
-              subject: t.email.subject,
-              totalStars: summary.totalStars,
-              delta: deltaIndicator(summary.totalDelta),
-            },
-          });
-
-          try {
-            await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
-          } catch (error) {
-            core.warning(`Failed to send email: ${(error as Error).message}`);
-          }
-        } else if (emailConfig) {
-          core.info('No star changes detected, skipping email');
-        }
       },
     });
   } catch (error) {
@@ -264,6 +277,7 @@ function setEmptyOutputs(): void {
     htmlReport: '<p>No repositories matched the configured filters.</p>',
     csvReport: '',
     shouldNotify: false,
+    notificationSent: false,
     newStargazers: 0,
   });
 }
@@ -274,6 +288,7 @@ interface SetOutputsParams {
   htmlReport: string;
   csvReport: string;
   shouldNotify: boolean;
+  notificationSent: boolean;
   newStargazers: number;
 }
 
@@ -283,6 +298,7 @@ function setOutputs({
   htmlReport,
   csvReport,
   shouldNotify,
+  notificationSent,
   newStargazers,
 }: SetOutputsParams): void {
   core.setOutput('report', markdownReport);
@@ -294,5 +310,6 @@ function setOutputs({
   core.setOutput('new-stars', String(summary.newStars));
   core.setOutput('lost-stars', String(summary.lostStars));
   core.setOutput('should-notify', String(shouldNotify));
+  core.setOutput('notification-sent', String(notificationSent));
   core.setOutput('new-stargazers', String(newStargazers));
 }

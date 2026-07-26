@@ -26,6 +26,20 @@ export function parseNumberList(value: string | null | undefined): number[] {
   ].sort((a, b) => a - b);
 }
 
+export function parsePositiveNumber(value: string | number | null | undefined): number | undefined {
+  const parsed = parseNumber(value);
+
+  return parsed !== undefined && parsed > 0 ? parsed : undefined;
+}
+
+export function parseNonNegativeNumber(
+  value: string | number | null | undefined,
+): number | undefined {
+  const parsed = parseNumber(value);
+
+  return parsed !== undefined && parsed >= 0 ? parsed : undefined;
+}
+
 export function parseBool(value: string | boolean | null | undefined): boolean | undefined {
   if (isBlank(value)) return undefined;
   if (typeof value === 'boolean') return value;

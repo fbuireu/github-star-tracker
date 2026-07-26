@@ -102,6 +102,32 @@ export function writeChart({ dataDir, filename, svg }: WriteChartParams): void {
   fs.writeFileSync(filePath, svg);
 }
 
+interface PruneChartsParams {
+  dataDir: string;
+  keep: string[];
+}
+
+export function pruneCharts({ dataDir, keep }: PruneChartsParams): string[] {
+  const chartsDir = path.join(dataDir, DATA_FILES.chartsDir);
+
+  if (!fs.existsSync(chartsDir)) return [];
+
+  const kept = new Set(keep);
+  const removed = fs
+    .readdirSync(chartsDir)
+    .filter((filename) => filename.endsWith('.svg') && !kept.has(filename));
+
+  for (const filename of removed) {
+    fs.rmSync(path.join(chartsDir, filename));
+  }
+
+  if (removed.length > 0) {
+    core.info(`Removed ${removed.length} chart(s) no longer produced: ${removed.join(', ')}`);
+  }
+
+  return removed;
+}
+
 export function readStargazers(dataDir: string): StargazerMap {
   return readJsonFile<StargazerMap>({
     filePath: path.join(dataDir, DATA_FILES.stargazers),

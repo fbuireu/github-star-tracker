@@ -16,9 +16,9 @@ Charts plot the **real historical star curve**. Every star is placed on the date
 
 Shows the **total star count** across all tracked repositories over time.
 
-- Animated line with smooth Catmull-Rom curves, anchored to the baseline at the first point (starts from zero, not mid-air)
+- Animated line with smooth monotone cubic curves (configurable via `chart-curve`), anchored to the baseline at the first point (starts from zero, not mid-air)
 - CSS draw-line animation + fade-in data points
-- Milestone markers at 10, 50, 100, 500, 1K, 5K, 10K stars (when in range)
+- Milestone markers at 10, 50, 100, 500, 1K, 5K, 10K, 50K, 100K, 500K, 1M stars (when in range)
 - Compact Y-axis and milestone values (e.g. `50K`) that stay inside the chart bounds
 - X-axis date labels scaled to the time span: years for multi-year histories (e.g. `2023 2024 2025`), day-level labels for shorter ranges
 - Optional **trend line**: when `chart-trend-line` is enabled, a dashed neutral-gray line (`#6a737d`) is overlaid on top of the gold star line. It is a 7-point moving average that smooths week-to-week noise so the underlying growth direction is easier to read. This chart has no legend, so the gray dashed line is the trend line (the solid gold line is the actual star count).

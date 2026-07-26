@@ -116,9 +116,13 @@ Default on the left, the changed option on the right.
 
 Narrows the time window, measured back from the latest point.
 
-| `all` (default) | `90d` | `1y` |
-|---|---|---|
-| ![all time](option-range-all.svg) | ![last 90 days](option-range-90d.svg) | ![last year](option-range-1y.svg) |
+| `all` (default) | `1y` | `90d` | `30d` |
+|---|---|---|---|
+| ![all time](option-range-all.svg) | ![last year](option-range-1y.svg) | ![last 90 days](option-range-90d.svg) | ![last 30 days](option-range-30d.svg) |
+
+All four are rendered from the same weekly history. `chart-max-points` (default 30) controls resolution,
+not the span: each chart spreads its 30 points evenly across the window `chart-range` selected, so the
+narrower the range the denser the real detail.
 
 ### `chart-max-points`
 

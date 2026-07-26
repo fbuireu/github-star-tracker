@@ -1,10 +1,6 @@
-import { MS_PER_DAY } from './constants';
+import { MIN_RATE_INTERVAL_DAYS, MS_PER_DAY, STAR_MILESTONES } from './constants';
 import { toEpochMs } from './time';
-import type { History } from './types';
-
-const VELOCITY_MILESTONES = [
-  10, 50, 100, 500, 1_000, 5_000, 10_000, 50_000, 100_000, 500_000, 1_000_000,
-] as const;
+import type { History, Snapshot } from './types';
 
 const MIN_SNAPSHOTS_FOR_VELOCITY = 2;
 const PERCENT_MULTIPLIER = 100;
@@ -25,21 +21,33 @@ function roundTo(value: number, decimals: number): number {
 }
 
 function nextMilestoneAbove(value: number): number | null {
-  return VELOCITY_MILESTONES.find((milestone) => milestone > value) ?? null;
+  return STAR_MILESTONES.find((milestone) => milestone > value) ?? null;
 }
 
 export function computeVelocity({ history }: { history: History }): VelocityMetrics | null {
   const snapshots = history.snapshots;
   if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
 
-  const previous = snapshots[snapshots.length - 2];
   const last = snapshots[snapshots.length - 1];
   const lastMs = toEpochMs(last.timestamp);
-  const previousMs = toEpochMs(previous.timestamp);
-  if (lastMs === null || previousMs === null) return null;
+  if (lastMs === null) return null;
 
-  const elapsedDays = (lastMs - previousMs) / MS_PER_DAY;
-  if (elapsedDays <= 0) return null;
+  let previous: Snapshot | null = null;
+  let elapsedDays = 0;
+
+  for (let index = snapshots.length - 2; index >= 0; index--) {
+    const candidateMs = toEpochMs(snapshots[index].timestamp);
+    if (candidateMs === null) continue;
+
+    const candidateDays = (lastMs - candidateMs) / MS_PER_DAY;
+    if (candidateDays < MIN_RATE_INTERVAL_DAYS) continue;
+
+    previous = snapshots[index];
+    elapsedDays = candidateDays;
+    break;
+  }
+
+  if (previous === null) return null;
 
   const gained = last.totalStars - previous.totalStars;
   const starsPerDay = roundTo(gained / elapsedDays, STARS_PER_DAY_DECIMALS);

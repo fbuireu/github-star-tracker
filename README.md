@@ -67,8 +67,8 @@ Every run, Star Tracker commits these artifacts to a dedicated data branch:
 - :office: **GitHub Enterprise:** GHES support, auto-detected or explicit API URL
 - :globe_with_meridians: **Multi-language:** English, Spanish, Catalan, Italian
 - :bar_chart: **CSV export:** Machine-readable output for data pipelines
-- :jigsaw: **Action outputs:** `total-stars`, `new-stars`, `lost-stars`, `should-notify`, `new-stargazers` (and much more) for workflow chaining
-- :shield: **Zero runtime deps:** Bundled TypeScript action, 98%+ test coverage, 710+ tests
+- :jigsaw: **Action outputs:** `total-stars`, `new-stars`, `lost-stars`, `should-notify`, `notification-sent`, `new-stargazers` (and much more) for workflow chaining
+- :shield: **Zero runtime deps:** Bundled TypeScript action, 98%+ test coverage, extensive unit test suite
 - :lock: **Future-proof:** Unaffected by GitHub's 2026 stargazers API restrictions, since it uses your own credentials on your own repositories
 
 ---
@@ -206,6 +206,7 @@ In the YAML config file, option keys may be written with either dashes or unders
 | `new-stars`        | Stars gained vs. the comparison baseline. Per run, not cumulative |
 | `lost-stars`       | Stars lost vs. the comparison baseline. Per run, not cumulative   |
 | `should-notify`    | `true` / `false` - the **cumulative** threshold signal, driven by `notification-threshold` and `notification-mode` (and requires an actual change) |
+| `notification-sent` | `true` / `false` - whether an email was actually delivered. `should-notify` is the decision; this is the outcome |
 | `new-stargazers`   | New stargazers vs. the stored stargazer list, which every writing run rewrites - not driven by `compare-against` |
 | `report`           | Full Markdown report                                              |
 | `report-html`      | HTML report (for email)                                          |

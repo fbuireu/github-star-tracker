@@ -30,15 +30,17 @@ flowchart TD
     charts["SVG charts"]
     commit["Git commit & push (data branch)"]
     setout["Export action outputs"]
-    email{"SMTP configured?"}
+    email{"Notify? (threshold + SMTP)"}
     send["Dispatch notification"]
 
     trigger --> config --> fetch --> filter
     filter --> init --> read --> baseline --> compare
     compare --> stargazers --> history --> forecast
     forecast --> md & json & csv & svg & html & charts
-    md & json & csv & svg & html & charts --> commit --> setout --> email
-    email -->|Yes| send
+    md & json & csv & svg & html & charts --> email
+    email -->|Yes| send --> commit
+    email -->|No| commit
+    commit --> setout
 
     style trigger fill:#e1f5ff,stroke:#01579b,stroke-width:2px
     style config fill:#fff3e0,stroke:#e65100,stroke-width:2px
@@ -82,7 +84,7 @@ trackStars();
 
 **File:** `src/application/tracker.ts` > `trackStars()`
 
-Coordinates all bounded contexts in a single `try`/`finally` flow: PAT extraction, Octokit instantiation, configuration loading, i18n bootstrap, and the full data pipeline.
+Coordinates all layers in a single `try`/`finally` flow: PAT extraction, Octokit instantiation, configuration loading, i18n bootstrap, and the full data pipeline.
 
 ### Configuration Resolution
 

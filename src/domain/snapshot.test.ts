@@ -14,6 +14,19 @@ function makeDailyHistory(days: number): History {
   };
 }
 
+describe('getLastSnapshot skips corrupt timestamps', () => {
+  it('falls back to the newest snapshot whose timestamp parses', () => {
+    const history = {
+      snapshots: [
+        { timestamp: '2026-01-01T00:00:00Z', totalStars: 10, repos: [] },
+        { timestamp: 'not-a-date', totalStars: 20, repos: [] },
+      ],
+    };
+
+    expect(getLastSnapshot(history)?.totalStars).toBe(10);
+  });
+});
+
 describe('getLastSnapshot', () => {
   it('returns null for empty history', () => {
     const history: History = { snapshots: [] };

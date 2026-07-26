@@ -4,9 +4,9 @@ Technologies, design decisions, and architecture overview.
 
 ## Architecture
 
-The project implements **Domain-Driven Design<sub>(ish)</sub>** with a **Functional Core, Imperative Shell** pattern. Five bounded contexts organize the codebase:
+The project implements **Domain-Driven Design<sub>(ish)</sub>** with a **Functional Core, Imperative Shell** pattern. Five layers organize the codebase. They are layers, not DDD bounded contexts: they share a single ubiquitous language, recorded in `CONTEXT.md` at the repo root.
 
-| Context | Directory | Responsibility | Purity |
+| Layer | Directory | Responsibility | Purity |
 |---|---|---|---|
 | **Domain** | `src/domain/` | Core types, comparison, snapshots, forecasts, notifications, stargazers | Pure functions |
 | **Config** | `src/config/` | Schema, defaults, parsing, loading | Mostly pure |

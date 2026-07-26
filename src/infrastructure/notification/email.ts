@@ -3,7 +3,8 @@ import { getTranslations, type Locale } from '@i18n';
 import nodemailer from 'nodemailer';
 
 const SECURE_SMTP_PORT = 465;
-const DEFAULT_SMTP_PORT = '587';
+export const DEFAULT_SMTP_PORT = '587';
+const MAX_TCP_PORT = 65_535;
 
 function resolveFromAddress({ from, username }: { from: string; username: string }): string {
   if (from.includes('@')) {
@@ -26,17 +27,30 @@ export interface EmailConfig {
   from: string;
 }
 
+function resolvePort(raw: string): number {
+  const parsed = Number.parseInt(raw || DEFAULT_SMTP_PORT, 10);
+
+  if (Number.isInteger(parsed) && parsed > 0 && parsed <= MAX_TCP_PORT) return parsed;
+
+  core.warning(`Invalid smtp-port "${raw}". Falling back to ${DEFAULT_SMTP_PORT}.`);
+
+  return Number.parseInt(DEFAULT_SMTP_PORT, 10);
+}
+
 export function getEmailConfig(locale: Locale): EmailConfig | null {
   const host = core.getInput('smtp-host');
   if (!host) return null;
 
   const t = getTranslations(locale);
+  const password = core.getInput('smtp-password');
+
+  if (password) core.setSecret(password);
 
   return {
     host,
-    port: Number.parseInt(core.getInput('smtp-port') || DEFAULT_SMTP_PORT, 10),
+    port: resolvePort(core.getInput('smtp-port')),
     username: core.getInput('smtp-username'),
-    password: core.getInput('smtp-password'),
+    password,
     to: core.getInput('email-to'),
     from: core.getInput('email-from') || t.email.defaultFrom,
   };

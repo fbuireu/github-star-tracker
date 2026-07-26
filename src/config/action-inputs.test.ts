@@ -1,8 +1,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { DEFAULT_SMTP_PORT } from '@infrastructure/notification/email';
 import * as yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 import { DEFAULTS } from './defaults';
+import { DEFAULT_CONFIG_PATH } from './loader';
 
 interface ActionInput {
   description: string;
@@ -24,6 +26,18 @@ const OVERRIDABLE = Object.keys(DEFAULTS).filter((key) => key !== 'sendOnNoChang
 function toKebabCase(key: string): string {
   return key.replaceAll(UPPERCASE_LETTER_PATTERN, (letter) => `-${letter.toLowerCase()}`);
 }
+
+describe('config-path default', () => {
+  it('matches DEFAULT_CONFIG_PATH in @config/loader', () => {
+    expect(manifest.inputs['config-path'].default).toBe(DEFAULT_CONFIG_PATH);
+  });
+});
+
+describe('smtp-port default', () => {
+  it('matches DEFAULT_SMTP_PORT in @infrastructure/notification/email', () => {
+    expect(manifest.inputs['smtp-port'].default).toBe(DEFAULT_SMTP_PORT);
+  });
+});
 
 describe('action.yml inputs', () => {
   it.each(OVERRIDABLE)('declares an input for the %s config key', (key) => {
