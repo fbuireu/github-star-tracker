@@ -82,7 +82,7 @@ trackStars();
 
 **File:** `src/application/tracker.ts` > `trackStars()`
 
-Coordinates all bounded contexts in a single `try`/`finally` flow: PAT extraction, Octokit instantiation, configuration loading, i18n bootstrap, and the full data pipeline.
+Coordinates all layers in a single `try`/`finally` flow: PAT extraction, Octokit instantiation, configuration loading, i18n bootstrap, and the full data pipeline.
 
 ### Configuration Resolution
 

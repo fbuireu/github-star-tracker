@@ -193,9 +193,9 @@ SVG charts are the primary output: they are self-contained, support CSS animatio
 - Dimensions fixed at `800x400` pixels.
 - CSS animations for line drawing and point fade-in.
 - `@media (prefers-color-scheme: dark)` for automatic theme switching.
-- Data points capped at **30** (`CHART.maxDataPoints`).
+- Data points follow `chart-max-points` (default 30, capped at 365; `0` = full history at weekly resolution). The **30** cap in `CHART.maxDataPoints` applies to the QuickChart email charts only.
 - Comparison charts limited to **10 repositories** (`CHART.maxComparison`).
-- Milestone annotations (50, 100, 500, 1K, 5K, 10K stars) appear as horizontal dashed lines when within the visible range.
+- Milestone annotations (10, 50, 100, 500, 1K, 5K, 10K, 50K, 100K, 500K, 1M stars) appear as horizontal dashed lines when within the visible range.
 
 **QuickChart PNGs (email fallback)**
 - Encoded as **URL query parameters** (`GET /chart?c={config}`), no POST requests or authentication needed.
