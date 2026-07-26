@@ -40,8 +40,8 @@ flowchart TD
     test["@shared/testing<br/>imported from *.test.ts only"] -.-> cfg
     test -.-> dom
 
-    classDef pure fill:#dfb31722,stroke:#dfb317,stroke-width:2px
-    classDef io fill:#d73a4922,stroke:#d73a49,stroke-width:2px
+    classDef pure fill:#8a6a0f,stroke:#dfb317,stroke-width:2px,color:#fff
+    classDef io fill:#9b2530,stroke:#d73a49,stroke-width:2px,color:#fff
     class dom,pres pure
     class infra io
 ```
