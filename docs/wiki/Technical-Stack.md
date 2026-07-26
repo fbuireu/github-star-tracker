@@ -79,9 +79,11 @@ The action ships as a single bundled `dist/index.js` with **zero runtime depende
 
 ## Key Design Decisions
 
+The decisions below are summarized here; the full reasoning, alternatives and costs of each are recorded as [architecture decision records](https://github.com/fbuireu/github-star-tracker/tree/main/docs/adr) in the repository.
+
 ### Orphan Branch for Data
 
-Historical snapshots, reports, charts, and badges are stored on an isolated orphan branch (`star-tracker-data` by default). This branch has its own Git history, completely separate from `main`.
+Historical snapshots, reports, charts, and badges are stored on an isolated orphan branch (`star-tracker-data` by default). This branch has its own Git history, completely separate from `main`. Why a branch rather than workflow artifacts or an external store: [ADR 0001](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0001-star-data-lives-on-a-dedicated-data-branch.md).
 
 **Benefits:**
 - Main branch stays clean - no data commits polluting your project history
@@ -108,6 +110,8 @@ Supports any SMTP provider without vendor lock-in. The `secure` flag is auto-det
 
 - **SVG charts** (`src/presentation/svg-chart.ts`): Self-contained animated SVGs with CSS draw-line animations, committed to the data branch. Render natively in GitHub Markdown.
 - **QuickChart URLs** (`src/presentation/chart.ts`): Chart.js configs encoded as URLs, used in HTML email reports where CSS animations aren't supported.
+
+Both halves are deliberate: the SVG is emitted by hand rather than drawn with a charting library ([ADR 0006](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0006-hand-rendered-svg-charts.md)), and the email path goes through a third-party image service because mail clients will not display inline SVG ([ADR 0010](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0010-quickchart-renders-the-email-charts.md)).
 
 ---
 

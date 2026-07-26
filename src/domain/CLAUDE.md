@@ -46,7 +46,7 @@ markdown/HTML/SVG belongs to `@presentation/*`, and orchestration belongs to `@a
 
 ### `@domain/stargazers`
 - `diffStargazers({ current, previousMap }: { current: RepoStargazers[]; previousMap: StargazerMap }): StargazerDiffResult` — new-stargazer detection for the report.
-- `buildStargazerMap({ repoStargazers, previousMap }: { repoStargazers: RepoStargazers[]; previousMap: StargazerMap }): StargazerMap` — the shape persisted to disk by `@infrastructure/persistence/storage`. Sampled and `incomplete` repos carry their previous logins forward instead of being dropped, so a failed fetch cannot wipe an entry and fabricate a spike on the next run.
+- `buildStargazerMap({ repoStargazers, previousMap }: { repoStargazers: RepoStargazers[]; previousMap: StargazerMap }): StargazerMap` — the shape persisted to disk by `@infrastructure/persistence/storage`. Sampled and `incomplete` repos carry their previous logins forward instead of being dropped, so a failed fetch cannot wipe an entry and fabricate a spike on the next run ([ADR 0012](../../docs/adr/0012-unreadable-stargazer-lists-keep-their-previous-logins.md)). The matching exclusion in `diffStargazers` — a Sampled repo is never diffed, because absence from a sample is not evidence — is [ADR 0008](../../docs/adr/0008-sampled-repositories-are-excluded-from-stargazer-diffing.md).
 
 ### `@domain/notification`
 - `shouldNotify({ totalStars, starsAtLastNotification, threshold, mode? }: { totalStars: number; starsAtLastNotification: number | undefined; threshold: number | 'auto'; mode?: NotificationMode }): boolean` — drives the `should-notify` action output and email dispatch.
@@ -174,7 +174,8 @@ markdown/HTML/SVG belongs to `@presentation/*`, and orchestration belongs to `@a
   never fires. Comparison is `>=`.
 - `'auto'` resolves against the **current** total: `<=50 → 1`, `<=200 → 5`, `<=500 → 10`, else `20`.
 
-**Star-history reconstruction**
+**Star-history reconstruction** — charts are built from stargazer timestamps rather than from stored
+snapshots on purpose ([ADR 0005](../../docs/adr/0005-charts-are-reconstructed-from-stargazer-timestamps.md)).
 - Returns `{ snapshots: [] }` when no repo has a single parseable `starred_at`.
 - Bucket count is `clamp(maxPoints, 2, 365)`; `maxPoints: 0` means full history at weekly cadence
   (`ceil(span / 7d) + 1`, still capped at 365). The final edge is forced to exactly `end` so the last
@@ -184,7 +185,8 @@ markdown/HTML/SVG belongs to `@presentation/*`, and orchestration belongs to `@a
   fabricated `0 → total` ramp (issue #148).
 - `reachable = min(coveredStars ?? MAX_REACHABLE_STARGAZERS, repo.stars)`. When `reachable < repo.stars`
   the tail is linearly ramped from the last real data point up to the true total instead of flattening at
-  the 40k cap (issue #114); otherwise counts are scaled proportionally, and when `fetchedTotal === trueTotal`
+  the 40k cap (issue #114, [ADR 0007](../../docs/adr/0007-bridge-unreachable-history-with-a-ramp.md));
+  otherwise counts are scaled proportionally, and when `fetchedTotal === trueTotal`
   the raw counts are used unrounded so no drift is introduced.
 - Snapshot `totalStars` here is the **sum of the per-repo values at that edge**, unlike stored snapshots
   where it comes from `Summary`.

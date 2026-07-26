@@ -334,6 +334,10 @@ The line style is configurable via `chart-curve` (`monotone` by default, plus `c
 | **[Known Limitations](../../wiki/Known-Limitations)**                 | Constraints and workarounds               |
 | **[Troubleshooting](../../wiki/Troubleshooting)**                     | Common issues and solutions               |
 
+For *why* the action is built the way it is — one decision per file, including the
+[AGPL-3.0-only licence](docs/adr/0009-agpl-3-0-only-licence.md) and what it asks of anyone redistributing
+or hosting a modified version — see the [architecture decision records](docs/adr/).
+
 ## Support & Contributing
 
 - **[Report bugs](../../issues/new?template=bug_report.yml)**

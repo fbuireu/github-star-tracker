@@ -7,6 +7,10 @@ know what those files are (that is `@infrastructure/persistence`), it never push
 `--allow-empty` one that initializes a brand-new orphan branch (data commits are `commitAndPush` in
 `@infrastructure/persistence/storage`), and it reads no Action inputs — the branch name is passed in.
 
+Why a branch at all, rather than workflow artifacts or an external store, is
+[ADR 0001](../../../docs/adr/0001-star-data-lives-on-a-dedicated-data-branch.md) — including the reason a
+Read-Only Run exists.
+
 ## Files
 | File | Responsibility |
 | --- | --- |

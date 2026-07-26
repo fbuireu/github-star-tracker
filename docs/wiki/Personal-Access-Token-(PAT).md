@@ -4,7 +4,7 @@ GitHub Star Tracker requires a Personal Access Token rather than the default `GI
 
 ## Why a PAT Is Required
 
-The `GITHUB_TOKEN` provided automatically by GitHub Actions is scoped to the **current repository only**. GitHub Star Tracker needs to list **all repositories owned by the authenticated user** via `GET /user/repos`, which requires broader access. This is a GitHub API restriction - the automatic token simply cannot enumerate repos outside the triggering repository.
+The `GITHUB_TOKEN` provided automatically by GitHub Actions is scoped to the **current repository only**. GitHub Star Tracker needs to list **all repositories owned by the authenticated user** via `GET /user/repos`, which requires broader access. This is a GitHub API restriction - the automatic token simply cannot enumerate repos outside the triggering repository. The trade-off behind requiring one anyway, and how the *kind* of token silently decides how much of the product works, is recorded in [ADR 0002](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0002-require-a-personal-access-token.md).
 
 ---
 

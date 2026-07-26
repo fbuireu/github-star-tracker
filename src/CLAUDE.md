@@ -13,7 +13,10 @@ interchangeable with this one:
   words to avoid. There is exactly one, because the repo is a single bounded context; the per-folder files
   here are layers, not bounded contexts.
 - [`../ARCHITECTURE.md`](../ARCHITECTURE.md) — the big picture: end-to-end run, data branch, build and
-  release. Architectural decisions and their rationale live in [`../docs/adr/`](../docs/adr/).
+  release. Architectural decisions and their rationale live in [`../docs/adr/`](../docs/adr/). Two of them
+  are about this file's subject: the layering itself is
+  [ADR 0004](../docs/adr/0004-layered-source-structure.md), and the committed bundle every layer ends up
+  inside is [ADR 0003](../docs/adr/0003-commit-the-bundled-dist-directory.md).
 
 ## Files
 | File | Responsibility |
@@ -155,8 +158,9 @@ commit** — a follow-up commit is a promise, not a fix.
 | Add or remove a file | the *Files* table of that folder's `CLAUDE.md` |
 
 Propose an ADR in [`../docs/adr/`](../docs/adr/) when a decision is **hard to reverse**, **surprising
-without context** and **the result of a real trade-off**. All three, or it is not an ADR. Number it one
-above the highest existing file and add it to the index in `ARCHITECTURE.md`.
+without context** and **the result of a real trade-off**. All three, or it is not an ADR. Copy
+[`0000-adr-template.md`](../docs/adr/0000-adr-template.md) rather than writing one from scratch, number it
+one above the highest existing file, and add it to the index in `ARCHITECTURE.md`.
 
 Two traps worth naming, because both have already happened here: deleting a resolved entry from a
 "known inconsistencies" list is part of the fix, not tidying to do later; and a `file.ts:123` citation

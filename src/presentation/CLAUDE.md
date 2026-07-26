@@ -2,6 +2,8 @@
 
 This layer turns already-computed domain data into the artifacts the action publishes: Markdown and HTML reports, CSV, SVG line charts, an SVG badge, and QuickChart image URLs for email. Every function here is synchronous and side-effect free — it returns a string (or `null`), never writes a file, never calls the network, never touches `@actions/core`. Deciding *what* to render is the caller's job (`@application/tracker`); deciding *how many stars a repo gained* is the domain's. This layer only formats.
 
+Two decisions explain why there are two chart renderers in here rather than one library call: the SVG is emitted by hand so it stays self-contained and theme-aware ([ADR 0006](../../docs/adr/0006-hand-rendered-svg-charts.md)), and the email path goes through QuickChart because mail clients will not display inline SVG ([ADR 0010](../../docs/adr/0010-quickchart-renders-the-email-charts.md)).
+
 ## Files
 
 | File | Responsibility |

@@ -116,7 +116,8 @@ stars, or a repo covered by `smart-sampling` — **keeps its previous login list
 as empty. Without that, one transient failure would wipe the entry and the next successful run would report
 every existing stargazer as new. The trade-off is that such an entry can be stale, and if the repository is
 permanently unreadable it will never report a new stargazer again. Each affected repository is named in a
-warning in the run log.
+warning in the run log. The full reasoning is
+[ADR 0012](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0012-unreadable-stargazer-lists-keep-their-previous-logins.md).
 
 ---
 

@@ -4,7 +4,7 @@ GitHub Star Tracker generates animated SVG charts to visualize star growth over 
 
 ## Real Star History
 
-Charts plot the **real historical star curve**. Every star is placed on the date it was actually given (GitHub's `starred_at` timestamp via the `application/vnd.github.star+json` media type), and the cumulative count is reconstructed over real time. The timeline runs from a repo's very first star up to now, regardless of when you started running the action. Per-run snapshots on the data branch are still kept for the report's delta tables and notifications, but the charts no longer depend on them.
+Charts plot the **real historical star curve**. Every star is placed on the date it was actually given (GitHub's `starred_at` timestamp via the `application/vnd.github.star+json` media type), and the cumulative count is reconstructed over real time. The timeline runs from a repo's very first star up to now, regardless of when you started running the action. Per-run snapshots on the data branch are still kept for the report's delta tables and notifications, but the charts no longer depend on them. Why the charts were moved off those snapshots, and what it costs in stargazer API calls, is [ADR 0005](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0005-charts-are-reconstructed-from-stargazer-timestamps.md).
 
 ---
 

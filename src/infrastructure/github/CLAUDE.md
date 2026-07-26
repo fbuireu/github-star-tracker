@@ -6,6 +6,10 @@ config's include/exclude rules, maps the raw API shape onto `RepoInfo`, and page
 construct the `Octokit` client (that happens in `@application/tracker`), does not persist anything, does
 not compute deltas or star history, and renders nothing.
 
+The token it is handed is always a user-supplied PAT, never the injected `GITHUB_TOKEN`, and the *role*
+that token carries decides whether the stargazer endpoint answers at all —
+[ADR 0002](../../../docs/adr/0002-require-a-personal-access-token.md).
+
 ## Files
 | File | Responsibility |
 | --- | --- |
@@ -109,7 +113,9 @@ Pattern matching (`matchesPattern`, `filters.ts:14`) accepts either an exact str
   because GitHub only pages through the oldest 40,000 stargazers of a repo.
 - Full fetch (`fetchRepoStargazers`): pages 1..400, stops early when a page returns fewer than 100 rows.
 - Sampled fetch (`fetchSampledStargazers`), used when
-  `config.smartSampling && repo.stars > config.smartSamplingThreshold`:
+  `config.smartSampling && repo.stars > config.smartSamplingThreshold`. A repo fetched this way is flagged
+  `sampled`, which costs it New Stargazer detection downstream
+  ([ADR 0008](../../../docs/adr/0008-sampled-repositories-are-excluded-from-stargazer-diffing.md)):
   `totalPages = min(400, max(1, ceil(totalStars / 100)))`, then `selectSampledPages` picks evenly spaced
   page numbers `1 + round(i * (totalPages - 1) / (pages - 1))` for `i` in `[0, pages)`, de-duplicated via a
   `Set` and sorted ascending. It always includes page 1 and page `totalPages`.

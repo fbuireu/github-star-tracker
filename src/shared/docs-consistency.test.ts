@@ -18,6 +18,16 @@ const OUTPUT_SURFACES = [
 
 const MIN_EXPECTED_DOCS = 20;
 
+const ADR_DIRECTORY = 'docs/adr';
+const ADR_TEMPLATE = 'docs/adr/0000-adr-template.md';
+const ADR_INDEX = 'ARCHITECTURE.md';
+const ADR_SECTIONS = ['Status', 'Context', 'Decision', 'Consequences'];
+const ADR_STATUSES = new Set(['Template', 'Proposed', 'Accepted', 'Superseded', 'Deprecated']);
+const ADR_FILE_PATTERN = /^docs\/adr\/\d{4}(-[a-z\d]+)+\.md$/;
+const ADR_STATUS_PATTERN = /\n## Status\n\n(\w+)/;
+const ADR_DATE_PATTERN = /\nDate: \d{4}-\d{2}-\d{2}\n/;
+const ADR_REFERENCE_PATTERNS = [/ADR (\d{4})/g, /docs\/adr\/(\d{4})-/g];
+
 function walk(dir: string, keep: (filename: string) => boolean): string[] {
   if (!fs.existsSync(dir)) return [];
 
@@ -44,8 +54,22 @@ const TEST_FILENAMES = new Set(
   walk('src', (filename) => filename.endsWith('.test.ts')).map((file) => path.basename(file)),
 );
 
+const toPosix = (file: string): string => file.split(path.sep).join('/');
+
+const ADR_FILES = walk(ADR_DIRECTORY, isMarkdown).map(toPosix).sort();
+
+const adrNumber = (file: string): string => path.basename(file).slice(0, 4);
+
 function read(file: string): string {
   return fs.readFileSync(file, 'utf8');
+}
+
+function adrReferencesIn(doc: string): string[] {
+  const body = read(doc);
+
+  return ADR_REFERENCE_PATTERNS.flatMap((pattern) =>
+    [...body.matchAll(pattern)].map(([, number]) => number),
+  );
 }
 
 interface CollectParams {
@@ -103,6 +127,66 @@ describe('documentation consistency', () => {
       .filter((svg) => !fs.existsSync(path.join('examples', svg)));
 
     expect(missing).toEqual([]);
+  });
+});
+
+describe('architecture decision records', () => {
+  it('numbers files sequentially from the template, with no gaps or duplicates', () => {
+    const numbers = ADR_FILES.map((file) => Number(adrNumber(file)));
+
+    expect(numbers).toEqual(numbers.map((_, index) => index));
+  });
+
+  it('names every file NNNN-kebab-title.md', () => {
+    expect(ADR_FILES.filter((file) => !ADR_FILE_PATTERN.test(file))).toEqual([]);
+  });
+
+  it('fills in the template: numbered heading, date, status, and the four sections', () => {
+    const malformed = ADR_FILES.flatMap((file) => {
+      const body = read(file);
+      const number = Number(adrNumber(file));
+      const status = body.match(ADR_STATUS_PATTERN)?.[1] ?? '';
+      const heading = new RegExp(`^# ${number}\\. \\S`);
+
+      return [
+        ...(heading.test(body) ? [] : [`${file}: heading is not "# ${number}. Title"`]),
+        ...(ADR_DATE_PATTERN.test(body) ? [] : [`${file}: no "Date: YYYY-MM-DD" line`]),
+        ...(ADR_STATUSES.has(status) ? [] : [`${file}: status is "${status}"`]),
+        ...ADR_SECTIONS.filter((section) => !body.includes(`\n## ${section}\n`)).map(
+          (section) => `${file}: no "## ${section}" section`,
+        ),
+      ];
+    });
+
+    expect(malformed).toEqual([]);
+  });
+
+  it('references only ADRs that exist', () => {
+    const existing = new Set(ADR_FILES.map(adrNumber));
+    const dangling = DOCS.flatMap((doc) =>
+      adrReferencesIn(doc)
+        .filter((number) => !existing.has(number))
+        .map((number) => `${doc} -> ADR ${number}`),
+    );
+
+    expect(dangling).toEqual([]);
+  });
+
+  it('indexes every decision in ARCHITECTURE.md', () => {
+    const index = read(ADR_INDEX);
+    const unindexed = ADR_FILES.filter((file) => file !== ADR_TEMPLATE && !index.includes(file));
+
+    expect(unindexed).toEqual([]);
+  });
+
+  it('gives every ADR a home outside the index', () => {
+    const contextual = DOCS.map(toPosix).filter(
+      (doc) => doc !== ADR_INDEX && !doc.startsWith(`${ADR_DIRECTORY}/`),
+    );
+    const linked = new Set(contextual.flatMap(adrReferencesIn));
+    const orphaned = ADR_FILES.map(adrNumber).filter((number) => !linked.has(number));
+
+    expect(orphaned).toEqual([]);
   });
 });
 

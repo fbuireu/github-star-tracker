@@ -81,7 +81,8 @@ Both interfaces are local to `tracker.ts` and are not exported.
     `false` without throwing) counts as *not* delivered. Then `updatedHistory.starsAtLastNotification = summary.totalStars`, but only
     when `notificationDelivered` — a configured-and-failed send leaves the baseline alone so the
     accumulated change is not lost, while an unconfigured transport advances it because the
-    `should-notify` output is the notification. See ADR 0011.
+    `should-notify` output is the notification. See
+    [ADR 0011](../../docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md).
 21. Persist into the worktree: `writeHistory`, `writeReport`, `writeBadge`, `writeCsv`, then
     `buildChartFiles({ config, history, fallbackHistory: updatedHistory, forecastData, topRepoNames, repoTotals, repoStargazers, now: chartNow })`
     and one `writeChart({ dataDir, filename, svg })` per returned file.

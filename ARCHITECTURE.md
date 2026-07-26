@@ -169,6 +169,10 @@ Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain gl
 | [0011](./docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md) | The notification baseline advances only on delivery |
 | [0012](./docs/adr/0012-unreadable-stargazer-lists-keep-their-previous-logins.md) | Unreadable stargazer lists keep their previous logins |
 
+Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md) — `# N. Title`, a date, a
+status, then *Context*, *Decision*, *Consequences*. A new ADR starts by copying that file, not by writing
+one from scratch.
+
 | Document | Covers |
 | --- | --- |
 | [src/CLAUDE.md](src/CLAUDE.md) | Entry point, alias wiring, verified whole-tree dependency graph |

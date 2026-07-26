@@ -62,6 +62,8 @@ GitHub's stargazers API only lists up to ~40,000 stargazers per repository, olde
 
 For those repos the reachable history is drawn accurately (scaled to the reachable count), and the unreachable recent tail is bridged with a straight ramp from there up to the repo's true current total at the final point - so the chart no longer flattens out at the cutoff date. The final point always equals the true star count. Repos within the 40,000 window are unaffected. Pair high-star repos with `smart-sampling` to keep within rate limits.
 
+That ramp is an admitted approximation whose shape carries no information — only its endpoints do — and it is drawn deliberately rather than left flat: [ADR 0007](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0007-bridge-unreachable-history-with-a-ramp.md). Enabling `smart-sampling` also costs those repositories their new-stargazer list, for a separate reason: [ADR 0008](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0008-sampled-repositories-are-excluded-from-stargazer-diffing.md).
+
 ---
 
 ## 🔐 Stargazers API Access Restriction (2026)
