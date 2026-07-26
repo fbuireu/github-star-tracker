@@ -24,6 +24,9 @@ the caller catches and warns.
 
 ## github/
 
+Fetch, then filter, then map. What survives every configured filter is the **Tracked Set**, and nothing
+downstream can see a repository outside it.
+
 - **The `accept: application/vnd.github.star+json` header is load-bearing** and is set per request, not on
   the client. Without it GitHub returns bare user objects with **no `starred_at`** and the whole star-history
   reconstruction silently degrades. Any new stargazer request must set it too.

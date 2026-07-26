@@ -362,6 +362,8 @@ const value = (params: DeclarationParams): number => product(declaration(params)
 
 const grouped = (count: number): string => count.toLocaleString('en-US');
 
+const prose = (file: string): string => read(file).replace(/\s+/g, ' ');
+
 const QUOTED_CONSTANTS = [
   {
     name: 'MIN_SNAPSHOTS_FOR_FORECAST',
@@ -427,12 +429,12 @@ const QUOTED_CONSTANTS = [
 
 describe('the guides quote the constants the code declares', () => {
   it.each(QUOTED_CONSTANTS)('$name', ({ name, file, doc, mention }) => {
-    expect(read(doc)).toContain(mention(value({ file, name })));
+    expect(prose(doc)).toContain(mention(value({ file, name })));
   });
 
   it('states the compare-window tolerance in hours', () => {
     const hours = value({ file: 'src/domain/snapshot.ts', name: 'COMPARE_WINDOW_TOLERANCE_MS' }) / 3_600_000;
-    const guide = read(DOMAIN_GUIDE);
+    const guide = prose(DOMAIN_GUIDE);
 
     expect(guide).toContain(`+ ${hours}h`);
     expect(guide).toContain(`${hours}-hour`);
@@ -442,8 +444,8 @@ describe('the guides quote the constants the code declares', () => {
     const min = value({ file: 'src/domain/star-history.ts', name: 'MIN_HISTORY_BUCKETS' });
     const max = value({ file: 'src/domain/star-history.ts', name: 'MAX_HISTORY_BUCKETS' });
 
-    expect(read(DOMAIN_GUIDE)).toContain(`clamp(maxPoints, ${min}, ${max})`);
-    expect(read('src/config/CLAUDE.md')).toContain(`capped at ${max}`);
+    expect(prose(DOMAIN_GUIDE)).toContain(`clamp(maxPoints, ${min}, ${max})`);
+    expect(prose('src/config/CLAUDE.md')).toContain(`capped at ${max}`);
   });
 
   it('derives the reachable page cap rather than restating it', () => {
@@ -453,7 +455,7 @@ describe('the guides quote the constants the code declares', () => {
         value({ file: stargazers, name: 'STARGAZERS_PER_PAGE' }),
     );
 
-    expect(read(IO_GUIDE)).toContain(`is ${pages} because`);
+    expect(prose(IO_GUIDE)).toContain(`is ${pages} because`);
   });
 
   it('states the SVG canvas, its margins and what they imply', () => {
@@ -466,7 +468,7 @@ describe('the guides quote the constants the code declares', () => {
         .filter(([side]) => side)
         .map(([side, size]) => [side, Number(size)]),
     ) as Record<'top' | 'right' | 'bottom' | 'left', number>;
-    const guide = read(CHART_GUIDE);
+    const guide = prose(CHART_GUIDE);
 
     expect(guide).toContain(`viewBox="0 0 ${width} ${height}"`);
     expect(guide).toContain(
@@ -488,7 +490,7 @@ describe('the guides quote the constants the code declares', () => {
       .split(',')
       .map((entry) => Number(entry.trim().replace(/_/g, '')))
       .filter(Number.isFinite);
-    const guide = read(DOMAIN_GUIDE);
+    const guide = prose(DOMAIN_GUIDE);
 
     expect(ladder.filter((rung) => !guide.includes(rung))).toEqual([]);
     expect([...guide.matchAll(/`<=\d+ → \d+`/g)]).toHaveLength(ladder.length);
@@ -501,14 +503,36 @@ describe('the guides quote the constants the code declares', () => {
       name: 'DEFAULT_SMTP_PORT',
     }).replace(/'/g, '');
 
-    expect(read(IO_GUIDE)).toContain(`falls back to \`${port}\``);
-    expect(read('src/config/CLAUDE.md')).toContain(`\`'${port}'\``);
+    expect(prose(IO_GUIDE)).toContain(`falls back to \`${port}\``);
+    expect(prose('src/config/CLAUDE.md')).toContain(`\`'${port}'\``);
   });
 
   it('keeps MS_PER_YEAR uncorrected for leap years', () => {
-    expect(read(DOMAIN_GUIDE)).toContain(
+    expect(prose(DOMAIN_GUIDE)).toContain(
       `\`${declaration({ file: DOMAIN_CONSTANTS, name: 'MS_PER_YEAR' })}\``,
     );
+  });
+});
+
+const GLOSSARY = 'CONTEXT.md';
+const GLOSSARY_TERM_PATTERN = /^\*\*(.+?)\*\*:/gm;
+
+const flatten = (text: string): string => text.replace(/[^a-z]/gi, '').toLowerCase();
+
+describe('the glossary is ubiquitous language, not decoration', () => {
+  it('uses every term it defines somewhere outside itself', () => {
+    const terms = [...read(GLOSSARY).matchAll(GLOSSARY_TERM_PATTERN)].map(([, term]) => term);
+    const corpus = DOCS.map(toPosix)
+      .filter((doc) => doc !== GLOSSARY)
+      .map(read)
+      .join('\n');
+    const flattened = flatten(corpus);
+    const unused = terms.filter(
+      (term) => !corpus.includes(term) && !flattened.includes(flatten(term)),
+    );
+
+    expect(terms.length).toBeGreaterThan(0);
+    expect(unused).toEqual([]);
   });
 });
 

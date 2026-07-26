@@ -34,6 +34,9 @@ One module per concept, each with a colocated `*.test.ts`: `comparison`, `snapsh
 
 ## Snapshot store
 
+`getBaselineSnapshot` resolves the **Comparison Window** — the `compare-against` input — to the single
+snapshot everything else is diffed against.
+
 - Every mode ignores snapshots whose timestamp does not parse, including `last-run`, which walks back to the
   newest one that does. Empty history → `null`.
 - Windowed modes pick the **newest** snapshot at or before `now - windowDays + 6h`. That 6-hour slack exists
@@ -46,8 +49,9 @@ One module per concept, each with a colocated `*.test.ts`: `comparison`, `snapsh
 
 ## Forecast, velocity, notifications
 
-- `computeForecast` returns `null` below 3 snapshots; otherwise always exactly two `ForecastResult`s (linear
-  regression then weighted moving average), each with 4 weekly points.
+- `computeForecast` returns `null` below 3 snapshots; otherwise always exactly two `ForecastResult`s, one per
+  **Forecast Method** (`ForecastMethod`: linear regression, then weighted moving average), each with 4 weekly
+  points.
 - Projections anchor on the **last observed value**, not the fitted one:
   `predicted = last.value + rate * weekOffset * 7`. Changing this changes every chart. Every prediction is
   clamped to a non-negative integer.
