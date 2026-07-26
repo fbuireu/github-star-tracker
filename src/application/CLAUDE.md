@@ -25,11 +25,12 @@ is not repeated here. What follows is what that table cannot express.
   alone so the accumulated change is not lost, while an unconfigured transport advances it because the
   `should-notify` output *is* the notification
   ([ADR 0011](../../docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md)).
-- **`notificationDelivered` is `notify && sent`, so it is about the *notification*, not the email.** A
-  courtesy send under `send-on-no-changes` on an unchanged run delivers mail while leaving it `false`, which
-  is correct for the baseline — a courtesy email must not consume the accumulated threshold. But the same
-  value feeds the `notification-sent` output, so that output is `false` after a successful courtesy send.
-  Anything that needs "did mail leave the runner" cannot use it as-is.
+- **Two variables track the send, and conflating them is a bug that already happened.**
+  `notificationDelivered` is `notify && sent` and gates the baseline only: a courtesy send under
+  `send-on-no-changes` must not consume the accumulated threshold, so it stays `false` there on purpose.
+  `mailDelivered` is plain `sent` and feeds the `notification-sent` output, which is a factual claim about
+  delivery. Feeding the output from `notificationDelivered` made it report `false` after a successful
+  courtesy email; `tracker.test.ts` now pins both outputs for that case.
 - **`shouldNotify` reads the pre-append `storedHistory.starsAtLastNotification`.** That is what makes the
   threshold accumulate across runs. `addSnapshot` returns a fresh object, so the later assignment mutates
   that copy, never `storedHistory`.
@@ -59,7 +60,7 @@ as-is; the rest are wrapped in `String()`.
 | `report-html-path` | return value of `writeHtmlReport` — a filesystem path |
 | `total-stars` / `stars-changed` / `new-stars` / `lost-stars` | the matching `Summary` fields |
 | `should-notify` | `summary.changed && thresholdReached` — the *decision* |
-| `notification-sent` | `notificationDelivered && emailConfig !== null` — a *threshold-triggered* notification went out |
+| `notification-sent` | `mailDelivered` — an email actually left the runner |
 | `new-stargazers` | `stargazerDiff?.totalNew ?? 0` |
 
 `setEmptyOutputs()` emits the same eleven keys zeroed, with a "No repositories matched the configured

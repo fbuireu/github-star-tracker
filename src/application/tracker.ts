@@ -188,6 +188,7 @@ export async function trackStars(): Promise<void> {
 
         const emailConfig = getEmailConfig(config.locale);
         let notificationDelivered = notify;
+        let mailDelivered = false;
 
         if (emailConfig && (notify || config.sendOnNoChanges)) {
           const subject = interpolate({
@@ -202,6 +203,7 @@ export async function trackStars(): Promise<void> {
           try {
             const sent = await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
 
+            mailDelivered = sent;
             notificationDelivered = notify && sent;
           } catch (error) {
             core.warning(`Failed to send email: ${(error as Error).message}`);
@@ -250,7 +252,7 @@ export async function trackStars(): Promise<void> {
           htmlReport,
           csvReport,
           shouldNotify: notify,
-          notificationSent: notificationDelivered && emailConfig !== null,
+          notificationSent: mailDelivered,
           newStargazers: stargazerDiff?.totalNew ?? 0,
         });
       },

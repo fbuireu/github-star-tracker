@@ -264,6 +264,17 @@ describe('trackStars', () => {
       await trackStars();
 
       expect(sendEmail).toHaveBeenCalled();
+      expect(core.setOutput).toHaveBeenCalledWith('notification-sent', 'true');
+      expect(core.setOutput).toHaveBeenCalledWith('should-notify', 'false');
+    });
+
+    it('reports notification-sent false when the transport is unconfigured', async () => {
+      vi.mocked(getEmailConfig).mockReturnValue(null);
+
+      await trackStars();
+
+      expect(sendEmail).not.toHaveBeenCalled();
+      expect(core.setOutput).toHaveBeenCalledWith('notification-sent', 'false');
     });
 
     it('skips email when no changes and sendOnNoChanges is false', async () => {
