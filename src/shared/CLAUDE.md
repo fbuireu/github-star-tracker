@@ -8,7 +8,7 @@ that it has no owning layer, and that claim is usually wrong.
 | File | Responsibility |
 | --- | --- |
 | `testing/` | Fixture factories used by `*.test.ts` files across the whole tree — see [`testing/CLAUDE.md`](./testing/CLAUDE.md). |
-| `docs-consistency.test.ts` | Guards the documentation set against the repo: no dead markdown links, no citations of source or test files that do not exist, no sample chart embedded in `examples/README.md` without the SVG, and every `action.yml` input and output named where it is meant to be listed. It ships no production code and lives here because it belongs to no layer — it is about the repo as a whole. |
+| `docs-consistency.test.ts` | Guards the documentation set against the repo: no dead markdown links, no citations of source or test files that do not exist, no sample chart embedded in `examples/README.md` without the SVG, and every `action.yml` input and output named where it is meant to be listed. It ships no production code and lives here because it belongs to no layer — it is about the repo as a whole. Keep its assertions **aggregated** (one failing list per rule) rather than `it.each` per document, so it stays a handful of tests instead of dominating the suite. |
 
 ## Invariants & rules
 The alias convention itself (`@shared/*`, mapped to `./src/shared/*` in `tsconfig.json`) and the layer

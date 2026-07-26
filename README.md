@@ -68,7 +68,7 @@ Every run, Star Tracker commits these artifacts to a dedicated data branch:
 - :globe_with_meridians: **Multi-language:** English, Spanish, Catalan, Italian
 - :bar_chart: **CSV export:** Machine-readable output for data pipelines
 - :jigsaw: **Action outputs:** `total-stars`, `new-stars`, `lost-stars`, `should-notify`, `notification-sent`, `new-stargazers` (and much more) for workflow chaining
-- :shield: **Zero runtime deps:** Bundled TypeScript action, 98%+ test coverage, 740+ tests
+- :shield: **Zero runtime deps:** Bundled TypeScript action, 98%+ test coverage, extensive unit test suite
 - :lock: **Future-proof:** Unaffected by GitHub's 2026 stargazers API restrictions, since it uses your own credentials on your own repositories
 
 ---
