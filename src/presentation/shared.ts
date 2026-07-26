@@ -15,6 +15,7 @@ export interface GenerateReportParams {
   previousTimestamp: string | null;
   locale: Locale;
   history?: History | null;
+  velocityHistory?: History | null;
   includeCharts?: boolean;
   stargazerDiff?: StargazerDiffResult | null;
   forecastData?: ForecastData | null;

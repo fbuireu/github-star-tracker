@@ -16,6 +16,7 @@ export function generateMarkdownReport({
   previousTimestamp,
   locale,
   history = null,
+  velocityHistory = null,
   includeCharts = true,
   stargazerDiff = null,
   forecastData = null,
@@ -184,7 +185,10 @@ export function generateMarkdownReport({
           ]
         : [];
 
-  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
+  const velocity =
+    velocityMetrics && velocityHistory !== null
+      ? computeVelocity({ history: velocityHistory })
+      : null;
   const velocityLines = velocity
     ? [
         `- **${t.velocity.starsPerDay}:** ${velocity.starsPerDay}`,

@@ -246,6 +246,15 @@ describe('generateSvgChart', () => {
     expect(result).toContain('stroke-dasharray="6,6"');
   });
 
+  it('still draws milestones for repos above the ten-thousand mark', () => {
+    const history = makeHistory([12_000, 60_000, 120_000]);
+    const result = expectSvg(generateSvgChart({ history, locale: 'en' }));
+
+    expect(result).toContain('50K ★');
+    expect(result).toContain('100K ★');
+    expect(result).toContain('stroke-dasharray="6,6"');
+  });
+
   it('floors the Y-axis at zero when beginAtZero is enabled', () => {
     const history = makeHistory([80, 120, 150]);
     const zoomed = expectSvg(generateSvgChart({ history, locale: 'en' }));

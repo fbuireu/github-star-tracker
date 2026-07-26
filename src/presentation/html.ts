@@ -36,6 +36,7 @@ export function generateHtmlReport({
   previousTimestamp,
   locale,
   history = null,
+  velocityHistory = null,
   includeCharts = true,
   stargazerDiff = null,
   forecastData = null,
@@ -195,7 +196,10 @@ export function generateHtmlReport({
       </div>`
         : '';
 
-  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
+  const velocity =
+    velocityMetrics && velocityHistory !== null
+      ? computeVelocity({ history: velocityHistory })
+      : null;
   const velocityList = velocity
     ? `
         <ul style="margin:0;padding-left:20px;">

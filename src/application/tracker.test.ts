@@ -837,6 +837,51 @@ describe('trackStars', () => {
       );
     });
 
+    it('passes the stored history as velocityHistory, not the resolved chart history', async () => {
+      await trackStars();
+
+      const params = vi.mocked(generateMarkdownReport).mock.calls[0][0];
+
+      expect(params.velocityHistory).toBeDefined();
+      expect(params.velocityHistory).toBe(vi.mocked(addSnapshot).mock.results[0].value);
+    });
+
+    it('does not advance the notification baseline when the email fails to send', async () => {
+      vi.mocked(getEmailConfig).mockReturnValue({
+        host: 'smtp.test.com',
+        port: 587,
+        username: 'user',
+        password: 'pass',
+        to: 'to@test.com',
+        from: 'from@test.com',
+      });
+      vi.mocked(sendEmail).mockRejectedValue(new Error('smtp down'));
+
+      await trackStars();
+
+      const persisted = vi.mocked(writeHistory).mock.calls[0][0].history;
+
+      expect(persisted.starsAtLastNotification).toBeUndefined();
+    });
+
+    it('does not advance the notification baseline when SMTP is configured without a recipient', async () => {
+      vi.mocked(getEmailConfig).mockReturnValue({
+        host: 'smtp.test.com',
+        port: 587,
+        username: 'user',
+        password: 'pass',
+        to: '',
+        from: 'from@test.com',
+      });
+      vi.mocked(sendEmail).mockResolvedValue(false);
+
+      await trackStars();
+
+      const persisted = vi.mocked(writeHistory).mock.calls[0][0].history;
+
+      expect(persisted.starsAtLastNotification).toBeUndefined();
+    });
+
     it('includes delta indicator in commit message', async () => {
       vi.mocked(deltaIndicator).mockReturnValue('+10');
 

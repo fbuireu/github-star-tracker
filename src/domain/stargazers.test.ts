@@ -129,7 +129,7 @@ describe('buildStargazerMap', () => {
       { repoFullName: 'user/repo-a', stargazers: [makeStar('alice'), makeStar('bob')] },
       { repoFullName: 'user/repo-b', stargazers: [makeStar('charlie')] },
     ];
-    const map = buildStargazerMap(repoStargazers);
+    const map = buildStargazerMap({ repoStargazers, previousMap: {} });
 
     expect(map).toEqual({
       'user/repo-a': ['alice', 'bob'],
@@ -138,7 +138,7 @@ describe('buildStargazerMap', () => {
   });
 
   it('returns empty map for empty input', () => {
-    const map = buildStargazerMap([]);
+    const map = buildStargazerMap({ repoStargazers: [], previousMap: {} });
 
     expect(map).toEqual({});
   });
@@ -148,8 +148,41 @@ describe('buildStargazerMap', () => {
       { repoFullName: 'user/repo-a', stargazers: [makeStar('alice')] },
       { repoFullName: 'user/huge', stargazers: [makeStar('bob')], sampled: true },
     ];
-    const map = buildStargazerMap(repoStargazers);
+    const map = buildStargazerMap({ repoStargazers, previousMap: {} });
 
     expect(map).toEqual({ 'user/repo-a': ['alice'] });
+  });
+
+  it('carries previously known logins forward for a sampled repo', () => {
+    const repoStargazers: RepoStargazers[] = [
+      { repoFullName: 'user/huge', stargazers: [makeStar('bob')], sampled: true },
+    ];
+    const map = buildStargazerMap({
+      repoStargazers,
+      previousMap: { 'user/huge': ['alice', 'bob'] },
+    });
+
+    expect(map).toEqual({ 'user/huge': ['alice', 'bob'] });
+  });
+
+  it('carries previously known logins forward when a fetch came back incomplete', () => {
+    const repoStargazers: RepoStargazers[] = [
+      { repoFullName: 'user/repo-a', stargazers: [], incomplete: true },
+    ];
+    const map = buildStargazerMap({
+      repoStargazers,
+      previousMap: { 'user/repo-a': ['alice', 'bob'] },
+    });
+
+    expect(map).toEqual({ 'user/repo-a': ['alice', 'bob'] });
+  });
+
+  it('does not resurrect a repo that has no previous entry', () => {
+    const repoStargazers: RepoStargazers[] = [
+      { repoFullName: 'user/repo-a', stargazers: [], incomplete: true },
+    ];
+    const map = buildStargazerMap({ repoStargazers, previousMap: {} });
+
+    expect(map).toEqual({});
   });
 });

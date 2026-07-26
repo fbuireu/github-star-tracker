@@ -123,5 +123,3 @@ export const CHART_FILES = {
   comparison: 'comparison.svg',
   forecast: 'forecast.svg',
 } as const;
-
-export const MILESTONE_THRESHOLDS = [10, 50, 100, 500, 1_000, 5_000, 10_000] as const;

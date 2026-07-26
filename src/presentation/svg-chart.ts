@@ -1,4 +1,5 @@
 import { ChartAxisSide, ChartCurve, type ChartRange, ChartTheme } from '@config/types';
+import { STAR_MILESTONES } from '@domain/constants';
 import type { ForecastData } from '@domain/forecast';
 import { buildAxisLabels, formatCount, formatDate } from '@domain/formatting';
 import { repoStarSeries } from '@domain/snapshot';
@@ -9,7 +10,6 @@ import {
   CHART_COMPARISON_COLORS,
   CHART_TENSION,
   DARK_PALETTE,
-  MILESTONE_THRESHOLDS,
   MIN_SNAPSHOTS_FOR_CHART,
   SVG_CHART,
   TREND_WINDOW,
@@ -279,7 +279,7 @@ function niceAxisSteps({ min, max, count }: NiceAxisStepsParams): number[] {
     }
   }
 
-  return steps;
+  return [...new Set(steps)];
 }
 function escapeXml(text: string): string {
   return text.replaceAll(XML_ESCAPABLE_CHAR_PATTERN, (char) => XML_ESCAPE_MAP[char]);
@@ -319,7 +319,7 @@ function renderSvg({
   title,
   showLegend,
   milestones = false,
-  milestoneThresholds = MILESTONE_THRESHOLDS,
+  milestoneThresholds = STAR_MILESTONES,
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
@@ -635,7 +635,7 @@ export function generateSvgChart({
     showLegend: false,
     milestones,
     milestoneThresholds:
-      customMilestones && customMilestones.length > 0 ? customMilestones : MILESTONE_THRESHOLDS,
+      customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES,
   });
 }
 

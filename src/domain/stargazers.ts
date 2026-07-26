@@ -10,6 +10,7 @@ export interface RepoStargazers {
   stargazers: Stargazer[];
   sampled?: boolean;
   coveredStars?: number;
+  incomplete?: boolean;
 }
 
 export type StargazerMap = Record<string, string[]>;
@@ -44,6 +45,8 @@ export function diffStargazers({
       continue;
     }
 
+    if (repo.incomplete) continue;
+
     const previousLogins = new Set(previousMap[repo.repoFullName] ?? []);
     const newStargazers = repo.stargazers
       .filter((stargazer) => !previousLogins.has(stargazer.login))
@@ -58,11 +61,24 @@ export function diffStargazers({
   return { entries, totalNew, sampledRepos: sampledRepos.length > 0 ? sampledRepos : undefined };
 }
 
-export function buildStargazerMap(repoStargazers: RepoStargazers[]): StargazerMap {
+interface BuildStargazerMapParams {
+  repoStargazers: RepoStargazers[];
+  previousMap: StargazerMap;
+}
+
+export function buildStargazerMap({
+  repoStargazers,
+  previousMap,
+}: BuildStargazerMapParams): StargazerMap {
   const map: StargazerMap = {};
 
   for (const repo of repoStargazers) {
-    if (repo.sampled) continue;
+    if (repo.sampled || repo.incomplete) {
+      const previousLogins = previousMap[repo.repoFullName];
+      if (previousLogins) map[repo.repoFullName] = previousLogins;
+      continue;
+    }
+
     map[repo.repoFullName] = repo.stargazers.map((stargazer) => stargazer.login);
   }
 

@@ -100,7 +100,10 @@ export async function trackStars(): Promise<void> {
 
           stargazerDiff = diffStargazers({ current: repoStargazers, previousMap });
 
-          writeStargazers({ dataDir, stargazerMap: buildStargazerMap(repoStargazers) });
+          writeStargazers({
+            dataDir,
+            stargazerMap: buildStargazerMap({ repoStargazers, previousMap }),
+          });
 
           core.info(`Found ${stargazerDiff.totalNew} new stargazers`);
         }
@@ -153,6 +156,7 @@ export async function trackStars(): Promise<void> {
           previousTimestamp,
           locale: config.locale,
           history,
+          velocityHistory: updatedHistory,
           includeCharts: config.includeCharts,
           stargazerDiff,
           forecastData,
@@ -181,7 +185,32 @@ export async function trackStars(): Promise<void> {
         });
         const notify = summary.changed && thresholdReached;
 
-        if (notify) {
+        const emailConfig = getEmailConfig(config.locale);
+        let notificationDelivered = notify;
+
+        if (emailConfig && (notify || config.sendOnNoChanges)) {
+          const subject = interpolate({
+            template: t.email.subjectLine,
+            params: {
+              subject: t.email.subject,
+              totalStars: summary.totalStars,
+              delta: deltaIndicator(summary.totalDelta),
+            },
+          });
+
+          try {
+            const sent = await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
+
+            notificationDelivered = notify && sent;
+          } catch (error) {
+            core.warning(`Failed to send email: ${(error as Error).message}`);
+            notificationDelivered = false;
+          }
+        } else if (emailConfig) {
+          core.info('No star changes detected, skipping email');
+        }
+
+        if (notificationDelivered) {
           updatedHistory.starsAtLastNotification = summary.totalStars;
         }
 
@@ -220,26 +249,6 @@ export async function trackStars(): Promise<void> {
           shouldNotify: notify,
           newStargazers: stargazerDiff?.totalNew ?? 0,
         });
-
-        const emailConfig = getEmailConfig(config.locale);
-        if (emailConfig && (notify || config.sendOnNoChanges)) {
-          const subject = interpolate({
-            template: t.email.subjectLine,
-            params: {
-              subject: t.email.subject,
-              totalStars: summary.totalStars,
-              delta: deltaIndicator(summary.totalDelta),
-            },
-          });
-
-          try {
-            await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
-          } catch (error) {
-            core.warning(`Failed to send email: ${(error as Error).message}`);
-          }
-        } else if (emailConfig) {
-          core.info('No star changes detected, skipping email');
-        }
       },
     });
   } catch (error) {

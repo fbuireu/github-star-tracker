@@ -34685,10 +34685,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -36980,7 +36980,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -37103,7 +37103,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -40355,6 +40355,20 @@ var MS_PER_DAY = 864e5;
 var MS_PER_YEAR = 365 * MS_PER_DAY;
 var MIN_SNAPSHOTS_FOR_FORECAST = 3;
 var FORECAST_WEEKS = 4;
+var MIN_RATE_INTERVAL_DAYS = 0.25;
+var STAR_MILESTONES = [
+  10,
+  50,
+  100,
+  500,
+  1e3,
+  5e3,
+  1e4,
+  5e4,
+  1e5,
+  5e5,
+  1e6
+];
 var NOTIFICATION_THRESHOLDS = [
   { limit: 50, value: 1 },
   { limit: 200, value: 5 },
@@ -40437,7 +40451,7 @@ function weightedMovingAverage(points) {
   const dailyRates = [];
   for (let index = 1; index < points.length; index++) {
     const elapsedDays = points[index].day - points[index - 1].day;
-    if (elapsedDays <= 0) continue;
+    if (elapsedDays < MIN_RATE_INTERVAL_DAYS) continue;
     dailyRates.push((points[index].value - points[index - 1].value) / elapsedDays);
   }
   if (dailyRates.length === 0) return 0;
@@ -40684,6 +40698,7 @@ function diffStargazers({
       sampledRepos.push(repo.repoFullName);
       continue;
     }
+    if (repo.incomplete) continue;
     const previousLogins = new Set(previousMap[repo.repoFullName] ?? []);
     const newStargazers = repo.stargazers.filter((stargazer) => !previousLogins.has(stargazer.login)).sort((earlier, later) => later.starredAt.localeCompare(earlier.starredAt));
     if (newStargazers.length > 0) {
@@ -40693,10 +40708,17 @@ function diffStargazers({
   }
   return { entries, totalNew, sampledRepos: sampledRepos.length > 0 ? sampledRepos : void 0 };
 }
-function buildStargazerMap(repoStargazers) {
+function buildStargazerMap({
+  repoStargazers,
+  previousMap
+}) {
   const map = {};
   for (const repo of repoStargazers) {
-    if (repo.sampled) continue;
+    if (repo.sampled || repo.incomplete) {
+      const previousLogins = previousMap[repo.repoFullName];
+      if (previousLogins) map[repo.repoFullName] = previousLogins;
+      continue;
+    }
     map[repo.repoFullName] = repo.stargazers.map((stargazer) => stargazer.login);
   }
   return map;
@@ -40920,12 +40942,18 @@ async function fetchAllStargazers({
         repoFullName: repo.fullName,
         stargazers,
         sampled: shouldSample,
-        coveredStars
+        coveredStars,
+        incomplete: repo.stars > 0 && stargazers.length === 0
       });
       if (shouldSample) sampled.push(repo.fullName);
     } catch (error2) {
       warning(`Failed to fetch stargazers for ${repo.fullName}: ${describeFetchError(error2)}`);
-      results.push({ repoFullName: repo.fullName, stargazers: [], sampled: shouldSample });
+      results.push({
+        repoFullName: repo.fullName,
+        stargazers: [],
+        sampled: shouldSample,
+        incomplete: true
+      });
     }
   }
   if (sampled.length > 0) {
@@ -41392,7 +41420,6 @@ var CHART_FILES = {
   comparison: "comparison.svg",
   forecast: "forecast.svg"
 };
-var MILESTONE_THRESHOLDS = [10, 50, 100, 500, 1e3, 5e3, 1e4];
 
 // src/presentation/badge.ts
 function generateBadge({ totalStars, locale }) {
@@ -41711,7 +41738,7 @@ function niceAxisSteps({ min, max, count }) {
       steps.push(Math.round(step));
     }
   }
-  return steps;
+  return [...new Set(steps)];
 }
 function escapeXml(text) {
   return text.replaceAll(XML_ESCAPABLE_CHAR_PATTERN, (char) => XML_ESCAPE_MAP[char]);
@@ -41722,7 +41749,7 @@ function renderSvg({
   title,
   showLegend,
   milestones = false,
-  milestoneThresholds = MILESTONE_THRESHOLDS,
+  milestoneThresholds = STAR_MILESTONES,
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
@@ -41964,7 +41991,7 @@ function generateSvgChart({
     title: title ?? "Star History",
     showLegend: false,
     milestones,
-    milestoneThresholds: customMilestones && customMilestones.length > 0 ? customMilestones : MILESTONE_THRESHOLDS
+    milestoneThresholds: customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES
   });
 }
 function generatePerRepoSvgChart({
@@ -42216,19 +42243,6 @@ function generateCsvReport({ repos }) {
 }
 
 // src/domain/velocity.ts
-var VELOCITY_MILESTONES = [
-  10,
-  50,
-  100,
-  500,
-  1e3,
-  5e3,
-  1e4,
-  5e4,
-  1e5,
-  5e5,
-  1e6
-];
 var MIN_SNAPSHOTS_FOR_VELOCITY = 2;
 var PERCENT_MULTIPLIER = 100;
 var STARS_PER_DAY_DECIMALS = 2;
@@ -42238,18 +42252,26 @@ function roundTo(value, decimals) {
   return Math.round(value * factor) / factor;
 }
 function nextMilestoneAbove(value) {
-  return VELOCITY_MILESTONES.find((milestone) => milestone > value) ?? null;
+  return STAR_MILESTONES.find((milestone) => milestone > value) ?? null;
 }
 function computeVelocity({ history }) {
   const snapshots = history.snapshots;
   if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
-  const previous = snapshots[snapshots.length - 2];
   const last = snapshots[snapshots.length - 1];
   const lastMs = toEpochMs(last.timestamp);
-  const previousMs = toEpochMs(previous.timestamp);
-  if (lastMs === null || previousMs === null) return null;
-  const elapsedDays = (lastMs - previousMs) / MS_PER_DAY;
-  if (elapsedDays <= 0) return null;
+  if (lastMs === null) return null;
+  let previous = null;
+  let elapsedDays = 0;
+  for (let index = snapshots.length - 2; index >= 0; index--) {
+    const candidateMs = toEpochMs(snapshots[index].timestamp);
+    if (candidateMs === null) continue;
+    const candidateDays = (lastMs - candidateMs) / MS_PER_DAY;
+    if (candidateDays < MIN_RATE_INTERVAL_DAYS) continue;
+    previous = snapshots[index];
+    elapsedDays = candidateDays;
+    break;
+  }
+  if (previous === null) return null;
   const gained = last.totalStars - previous.totalStars;
   const starsPerDay = roundTo(gained / elapsedDays, STARS_PER_DAY_DECIMALS);
   const growthPercent = previous.totalStars > 0 ? roundTo(gained / previous.totalStars * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS) : null;
@@ -42293,7 +42315,7 @@ function buildMilestoneAnnotations({
   minStars,
   maxStars,
   palette = LIGHT_PALETTE,
-  thresholds = MILESTONE_THRESHOLDS
+  thresholds = STAR_MILESTONES
 }) {
   const visible = thresholds.filter((milestone) => milestone > minStars && milestone < maxStars);
   if (visible.length === 0) return null;
@@ -42442,7 +42464,7 @@ function generateChartUrl({
   }
   const minStars = Math.min(...data);
   const maxStars = Math.max(...data);
-  const thresholds = customMilestones && customMilestones.length > 0 ? customMilestones : MILESTONE_THRESHOLDS;
+  const thresholds = customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
   const annotation = milestones ? buildMilestoneAnnotations({ minStars, maxStars, palette, thresholds }) : null;
   const config = buildChartConfig({
     labels,
@@ -42620,6 +42642,7 @@ function generateHtmlReport({
   previousTimestamp,
   locale,
   history = null,
+  velocityHistory = null,
   includeCharts = true,
   stargazerDiff = null,
   forecastData = null,
@@ -42732,7 +42755,7 @@ function generateHtmlReport({
         ${sampledNoteHtml}
         <p style="color:${palette.neutral};">${t.stargazers.noNewStargazers}</p>
       </div>` : "";
-  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
+  const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
   const velocityList = velocity ? `
         <ul style="margin:0;padding-left:20px;">
           <li><strong>${t.velocity.starsPerDay}:</strong> ${velocity.starsPerDay}</li>
@@ -42855,6 +42878,7 @@ function generateMarkdownReport({
   previousTimestamp,
   locale,
   history = null,
+  velocityHistory = null,
   includeCharts = true,
   stargazerDiff = null,
   forecastData = null,
@@ -42976,7 +43000,7 @@ function generateMarkdownReport({
     t.stargazers.noNewStargazers,
     ""
   ] : [];
-  const velocity = velocityMetrics && history ? computeVelocity({ history }) : null;
+  const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
   const velocityLines = velocity ? [
     `- **${t.velocity.starsPerDay}:** ${velocity.starsPerDay}`,
     ...velocity.growthPercent !== null ? [`- **${t.velocity.growth}:** ${formatSignedPercent(velocity.growthPercent)}`] : [],
@@ -43097,7 +43121,10 @@ async function trackStars() {
         if (config.trackStargazers) {
           const previousMap = readStargazers(dataDir);
           stargazerDiff = diffStargazers({ current: repoStargazers, previousMap });
-          writeStargazers({ dataDir, stargazerMap: buildStargazerMap(repoStargazers) });
+          writeStargazers({
+            dataDir,
+            stargazerMap: buildStargazerMap({ repoStargazers, previousMap })
+          });
           info(`Found ${stargazerDiff.totalNew} new stargazers`);
         }
         const snapshot = createSnapshot({ currentRepos: repos, summary: summary2 });
@@ -43137,6 +43164,7 @@ async function trackStars() {
           previousTimestamp,
           locale: config.locale,
           history,
+          velocityHistory: updatedHistory,
           includeCharts: config.includeCharts,
           stargazerDiff,
           forecastData,
@@ -43163,7 +43191,28 @@ async function trackStars() {
           mode: config.notificationMode
         });
         const notify = summary2.changed && thresholdReached;
-        if (notify) {
+        const emailConfig = getEmailConfig(config.locale);
+        let notificationDelivered = notify;
+        if (emailConfig && (notify || config.sendOnNoChanges)) {
+          const subject = interpolate({
+            template: t.email.subjectLine,
+            params: {
+              subject: t.email.subject,
+              totalStars: summary2.totalStars,
+              delta: deltaIndicator(summary2.totalDelta)
+            }
+          });
+          try {
+            const sent = await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
+            notificationDelivered = notify && sent;
+          } catch (error2) {
+            warning(`Failed to send email: ${error2.message}`);
+            notificationDelivered = false;
+          }
+        } else if (emailConfig) {
+          info("No star changes detected, skipping email");
+        }
+        if (notificationDelivered) {
           updatedHistory.starsAtLastNotification = summary2.totalStars;
         }
         writeHistory({ dataDir, history: updatedHistory });
@@ -43197,24 +43246,6 @@ async function trackStars() {
           shouldNotify: notify,
           newStargazers: stargazerDiff?.totalNew ?? 0
         });
-        const emailConfig = getEmailConfig(config.locale);
-        if (emailConfig && (notify || config.sendOnNoChanges)) {
-          const subject = interpolate({
-            template: t.email.subjectLine,
-            params: {
-              subject: t.email.subject,
-              totalStars: summary2.totalStars,
-              delta: deltaIndicator(summary2.totalDelta)
-            }
-          });
-          try {
-            await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
-          } catch (error2) {
-            warning(`Failed to send email: ${error2.message}`);
-          }
-        } else if (emailConfig) {
-          info("No star changes detected, skipping email");
-        }
       }
     });
   } catch (error2) {

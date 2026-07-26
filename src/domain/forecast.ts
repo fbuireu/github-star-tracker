@@ -1,4 +1,9 @@
-import { FORECAST_WEEKS, MIN_SNAPSHOTS_FOR_FORECAST, MS_PER_DAY } from './constants';
+import {
+  FORECAST_WEEKS,
+  MIN_RATE_INTERVAL_DAYS,
+  MIN_SNAPSHOTS_FOR_FORECAST,
+  MS_PER_DAY,
+} from './constants';
 import { repoStarSeries } from './snapshot';
 import type { History } from './types';
 
@@ -76,7 +81,7 @@ export function weightedMovingAverage(points: SeriesPoint[]): number {
 
   for (let index = 1; index < points.length; index++) {
     const elapsedDays = points[index].day - points[index - 1].day;
-    if (elapsedDays <= 0) continue;
+    if (elapsedDays < MIN_RATE_INTERVAL_DAYS) continue;
     dailyRates.push((points[index].value - points[index - 1].value) / elapsedDays);
   }
 

@@ -430,6 +430,14 @@ describe('chart', () => {
       expect(result).toBeNull();
     });
 
+    it('returns annotations for repos above the ten-thousand mark', () => {
+      const result = buildMilestoneAnnotations({ minStars: 12_000, maxStars: 120_000 });
+
+      expect(result).not.toBeNull();
+      expect(result?.annotations).toHaveProperty('milestone50000');
+      expect(result?.annotations).toHaveProperty('milestone100000');
+    });
+
     it('excludes boundary values (min and max)', () => {
       const result = buildMilestoneAnnotations({ minStars: 50, maxStars: 1000 });
 

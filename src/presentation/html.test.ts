@@ -20,14 +20,14 @@ describe('generateHtmlReport', () => {
   const velocityHistory = makeHistory([100, 200], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
   it('renders the velocity section when velocity-metrics is enabled', () => {
-    const html = renderHtml({ history: velocityHistory, velocityMetrics: true });
+    const html = renderHtml({ velocityHistory, velocityMetrics: true });
 
     expect(html).toContain('Growth Velocity');
     expect(html).toContain('Stars per day');
   });
 
   it('omits the velocity section by default', () => {
-    const html = renderHtml({ history: velocityHistory });
+    const html = renderHtml({ velocityHistory });
 
     expect(html).not.toContain('Growth Velocity');
   });
@@ -35,7 +35,7 @@ describe('generateHtmlReport', () => {
   it('renders velocity with only the daily rate when growth and projection are unavailable', () => {
     const flatHistory = makeHistory([0, 0], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
-    const html = renderHtml({ history: flatHistory, velocityMetrics: true });
+    const html = renderHtml({ velocityHistory: flatHistory, velocityMetrics: true });
 
     expect(html).toContain('Growth Velocity');
     expect(html).toContain('Stars per day');
@@ -48,7 +48,7 @@ describe('generateHtmlReport', () => {
       stepDays: 10,
     });
 
-    const html = renderHtml({ history: decliningHistory, velocityMetrics: true });
+    const html = renderHtml({ velocityHistory: decliningHistory, velocityMetrics: true });
 
     expect(html).toContain('-25%');
     expect(html).not.toContain('+-25%');
@@ -73,7 +73,7 @@ describe('generateHtmlReport', () => {
     };
 
     const html = renderHtml({
-      history: velocityHistory,
+      velocityHistory,
       velocityMetrics: true,
       forecastData,
     });
