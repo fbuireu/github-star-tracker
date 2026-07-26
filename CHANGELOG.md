@@ -1,3 +1,10 @@
+## [1.24.2](https://github.com/fbuireu/github-star-tracker/compare/v1.24.1...v1.24.2) (2026-07-26)
+
+
+### Bug Fixes
+
+* report notification-sent for every delivered email ([815e56e](https://github.com/fbuireu/github-star-tracker/commit/815e56e9da5ba9b2a0957353c5356bedb7288aa9))
+
 ## [1.24.1](https://github.com/fbuireu/github-star-tracker/compare/v1.24.0...v1.24.1) (2026-07-26)
 
 
