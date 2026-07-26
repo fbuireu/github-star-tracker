@@ -86,7 +86,7 @@ Access data in subsequent workflow steps for custom integrations.
 | `should-notify` | Whether the notification threshold was reached (cumulative across runs) |
 | `new-stargazers` | New stargazers detected against the stored stargazer list, which every writing run rewrites - not affected by `compare-against` |
 | `report-csv` | CSV report of the run |
-| `notification-sent` | Whether an email was actually delivered (false when SMTP is unconfigured, `email-to` is empty, or the send failed) |
+| `notification-sent` | Whether a threshold-triggered notification was delivered (false when SMTP is unconfigured, `email-to` is empty, the send failed, or `send-on-no-changes` sent a courtesy email on an unchanged run) |
 
 > [!NOTE]
 > The comparison baseline is the previous run by default, and [`compare-against`](Configuration#compare-against) can move it to 24h, 7d or 30d ago. `new-stars` and `lost-stars` describe a single run and carry no memory of whether a notification was sent - gate recurring emails on `should-notify`, which accumulates until it fires. See **[Email Notifications](Email-Notifications)**.

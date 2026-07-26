@@ -4,15 +4,24 @@ Technologies, design decisions, and architecture overview.
 
 ## Architecture
 
-The project implements **Domain-Driven Design<sub>(ish)</sub>** with a **Functional Core, Imperative Shell** pattern. Five layers organize the codebase. They are layers, not DDD bounded contexts: they share a single ubiquitous language, recorded in `CONTEXT.md` at the repo root.
+The project implements **Domain-Driven Design<sub>(ish)</sub>** with a **Functional Core, Imperative Shell** pattern. Seven layers organize the codebase. They are layers, not DDD bounded contexts: they share a single ubiquitous language, recorded in `CONTEXT.md` at the repo root.
 
-| Layer | Directory | Responsibility | Purity |
-|---|---|---|---|
-| **Domain** | `src/domain/` | Core types, comparison, snapshots, forecasts, notifications, stargazers | Pure functions |
-| **Config** | `src/config/` | Schema, defaults, parsing, loading | Mostly pure |
-| **Infrastructure** | `src/infrastructure/` | GitHub API, Git operations, file I/O, email | Side effects |
-| **Presentation** | `src/presentation/` | Markdown, HTML, SVG charts, badges | Pure functions |
-| **Application** | `src/application/` | Orchestration (`trackStars()`) | Coordinator |
+The functional core is pure — no filesystem, no network, no clock beyond an injectable `now`:
+
+| Layer | Directory | Responsibility |
+|---|---|---|
+| **Domain** | `src/domain/` | Core types, comparison, snapshots, forecasts, notifications, stargazers |
+| **Presentation** | `src/presentation/` | Markdown, HTML, SVG charts, badges |
+| **i18n** | `src/i18n/` | Translation bundles, `getTranslations`, `interpolate` - the only true leaf |
+| **Shared** | `src/shared/` | Cross-cutting code owning no layer; today only test fixtures |
+
+The imperative shell performs the side effects, and each layer owns a different one:
+
+| Layer | Directory | Side effect it owns |
+|---|---|---|
+| **Config** | `src/config/` | Reads the action inputs and the YAML config file (`node:fs`) |
+| **Infrastructure** | `src/infrastructure/` | Everything outbound: GitHub API, `git`, the filesystem, SMTP |
+| **Application** | `src/application/` | Orchestrates `trackStars()`, and writes the Action log and outputs |
 
 ### Principles
 
@@ -20,7 +29,7 @@ The project implements **Domain-Driven Design<sub>(ish)</sub>** with a **Functio
 - Anti-corruption layer isolates external systems (GitHub API types ≠ domain types)
 - Immutable data structures (snapshot operations return new objects)
 - Pure functions for all business logic
-- Side effects isolated at infrastructure edges
+- Side effects confined to three layers: `config` reads inputs and the YAML file, `infrastructure` owns everything outbound, `application` writes the Action log and outputs. `infrastructure` is the only layer that reaches the network, not the only one that performs I/O
 - Named parameters for functions with 2+ arguments (destructured objects with typed interfaces)
 
 ### Path Aliases

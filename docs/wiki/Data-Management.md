@@ -23,14 +23,17 @@ The working directory for the branch is derived from the name: a dot followed by
 |---|---|---|
 | `README.md` | Markdown report with embedded charts | Every run |
 | `stars-data.json` | Historical snapshot data | Every run |
+| `stars-data.csv` | Flat per-repo export (`repository,owner,name,stars,previous,delta,status`) | Every run |
 | `stars-badge.svg` | Star count badge | Every run |
+| `stargazers.json` | Stargazer login map | Only with `track-stargazers: true` |
 | `charts/star-history.svg` | Total stars chart | Every run (charts on) |
 | `charts/comparison.svg` | Top repos comparison | Every run (charts on) |
 | `charts/forecast.svg` | Growth forecast | Every run (when enough history points exist) |
 | `charts/{owner}-{repo}.svg` | Per-repo charts | Every run (charts on) |
 
 Charts this run did not produce are deleted from `charts/`, so a repository that drops out of `top-repos` does not leave its file behind. Nothing outside `charts/` is ever removed, and only `.svg` files are considered.
-| `stargazers.json` | Stargazer login map | Only with `track-stargazers: true` |
+
+The HTML report is **not** on this branch. It is written to the runner's temp directory and exposed as the `report-html-path` output, so it never reaches a commit.
 
 > Charts are reconstructed from the real star history (each stargazer's `starred_at` date), not from accumulated per-run snapshots, so they render on the first run.
 
