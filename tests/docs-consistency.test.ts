@@ -317,6 +317,201 @@ describe('the root guide matches the manifests', () => {
   });
 });
 
+const DOMAIN_CONSTANTS = 'src/domain/constants.ts';
+const CHART_CONSTANTS = 'src/presentation/constants.ts';
+const DOMAIN_GUIDE = 'src/domain/CLAUDE.md';
+const CHART_GUIDE = 'src/presentation/CLAUDE.md';
+const IO_GUIDE = 'src/infrastructure/CLAUDE.md';
+
+interface DeclarationParams {
+  file: string;
+  name: string;
+}
+
+function declaration({ file, name }: DeclarationParams): string {
+  const match = new RegExp(`\\b${name}\\b[^=:\\n]*[=:]\\s*([^;,\\n]+)`).exec(read(file));
+
+  if (!match) throw new Error(`${name} is not declared in ${file}`);
+
+  return match[1].trim();
+}
+
+function arrayLiteral({ file, name }: DeclarationParams): string {
+  const match = new RegExp(`\\b${name}\\b[^=:]*[=:]\\s*\\[([\\s\\S]*?)\\]`).exec(read(file));
+
+  if (!match) throw new Error(`${name} is not declared as an array in ${file}`);
+
+  return match[1];
+}
+
+function objectLiteral({ file, name }: DeclarationParams): string {
+  const match = new RegExp(`\\b${name}\\b[^=:]*[=:]\\s*\\{([^{}]*)\\}`).exec(read(file));
+
+  if (!match) throw new Error(`${name} is not declared as an object in ${file}`);
+
+  return match[1];
+}
+
+function product(expression: string): number {
+  return expression
+    .split('*')
+    .reduce((total, part) => total * Number(part.trim().replace(/_/g, '')), 1);
+}
+
+const value = (params: DeclarationParams): number => product(declaration(params));
+
+const grouped = (count: number): string => count.toLocaleString('en-US');
+
+const QUOTED_CONSTANTS = [
+  {
+    name: 'MIN_SNAPSHOTS_FOR_FORECAST',
+    file: DOMAIN_CONSTANTS,
+    doc: DOMAIN_GUIDE,
+    mention: (count: number) => `below ${count} snapshots`,
+  },
+  {
+    name: 'FORECAST_WEEKS',
+    file: DOMAIN_CONSTANTS,
+    doc: DOMAIN_GUIDE,
+    mention: (count: number) => `${count} weekly points`,
+  },
+  {
+    name: 'MIN_RATE_INTERVAL_DAYS',
+    file: DOMAIN_CONSTANTS,
+    doc: DOMAIN_GUIDE,
+    mention: (days: number) => `at least ${days} days back`,
+  },
+  {
+    name: 'NOTIFICATION_THRESHOLD_MAX_PACE',
+    file: DOMAIN_CONSTANTS,
+    doc: DOMAIN_GUIDE,
+    mention: (pace: number) => `else \`${pace}\``,
+  },
+  {
+    name: 'MAX_REACHABLE_STARGAZERS',
+    file: DOMAIN_CONSTANTS,
+    doc: IO_GUIDE,
+    mention: (cap: number) => `oldest ${grouped(cap)} stargazers`,
+  },
+  {
+    name: 'MIN_SNAPSHOTS_FOR_CHART',
+    file: CHART_CONSTANTS,
+    doc: CHART_GUIDE,
+    mention: (count: number) => `\`< ${count}\` snapshots`,
+  },
+  {
+    name: 'maxDataPoints',
+    file: CHART_CONSTANTS,
+    doc: CHART_GUIDE,
+    mention: (count: number) => `fixed at ${count} points`,
+  },
+  {
+    name: 'STARGAZERS_PER_PAGE',
+    file: 'src/infrastructure/github/stargazers.ts',
+    doc: IO_GUIDE,
+    mention: (size: number) => `shorter than ${size}`,
+  },
+  {
+    name: 'SECURE_SMTP_PORT',
+    file: 'src/infrastructure/notification/email.ts',
+    doc: IO_GUIDE,
+    mention: (port: number) => `port === ${port}`,
+  },
+  {
+    name: 'MIN_THRESHOLD',
+    file: 'vitest.config.ts',
+    doc: GUIDE,
+    mention: (percent: number) => `${percent}%`,
+  },
+];
+
+describe('the guides quote the constants the code declares', () => {
+  it.each(QUOTED_CONSTANTS)('$name', ({ name, file, doc, mention }) => {
+    expect(read(doc)).toContain(mention(value({ file, name })));
+  });
+
+  it('states the compare-window tolerance in hours', () => {
+    const hours = value({ file: 'src/domain/snapshot.ts', name: 'COMPARE_WINDOW_TOLERANCE_MS' }) / 3_600_000;
+    const guide = read(DOMAIN_GUIDE);
+
+    expect(guide).toContain(`+ ${hours}h`);
+    expect(guide).toContain(`${hours}-hour`);
+  });
+
+  it('states the bucket clamp both layers rely on', () => {
+    const min = value({ file: 'src/domain/star-history.ts', name: 'MIN_HISTORY_BUCKETS' });
+    const max = value({ file: 'src/domain/star-history.ts', name: 'MAX_HISTORY_BUCKETS' });
+
+    expect(read(DOMAIN_GUIDE)).toContain(`clamp(maxPoints, ${min}, ${max})`);
+    expect(read('src/config/CLAUDE.md')).toContain(`capped at ${max}`);
+  });
+
+  it('derives the reachable page cap rather than restating it', () => {
+    const stargazers = 'src/infrastructure/github/stargazers.ts';
+    const pages = Math.floor(
+      value({ file: DOMAIN_CONSTANTS, name: 'MAX_REACHABLE_STARGAZERS' }) /
+        value({ file: stargazers, name: 'STARGAZERS_PER_PAGE' }),
+    );
+
+    expect(read(IO_GUIDE)).toContain(`is ${pages} because`);
+  });
+
+  it('states the SVG canvas, its margins and what they imply', () => {
+    const width = value({ file: CHART_CONSTANTS, name: 'width' });
+    const height = value({ file: CHART_CONSTANTS, name: 'height' });
+    const margin = Object.fromEntries(
+      objectLiteral({ file: CHART_CONSTANTS, name: 'margin' })
+        .split(',')
+        .map((entry) => entry.split(':').map((part) => part.trim()))
+        .filter(([side]) => side)
+        .map(([side, size]) => [side, Number(size)]),
+    ) as Record<'top' | 'right' | 'bottom' | 'left', number>;
+    const guide = read(CHART_GUIDE);
+
+    expect(guide).toContain(`viewBox="0 0 ${width} ${height}"`);
+    expect(guide).toContain(
+      `{top:${margin.top},right:${margin.right},bottom:${margin.bottom},left:${margin.left}}`,
+    );
+    expect(guide).toContain(
+      `plot area ${width - margin.left - margin.right}x${height - margin.top - margin.bottom}`,
+    );
+    expect(guide).toContain(`baseline y=${height - margin.bottom}`);
+  });
+
+  it('states the adaptive threshold ladder and its top milestone', () => {
+    const ladder = [
+      ...arrayLiteral({ file: DOMAIN_CONSTANTS, name: 'NOTIFICATION_THRESHOLDS' }).matchAll(
+        /limit:\s*(\d+),\s*value:\s*(\d+)/g,
+      ),
+    ].map(([, limit, threshold]) => `\`<=${limit} → ${threshold}\``);
+    const milestones = arrayLiteral({ file: DOMAIN_CONSTANTS, name: 'STAR_MILESTONES' })
+      .split(',')
+      .map((entry) => Number(entry.trim().replace(/_/g, '')))
+      .filter(Number.isFinite);
+    const guide = read(DOMAIN_GUIDE);
+
+    expect(ladder.filter((rung) => !guide.includes(rung))).toEqual([]);
+    expect([...guide.matchAll(/`<=\d+ → \d+`/g)]).toHaveLength(ladder.length);
+    expect(guide).toContain(`exactly ${grouped(Math.max(...milestones))}`);
+  });
+
+  it('states the default SMTP port on both surfaces that name it', () => {
+    const port = declaration({
+      file: 'src/infrastructure/notification/email.ts',
+      name: 'DEFAULT_SMTP_PORT',
+    }).replace(/'/g, '');
+
+    expect(read(IO_GUIDE)).toContain(`falls back to \`${port}\``);
+    expect(read('src/config/CLAUDE.md')).toContain(`\`'${port}'\``);
+  });
+
+  it('keeps MS_PER_YEAR uncorrected for leap years', () => {
+    expect(read(DOMAIN_GUIDE)).toContain(
+      `\`${declaration({ file: DOMAIN_CONSTANTS, name: 'MS_PER_YEAR' })}\``,
+    );
+  });
+});
+
 describe('citations name symbols, not line numbers', () => {
   it('cites no file:line anywhere outside the rule that forbids it', () => {
     const cited = DOCS.map(toPosix)
