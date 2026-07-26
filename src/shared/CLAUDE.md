@@ -1,13 +1,14 @@
 # src/shared — cross-cutting code that belongs to no layer
 
 `shared/` is the escape hatch for code that every layer may reach for but that is not domain logic,
-configuration, rendering or I/O. Today it contains exactly one thing: `testing/`, the fixture factories used
-by `*.test.ts` files across the whole tree. It is deliberately almost empty — putting something here is a
-statement that it has no owning layer, and that claim is usually wrong.
+configuration, rendering or I/O. It is deliberately almost empty — putting something here is a statement
+that it has no owning layer, and that claim is usually wrong.
 
 ## Files
-This folder holds no `.ts` files of its own. Its only content is the sub-folder
-[`testing/`](./testing/CLAUDE.md).
+| File | Responsibility |
+| --- | --- |
+| `testing/` | Fixture factories used by `*.test.ts` files across the whole tree — see [`testing/CLAUDE.md`](./testing/CLAUDE.md). |
+| `docs-consistency.test.ts` | Guards the documentation set against the repo: no dead markdown links, no citations of source or test files that do not exist, no sample chart embedded in `examples/README.md` without the SVG, and every `action.yml` input and output named where it is meant to be listed. It ships no production code and lives here because it belongs to no layer — it is about the repo as a whole. |
 
 ## Invariants & rules
 The alias convention itself (`@shared/*`, mapped to `./src/shared/*` in `tsconfig.json`) and the layer
