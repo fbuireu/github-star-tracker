@@ -10,6 +10,6 @@ Mail clients do not reliably display inline SVG, so the hand-written renderer th
 
 ## Consequences
 
-Charts have **two independent renderers** with different capabilities, and a change to one does not change the other. The QuickChart path is a deliberate lower-fidelity approximation: it is hard-capped at 30 points regardless of `chart-max-points`, and it collapses the four curve types onto two Chart.js modes. A rendering difference between the README chart and the email chart is expected, not a bug.
+Charts have **two independent renderers** with different capabilities, and a change to one does not change the other. The QuickChart path is a deliberate lower-fidelity approximation: it is fixed at 30 points regardless of `chart-max-points` (spread across the selected range, not taken from the end), and it collapses the four curve types onto two Chart.js modes. A rendering difference between the README chart and the email chart is expected, not a bug.
 
 The chart URLs also mean an unrelated third party receives a request, carrying the chart data in the query string, whenever a recipient opens the email — and that if `quickchart.io` is down or blocked, email charts render as broken images while the Data Branch charts are unaffected. This is the only external service the action depends on besides GitHub itself, and it is the one dependency a self-hosted or air-gapped user cannot satisfy.

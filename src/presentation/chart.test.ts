@@ -135,7 +135,7 @@ describe('chart', () => {
       }
     });
 
-    it('returns null for non-existent repository', () => {
+    it('renders a flat zero series for a repository absent from every snapshot', () => {
       const url = generatePerRepoChartUrl({
         history: mockHistory,
         repoFullName: 'user/non-existent',

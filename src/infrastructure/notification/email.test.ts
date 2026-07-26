@@ -7,6 +7,7 @@ vi.mock('@actions/core', () => ({
   getInput: vi.fn().mockReturnValue(''),
   info: vi.fn(),
   warning: vi.fn(),
+  setSecret: vi.fn(),
 }));
 
 vi.mock('nodemailer', () => {
@@ -128,7 +129,7 @@ describe('sendEmail', () => {
     });
   });
 
-  it('logs the recipient address, not the message ID', async () => {
+  it('logs the recipient address alongside the message ID', async () => {
     await sendEmail({
       emailConfig,
       subject: 'Subject',

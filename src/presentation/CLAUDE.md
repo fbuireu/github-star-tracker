@@ -90,7 +90,7 @@ Config input (`action.yml`) → parameter → effect. Sample SVGs in `examples/`
 | `chart-line-color` | `lineColor` | primary series only (star-history, per-repo, forecast historical) | `option-line-color.svg` |
 | `chart-line-width` | `lineWidth` | `stroke-width` on data paths, default `2.5` | `option-line-width.svg` |
 | `chart-range` | `range: ChartRange` | `30d`/`90d`/`1y`/`all`, measured back from the newest snapshot | `option-range-*.svg` |
-| `chart-max-points` | `maxPoints` | tail cap after range filtering; `0` = keep all | `option-maxpoints-*.svg` |
+| `chart-max-points` | `maxPoints` | resolution: evenly spaced points across the range window; `0` = keep all | `option-maxpoints-*.svg` |
 | `chart-trend-line` | `trendLine` | dashed 7-point moving average overlay on star-history | — |
 | `chart-animation` | `animate` | `false` strips `@keyframes` and `stroke-dashoffset` | — |
 
@@ -98,9 +98,14 @@ Config input (`action.yml`) → parameter → effect. Sample SVGs in `examples/`
 
 - **Purity.** No `fs`, no network, no `@actions/*`. The only clock reads are `new Date().toISOString()` for the report date and footer timestamp; the one piece of date arithmetic is the range cutoff in `shared.ts` (`lastTimestamp - days * MS_PER_DAY`), which is relative to the data, not the clock. `chart.ts` and `html.ts` *reference* `quickchart.io` URLs but never fetch them.
 - **`< 2` snapshots = `null`.** Every generator in `svg-chart.ts` and `chart.ts` returns `null` below `MIN_SNAPSHOTS_FOR_CHART` (2). `generateComparisonSvgChart` / `generateComparisonChartUrl` also return `null` for an empty `repoNames`.
-- **Windowing order is range-then-tail.** `selectChartSnapshots` filters by `range` first, then keeps the *last* `maxPoints` entries. `maxPoints ?? 30`; `maxPoints <= 0` returns a **copy** of the full window (`[...windowed]`), never the caller's array.
+- **Windowing order is range-then-downsample.** `selectChartSnapshots` filters by `range` first, then picks
+  `maxPoints` **evenly spaced** entries across the whole window, always keeping the first and the last.
+  `maxPoints ?? 30`; `maxPoints <= 0` and a window already at or below the limit both return a **copy**
+  (`[...windowed]`), never the caller's array; `maxPoints === 1` returns the newest entry.
+  It must not be a tail slice: with a tail slice, any range window larger than `maxPoints` collapses to the
+  same recent points and `chart-range` silently stops having any effect.
 - **Range cutoff is relative to the newest snapshot**, not to `Date.now()`. If the newest timestamp is unparseable, the series is returned unfiltered; individual unparseable timestamps are dropped.
-- **`chart.ts` never receives `maxPoints`** — it always calls `selectChartSnapshots` without it, so QuickChart/email charts are hard-capped at 30 points regardless of `chart-max-points`. This matches the `action.yml` wording.
+- **`chart.ts` never receives `maxPoints`** — it always calls `selectChartSnapshots` without it, so QuickChart/email charts are fixed at 30 points regardless of `chart-max-points`. Those 30 are now spread across the selected range rather than taken from the end, so an email chart covers the same span as its SVG counterpart at lower resolution. This matches the `action.yml` wording.
 - **`prepareReportData` does not mutate.** `sorted` is `[...activeRepos]` sorted by `current` descending (ties keep input order — `Array.prototype.sort` is stable). `now` is UTC `YYYY-MM-DD` from `toISOString()`; `prev` is the date part of `previousTimestamp`, or the localized `t.report.firstRun` string.
 - **`movingAverageSeries` is trailing and partial-window.** Index `i` averages `values[max(0, i-window+1)..i]`, `Math.round`ed. Output length always equals input length. `TREND_WINDOW` is 7.
 - **Forecast series are anchored.** `buildForecastChartSeries` pads each projection with `padLength - 1` nulls, then repeats the last historical value, then the predictions — so forecast lines visually start on the last real point. `historical` is padded with trailing nulls to the same total length. `forecastLength` is read from `forecasts[0]`.

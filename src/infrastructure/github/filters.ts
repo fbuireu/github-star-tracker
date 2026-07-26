@@ -15,8 +15,15 @@ function matchesPattern({ name, patterns }: MatchesPatternParams): boolean {
   return patterns.some((pattern) => {
     const match = REGEX_PATTERN.exec(pattern);
     if (match) {
-      const regex = new RegExp(match[1], match[2]);
-      return regex.test(name);
+      try {
+        return new RegExp(match[1], match[2]).test(name);
+      } catch (error) {
+        core.warning(
+          `Ignoring invalid pattern "${pattern}": ${(error as Error).message}. Filters expect either an exact name or /pattern/flags.`,
+        );
+
+        return false;
+      }
     }
     return name === pattern;
   });

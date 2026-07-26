@@ -207,7 +207,7 @@ export async function trackStars(): Promise<void> {
             notificationDelivered = false;
           }
         } else if (emailConfig) {
-          core.info('No star changes detected, skipping email');
+          core.info('Notification threshold not reached, skipping email');
         }
 
         if (notificationDelivered) {

@@ -41,8 +41,35 @@ describe('selectChartSnapshots', () => {
     expect(windowed).toEqual([{ timestamp: '2026-02-01T00:00:00Z' }, snapshots[2]]);
   });
 
-  it('keeps the tail when maxPoints is smaller than the window', () => {
-    expect(selectChartSnapshots({ snapshots, maxPoints: 2 })).toEqual([snapshots[1], snapshots[2]]);
+  it('downsamples across the window instead of keeping only the tail', () => {
+    expect(selectChartSnapshots({ snapshots, maxPoints: 2 })).toEqual([snapshots[0], snapshots[2]]);
+  });
+
+  it('spans the whole window at evenly spaced points, keeping both endpoints', () => {
+    const dense = Array.from({ length: 100 }, (_, index) => ({
+      timestamp: new Date(Date.UTC(2026, 0, 1) + index * 86_400_000).toISOString(),
+    }));
+
+    const picked = selectChartSnapshots({ snapshots: dense, maxPoints: 5 });
+
+    expect(picked).toHaveLength(5);
+    expect(picked[0]).toBe(dense[0]);
+    expect(picked.at(-1)).toBe(dense.at(-1));
+  });
+
+  it('keeps chart-range meaningful once the window exceeds maxPoints', () => {
+    const dense = Array.from({ length: 400 }, (_, index) => ({
+      timestamp: new Date(Date.UTC(2025, 0, 1) + index * 86_400_000).toISOString(),
+    }));
+
+    const year = selectChartSnapshots({ snapshots: dense, range: ChartRange.Y1, maxPoints: 30 });
+    const everything = selectChartSnapshots({
+      snapshots: dense,
+      range: ChartRange.ALL,
+      maxPoints: 30,
+    });
+
+    expect(year[0]).not.toBe(everything[0]);
   });
 
   it('copies rather than aliases when maxPoints is 0', () => {

@@ -275,7 +275,7 @@ describe('trackStars', () => {
       await trackStars();
 
       expect(sendEmail).not.toHaveBeenCalled();
-      expect(core.info).toHaveBeenCalledWith('No star changes detected, skipping email');
+      expect(core.info).toHaveBeenCalledWith('Notification threshold not reached, skipping email');
     });
 
     it('skips email when threshold is not reached', async () => {

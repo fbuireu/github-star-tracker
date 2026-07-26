@@ -91,7 +91,12 @@ export function selectChartSnapshots<T extends { timestamp: string }>({
   const windowed = filterSnapshotsByRange({ snapshots, range });
   const limit = maxPoints ?? CHART.maxDataPoints;
 
-  return limit > 0 ? windowed.slice(-limit) : [...windowed];
+  if (limit <= 0 || windowed.length <= limit) return [...windowed];
+  if (limit === 1) return windowed.slice(-1);
+
+  const step = (windowed.length - 1) / (limit - 1);
+
+  return Array.from({ length: limit }, (_, index) => windowed[Math.round(index * step)]);
 }
 
 interface MovingAverageSeriesParams {

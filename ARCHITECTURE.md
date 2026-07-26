@@ -53,12 +53,9 @@ red = the I/O boundary.
 | presentation | `@presentation/*` | Pure rendering: data in, string out (markdown/HTML/SVG/CSV/badge) | `@config/types`, domain, i18n | infrastructure, `@actions/*`, `node:fs`, any network |
 | shared | `@shared/*` | Cross-cutting non-layer code; today only `shared/testing` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only) | used from `*.test.ts` only |
 
-Two hard rules:
+Two hard rules govern this diagram: **domain and presentation are pure** (every I/O call in the tree lives under `src/infrastructure/`), and **cross-layer imports always go through path aliases while same-layer imports stay relative**.
 
-- **domain and presentation are pure.** No filesystem, no network, no `@actions/*`, no mutation of inputs. Every I/O call in the tree lives under `src/infrastructure/`.
-- **Cross-layer imports always go through path aliases; same-layer imports stay relative.** Aliases are declared once in `tsconfig.json` `compilerOptions.paths`; `esbuild.config.ts` derives its `alias` map from that object and `vitest.config.ts` sets `resolve.tsconfigPaths: true`, so adding an alias is a single edit.
-
-Codebase-wide conventions: every function with 2+ arguments takes one destructured named-params object typed by an interface (`function foo({ a, b }: FooParams)`), and source files carry **no explanatory comments** — that is what the per-folder `CLAUDE.md` files are for. Tests are colocated as `src/**/*.test.ts`.
+Those rules, the per-layer "may import / must not import" detail and the codebase-wide conventions are stated normatively once, in [src/CLAUDE.md](src/CLAUDE.md#invariants--rules). This section is the overview; when the two disagree, `src/CLAUDE.md` is right.
 
 ## 3. A run, end to end
 

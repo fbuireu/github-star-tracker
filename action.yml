@@ -22,42 +22,42 @@ inputs:
     default: 'star-tracker.yml'
 
   visibility:
-    description: 'Repository visibility filter: public, private, all, or owned (only repos you own) (overrides config file)'
+    description: 'Repository visibility filter: public, private, all, or owned (only repos you own). (default all) (overrides config file)'
     required: false
     default: ''
 
   include-archived:
-    description: 'Include archived repositories (overrides config file)'
+    description: 'Include archived repositories. (default false) (overrides config file)'
     required: false
     default: ''
 
   include-forks:
-    description: 'Include forked repositories (overrides config file)'
+    description: 'Include forked repositories. (default false) (overrides config file)'
     required: false
     default: ''
 
   exclude-repos:
-    description: 'Comma-separated list of repository names or regex patterns (e.g. /^test-.*/) to exclude (overrides config file)'
+    description: 'Comma-separated list of repository names or regex patterns (e.g. /^test-.*/) to exclude. (default empty) (overrides config file)'
     required: false
     default: ''
 
   only-repos:
-    description: 'Comma-separated list of repository names to exclusively track (overrides config file)'
+    description: 'Comma-separated list of repository names to exclusively track. (default empty) (overrides config file)'
     required: false
     default: ''
 
   only-orgs:
-    description: 'Comma-separated list of organization/owner names or regex patterns (e.g. /^my-org$/) to exclusively track (overrides config file)'
+    description: 'Comma-separated list of organization/owner names or regex patterns (e.g. /^my-org$/) to exclusively track. (default empty) (overrides config file)'
     required: false
     default: ''
 
   exclude-orgs:
-    description: 'Comma-separated list of organization/owner names or regex patterns to exclude (overrides config file)'
+    description: 'Comma-separated list of organization/owner names or regex patterns to exclude. (default empty) (overrides config file)'
     required: false
     default: ''
 
   min-stars:
-    description: 'Only track repos with at least this many stars (overrides config file)'
+    description: 'Only track repos with at least this many stars. (default 0) (overrides config file)'
     required: false
     default: ''
 
@@ -132,7 +132,7 @@ inputs:
     default: ''
 
   locale:
-    description: 'Language for reports and emails: en, es, ca, it. (default en) (overrides config file)'
+    description: 'Language for reports and emails: en, es, ca, it. Affects wording and date formatting; compact star counts (1.5K, 2.5M) stay English. (default en) (overrides config file)'
     required: false
     default: ''
 
@@ -244,7 +244,7 @@ outputs:
     description: 'HTML report of star changes (for email)'
 
   report-html-path:
-    description: 'Path to a file containing the HTML report. Use this instead of report-html when piping into a custom mailer step, as large reports can exceed the shell environment variable size limit'
+    description: 'Path to a file containing the HTML report. Use this instead of report-html when piping into a custom mailer step, as large reports can exceed the shell environment variable size limit. Written to RUNNER_TEMP (falling back to the working directory) on every run, including read-only runs and runs where no repository matched, so the file outlives the action'
 
   total-stars:
     description: 'Total star count across all tracked repositories'

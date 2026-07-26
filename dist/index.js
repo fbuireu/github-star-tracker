@@ -40490,8 +40490,8 @@ function forecastFromSeries(points) {
   ];
 }
 function snapshotDays(history) {
-  const times = history.snapshots.map((snapshot) => Date.parse(snapshot.timestamp));
-  if (times.some((timeMs) => !Number.isFinite(timeMs))) {
+  const times = history.snapshots.map((snapshot) => toEpochMs(snapshot.timestamp));
+  if (times.some((timeMs) => timeMs === null)) {
     return history.snapshots.map((_, index) => index * DAYS_PER_WEEK);
   }
   const first = times[0];
@@ -40540,19 +40540,24 @@ function trendIcon(delta) {
   return DASH;
 }
 function formatDate({ timestamp, locale }) {
-  const date = new Date(timestamp);
+  const epochMs = toEpochMs(timestamp);
+  if (epochMs === null) return "";
   const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
-  return date.toLocaleDateString(localeCode, { month: "short", day: "numeric" });
+  return new Date(epochMs).toLocaleDateString(localeCode, {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC"
+  });
 }
 function buildAxisLabels({ timestamps, locale }) {
-  const times = timestamps.map((timestamp) => Date.parse(timestamp)).filter(Number.isFinite);
+  const times = timestamps.map((timestamp) => toEpochMs(timestamp)).filter((timeMs) => timeMs !== null);
   if (times.length < 2 || Math.max(...times) - Math.min(...times) < MS_PER_YEAR) {
     return timestamps.map((timestamp) => formatDate({ timestamp, locale }));
   }
   let lastYear = null;
   return timestamps.map((timestamp) => {
-    const time = Date.parse(timestamp);
-    if (!Number.isFinite(time)) return "";
+    const time = toEpochMs(timestamp);
+    if (time === null) return "";
     const year = new Date(time).getUTCFullYear();
     if (year === lastYear) return "";
     lastYear = year;
@@ -40641,7 +40646,7 @@ function buildStarHistory({
   const eventsByRepo = /* @__PURE__ */ new Map();
   let earliest = Number.POSITIVE_INFINITY;
   for (const repo of repos) {
-    const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? []).map((stargazer) => Date.parse(stargazer.starredAt)).filter((timeMs) => Number.isFinite(timeMs)).sort((earlier, later) => earlier - later);
+    const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? []).map((stargazer) => toEpochMs(stargazer.starredAt)).filter((timeMs) => timeMs !== null).sort((earlier, later) => earlier - later);
     eventsByRepo.set(repo.fullName, times);
     if (times.length > 0 && times[0] < earliest) earliest = times[0];
   }
@@ -40857,8 +40862,14 @@ function matchesPattern({ name, patterns }) {
   return patterns.some((pattern) => {
     const match = REGEX_PATTERN.exec(pattern);
     if (match) {
-      const regex = new RegExp(match[1], match[2]);
-      return regex.test(name);
+      try {
+        return new RegExp(match[1], match[2]).test(name);
+      } catch (error2) {
+        warning(
+          `Ignoring invalid pattern "${pattern}": ${error2.message}. Filters expect either an exact name or /pattern/flags.`
+        );
+        return false;
+      }
     }
     return name === pattern;
   });
@@ -41072,6 +41083,7 @@ async function fetchSampledStargazers({
 var import_nodemailer = __toESM(require_nodemailer());
 var SECURE_SMTP_PORT = 465;
 var DEFAULT_SMTP_PORT = "587";
+var MAX_TCP_PORT = 65535;
 function resolveFromAddress({ from, username }) {
   if (from.includes("@")) {
     return from;
@@ -41081,15 +41093,23 @@ function resolveFromAddress({ from, username }) {
   }
   return from;
 }
+function resolvePort(raw) {
+  const parsed = Number.parseInt(raw || DEFAULT_SMTP_PORT, 10);
+  if (Number.isInteger(parsed) && parsed > 0 && parsed <= MAX_TCP_PORT) return parsed;
+  warning(`Invalid smtp-port "${raw}". Falling back to ${DEFAULT_SMTP_PORT}.`);
+  return Number.parseInt(DEFAULT_SMTP_PORT, 10);
+}
 function getEmailConfig(locale) {
   const host = getInput("smtp-host");
   if (!host) return null;
   const t = getTranslations(locale);
+  const password = getInput("smtp-password");
+  if (password) setSecret(password);
   return {
     host,
-    port: Number.parseInt(getInput("smtp-port") || DEFAULT_SMTP_PORT, 10),
+    port: resolvePort(getInput("smtp-port")),
     username: getInput("smtp-username"),
-    password: getInput("smtp-password"),
+    password,
     to: getInput("email-to"),
     from: getInput("email-from") || t.email.defaultFrom
   };
@@ -41491,7 +41511,10 @@ function selectChartSnapshots({
 }) {
   const windowed = filterSnapshotsByRange({ snapshots, range });
   const limit = maxPoints ?? CHART.maxDataPoints;
-  return limit > 0 ? windowed.slice(-limit) : [...windowed];
+  if (limit <= 0 || windowed.length <= limit) return [...windowed];
+  if (limit === 1) return windowed.slice(-1);
+  const step = (windowed.length - 1) / (limit - 1);
+  return Array.from({ length: limit }, (_, index) => windowed[Math.round(index * step)]);
 }
 function movingAverageSeries({ values, window: window2 }) {
   return values.map((_, index) => {
@@ -43210,7 +43233,7 @@ async function trackStars() {
             notificationDelivered = false;
           }
         } else if (emailConfig) {
-          info("No star changes detected, skipping email");
+          info("Notification threshold not reached, skipping email");
         }
         if (notificationDelivered) {
           updatedHistory.starsAtLastNotification = summary2.totalStars;

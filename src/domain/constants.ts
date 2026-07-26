@@ -19,7 +19,4 @@ export const NOTIFICATION_THRESHOLDS = [
 
 export const NOTIFICATION_THRESHOLD_MAX_PACE = 20;
 
-// GitHub only lets us page through the oldest 40,000 stargazers, so for larger
-// repos the most recent stars are unreachable and the fetched dates stop well
-// before "now". Those repos need a ramped tail instead of a flat one (#114).
 export const MAX_REACHABLE_STARGAZERS = 40_000;
