@@ -75,7 +75,9 @@ fetch is gated on `includeCharts || trackStargazers`.
   never reads them. A missing `smtp-host` returns `null` and silently skips email.
 - `initializeDataBranch` throws when the data branch is absent from the remote **and** the run is read-only.
   That surfaces as a `setFailed` before the body ever runs.
-- The `else if (emailConfig)` branch logs "No star changes detected, skipping email" even when the real
-  reason was an unmet threshold. The message is imprecise but pinned by a test.
+- The `else if (emailConfig)` branch logs `'Notification threshold not reached, skipping email'`, but it also
+  fires when `summary.changed` is false, since `notify` needs both. So the message names the threshold even
+  when nothing changed at all. It is pinned verbatim by `tracker.test.ts`, so fix the wording and the test
+  together or not at all.
 - `tracker.test.ts` mocks most of the tree but deliberately **not** `@presentation/charts` or
   `@domain/star-history`, so `buildChartFiles` and `buildStarHistory` execute for real.

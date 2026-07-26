@@ -8,6 +8,13 @@ const SOURCE_PATH_PATTERN = /`(src\/[\w./-]+\.ts)`/g;
 const TEST_FILE_PATTERN = /`([\w-]+\.test\.ts)`/g;
 const SVG_LINK_PATTERN = /\]\(([\w.-]+\.svg)\)/g;
 const OUTPUT_KEY_PATTERN = /^ {2}([a-z][a-z-]*):$/gm;
+const LINE_CITATION_PATTERN = /`[\w/.-]+\.ts:\d+/g;
+const SCRIPT_PATTERN = /^pnpm ([a-z][a-z0-9:._-]*)/gm;
+const LAYER_ROW_PATTERN = /^\| `([\w-]+)\/` \| `(@[a-z\d]+)(?:\/\*)?` \|/gm;
+
+const GUIDE = 'CLAUDE.md';
+
+const UNDOCUMENTED_SCRIPTS = new Set(['prepare', 'test:watch', 'test:changed']);
 
 const OUTPUT_SURFACES = [
   'README.md',
@@ -28,6 +35,8 @@ const ADR_FILE_PATTERN = /^docs\/adr\/\d{4}(-[a-z\d]+)+\.md$/;
 const ADR_STATUS_PATTERN = /\n## Status\n\n(\w+)/;
 const ADR_DATE_PATTERN = /\nDate: \d{4}-\d{2}-\d{2}\n/;
 const ADR_REFERENCE_PATTERNS = [/ADR (\d{4})/g, /docs\/adr\/(\d{4})-/g];
+
+const LINE_CITATION_ALLOWLIST = new Set([GUIDE, ADR_TEMPLATE]);
 
 function walk(dir: string, keep: (filename: string) => boolean): string[] {
   if (!fs.existsSync(dir)) return [];
@@ -227,5 +236,95 @@ describe('action.yml is documented', () => {
     );
 
     expect(undocumented).toEqual([]);
+  });
+});
+
+interface PackageManifest {
+  engines: { node: string };
+  packageManager: string;
+  scripts: Record<string, string>;
+}
+
+interface TsConfig {
+  compilerOptions: { paths: Record<string, string[]> };
+}
+
+const pkg = JSON.parse(read('package.json')) as PackageManifest;
+const tsconfig = JSON.parse(
+  read('tsconfig.json').replace(/^\s*\/\/.*$/gm, ''),
+) as TsConfig;
+const guide = read(GUIDE);
+
+describe('the root guide matches the manifests', () => {
+  const documentedScripts = [...guide.matchAll(SCRIPT_PATTERN)].map(([, name]) => name);
+
+  it('documents only scripts that package.json declares', () => {
+    expect(documentedScripts.filter((script) => !(script in pkg.scripts))).toEqual([]);
+  });
+
+  it('documents every script that is not deliberately left out', () => {
+    const missing = Object.keys(pkg.scripts).filter(
+      (script) => !UNDOCUMENTED_SCRIPTS.has(script) && !documentedScripts.includes(script),
+    );
+
+    expect(missing).toEqual([]);
+  });
+
+  it('pins the same Node and pnpm versions it claims', () => {
+    expect(guide.match(/Node \*\*([\d.]+)\*\*/)?.[1]).toBe(pkg.engines.node);
+    expect(guide.match(/pnpm \*\*([\d.]+)\*\*/)?.[1]).toBe(
+      pkg.packageManager.replace('pnpm@', ''),
+    );
+  });
+
+  const layerRows = [...guide.matchAll(LAYER_ROW_PATTERN)].map(([, layer, alias]) => ({
+    layer,
+    alias,
+  }));
+
+  it('gives every layer under src a row in the layer table', () => {
+    const onDisk = fs
+      .readdirSync('src', { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
+
+    expect(layerRows.map(({ layer }) => layer).sort()).toEqual(onDisk);
+  });
+
+  it('gives every layer its own nested guide', () => {
+    const missing = layerRows
+      .map(({ layer }) => `src/${layer}/CLAUDE.md`)
+      .filter((file) => !fs.existsSync(file));
+
+    expect(missing).toEqual([]);
+  });
+
+  it('names the alias tsconfig maps to each layer, and no others', () => {
+    const declared = Object.keys(tsconfig.compilerOptions.paths)
+      .map((alias) => alias.replace('/*', ''))
+      .sort();
+
+    expect([...new Set(layerRows.map(({ alias }) => alias))].sort()).toEqual(declared);
+
+    const mismatched = layerRows.filter(({ layer, alias }) => {
+      const target = tsconfig.compilerOptions.paths[alias] ?? tsconfig.compilerOptions.paths[`${alias}/*`];
+
+      return !target?.[0]?.startsWith(`./src/${layer}`);
+    });
+
+    expect(mismatched).toEqual([]);
+  });
+});
+
+describe('citations name symbols, not line numbers', () => {
+  it('cites no file:line anywhere outside the rule that forbids it', () => {
+    const cited = DOCS.map(toPosix)
+      .filter((doc) => !LINE_CITATION_ALLOWLIST.has(doc))
+      .flatMap((doc) =>
+        [...read(doc).matchAll(LINE_CITATION_PATTERN)].map((match) => `${doc} -> ${match[0]}`),
+      );
+
+    expect(cited).toEqual([]);
   });
 });
