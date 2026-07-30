@@ -35,6 +35,7 @@ const ADR_FILE_PATTERN = /^docs\/adr\/\d{4}(-[a-z\d]+)+\.md$/;
 const ADR_STATUS_PATTERN = /\n## Status\n\n(\w+)/;
 const ADR_DATE_PATTERN = /\nDate: \d{4}-\d{2}-\d{2}\n/;
 const ADR_REFERENCE_PATTERNS = [/ADR (\d{4})/g, /docs\/adr\/(\d{4})-/g];
+const adrHeadingPattern = (number: number): RegExp => new RegExp(`^# ${number}\\. \\S`);
 
 const LINE_CITATION_ALLOWLIST = new Set([GUIDE, ADR_TEMPLATE]);
 
@@ -158,7 +159,7 @@ describe('architecture decision records', () => {
       const body = read(file);
       const number = Number(adrNumber(file));
       const status = body.match(ADR_STATUS_PATTERN)?.[1] ?? '';
-      const heading = new RegExp(`^# ${number}\\. \\S`);
+      const heading = adrHeadingPattern(number);
 
       return [
         ...(heading.test(body) ? [] : [`${file}: heading is not "# ${number}. Title"`]),
@@ -249,10 +250,13 @@ interface TsConfig {
   compilerOptions: { paths: Record<string, string[]> };
 }
 
+const JSONC_COMMENT_PATTERN = /^\s*\/\/.*$/gm;
+const NODE_VERSION_PATTERN = /Node \*\*([\d.]+)\*\*/;
+const PNPM_VERSION_PATTERN = /pnpm \*\*([\d.]+)\*\*/;
+const PNPM_PREFIX = 'pnpm@';
+
 const pkg = JSON.parse(read('package.json')) as PackageManifest;
-const tsconfig = JSON.parse(
-  read('tsconfig.json').replace(/^\s*\/\/.*$/gm, ''),
-) as TsConfig;
+const tsconfig = JSON.parse(read('tsconfig.json').replace(JSONC_COMMENT_PATTERN, '')) as TsConfig;
 const guide = read(GUIDE);
 
 describe('the root guide matches the manifests', () => {
@@ -271,9 +275,9 @@ describe('the root guide matches the manifests', () => {
   });
 
   it('pins the same Node and pnpm versions it claims', () => {
-    expect(guide.match(/Node \*\*([\d.]+)\*\*/)?.[1]).toBe(pkg.engines.node);
-    expect(guide.match(/pnpm \*\*([\d.]+)\*\*/)?.[1]).toBe(
-      pkg.packageManager.replace('pnpm@', ''),
+    expect(guide.match(NODE_VERSION_PATTERN)?.[1]).toBe(pkg.engines.node);
+    expect(guide.match(PNPM_VERSION_PATTERN)?.[1]).toBe(
+      pkg.packageManager.replace(PNPM_PREFIX, ''),
     );
   });
 
@@ -323,13 +327,29 @@ const DOMAIN_GUIDE = 'src/domain/CLAUDE.md';
 const CHART_GUIDE = 'src/presentation/CLAUDE.md';
 const IO_GUIDE = 'src/infrastructure/CLAUDE.md';
 
+const declarationPattern = (name: string): RegExp =>
+  new RegExp(`\\b${name}\\b[^=:\\n]*[=:]\\s*([^;,\\n]+)`);
+const arrayLiteralPattern = (name: string): RegExp =>
+  new RegExp(`\\b${name}\\b[^=:]*[=:]\\s*\\[([\\s\\S]*?)\\]`);
+const objectLiteralPattern = (name: string): RegExp =>
+  new RegExp(`\\b${name}\\b[^=:]*[=:]\\s*\\{([^{}]*)\\}`);
+
+const NUMERIC_SEPARATOR_PATTERN = /_/g;
+const WHITESPACE_RUN_PATTERN = /\s+/g;
+const SINGLE_QUOTE_PATTERN = /'/g;
+const THRESHOLD_RUNG_PATTERN = /limit:\s*(\d+),\s*value:\s*(\d+)/g;
+const QUOTED_RUNG_PATTERN = /`<=\d+ → \d+`/g;
+const MULTIPLICATION_OPERATOR = '*';
+const GROUPING_LOCALE = 'en-US';
+const MS_PER_HOUR = 3_600_000;
+
 interface DeclarationParams {
   file: string;
   name: string;
 }
 
 function declaration({ file, name }: DeclarationParams): string {
-  const match = new RegExp(`\\b${name}\\b[^=:\\n]*[=:]\\s*([^;,\\n]+)`).exec(read(file));
+  const match = declarationPattern(name).exec(read(file));
 
   if (!match) throw new Error(`${name} is not declared in ${file}`);
 
@@ -337,7 +357,7 @@ function declaration({ file, name }: DeclarationParams): string {
 }
 
 function arrayLiteral({ file, name }: DeclarationParams): string {
-  const match = new RegExp(`\\b${name}\\b[^=:]*[=:]\\s*\\[([\\s\\S]*?)\\]`).exec(read(file));
+  const match = arrayLiteralPattern(name).exec(read(file));
 
   if (!match) throw new Error(`${name} is not declared as an array in ${file}`);
 
@@ -345,7 +365,7 @@ function arrayLiteral({ file, name }: DeclarationParams): string {
 }
 
 function objectLiteral({ file, name }: DeclarationParams): string {
-  const match = new RegExp(`\\b${name}\\b[^=:]*[=:]\\s*\\{([^{}]*)\\}`).exec(read(file));
+  const match = objectLiteralPattern(name).exec(read(file));
 
   if (!match) throw new Error(`${name} is not declared as an object in ${file}`);
 
@@ -354,15 +374,15 @@ function objectLiteral({ file, name }: DeclarationParams): string {
 
 function product(expression: string): number {
   return expression
-    .split('*')
-    .reduce((total, part) => total * Number(part.trim().replace(/_/g, '')), 1);
+    .split(MULTIPLICATION_OPERATOR)
+    .reduce((total, part) => total * Number(part.trim().replace(NUMERIC_SEPARATOR_PATTERN, '')), 1);
 }
 
 const value = (params: DeclarationParams): number => product(declaration(params));
 
-const grouped = (count: number): string => count.toLocaleString('en-US');
+const grouped = (count: number): string => count.toLocaleString(GROUPING_LOCALE);
 
-const prose = (file: string): string => read(file).replace(/\s+/g, ' ');
+const prose = (file: string): string => read(file).replace(WHITESPACE_RUN_PATTERN, ' ');
 
 const QUOTED_CONSTANTS = [
   {
@@ -433,7 +453,8 @@ describe('the guides quote the constants the code declares', () => {
   });
 
   it('states the compare-window tolerance in hours', () => {
-    const hours = value({ file: 'src/domain/snapshot.ts', name: 'COMPARE_WINDOW_TOLERANCE_MS' }) / 3_600_000;
+    const hours =
+      value({ file: 'src/domain/snapshot.ts', name: 'COMPARE_WINDOW_TOLERANCE_MS' }) / MS_PER_HOUR;
     const guide = prose(DOMAIN_GUIDE);
 
     expect(guide).toContain(`+ ${hours}h`);
@@ -483,17 +504,17 @@ describe('the guides quote the constants the code declares', () => {
   it('states the adaptive threshold ladder and its top milestone', () => {
     const ladder = [
       ...arrayLiteral({ file: DOMAIN_CONSTANTS, name: 'NOTIFICATION_THRESHOLDS' }).matchAll(
-        /limit:\s*(\d+),\s*value:\s*(\d+)/g,
+        THRESHOLD_RUNG_PATTERN,
       ),
     ].map(([, limit, threshold]) => `\`<=${limit} → ${threshold}\``);
     const milestones = arrayLiteral({ file: DOMAIN_CONSTANTS, name: 'STAR_MILESTONES' })
       .split(',')
-      .map((entry) => Number(entry.trim().replace(/_/g, '')))
+      .map((entry) => Number(entry.trim().replace(NUMERIC_SEPARATOR_PATTERN, '')))
       .filter(Number.isFinite);
     const guide = prose(DOMAIN_GUIDE);
 
     expect(ladder.filter((rung) => !guide.includes(rung))).toEqual([]);
-    expect([...guide.matchAll(/`<=\d+ → \d+`/g)]).toHaveLength(ladder.length);
+    expect([...guide.matchAll(QUOTED_RUNG_PATTERN)]).toHaveLength(ladder.length);
     expect(guide).toContain(`exactly ${grouped(Math.max(...milestones))}`);
   });
 
@@ -501,7 +522,7 @@ describe('the guides quote the constants the code declares', () => {
     const port = declaration({
       file: 'src/infrastructure/notification/email.ts',
       name: 'DEFAULT_SMTP_PORT',
-    }).replace(/'/g, '');
+    }).replace(SINGLE_QUOTE_PATTERN, '');
 
     expect(prose(IO_GUIDE)).toContain(`falls back to \`${port}\``);
     expect(prose('src/config/CLAUDE.md')).toContain(`\`'${port}'\``);
@@ -516,8 +537,9 @@ describe('the guides quote the constants the code declares', () => {
 
 const GLOSSARY = 'CONTEXT.md';
 const GLOSSARY_TERM_PATTERN = /^\*\*(.+?)\*\*:/gm;
+const NON_LETTER_PATTERN = /[^a-z]/gi;
 
-const flatten = (text: string): string => text.replace(/[^a-z]/gi, '').toLowerCase();
+const flatten = (text: string): string => text.replace(NON_LETTER_PATTERN, '').toLowerCase();
 
 describe('the glossary is ubiquitous language, not decoration', () => {
   it('uses every term it defines somewhere outside itself', () => {
