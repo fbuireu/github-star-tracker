@@ -144,7 +144,7 @@ The eleven action outputs: `report`, `report-html`, `report-html-path`, `report-
 ## 5. Build & release
 
 - **Bundling.** `esbuild.config.ts` (run via `tsx`) bundles `src/index.ts` -> `dist/index.js`, `platform: node`, `target: node24`, `format: cjs`, `sourcemap: true`, with the alias map derived from `tsconfig.json`. `dist/` is **committed** because GitHub runs a JS action straight from the repository at the referenced ref — there is no install step, so the bundle must be in the tree.
-- **Scripts** (`package.json`): `lint` = `biome check --no-errors-on-unmatched .`; `format` = `lint --write`; `typecheck` = `tsc --noEmit`; `test` / `test:coverage` = Vitest (v8 coverage, 85% threshold on lines/functions/branches/statements); `check` = lint + typecheck + test:coverage; `validate` = check + build. `pnpm run validate` is what the release job runs; `ci.yml` runs the same work as separate `check` / `test:coverage` / `build` steps.
+- **Scripts** (`package.json`): `lint` = `biome check --no-errors-on-unmatched .`; `format` = `lint --write`; `typecheck` = `tsc --noEmit`; `test` / `test:coverage` = Vitest (v8 coverage, 85% threshold on lines/functions/branches/statements); `check` = lint + typecheck + test:coverage; `validate` = check + build. `pnpm run validate` is what the release job runs; `ci.yml` runs the same work as separate `check` / `build` steps (coverage runs once, inside `check`).
 - **Biome** (`biome.json`) is linter and formatter: 100-col, 2-space, LF, single quotes, semicolons, trailing commas; recommended rule preset. `.gitattributes` pins `* text=auto eol=lf`.
 - **Git hooks.** Husky: `pre-commit` -> `lint-staged` (`biome check --write` on `*.{ts,json}`), `commit-msg` -> `commitlint` (`@commitlint/config-conventional`), `pre-push` -> `typecheck && test:changed && build`.
 - **Release.** `.releaserc.json`: semantic-release on `main` with commit-analyzer, release-notes-generator, changelog, npm (`npmPublish: false`), git (commits `package.json`, `pnpm-lock.yaml`, `CHANGELOG.md` and `dist/`) and github plugins.
@@ -153,7 +153,7 @@ The eleven action outputs: `report`, `report-html`, `report-html-path`, `report-
 
 | Workflow | Purpose |
 | --- | --- |
-| `ci.yml` | On push/PR to `main`: install, `pnpm run check`, coverage, Codecov upload, build |
+| `ci.yml` | On push/PR to `main`: install, `pnpm run check`, Codecov upload (also when `check` fails, so threshold failures still report), build |
 | `release.yml` | On push to `main`: `pnpm run validate` then `semantic-release`, plus a major-version tag update |
 | `codeql.yml` | CodeQL analysis of `javascript-typescript` and `actions`, weekly + on push/PR |
 | `zizmor.yml` | zizmor static analysis of the workflow files themselves |

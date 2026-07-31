@@ -161,6 +161,6 @@ the moment anything above it moves — prefer naming the symbol.
 `esbuild.config.ts` (run via `tsx`) bundles `src/index.ts` into the committed `dist/index.js` with a
 sourcemap. Husky runs `lint-staged` on `pre-commit`, `commitlint` on `commit-msg` and
 `typecheck && test:changed && build` on `pre-push`. `.releaserc.json` runs semantic-release on `main`,
-committing `package.json`, `pnpm-lock.yaml`, `CHANGELOG.md` and `dist/`. `ci.yml` runs check + coverage +
-build; `release.yml` runs `pnpm validate` then semantic-release; `sync-wiki.yml` publishes `docs/wiki/` to
+committing `package.json`, `pnpm-lock.yaml`, `CHANGELOG.md` and `dist/`. `ci.yml` runs check (which
+includes coverage) + Codecov upload + build; `release.yml` runs `pnpm validate` then semantic-release; `sync-wiki.yml` publishes `docs/wiki/` to
 the GitHub Wiki. Full detail, including every workflow, is in [ARCHITECTURE.md](./ARCHITECTURE.md).
