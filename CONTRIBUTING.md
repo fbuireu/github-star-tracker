@@ -359,7 +359,7 @@ The source carries **no explanatory comments** by design — the `CLAUDE.md` fil
 instead. That is why letting them drift costs more here than in a commented codebase.
 
 The root [`CLAUDE.md`](./CLAUDE.md) has the full table of what to update for a given change, and
-`tests/docs-consistency.test.ts` fails the build when the mechanical half of it is broken.
+`docs/docs-consistency.test.ts` fails the build when the mechanical half of it is broken.
 
 
 ## Development Tips

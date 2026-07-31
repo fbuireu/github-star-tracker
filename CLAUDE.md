@@ -61,8 +61,8 @@ things it may depend on ([ADR 0004](./docs/adr/0004-layered-source-structure.md)
 | `presentation/` | `@presentation/*` | Pure rendering: data in, markdown/HTML/SVG/CSV string out |
 | `shared/` | `@shared/*` | Cross-cutting code owning no layer (today: test factories) |
 
-Tests are colocated next to the file they cover (`src/**/*.test.ts`). Repo-level tests that belong to no
-module live in `tests/` — currently `tests/docs-consistency.test.ts`, the guard described below.
+Tests are colocated next to the file they cover (`src/**/*.test.ts`). The one test covering no module is
+`docs/docs-consistency.test.ts` — the docs guard described below, colocated with the docs it checks.
 
 Aliases are declared **once**, in `tsconfig.json` `compilerOptions.paths`. `esbuild.config.ts` derives its
 `alias` map from that object at build time and `vitest.config.ts` sets `resolve.tsconfigPaths: true`, so a
@@ -107,7 +107,7 @@ These documents are not generated. A change that does not update them leaves the
 no longer exists, so when you change code, update the docs **in the same commit** — a follow-up commit is a
 promise, not a fix.
 
-`tests/docs-consistency.test.ts` makes the mechanical half of that contract executable: it reads every
+`docs/docs-consistency.test.ts` makes the mechanical half of that contract executable: it reads every
 document and asserts the checkable claims against the repo — no dead markdown links, no citation of a source
 or test file that does not exist, no sample chart in `examples/README.md` without its SVG, every `action.yml`
 input and output named on the surfaces that list them, and the ADR set held to its template (sequential
