@@ -8,7 +8,7 @@ Accepted.
 
 ## Context
 
-Mail clients do not reliably display inline SVG, so the hand-written renderer that produces every Chart on the Data Branch (ADR 0006) cannot serve the email Report. Three ways out were available:
+Mail clients do not reliably display inline SVG, so the hand-written renderer that produces every Chart on the Data Branch ([ADR 0006](./0006-hand-rendered-svg-charts.md)) cannot serve the email Report. Three ways out were available:
 
 - **Inline the SVG in the email** — the obvious choice, and the reason this decision is surprising. Gmail and Outlook strip or refuse inline SVG, so the chart simply disappears for most recipients.
 - **Rasterise the SVG ourselves and attach it** — needs a headless browser or a native rasteriser in the Action, which is a heavy dependency for a tool whose actual work takes seconds.

@@ -12,7 +12,7 @@ A Chart has to be a single self-contained SVG file that renders correctly embedd
 
 ## Decision
 
-The SVG is emitted directly, so the action carries no charting dependency, and the file carries its own stylesheet — which is the only reason theme adaptation is possible at all. The email path is deliberately not served by this renderer: mail clients do not reliably display inline SVG, so the HTML report embeds third-party QuickChart image URLs instead (ADR 0010).
+The SVG is emitted directly, so the action carries no charting dependency, and the file carries its own stylesheet — which is the only reason theme adaptation is possible at all. The email path is deliberately not served by this renderer: mail clients do not reliably display inline SVG, so the HTML report embeds third-party QuickChart image URLs instead ([ADR 0010](./0010-quickchart-renders-the-email-charts.md)).
 
 ## Consequences
 

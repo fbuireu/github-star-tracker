@@ -12,7 +12,7 @@ Reachable Stargazers stop at a fixed ceiling and are listed oldest first, so for
 
 ## Decision
 
-The reachable portion is scaled to the count it genuinely covers, and a Ramped Tail is drawn from there to the true present-day Star Count. The ramp is triggered whenever coverage fell short of the true Star Count — from the ceiling, but equally from a fetch that was cut short by an error or by Smart Sampling (ADR 0008) — so a small Repository can get a ramped tail too. A Repository whose Stargazers were fully enumerated is untouched.
+The reachable portion is scaled to the count it genuinely covers, and a Ramped Tail is drawn from there to the true present-day Star Count. The ramp is triggered whenever coverage fell short of the true Star Count — from the ceiling, but equally from a fetch that was cut short by an error or by Smart Sampling ([ADR 0008](./0008-sampled-repositories-are-excluded-from-stargazer-diffing.md)) — so a small Repository can get a ramped tail too. A Repository whose Stargazers were fully enumerated is untouched.
 
 ## Consequences
 
