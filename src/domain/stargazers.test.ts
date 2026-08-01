@@ -1,4 +1,4 @@
-import { makeStargazer } from '@shared/testing';
+import { makeStargazer } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
 import type { RepoStargazers, Stargazer, StargazerMap } from './stargazers';
 

@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import type { Config } from '@config/types';
 import { Visibility } from '@config/types';
-import { makeConfig } from '@shared/testing';
+import { makeConfig } from '@shared/tests';
 import { describe, expect, it, vi } from 'vitest';
 import { fetchRepos } from './client';
 import { filterRepos, getRepos, mapRepos } from './filters';

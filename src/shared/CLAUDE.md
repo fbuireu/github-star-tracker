@@ -44,8 +44,8 @@ Nothing outside a `*.test.ts` may import it.
   current ones.
 - **Two test files define their own local factories** with the same names but different signatures:
   `velocity.test.ts` has its own `makeHistory` and `svg-chart.test.ts` its own `makeSnapshot` /
-  `makeMultiRepoSnapshot`. Neither imports `@shared/testing` — do not assume the name means the shared factory.
-- `src/shared/testing/**` is excluded from coverage, so a broken or unused factory shows up as failing
+  `makeMultiRepoSnapshot`. Neither imports `@shared/tests` — do not assume the name means the shared factory.
+- `src/shared/tests/**` is excluded from coverage, so a broken or unused factory shows up as failing
   assertions elsewhere, never as an uncovered-lines failure. After changing a default, run the whole suite:
   the blast radius is every layer.
 - Nothing in `shared` may import `@application/*`, `@infrastructure/*` or `@presentation/*`. It sits below

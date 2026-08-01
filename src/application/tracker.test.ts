@@ -34,7 +34,7 @@ import {
   generatePerRepoSvgChart,
   generateSvgChart,
 } from '@presentation/svg-chart';
-import { makeConfig, makeRepoInfo, makeStargazerSeries } from '@shared/testing';
+import { makeConfig, makeRepoInfo, makeStargazerSeries } from '@shared/tests';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { trackStars } from './tracker';
 

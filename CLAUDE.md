@@ -89,7 +89,7 @@ alias (`"@i18n": ["./src/i18n/index.ts"]`), not a glob: `@i18n/types` does not r
   sorting and duplicate it in the bundle. "Same layer" means all of `src/infrastructure`, not one adapter.
 - **Named params for 2+ arguments.** Any function taking two or more arguments takes one destructured
   object typed by an interface: `function foo({ a, b }: FooParams)`. Single-argument functions stay
-  positional. The fixture factories in `src/shared/testing` are the only sanctioned exception.
+  positional. The fixture factories in `src/shared/tests` are the only sanctioned exception.
 - **No explanatory comments in `.ts` files**, without exception — the tree contains none. These `CLAUDE.md`
   files carry the explanation instead. If something needs explaining it goes in the folder's *Invariants* or
   *Gotchas* section, not above the line.
@@ -148,7 +148,7 @@ the moment anything above it moves — prefer naming the symbol.
   `action.yml` and fails if you add one. Only `config-path`, `send-on-no-changes` and `smtp-port` carry a
   non-empty default.
 - **Coverage is global at 85%** for lines/functions/branches/statements. Excluded: `src/index.ts`,
-  `src/**/{types,defaults,constants}.ts`, `src/**/*.test.ts`, `src/shared/testing/**`. Changing a constant
+  `src/**/{types,defaults,constants}.ts`, `src/**/*.test.ts`, `src/shared/tests/**`. Changing a constant
   therefore produces no coverage signal, but many tests assert the resulting literals — expect failures far
   from the edit.
 - **One test file can cover two modules.** `src/infrastructure/github/filters.test.ts` is the spec for both

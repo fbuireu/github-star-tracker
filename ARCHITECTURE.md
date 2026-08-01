@@ -37,7 +37,7 @@ flowchart TD
     infra --> i18n
     dom -->|"Locale, LOCALE_MAP<br/>(formatting.ts only)"| i18n
 
-    test["@shared/testing<br/>imported from *.test.ts only"] -.-> cfg
+    test["@shared/tests<br/>imported from *.test.ts only"] -.-> cfg
     test -.-> dom
 
     classDef pure fill:#8a6a0f,stroke:#dfb317,stroke-width:2px,color:#fff
@@ -63,7 +63,7 @@ that performs I/O at all.
 | i18n | `@i18n` | Translation bundles, `getTranslations`, `interpolate` | nothing (true leaf) | everything |
 | infrastructure | `@infrastructure/*` | All I/O: octokit REST, `git` CLI, `fs`, nodemailer | config, domain (types/constants), i18n, `node:*`, `@actions/*`, `nodemailer` | application, presentation |
 | presentation | `@presentation/*` | Pure rendering: data in, string out (markdown/HTML/SVG/CSV/badge) | `@config/types`, domain, i18n | infrastructure, `@actions/*`, `node:fs`, any network |
-| shared | `@shared/*` | Cross-cutting non-layer code; today only `shared/testing` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only) | used from `*.test.ts` only |
+| shared | `@shared/*` | Cross-cutting non-layer code; today only `shared/tests` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only) | used from `*.test.ts` only |
 
 Two hard rules govern this diagram: **`domain`, `presentation` and `i18n` are pure** — no `node:*`, no `@actions/*`, no network — and **cross-layer imports always go through path aliases while same-layer imports stay relative**.
 
@@ -196,7 +196,7 @@ one from scratch.
 | [src/presentation/CLAUDE.md](src/presentation/CLAUDE.md) | Renderers, the chart trio, escaping and injection rules |
 | [src/shared/CLAUDE.md](src/shared/CLAUDE.md) | Fixture factories and why this folder stays almost empty |
 
-One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/testing` are sections inside their parent's guide rather than files of their own, because a guide in a subdirectory only reaches the agent once it reads a file in that exact folder.
+One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/tests` are sections inside their parent's guide rather than files of their own, because a guide in a subdirectory only reaches the agent once it reads a file in that exact folder.
 
 ## 7. Extending it
 

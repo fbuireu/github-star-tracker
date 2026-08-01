@@ -1,4 +1,4 @@
-import { makeComparisonResults } from '@shared/testing';
+import { makeComparisonResults } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
 import { generateCsvReport, NEW_LINE } from './csv';
 

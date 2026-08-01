@@ -134,7 +134,7 @@ Configurable sliding window (default 52 snapshots). Pruning is a pure domain fun
 
 - **710+ tests** across all layers
 - **98%+ statement coverage**, with a floor of 85% enforced via the threshold in `vitest.config.ts`
-- Coverage excludes: `src/index.ts`, type/constant/default files, test files, and the shared test helpers in `src/shared/testing/`
+- Coverage excludes: `src/index.ts`, type/constant/default files, test files, and the shared test helpers in `src/shared/tests/`
 - Philosophy: "Mock at the boundary, not in the middle" - real code paths are exercised; only external dependencies (GitHub API, filesystem, Git) are mocked
 
 ### Security

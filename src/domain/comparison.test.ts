@@ -1,4 +1,4 @@
-import { makeRepoInfo } from '@shared/testing';
+import { makeRepoInfo } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
 import { compareStars, createSnapshot } from './comparison';
 import type { Snapshot } from './types';
