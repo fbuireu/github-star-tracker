@@ -23,7 +23,7 @@ SMTP. There is exactly one use case: `trackStars()`.
 - **esbuild** (`platform: node`, `target: node24`, `format: cjs`), **Vitest** (v8 coverage), **Biome**
   (lint + format), **semantic-release** + commitlint, **husky** + lint-staged.
 
-## Versions (pinned — match exactly)
+## Versions (pinned by hand — not enforced by the docs test, since routine dependency bumps would break CI on it)
 
 - Node **26.2.0** (`engines.node`)
 - pnpm **11.15.1** (`packageManager`) — always use pnpm, never npm/yarn

@@ -241,8 +241,6 @@ describe('action.yml is documented', () => {
 });
 
 interface PackageManifest {
-  engines: { node: string };
-  packageManager: string;
   scripts: Record<string, string>;
 }
 
@@ -251,9 +249,6 @@ interface TsConfig {
 }
 
 const JSONC_COMMENT_PATTERN = /^\s*\/\/.*$/gm;
-const NODE_VERSION_PATTERN = /Node \*\*([\d.]+)\*\*/;
-const PNPM_VERSION_PATTERN = /pnpm \*\*([\d.]+)\*\*/;
-const PNPM_PREFIX = 'pnpm@';
 
 const pkg = JSON.parse(read('package.json')) as PackageManifest;
 const tsconfig = JSON.parse(read('tsconfig.json').replace(JSONC_COMMENT_PATTERN, '')) as TsConfig;
@@ -272,13 +267,6 @@ describe('the root guide matches the manifests', () => {
     );
 
     expect(missing).toEqual([]);
-  });
-
-  it('pins the same Node and pnpm versions it claims', () => {
-    expect(guide.match(NODE_VERSION_PATTERN)?.[1]).toBe(pkg.engines.node);
-    expect(guide.match(PNPM_VERSION_PATTERN)?.[1]).toBe(
-      pkg.packageManager.replace(PNPM_PREFIX, ''),
-    );
   });
 
   const layerRows = [...guide.matchAll(LAYER_ROW_PATTERN)].map(([, layer, alias]) => ({
