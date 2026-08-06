@@ -46,7 +46,8 @@ Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run 
 ## Structure & aliases
 
 `src/` is a mini-DDD tree — one entry point plus seven layers, each with an alias and an explicit set of
-things it may depend on ([ADR 0004](./docs/adr/0004-layered-source-structure.md)). `index.ts` imports
+things it may depend on ([ADR 0004](./docs/adr/0004-layered-source-structure.md)), and one folder that is
+not a layer at all: `assets/`, the brand files the README embeds. `index.ts` imports
 `trackStars` from `@application/tracker` and calls it at module load; nothing else may import
 `@application/*`. The full dependency graph, with the arrows that are forbidden, is the layer map in
 [ARCHITECTURE.md](./ARCHITECTURE.md).
@@ -54,6 +55,7 @@ things it may depend on ([ADR 0004](./docs/adr/0004-layered-source-structure.md)
 | Layer | Alias | Owns |
 | --- | --- | --- |
 | `application/` | `@application/*` | Orchestration: the single `trackStars()` run |
+| `assets/` | `@assets/*` | The wordmark pair the README embeds — no code, imported by nothing |
 | `config/` | `@config/*` | Action inputs + `star-tracker.yml` -> a typed `Config` |
 | `domain/` | `@domain/*` | Pure business logic and types |
 | `i18n/` | `@i18n` | Locale bundles, `getTranslations`, `interpolate` |
@@ -75,6 +77,7 @@ alias (`"@i18n": ["./src/i18n/index.ts"]`), not a glob: `@i18n/types` does not r
 | Folder | Covers |
 | --- | --- |
 | [`src/application/`](./src/application/CLAUDE.md) | Run sequence, the output contract, failure policy |
+| [`src/assets/`](./src/assets/CLAUDE.md) | The wordmark pair, and why the text carries `textLength` and a `<title>` |
 | [`src/config/`](./src/config/CLAUDE.md) | Input + YAML precedence, what throws vs warns, parser vocabularies |
 | [`src/domain/`](./src/domain/CLAUDE.md) | Comparison semantics, snapshots, forecast/velocity maths, star-history |
 | [`src/i18n/`](./src/i18n/CLAUDE.md) | Bundles, placeholder rules, adding a locale |

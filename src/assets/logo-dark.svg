@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 110" width="840" height="220" font-family="Barlow Condensed, Barlow, Helvetica, sans-serif">
+  <title>GitHub Star Tracker</title>
+  <defs><clipPath id="star"><polygon points="50,0 62.1,33.3 97.6,34.5 69.6,56.4 79.4,90.5 50,70.6 20.6,90.5 30.4,56.4 2.5,34.5 37.9,33.3"></polygon></clipPath></defs>
+  <g transform="translate(0 5) scale(1)" clip-path="url(#star)" fill="#dfb317">
+    <rect x="0" y="72" width="11" height="28"></rect>
+    <rect x="13" y="60" width="11" height="40"></rect>
+    <rect x="26" y="48" width="11" height="52"></rect>
+    <rect x="39" y="34" width="11" height="66"></rect>
+    <rect x="52" y="26" width="11" height="74"></rect>
+    <rect x="65" y="14" width="11" height="86"></rect>
+    <rect x="78" y="6" width="11" height="94"></rect>
+    <rect x="91" y="0" width="11" height="100"></rect>
+  </g>
+  <text x="122" y="58" fill="#f2f2f3" font-size="52" font-weight="700" letter-spacing="2" textLength="290" lengthAdjust="spacingAndGlyphs">STAR TRACKER</text>
+  <text x="124" y="82" fill="#94bce3" font-size="17" font-family="IBM Plex Mono, ui-monospace, monospace" letter-spacing="0.8" textLength="288" lengthAdjust="spacingAndGlyphs">fbuireu/github-star-tracker</text>
+</svg>

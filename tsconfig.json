@@ -11,6 +11,7 @@
     "types": ["node"],
     "paths": {
       "@application/*": ["./src/application/*"],
+      "@assets/*": ["./src/assets/*"],
       "@config/*": ["./src/config/*"],
       "@domain/*": ["./src/domain/*"],
       "@i18n": ["./src/i18n/index.ts"],
