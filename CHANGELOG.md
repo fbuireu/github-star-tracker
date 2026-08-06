@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/fbuireu/github-star-tracker/compare/v1.24.2...v1.25.0) (2026-08-06)
+
+
+### Features
+
+* add email color theme ([9e8af79](https://github.com/fbuireu/github-star-tracker/commit/9e8af790fc8909849ae09baf4a4d10e571e24f10))
+
 ## [1.24.2](https://github.com/fbuireu/github-star-tracker/compare/v1.24.1...v1.24.2) (2026-07-26)
 
 
