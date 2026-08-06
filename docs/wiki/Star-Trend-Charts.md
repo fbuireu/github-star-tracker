@@ -244,7 +244,8 @@ The chart appearance is configurable via these inputs:
 | `chart-animation` | `true` | `true` animates the SVG charts; `false` renders them static for email/static contexts. SVG-only. |
 | `chart-milestones` | `true` | `true` draws milestone reference lines on the main chart; `false` hides them. Applies to email charts too. |
 | `chart-begin-at-zero` | `false` | `false` zooms the Y-axis into the data range; `true` anchors it at zero. Applies to all charts. |
-| `chart-theme` | `auto` | `auto` follows `prefers-color-scheme` in SVG charts; `light`/`dark` force the palette. Email falls back to light under `auto`. |
+| `chart-theme` | `auto` | `auto` follows `prefers-color-scheme` in SVG charts; `light`/`dark` force the palette. SVG-only — the email follows `email-theme`. |
+| `email-theme` | `auto` | Palette for the email charts and body. `auto` means "same as `chart-theme`". Email charts are images, so `prefers-color-scheme` never reaches them: a dark-mode reader sees a white chart background unless this resolves to `dark`. |
 | `chart-custom-milestones` | _(empty)_ | Comma-separated star counts (e.g. `250, 750, 2500`) that replace the built-in milestone thresholds. When empty, the defaults are used. Requires `chart-milestones`. Applies to email charts too. |
 | `chart-range` | `all` | Time window plotted (`30d`, `90d`, `1y`, `all`), measured back from the latest data point, before `chart-max-points`. |
 | `chart-trend-line` | `false` | Overlay a dashed 7-point moving-average trend line (neutral gray, `#6a737d`) on the star-history chart to highlight the underlying growth direction. The chart has no legend, so the gray dashed line is the trend and the solid gold line is the actual star count. Applies to email charts too. |
@@ -297,6 +298,7 @@ All four curves keep the plateaus flat except `catmull-rom`, which overshoots at
 | Option | Options | Effect |
 |---|---|---|
 | `chart-theme` | `auto` / `light` / `dark` | `auto` follows the viewer's color scheme; the others force a palette |
+| `email-theme` | `auto` / `light` / `dark` | palette for the email only; `auto` inherits `chart-theme`, and a raster chart cannot follow the reader's scheme |
 | `chart-y-axis-side` | `left` / `right` | moves the axis labels, e.g. to avoid overlap with the start of the line |
 | `chart-range` | `30d` / `90d` / `1y` / `all` | narrows the time window, measured back from the latest point |
 | `chart-max-points` | `0` / `N` (capped at 365) | curve resolution across the span; `0` reconstructs at weekly cadence |

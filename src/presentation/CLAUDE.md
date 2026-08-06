@@ -84,6 +84,12 @@ cross-renderer helpers and `constants.ts` / `types.ts` for palettes, geometry an
 - `COLORS` is an alias for `LIGHT_PALETTE` and `badge.ts` uses it unconditionally, so **the badge is always
   light-themed** and ignores `chart-theme` — though its number *is* localized.
 - In `ColorPalette`, `white` is the *background* colour: it is `#0d1117` in the dark palette, not white.
+- **`theme` means different things to the two chart paths.** `svg-chart.ts` can honour `auto` because CSS
+  travels with the SVG; `chart.ts` cannot, because `buildChartUrl` bakes `palette.white` into the QuickChart
+  `backgroundColor` query parameter and a PNG has one background forever. `auto` there resolves to
+  `LIGHT_PALETTE` (`resolvePalette` in `shared.ts`), so a reader in dark mode gets a white slab whose
+  surroundings the mail client has darkened. `email-theme` exists so that path can be forced independently of
+  `chart-theme`; `html.ts` receives it as its `theme`.
 - `perRepoChartFile` replaces only the **first** `/`, so a nested-looking name would keep later slashes and
   produce an invalid filename.
 - `repoStarSeries` returns `0`, not `null`, for a repo missing from a snapshot, so a per-repo chart for an

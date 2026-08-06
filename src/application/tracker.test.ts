@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { loadConfig } from '@config/loader';
+import { ChartTheme } from '@config/types';
 import { compareStars, createSnapshot } from '@domain/comparison';
 import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
@@ -556,6 +557,23 @@ describe('trackStars', () => {
 
       expect(perRepo['u/restricted']).toBe(storedSnapshots);
       expect(perRepo['u/reachable']).not.toBe(storedSnapshots);
+    });
+
+    it('renders the HTML report with emailTheme and the markdown report with chartTheme', async () => {
+      vi.mocked(loadConfig).mockReturnValue({
+        ...defaultConfig,
+        chartTheme: ChartTheme.LIGHT,
+        emailTheme: ChartTheme.DARK,
+      });
+
+      await trackStars();
+
+      expect(generateHtmlReport).toHaveBeenCalledWith(
+        expect.objectContaining({ theme: ChartTheme.DARK }),
+      );
+      expect(generateMarkdownReport).toHaveBeenCalledWith(
+        expect.objectContaining({ theme: ChartTheme.LIGHT }),
+      );
     });
 
     it('skips SVG chart when includeCharts is false', async () => {

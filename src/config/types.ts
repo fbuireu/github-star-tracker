@@ -77,6 +77,7 @@ export interface Config {
   chartMilestones: boolean;
   chartBeginAtZero: boolean;
   chartTheme: ChartTheme;
+  emailTheme: ChartTheme;
   chartCustomMilestones: number[];
   chartRange: ChartRange;
   chartTrendLine: boolean;

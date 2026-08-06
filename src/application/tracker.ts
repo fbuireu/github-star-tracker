@@ -174,7 +174,7 @@ export async function trackStars(): Promise<void> {
           velocityMetrics: config.velocityMetrics,
         };
         const markdownReport = generateMarkdownReport(reportParams);
-        const htmlReport = generateHtmlReport(reportParams);
+        const htmlReport = generateHtmlReport({ ...reportParams, theme: config.emailTheme });
 
         const csvReport = generateCsvReport(results);
         const badge = generateBadge({ totalStars: summary.totalStars, locale: config.locale });

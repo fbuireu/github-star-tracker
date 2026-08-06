@@ -49,6 +49,7 @@ export const DEFAULTS: Config = {
   chartMilestones: true,
   chartBeginAtZero: false,
   chartTheme: ChartTheme.AUTO,
+  emailTheme: ChartTheme.AUTO,
   chartCustomMilestones: [],
   chartRange: ChartRange.ALL,
   chartTrendLine: false,

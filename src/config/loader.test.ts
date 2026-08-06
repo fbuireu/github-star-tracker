@@ -411,6 +411,7 @@ describe('loadConfig', () => {
         'chart_milestones: false',
         'chart_begin_at_zero: true',
         'chart_theme: dark',
+        'email_theme: light',
         'chart_range: 30d',
         'chart_trend_line: true',
         'velocity_metrics: true',
@@ -437,6 +438,7 @@ describe('loadConfig', () => {
     expect(config.chartMilestones).toBe(false);
     expect(config.chartBeginAtZero).toBe(true);
     expect(config.chartTheme).toBe('dark');
+    expect(config.emailTheme).toBe('light');
     expect(config.chartRange).toBe('30d');
     expect(config.chartTrendLine).toBe(true);
     expect(config.velocityMetrics).toBe(true);
@@ -944,6 +946,46 @@ describe('loadConfig', () => {
 
     expect(config.chartTheme).toBe('auto');
     expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid chart-theme'));
+  });
+
+  it('defaults email-theme to auto, which resolves to auto when chart-theme is unset', () => {
+    const config = loadConfig();
+
+    expect(config.emailTheme).toBe('auto');
+  });
+
+  it('inherits the resolved chart-theme when email-theme is unset', () => {
+    mockInputs({ 'chart-theme': 'dark' });
+
+    const config = loadConfig();
+
+    expect(config.emailTheme).toBe('dark');
+  });
+
+  it('inherits the resolved chart-theme when email-theme is an explicit auto', () => {
+    mockInputs({ 'chart-theme': 'dark', 'email-theme': 'auto' });
+
+    const config = loadConfig();
+
+    expect(config.emailTheme).toBe('dark');
+  });
+
+  it('lets an explicit email-theme override chart-theme without changing it', () => {
+    mockInputs({ 'chart-theme': 'light', 'email-theme': 'dark' });
+
+    const config = loadConfig();
+
+    expect(config.emailTheme).toBe('dark');
+    expect(config.chartTheme).toBe('light');
+  });
+
+  it('warns and inherits chart-theme for an invalid email-theme', () => {
+    mockInputs({ 'chart-theme': 'dark', 'email-theme': 'sepia' });
+
+    const config = loadConfig();
+
+    expect(config.emailTheme).toBe('dark');
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid email-theme'));
   });
 
   it('defaults chart-custom-milestones to an empty list', () => {

@@ -528,14 +528,37 @@ Where the chart Y-axis starts.
 
 ### `chart-theme`
 
-Color theme for the charts and the email report.
+Color theme for the SVG charts, and the fallback for the email report when [`email-theme`](#email-theme) is `auto`.
 
 | Property | Value |
 |---|---|
 | **Type** | `auto`, `light`, `dark` |
 | **Default** | `auto` |
 
-`auto` makes the SVG charts follow the reader's `prefers-color-scheme` (light or dark) via a media query. `light` and `dark` force that palette. Note that most email clients ignore `prefers-color-scheme`, so the QuickChart images and the email body render in light under `auto`; set `dark` explicitly if you want a dark email.
+`auto` makes the SVG charts follow the reader's `prefers-color-scheme` (light or dark) via a media query. `light` and `dark` force that palette. Most email clients ignore `prefers-color-scheme`, so under `auto` the email body and its charts render in light; use [`email-theme`](#email-theme) to give the email a palette of its own.
+
+---
+
+### `email-theme`
+
+Color theme for the HTML email report and the chart images inside it.
+
+| Property | Value |
+|---|---|
+| **Type** | `auto`, `light`, `dark` |
+| **Default** | `auto` |
+
+`auto` means "same as [`chart-theme`](#chart-theme)", so you only need to set this when the email should differ from the SVG charts on the data branch — for example `chart-theme: auto` (the README charts follow each viewer's system theme) together with `email-theme: dark` (every recipient gets a dark digest).
+
+This is the input to reach for when a reader in dark mode sees a **white background behind the email charts**. Those charts are PNG images rendered by QuickChart with the background baked into the request ([ADR 0010](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0010-quickchart-renders-the-email-charts.md)), so `prefers-color-scheme` cannot reach them the way it reaches an SVG: the mail client darkens the surrounding HTML and leaves the image untouched. `email-theme: dark` bakes the dark palette into both the body and the images instead.
+
+The trade-off is that a raster has exactly one background for every recipient. `light` and `dark` are a bet on how your audience reads mail; there is no per-reader answer.
+
+```yaml
+with:
+  chart-theme: auto
+  email-theme: dark
+```
 
 ---
 

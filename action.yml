@@ -212,7 +212,12 @@ inputs:
     default: ''
 
   chart-theme:
-    description: 'Color theme for the charts and email report: auto, light or dark. auto follows the readers prefers-color-scheme in the SVG charts; email clients that ignore it fall back to light. Force light or dark to override. (default auto)'
+    description: 'Color theme for the SVG charts, and the fallback for the email report when email-theme is auto: auto, light or dark. auto follows the readers prefers-color-scheme in the SVG charts; email clients that ignore it fall back to light. Force light or dark to override. (default auto)'
+    required: false
+    default: ''
+
+  email-theme:
+    description: 'Color theme for the HTML email report and its charts: auto, light or dark. auto means "same as chart-theme", so set this only when the email should differ from the SVG charts. The email charts are PNG images with the background baked in, so a reader in dark mode sees a white chart background unless this resolves to dark - prefers-color-scheme cannot reach a raster image. (default auto)'
     required: false
     default: ''
 

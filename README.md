@@ -161,7 +161,8 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `chart-animation`        | `true`                | Animate SVG charts (`true`) or render them static (`false`) for email/static contexts |
 | `chart-milestones`       | `true`                | Show milestone reference lines on the main star-history chart (`true`) or hide them (`false`) |
 | `chart-begin-at-zero`    | `false`               | Start the Y-axis at zero (`true`) or zoom into the data range (`false`) |
-| `chart-theme`            | `auto`                | Color theme: `auto` (follows `prefers-color-scheme`), `light` or `dark` |
+| `chart-theme`            | `auto`                | Color theme for the SVG charts: `auto` (follows `prefers-color-scheme`), `light` or `dark` |
+| `email-theme`            | `auto`                | Color theme for the HTML email and its charts: `auto` (same as `chart-theme`), `light` or `dark`. Email charts are images, so a dark-mode reader needs this to resolve to `dark` |
 | `chart-custom-milestones` | _(empty)_            | Comma-separated star counts for the milestone reference lines, replacing the built-in defaults (e.g. `250, 750, 2500`). Requires `chart-milestones` |
 | `chart-range`            | `all`                 | Time window plotted: `30d`, `90d`, `1y` or `all` |
 | `chart-trend-line`       | `false`               | Overlay a dashed moving-average trend line on the main chart |

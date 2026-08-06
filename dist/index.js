@@ -34685,10 +34685,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -36980,7 +36980,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -37103,7 +37103,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -39898,6 +39898,7 @@ var DEFAULTS2 = {
   chartMilestones: true,
   chartBeginAtZero: false,
   chartTheme: ChartTheme.AUTO,
+  emailTheme: ChartTheme.AUTO,
   chartCustomMilestones: [],
   chartRange: ChartRange.ALL,
   chartTrendLine: false,
@@ -40099,6 +40100,7 @@ function loadConfig() {
   const inputChartMilestones = getInput("chart-milestones");
   const inputChartBeginAtZero = getInput("chart-begin-at-zero");
   const inputChartTheme = getInput("chart-theme");
+  const inputEmailTheme = getInput("email-theme");
   const inputChartCustomMilestones = getInput("chart-custom-milestones");
   const inputChartRange = getInput("chart-range");
   const inputChartTrendLine = getInput("chart-trend-line");
@@ -40149,6 +40151,13 @@ function loadConfig() {
     fallback: DEFAULTS2.chartTheme,
     inputName: "chart-theme"
   });
+  const emailThemeSetting = resolveEnum({
+    value: inputEmailTheme || fileConfig.emailTheme,
+    allowed: Object.values(ChartTheme),
+    fallback: DEFAULTS2.emailTheme,
+    inputName: "email-theme"
+  });
+  const emailTheme = emailThemeSetting === ChartTheme.AUTO ? chartTheme : emailThemeSetting;
   const chartRange = resolveEnum({
     value: inputChartRange || fileConfig.chartRange,
     allowed: Object.values(ChartRange),
@@ -40255,6 +40264,7 @@ function loadConfig() {
       parse: parseBool
     }) ?? parseFileBool(fileConfig.chartBeginAtZero) ?? DEFAULTS2.chartBeginAtZero,
     chartTheme,
+    emailTheme,
     chartCustomMilestones: inputChartCustomMilestones ? parseNumberList(inputChartCustomMilestones) : fileCustomMilestones.length > 0 ? fileCustomMilestones : DEFAULTS2.chartCustomMilestones,
     chartRange,
     chartTrendLine: parseOrWarn({
@@ -43258,7 +43268,7 @@ async function trackStars() {
           velocityMetrics: config.velocityMetrics
         };
         const markdownReport = generateMarkdownReport(reportParams);
-        const htmlReport = generateHtmlReport(reportParams);
+        const htmlReport = generateHtmlReport({ ...reportParams, theme: config.emailTheme });
         const csvReport = generateCsvReport(results);
         const badge = generateBadge({ totalStars: summary2.totalStars, locale: config.locale });
         const thresholdReached = shouldNotify({

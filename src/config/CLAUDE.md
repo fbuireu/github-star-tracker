@@ -14,6 +14,12 @@ inputs (`@infrastructure/notification` does), does **not** read `github-token` /
 - **Precedence, per key: action input → config-file value → `DEFAULTS`.** Never reversed. Enum keys use
   `input || fileValue`, so an empty-string input falls through; everything else uses `??` on the *parsed*
   result, so a value that parses to `false` or `0` still beats the file.
+- **`emailTheme` is the one key whose default is another key.** It resolves through `resolveEnum` like any
+  enum, but `ChartTheme.AUTO` is not a value it keeps: `auto` collapses to the already-resolved `chartTheme`
+  before the `Config` is built, so `Config.emailTheme` is what the email should actually use and no consumer
+  re-derives it. `DEFAULTS.emailTheme` is therefore `auto` — a marker meaning "inherit", not a palette — and
+  it exists mainly so the config-file key `email_theme` is derived. Order matters: `chartTheme` must be
+  resolved above it.
 - **Only two things throw**: an unknown `visibility`, and an invalid `data-branch`. Everything else — bad
   enum, bad bool, bad number, bad colour, malformed YAML — warns and falls back. A missing config file is
   `info`, not a warning.

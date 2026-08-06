@@ -201,6 +201,7 @@ export function loadConfig(): Config {
   const inputChartMilestones = core.getInput('chart-milestones');
   const inputChartBeginAtZero = core.getInput('chart-begin-at-zero');
   const inputChartTheme = core.getInput('chart-theme');
+  const inputEmailTheme = core.getInput('email-theme');
   const inputChartCustomMilestones = core.getInput('chart-custom-milestones');
   const inputChartRange = core.getInput('chart-range');
   const inputChartTrendLine = core.getInput('chart-trend-line');
@@ -269,6 +270,15 @@ export function loadConfig(): Config {
     fallback: DEFAULTS.chartTheme,
     inputName: 'chart-theme',
   });
+
+  const emailThemeSetting = resolveEnum({
+    value: inputEmailTheme || fileConfig.emailTheme,
+    allowed: Object.values(ChartTheme),
+    fallback: DEFAULTS.emailTheme,
+    inputName: 'email-theme',
+  });
+
+  const emailTheme = emailThemeSetting === ChartTheme.AUTO ? chartTheme : emailThemeSetting;
 
   const chartRange = resolveEnum({
     value: inputChartRange || fileConfig.chartRange,
@@ -439,6 +449,7 @@ export function loadConfig(): Config {
       parseFileBool(fileConfig.chartBeginAtZero) ??
       DEFAULTS.chartBeginAtZero,
     chartTheme,
+    emailTheme,
     chartCustomMilestones: inputChartCustomMilestones
       ? parseNumberList(inputChartCustomMilestones)
       : fileCustomMilestones.length > 0

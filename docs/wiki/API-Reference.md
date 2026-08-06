@@ -35,7 +35,8 @@ Complete reference for all inputs, outputs, and data formats.
 | `chart-animation` | `boolean` | `true` | Animate the SVG charts (`true`) or render them static (`false`) for email/static contexts |
 | `chart-milestones` | `boolean` | `true` | Show milestone reference lines on the main star-history chart (`true`) or hide them (`false`) |
 | `chart-begin-at-zero` | `boolean` | `false` | Start the Y-axis at zero (`true`) or zoom into the data range (`false`) |
-| `chart-theme` | `string` | `auto` | Color theme: `auto` (follows `prefers-color-scheme`), `light` or `dark` |
+| `chart-theme` | `string` | `auto` | Color theme for the SVG charts: `auto` (follows `prefers-color-scheme`), `light` or `dark` |
+| `email-theme` | `string` | `auto` | Color theme for the HTML email and its charts: `auto` (same as `chart-theme`), `light` or `dark`. The email charts are images with a baked-in background, so a dark-mode reader needs this to resolve to `dark` |
 | `chart-custom-milestones` | `string` | _(empty)_ | Comma-separated star counts for the milestone reference lines, replacing the built-in defaults (e.g. `250, 750, 2500`). Requires `chart-milestones` |
 | `chart-range` | `string` | `all` | Time window plotted: `30d`, `90d`, `1y` or `all` |
 | `chart-trend-line` | `boolean` | `false` | Overlay a dashed moving-average trend line on the main chart |

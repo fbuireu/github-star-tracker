@@ -390,6 +390,23 @@ When `include-charts: true`, the HTML email includes chart images via QuickChart
 - Maximum 30 data points per chart (email charts ignore `chart-max-points` above 30)
 - QuickChart cannot draw every [`chart-curve`](Configuration#chart-curve) natively: `monotone` is exact, `rounded-step` falls back to `monotone`, and `catmull-rom` and `cubic-bezier` both render as a tensioned spline. The SVG charts on the data branch always use the exact curve.
 - If QuickChart.io is unreachable, charts appear as broken images; report text is unaffected
+- A PNG carries its background as pixels, so the email charts cannot follow the reader's `prefers-color-scheme` the way the SVG charts do. Use [`email-theme`](Configuration#email-theme) to pick the palette baked into them
+
+---
+
+## Dark Mode
+
+The HTML email and its charts are themed by [`email-theme`](Configuration#email-theme), which defaults to `auto` — meaning "whatever [`chart-theme`](Configuration#chart-theme) is". Under `auto` both resolve to the light palette, because the SVG trick that follows each viewer's system theme (a `prefers-color-scheme` media query inside the file) cannot work here: the email charts are PNG images with the background baked in, and mail clients do not recolour images.
+
+The visible symptom is a **white rectangle behind every chart** for a recipient reading in dark mode — the client darkened the surrounding HTML and left the images alone. Force the palette to fix it:
+
+```yaml
+with:
+  chart-theme: auto      # data-branch SVGs still follow each viewer's system theme
+  email-theme: dark      # every recipient gets a dark digest, charts included
+```
+
+Because the images are rasterised once per run, this is one choice for the whole recipient list. `email-theme: dark` looks wrong to someone reading in light mode, and vice versa; there is no per-reader option. See [ADR 0010](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0010-quickchart-renders-the-email-charts.md).
 
 ---
 
@@ -415,6 +432,7 @@ The built-in email auto-generates localized subject lines:
 | Log shows `Email sent to <address> (message ID: …@localhost)` | The message ID is informational, not the recipient - the email is sent to the `email-to` address shown before it. A `@localhost` message ID means `email-from` had no email address; set `email-from` to a real address (or an `smtp-username` that is one) so it reads e.g. `…@gmail.com` |
 | Custom mailer fails with `Argument list too long` | The report is too large to pass through a shell variable; use the `report-html-path` output with your mailer's file input (e.g. `html_body_file`) instead of `report-html` |
 | Charts missing in email | Ensure `include-charts: true`; check that tracked repos have stargazers; check if the email client blocks external images |
+| Charts have a white background in dark mode | The email charts are PNG images, so `prefers-color-scheme` cannot reach them and the mail client darkens everything around them instead. Set `email-theme: dark` (it defaults to following `chart-theme`) |
 | Multiple emails | Check for duplicate workflows; add `if: stars-changed == 'true'` condition |
 | Email arrives almost every day | The mailer is probably gated on `new-stars`/`lost-stars`, which are per-run values, or `notification-threshold` is still `0` (the default). Set a `notification-threshold`, add `notification-mode: 'gains'` and gate the step on `should-notify == 'true'` |
 | Weekly digest workflow fights the daily one over the data branch | Add `read-only: true` to the digest workflow. It then reads the branch and reports from it without committing a snapshot of its own |
