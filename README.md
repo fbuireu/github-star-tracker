@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="src/assets/logo.svg" alt="" width="60" align="center"> 
+<img src="src/assets/logo.svg" alt="" width="80" align="center"> 
 
 # GitHub Star Tracker
 
