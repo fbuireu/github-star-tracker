@@ -55,7 +55,7 @@ not a layer at all: `assets/`, the brand files the README embeds. `index.ts` imp
 | Layer | Alias | Owns |
 | --- | --- | --- |
 | `application/` | `@application/*` | Orchestration: the single `trackStars()` run |
-| `assets/` | `@assets/*` | The wordmark pair the README embeds — no code, imported by nothing |
+| `assets/` | `@assets/*` | The star mark the README embeds — no code, imported by nothing |
 | `config/` | `@config/*` | Action inputs + `star-tracker.yml` -> a typed `Config` |
 | `domain/` | `@domain/*` | Pure business logic and types |
 | `i18n/` | `@i18n` | Locale bundles, `getTranslations`, `interpolate` |
@@ -77,7 +77,7 @@ alias (`"@i18n": ["./src/i18n/index.ts"]`), not a glob: `@i18n/types` does not r
 | Folder | Covers |
 | --- | --- |
 | [`src/application/`](./src/application/CLAUDE.md) | Run sequence, the output contract, failure policy |
-| [`src/assets/`](./src/assets/CLAUDE.md) | The wordmark pair, and why the text carries `textLength` and a `<title>` |
+| [`src/assets/`](./src/assets/CLAUDE.md) | The mark, why it needs no light/dark pair, and why the README heading stays |
 | [`src/config/`](./src/config/CLAUDE.md) | Input + YAML precedence, what throws vs warns, parser vocabularies |
 | [`src/domain/`](./src/domain/CLAUDE.md) | Comparison semantics, snapshots, forecast/velocity maths, star-history |
 | [`src/i18n/`](./src/i18n/CLAUDE.md) | Bundles, placeholder rules, adding a locale |

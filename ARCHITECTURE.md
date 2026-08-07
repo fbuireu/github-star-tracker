@@ -58,7 +58,7 @@ that performs I/O at all.
 | --- | --- | --- | --- | --- |
 | `src/` entry | - | `index.ts` calls `trackStars()` at module load, un-awaited | `@application` | anything else |
 | application | `@application/*` | Sequencing the single use case; composition root for Octokit | config, domain, i18n, infrastructure, presentation, `@actions/*`, `@octokit/plugin-retry` | nothing forbidden — it is the top |
-| assets | `@assets/*` | Not a layer: the light/dark wordmark pair the README embeds, no code | nothing — it imports nothing and nothing imports it | — |
+| assets | `@assets/*` | Not a layer: the star mark the README embeds, no code | nothing — it imports nothing and nothing imports it | — |
 | config | `@config/*` | Action inputs + `star-tracker.yml` -> a fully-populated `Config` | `@domain/types`, `@i18n`, `@actions/core`, `js-yaml`, `node:fs/path` | application, infrastructure, presentation |
 | domain | `@domain/*` | Pure business core: comparison, snapshots, forecast, velocity, stargazer diffing, star-history reconstruction, formatting | `@i18n` only | everything else, incl. `@actions/*`, octokit, `node:fs` |
 | i18n | `@i18n` | Translation bundles, `getTranslations`, `interpolate` | nothing (true leaf) | everything |
@@ -190,7 +190,7 @@ one from scratch.
 | --- | --- |
 | [CLAUDE.md](./CLAUDE.md) | Commands, alias wiring, conventions, the maintenance contract — loaded into every agent session |
 | [src/application/CLAUDE.md](src/application/CLAUDE.md) | `trackStars()` invariants, the output contract, failure policy |
-| [src/assets/CLAUDE.md](src/assets/CLAUDE.md) | The wordmark pair, and why the text carries `textLength` and a `<title>` |
+| [src/assets/CLAUDE.md](src/assets/CLAUDE.md) | The mark, why it needs no light/dark pair, and why the README heading stays |
 | [src/config/CLAUDE.md](src/config/CLAUDE.md) | Input + YAML precedence, what throws vs warns, parser vocabularies |
 | [src/domain/CLAUDE.md](src/domain/CLAUDE.md) | Comparison semantics, snapshots, forecast/velocity maths, star-history |
 | [src/i18n/CLAUDE.md](src/i18n/CLAUDE.md) | Bundles, placeholder rules, adding a locale |

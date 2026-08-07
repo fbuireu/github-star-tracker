@@ -1,9 +1,8 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="src/assets/logo-dark.svg">
-  <img src="src/assets/logo-light.svg" alt="GitHub Star Tracker" width="420">
-</picture>
+<img src="src/assets/logo.svg" alt="GitHub Star Tracker" width="120">
+
+# GitHub Star Tracker
 
 **A GitHub Action that tracks star counts across all your repositories on a schedule, generates visual reports with charts and badges, and sends notifications when changes are detected.**
 
