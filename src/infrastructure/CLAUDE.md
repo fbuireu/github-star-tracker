@@ -43,6 +43,13 @@ downstream can see a repository outside it.
 - `fetchRepos` requests `sort: 'full_name'`, so downstream ordering is GitHub's ascending full-name order.
   Anything relying on stable report ordering depends on it. The loop stops on any page shorter than 100, so a
   page of exactly 100 always triggers one more request.
+- **`client.ts` owns the whole `listForAuthenticatedUser` request**, including the `visibility`-to-query-param
+  translation in `VISIBILITY_PARAMS`. GitHub's REST vocabulary has no `owned`: it is expressed as
+  `visibility: 'all'` plus `affiliation: 'owner'`, which is why the map is not the identity. It is keyed by
+  bare string literals and typed `Record<Config['visibility'], …>`, so a new `Visibility` is still a type
+  error here while `@infrastructure` takes no *value* import from `@config` at all. The map used to live in
+  `@config/defaults`, which put octokit's dialect in the one layer that must not know octokit exists — and
+  its spec was in `filters.test.ts` here the whole time.
 - **`fetchAllStargazers` returns exactly one entry per input repo, in input order**, even when the fetch
   failed. Downstream code may assume 1:1 alignment.
 - `coveredStars` is `undefined` on a clean fetch and only set when coverage was cut short. It is the signal

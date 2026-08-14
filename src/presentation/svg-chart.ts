@@ -1,5 +1,4 @@
 import { ChartAxisSide, ChartCurve, type ChartRange, ChartTheme } from '@config/types';
-import { STAR_MILESTONES } from '@domain/constants';
 import { formatCount } from '@domain/formatting';
 import type { Locale } from '@i18n';
 import type { ChartRequest } from './chart-spec';
@@ -287,8 +286,7 @@ interface RenderSvgParams extends SvgChartStyle {
   title: string;
   showLegend: boolean;
   locale: Locale;
-  milestones?: boolean;
-  milestoneThresholds?: readonly number[];
+  milestones: readonly number[];
 }
 
 function renderSvg({
@@ -297,8 +295,7 @@ function renderSvg({
   title,
   showLegend,
   locale,
-  milestones = false,
-  milestoneThresholds = STAR_MILESTONES,
+  milestones,
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
@@ -358,15 +355,12 @@ function renderSvg({
     .join('\n    ');
 
   const milestoneLines = milestones
-    ? milestoneThresholds
-        .filter((milestone) => milestone > minData && milestone < maxData)
-        .map((value) => {
-          const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
-          return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="${milestoneStyle.strokeWidth}" stroke-dasharray="${milestoneStyle.dashArray}" />
+    .map((value) => {
+      const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
+      return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="${milestoneStyle.strokeWidth}" stroke-dasharray="${milestoneStyle.dashArray}" />
     <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount({ count: value, locale })} ★</text>`;
-        })
-        .join('\n    ')
-    : '';
+    })
+    .join('\n    ');
 
   const maxLabels = xAxis.maxLabels;
   const nonEmptyLabelIndices = labels.reduce<number[]>((indices, label, labelIndex) => {
@@ -598,7 +592,6 @@ export function renderSvgChart({
     })),
     title: spec.title,
     showLegend: spec.showLegend,
-    milestones: spec.milestoneThresholds !== null,
-    milestoneThresholds: spec.milestoneThresholds ?? STAR_MILESTONES,
+    milestones: spec.milestones,
   });
 }

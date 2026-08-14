@@ -29,7 +29,7 @@ flowchart TD
 
     cfg --> dom
     cfg --> i18n
-    pres -->|types only| cfg
+    pres --> cfg
     pres --> dom
     pres --> i18n
     infra --> cfg
@@ -121,7 +121,7 @@ State has to survive between runs of a stateless Action. Artifacts expire and ar
     star-history.svg  comparison.svg  forecast.svg  <owner>-<repo>.svg
 ```
 
-`read-only: true` runs everything — fetch, compare, render, all outputs, email — but skips `commitAndPush`, so a second workflow (e.g. a weekly digest using `compare-against`) can share a data branch without appending snapshots or racing the writer. The read-only guard lives in `tracker.ts`, not in the persistence layer.
+`read-only: true` runs everything — fetch, compare, render, all outputs, email — but skips `commitAndPush`, so a second workflow (e.g. a weekly digest using `compare-against`) can share a data branch without appending snapshots or racing the writer. There are **two guards, both inside `@infrastructure`**: `initializeDataBranch` refuses to bring an absent Data Branch into existence, and `publish` writes every artefact into the worktree and then returns before `commitAndPush`. `tracker.ts` passes `readOnly` into `withDataBranch` and never branches on it itself.
 
 ## 4. Outputs
 

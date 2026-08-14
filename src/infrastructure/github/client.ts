@@ -1,5 +1,4 @@
 import * as core from '@actions/core';
-import { VISIBILITY_CONFIG } from '@config/defaults';
 import type { Config } from '@config/types';
 import { describeFetchError } from './errors';
 import type { GitHubRepo, Octokit } from './types';
@@ -11,7 +10,19 @@ interface FetchReposParams {
   config: Config;
 }
 
-type ListReposParams = Parameters<Octokit['rest']['repos']['listForAuthenticatedUser']>[0];
+type ListReposParams = NonNullable<
+  Parameters<Octokit['rest']['repos']['listForAuthenticatedUser']>[0]
+>;
+
+const VISIBILITY_PARAMS: Record<
+  Config['visibility'],
+  Pick<ListReposParams, 'visibility' | 'affiliation'>
+> = {
+  public: { visibility: 'public' },
+  private: { visibility: 'private' },
+  all: { visibility: 'all' },
+  owned: { visibility: 'all', affiliation: 'owner' },
+};
 
 export async function fetchRepos({ octokit, config }: FetchReposParams): Promise<GitHubRepo[]> {
   const repos: GitHubRepo[] = [];
@@ -20,7 +31,7 @@ export async function fetchRepos({ octokit, config }: FetchReposParams): Promise
   const params = {
     per_page: REPOS_PER_PAGE,
     sort: 'full_name',
-    ...VISIBILITY_CONFIG[config.visibility],
+    ...VISIBILITY_PARAMS[config.visibility],
   } satisfies ListReposParams;
 
   try {

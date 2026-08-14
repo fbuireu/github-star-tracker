@@ -3,7 +3,7 @@ import { ForecastMethod } from '@domain/forecast';
 import type { History } from '@domain/types';
 import { makeMultiRepoHistory } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
-import { buildMilestoneAnnotations, chartImageUrl } from './chart';
+import { chartImageUrl } from './chart';
 import { ChartKind } from './chart-spec';
 import { CHART_TENSION } from './constants';
 
@@ -447,61 +447,7 @@ describe('chart', () => {
     });
   });
 
-  describe('buildMilestoneAnnotations', () => {
-    it('returns annotations for milestones within range', () => {
-      const result = buildMilestoneAnnotations({ minStars: 30, maxStars: 200 });
-
-      expect(result).not.toBeNull();
-      expect(result?.annotations).toHaveProperty('milestone50');
-      expect(result?.annotations).toHaveProperty('milestone100');
-      expect(result?.annotations.milestone50.yMin).toBe(50);
-      expect(result?.annotations.milestone100.yMin).toBe(100);
-    });
-
-    it('excludes milestones outside the visible range', () => {
-      const result = buildMilestoneAnnotations({ minStars: 30, maxStars: 200 });
-
-      expect(result?.annotations).not.toHaveProperty('milestone10');
-      expect(result?.annotations).not.toHaveProperty('milestone500');
-    });
-
-    it('returns null when no milestones are visible', () => {
-      const result = buildMilestoneAnnotations({ minStars: 200, maxStars: 400 });
-
-      expect(result).toBeNull();
-    });
-
-    it('returns annotations for repos above the ten-thousand mark', () => {
-      const result = buildMilestoneAnnotations({ minStars: 12_000, maxStars: 120_000 });
-
-      expect(result).not.toBeNull();
-      expect(result?.annotations).toHaveProperty('milestone50000');
-      expect(result?.annotations).toHaveProperty('milestone100000');
-    });
-
-    it('excludes boundary values (min and max)', () => {
-      const result = buildMilestoneAnnotations({ minStars: 50, maxStars: 1000 });
-
-      expect(result).not.toBeNull();
-      expect(result?.annotations).not.toHaveProperty('milestone50');
-      expect(result?.annotations).not.toHaveProperty('milestone1000');
-      expect(result?.annotations).toHaveProperty('milestone100');
-      expect(result?.annotations).toHaveProperty('milestone500');
-    });
-
-    it('uses custom thresholds when provided', () => {
-      const result = buildMilestoneAnnotations({
-        minStars: 30,
-        maxStars: 400,
-        thresholds: [50, 250, 5000],
-      });
-
-      expect(result?.annotations).toHaveProperty('milestone250');
-      expect(result?.annotations.milestone250.yMin).toBe(250);
-      expect(result?.annotations).not.toHaveProperty('milestone100');
-      expect(result?.annotations).not.toHaveProperty('milestone5000');
-    });
-
+  describe('milestone annotations', () => {
     it('includes milestone annotations in aggregate chart', () => {
       const largeHistory: History = {
         snapshots: [

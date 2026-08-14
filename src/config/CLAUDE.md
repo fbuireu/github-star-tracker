@@ -6,7 +6,7 @@ repo's `star-tracker.yml`. It produces a fully-populated `Config` — every fiel
 inputs (`@infrastructure/notification` does), does **not** read `github-token` / `github-api-url`
 (`@application/tracker` does), and does **not** validate value *ranges*.
 
-`types.ts` holds `Config` and the enums, `defaults.ts` holds `DEFAULTS` and `VISIBILITY_CONFIG`,
+`types.ts` holds `Config` and the enums, `defaults.ts` holds `DEFAULTS`,
 `parsers.ts` holds pure coercions used only here, and `loader.ts` is the resolver. Every parser is reached
 through `loader.ts`'s field table, so none of them is exported purely for a test.
 

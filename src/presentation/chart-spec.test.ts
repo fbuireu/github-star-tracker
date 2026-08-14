@@ -171,20 +171,48 @@ describe('buildChartSpec', () => {
       expect(values.length).toBeLessThanOrEqual(TREND_WINDOW);
     });
 
-    it('resolves milestones: custom beats built-in, empty falls back, off is null', () => {
-      const history = makeHistory([10, 20]);
-      const thresholds = [
-        specOf({ request: { kind: ChartKind.STAR_HISTORY, history } }).milestoneThresholds,
+    it('resolves milestones: custom beats built-in, empty falls back, off is none', () => {
+      const history = makeHistory([10, 600]);
+      const resolved = [
+        specOf({ request: { kind: ChartKind.STAR_HISTORY, history } }).milestones,
         specOf({
           request: { kind: ChartKind.STAR_HISTORY, history, customMilestones: [90, 110] },
-        }).milestoneThresholds,
+        }).milestones,
         specOf({ request: { kind: ChartKind.STAR_HISTORY, history, customMilestones: [] } })
-          .milestoneThresholds,
+          .milestones,
         specOf({ request: { kind: ChartKind.STAR_HISTORY, history, milestones: false } })
-          .milestoneThresholds,
+          .milestones,
       ];
 
-      expect(thresholds).toEqual([STAR_MILESTONES, [90, 110], STAR_MILESTONES, null]);
+      expect(resolved).toEqual([[50, 100, 500], [90, 110], [50, 100, 500], []]);
+      expect(STAR_MILESTONES).toContain(500);
+    });
+
+    it('keeps only the milestones strictly inside the observed extremes', () => {
+      const spec = specOf({
+        request: {
+          kind: ChartKind.STAR_HISTORY,
+          history: makeHistory([10, 100]),
+          customMilestones: [10, 50, 100],
+        },
+      });
+
+      expect(spec.milestones).toEqual([50]);
+    });
+
+    it('measures the extremes across every series, not just the primary one', () => {
+      const values = [10, 20, 30, 40];
+      const spec = specOf({
+        request: {
+          kind: ChartKind.STAR_HISTORY,
+          history: makeHistory(values),
+          customMilestones: [12, 25, 35],
+          trendLine: true,
+        },
+      });
+
+      expect(spec.series).toHaveLength(2);
+      expect(spec.milestones).toEqual([12, 25, 35]);
     });
   });
 
@@ -196,7 +224,7 @@ describe('buildChartSpec', () => {
 
       expect(spec.series).toHaveLength(1);
       expect(spec.series[0].data).toEqual([30, 35, 40]);
-      expect(spec.milestoneThresholds).toBeNull();
+      expect(spec.milestones).toEqual([]);
       expect(spec.showLegend).toBe(false);
     });
 

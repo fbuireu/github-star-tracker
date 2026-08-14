@@ -39989,12 +39989,6 @@ var ChartCurve = {
 };
 
 // src/config/defaults.ts
-var VISIBILITY_CONFIG = {
-  [Visibility.PUBLIC]: { visibility: Visibility.PUBLIC },
-  [Visibility.PRIVATE]: { visibility: Visibility.PRIVATE },
-  [Visibility.ALL]: { visibility: Visibility.ALL },
-  [Visibility.OWNED]: { visibility: Visibility.ALL, affiliation: "owner" }
-};
 var DEFAULTS2 = {
   visibility: Visibility.ALL,
   includeArchived: false,
@@ -40879,13 +40873,19 @@ function describeFetchError(error2) {
 
 // src/infrastructure/github/client.ts
 var REPOS_PER_PAGE = 100;
+var VISIBILITY_PARAMS = {
+  public: { visibility: "public" },
+  private: { visibility: "private" },
+  all: { visibility: "all" },
+  owned: { visibility: "all", affiliation: "owner" }
+};
 async function fetchRepos({ octokit, config }) {
   const repos = [];
   let page = 1;
   const params = {
     per_page: REPOS_PER_PAGE,
     sort: "full_name",
-    ...VISIBILITY_CONFIG[config.visibility]
+    ...VISIBILITY_PARAMS[config.visibility]
   };
   try {
     let dataLength;
@@ -41895,6 +41895,15 @@ function selectWindow({ history, locale, range, maxPoints, axisLabels }) {
 function resolveMilestones(customMilestones) {
   return customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
 }
+function visibleMilestones({ series, thresholds }) {
+  const values = series.flatMap(
+    (entry) => entry.data.filter((value) => value !== null)
+  );
+  if (values.length === 0) return [];
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  return thresholds.filter((milestone) => milestone > min && milestone < max);
+}
 function starHistorySpec({
   title,
   palette,
@@ -41933,7 +41942,7 @@ function starHistorySpec({
     series,
     title,
     showLegend: false,
-    milestoneThresholds: milestones ? resolveMilestones(customMilestones) : null
+    milestones: milestones ? visibleMilestones({ series, thresholds: resolveMilestones(customMilestones) }) : []
   };
 }
 function perRepoSpec({
@@ -41959,7 +41968,7 @@ function perRepoSpec({
     ],
     title,
     showLegend: false,
-    milestoneThresholds: null
+    milestones: []
   };
 }
 function comparisonSpec({ repoNames, title, ...window2 }) {
@@ -41982,7 +41991,7 @@ function comparisonSpec({ repoNames, title, ...window2 }) {
     })),
     title,
     showLegend: true,
-    milestoneThresholds: null
+    milestones: []
   };
 }
 function forecastSpec({
@@ -42033,7 +42042,7 @@ function forecastSpec({
     ],
     title,
     showLegend: true,
-    milestoneThresholds: null
+    milestones: []
   };
 }
 var ChartKind = {
@@ -42275,8 +42284,7 @@ function renderSvg({
   title,
   showLegend,
   locale,
-  milestones = false,
-  milestoneThresholds = STAR_MILESTONES,
+  milestones,
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
   smoothing = true,
@@ -42328,11 +42336,11 @@ function renderSvg({
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
     <text x="${yLabelX}" y="${y + yAxis.labelBaselineOffset}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount({ count: value, locale })}</text>`;
   }).join("\n    ");
-  const milestoneLines = milestones ? milestoneThresholds.filter((milestone) => milestone > minData && milestone < maxData).map((value) => {
+  const milestoneLines = milestones.map((value) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="${milestoneStyle.strokeWidth}" stroke-dasharray="${milestoneStyle.dashArray}" />
     <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount({ count: value, locale })} \u2605</text>`;
-  }).join("\n    ") : "";
+  }).join("\n    ");
   const maxLabels = xAxis.maxLabels;
   const nonEmptyLabelIndices = labels.reduce((indices, label, labelIndex) => {
     if (label !== "") indices.push(labelIndex);
@@ -42508,8 +42516,7 @@ function renderSvgChart({
     })),
     title: spec.title,
     showLegend: spec.showLegend,
-    milestones: spec.milestoneThresholds !== null,
-    milestoneThresholds: spec.milestoneThresholds ?? STAR_MILESTONES
+    milestones: spec.milestones
   });
 }
 
@@ -42661,15 +42668,12 @@ function pointRadiusFor({ showPoints, radius }) {
   return showPoints ? radius : CHART_POINT.hidden;
 }
 function buildMilestoneAnnotations({
-  minStars,
-  maxStars,
-  palette = LIGHT_PALETTE,
-  thresholds = STAR_MILESTONES
+  milestones,
+  palette
 }) {
-  const visible = thresholds.filter((milestone) => milestone > minStars && milestone < maxStars);
-  if (visible.length === 0) return null;
+  if (milestones.length === 0) return null;
   const annotations = {};
-  for (const milestone of visible) {
+  for (const milestone of milestones) {
     annotations[`milestone${milestone}`] = {
       type: "line",
       yMin: milestone,
@@ -42789,13 +42793,7 @@ function chartImageUrl({
   if (spec === null) return null;
   const curveProps = curvePropsFor({ smoothing, curve });
   const datasets = spec.series.map((series) => toDataset({ series, curveProps, showPoints }));
-  const primary = spec.series[0].data.filter((value) => value !== null);
-  const annotation = spec.milestoneThresholds ? buildMilestoneAnnotations({
-    minStars: Math.min(...primary),
-    maxStars: Math.max(...primary),
-    palette,
-    thresholds: spec.milestoneThresholds
-  }) : null;
+  const annotation = buildMilestoneAnnotations({ milestones: spec.milestones, palette });
   return buildChartUrl({
     config: buildChartConfig({
       labels: spec.labels,

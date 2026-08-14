@@ -1,9 +1,8 @@
 import { ChartCurve, ChartRange, ChartTheme } from '@config/types';
-import { STAR_MILESTONES } from '@domain/constants';
 import type { Locale } from '@i18n';
 import type { ChartRequest, ChartSeries } from './chart-spec';
 import { AxisLabels, buildChartSpec, SeriesDash, SeriesWeight } from './chart-spec';
-import { CHART, CHART_POINT, CHART_TENSION, LIGHT_PALETTE } from './constants';
+import { CHART, CHART_POINT, CHART_TENSION } from './constants';
 import { resolvePalette } from './shared';
 import type { ColorPalette } from './types';
 
@@ -133,25 +132,19 @@ interface ChartOptions {
 }
 
 interface BuildMilestoneAnnotationsParams {
-  minStars: number;
-  maxStars: number;
-  palette?: ColorPalette;
-  thresholds?: readonly number[];
+  milestones: readonly number[];
+  palette: ColorPalette;
 }
 
-export function buildMilestoneAnnotations({
-  minStars,
-  maxStars,
-  palette = LIGHT_PALETTE,
-  thresholds = STAR_MILESTONES,
+function buildMilestoneAnnotations({
+  milestones,
+  palette,
 }: BuildMilestoneAnnotationsParams): AnnotationPlugin | null {
-  const visible = thresholds.filter((milestone) => milestone > minStars && milestone < maxStars);
-
-  if (visible.length === 0) return null;
+  if (milestones.length === 0) return null;
 
   const annotations: Record<string, MilestoneAnnotation> = {};
 
-  for (const milestone of visible) {
+  for (const milestone of milestones) {
     annotations[`milestone${milestone}`] = {
       type: 'line',
       yMin: milestone,
@@ -318,15 +311,7 @@ export function chartImageUrl({
 
   const curveProps = curvePropsFor({ smoothing, curve });
   const datasets = spec.series.map((series) => toDataset({ series, curveProps, showPoints }));
-  const primary = spec.series[0].data.filter((value): value is number => value !== null);
-  const annotation = spec.milestoneThresholds
-    ? buildMilestoneAnnotations({
-        minStars: Math.min(...primary),
-        maxStars: Math.max(...primary),
-        palette,
-        thresholds: spec.milestoneThresholds,
-      })
-    : null;
+  const annotation = buildMilestoneAnnotations({ milestones: spec.milestones, palette });
 
   return buildChartUrl({
     config: buildChartConfig({

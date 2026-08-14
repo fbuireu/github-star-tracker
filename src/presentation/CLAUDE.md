@@ -18,10 +18,15 @@ email path goes through QuickChart because mail clients will not display inline 
   forecast — carrying only that kind's own inputs (`repoFullName`, `repoNames`, `forecastData`, the
   star-history Milestone and trend flags) plus an optional `title`. `buildChartSpec({ request, locale,
   palette, axisLabels, range, maxPoints })` maps one onto a `ChartSpec` — labels, an ordered list of series
-  with a resolved colour, the title, whether to show a legend, and the Milestone thresholds — or `null` when
-  there is too little history. The four spec builders behind it are module-private; both renderers read the
-  spec and neither re-derives it
+  with a resolved colour, the title, whether to show a legend, and **the Milestones to draw, already resolved
+  and already filtered to the visible ones** — or `null` when there is too little history. The four spec
+  builders behind it are module-private; both renderers read the spec and neither re-derives it
   ([ADR 0014](../../docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
+- **Milestone visibility is decided once, in `starHistorySpec`.** The extremes are taken over **every series
+  in the spec**, not just the primary one, and the comparison is **strict** (`> min && < max`), so a Milestone
+  equal to an extreme is never drawn. They are the raw data extremes, not the padded axis bounds. `milestones`
+  is `[]` — never `null` — when `chart-milestones` is off, for a kind that has none, or when everything
+  filtered out; the adapters draw exactly what they are given and neither owns a threshold list any more.
 - **`charts.ts` orchestrates.** `buildChartFiles` reads `Config`, builds the shared style object once, binds
   it into a local `renderChart(request)`, and returns `{ filename, svg }[]`. It renders nothing itself and
   returns `[]` when charts are off or the history has fewer than 2 snapshots.
@@ -107,8 +112,6 @@ its spec — assert a section rule there, not through one dialect's markup.
   no circles and no draw animation.
 - **Theme rendering is asymmetric.** `auto` emits light values *plus* a `prefers-color-scheme: dark` override
   block; `light` and `dark` emit exactly one palette and **no** media query.
-- **Milestone visibility uses raw data extremes** (`> minData && < maxData`), not the padded axis bounds — a
-  milestone equal to the max is never drawn.
 - **Empty x-axis labels are ticks that must not render.** `buildAxisLabels` returns `''` for suppressed
   positions; `renderSvg` filters those out, thins the rest to at most 10, and always keeps the last non-empty
   index.

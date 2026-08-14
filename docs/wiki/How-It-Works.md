@@ -480,7 +480,7 @@ src/
 │   └── tracker.ts                    # Orchestrator
 ├── config/
 │   ├── types.ts                      # Config, Visibility, ChartCurve/Theme/Range types
-│   ├── defaults.ts                   # DEFAULTS, VISIBILITY_CONFIG
+│   ├── defaults.ts                   # DEFAULTS
 │   ├── parsers.ts                    # parseBool, parseFileBool, parseNumber, parseList, toStringList
 │   └── loader.ts                     # loadConfig(), loadConfigFile(), resolveEnum()
 ├── domain/

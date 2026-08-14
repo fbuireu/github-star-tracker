@@ -47,7 +47,7 @@ export interface ChartSpec {
   series: ChartSeries[];
   title: string;
   showLegend: boolean;
-  milestoneThresholds: readonly number[] | null;
+  milestones: readonly number[];
 }
 
 interface WindowParams {
@@ -78,6 +78,24 @@ function selectWindow({ history, locale, range, maxPoints, axisLabels }: WindowP
 
 function resolveMilestones(customMilestones?: readonly number[]): readonly number[] {
   return customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
+}
+
+interface VisibleMilestonesParams {
+  series: ChartSeries[];
+  thresholds: readonly number[];
+}
+
+function visibleMilestones({ series, thresholds }: VisibleMilestonesParams): readonly number[] {
+  const values = series.flatMap((entry) =>
+    entry.data.filter((value): value is number => value !== null),
+  );
+
+  if (values.length === 0) return [];
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+
+  return thresholds.filter((milestone) => milestone > min && milestone < max);
 }
 
 interface StarHistorySpecParams extends WindowParams {
@@ -130,7 +148,9 @@ function starHistorySpec({
     series,
     title,
     showLegend: false,
-    milestoneThresholds: milestones ? resolveMilestones(customMilestones) : null,
+    milestones: milestones
+      ? visibleMilestones({ series, thresholds: resolveMilestones(customMilestones) })
+      : [],
   };
 }
 
@@ -166,7 +186,7 @@ function perRepoSpec({
     ],
     title,
     showLegend: false,
-    milestoneThresholds: null,
+    milestones: [],
   };
 }
 
@@ -197,7 +217,7 @@ function comparisonSpec({ repoNames, title, ...window }: ComparisonSpecParams): 
     })),
     title,
     showLegend: true,
-    milestoneThresholds: null,
+    milestones: [],
   };
 }
 
@@ -258,7 +278,7 @@ function forecastSpec({
     ],
     title,
     showLegend: true,
-    milestoneThresholds: null,
+    milestones: [],
   };
 }
 
