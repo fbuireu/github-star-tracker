@@ -116,6 +116,16 @@ Everything else here is behind it.
   Downstream domain code never null-checks it.
 - **Invalid JSON throws and does not fall back.** Silently resetting corrupt history would destroy a user's
   tracking record — keep it fatal. `readStargazers` does no normalization at all; missing file → `{}`.
+- **`stars-data.json` carries a `version` and this folder owns it end to end**
+  ([ADR 0015](../../docs/adr/0015-the-stored-history-declares-its-format-version.md)). `writeHistory` stamps
+  `DATA_FORMAT_VERSION` as the first key; `readHistory` validates it through `assertReadableFormat` and
+  **strips it**, so `History` in `@domain/types` never gains the field and the domain stays unaware a file
+  format exists. Absent means version 1 and always will, because every existing data branch predates the
+  field. A higher number, or a version that is not a number, throws rather than being read optimistically.
+  **Bump `DATA_FORMAT_VERSION` in the same commit as any change to `History`, `Snapshot` or `SnapshotRepo`** —
+  nothing checks that for you, and the split between the shape (`@domain`) and the version (here) is
+  deliberate. `stargazers.json` is deliberately unversioned: it is a flat map keyed by repo full name, so a
+  reserved key would collide with the data.
 - **JSON formatting is part of the on-disk contract**: 2-space indent, no trailing newline. Changing it
   rewrites the whole file and produces a full-file diff in every user's data branch.
 - `writeChart` is the only function that creates a directory (`charts/`); every other writer assumes the
@@ -124,6 +134,14 @@ Everything else here is behind it.
 - **`commitAndPush` is a no-op when nothing changed.** It runs `add -A`, then `diff --cached --quiet`; a
   *successful* exit means no staged changes, so the commit path is the `catch` branch. Do not "fix" that
   inverted-looking try/catch.
+- **A rejected push is translated, every other push failure is not.** The worktree is pinned to
+  `origin/<dataBranch>` at Run start and never re-fetched, so two overlapping writing Runs both branch from
+  the same commit and the second one's push is refused as non-fast-forward. `commitAndPush` matches
+  `PUSH_REJECTED_PATTERN` against the error and replaces only that case with remediation text naming
+  `concurrency` and `read-only`; anything else rethrows untouched, because git's own detail is the useful
+  part there. Do not widen the pattern into a bare catch — an auth or network failure must keep its message.
+  This layer does **not** retry: re-reading and re-appending the Stored History after losing the race is a
+  behaviour change, not an error-handling one.
 - **`core.setSecret` on the push credential must stay before the push.** The base64 credential is passed as
   `-c http.extraheader=…`, and `execute` embeds the whole argv in any thrown error — the mask is what keeps a
   push failure from leaking the token. Any new call passing a secret in argv must do the same.

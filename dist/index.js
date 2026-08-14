@@ -41292,6 +41292,8 @@ function cleanup(dataDir) {
 // src/infrastructure/persistence/storage.ts
 var fs5 = __toESM(require("node:fs"));
 var path3 = __toESM(require("node:path"));
+var DATA_FORMAT_VERSION = 1;
+var PUSH_REJECTED_PATTERN = /\[rejected]|non-fast-forward|fetch first/i;
 var DATA_FILES = {
   history: "stars-data.json",
   stargazers: "stargazers.json",
@@ -41317,15 +41319,27 @@ function readJsonFile({ filePath, fallback }) {
 function writeJsonFile({ filePath, data }) {
   fs5.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
+function assertReadableFormat(version) {
+  if (version === void 0 || typeof version === "number" && version <= DATA_FORMAT_VERSION) {
+    return;
+  }
+  throw new Error(
+    `${DATA_FILES.history} on the data branch declares format version ${JSON.stringify(version)}, which this version of the action does not understand (it writes version ${DATA_FORMAT_VERSION}). Upgrade the action, or point data-branch at a branch this version wrote.`
+  );
+}
 function readHistory(dataDir) {
-  const raw = readJsonFile({
+  const { version, ...raw } = readJsonFile({
     filePath: path3.join(dataDir, DATA_FILES.history),
     fallback: {}
   });
+  assertReadableFormat(version);
   return { ...raw, snapshots: Array.isArray(raw.snapshots) ? raw.snapshots : [] };
 }
 function writeHistory({ dataDir, history }) {
-  writeJsonFile({ filePath: path3.join(dataDir, DATA_FILES.history), data: history });
+  writeJsonFile({
+    filePath: path3.join(dataDir, DATA_FILES.history),
+    data: { version: DATA_FORMAT_VERSION, ...history }
+  });
 }
 function writeReport({ dataDir, markdown }) {
   const filePath = path3.join(dataDir, DATA_FILES.report);
@@ -41393,16 +41407,23 @@ function commitAndPush({
   execute({ args: ["commit", "-m", message], options: { cwd } });
   const basicCredential = Buffer.from(`x-access-token:${token}`).toString("base64");
   setSecret(basicCredential);
-  execute({
-    args: [
-      "-c",
-      `http.extraheader=AUTHORIZATION: basic ${basicCredential}`,
-      "push",
-      "origin",
-      `HEAD:${dataBranch}`
-    ],
-    options: { cwd }
-  });
+  try {
+    execute({
+      args: [
+        "-c",
+        `http.extraheader=AUTHORIZATION: basic ${basicCredential}`,
+        "push",
+        "origin",
+        `HEAD:${dataBranch}`
+      ],
+      options: { cwd }
+    });
+  } catch (error2) {
+    if (!PUSH_REJECTED_PATTERN.test(error2.message)) throw error2;
+    throw new Error(
+      `Another run pushed to "${dataBranch}" while this one was working, so this run's snapshot was not recorded \u2014 its report and any email have already gone out. Re-run to record it. To stop runs overlapping, give the workflow a "concurrency" group, or set read-only on whichever workflow should not be the writer.`
+    );
+  }
   info(`Data committed and pushed to ${dataBranch}`);
   return true;
 }

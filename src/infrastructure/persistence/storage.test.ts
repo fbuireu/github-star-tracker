@@ -90,6 +90,27 @@ describe('readHistory', () => {
 
     expect(() => readHistory('/data')).toThrow(/stars-data\.json on the data branch/);
   });
+
+  it('accepts a file written by this format version', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('{"version":1,"snapshots":[]}');
+
+    expect(readHistory('/data')).toEqual({ snapshots: [] });
+  });
+
+  it('refuses a file written by a newer format version instead of misreading it', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('{"version":2,"snapshots":[]}');
+
+    expect(() => readHistory('/data')).toThrow(/declares format version 2/);
+  });
+
+  it('refuses a version that is not a number', () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue('{"version":"1","snapshots":[]}');
+
+    expect(() => readHistory('/data')).toThrow(/declares format version "1"/);
+  });
 });
 
 describe('writeHistory', () => {
@@ -112,8 +133,29 @@ describe('writeHistory', () => {
 
     expect(fs.writeFileSync).toHaveBeenCalledWith(
       path.join('/data', 'stars-data.json'),
-      JSON.stringify(history, null, 2),
+      JSON.stringify({ version: 1, ...history }, null, 2),
     );
+  });
+
+  it('stamps the format version as the first key so a reader sees it before the data', () => {
+    writeHistory({ dataDir: '/data', history: { snapshots: [] } });
+
+    const written = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
+
+    expect(Object.keys(JSON.parse(written))[0]).toBe('version');
+  });
+
+  it('round-trips: what writeHistory stamps, readHistory accepts and strips', () => {
+    const history: History = { snapshots: [], starsAtLastNotification: 520 };
+
+    writeHistory({ dataDir: '/data', history });
+
+    const written = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
+
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue(written);
+
+    expect(readHistory('/data')).toEqual(history);
   });
 });
 
@@ -327,6 +369,50 @@ describe('commitAndPush', () => {
       ['commit', '-m', 'Update star data: 12 "total" (+3)'],
       expect.any(Object),
     );
+  });
+
+  it('explains a rejected push instead of surfacing git’s raw text', () => {
+    vi.mocked(execFileSync)
+      .mockReturnValueOnce('')
+      .mockImplementationOnce(() => {
+        throw new Error('Changes detected');
+      })
+      .mockReturnValueOnce('')
+      .mockImplementationOnce(() => {
+        throw new Error(
+          'Git command failed: "git push"\n ! [rejected] HEAD -> star-tracker-data (fetch first)',
+        );
+      });
+
+    expect(() =>
+      commitAndPush({
+        dataDir: '/data',
+        dataBranch: 'star-tracker-data',
+        message: 'Update data',
+        token: 'fake-token',
+      }),
+    ).toThrow(/Another run pushed to "star-tracker-data" while this one was working/);
+  });
+
+  it('lets any other push failure through untouched', () => {
+    vi.mocked(execFileSync)
+      .mockReturnValueOnce('')
+      .mockImplementationOnce(() => {
+        throw new Error('Changes detected');
+      })
+      .mockReturnValueOnce('')
+      .mockImplementationOnce(() => {
+        throw new Error('Git command failed: "git push"\nfatal: Authentication failed');
+      });
+
+    expect(() =>
+      commitAndPush({
+        dataDir: '/data',
+        dataBranch: 'star-tracker-data',
+        message: 'Update data',
+        token: 'fake-token',
+      }),
+    ).toThrow(/Authentication failed/);
   });
 
   it('returns false when there are no changes to commit', () => {
