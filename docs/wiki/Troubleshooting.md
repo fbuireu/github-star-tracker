@@ -87,6 +87,29 @@ git push origin --delete star-tracker-data
 git push origin --delete star-tracker-data
 ```
 
+### "Another run pushed to ... while this one was working"
+
+**Cause:** Two runs that both write overlapped. The action reads the data branch when it starts and pushes
+when it finishes, and everything in between — listing repositories, fetching stargazers, rendering — takes
+minutes. If a second writing run starts in that window, both branch from the same commit and the one that
+finishes last is refused. The usual trigger is a scheduled run plus a manual **Run workflow**; it can also
+happen if a run takes longer than the schedule interval.
+
+**What it means:** that run's snapshot was not recorded. Its report and email had already gone out, because
+the email is sent before the data is saved, so you may receive a digest for a run that ends red.
+
+**Fix:** re-run it — the next run records the current totals and nothing is lost but that one data point.
+To stop it recurring, give the workflow a concurrency group so runs queue instead of overlapping:
+
+```yaml
+concurrency:
+  group: star-tracker
+  cancel-in-progress: false
+```
+
+If you deliberately have two workflows sharing one data branch, set [`read-only`](Configuration#read-only)
+on whichever one should not be the writer.
+
 ### Data Branch Shows in PR Comparisons
 
 **Cause:** Some Git tools show orphan branches in comparisons.

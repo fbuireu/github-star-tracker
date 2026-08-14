@@ -45,6 +45,7 @@ Each run creates a snapshot appended to the `snapshots` array in `stars-data.jso
 
 ```json
 {
+  "version": 1,
   "snapshots": [
     {
       "timestamp": "2026-02-15T00:00:00.000Z",

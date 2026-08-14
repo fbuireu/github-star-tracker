@@ -1,13 +1,10 @@
-import { ChartCurve, ChartRange, ChartTheme } from '@config/types';
+import { ChartTheme } from '@config/types';
 import type { ForecastResult } from '@domain/forecast';
 import { deltaIndicator, formatSignedPercent } from '@domain/formatting';
 import { getTranslations, interpolate } from '@i18n';
-import {
-  generateChartUrl,
-  generateComparisonChartUrl,
-  generateForecastChartUrl,
-  generatePerRepoChartUrl,
-} from './chart';
+import { chartImageUrl } from './chart';
+import type { ChartRequest } from './chart-spec';
+import { ChartKind } from './chart-spec';
 import { SECTION_ICON } from './constants';
 import { EscapeDialect, escapeFor } from './escaping';
 import { buildForecastTable, buildReportModel, StargazerOutcome } from './report-model';
@@ -31,19 +28,33 @@ function deltaColor({ delta, palette }: DeltaColorParams): string {
 export function generateHtmlReport(params: GenerateHtmlReportParams): string {
   const {
     locale,
-    smoothing = true,
-    curve = ChartCurve.MONOTONE,
-    showPoints = true,
-    milestones = true,
-    beginAtZero = false,
     theme = ChartTheme.AUTO,
+    smoothing,
+    curve,
+    showPoints,
+    beginAtZero,
+    range,
+    lineWidth,
+    milestones,
     customMilestones,
-    range = ChartRange.ALL,
-    trendLine = false,
+    trendLine,
+    lineColor,
   } = params;
 
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
+  const chartUrl = (request: ChartRequest): string | null =>
+    chartImageUrl({
+      request,
+      locale,
+      smoothing,
+      curve,
+      showPoints,
+      beginAtZero,
+      theme,
+      range,
+      lineWidth,
+    });
   const model = buildReportModel(params);
   const {
     summary,
@@ -85,40 +96,24 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
   const topRepos = model.topRepos;
   const comparisonChartUrl =
     history !== null && topRepos.length > 0
-      ? generateComparisonChartUrl({
-          history,
-          repoNames: topRepos,
-          title: t.report.topRepositories,
-          locale,
-          smoothing,
-          curve,
-          showPoints,
-          beginAtZero,
-          theme,
-          range,
-        })
+      ? chartUrl({ kind: ChartKind.COMPARISON, history, repoNames: topRepos })
       : null;
 
   const individualRepoChartsHtml =
     history !== null
       ? topRepos
           .map((repoName) => {
-            const chartUrl = generatePerRepoChartUrl({
+            const repoChartUrl = chartUrl({
+              kind: ChartKind.PER_REPO,
               history,
               repoFullName: repoName,
-              locale,
-              smoothing,
-              curve,
-              showPoints,
-              beginAtZero,
-              theme,
-              range,
+              lineColor,
             });
-            if (!chartUrl) return '';
+            if (!repoChartUrl) return '';
             return `
         <div style="margin-top:16px;">
           <h4 style="font-size:14px;margin-bottom:8px;">${escapeHtml(repoName)}</h4>
-          <img src="${chartUrl}" alt="${escapeHtml(repoName)}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${repoChartUrl}" alt="${escapeHtml(repoName)}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
           })
           .filter(Boolean)
@@ -130,7 +125,7 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
       ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.starTrend} ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, curve, showPoints, milestones, beginAtZero, theme, customMilestones, range, trendLine })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${chartUrl({ kind: ChartKind.STAR_HISTORY, history, milestones, customMilestones, trendLine, lineColor })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
 
         ${
           comparisonChartUrl
@@ -224,7 +219,7 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
         ${
           history !== null
             ? `<div style="margin-top:16px;text-align:center;">
-          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, curve, showPoints, beginAtZero, theme, range })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${chartUrl({ kind: ChartKind.FORECAST, history, forecastData, lineColor })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`
             : ''
         }

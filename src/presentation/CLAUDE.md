@@ -13,22 +13,42 @@ stays self-contained and theme-aware ([ADR 0006](../../docs/adr/0006-hand-render
 email path goes through QuickChart because mail clients will not display inline SVG
 ([ADR 0010](../../docs/adr/0010-quickchart-renders-the-email-charts.md)).
 
-- **`chart-spec.ts` decides what a Chart is.** `starHistorySpec`, `perRepoSpec`, `comparisonSpec` and
-  `forecastSpec` each return a `ChartSpec` — labels, an ordered list of series with a resolved colour, the
-  title, whether to show a legend, and the Milestone thresholds — or `null` when there is too little
-  history. Both renderers read it and neither re-derives it
+- **`chart-spec.ts` decides what a Chart is**, and names which one is wanted. A `ChartRequest` is a
+  discriminated union over the four `ChartKind`s CONTEXT.md lists — star history, per repo, comparison,
+  forecast — carrying only that kind's own inputs (`repoFullName`, `repoNames`, `forecastData`, the
+  star-history Milestone and trend flags) plus an optional `title`. `buildChartSpec({ request, locale,
+  palette, axisLabels, range, maxPoints })` maps one onto a `ChartSpec` — labels, an ordered list of series
+  with a resolved colour, the title, whether to show a legend, and **the Milestones to draw, already resolved
+  and already filtered to the visible ones** — or `null` when there is too little history. The four spec
+  builders behind it are module-private; both renderers read the spec and neither re-derives it
   ([ADR 0014](../../docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
-- **`charts.ts` orchestrates.** `buildChartFiles` reads `Config`, builds the shared style object once, and
-  returns `{ filename, svg }[]`. It renders nothing itself and returns `[]` when charts are off or the
-  history has fewer than 2 snapshots.
-- **`svg-chart.ts` draws.** One private `renderSvg` does all the drawing; the four exported generators only
-  build a spec and map it onto `SvgDataset`s.
-- **`chart.ts` is the email path**, producing `quickchart.io` URLs consumed by `html.ts`. It is a parallel,
-  lower-fidelity rendering of the *same* spec — never an input to the SVG files.
+- **Milestone visibility is decided once, in `starHistorySpec`.** The extremes are taken over **every series
+  in the spec**, not just the primary one, and the comparison is **strict** (`> min && < max`), so a Milestone
+  equal to an extreme is never drawn. They are the raw data extremes, not the padded axis bounds. `milestones`
+  is `[]` — never `null` — when `chart-milestones` is off, for a kind that has none, or when everything
+  filtered out; the adapters draw exactly what they are given and neither owns a threshold list any more.
+- **`charts.ts` orchestrates.** `buildChartFiles` reads `Config`, builds the shared style object once, binds
+  it into a local `renderChart(request)`, and returns `{ filename, svg }[]`. It renders nothing itself and
+  returns `[]` when charts are off or the history has fewer than 2 snapshots.
+- **`svg-chart.ts` draws.** `renderSvgChart({ request, locale, ...style })` is its only export: it builds the
+  spec with year-thinned axis labels and maps the series onto `SvgDataset`s. One private `renderSvg` does all
+  the drawing.
+- **`chart.ts` is the email path.** `chartImageUrl({ request, locale, ...style })` is its only chart export,
+  producing `quickchart.io` URLs consumed by `html.ts`. It is a parallel, lower-fidelity rendering of the
+  *same* spec — never an input to the SVG files.
+
+**Default titles live in `buildChartSpec`, not in the adapters**, so the SVG and the email chart of the same
+kind are always named the same thing and both are localized. Only the per-repo default is composed rather
+than translated (`` `${repoFullName} Star History` ``).
 
 `SeriesDash` and `SeriesWeight` are emphasis, not pixels: each adapter maps them through its own table
 (`DASH_PATTERNS` / `POINT_SIZES` in `chart.ts`, a `dashed` boolean in `svg-chart.ts`). Keep dash arrays and
 point radii out of the spec.
+
+**`AxisLabels` is an adapter constant, not a per-call choice**: `svg-chart.ts` always asks for `THINNED` and
+`chart.ts` always for `DATES`. The forecast spec overrides whatever it is given with `DATES` — its params
+type `Omit`s the field so the caller cannot believe otherwise. `maxPoints` is likewise passed only by
+`renderSvgChart`, which is what fixes email charts at 30 points.
 
 The report modules are one per format: `markdown.ts`, `html.ts`, `csv.ts`, `badge.ts`, over a shared
 `report-model.ts`; with `escaping.ts` for every dialect's escaper, `shared.ts` for cross-renderer helpers and
@@ -37,11 +57,15 @@ The report modules are one per format: `markdown.ts`, `html.ts`, `csv.ts`, `badg
 ## The report model
 
 `buildReportModel` (`src/presentation/report-model.ts`) decides **which sections a Report has and what is in
-them**, once. `markdown.ts` and `html.ts` are dialects over it and own only markup.
+them**, once. `markdown.ts` and `html.ts` are dialects over it and own only markup. `report-model.test.ts` is
+its spec — assert a section rule there, not through one dialect's markup.
 
 - The model resolves `hasChartHistory`, `chartHistory` (the history *only* when it is plottable, so the
   dialects narrow on `!== null`), `topRepos`, `isFirstRun`, the Velocity figures and the three-way Stargazer
   outcome. A dialect that recomputes any of these has reintroduced the drift this module exists to stop.
+- **`topRepos` is not derived here.** It calls `topRepositories` in `@domain/comparison`, the same function
+  `@application/tracker` uses for the charts and the Forecast, so the Report and the Charts cannot rank the
+  Tracked Set differently. `prepareReportData`'s `sorted` is that module's `rankByStars`.
 - `StargazerOutcome` is `NEW` or `NONE`; the section is omitted entirely when `stargazers` is `null`, which
   is what "`track-stargazers` is off" looks like.
 - `VelocitySection.projection` is already `null`-or-present, so neither dialect repeats the
@@ -51,6 +75,18 @@ them**, once. `markdown.ts` and `html.ts` are dialects over it and own only mark
 - **The two dialects take different params.** `generateMarkdownReport` takes `ReportParams`;
   `generateHtmlReport` takes `GenerateHtmlReportParams`, which adds `EmailChartStyle`. Markdown emits
   relative `./charts/*.svg` links and has no use for chart styling, and the types now say so.
+- **`EmailChartStyle`'s fields split two ways at the call site**, and `html.ts` is the only place that knows
+  which is which: `milestones`, `customMilestones`, `trendLine` and `lineColor` become part of the
+  `ChartRequest`; `smoothing`, `curve`, `showPoints`, `beginAtZero`, `range` and `lineWidth` are the adapter
+  style and reach `chartImageUrl` **undefaulted**, because `chartImageUrl` owns those defaults. Only `theme`
+  is defaulted in `html.ts`, because the document itself needs a resolved palette and a `color-scheme`. Do
+  not reintroduce the other defaults here — the two sets drifting apart is the failure mode.
+- **`lineColor` and `lineWidth` reach the email charts too**, so the Notification and the Data Branch draw
+  the same stroke. `lineColor` goes on the star-history, per-repo and forecast requests only — the comparison
+  chart has a per-series palette and takes none, on both paths. `lineWidth` becomes Chart.js `borderWidth`,
+  emitted **only when supplied**: `chart.ts` must not default it to `SVG_CHART.lineWidth`, which is the SVG
+  renderer's own fallback and would put the same literal in a third place. They used to be SVG-only while
+  four documents said otherwise, which meant one run produced a purple README chart and a gold email chart.
 
 ## Invariants & rules
 
@@ -82,8 +118,6 @@ them**, once. `markdown.ts` and `html.ts` are dialects over it and own only mark
   no circles and no draw animation.
 - **Theme rendering is asymmetric.** `auto` emits light values *plus* a `prefers-color-scheme: dark` override
   block; `light` and `dark` emit exactly one palette and **no** media query.
-- **Milestone visibility uses raw data extremes** (`> minData && < maxData`), not the padded axis bounds — a
-  milestone equal to the max is never drawn.
 - **Empty x-axis labels are ticks that must not render.** `buildAxisLabels` returns `''` for suppressed
   positions; `renderSvg` filters those out, thins the rest to at most 10, and always keeps the last non-empty
   index.
@@ -136,6 +170,10 @@ uses that everywhere. Do not write a second escape map.
 - `charts.ts` now has a colocated `charts.test.ts` covering the `Config`-to-style projection, the per-repo
   reconstruction fallback and which files a run produces. `tracker.test.ts` still runs it unmocked, so a
   break there shows up twice.
+- **`chart-spec.test.ts` is where a Chart's *content* is asserted** — the `< 2` guard, default titles, the
+  comparison cap and short-label heuristic, Milestone resolution, the Forecast series layout, windowing.
+  `svg-chart.test.ts` and `chart.test.ts` are for *appearance*; adding a content assertion there means the
+  rule is now pinned twice, in the dialect that happened to be open.
 - **`escapeXml`'s pattern is built from the dialect's map** in `escaping.ts` and used with `replaceAll`,
   which resets `lastIndex`. Safe as written; do not switch it to `.exec`/`.test`.
 - `chart.ts` maps `rounded-step` to Chart.js `monotone` and both `catmull-rom` and `cubic-bezier` to a plain

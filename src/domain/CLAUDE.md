@@ -50,6 +50,11 @@ records why. It composes `getBaselineSnapshot`, `compareStars`, `createSnapshot`
   equal `newStars - lostStars`.
 - `summary.changed` is true if any repo has a non-zero delta **or** is new/removed, so a first run with repos
   always reports `changed: true`.
+- **Top Repositories is defined once, here.** `rankByStars` drops Removed Repositories and orders a **copy**
+  descending by current Star Count; `topRepositories({ repos, limit })` cuts that ranking and returns full
+  names. `@application/tracker` uses it for the charts and the Forecast and `@presentation/report-model` for
+  the Report — neither re-derives the ordering, which is what stops a Chart and its Report disagreeing about
+  which repositories are the top ones.
 
 ## Snapshot store
 

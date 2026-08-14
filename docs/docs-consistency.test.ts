@@ -37,6 +37,15 @@ const ADR_DATE_PATTERN = /\nDate: \d{4}-\d{2}-\d{2}\n/;
 const ADR_REFERENCE_PATTERNS = [/ADR (\d{4})/g, /docs\/adr\/(\d{4})-/g];
 const adrHeadingPattern = (number: number): RegExp => new RegExp(`^# ${number}\\. \\S`);
 
+const STORAGE_MODULE = 'src/infrastructure/persistence/storage.ts';
+const DATA_FORMAT_VERSION_PATTERN = /const DATA_FORMAT_VERSION = (\d+);/;
+const DOCUMENTED_VERSION_PATTERN = /"version": (\d+)/g;
+const HISTORY_FILE_SURFACES = ['docs/wiki/API-Reference.md', 'docs/wiki/Data-Management.md'];
+
+const I18N_PAGE = 'docs/wiki/Internationalization-(i18n).md';
+const I18N_SECTION_ROW_PATTERN = /^\| `(\w+)` \| ((?:`[\w.]+`(?:, )?)+) \|/gm;
+const I18N_KEY_PATTERN = /`([\w.]+)`/g;
+
 const LINE_CITATION_ALLOWLIST = new Set([GUIDE, ADR_TEMPLATE]);
 
 function walk(dir: string, keep: (filename: string) => boolean): string[] {
@@ -555,5 +564,65 @@ describe('citations name symbols, not line numbers', () => {
       );
 
     expect(cited).toEqual([]);
+  });
+});
+
+describe('the i18n key table matches the bundles', () => {
+  it('lists every section and every key of en.json, and invents none', () => {
+    const bundle = JSON.parse(read('src/i18n/en.json')) as Record<
+      string,
+      Record<string, unknown>
+    >;
+    const documented = new Map(
+      [...read(I18N_PAGE).matchAll(I18N_SECTION_ROW_PATTERN)].map(([, section, keys]) => [
+        section,
+        [...keys.matchAll(I18N_KEY_PATTERN)].map(([, key]) => key).sort(),
+      ]),
+    );
+    const actualKeys = (section: Record<string, unknown>): string[] =>
+      Object.entries(section)
+        .flatMap(([key, value]) =>
+          value !== null && typeof value === 'object'
+            ? Object.keys(value as Record<string, unknown>).map((leaf) => `${key}.${leaf}`)
+            : [key],
+        )
+        .sort();
+
+    const mismatches = [
+      ...Object.keys(bundle)
+        .filter((section) => !documented.has(section))
+        .map((section) => `undocumented section: ${section}`),
+      ...[...documented.keys()]
+        .filter((section) => !(section in bundle))
+        .map((section) => `section is not in en.json: ${section}`),
+      ...Object.entries(bundle)
+        .filter(([section]) => documented.has(section))
+        .flatMap(([section, keys]) => {
+          const expected = actualKeys(keys);
+          const listed = documented.get(section) ?? [];
+
+          return expected.join() === listed.join()
+            ? []
+            : [`${section}: documented [${listed.join(', ')}] but en.json has [${expected.join(', ')}]`];
+        }),
+    ];
+
+    expect(documented.size).toBeGreaterThan(0);
+    expect(mismatches).toEqual([]);
+  });
+});
+
+describe('the documented data-branch format matches the writer', () => {
+  it('shows the version stars-data.json is actually stamped with', () => {
+    const stamped = read(STORAGE_MODULE).match(DATA_FORMAT_VERSION_PATTERN)?.[1];
+    const stale = HISTORY_FILE_SURFACES.flatMap((surface) =>
+      [...read(surface).matchAll(DOCUMENTED_VERSION_PATTERN)]
+        .map(([, documented]) => documented)
+        .filter((documented) => documented !== stamped)
+        .map((documented) => `${surface} shows version ${documented}, storage.ts writes ${stamped}`),
+    );
+
+    expect(stamped).toBeDefined();
+    expect(stale).toEqual([]);
   });
 });

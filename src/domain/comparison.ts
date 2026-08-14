@@ -80,6 +80,23 @@ export function compareStars({
   return { repos: repoResults, summary };
 }
 
+export function rankByStars(repos: RepoResult[]): RepoResult[] {
+  return repos
+    .filter((repo) => !repo.isRemoved)
+    .sort((repoA, repoB) => repoB.current - repoA.current);
+}
+
+interface TopRepositoriesParams {
+  repos: RepoResult[];
+  limit: number;
+}
+
+export function topRepositories({ repos, limit }: TopRepositoriesParams): string[] {
+  return rankByStars(repos)
+    .slice(0, limit)
+    .map((repo) => repo.fullName);
+}
+
 interface CreateSnapshotParams {
   currentRepos: RepoInfo[];
   summary: Summary;

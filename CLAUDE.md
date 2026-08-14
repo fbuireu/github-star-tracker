@@ -113,7 +113,10 @@ promise, not a fix.
 `docs/docs-consistency.test.ts` makes the mechanical half of that contract executable: it reads every
 document and asserts the checkable claims against the repo — no dead markdown links, no citation of a source
 or test file that does not exist, no sample chart in `examples/README.md` without its SVG, every `action.yml`
-input and output named on the surfaces that list them, and the ADR set held to its template (sequential
+input and output named on the surfaces that list them, the translation-key table in
+`docs/wiki/Internationalization-(i18n).md` matching `src/i18n/en.json` section for section and key for key,
+every documented `stars-data.json` example showing the `version` the writer actually stamps,
+and the ADR set held to its template (sequential
 numbering, `NNNN-kebab-title.md` filenames, the `# N. Title` / date / status / *Context* / *Decision* /
 *Consequences* shape, a row in the `ARCHITECTURE.md` index, and — the one that rots quietly — a link from
 some document **other** than that index, since an ADR only the index points at will not be read). It runs

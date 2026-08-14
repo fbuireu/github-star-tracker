@@ -54,8 +54,10 @@ is not repeated here. What follows is what that table cannot express.
   SVG palette again, which is what left dark-mode readers with a white chart background.
 - **One `chartNow` `Date` is created and reused** for `buildStarHistory` and `buildChartFiles`, so the global
   chart and every per-repo chart end on the same instant.
-- `topRepoNames` sorts a **copy** of `results.repos`; that array must not be reordered in place. Removed
-  repos are excluded, and therefore have no per-repo chart.
+- **`topRepoNames` is not computed here.** It is `topRepositories({ repos: results.repos, limit:
+  config.topRepos })` from `@domain/comparison`, the same call `@presentation/report-model` makes for the
+  Report. It ranks a **copy**, so `results.repos` is never reordered in place, and Removed Repositories are
+  excluded — they therefore have no per-repo chart.
 - **Read-only runs do everything except the push** — they still read, compute, render, write into the
   worktree, set every output and send the email, and the worktree is then discarded unpushed. The guard now
   lives inside `withDataBranch`, which receives `readOnly` and decides; this layer passes the flag and never
@@ -105,6 +107,9 @@ fetch is gated on `includeCharts || trackStargazers`.
 - `tracker.test.ts` mocks most of the tree but deliberately **not** `@presentation/charts` or
   `@domain/star-history`, so `buildChartFiles` and `buildStarHistory` execute for real. Both now also have
   colocated tests of their own, so this is belt-and-braces rather than their only coverage.
+- `tracker.test.ts` mocks `@presentation/svg-chart` down to its single `renderSvgChart`, so "which chart was
+  drawn" is read off the `request.kind` of each call — the local `chartRequests(kind)` and `mockCharts({
+  [kind]: svg })` helpers exist for exactly that. There is no per-kind mock to assert on any more.
 - `tracker.test.ts` fakes the `DataBranch` rather than the filesystem: assertions about what was persisted
   read `branch.publish.mock.calls[0][0]`, not `writeHistory`. Anything about *how* the worktree is written
   belongs in `data-branch.test.ts`.

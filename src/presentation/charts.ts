@@ -3,15 +3,11 @@ import type { ForecastData } from '@domain/forecast';
 import { buildStarHistory } from '@domain/star-history';
 import type { RepoStargazers } from '@domain/stargazers';
 import type { History, SnapshotRepo } from '@domain/types';
-import { getTranslations } from '@i18n';
+import type { ChartRequest } from './chart-spec';
+import { ChartKind } from './chart-spec';
 import { CHART_FILES, MIN_SNAPSHOTS_FOR_CHART } from './constants';
 import { perRepoChartFile } from './shared';
-import {
-  generateComparisonSvgChart,
-  generateForecastSvgChart,
-  generatePerRepoSvgChart,
-  generateSvgChart,
-} from './svg-chart';
+import { renderSvgChart } from './svg-chart';
 
 interface ChartFile {
   filename: string;
@@ -52,7 +48,6 @@ export function buildChartFiles({
     return [];
   }
 
-  const t = getTranslations(config.locale);
   const style = {
     locale: config.locale,
     lineWidth: config.chartLineWidth,
@@ -66,12 +61,13 @@ export function buildChartFiles({
     theme: config.chartTheme,
     range: config.chartRange,
   };
+  const renderChart = (request: ChartRequest): string | null =>
+    renderSvgChart({ ...style, request });
   const files: ChartFile[] = [];
 
-  const starHistoryChart = generateSvgChart({
-    ...style,
+  const starHistoryChart = renderChart({
+    kind: ChartKind.STAR_HISTORY,
     history,
-    title: t.report.starHistory,
     lineColor: config.chartLineColor,
     milestones: config.chartMilestones,
     customMilestones: config.chartCustomMilestones,
@@ -94,8 +90,8 @@ export function buildChartFiles({
           now,
         })
       : { snapshots: [] };
-    const repoChart = generatePerRepoSvgChart({
-      ...style,
+    const repoChart = renderChart({
+      kind: ChartKind.PER_REPO,
       history: resolveChartHistory({ candidate: repoStarHistory, fallback: fallbackHistory }),
       repoFullName,
       lineColor: config.chartLineColor,
@@ -107,11 +103,10 @@ export function buildChartFiles({
   }
 
   if (topRepoNames.length > 0) {
-    const comparisonChart = generateComparisonSvgChart({
-      ...style,
+    const comparisonChart = renderChart({
+      kind: ChartKind.COMPARISON,
       history,
       repoNames: topRepoNames,
-      title: t.report.topRepositories,
     });
 
     if (comparisonChart) {
@@ -120,8 +115,8 @@ export function buildChartFiles({
   }
 
   if (forecastData) {
-    const forecastChart = generateForecastSvgChart({
-      ...style,
+    const forecastChart = renderChart({
+      kind: ChartKind.FORECAST,
       history,
       forecastData,
       lineColor: config.chartLineColor,

@@ -412,14 +412,9 @@ Because the images are rasterised once per run, this is one choice for the whole
 
 ## Localized Subject Lines
 
-The built-in email auto-generates localized subject lines:
-
-| Locale | Example Subject |
-|---|---|
-| `en` | `GitHub Stars Report: 523 total stars (+15)` |
-| `es` | `Informe de estrellas de GitHub: 523 estrellas totales (+15)` |
-| `ca` | `Informe d'estrelles de GitHub: 523 estrelles totals (+15)` |
-| `it` | `Rapporto stelle GitHub: 523 stelle totali (+15)` |
+The subject is always `<localized subject>: <total stars> (<delta>)` — for example
+`GitHub Star Tracker Report: 523 (+15)`. The per-locale wording is listed once, in
+[Internationalization (i18n)](Internationalization-(i18n)#localized-email-subjects).
 
 ---
 

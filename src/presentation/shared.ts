@@ -1,4 +1,5 @@
 import { type ChartCurve, ChartRange, ChartTheme } from '@config/types';
+import { rankByStars } from '@domain/comparison';
 import { FORECAST_WEEKS, MS_PER_DAY } from '@domain/constants';
 import { type ForecastData, ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
@@ -33,6 +34,8 @@ export interface EmailChartStyle {
   customMilestones?: readonly number[];
   range?: ChartRange;
   trendLine?: boolean;
+  lineColor?: string;
+  lineWidth?: number;
 }
 
 export interface GenerateHtmlReportParams extends ReportParams, EmailChartStyle {}
@@ -140,13 +143,12 @@ export function prepareReportData({
 }: PrepareReportDataParams): ReportData {
   const { repos } = results;
   const t = getTranslations(locale);
-  const activeRepos = repos.filter((repo) => !repo.isRemoved);
 
   return {
-    activeRepos,
+    activeRepos: repos.filter((repo) => !repo.isRemoved),
     newRepos: repos.filter((repo) => repo.isNew),
     removedRepos: repos.filter((repo) => repo.isRemoved),
-    sorted: [...activeRepos].sort((repoA, repoB) => repoB.current - repoA.current),
+    sorted: rankByStars(repos),
     now: new Date().toISOString().split('T')[0],
     prev: previousTimestamp ? previousTimestamp.split('T')[0] : t.report.firstRun,
   };

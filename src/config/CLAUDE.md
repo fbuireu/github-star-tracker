@@ -6,7 +6,7 @@ repo's `star-tracker.yml`. It produces a fully-populated `Config` — every fiel
 inputs (`@infrastructure/notification` does), does **not** read `github-token` / `github-api-url`
 (`@application/tracker` does), and does **not** validate value *ranges*.
 
-`types.ts` holds `Config` and the enums, `defaults.ts` holds `DEFAULTS` and `VISIBILITY_CONFIG`,
+`types.ts` holds `Config` and the enums, `defaults.ts` holds `DEFAULTS`,
 `parsers.ts` holds pure coercions used only here, and `loader.ts` is the resolver. Every parser is reached
 through `loader.ts`'s field table, so none of them is exported purely for a test.
 
@@ -93,9 +93,13 @@ not implement:
 - `chart-custom-milestones` says it "Requires chart-milestones to be enabled". Nothing enforces that; the two
   resolve independently, so custom milestones combined with `chart-milestones: false` silently do nothing.
 
-Two literals are also duplicated between the manifest and code, so changing `action.yml` alone has no effect:
-`smtp-port`'s `'587'` (`DEFAULT_SMTP_PORT` in `@infrastructure/notification/email`) and `config-path`'s
-`'star-tracker.yml'` (`DEFAULT_CONFIG_PATH` in `loader.ts`).
+Three literals are duplicated between the manifest and code, so changing `action.yml` alone has no effect:
+`smtp-port`'s `'587'` (`DEFAULT_SMTP_PORT` in `@infrastructure/notification/email`), `config-path`'s
+`'star-tracker.yml'` (`DEFAULT_CONFIG_PATH` in `loader.ts`) and `send-on-no-changes`'s `'false'`
+(`DEFAULTS.sendOnNoChanges`). All three pairs are pinned by `action-inputs.test.ts`. The third is the
+asymmetric one: because the manifest always supplies a non-empty `'false'`, `DEFAULTS.sendOnNoChanges` is
+reached **only** through an unparseable input, so a drift there shows up as an invalid value behaving
+differently from an absent one rather than as a changed default.
 
 ## Gotchas
 

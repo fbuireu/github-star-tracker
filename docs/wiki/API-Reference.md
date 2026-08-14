@@ -162,6 +162,7 @@ Do not use `if: steps.tracker.outputs.new-stars >= 500` for this - that requires
 
 ```typescript
 interface History {
+  version: number;                   // on-disk format version; absent in files written before it existed, which means 1
   snapshots: Snapshot[];
   starsAtLastNotification?: number;  // total stars captured when the last notification fired; absent until one does
 }
@@ -184,6 +185,7 @@ interface SnapshotRepo {
 
 ```json
 {
+  "version": 1,
   "snapshots": [
     {
       "timestamp": "2026-02-15T00:00:00.000Z",

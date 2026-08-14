@@ -7,6 +7,8 @@ import { COLORS } from './constants';
 import { generateHtmlReport } from './html';
 import type { GenerateHtmlReportParams } from './shared';
 
+const QUICKCHART_CONFIG = /https:\/\/quickchart\.io\/chart\?[^"]*&c=([^"]+)/g;
+
 function renderHtml(overrides: Partial<GenerateHtmlReportParams> = {}): string {
   return generateHtmlReport({
     results: makeComparisonResults(),
@@ -180,6 +182,55 @@ describe('generateHtmlReport', () => {
     expect(html).toContain('alt="user/repo-a"');
     expect(html).toContain('alt="user/repo-b"');
     expect(html).not.toContain('<details>');
+  });
+
+  it('applies chart-line-color to the star history, per-repo and forecast charts', () => {
+    const history = makeMultiRepoHistory(
+      [
+        { 'user/repo-a': 10, 'user/repo-b': 10 },
+        { 'user/repo-a': 15, 'user/repo-b': 10 },
+        { 'user/repo-a': 22, 'user/repo-b': 12 },
+      ],
+      { stepDays: 1 },
+    );
+    const forecastData: ForecastData = {
+      aggregate: {
+        forecasts: [
+          {
+            method: ForecastMethod.LINEAR_REGRESSION,
+            points: [{ weekOffset: 1, predicted: 40 }],
+          },
+        ],
+      },
+      repos: [],
+    };
+
+    const html = renderHtml({
+      history,
+      includeCharts: true,
+      forecastData,
+      lineColor: '#6b63ff',
+    });
+    const configs = [...html.matchAll(QUICKCHART_CONFIG)].map((match) =>
+      decodeURIComponent(match[1]),
+    );
+
+    expect(configs.filter((config) => config.includes('#6b63ff')).length).toBeGreaterThanOrEqual(3);
+    expect(configs[0]).not.toContain(COLORS.accent);
+  });
+
+  it('applies chart-line-width to the email chart data lines', () => {
+    const history = makeMultiRepoHistory([{ 'user/repo-a': 20 }, { 'user/repo-a': 23 }], {
+      stepDays: 1,
+    });
+    const configsOf = (html: string): string[] =>
+      [...html.matchAll(QUICKCHART_CONFIG)].map((match) => decodeURIComponent(match[1]));
+
+    const styled = configsOf(renderHtml({ history, includeCharts: true, lineWidth: 5 }));
+    const plain = configsOf(renderHtml({ history, includeCharts: true }));
+
+    expect(styled.every((config) => config.includes('"borderWidth":5'))).toBe(true);
+    expect(plain.some((config) => config.includes('borderWidth'))).toBe(false);
   });
 
   it('does not include charts when includeCharts is false', () => {

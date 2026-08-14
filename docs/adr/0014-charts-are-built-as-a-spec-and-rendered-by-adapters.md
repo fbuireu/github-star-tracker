@@ -33,10 +33,20 @@ done, and it is precisely the part that did *not* drift; what drifted was everyt
 
 `@presentation/chart-spec` decides **what** a Chart is; the two renderers decide **how** it looks.
 
-`starHistorySpec`, `perRepoSpec`, `comparisonSpec` and `forecastSpec` each return a `ChartSpec` — axis
-labels, an ordered list of series with a resolved colour, and the Milestone thresholds, or `null` when there
-is too little history to plot. `svg-chart.ts` and `chart.ts` are adapters over that seam: each maps a
-`ChartSpec` onto its own dialect and owns nothing else about the Chart's content.
+A `ChartRequest` names *which* Chart is wanted — a discriminated union over the four `ChartKind`s
+[CONTEXT.md](../../CONTEXT.md) already lists, each variant carrying only its own inputs. `buildChartSpec`
+maps one onto a `ChartSpec` — axis labels, an ordered list of series with a resolved colour, and the
+Milestone thresholds, or `null` when there is too little history to plot. `starHistorySpec`, `perRepoSpec`,
+`comparisonSpec` and `forecastSpec` are the private cases behind it.
+
+`svg-chart.ts` and `chart.ts` are adapters over that seam, each with **one** entry point — `renderSvgChart`
+and `chartImageUrl` — taking a request plus its own style. Each maps a `ChartSpec` onto its own dialect and
+owns nothing else about the Chart's content.
+
+The request is what stops the seam being re-described at every call: before it, each adapter exported four
+near-identical generators whose params interfaces restated the same fields, and every caller restated the
+style bag once per chart. A fifth chart kind cost two exports, two params interfaces and two call sites; it
+now costs one union variant and one `case`.
 
 The dialect-specific facts stay in the adapters, because they are genuinely not shared: the SVG path
 geometry and animation, Chart.js option names, and the two defaults that differ. Where a difference is a
@@ -52,8 +62,18 @@ a dash array or a point radius. Each adapter maps them through its own table.
 - **The spec must stay free of dialect vocabulary.** No SVG attributes, no Chart.js option names, no
   `borderDash` arrays. The moment one leaks in, the other adapter has to work around it and the seam stops
   paying for itself.
-- **A new chart kind is a new spec builder plus two small mappings**, not two parallel implementations. A new
-  *style* option is one field on `ChartSpec` and one line in each adapter.
+- **A new chart kind is a `ChartRequest` variant plus a `case` in `buildChartSpec`**, not two parallel
+  implementations — neither adapter is touched. A new *style* option is one field on `ChartSpec` and one line
+  in each adapter; a new *content* option is one field on the request variant.
+- **Default titles moved into `buildChartSpec`**, so the SVG and the email chart of a kind are always named
+  the same thing. The SVG star-history chart used to fall back to a hardcoded English `'Star History'` while
+  the email one used the locale bundle.
+- **`AxisLabels` stopped being a per-call parameter.** It is now an adapter constant, and `forecastSpec`
+  `Omit`s it from its params rather than accepting a value it overrides — the shape now says what the code
+  always did.
+- **`chart-spec.test.ts` is the seam's own test surface.** Content rules were previously asserted only
+  through `svg-chart.test.ts` and `chart.test.ts`, in duplicate and through rendered strings; those two are
+  now free to be about appearance.
 - **The two renderers can no longer drift on content** — window, cap, colours, labels and Milestone
   visibility are computed once. They can still drift on appearance, which is the point.
 - **The cost is a layer of indirection and a vocabulary to learn** (`ChartSpec`, `AxisLabels`, `SeriesDash`,

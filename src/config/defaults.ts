@@ -3,18 +3,6 @@ import type { Locale } from '@i18n';
 import type { Config } from './types';
 import { ChartAxisSide, ChartCurve, ChartRange, ChartTheme, Visibility } from './types';
 
-interface VisibilityApiParams {
-  visibility: Exclude<Visibility, typeof Visibility.OWNED>;
-  affiliation?: string;
-}
-
-export const VISIBILITY_CONFIG: Record<Visibility, VisibilityApiParams> = {
-  [Visibility.PUBLIC]: { visibility: Visibility.PUBLIC },
-  [Visibility.PRIVATE]: { visibility: Visibility.PRIVATE },
-  [Visibility.ALL]: { visibility: Visibility.ALL },
-  [Visibility.OWNED]: { visibility: Visibility.ALL, affiliation: 'owner' },
-};
-
 export const DEFAULTS: Config = {
   visibility: Visibility.ALL,
   includeArchived: false,

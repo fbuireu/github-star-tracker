@@ -29,7 +29,7 @@ flowchart TD
 
     cfg --> dom
     cfg --> i18n
-    pres -->|types only| cfg
+    pres --> cfg
     pres --> dom
     pres --> i18n
     infra --> cfg
@@ -87,7 +87,7 @@ All step numbers refer to `src/application/tracker.ts`.
 | 9 | `measurement.droppedSnapshots > 0` -> prune warning | application | The domain reports the count; only the shell can log it |
 | 10 | `fetchAllStargazers({ octokit, repos, config })` | infrastructure/github | Only when `includeCharts \|\| trackStargazers`. Per-repo failures degrade to `core.warning` |
 | 11 | `branch.readStargazers()` -> `diffStargazers` -> `buildStargazerMap(...)` | persistence + domain | Only when `trackStargazers`. The map is handed to `publish`, not written here |
-| 12 | `topRepoNames` = copy of `results.repos`, drop `isRemoved`, sort desc by `current`, `slice(0, topRepos)` | application | Local, no helper |
+| 12 | `topRepositories({ repos: results.repos, limit: config.topRepos })` | domain/comparison | The single definition of Top Repositories; `@presentation/report-model` calls the same function for the Report |
 | 13 | `buildStarHistory({ repoStargazers, repos, maxPoints, now: chartNow })` | domain/star-history | Reconstructs a dense monotonic history from `starred_at`; capped at 365 buckets |
 | 14 | `resolveChartHistory({ candidate, fallback: updatedHistory })` | presentation/charts | Reconstruction wins when it has >= 2 snapshots, otherwise the stored history |
 | 15 | `computeForecast({ history, topRepoNames })` | domain/forecast | `null` below 3 snapshots; always 2 methods x 4 weekly points |
@@ -121,7 +121,7 @@ State has to survive between runs of a stateless Action. Artifacts expire and ar
     star-history.svg  comparison.svg  forecast.svg  <owner>-<repo>.svg
 ```
 
-`read-only: true` runs everything — fetch, compare, render, all outputs, email — but skips `commitAndPush`, so a second workflow (e.g. a weekly digest using `compare-against`) can share a data branch without appending snapshots or racing the writer. The read-only guard lives in `tracker.ts`, not in the persistence layer.
+`read-only: true` runs everything — fetch, compare, render, all outputs, email — but skips `commitAndPush`, so a second workflow (e.g. a weekly digest using `compare-against`) can share a data branch without appending snapshots or racing the writer. There are **two guards, both inside `@infrastructure`**: `initializeDataBranch` refuses to bring an absent Data Branch into existence, and `publish` writes every artefact into the worktree and then returns before `commitAndPush`. `tracker.ts` passes `readOnly` into `withDataBranch` and never branches on it itself.
 
 ## 4. Outputs
 
@@ -181,6 +181,7 @@ Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain gl
 | [0012](./docs/adr/0012-unreadable-stargazer-lists-keep-their-previous-logins.md) | Unreadable stargazer lists keep their previous logins |
 | [0013](./docs/adr/0013-a-run-is-measured-in-one-place.md) | A Run is measured in one place |
 | [0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md) | Charts are built as a spec and rendered by adapters |
+| [0015](./docs/adr/0015-the-stored-history-declares-its-format-version.md) | The Stored History declares its format version |
 
 Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md) — `# N. Title`, a date, a
 status, then *Context*, *Decision*, *Consequences*. A new ADR starts by copying that file, not by writing
@@ -207,7 +208,8 @@ One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/
 | **Add an action input** | `action.yml` (declare it, `default: ''` so the config file can win); `src/config/types.ts` (`Config` field); `src/config/defaults.ts` (`DEFAULTS` entry — this also makes the snake_case/kebab-case config-file key work automatically); `src/config/loader.ts` (**one row in `FIELD_SOURCES`**, naming the input parser and the file parser — the action input name is derived from the key); consume it in the relevant layer; update `src/config/action-inputs.test.ts` and `README.md`/`docs/wiki`. |
 | **Add a locale** | Add the JSON bundle under `src/i18n/`; register it in `LOCALES`, `LOCALE_MAP` and the `TRANSLATIONS: Record<Locale, Translations>` map (a missing key is a type error, an extra key is not); extend the `locale` description in `action.yml`. |
 | **Add a report format** | New pure renderer in `src/presentation/` (data in, string out, no I/O) reading `buildReportModel` rather than re-deriving sections + colocated test; a `write<Format>` helper and filename in `@infrastructure/persistence/storage`, plus a field on `PublishedArtefacts`; add an output to `action.yml` + `setOutputs`/`setEmptyOutputs` if it should be exposed. |
-| **Add a chart option** | Input plumbing as above; thread it through the `style` object in `src/presentation/charts.ts`. If it changes **what** is plotted it belongs on `ChartSpec` in `src/presentation/chart-spec.ts` and both adapters read it; if it only changes **how**, implement it in `src/presentation/svg-chart.ts` (all SVG primitives live behind the private `renderSvg`) and mirror it in `src/presentation/chart.ts` if email charts should honour it ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)); add a sample SVG under `examples/`. |
+| **Add a chart option** | Input plumbing as above; thread it through the `style` object in `src/presentation/charts.ts`. If it changes **what** is plotted it belongs on the matching `ChartRequest` variant or on `ChartSpec` in `src/presentation/chart-spec.ts` and both adapters read it; if it only changes **how**, implement it in `src/presentation/svg-chart.ts` (all SVG primitives live behind the private `renderSvg`) and mirror it in `src/presentation/chart.ts` if email charts should honour it ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)); add a sample SVG under `examples/`. |
+| **Add a chart kind** | One variant on `ChartRequest` and one `case` in `buildChartSpec` (`src/presentation/chart-spec.ts`), plus the spec builder itself. Neither adapter changes — `renderSvgChart` and `chartImageUrl` take any request. Then emit it from `buildChartFiles` (`charts.ts`) and/or `html.ts`, and add a filename to `CHART_FILES`. |
 
 ## 8. Known inconsistencies
 

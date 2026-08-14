@@ -480,17 +480,22 @@ src/
 │   └── tracker.ts                    # Orchestrator
 ├── config/
 │   ├── types.ts                      # Config, Visibility, ChartCurve/Theme/Range types
-│   ├── defaults.ts                   # DEFAULTS, VISIBILITY_CONFIG
+│   ├── defaults.ts                   # DEFAULTS
 │   ├── parsers.ts                    # parseBool, parseFileBool, parseNumber, parseList, toStringList
 │   └── loader.ts                     # loadConfig(), loadConfigFile(), resolveEnum()
 ├── domain/
 │   ├── types.ts                      # RepoInfo, Snapshot, History, Summary, CompareAgainst, NotificationMode
-│   ├── constants.ts                  # MS_PER_DAY, toEpochMs(), NOTIFICATION_THRESHOLDS
-│   ├── comparison.ts                 # compareStars(), createSnapshot()
-│   ├── snapshot.ts                   # getBaselineSnapshot(), getLastSnapshot(), addSnapshot(), repoStarSeries()
-│   ├── formatting.ts                 # formatCount(), deltaIndicator(), trendIcon(), formatDate()
-│   ├── notification.ts               # shouldNotify(), getAdaptiveThreshold()
-│   ├── forecast.ts                   # computeForecast(), linearRegression(), weightedMovingAverage()
+│   ├── constants.ts                  # MS_PER_DAY, STAR_MILESTONES, NOTIFICATION_THRESHOLDS
+│   ├── time.ts                       # toEpochMs() - the layer's only timestamp entry point
+│   ├── measurement.ts                # measureRun(), recordNotification() - the layer's front door
+│   ├── comparison.ts                 # compareStars(), createSnapshot(), rankByStars(), topRepositories()
+│   ├── snapshot.ts                   # getBaselineSnapshot(), addSnapshot(), repoStarSeries()
+│   ├── formatting.ts                 # formatCount(), deltaIndicator(), trendIcon(), formatDate(), buildAxisLabels()
+│   ├── notification.ts               # shouldNotify()
+│   ├── growth.ts                     # calendarDays(), latestRateInterval(), weightedDailyRate(), fitTrend()
+│   ├── forecast.ts                   # computeForecast()
+│   ├── velocity.ts                   # computeVelocity()
+│   ├── star-history.ts               # buildStarHistory() - reconstruction from starred_at
 │   └── stargazers.ts                 # diffStargazers(), buildStargazerMap()
 ├── i18n/
 │   ├── index.ts                      # LOCALE_MAP, LOCALES, getTranslations(), interpolate()
@@ -508,15 +513,19 @@ src/
 │   ├── notification/
 │   │   └── email.ts                  # getEmailConfig(), sendEmail()
 │   └── persistence/
+│       ├── data-branch.ts            # withDataBranch() - the folder's only external surface
 │       └── storage.ts                # read/write History, Report, Badge, CSV, Chart, Stargazers; commitAndPush()
 └── presentation/
     ├── constants.ts                  # COLORS, CHART, BADGE, SVG_CHART, CHART_FILES, SECTION_ICON
     ├── shared.ts                     # prepareReportData(), selectChartSnapshots(), resolvePalette()
+    ├── report-model.ts               # buildReportModel() - which sections a report has
+    ├── escaping.ts                   # escapeFor(dialect) - every escaper in the layer
     ├── markdown.ts                   # generateMarkdownReport()
     ├── html.ts                       # generateHtmlReport()
     ├── csv.ts                        # generateCsvReport()
-    ├── chart.ts                      # generateChartUrl() (QuickChart for HTML emails)
-    ├── svg-chart.ts                  # generateSvgChart() (animated SVGs for data branch)
+    ├── chart-spec.ts                 # ChartRequest, buildChartSpec() - what a chart contains
+    ├── chart.ts                      # chartImageUrl() (QuickChart for HTML emails)
+    ├── svg-chart.ts                  # renderSvgChart() (animated SVGs for data branch)
     ├── charts.ts                     # buildChartFiles() - which charts a run produces
     └── badge.ts                      # generateBadge()
 ```
