@@ -5,8 +5,27 @@ snapshot, which snapshot is the baseline, how a star curve is reconstructed and 
 notification is due, and how numbers and dates become short strings. No I/O of any kind. It does not build
 reports (`@presentation/*`) and does not sequence anything (`@application/tracker`).
 
-One module per concept, each with a colocated `*.test.ts`: `comparison`, `snapshot`, `forecast`, `velocity`,
-`stargazers`, `star-history`, `formatting`, `notification`, `time`, plus `types.ts` and `constants.ts`.
+One module per concept, each with a colocated `*.test.ts`: `measurement`, `comparison`, `snapshot`,
+`forecast`, `velocity`, `growth`, `stargazers`, `star-history`, `formatting`, `notification`, `time`, plus
+`types.ts` and `constants.ts`.
+
+## The Run Measurement is the layer's front door
+
+`measureRun` (`src/domain/measurement.ts`) is the only entry point `@application` uses to turn one
+observation into a Run Measurement, and [ADR 0013](../../docs/adr/0013-a-run-is-measured-in-one-place.md)
+records why. It composes `getBaselineSnapshot`, `compareStars`, `createSnapshot`, `addSnapshot` and
+`shouldNotify` in the one order that is correct, and returns `baselineTimestamp`, `results`, `summary`,
+`updatedHistory`, `droppedSnapshots` and `thresholdReached`.
+
+- **The five it composes stay exported and stay tested.** They are internal seams within this layer, not a
+  surface another layer crosses. Do not call them from outside `@domain` — the ordering rules they carry are
+  what `measureRun` exists to make unreachable.
+- **`measureRun` never advances the Notification baseline.** It reports `thresholdReached`; `@application`
+  decides delivery and then calls `recordNotification`, which returns a **new** History rather than mutating
+  the one it was handed. That split is [ADR 0011](../../docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md).
+- **`droppedSnapshots` is a count, not a warning.** This layer is pure and cannot log; the shell raises the
+  `max-history` warning from it.
+- `now` is injectable and reaches `getBaselineSnapshot` only. `createSnapshot` still reads the wall clock.
 
 ## Purity and time
 
@@ -55,8 +74,16 @@ snapshot everything else is diffed against.
 - Projections anchor on the **last observed value**, not the fitted one:
   `predicted = last.value + rate * weekOffset * 7`. Changing this changes every chart. Every prediction is
   clamped to a non-negative integer.
-- `snapshotDays` normalizes by real calendar spacing, so the projection is in calendar weeks whatever the run
+- **All rate arithmetic lives in `src/domain/growth.ts`**, and both consumers cross it: `calendarDays`
+  converts a History to day offsets, `latestRateInterval` finds the newest usable pair, `weightedDailyRate`
+  is the Forecast Method that weights recent movement, and `fitTrend` is the least-squares one. The
+  **Rate Interval** rule — skip any pair closer than `MIN_RATE_INTERVAL_DAYS` — is now written once, so
+  Velocity and Forecast cannot disagree about it.
+- `calendarDays` normalizes by real calendar spacing, so the projection is in calendar weeks whatever the run
   cadence. If **any** timestamp is unparseable it falls back to a synthetic weekly cadence for *all* points.
+  `computeVelocity` does **not** share that policy: it drops unparseable snapshots and returns `null` when
+  the newest one does not parse. The two policies are deliberately different and both are stated here
+  because neither signature says so.
 - `computeVelocity` uses the last snapshot and the newest earlier one at least 0.25 days back, skipping
   closer pairs so a manual re-run minutes after a scheduled one cannot inflate the rate. It is a
   recent-period rate, never an all-time average. Callers must pass the **stored** history, not a
@@ -108,6 +135,10 @@ every value is a same-format ISO string.
 - `buildStarHistory` handles a `starred_at` in the future relative to `now` by emitting just two edges,
   silently collapsing the chart to two points.
 - `compareStars` keys the previous snapshot by `fullName` in a `Map`; duplicate entries resolve last-wins
-  without warning.
+  without warning. `comparison.test.ts` pins that, so it is behaviour rather than an accident.
+- **Nothing here is exported only so a test can reach it.** `getAdaptiveThreshold`, `getLastSnapshot`,
+  `linearRegression` and `weightedMovingAverage` used to be, and their cases now run through `shouldNotify`,
+  `getBaselineSnapshot` and `growth.ts`'s own interface instead. Adding an export purely to test an internal
+  is the smell that says the module is the wrong shape.
 - `STAR_MILESTONES` lives in `src/domain/constants.ts` and is consumed by `velocity.ts` **and**
   `@presentation/*`. `constants.ts` and `types.ts` are coverage-excluded.

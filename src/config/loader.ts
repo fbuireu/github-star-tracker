@@ -67,8 +67,16 @@ function assertValidDataBranch(dataBranch: string): void {
   }
 }
 
-function toSnakeCase(key: string): string {
-  return key.replaceAll(UPPERCASE_LETTER_PATTERN, (letter) => `_${letter.toLowerCase()}`);
+interface ToDelimitedParams {
+  key: string;
+  delimiter: string;
+}
+
+function toDelimited({ key, delimiter }: ToDelimitedParams): string {
+  return key.replaceAll(
+    UPPERCASE_LETTER_PATTERN,
+    (letter) => `${delimiter}${letter.toLowerCase()}`,
+  );
 }
 
 function formatChoices(choices: readonly string[]): string {
@@ -77,6 +85,10 @@ function formatChoices(choices: readonly string[]): string {
   if (quoted.length <= 2) return quoted.join(' or ');
 
   return `${quoted.slice(0, -1).join(', ')}, or ${quoted.at(-1)}`;
+}
+
+function formatFallback(fallback: unknown): string {
+  return typeof fallback === 'string' ? `"${fallback}"` : String(fallback);
 }
 
 interface ResolveEnumParams<T extends string> {
@@ -105,20 +117,145 @@ function resolveEnum<T extends string>({
   return fallback;
 }
 
-interface ParseOrWarnParams<T> {
+interface FieldContext {
   input: string;
   inputName: string;
-  parse: (value: string) => T | undefined;
+  fileValue: unknown;
+  fallback: unknown;
 }
 
-function parseOrWarn<T>({ input, inputName, parse }: ParseOrWarnParams<T>): T | undefined {
-  const parsed = parse(input);
+type FieldResolver<T> = (context: FieldContext) => T | undefined;
 
-  if (input !== '' && parsed === undefined) {
-    core.warning(`Invalid ${inputName} "${input}". Ignoring it.`);
-  }
+interface FieldSource<T> {
+  fromInput: (value: string) => T | undefined;
+  fromFile: (value: unknown) => T | undefined;
+}
 
-  return parsed;
+function scalarField<T>({ fromInput, fromFile }: FieldSource<T>): FieldResolver<T> {
+  return ({ input, inputName, fileValue }) => {
+    const parsed = fromInput(input);
+
+    if (input !== '' && parsed === undefined) {
+      core.warning(`Invalid ${inputName} "${input}". Ignoring it.`);
+    }
+
+    return parsed ?? fromFile(fileValue);
+  };
+}
+
+function namedFallbackField<T>({ fromInput, fromFile }: FieldSource<T>): FieldResolver<T> {
+  return ({ input, inputName, fileValue, fallback }) => {
+    const parsed = fromInput(input);
+
+    if (input !== '' && parsed === undefined) {
+      core.warning(`Invalid ${inputName} "${input}". Falling back to ${formatFallback(fallback)}`);
+    }
+
+    return parsed ?? fromFile(fileValue);
+  };
+}
+
+function enumField<T extends string>(allowed: readonly T[]): FieldResolver<T> {
+  return ({ input, inputName, fileValue, fallback }) =>
+    resolveEnum({
+      value: input || (fileValue as string | undefined),
+      allowed,
+      fallback: fallback as T,
+      inputName,
+    });
+}
+
+type ScalarValue = string | number | null | undefined;
+
+function fromFileScalar<T>(parse: (value: ScalarValue) => T | undefined) {
+  return (value: unknown): T | undefined =>
+    typeof value === 'string' || typeof value === 'number' || value === null || value === undefined
+      ? parse(value)
+      : undefined;
+}
+
+const boolField = scalarField<boolean>({ fromInput: parseBool, fromFile: parseFileBool });
+
+const positiveField = scalarField<number>({
+  fromInput: parsePositiveNumber,
+  fromFile: fromFileScalar(parsePositiveNumber),
+});
+
+const nonNegativeField = scalarField<number>({
+  fromInput: parseNonNegativeNumber,
+  fromFile: fromFileScalar(parseNonNegativeNumber),
+});
+
+const listField = scalarField<string[]>({ fromInput: parseList, fromFile: toStringList });
+
+type TabledKey = Exclude<
+  keyof Config,
+  'visibility' | 'dataBranch' | 'sendOnNoChanges' | 'chartCustomMilestones'
+>;
+
+const FIELD_SOURCES: { [K in TabledKey]: FieldResolver<Config[K]> } = {
+  includeArchived: boolField,
+  includeForks: boolField,
+  excludeRepos: listField,
+  onlyRepos: listField,
+  excludeOrgs: listField,
+  onlyOrgs: listField,
+  minStars: nonNegativeField,
+  maxHistory: positiveField,
+  compareAgainst: enumField(Object.values(CompareAgainst)),
+  readOnly: boolField,
+  includeCharts: boolField,
+  locale: enumField(LOCALES),
+  notificationThreshold: scalarField<number | 'auto'>({
+    fromInput: parseNotificationThreshold,
+    fromFile: fromFileScalar(parseNotificationThreshold),
+  }),
+  notificationMode: enumField(Object.values(NotificationMode)),
+  trackStargazers: boolField,
+  topRepos: positiveField,
+  smartSampling: boolField,
+  smartSamplingThreshold: nonNegativeField,
+  smartSamplingPages: positiveField,
+  chartLineColor: namedFallbackField<string>({
+    fromInput: parseHexColor,
+    fromFile: parseFileHexColor,
+  }),
+  chartLineWidth: namedFallbackField<number>({
+    fromInput: parseDecimal,
+    fromFile: fromFileScalar(parseDecimal),
+  }),
+  chartMaxPoints: nonNegativeField,
+  chartYAxisSide: enumField(Object.values(ChartAxisSide)),
+  chartSmoothing: boolField,
+  chartCurve: enumField(Object.values(ChartCurve)),
+  chartShowPoints: boolField,
+  chartAnimation: boolField,
+  chartMilestones: boolField,
+  chartBeginAtZero: boolField,
+  chartTheme: enumField(Object.values(ChartTheme)),
+  emailTheme: enumField(Object.values(ChartTheme)),
+  chartRange: enumField(Object.values(ChartRange)),
+  chartTrendLine: boolField,
+  velocityMetrics: boolField,
+};
+
+const TABLED_KEYS = Object.keys(FIELD_SOURCES) as TabledKey[];
+
+function resolveTabledFields(fileConfig: FileConfig): Pick<Config, TabledKey> {
+  const resolved = TABLED_KEYS.map((key) => {
+    const inputName = toDelimited({ key, delimiter: '-' });
+    const fallback = DEFAULTS[key];
+    const value = FIELD_SOURCES[key]({
+      input: core.getInput(inputName),
+      inputName,
+      fileValue: fileConfig[key as FileConfigKey],
+      fallback,
+    });
+
+    return [key, value ?? fallback] as const;
+  });
+
+  return Object.fromEntries(resolved) as Pick<Config, TabledKey>;
 }
 
 interface ParseConfigYamlParams {
@@ -158,320 +295,71 @@ export function loadConfigFile(configPath: string): FileConfig {
 
   return Object.fromEntries(
     FILE_CONFIG_KEYS.map((key) => {
-      const snakeKey = toSnakeCase(key);
+      const snakeKey = toDelimited({ key, delimiter: '_' });
 
       return [key, parsed[snakeKey] ?? parsed[snakeKey.replaceAll('_', '-')]] as const;
     }),
   ) as FileConfig;
 }
 
+function resolveVisibility(fileConfig: FileConfig): Visibility {
+  const raw = core.getInput('visibility') || fileConfig.visibility || DEFAULTS.visibility;
+  const options = Object.values(Visibility);
+  const match = options.find((option) => option === raw);
+
+  if (match === undefined) {
+    throw new Error(`Invalid visibility "${raw}". Must be one of: ${options.join(', ')}`);
+  }
+
+  return match;
+}
+
+function resolveDataBranch(fileConfig: FileConfig): string {
+  const dataBranch = core.getInput('data-branch') || fileConfig.dataBranch || DEFAULTS.dataBranch;
+  assertValidDataBranch(dataBranch);
+
+  return dataBranch;
+}
+
+function resolveCustomMilestones(fileConfig: FileConfig): Config['chartCustomMilestones'] {
+  const input = core.getInput('chart-custom-milestones');
+  const fromInput = input ? parseNumberList(input) : null;
+
+  if (fromInput !== null && fromInput.length === 0) {
+    core.warning(
+      `Invalid chart-custom-milestones "${input}". Expected a comma-separated list of positive numbers. Falling back to the built-in milestones.`,
+    );
+  }
+
+  if (fromInput !== null) return fromInput;
+
+  const fromFile = Array.isArray(fileConfig.chartCustomMilestones)
+    ? parseNumberList(fileConfig.chartCustomMilestones.join(','))
+    : parseNumberList(fileConfig.chartCustomMilestones);
+
+  return fromFile.length > 0 ? fromFile : DEFAULTS.chartCustomMilestones;
+}
+
+const LIST_LOG_LABELS: Record<'onlyRepos' | 'excludeRepos' | 'onlyOrgs' | 'excludeOrgs', string> = {
+  onlyRepos: 'tracking only repos',
+  excludeRepos: 'excluding repos',
+  onlyOrgs: 'tracking only orgs',
+  excludeOrgs: 'excluding orgs',
+};
+
 export function loadConfig(): Config {
   const configPath = core.getInput('config-path') || DEFAULT_CONFIG_PATH;
   const fileConfig = loadConfigFile(configPath);
 
-  const inputVisibility = core.getInput('visibility');
-  const inputIncludeArchived = core.getInput('include-archived');
-  const inputIncludeForks = core.getInput('include-forks');
-  const inputExcludeRepos = core.getInput('exclude-repos');
-  const inputOnlyRepos = core.getInput('only-repos');
-  const inputExcludeOrgs = core.getInput('exclude-orgs');
-  const inputOnlyOrgs = core.getInput('only-orgs');
-  const inputMinStars = core.getInput('min-stars');
-  const inputDataBranch = core.getInput('data-branch');
-  const inputMaxHistory = core.getInput('max-history');
-  const inputReadOnly = core.getInput('read-only');
-  const inputIncludeCharts = core.getInput('include-charts');
-  const inputLocale = core.getInput('locale');
-  const inputNotificationThreshold = core.getInput('notification-threshold');
-  const inputNotificationMode = core.getInput('notification-mode');
-  const inputCompareAgainst = core.getInput('compare-against');
-  const inputTrackStargazers = core.getInput('track-stargazers');
-  const inputTopRepos = core.getInput('top-repos');
-  const inputSmartSampling = core.getInput('smart-sampling');
-  const inputSmartSamplingThreshold = core.getInput('smart-sampling-threshold');
-  const inputSmartSamplingPages = core.getInput('smart-sampling-pages');
-  const inputChartLineColor = core.getInput('chart-line-color');
-  const inputChartLineWidth = core.getInput('chart-line-width');
-  const inputChartMaxPoints = core.getInput('chart-max-points');
-  const inputChartYAxisSide = core.getInput('chart-y-axis-side');
-  const inputChartSmoothing = core.getInput('chart-smoothing');
-  const inputChartCurve = core.getInput('chart-curve');
-  const inputChartShowPoints = core.getInput('chart-show-points');
-  const inputChartAnimation = core.getInput('chart-animation');
-  const inputChartMilestones = core.getInput('chart-milestones');
-  const inputChartBeginAtZero = core.getInput('chart-begin-at-zero');
-  const inputChartTheme = core.getInput('chart-theme');
-  const inputEmailTheme = core.getInput('email-theme');
-  const inputChartCustomMilestones = core.getInput('chart-custom-milestones');
-  const inputChartRange = core.getInput('chart-range');
-  const inputChartTrendLine = core.getInput('chart-trend-line');
-  const inputVelocityMetrics = core.getInput('velocity-metrics');
-
-  const rawVisibility = inputVisibility || fileConfig.visibility || DEFAULTS.visibility;
-  const visibilityOptions = Object.values(Visibility);
-  const visibility = visibilityOptions.find((option) => option === rawVisibility);
-
-  if (visibility === undefined) {
-    throw new Error(
-      `Invalid visibility "${rawVisibility}". Must be one of: ${visibilityOptions.join(', ')}`,
-    );
-  }
-
-  const dataBranch = inputDataBranch || fileConfig.dataBranch || DEFAULTS.dataBranch;
-  assertValidDataBranch(dataBranch);
-
-  const fileCustomMilestones = Array.isArray(fileConfig.chartCustomMilestones)
-    ? parseNumberList(fileConfig.chartCustomMilestones.join(','))
-    : parseNumberList(fileConfig.chartCustomMilestones);
-
-  if (inputChartCustomMilestones && parseNumberList(inputChartCustomMilestones).length === 0) {
-    core.warning(
-      `Invalid chart-custom-milestones "${inputChartCustomMilestones}". Expected a comma-separated list of positive numbers. Falling back to the built-in milestones.`,
-    );
-  }
-
-  const locale = resolveEnum({
-    value: inputLocale || fileConfig.locale,
-    allowed: LOCALES,
-    fallback: DEFAULTS.locale,
-    inputName: 'locale',
-  });
-
-  const chartLineColor =
-    parseHexColor(inputChartLineColor) ??
-    parseFileHexColor(fileConfig.chartLineColor) ??
-    DEFAULTS.chartLineColor;
-  if (inputChartLineColor && !parseHexColor(inputChartLineColor)) {
-    core.warning(
-      `Invalid chart-line-color "${inputChartLineColor}". Falling back to "${DEFAULTS.chartLineColor}"`,
-    );
-  }
-
-  const chartLineWidth =
-    parseDecimal(inputChartLineWidth) ??
-    parseDecimal(fileConfig.chartLineWidth) ??
-    DEFAULTS.chartLineWidth;
-  if (inputChartLineWidth && parseDecimal(inputChartLineWidth) === undefined) {
-    core.warning(
-      `Invalid chart-line-width "${inputChartLineWidth}". Falling back to ${DEFAULTS.chartLineWidth}`,
-    );
-  }
-
-  const chartYAxisSide = resolveEnum({
-    value: inputChartYAxisSide || fileConfig.chartYAxisSide,
-    allowed: Object.values(ChartAxisSide),
-    fallback: DEFAULTS.chartYAxisSide,
-    inputName: 'chart-y-axis-side',
-  });
-
-  const chartTheme = resolveEnum({
-    value: inputChartTheme || fileConfig.chartTheme,
-    allowed: Object.values(ChartTheme),
-    fallback: DEFAULTS.chartTheme,
-    inputName: 'chart-theme',
-  });
-
-  const emailThemeSetting = resolveEnum({
-    value: inputEmailTheme || fileConfig.emailTheme,
-    allowed: Object.values(ChartTheme),
-    fallback: DEFAULTS.emailTheme,
-    inputName: 'email-theme',
-  });
-
-  const emailTheme = emailThemeSetting === ChartTheme.AUTO ? chartTheme : emailThemeSetting;
-
-  const chartRange = resolveEnum({
-    value: inputChartRange || fileConfig.chartRange,
-    allowed: Object.values(ChartRange),
-    fallback: DEFAULTS.chartRange,
-    inputName: 'chart-range',
-  });
-
-  const chartCurve = resolveEnum({
-    value: inputChartCurve || fileConfig.chartCurve,
-    allowed: Object.values(ChartCurve),
-    fallback: DEFAULTS.chartCurve,
-    inputName: 'chart-curve',
-  });
-
-  const compareAgainst = resolveEnum({
-    value: inputCompareAgainst || fileConfig.compareAgainst,
-    allowed: Object.values(CompareAgainst),
-    fallback: DEFAULTS.compareAgainst,
-    inputName: 'compare-against',
-  });
-
-  const notificationMode = resolveEnum({
-    value: inputNotificationMode || fileConfig.notificationMode,
-    allowed: Object.values(NotificationMode),
-    fallback: DEFAULTS.notificationMode,
-    inputName: 'notification-mode',
-  });
+  const tabled = resolveTabledFields(fileConfig);
 
   const config: Config = {
-    visibility,
-    includeArchived:
-      parseOrWarn({
-        input: inputIncludeArchived,
-        inputName: 'include-archived',
-        parse: parseBool,
-      }) ??
-      parseFileBool(fileConfig.includeArchived) ??
-      DEFAULTS.includeArchived,
-    includeForks:
-      parseOrWarn({ input: inputIncludeForks, inputName: 'include-forks', parse: parseBool }) ??
-      parseFileBool(fileConfig.includeForks) ??
-      DEFAULTS.includeForks,
-    excludeRepos:
-      parseList(inputExcludeRepos) ??
-      toStringList(fileConfig.excludeRepos) ??
-      DEFAULTS.excludeRepos,
-    onlyRepos:
-      parseList(inputOnlyRepos) ?? toStringList(fileConfig.onlyRepos) ?? DEFAULTS.onlyRepos,
-    excludeOrgs:
-      parseList(inputExcludeOrgs) ?? toStringList(fileConfig.excludeOrgs) ?? DEFAULTS.excludeOrgs,
-    onlyOrgs: parseList(inputOnlyOrgs) ?? toStringList(fileConfig.onlyOrgs) ?? DEFAULTS.onlyOrgs,
-    minStars:
-      parseOrWarn({
-        input: inputMinStars,
-        inputName: 'min-stars',
-        parse: parseNonNegativeNumber,
-      }) ??
-      parseNonNegativeNumber(fileConfig.minStars) ??
-      DEFAULTS.minStars,
-    dataBranch,
-    maxHistory:
-      parseOrWarn({
-        input: inputMaxHistory,
-        inputName: 'max-history',
-        parse: parsePositiveNumber,
-      }) ??
-      parsePositiveNumber(fileConfig.maxHistory) ??
-      DEFAULTS.maxHistory,
-    compareAgainst,
-    readOnly:
-      parseOrWarn({ input: inputReadOnly, inputName: 'read-only', parse: parseBool }) ??
-      parseFileBool(fileConfig.readOnly) ??
-      DEFAULTS.readOnly,
+    ...tabled,
+    visibility: resolveVisibility(fileConfig),
+    dataBranch: resolveDataBranch(fileConfig),
     sendOnNoChanges: parseBool(core.getInput('send-on-no-changes')) ?? DEFAULTS.sendOnNoChanges,
-    includeCharts:
-      parseOrWarn({ input: inputIncludeCharts, inputName: 'include-charts', parse: parseBool }) ??
-      parseFileBool(fileConfig.includeCharts) ??
-      DEFAULTS.includeCharts,
-    locale,
-    notificationThreshold:
-      parseOrWarn({
-        input: inputNotificationThreshold,
-        inputName: 'notification-threshold',
-        parse: parseNotificationThreshold,
-      }) ??
-      parseNotificationThreshold(fileConfig.notificationThreshold) ??
-      DEFAULTS.notificationThreshold,
-    notificationMode,
-    trackStargazers:
-      parseOrWarn({
-        input: inputTrackStargazers,
-        inputName: 'track-stargazers',
-        parse: parseBool,
-      }) ??
-      parseFileBool(fileConfig.trackStargazers) ??
-      DEFAULTS.trackStargazers,
-    topRepos:
-      parseOrWarn({
-        input: inputTopRepos,
-        inputName: 'top-repos',
-        parse: parsePositiveNumber,
-      }) ??
-      parsePositiveNumber(fileConfig.topRepos) ??
-      DEFAULTS.topRepos,
-    smartSampling:
-      parseOrWarn({ input: inputSmartSampling, inputName: 'smart-sampling', parse: parseBool }) ??
-      parseFileBool(fileConfig.smartSampling) ??
-      DEFAULTS.smartSampling,
-    smartSamplingThreshold:
-      parseOrWarn({
-        input: inputSmartSamplingThreshold,
-        inputName: 'smart-sampling-threshold',
-        parse: parseNonNegativeNumber,
-      }) ??
-      parseNonNegativeNumber(fileConfig.smartSamplingThreshold) ??
-      DEFAULTS.smartSamplingThreshold,
-    smartSamplingPages:
-      parseOrWarn({
-        input: inputSmartSamplingPages,
-        inputName: 'smart-sampling-pages',
-        parse: parsePositiveNumber,
-      }) ??
-      parsePositiveNumber(fileConfig.smartSamplingPages) ??
-      DEFAULTS.smartSamplingPages,
-    chartLineColor,
-    chartLineWidth,
-    chartMaxPoints:
-      parseOrWarn({
-        input: inputChartMaxPoints,
-        inputName: 'chart-max-points',
-        parse: parseNonNegativeNumber,
-      }) ??
-      parseNonNegativeNumber(fileConfig.chartMaxPoints) ??
-      DEFAULTS.chartMaxPoints,
-    chartYAxisSide,
-    chartSmoothing:
-      parseOrWarn({ input: inputChartSmoothing, inputName: 'chart-smoothing', parse: parseBool }) ??
-      parseFileBool(fileConfig.chartSmoothing) ??
-      DEFAULTS.chartSmoothing,
-    chartCurve,
-    chartShowPoints:
-      parseOrWarn({
-        input: inputChartShowPoints,
-        inputName: 'chart-show-points',
-        parse: parseBool,
-      }) ??
-      parseFileBool(fileConfig.chartShowPoints) ??
-      DEFAULTS.chartShowPoints,
-    chartAnimation:
-      parseOrWarn({ input: inputChartAnimation, inputName: 'chart-animation', parse: parseBool }) ??
-      parseFileBool(fileConfig.chartAnimation) ??
-      DEFAULTS.chartAnimation,
-    chartMilestones:
-      parseOrWarn({
-        input: inputChartMilestones,
-        inputName: 'chart-milestones',
-        parse: parseBool,
-      }) ??
-      parseFileBool(fileConfig.chartMilestones) ??
-      DEFAULTS.chartMilestones,
-    chartBeginAtZero:
-      parseOrWarn({
-        input: inputChartBeginAtZero,
-        inputName: 'chart-begin-at-zero',
-        parse: parseBool,
-      }) ??
-      parseFileBool(fileConfig.chartBeginAtZero) ??
-      DEFAULTS.chartBeginAtZero,
-    chartTheme,
-    emailTheme,
-    chartCustomMilestones: inputChartCustomMilestones
-      ? parseNumberList(inputChartCustomMilestones)
-      : fileCustomMilestones.length > 0
-        ? fileCustomMilestones
-        : DEFAULTS.chartCustomMilestones,
-    chartRange,
-    chartTrendLine:
-      parseOrWarn({
-        input: inputChartTrendLine,
-        inputName: 'chart-trend-line',
-        parse: parseBool,
-      }) ??
-      parseFileBool(fileConfig.chartTrendLine) ??
-      DEFAULTS.chartTrendLine,
-    velocityMetrics:
-      parseOrWarn({
-        input: inputVelocityMetrics,
-        inputName: 'velocity-metrics',
-        parse: parseBool,
-      }) ??
-      parseFileBool(fileConfig.velocityMetrics) ??
-      DEFAULTS.velocityMetrics,
+    chartCustomMilestones: resolveCustomMilestones(fileConfig),
+    emailTheme: tabled.emailTheme === ChartTheme.AUTO ? tabled.chartTheme : tabled.emailTheme,
   };
 
   if (config.readOnly && config.notificationThreshold !== 0) {
@@ -483,17 +371,13 @@ export function loadConfig(): Config {
   core.info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`,
   );
-  if (config.onlyRepos.length > 0) {
-    core.info(`Config: tracking only repos: ${config.onlyRepos.join(', ')}`);
-  }
-  if (config.excludeRepos.length > 0) {
-    core.info(`Config: excluding repos: ${config.excludeRepos.join(', ')}`);
-  }
-  if (config.onlyOrgs.length > 0) {
-    core.info(`Config: tracking only orgs: ${config.onlyOrgs.join(', ')}`);
-  }
-  if (config.excludeOrgs.length > 0) {
-    core.info(`Config: excluding orgs: ${config.excludeOrgs.join(', ')}`);
+
+  for (const [key, label] of Object.entries(LIST_LOG_LABELS)) {
+    const values = config[key as keyof typeof LIST_LOG_LABELS];
+
+    if (values.length > 0) {
+      core.info(`Config: ${label}: ${values.join(', ')}`);
+    }
   }
 
   return config;

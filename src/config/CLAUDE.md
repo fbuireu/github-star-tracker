@@ -7,13 +7,34 @@ inputs (`@infrastructure/notification` does), does **not** read `github-token` /
 (`@application/tracker` does), and does **not** validate value *ranges*.
 
 `types.ts` holds `Config` and the enums, `defaults.ts` holds `DEFAULTS` and `VISIBILITY_CONFIG`,
-`parsers.ts` holds pure coercions used only here, and `loader.ts` is the resolver.
+`parsers.ts` holds pure coercions used only here, and `loader.ts` is the resolver. Every parser is reached
+through `loader.ts`'s field table, so none of them is exported purely for a test.
+
+## The field table
+
+`loadConfig` does **not** resolve keys one at a time. `FIELD_SOURCES` in `loader.ts` is one row per key
+naming how to parse the action input and how to parse the config-file value; `resolveTabledFields` folds it,
+deriving the kebab-case input name from the key and falling back to `DEFAULTS`. Adding a `Config` field
+means adding a row, not four lines in four places.
+
+The row types are the vocabulary: `boolField`, `positiveField`, `nonNegativeField`, `listField`,
+`enumField(allowed)` and `namedFallbackField` — the last being the two keys whose warning names the fallback
+(`chart-line-color`, `chart-line-width`) rather than saying "Ignoring it."
+
+**Four keys are deliberately outside the table**, and each is a documented exception: `visibility` throws
+instead of warning, `dataBranch` runs an extra validator, `sendOnNoChanges` never reads the config file and
+never warns, and `chartCustomMilestones` has its own precedence (see below). Anything else belongs in the
+table.
 
 ## Invariants & rules
 
 - **Precedence, per key: action input → config-file value → `DEFAULTS`.** Never reversed. Enum keys use
   `input || fileValue`, so an empty-string input falls through; everything else uses `??` on the *parsed*
   result, so a value that parses to `false` or `0` still beats the file.
+- **Each input is parsed once.** The fold decides the value and whether to warn from the same result, so no
+  key calls its parser twice.
+- A config-file value that is neither a string, a number, `null` nor absent is ignored rather than crashing
+  the parser — `min_stars: true` falls back to the default.
 - **`emailTheme` is the one key whose default is another key.** It resolves through `resolveEnum` like any
   enum, but `ChartTheme.AUTO` is not a value it keeps: `auto` collapses to the already-resolved `chartTheme`
   before the `Config` is built, so `Config.emailTheme` is what the email should actually use and no consumer

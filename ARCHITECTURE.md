@@ -80,26 +80,24 @@ All step numbers refer to `src/application/tracker.ts`.
 | 2 | `loadConfig()` | config | Precedence: action input -> config file -> `DEFAULTS`. Only unknown `visibility` and an invalid `data-branch` throw |
 | 3 | `core.getInput('github-token' / 'github-api-url')`, `github.getOctokit(token, baseUrl?, retry)` | application | The only place an Octokit instance is built; `@octokit/plugin-retry` attached here |
 | 4 | `getRepos({ octokit, config })` | infrastructure/github | Paginates, filters, maps; result sorted by `full_name`. Fetch failure is fatal |
-| 5 | empty result -> `setEmptyOutputs()` and `return` | application | Returns **before** `withDataDir`, so no worktree, no commit, no email |
-| 6 | `withDataDir` -> `initializeDataBranch({ dataBranch, readOnly })` | infrastructure/git | Returns `dataDir`, the template literal `` `.${dataBranch}` ``. `cleanup(dataDir)` runs in `finally` |
-| 7 | `readHistory(dataDir)` | infrastructure/persistence | Normalizes to `{ ...raw, snapshots: Array.isArray(raw.snapshots) ? raw.snapshots : [] }` — a non-array `snapshots` becomes `[]`, everything else survives; invalid JSON throws rather than resetting |
-| 8 | `getBaselineSnapshot({ history, compareAgainst })` | domain/snapshot | `last-run` or the newest snapshot at least 24h/7d/30d old (6h cron-jitter tolerance), else oldest parseable |
-| 9 | `compareStars({ currentRepos, previousSnapshot })` | domain/comparison | New repos get delta 0; removed repos are excluded from `totalStars` but counted in `lostStars` |
+| 5 | empty result -> `setEmptyOutputs()` and `return` | application | Returns **before** `withDataBranch`, so no worktree, no commit, no email |
+| 6 | `withDataBranch({ dataBranch, readOnly, token, run })` | infrastructure/persistence | Opens the worktree via `initializeDataBranch`, hands the body a `DataBranch`, and runs `cleanup` in `finally`. `dataDir` never escapes the module |
+| 7 | `branch.readHistory()` | infrastructure/persistence | Normalizes to `{ ...raw, snapshots: Array.isArray(raw.snapshots) ? raw.snapshots : [] }` — a non-array `snapshots` becomes `[]`, everything else survives; invalid JSON throws rather than resetting |
+| 8 | `measureRun({ trackedSet, storedHistory, comparisonWindow, maxHistory, notificationThreshold, notificationMode })` | domain/measurement | The whole measurement in one call: resolves the Baseline, compares, snapshots, appends, and decides whether the threshold was reached. See [ADR 0013](./docs/adr/0013-a-run-is-measured-in-one-place.md) |
+| 9 | `measurement.droppedSnapshots > 0` -> prune warning | application | The domain reports the count; only the shell can log it |
 | 10 | `fetchAllStargazers({ octokit, repos, config })` | infrastructure/github | Only when `includeCharts \|\| trackStargazers`. Per-repo failures degrade to `core.warning` |
-| 11 | `readStargazers` -> `diffStargazers` -> `writeStargazers(buildStargazerMap(...))` | persistence + domain | Only when `trackStargazers` |
-| 12 | `createSnapshot` -> prune warning -> `addSnapshot({ history, snapshot, maxHistory })` | domain | Returns a new object; preserves `starsAtLastNotification` |
-| 13 | `topRepoNames` = copy of `results.repos`, drop `isRemoved`, sort desc by `current`, `slice(0, topRepos)` | application | Local, no helper |
-| 14 | `buildStarHistory({ repoStargazers, repos, maxPoints, now: chartNow })` | domain/star-history | Reconstructs a dense monotonic history from `starred_at`; capped at 365 buckets |
-| 15 | `resolveChartHistory({ candidate, fallback: updatedHistory })` | presentation/charts | Reconstruction wins when it has >= 2 snapshots, otherwise the stored history |
-| 16 | `computeForecast({ history, topRepoNames })` | domain/forecast | `null` below 3 snapshots; always 2 methods x 4 weekly points |
-| 17 | `generateMarkdownReport(reportParams)` / `generateHtmlReport(reportParams)` / `generateCsvReport(results)` / `generateBadge({ totalStars, locale })` | presentation | Markdown and HTML share one `reportParams` object |
-| 18 | `shouldNotify({ totalStars, starsAtLastNotification, threshold, mode })` | domain/notification | Reads the **pre-append** `storedHistory.starsAtLastNotification`, so the threshold accumulates across runs |
-| 19 | `getEmailConfig(locale)` + `sendEmail({ emailConfig, subject, htmlBody })` | infrastructure/notification | Sent when `emailConfig && (notify \|\| sendOnNoChanges)`; failures downgrade to `core.warning` and clear `notificationDelivered`. **Runs before persistence** — see [ADR 0011](./docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md) |
-| 20 | `updatedHistory.starsAtLastNotification = summary.totalStars` | application | Only when `notificationDelivered`, i.e. a send succeeded or no SMTP transport is configured at all |
-| 21 | `writeHistory` / `writeReport` / `writeBadge` / `writeCsv` | infrastructure/persistence | Written into `dataDir` |
-| 22 | `buildChartFiles({ config, history, fallbackHistory, forecastData, topRepoNames, repoTotals, repoStargazers, now: chartNow })` -> `writeChart` per file, then `pruneCharts({ dataDir, keep })` | presentation + persistence | One `chartNow` `Date` is shared with step 14. Pruning deletes `charts/*.svg` this run did not produce, so a repo leaving `top-repos` does not strand its chart |
-| 23 | `commitAndPush({ dataDir, dataBranch, message, token })` | infrastructure/persistence | Skipped entirely when `config.readOnly` |
-| 24 | `setOutputs(...)` | application | Eleven outputs, exactly matching the `outputs:` block of `action.yml` |
+| 11 | `branch.readStargazers()` -> `diffStargazers` -> `buildStargazerMap(...)` | persistence + domain | Only when `trackStargazers`. The map is handed to `publish`, not written here |
+| 12 | `topRepoNames` = copy of `results.repos`, drop `isRemoved`, sort desc by `current`, `slice(0, topRepos)` | application | Local, no helper |
+| 13 | `buildStarHistory({ repoStargazers, repos, maxPoints, now: chartNow })` | domain/star-history | Reconstructs a dense monotonic history from `starred_at`; capped at 365 buckets |
+| 14 | `resolveChartHistory({ candidate, fallback: updatedHistory })` | presentation/charts | Reconstruction wins when it has >= 2 snapshots, otherwise the stored history |
+| 15 | `computeForecast({ history, topRepoNames })` | domain/forecast | `null` below 3 snapshots; always 2 methods x 4 weekly points |
+| 16 | `generateMarkdownReport(reportParams)` / `generateHtmlReport(reportParams)` / `generateCsvReport(results)` / `generateBadge({ totalStars, locale })` | presentation | Both reports build one `ReportModel` from the same params; only HTML also takes the chart style |
+| 17 | `notify` = `summary.changed && measurement.thresholdReached` | application | The decision, from the figure the measurement already produced |
+| 18 | `getEmailConfig(locale)` + `sendEmail({ emailConfig, subject, htmlBody })` | infrastructure/notification | Sent when `emailConfig && (notify \|\| sendOnNoChanges)`; failures downgrade to `core.warning` and clear `notificationDelivered`. **Runs before persistence** — see [ADR 0011](./docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md) |
+| 19 | `recordNotification({ history: updatedHistory, totalStars })` | domain/measurement | Only when `notificationDelivered`. Returns a **new** History; the undelivered one is persisted unchanged |
+| 20 | `buildChartFiles({ config, history, fallbackHistory, forecastData, topRepoNames, repoTotals, repoStargazers, now: chartNow })` | presentation | One `chartNow` `Date` is shared with step 13 |
+| 21 | `branch.publish({ history, stargazerMap, report, badge, csv, charts, commitMessage })` | infrastructure/persistence | Writes every data-branch artefact, prunes the `charts/*.svg` this run did not produce, then commits and pushes — unless `readOnly`, where the write happens and the push does not |
+| 22 | `setOutputs(...)` | application | Eleven outputs, exactly matching the `outputs:` block of `action.yml` |
 
 Failure policy: everything is wrapped in one `try/catch` that ends in `core.setFailed('Star Tracker failed: <msg>')` plus `core.debug(stack)`. Email is the only inner failure that is deliberately non-fatal.
 
@@ -181,6 +179,8 @@ Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain gl
 | [0010](./docs/adr/0010-quickchart-renders-the-email-charts.md) | QuickChart renders the email charts |
 | [0011](./docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md) | The notification baseline advances only on delivery |
 | [0012](./docs/adr/0012-unreadable-stargazer-lists-keep-their-previous-logins.md) | Unreadable stargazer lists keep their previous logins |
+| [0013](./docs/adr/0013-a-run-is-measured-in-one-place.md) | A Run is measured in one place |
+| [0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md) | Charts are built as a spec and rendered by adapters |
 
 Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md) — `# N. Title`, a date, a
 status, then *Context*, *Decision*, *Consequences*. A new ADR starts by copying that file, not by writing
@@ -204,10 +204,10 @@ One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/
 
 | Task | Files to touch |
 | --- | --- |
-| **Add an action input** | `action.yml` (declare it, `default: ''` so the config file can win); `src/config/types.ts` (`Config` field); `src/config/defaults.ts` (`DEFAULTS` entry — this also makes the snake_case/kebab-case config-file key work automatically); `src/config/loader.ts` (read + coerce, using an existing parser from `parsers.ts`); consume it in the relevant layer; update `src/config/action-inputs.test.ts` and `README.md`/`docs/wiki`. |
+| **Add an action input** | `action.yml` (declare it, `default: ''` so the config file can win); `src/config/types.ts` (`Config` field); `src/config/defaults.ts` (`DEFAULTS` entry — this also makes the snake_case/kebab-case config-file key work automatically); `src/config/loader.ts` (**one row in `FIELD_SOURCES`**, naming the input parser and the file parser — the action input name is derived from the key); consume it in the relevant layer; update `src/config/action-inputs.test.ts` and `README.md`/`docs/wiki`. |
 | **Add a locale** | Add the JSON bundle under `src/i18n/`; register it in `LOCALES`, `LOCALE_MAP` and the `TRANSLATIONS: Record<Locale, Translations>` map (a missing key is a type error, an extra key is not); extend the `locale` description in `action.yml`. |
-| **Add a report format** | New pure renderer in `src/presentation/` (data in, string out, no I/O) + colocated test; a `write<Format>` helper and filename in `@infrastructure/persistence/storage`; call both from `tracker.ts`; add an output to `action.yml` + `setOutputs`/`setEmptyOutputs` if it should be exposed. |
-| **Add a chart option** | Input plumbing as above; thread it through the `style` object in `src/presentation/charts.ts`; implement it in `src/presentation/svg-chart.ts` (all SVG primitives live behind the private `renderSvg`); mirror it in `src/presentation/chart.ts` if email charts should honour it; add a sample SVG under `examples/`. |
+| **Add a report format** | New pure renderer in `src/presentation/` (data in, string out, no I/O) reading `buildReportModel` rather than re-deriving sections + colocated test; a `write<Format>` helper and filename in `@infrastructure/persistence/storage`, plus a field on `PublishedArtefacts`; add an output to `action.yml` + `setOutputs`/`setEmptyOutputs` if it should be exposed. |
+| **Add a chart option** | Input plumbing as above; thread it through the `style` object in `src/presentation/charts.ts`. If it changes **what** is plotted it belongs on `ChartSpec` in `src/presentation/chart-spec.ts` and both adapters read it; if it only changes **how**, implement it in `src/presentation/svg-chart.ts` (all SVG primitives live behind the private `renderSvg`) and mirror it in `src/presentation/chart.ts` if email charts should honour it ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)); add a sample SVG under `examples/`. |
 
 ## 8. Known inconsistencies
 

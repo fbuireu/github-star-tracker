@@ -1,26 +1,10 @@
 import type { ComparisonResults } from '@domain/types';
+import { EscapeDialect, escapeFor } from './escaping';
 
 const CSV_HEADER = 'repository,owner,name,stars,previous,delta,status';
 export const NEW_LINE = '\n';
 
-const FORMULA_TRIGGERS = ['=', '+', '-', '@'];
-
-function escapeCsvField(field: string): string {
-  const neutralized = FORMULA_TRIGGERS.some((trigger) => field.startsWith(trigger))
-    ? `'${field}`
-    : field;
-
-  if (
-    neutralized.includes(',') ||
-    neutralized.includes('"') ||
-    neutralized.includes(NEW_LINE) ||
-    neutralized !== field
-  ) {
-    return `"${neutralized.replaceAll('"', '""')}"`;
-  }
-
-  return neutralized;
-}
+const escapeCsvField = escapeFor(EscapeDialect.CSV);
 
 const REPO_STATUS = {
   new: 'new',

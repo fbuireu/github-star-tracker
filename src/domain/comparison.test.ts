@@ -16,6 +16,26 @@ describe('compareStars', () => {
     expect(result.repos[0].delta).toBe(0);
   });
 
+  it('resolves a duplicated repository in the baseline to its last entry', () => {
+    const previous: Snapshot = {
+      timestamp: '2026-01-01T00:00:00Z',
+      totalStars: 10,
+      repos: [
+        { fullName: 'user/repo-a', name: 'repo-a', owner: 'user', stars: 10 },
+        { fullName: 'user/repo-a', name: 'repo-a', owner: 'user', stars: 40 },
+      ],
+    };
+
+    const result = compareStars({
+      currentRepos: [makeRepoInfo('repo-a', 50)],
+      previousSnapshot: previous,
+    });
+
+    expect(result.repos).toHaveLength(1);
+    expect(result.repos[0].previous).toBe(40);
+    expect(result.repos[0].delta).toBe(10);
+  });
+
   it('computes deltas against previous snapshot', () => {
     const repos = [makeRepoInfo('repo-a', 15), makeRepoInfo('repo-b', 18)];
     const previous: Snapshot = {

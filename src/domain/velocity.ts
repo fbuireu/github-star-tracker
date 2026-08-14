@@ -1,6 +1,7 @@
-import { MIN_RATE_INTERVAL_DAYS, MS_PER_DAY, STAR_MILESTONES } from './constants';
+import { MS_PER_DAY, STAR_MILESTONES } from './constants';
+import { latestRateInterval, type SeriesPoint } from './growth';
 import { toEpochMs } from './time';
-import type { History, Snapshot } from './types';
+import type { History } from './types';
 
 const MIN_SNAPSHOTS_FOR_VELOCITY = 2;
 const PERCENT_MULTIPLIER = 100;
@@ -29,31 +30,24 @@ export function computeVelocity({ history }: { history: History }): VelocityMetr
   if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
 
   const last = snapshots[snapshots.length - 1];
-  const lastMs = toEpochMs(last.timestamp);
-  if (lastMs === null) return null;
+  if (toEpochMs(last.timestamp) === null) return null;
 
-  let previous: Snapshot | null = null;
-  let elapsedDays = 0;
+  const points = snapshots.reduce<SeriesPoint[]>((observed, snapshot) => {
+    const timeMs = toEpochMs(snapshot.timestamp);
 
-  for (let index = snapshots.length - 2; index >= 0; index--) {
-    const candidateMs = toEpochMs(snapshots[index].timestamp);
-    if (candidateMs === null) continue;
+    if (timeMs !== null) observed.push({ day: timeMs / MS_PER_DAY, value: snapshot.totalStars });
 
-    const candidateDays = (lastMs - candidateMs) / MS_PER_DAY;
-    if (candidateDays < MIN_RATE_INTERVAL_DAYS) continue;
+    return observed;
+  }, []);
 
-    previous = snapshots[index];
-    elapsedDays = candidateDays;
-    break;
-  }
+  const interval = latestRateInterval(points);
+  if (interval === null) return null;
 
-  if (previous === null) return null;
-
-  const gained = last.totalStars - previous.totalStars;
-  const starsPerDay = roundTo(gained / elapsedDays, STARS_PER_DAY_DECIMALS);
+  const gained = interval.to.value - interval.from.value;
+  const starsPerDay = roundTo(gained / interval.days, STARS_PER_DAY_DECIMALS);
   const growthPercent =
-    previous.totalStars > 0
-      ? roundTo((gained / previous.totalStars) * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS)
+    interval.from.value > 0
+      ? roundTo((gained / interval.from.value) * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS)
       : null;
 
   const nextMilestone = nextMilestoneAbove(last.totalStars);

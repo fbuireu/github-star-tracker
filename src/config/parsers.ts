@@ -73,7 +73,7 @@ export function toStringList(value: unknown): string[] | undefined {
 
 const INTEGER_PATTERN = /^[+-]?\d+$/;
 
-export function parseNumber(value: string | number | null | undefined): number | undefined {
+function parseNumber(value: string | number | null | undefined): number | undefined {
   if (isBlank(value)) return undefined;
 
   if (typeof value === 'number') {

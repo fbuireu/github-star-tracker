@@ -1,53 +1,29 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { loadConfig } from '@config/loader';
-import { compareStars, createSnapshot } from '@domain/comparison';
 import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
-import { shouldNotify } from '@domain/notification';
-import { addSnapshot, getBaselineSnapshot } from '@domain/snapshot';
+import { measureRun, recordNotification } from '@domain/measurement';
 import { buildStarHistory } from '@domain/star-history';
-import { buildStargazerMap, diffStargazers, type RepoStargazers } from '@domain/stargazers';
+import {
+  buildStargazerMap,
+  diffStargazers,
+  type RepoStargazers,
+  type StargazerMap,
+} from '@domain/stargazers';
 import type { Summary } from '@domain/types';
 import { getTranslations, interpolate } from '@i18n';
-import { cleanup, initializeDataBranch } from '@infrastructure/git/worktree';
 import { getRepos } from '@infrastructure/github/filters';
 import { fetchAllStargazers } from '@infrastructure/github/stargazers';
 import { getEmailConfig, sendEmail } from '@infrastructure/notification/email';
-import {
-  commitAndPush,
-  pruneCharts,
-  readHistory,
-  readStargazers,
-  writeBadge,
-  writeChart,
-  writeCsv,
-  writeHistory,
-  writeHtmlReport,
-  writeReport,
-  writeStargazers,
-} from '@infrastructure/persistence/storage';
+import { withDataBranch } from '@infrastructure/persistence/data-branch';
+import { writeHtmlReport } from '@infrastructure/persistence/storage';
 import { retry } from '@octokit/plugin-retry';
 import { generateBadge } from '@presentation/badge';
 import { buildChartFiles, resolveChartHistory } from '@presentation/charts';
 import { generateCsvReport } from '@presentation/csv';
 import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
-
-interface WithDataDirParams {
-  branch: string;
-  readOnly: boolean;
-  fn: (dataDir: string) => Promise<void>;
-}
-
-async function withDataDir({ branch, readOnly, fn }: WithDataDirParams): Promise<void> {
-  const dataDir = initializeDataBranch({ dataBranch: branch, readOnly });
-  try {
-    await fn(dataDir);
-  } finally {
-    cleanup(dataDir);
-  }
-}
 
 export async function trackStars(): Promise<void> {
   try {
@@ -68,25 +44,33 @@ export async function trackStars(): Promise<void> {
       return;
     }
 
-    await withDataDir({
-      branch: config.dataBranch,
+    await withDataBranch({
+      dataBranch: config.dataBranch,
       readOnly: config.readOnly,
-      fn: async (dataDir) => {
+      token,
+      run: async (branch) => {
         core.info(`Tracking ${repos.length} repositories...`);
 
-        const storedHistory = readHistory(dataDir);
-        const baselineSnapshot = getBaselineSnapshot({
-          history: storedHistory,
-          compareAgainst: config.compareAgainst,
+        const storedHistory = branch.readHistory();
+        const measurement = measureRun({
+          trackedSet: repos,
+          storedHistory,
+          comparisonWindow: config.compareAgainst,
+          maxHistory: config.maxHistory,
+          notificationThreshold: config.notificationThreshold,
+          notificationMode: config.notificationMode,
         });
-        const previousTimestamp = baselineSnapshot ? baselineSnapshot.timestamp : null;
+        const { results, summary, updatedHistory } = measurement;
+        const previousTimestamp = measurement.baselineTimestamp;
 
         core.info(`Comparing star counts (baseline: ${previousTimestamp ?? 'first run'})...`);
-
-        const results = compareStars({ currentRepos: repos, previousSnapshot: baselineSnapshot });
-        const { summary } = results;
-
         core.info(`Total: ${summary.totalStars} stars (${deltaIndicator(summary.totalDelta)})`);
+
+        if (measurement.droppedSnapshots > 0) {
+          core.warning(
+            `max-history is ${config.maxHistory} but ${storedHistory.snapshots.length} snapshots are stored, so this run drops the oldest ${measurement.droppedSnapshots}. Raise max-history before this run if you want to keep them.`,
+          );
+        }
 
         let repoStargazers: RepoStargazers[] = [];
         if (config.includeCharts || config.trackStargazers) {
@@ -96,33 +80,16 @@ export async function trackStars(): Promise<void> {
         }
 
         let stargazerDiff = null;
+        let stargazerMap: StargazerMap | undefined;
+
         if (config.trackStargazers) {
-          const previousMap = readStargazers(dataDir);
+          const previousMap = branch.readStargazers();
 
           stargazerDiff = diffStargazers({ current: repoStargazers, previousMap });
-
-          writeStargazers({
-            dataDir,
-            stargazerMap: buildStargazerMap({ repoStargazers, previousMap }),
-          });
+          stargazerMap = buildStargazerMap({ repoStargazers, previousMap });
 
           core.info(`Found ${stargazerDiff.totalNew} new stargazers`);
         }
-
-        const snapshot = createSnapshot({ currentRepos: repos, summary });
-        const prunedCount = storedHistory.snapshots.length + 1 - config.maxHistory;
-
-        if (prunedCount > 0) {
-          core.warning(
-            `max-history is ${config.maxHistory} but ${storedHistory.snapshots.length} snapshots are stored, so this run drops the oldest ${prunedCount}. Raise max-history before this run if you want to keep them.`,
-          );
-        }
-
-        const updatedHistory = addSnapshot({
-          history: storedHistory,
-          snapshot,
-          maxHistory: config.maxHistory,
-        });
 
         const sorted = [...results.repos]
           .filter((repo) => !repo.isRemoved)
@@ -178,13 +145,7 @@ export async function trackStars(): Promise<void> {
 
         const csvReport = generateCsvReport(results);
         const badge = generateBadge({ totalStars: summary.totalStars, locale: config.locale });
-        const thresholdReached = shouldNotify({
-          totalStars: summary.totalStars,
-          starsAtLastNotification: storedHistory.starsAtLastNotification,
-          threshold: config.notificationThreshold,
-          mode: config.notificationMode,
-        });
-        const notify = summary.changed && thresholdReached;
+        const notify = summary.changed && measurement.thresholdReached;
 
         const emailConfig = getEmailConfig(config.locale);
         let notificationDelivered = notify;
@@ -213,38 +174,28 @@ export async function trackStars(): Promise<void> {
           core.info('Notification threshold not reached, skipping email');
         }
 
-        if (notificationDelivered) {
-          updatedHistory.starsAtLastNotification = summary.totalStars;
-        }
+        const historyToPersist = notificationDelivered
+          ? recordNotification({ history: updatedHistory, totalStars: summary.totalStars })
+          : updatedHistory;
 
-        writeHistory({ dataDir, history: updatedHistory });
-        writeReport({ dataDir, markdown: markdownReport });
-        writeBadge({ dataDir, svg: badge });
-        writeCsv({ dataDir, csv: csvReport });
-
-        const chartFiles = buildChartFiles({
-          config,
-          history,
-          fallbackHistory: updatedHistory,
-          forecastData,
-          topRepoNames,
-          repoTotals,
-          repoStargazers,
-          now: chartNow,
+        branch.publish({
+          history: historyToPersist,
+          stargazerMap,
+          report: markdownReport,
+          badge,
+          csv: csvReport,
+          charts: buildChartFiles({
+            config,
+            history,
+            fallbackHistory: updatedHistory,
+            forecastData,
+            topRepoNames,
+            repoTotals,
+            repoStargazers,
+            now: chartNow,
+          }),
+          commitMessage: `Update star data: ${summary.totalStars} total (${deltaIndicator(summary.totalDelta)})`,
         });
-
-        for (const chartFile of chartFiles) {
-          writeChart({ dataDir, filename: chartFile.filename, svg: chartFile.svg });
-        }
-
-        pruneCharts({ dataDir, keep: chartFiles.map((chartFile) => chartFile.filename) });
-
-        if (config.readOnly) {
-          core.info(`Read-only run: leaving ${config.dataBranch} untouched`);
-        } else {
-          const commitMsg = `Update star data: ${summary.totalStars} total (${deltaIndicator(summary.totalDelta)})`;
-          commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg, token });
-        }
 
         setOutputs({
           summary,

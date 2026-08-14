@@ -19647,9 +19647,9 @@ var require_dist = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/punycode/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/punycode/index.js
 var require_punycode = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/punycode/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/punycode/index.js"(exports2, module2) {
     "use strict";
     var maxInt = 2147483647;
     var base = 36;
@@ -19889,9 +19889,9 @@ var require_punycode = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/shared/url.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/shared/url.js
 var require_url = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/shared/url.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/shared/url.js"(exports2, module2) {
     "use strict";
     var urllib = require("url");
     var punycode = require_punycode();
@@ -19978,9 +19978,9 @@ var require_url = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/fetch/cookies.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/fetch/cookies.js
 var require_cookies2 = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/fetch/cookies.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/fetch/cookies.js"(exports2, module2) {
     "use strict";
     var urllib = require_url();
     var SESSION_TIMEOUT = 1800;
@@ -20186,12 +20186,12 @@ var require_cookies2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/package.json
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/package.json
 var require_package = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/package.json"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/package.json"(exports2, module2) {
     module2.exports = {
       name: "nodemailer",
-      version: "9.0.3",
+      version: "9.0.5",
       description: "Easy as cake e-mail sending from your Node.js applications",
       main: "lib/nodemailer.js",
       scripts: {
@@ -20218,19 +20218,19 @@ var require_package = __commonJS({
       },
       homepage: "https://nodemailer.com/",
       devDependencies: {
-        "@aws-sdk/client-sesv2": "3.1068.0",
+        "@aws-sdk/client-sesv2": "3.1104.0",
         bunyan: "1.8.15",
-        c8: "11.0.0",
-        eslint: "10.5.0",
+        c8: "12.0.0",
+        eslint: "10.8.0",
         "eslint-config-prettier": "10.1.8",
-        globals: "17.6.0",
+        globals: "17.9.0",
         libbase64: "1.3.0",
-        libmime: "5.3.8",
+        libmime: "5.4.1",
         libqp: "2.1.1",
-        prettier: "3.8.4",
+        prettier: "3.9.6",
         proxy: "1.0.2",
         "proxy-test-server": "1.0.0",
-        "smtp-server": "3.19.0"
+        "smtp-server": "3.19.2"
       },
       engines: {
         node: ">=6.0.0"
@@ -20239,9 +20239,9 @@ var require_package = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/errors.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/errors.js
 var require_errors2 = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/errors.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/errors.js"(exports2, module2) {
     "use strict";
     var ERROR_CODES = {
       // Connection errors
@@ -20280,9 +20280,9 @@ var require_errors2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/fetch/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/fetch/index.js
 var require_fetch2 = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/fetch/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/fetch/index.js"(exports2, module2) {
     "use strict";
     var http = require("http");
     var https = require("https");
@@ -20532,9 +20532,9 @@ var require_fetch2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/shared/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/shared/index.js
 var require_shared = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/shared/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/shared/index.js"(exports2, module2) {
     "use strict";
     var urllib = require_url();
     var util = require("util");
@@ -21075,9 +21075,9 @@ var require_shared = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mime-funcs/mime-types.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mime-funcs/mime-types.js
 var require_mime_types = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mime-funcs/mime-types.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mime-funcs/mime-types.js"(exports2, module2) {
     "use strict";
     var path4 = require("path");
     var defaultMimeType = "application/octet-stream";
@@ -23179,9 +23179,9 @@ var require_mime_types = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/base64/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/base64/index.js
 var require_base64 = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/base64/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/base64/index.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     function encode(buffer) {
@@ -23278,9 +23278,9 @@ var require_base64 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/qp/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/qp/index.js
 var require_qp = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/qp/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/qp/index.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var QP_RANGES = [
@@ -23442,9 +23442,9 @@ var require_qp = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mime-funcs/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mime-funcs/index.js
 var require_mime_funcs = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mime-funcs/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mime-funcs/index.js"(exports2, module2) {
     "use strict";
     var base64 = require_base64();
     var qp = require_qp();
@@ -23453,12 +23453,30 @@ var require_mime_funcs = __commonJS({
       /**
        * Checks if a value is plaintext string (uses only printable 7bit chars)
        *
+       * When isParam is set the value is destined for a header parameter, so HT, CR and LF
+       * are not plaintext either: a header parameter has no way to carry them. HT is a valid
+       * fold point, so folding and unfolding a header would rewrite it as a space, and CR/LF
+       * cannot appear in a header value at all. DEL is neither a token character nor qtext,
+       * so it can not be carried bare or quoted. Such values have to go through the rfc2231
+       * parameter continuation encoding instead, the same way a quote already does.
+       *
        * @param {String} value String to be tested
+       * @param {Boolean} [isParam] Set to true if the value is a header parameter value
        * @returns {Boolean} true if it is a plaintext string
        */
       isPlainText(value, isParam) {
-        const re = isParam ? /[\x00-\x08\x0b\x0c\x0e-\x1f"\u0080-\uFFFF]/ : /[\x00-\x08\x0b\x0c\x0e-\x1f\u0080-\uFFFF]/;
+        const re = isParam ? /[\x00-\x1f\x7f"\u0080-\uFFFF]/ : /[\x00-\x08\x0b\x0c\x0e-\x1f\u0080-\uFFFF]/;
         return typeof value === "string" && !re.test(value);
+      },
+      /**
+       * Wraps a value into a quoted-string. Inside one a quote would end the string early
+       * and a backslash would escape whatever follows it, so both go out as quoted-pairs.
+       *
+       * @param {String} value String to be quoted
+       * @returns {String} The value as a quoted-string, quotes included
+       */
+      quoteString(value) {
+        return '"' + (value || "").toString().replace(/["\\]/g, "\\$&") + '"';
       },
       /**
        * Checks if a multi line string containes lines longer than the selected value.
@@ -23513,7 +23531,7 @@ var require_mime_funcs = __commonJS({
             let lpart = "";
             for (let i = 0, len = encodedStr.length; i < len; i++) {
               let chr = encodedStr.charAt(i);
-              if (/[\ud83c\ud83d\ud83e]/.test(chr) && i < len - 1) {
+              if (/[\ud800-\udbff]/.test(chr) && /[\udc00-\udfff]/.test(encodedStr.charAt(i + 1))) {
                 chr += encodedStr.charAt(++i);
               }
               if (Buffer.byteLength(lpart + chr) <= maxLength || i === 0) {
@@ -23574,23 +23592,25 @@ var require_mime_funcs = __commonJS({
        */
       buildHeaderValue(structured) {
         const paramsArray = [];
-        Object.keys(structured.params || {}).forEach((param) => {
-          const value = structured.params[param];
-          if (!this.isPlainText(value, true) || value.length >= 75) {
-            this.buildHeaderParam(param, value, 50).forEach((encodedParam) => {
+        Object.keys(structured.params || {}).forEach((key) => {
+          const value2 = structured.params[key];
+          const param = key.replace(/[\x00-\x1f\x7f]/g, "");
+          if (!this.isPlainText(value2, true) || value2.length >= 75) {
+            this.buildHeaderParam(param, value2, 50).forEach((encodedParam) => {
               if (!/[\s"\\;:/=(),<>@[\]?]|^[-']|'$/.test(encodedParam.value) || encodedParam.key.substr(-1) === "*") {
                 paramsArray.push(encodedParam.key + "=" + encodedParam.value);
               } else {
                 paramsArray.push(encodedParam.key + "=" + JSON.stringify(encodedParam.value));
               }
             });
-          } else if (/[\s'"\\;:/=(),<>@[\]?]|^-/.test(value)) {
-            paramsArray.push(param + "=" + JSON.stringify(value));
+          } else if (/[\s'"\\;:/=(),<>@[\]?]|^-/.test(value2)) {
+            paramsArray.push(param + "=" + JSON.stringify(value2));
           } else {
-            paramsArray.push(param + "=" + value);
+            paramsArray.push(param + "=" + value2);
           }
         });
-        return structured.value + (paramsArray.length ? "; " + paramsArray.join("; ") : "");
+        const value = typeof structured.value === "string" ? structured.value.replace(/[\x00-\x1f\x7f]/g, "") : structured.value;
+        return value + (paramsArray.length ? "; " + paramsArray.join("; ") : "");
       },
       /**
        * Encodes a string or an Buffer to an UTF-8 Parameter Value Continuation encoding (rfc2231)
@@ -23610,7 +23630,7 @@ var require_mime_funcs = __commonJS({
       buildHeaderParam(key, data, maxLength) {
         const list = [];
         let encodedStr = typeof data === "string" ? data : (data || "").toString();
-        let chr, ord;
+        let chr;
         let line;
         let startPos = 0;
         let i, len;
@@ -23640,8 +23660,7 @@ var require_mime_funcs = __commonJS({
             const encodedStrArr = [];
             for (i = 0, len = encodedStr.length; i < len; i++) {
               chr = encodedStr.charAt(i);
-              ord = chr.charCodeAt(0);
-              if (ord >= 55296 && ord <= 56319 && i < len - 1) {
+              if (/[\ud800-\udbff]/.test(chr) && /[\udc00-\udfff]/.test(encodedStr.charAt(i + 1))) {
                 chr += encodedStr.charAt(i + 1);
                 encodedStrArr.push(chr);
                 i++;
@@ -23667,7 +23686,7 @@ var require_mime_funcs = __commonJS({
                     encoded
                   });
                   line = "";
-                  startPos = i - 1;
+                  encoded = true;
                 } else {
                   encoded = true;
                   i = startPos;
@@ -23925,7 +23944,7 @@ var require_mime_funcs = __commonJS({
         try {
           str = encodeURIComponent(str);
         } catch (_E) {
-          return str.replace(/[^\x00-\x1F *'()<>@,;:\\"[\]?=\u007F-\uFFFF]+/g, "");
+          str = encodeURIComponent(Buffer.from(str, "utf-8").toString("utf-8"));
         }
         return str.replace(/[\x00-\x1F *'()<>@,;:\\"[\]?=\u007F-\uFFFF]/g, (chr) => this.encodeURICharComponent(chr));
       }
@@ -23933,10 +23952,21 @@ var require_mime_funcs = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/addressparser/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/addressparser/index.js
 var require_addressparser = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/addressparser/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/addressparser/index.js"(exports2, module2) {
     "use strict";
+    function _quoteLocalPart(address) {
+      const lastAt = address.lastIndexOf("@");
+      if (lastAt < 0) {
+        return address;
+      }
+      const user = address.substr(0, lastAt);
+      if (/^[^\s"(),:;<>@[\\\]]+$/.test(user) || /^"(?:[^"\\]|\\[\s\S])*"$/.test(user)) {
+        return address;
+      }
+      return '"' + user.replace(/["\\]/g, "\\$&") + '"@' + address.substr(lastAt + 1);
+    }
     function _handleAddress(tokens, depth) {
       let isGroup = false;
       let state = "text";
@@ -24049,6 +24079,7 @@ var require_addressparser = __commonJS({
         if (data.address.length > 1) {
           data.text = data.text.concat(data.address.splice(1));
         }
+        const addressFromQuotedText = !data.address.length && data.textWasQuoted.some((wasQuoted) => wasQuoted);
         data.text = data.text.join(" ");
         data.address = data.address.join(" ");
         const address = {
@@ -24061,6 +24092,9 @@ var require_addressparser = __commonJS({
           } else {
             address.address = "";
           }
+        }
+        if (addressFromQuotedText && address.address) {
+          address.address = _quoteLocalPart(address.address);
         }
         addresses.push(address);
       }
@@ -24225,9 +24259,9 @@ var require_addressparser = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mime-node/last-newline.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mime-node/last-newline.js
 var require_last_newline = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mime-node/last-newline.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mime-node/last-newline.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var LastNewline = class extends Transform {
@@ -24258,9 +24292,9 @@ var require_last_newline = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mime-node/le-windows.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mime-node/le-windows.js
 var require_le_windows = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mime-node/le-windows.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mime-node/le-windows.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var LeWindows = class extends Transform {
@@ -24300,9 +24334,9 @@ var require_le_windows = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mime-node/le-unix.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mime-node/le-unix.js
 var require_le_unix = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mime-node/le-unix.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mime-node/le-unix.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var LeUnix = class extends Transform {
@@ -24335,9 +24369,9 @@ var require_le_unix = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mime-node/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mime-node/index.js
 var require_mime_node = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mime-node/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mime-node/index.js"(exports2, module2) {
     "use strict";
     var crypto2 = require("crypto");
     var fs6 = require("fs");
@@ -24354,6 +24388,10 @@ var require_mime_node = __commonJS({
     var LeWindows = require_le_windows();
     var LeUnix = require_le_unix();
     var FORMATTED_HEADERS = ["From", "Sender", "To", "Cc", "Bcc", "Reply-To", "Date", "References"];
+    var ATEXT = "[A-Za-z0-9!#$%&'*+\\-/=?^_`{|}~\\x80-\\uFFFF]";
+    var DOT_ATOM = new RegExp("^" + ATEXT + "+(?:\\." + ATEXT + "+)*$");
+    var QUOTED_STRING = /^"(?:[^"\\]|\\[\s\S])*"$/;
+    var PLAIN_ADDRESS = /^[^\s"(),:;<>@[\\\]]+@[^\s"(),:;<>@[\\\]]+$/;
     var MimeNode = class _MimeNode {
       constructor(contentType, options) {
         this.nodeCounter = 0;
@@ -24708,15 +24746,16 @@ var require_mime_node = __commonJS({
               break;
             case "Content-Type":
               structured = mimeFuncs.parseHeaderValue(value);
+              structured.value = (structured.value || "").toString().replace(/[\x00-\x1f\x7f]/g, "");
               this._handleContentType(structured);
               if (structured.value.match(/^text\/plain\b/) && typeof this.content === "string" && /[\u0080-\uFFFF]/.test(this.content)) {
                 structured.params.charset = "utf-8";
               }
               value = mimeFuncs.buildHeaderValue(structured);
               if (this.filename) {
-                param = this._encodeWords(this.filename);
+                param = /[\x00-\x1f\x7f]/.test(this.filename) ? mimeFuncs.encodeWord(this.filename, this._getTextEncoding(this.filename), 52) : this._encodeWords(this.filename);
                 if (param !== this.filename || /[\s'"\\;:/=(),<>@[\]?]|^-/.test(param)) {
-                  param = '"' + param + '"';
+                  param = JSON.stringify(param);
                 }
                 value += "; name=" + param;
               }
@@ -24733,8 +24772,9 @@ var require_mime_node = __commonJS({
           }
           if (typeof this.normalizeHeaderKey === "function") {
             const normalized = this.normalizeHeaderKey(key, value);
-            if (normalized && typeof normalized === "string" && normalized.length) {
-              key = normalized;
+            const cleaned = typeof normalized === "string" ? normalized.replace(/[\x00-\x1f\x7f]/g, "") : "";
+            if (cleaned) {
+              key = cleaned;
             }
           }
           headers.push(mimeFuncs.foldLines(key + ": " + value, 76));
@@ -24935,7 +24975,7 @@ var require_mime_node = __commonJS({
         };
         if (envelope.from) {
           list = [];
-          this._convertAddresses(this._parseAddresses(envelope.from), list);
+          this._convertAddresses(this._parseEnvelopeAddresses(envelope.from), list);
           list = list.filter((address) => address && address.address);
           if (list.length && list[0]) {
             this._envelope.from = list[0].address;
@@ -24943,7 +24983,7 @@ var require_mime_node = __commonJS({
         }
         ["to", "cc", "bcc"].forEach((key) => {
           if (envelope[key]) {
-            this._convertAddresses(this._parseAddresses(envelope[key]), this._envelope.to);
+            this._convertAddresses(this._parseEnvelopeAddresses(envelope[key]), this._envelope.to);
           }
         });
         this._envelope.to = this._envelope.to.map((to) => to.address).filter((address) => address);
@@ -25098,13 +25138,57 @@ var require_mime_node = __commonJS({
           [],
           [].concat(addresses).map((address) => {
             if (address && address.address) {
-              address.address = this._normalizeAddress(address.address);
-              address.name = address.name || "";
-              return [address];
+              const normalized = this._normalizeAddress(address.address);
+              if (normalized === address.address && typeof address.name === "string") {
+                return [address];
+              }
+              const copy = Object.assign({}, address);
+              copy.address = normalized;
+              copy.name = address.name || "";
+              return [copy];
             }
-            return addressparser(address);
+            return this._normalizeParsedAddresses(addressparser(address));
           })
         );
+      }
+      /**
+       * Normalizes the addresses of a freshly parsed address list, groups included.
+       *
+       * Everything this method returns carries a normalized address, whether it arrived as an
+       * object or was parsed out of a header value. Without this the two shapes disagree, and
+       * a consumer reading the parsed form back is handed the ambiguous
+       * 'user@evil.com@good.com' that the header and the envelope no longer carry.
+       *
+       * @param {Array} parsed An array of address objects, as returned by addressparser
+       * @return {Array} The same array, with every address normalized
+       */
+      _normalizeParsedAddresses(parsed) {
+        parsed.forEach((entry) => {
+          if (entry.address) {
+            entry.address = this._normalizeAddress(entry.address);
+          } else if (entry.group) {
+            this._normalizeParsedAddresses(entry.group);
+          }
+        });
+        return parsed;
+      }
+      /**
+       * Parses the addresses of an explicitly set envelope.
+       *
+       * An envelope value is an addr-spec and never a display name, so a bare local username
+       * such as 'root' is the address here. Header parsing has to read the same value as a
+       * display name, as a value with no '@' in it can not be an addr-spec in a header.
+       *
+       * @param {Mixed} addresses Addresses to be parsed
+       * @return {Array} An array of address objects
+       */
+      _parseEnvelopeAddresses(addresses) {
+        return this._parseAddresses(addresses).map((entry) => {
+          if (entry.address || entry.group || !entry.name || /[\s@]/.test(entry.name)) {
+            return entry;
+          }
+          return { address: this._normalizeAddress(entry.name), name: "" };
+        });
       }
       /**
        * Normalizes a header key, uses Camel-Case form, except for uppercase MIME-
@@ -25113,7 +25197,7 @@ var require_mime_node = __commonJS({
        * @return {String} key in Camel-Case form
        */
       _normalizeHeaderKey(key) {
-        key = (key || "").toString().replace(/\r?\n|\r/g, " ").trim().toLowerCase().replace(/^X-SMTPAPI$|^(MIME|DKIM|ARC|BIMI)\b|^[a-z]|-(SPF|FBL|ID|MD5)$|-[a-z]/gi, (c) => c.toUpperCase()).replace(/^Content-Features$/i, "Content-features");
+        key = (key || "").toString().replace(/\r?\n|\r/g, " ").replace(/[\x00-\x1f\x7f]/g, "").trim().toLowerCase().replace(/^X-SMTPAPI$|^(MIME|DKIM|ARC|BIMI)\b|^[a-z]|-(SPF|FBL|ID|MD5)$|-[a-z]/gi, (c) => c.toUpperCase()).replace(/^Content-Features$/i, "Content-features");
         return key;
       }
       /**
@@ -25160,7 +25244,7 @@ var require_mime_node = __commonJS({
           case "Message-ID":
           case "In-Reply-To":
           case "Content-Id":
-            value = (value || "").toString().replace(/\r?\n|\r/g, " ");
+            value = (value || "").toString().replace(/\r?\n|\r/g, " ").replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, "");
             if (value.charAt(0) !== "<") {
               value = "<" + value;
             }
@@ -25173,7 +25257,7 @@ var require_mime_node = __commonJS({
             value = [].concat.apply(
               [],
               [].concat(value || "").map((elm) => {
-                elm = (elm || "").toString().replace(/\r?\n|\r/g, " ").trim();
+                elm = (elm || "").toString().replace(/\r?\n|\r/g, " ").replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, "").trim();
                 return elm.replace(/<[^>]*>/g, (str) => str.replace(/\s/g, "")).split(/\s+/);
               })
             ).map((elm) => {
@@ -25191,13 +25275,13 @@ var require_mime_node = __commonJS({
               return value.toUTCString().replace(/GMT/, "+0000");
             }
             value = (value || "").toString().replace(/\r?\n|\r/g, " ");
-            return this._encodeWords(value);
+            return this._encodeHeaderText(value);
           case "Content-Type":
           case "Content-Disposition":
             return (value || "").toString().replace(/\r?\n|\r/g, " ");
           default:
             value = (value || "").toString().replace(/\r?\n|\r/g, " ");
-            return this._encodeWords(value);
+            return this._encodeHeaderText(value);
         }
       }
       /**
@@ -25214,7 +25298,7 @@ var require_mime_node = __commonJS({
           if (address.address) {
             address.address = this._normalizeAddress(address.address);
             if (!address.name) {
-              values.push(address.address.indexOf(" ") >= 0 ? `<${address.address}>` : `${address.address}`);
+              values.push(PLAIN_ADDRESS.test(address.address) ? address.address : `<${address.address}>`);
             } else {
               values.push(`${this._encodeAddressName(address.name)} <${address.address}>`);
             }
@@ -25235,12 +25319,15 @@ var require_mime_node = __commonJS({
        * @return {String} address string
        */
       _normalizeAddress(address) {
-        address = (address || "").toString().replace(/[\x00-\x1F<>]+/g, " ").trim();
-        const lastAt = address.lastIndexOf("@");
-        if (lastAt < 0) {
+        address = (address || "").toString().replace(/[\x00-\x1F\x7F<>]+/g, " ").trim();
+        if (!address) {
           return address;
         }
-        let user = address.substr(0, lastAt);
+        const lastAt = address.lastIndexOf("@");
+        if (lastAt < 0) {
+          return this._normalizeLocalPart(address);
+        }
+        const user = address.substr(0, lastAt);
         const domain = address.substr(lastAt + 1);
         let encodedDomain = domain;
         try {
@@ -25251,15 +25338,25 @@ var require_mime_node = __commonJS({
           }
         } catch (_err) {
         }
-        if (user.indexOf(" ") >= 0) {
-          if (user.charAt(0) !== '"') {
-            user = '"' + user;
-          }
-          if (user.substr(-1) !== '"') {
-            user = user + '"';
-          }
+        return `${this._normalizeLocalPart(user)}@${encodedDomain}`;
+      }
+      /**
+       * Normalizes the local part of an address into a form that can be emitted as is.
+       *
+       * A local part is either a dot-atom or a quoted-string, anything else is not a valid
+       * addr-spec. The quotes of a quoted local part get lost along the way, and a bare
+       * 'user@evil.com@good.com' leaves it to the receiver which '@' splits the domain off,
+       * while the split here is always at the last one. So whatever is not already one of
+       * the two valid forms goes back out as a quoted-string.
+       *
+       * @param {String} user Local part of an address
+       * @return {String} Local part as a dot-atom or as a quoted-string
+       */
+      _normalizeLocalPart(user) {
+        if (DOT_ATOM.test(user) || QUOTED_STRING.test(user)) {
+          return user;
         }
-        return `${user}@${encodedDomain}`;
+        return mimeFuncs.quoteString(user);
       }
       /**
        * If needed, mime encodes the name part
@@ -25270,12 +25367,26 @@ var require_mime_node = __commonJS({
       _encodeAddressName(name) {
         if (!/^[\w ]*$/.test(name)) {
           if (/^[\x20-\x7e]*$/.test(name)) {
-            return '"' + name.replace(/([\\"])/g, "\\$1") + '"';
+            return mimeFuncs.quoteString(name);
           } else {
             return mimeFuncs.encodeWord(name, this._getTextEncoding(name), 52);
           }
         }
         return name;
+      }
+      /**
+       * Encodes an unstructured header value. Such a value can only carry VCHAR and WSP, so a
+       * control char or DEL has to be forced into the mime encoded word that a non-ascii value
+       * would get anyway. HT stays as it is, it is valid folding whitespace here.
+       *
+       * @param {String} value Header value to encode
+       * @returns {String} Mime word encoded string if needed
+       */
+      _encodeHeaderText(value) {
+        return /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(value) ? mimeFuncs.encodeWord(value, this._getTextEncoding(value), 52) : (
+          // encodeWords only encodes if needed, otherwise the original string is returned
+          this._encodeWords(value)
+        );
       }
       /**
        * If needed, mime encodes the name part
@@ -25327,9 +25438,9 @@ var require_mime_node = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mail-composer/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mail-composer/index.js
 var require_mail_composer = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mail-composer/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mail-composer/index.js"(exports2, module2) {
     "use strict";
     var MimeNode = require_mime_node();
     var mimeFuncs = require_mime_funcs();
@@ -25814,9 +25925,9 @@ var require_mail_composer = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/dkim/message-parser.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/dkim/message-parser.js
 var require_message_parser = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/dkim/message-parser.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/dkim/message-parser.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var MessageParser = class extends Transform {
@@ -25943,9 +26054,9 @@ var require_message_parser = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/dkim/relaxed-body.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/dkim/relaxed-body.js
 var require_relaxed_body = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/dkim/relaxed-body.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/dkim/relaxed-body.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var crypto2 = require("crypto");
@@ -26052,9 +26163,9 @@ var require_relaxed_body = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/dkim/sign.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/dkim/sign.js
 var require_sign = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/dkim/sign.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/dkim/sign.js"(exports2, module2) {
     "use strict";
     var punycode = require_punycode();
     var mimeFuncs = require_mime_funcs();
@@ -26078,15 +26189,16 @@ var require_sign = __commonJS({
     };
     module2.exports.relaxedHeaders = relaxedHeaders;
     function generateDKIMHeader(domainName, keySelector, fieldNames, hashAlgo, bodyHash) {
+      const cleanTagValue = (value) => (value || "").toString().replace(/[\x00-\x1f\x7f;=]/g, "");
       const dkim = [
         "v=1",
         "a=rsa-" + hashAlgo,
         "c=relaxed/relaxed",
-        "d=" + punycode.toASCII(domainName),
+        "d=" + punycode.toASCII(cleanTagValue(domainName)),
         "q=dns/txt",
-        "s=" + keySelector,
+        "s=" + cleanTagValue(keySelector),
         "bh=" + bodyHash,
-        "h=" + fieldNames
+        "h=" + cleanTagValue(fieldNames)
       ].join("; ");
       return mimeFuncs.foldLines("DKIM-Signature: " + dkim, 76) + ";\r\n b=";
     }
@@ -26125,9 +26237,9 @@ var require_sign = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/dkim/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/dkim/index.js
 var require_dkim = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/dkim/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/dkim/index.js"(exports2, module2) {
     "use strict";
     var MessageParser = require_message_parser();
     var RelaxedBody = require_relaxed_body();
@@ -26320,9 +26432,9 @@ var require_dkim = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/smtp-connection/http-proxy-client.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/smtp-connection/http-proxy-client.js
 var require_http_proxy_client = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/smtp-connection/http-proxy-client.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/smtp-connection/http-proxy-client.js"(exports2, module2) {
     "use strict";
     var net = require("net");
     var tls = require("tls");
@@ -26436,9 +26548,9 @@ var require_http_proxy_client = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mailer/mail-message.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mailer/mail-message.js
 var require_mail_message = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mailer/mail-message.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mailer/mail-message.js"(exports2, module2) {
     "use strict";
     var shared = require_shared();
     var MimeNode = require_mime_node();
@@ -26555,7 +26667,7 @@ var require_mail_message = __commonJS({
         setImmediate(() => resolveNext());
       }
       normalize(callback) {
-        const envelope = this.data.envelope || this.message.getEnvelope();
+        const envelope = this.message.getEnvelope();
         const messageId = this.message.messageId();
         this.resolveAll((err, data) => {
           if (err) {
@@ -26665,19 +26777,13 @@ var require_mail_message = __commonJS({
                 };
               }
               if (value2 && value2.url) {
-                if (key.toLowerCase().trim() === "id") {
-                  let comment2 = (value2.comment || "").toString().replace(/\r?\n|\r/g, " ");
-                  if (mimeFuncs.isPlainText(comment2)) {
-                    comment2 = '"' + comment2 + '"';
-                  } else {
-                    comment2 = mimeFuncs.encodeWord(comment2);
-                  }
-                  return (value2.comment ? comment2 + " " : "") + this._formatListUrl(value2.url).replace(/^<[^:]+:\/{0,2}/, "<");
-                }
                 let comment = (value2.comment || "").toString().replace(/\r?\n|\r/g, " ");
-                if (!mimeFuncs.isPlainText(comment)) {
-                  comment = mimeFuncs.encodeWord(comment);
+                const needsEncoding = !mimeFuncs.isPlainText(comment) || /\x7f/.test(comment);
+                if (key.toLowerCase().trim() === "id") {
+                  comment = needsEncoding ? mimeFuncs.encodeWord(comment) : mimeFuncs.quoteString(comment);
+                  return (value2.comment ? comment + " " : "") + this._formatListUrl(value2.url).replace(/^<[^:]+:\/{0,2}/, "<");
                 }
+                comment = needsEncoding ? mimeFuncs.encodeWord(comment) : comment.replace(/[()\\]/g, "\\$&");
                 return this._formatListUrl(value2.url) + (value2.comment ? " (" + comment + ")" : "");
               }
               return "";
@@ -26686,7 +26792,7 @@ var require_mail_message = __commonJS({
         }));
       }
       _formatListUrl(url) {
-        url = url.replace(/[\s<]+|[\s>]+/g, "");
+        url = url.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, "").replace(/[\s<]+|[\s>]+/g, "");
         if (/^(https?|mailto|ftp):/.test(url)) {
           return "<" + url + ">";
         }
@@ -26700,9 +26806,9 @@ var require_mail_message = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mailer/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mailer/index.js
 var require_mailer = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/mailer/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/mailer/index.js"(exports2, module2) {
     "use strict";
     var EventEmitter = require("events");
     var shared = require_shared();
@@ -27091,9 +27197,9 @@ var require_mailer = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/smtp-connection/data-stream.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/smtp-connection/data-stream.js
 var require_data_stream = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/smtp-connection/data-stream.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/smtp-connection/data-stream.js"(exports2, module2) {
     "use strict";
     var { Transform } = require("stream");
     var DataStream = class extends Transform {
@@ -27178,9 +27284,9 @@ var require_data_stream = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/smtp-connection/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/smtp-connection/index.js
 var require_smtp_connection = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/smtp-connection/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/smtp-connection/index.js"(exports2, module2) {
     "use strict";
     var packageInfo = require_package();
     var { EventEmitter } = require("events");
@@ -28679,9 +28785,9 @@ var require_smtp_connection = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/xoauth2/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/xoauth2/index.js
 var require_xoauth2 = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/xoauth2/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/xoauth2/index.js"(exports2, module2) {
     "use strict";
     var { Stream } = require("stream");
     var nmfetch = require_fetch2();
@@ -29039,9 +29145,9 @@ var require_xoauth2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/smtp-pool/pool-resource.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/smtp-pool/pool-resource.js
 var require_pool_resource = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/smtp-pool/pool-resource.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/smtp-pool/pool-resource.js"(exports2, module2) {
     "use strict";
     var SMTPConnection = require_smtp_connection();
     var assign = require_shared().assign;
@@ -29260,9 +29366,9 @@ var require_pool_resource = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/well-known/services.json
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/well-known/services.json
 var require_services = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/well-known/services.json"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/well-known/services.json"(exports2, module2) {
     module2.exports = {
       "1und1": {
         description: "1&1 Mail (German hosting provider)",
@@ -29761,6 +29867,18 @@ var require_services = __commonJS({
         host: "smtp.tipimail.com",
         port: 587
       },
+      TurboSMTP: {
+        description: "TurboSMTP",
+        host: "pro.turbo-smtp.com",
+        port: 465,
+        secure: true
+      },
+      "TurboSMTP-EU": {
+        description: "TurboSMTP (EU region)",
+        host: "pro.eu.turbo-smtp.com",
+        port: 465,
+        secure: true
+      },
       Tutanota: {
         description: "Tutanota (Tuta Mail)",
         domains: ["tutanota.com", "tuta.com", "tutanota.de", "tuta.io"],
@@ -29800,9 +29918,9 @@ var require_services = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/well-known/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/well-known/index.js
 var require_well_known = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/well-known/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/well-known/index.js"(exports2, module2) {
     "use strict";
     var services = require_services();
     var normalized = {};
@@ -29836,9 +29954,9 @@ var require_well_known = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/smtp-pool/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/smtp-pool/index.js
 var require_smtp_pool = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/smtp-pool/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/smtp-pool/index.js"(exports2, module2) {
     "use strict";
     var EventEmitter = require("events");
     var PoolResource = require_pool_resource();
@@ -30375,9 +30493,9 @@ var require_smtp_pool = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/smtp-transport/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/smtp-transport/index.js
 var require_smtp_transport = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/smtp-transport/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/smtp-transport/index.js"(exports2, module2) {
     "use strict";
     var EventEmitter = require("events");
     var SMTPConnection = require_smtp_connection();
@@ -30744,9 +30862,9 @@ var require_smtp_transport = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/sendmail-transport/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/sendmail-transport/index.js
 var require_sendmail_transport = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/sendmail-transport/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/sendmail-transport/index.js"(exports2, module2) {
     "use strict";
     var { spawn } = require("child_process");
     var packageData = require_package();
@@ -30786,10 +30904,10 @@ var require_sendmail_transport = __commonJS({
        */
       send(mail, done) {
         mail.message.keepBcc = true;
-        const envelope = mail.data.envelope || mail.message.getEnvelope();
+        const envelope = mail.message.getEnvelope();
         const messageId = mail.message.messageId();
         let returned;
-        const hasInvalidAddresses = [].concat(envelope.from || []).concat(envelope.to || []).some((addr) => /^-/.test(addr));
+        const hasInvalidAddresses = [].concat(envelope.from || []).concat(envelope.to || []).some((addr) => /^"?-/.test(addr));
         if (hasInvalidAddresses) {
           const err = new Error("Can not send mail. Invalid envelope addresses.");
           err.code = errors.ESENDMAIL;
@@ -30920,9 +31038,9 @@ var require_sendmail_transport = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/stream-transport/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/stream-transport/index.js
 var require_stream_transport = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/stream-transport/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/stream-transport/index.js"(exports2, module2) {
     "use strict";
     var packageData = require_package();
     var shared = require_shared();
@@ -30947,7 +31065,7 @@ var require_stream_transport = __commonJS({
        */
       send(mail, done) {
         mail.message.keepBcc = true;
-        const envelope = mail.data.envelope || mail.message.getEnvelope();
+        const envelope = mail.message.getEnvelope();
         const messageId = mail.message.messageId();
         const recipients = [].concat(envelope.to || []);
         if (recipients.length > 3) {
@@ -31041,9 +31159,9 @@ var require_stream_transport = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/json-transport/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/json-transport/index.js
 var require_json_transport = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/json-transport/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/json-transport/index.js"(exports2, module2) {
     "use strict";
     var packageData = require_package();
     var shared = require_shared();
@@ -31065,7 +31183,7 @@ var require_json_transport = __commonJS({
        */
       send(mail, done) {
         mail.message.keepBcc = true;
-        const envelope = mail.data.envelope || mail.message.getEnvelope();
+        const envelope = mail.message.getEnvelope();
         const messageId = mail.message.messageId();
         const recipients = [].concat(envelope.to || []);
         if (recipients.length > 3) {
@@ -31110,9 +31228,9 @@ var require_json_transport = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/ses-transport/index.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/ses-transport/index.js
 var require_ses_transport = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/ses-transport/index.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/ses-transport/index.js"(exports2, module2) {
     "use strict";
     var EventEmitter = require("events");
     var packageData = require_package();
@@ -31159,7 +31277,7 @@ var require_ses_transport = __commonJS({
           const mimeNode = new MimeNode("text/plain");
           fromHeader = mimeNode._convertAddresses(mimeNode._parseAddresses(fromHeader.value));
         }
-        const envelope = mail.data.envelope || mail.message.getEnvelope();
+        const envelope = mail.message.getEnvelope();
         const messageId = mail.message.messageId();
         const recipients = [].concat(envelope.to || []);
         if (recipients.length > 3) {
@@ -31329,9 +31447,9 @@ var require_ses_transport = __commonJS({
   }
 });
 
-// node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/nodemailer.js
+// node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/nodemailer.js
 var require_nodemailer = __commonJS({
-  "node_modules/.pnpm/nodemailer@9.0.3/node_modules/nodemailer/lib/nodemailer.js"(exports2, module2) {
+  "node_modules/.pnpm/nodemailer@9.0.5/node_modules/nodemailer/lib/nodemailer.js"(exports2, module2) {
     "use strict";
     var Mailer = require_mailer();
     var shared = require_shared();
@@ -34685,10 +34803,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -36980,7 +37098,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -37103,7 +37221,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -40018,13 +40136,19 @@ function assertValidDataBranch(dataBranch) {
     );
   }
 }
-function toSnakeCase(key) {
-  return key.replaceAll(UPPERCASE_LETTER_PATTERN, (letter) => `_${letter.toLowerCase()}`);
+function toDelimited({ key, delimiter }) {
+  return key.replaceAll(
+    UPPERCASE_LETTER_PATTERN,
+    (letter) => `${delimiter}${letter.toLowerCase()}`
+  );
 }
 function formatChoices(choices) {
   const quoted = choices.map((choice) => `"${choice}"`);
   if (quoted.length <= 2) return quoted.join(" or ");
   return `${quoted.slice(0, -1).join(", ")}, or ${quoted.at(-1)}`;
+}
+function formatFallback(fallback) {
+  return typeof fallback === "string" ? `"${fallback}"` : String(fallback);
 }
 function resolveEnum({
   value,
@@ -40040,12 +40164,104 @@ function resolveEnum({
   );
   return fallback;
 }
-function parseOrWarn({ input, inputName, parse: parse3 }) {
-  const parsed = parse3(input);
-  if (input !== "" && parsed === void 0) {
-    warning(`Invalid ${inputName} "${input}". Ignoring it.`);
-  }
-  return parsed;
+function scalarField({ fromInput, fromFile }) {
+  return ({ input, inputName, fileValue }) => {
+    const parsed = fromInput(input);
+    if (input !== "" && parsed === void 0) {
+      warning(`Invalid ${inputName} "${input}". Ignoring it.`);
+    }
+    return parsed ?? fromFile(fileValue);
+  };
+}
+function namedFallbackField({ fromInput, fromFile }) {
+  return ({ input, inputName, fileValue, fallback }) => {
+    const parsed = fromInput(input);
+    if (input !== "" && parsed === void 0) {
+      warning(`Invalid ${inputName} "${input}". Falling back to ${formatFallback(fallback)}`);
+    }
+    return parsed ?? fromFile(fileValue);
+  };
+}
+function enumField(allowed) {
+  return ({ input, inputName, fileValue, fallback }) => resolveEnum({
+    value: input || fileValue,
+    allowed,
+    fallback,
+    inputName
+  });
+}
+function fromFileScalar(parse3) {
+  return (value) => typeof value === "string" || typeof value === "number" || value === null || value === void 0 ? parse3(value) : void 0;
+}
+var boolField = scalarField({ fromInput: parseBool, fromFile: parseFileBool });
+var positiveField = scalarField({
+  fromInput: parsePositiveNumber,
+  fromFile: fromFileScalar(parsePositiveNumber)
+});
+var nonNegativeField = scalarField({
+  fromInput: parseNonNegativeNumber,
+  fromFile: fromFileScalar(parseNonNegativeNumber)
+});
+var listField = scalarField({ fromInput: parseList, fromFile: toStringList });
+var FIELD_SOURCES = {
+  includeArchived: boolField,
+  includeForks: boolField,
+  excludeRepos: listField,
+  onlyRepos: listField,
+  excludeOrgs: listField,
+  onlyOrgs: listField,
+  minStars: nonNegativeField,
+  maxHistory: positiveField,
+  compareAgainst: enumField(Object.values(CompareAgainst)),
+  readOnly: boolField,
+  includeCharts: boolField,
+  locale: enumField(LOCALES),
+  notificationThreshold: scalarField({
+    fromInput: parseNotificationThreshold,
+    fromFile: fromFileScalar(parseNotificationThreshold)
+  }),
+  notificationMode: enumField(Object.values(NotificationMode)),
+  trackStargazers: boolField,
+  topRepos: positiveField,
+  smartSampling: boolField,
+  smartSamplingThreshold: nonNegativeField,
+  smartSamplingPages: positiveField,
+  chartLineColor: namedFallbackField({
+    fromInput: parseHexColor,
+    fromFile: parseFileHexColor
+  }),
+  chartLineWidth: namedFallbackField({
+    fromInput: parseDecimal,
+    fromFile: fromFileScalar(parseDecimal)
+  }),
+  chartMaxPoints: nonNegativeField,
+  chartYAxisSide: enumField(Object.values(ChartAxisSide)),
+  chartSmoothing: boolField,
+  chartCurve: enumField(Object.values(ChartCurve)),
+  chartShowPoints: boolField,
+  chartAnimation: boolField,
+  chartMilestones: boolField,
+  chartBeginAtZero: boolField,
+  chartTheme: enumField(Object.values(ChartTheme)),
+  emailTheme: enumField(Object.values(ChartTheme)),
+  chartRange: enumField(Object.values(ChartRange)),
+  chartTrendLine: boolField,
+  velocityMetrics: boolField
+};
+var TABLED_KEYS = Object.keys(FIELD_SOURCES);
+function resolveTabledFields(fileConfig) {
+  const resolved = TABLED_KEYS.map((key) => {
+    const inputName = toDelimited({ key, delimiter: "-" });
+    const fallback = DEFAULTS2[key];
+    const value = FIELD_SOURCES[key]({
+      input: getInput(inputName),
+      inputName,
+      fileValue: fileConfig[key],
+      fallback
+    });
+    return [key, value ?? fallback];
+  });
+  return Object.fromEntries(resolved);
 }
 function parseConfigYaml({
   content,
@@ -40073,223 +40289,54 @@ function loadConfigFile(configPath) {
   }
   return Object.fromEntries(
     FILE_CONFIG_KEYS.map((key) => {
-      const snakeKey = toSnakeCase(key);
+      const snakeKey = toDelimited({ key, delimiter: "_" });
       return [key, parsed[snakeKey] ?? parsed[snakeKey.replaceAll("_", "-")]];
     })
   );
 }
+function resolveVisibility(fileConfig) {
+  const raw = getInput("visibility") || fileConfig.visibility || DEFAULTS2.visibility;
+  const options = Object.values(Visibility);
+  const match = options.find((option) => option === raw);
+  if (match === void 0) {
+    throw new Error(`Invalid visibility "${raw}". Must be one of: ${options.join(", ")}`);
+  }
+  return match;
+}
+function resolveDataBranch(fileConfig) {
+  const dataBranch = getInput("data-branch") || fileConfig.dataBranch || DEFAULTS2.dataBranch;
+  assertValidDataBranch(dataBranch);
+  return dataBranch;
+}
+function resolveCustomMilestones(fileConfig) {
+  const input = getInput("chart-custom-milestones");
+  const fromInput = input ? parseNumberList(input) : null;
+  if (fromInput !== null && fromInput.length === 0) {
+    warning(
+      `Invalid chart-custom-milestones "${input}". Expected a comma-separated list of positive numbers. Falling back to the built-in milestones.`
+    );
+  }
+  if (fromInput !== null) return fromInput;
+  const fromFile = Array.isArray(fileConfig.chartCustomMilestones) ? parseNumberList(fileConfig.chartCustomMilestones.join(",")) : parseNumberList(fileConfig.chartCustomMilestones);
+  return fromFile.length > 0 ? fromFile : DEFAULTS2.chartCustomMilestones;
+}
+var LIST_LOG_LABELS = {
+  onlyRepos: "tracking only repos",
+  excludeRepos: "excluding repos",
+  onlyOrgs: "tracking only orgs",
+  excludeOrgs: "excluding orgs"
+};
 function loadConfig() {
   const configPath = getInput("config-path") || DEFAULT_CONFIG_PATH;
   const fileConfig = loadConfigFile(configPath);
-  const inputVisibility = getInput("visibility");
-  const inputIncludeArchived = getInput("include-archived");
-  const inputIncludeForks = getInput("include-forks");
-  const inputExcludeRepos = getInput("exclude-repos");
-  const inputOnlyRepos = getInput("only-repos");
-  const inputExcludeOrgs = getInput("exclude-orgs");
-  const inputOnlyOrgs = getInput("only-orgs");
-  const inputMinStars = getInput("min-stars");
-  const inputDataBranch = getInput("data-branch");
-  const inputMaxHistory = getInput("max-history");
-  const inputReadOnly = getInput("read-only");
-  const inputIncludeCharts = getInput("include-charts");
-  const inputLocale = getInput("locale");
-  const inputNotificationThreshold = getInput("notification-threshold");
-  const inputNotificationMode = getInput("notification-mode");
-  const inputCompareAgainst = getInput("compare-against");
-  const inputTrackStargazers = getInput("track-stargazers");
-  const inputTopRepos = getInput("top-repos");
-  const inputSmartSampling = getInput("smart-sampling");
-  const inputSmartSamplingThreshold = getInput("smart-sampling-threshold");
-  const inputSmartSamplingPages = getInput("smart-sampling-pages");
-  const inputChartLineColor = getInput("chart-line-color");
-  const inputChartLineWidth = getInput("chart-line-width");
-  const inputChartMaxPoints = getInput("chart-max-points");
-  const inputChartYAxisSide = getInput("chart-y-axis-side");
-  const inputChartSmoothing = getInput("chart-smoothing");
-  const inputChartCurve = getInput("chart-curve");
-  const inputChartShowPoints = getInput("chart-show-points");
-  const inputChartAnimation = getInput("chart-animation");
-  const inputChartMilestones = getInput("chart-milestones");
-  const inputChartBeginAtZero = getInput("chart-begin-at-zero");
-  const inputChartTheme = getInput("chart-theme");
-  const inputEmailTheme = getInput("email-theme");
-  const inputChartCustomMilestones = getInput("chart-custom-milestones");
-  const inputChartRange = getInput("chart-range");
-  const inputChartTrendLine = getInput("chart-trend-line");
-  const inputVelocityMetrics = getInput("velocity-metrics");
-  const rawVisibility = inputVisibility || fileConfig.visibility || DEFAULTS2.visibility;
-  const visibilityOptions = Object.values(Visibility);
-  const visibility = visibilityOptions.find((option) => option === rawVisibility);
-  if (visibility === void 0) {
-    throw new Error(
-      `Invalid visibility "${rawVisibility}". Must be one of: ${visibilityOptions.join(", ")}`
-    );
-  }
-  const dataBranch = inputDataBranch || fileConfig.dataBranch || DEFAULTS2.dataBranch;
-  assertValidDataBranch(dataBranch);
-  const fileCustomMilestones = Array.isArray(fileConfig.chartCustomMilestones) ? parseNumberList(fileConfig.chartCustomMilestones.join(",")) : parseNumberList(fileConfig.chartCustomMilestones);
-  if (inputChartCustomMilestones && parseNumberList(inputChartCustomMilestones).length === 0) {
-    warning(
-      `Invalid chart-custom-milestones "${inputChartCustomMilestones}". Expected a comma-separated list of positive numbers. Falling back to the built-in milestones.`
-    );
-  }
-  const locale = resolveEnum({
-    value: inputLocale || fileConfig.locale,
-    allowed: LOCALES,
-    fallback: DEFAULTS2.locale,
-    inputName: "locale"
-  });
-  const chartLineColor = parseHexColor(inputChartLineColor) ?? parseFileHexColor(fileConfig.chartLineColor) ?? DEFAULTS2.chartLineColor;
-  if (inputChartLineColor && !parseHexColor(inputChartLineColor)) {
-    warning(
-      `Invalid chart-line-color "${inputChartLineColor}". Falling back to "${DEFAULTS2.chartLineColor}"`
-    );
-  }
-  const chartLineWidth = parseDecimal(inputChartLineWidth) ?? parseDecimal(fileConfig.chartLineWidth) ?? DEFAULTS2.chartLineWidth;
-  if (inputChartLineWidth && parseDecimal(inputChartLineWidth) === void 0) {
-    warning(
-      `Invalid chart-line-width "${inputChartLineWidth}". Falling back to ${DEFAULTS2.chartLineWidth}`
-    );
-  }
-  const chartYAxisSide = resolveEnum({
-    value: inputChartYAxisSide || fileConfig.chartYAxisSide,
-    allowed: Object.values(ChartAxisSide),
-    fallback: DEFAULTS2.chartYAxisSide,
-    inputName: "chart-y-axis-side"
-  });
-  const chartTheme = resolveEnum({
-    value: inputChartTheme || fileConfig.chartTheme,
-    allowed: Object.values(ChartTheme),
-    fallback: DEFAULTS2.chartTheme,
-    inputName: "chart-theme"
-  });
-  const emailThemeSetting = resolveEnum({
-    value: inputEmailTheme || fileConfig.emailTheme,
-    allowed: Object.values(ChartTheme),
-    fallback: DEFAULTS2.emailTheme,
-    inputName: "email-theme"
-  });
-  const emailTheme = emailThemeSetting === ChartTheme.AUTO ? chartTheme : emailThemeSetting;
-  const chartRange = resolveEnum({
-    value: inputChartRange || fileConfig.chartRange,
-    allowed: Object.values(ChartRange),
-    fallback: DEFAULTS2.chartRange,
-    inputName: "chart-range"
-  });
-  const chartCurve = resolveEnum({
-    value: inputChartCurve || fileConfig.chartCurve,
-    allowed: Object.values(ChartCurve),
-    fallback: DEFAULTS2.chartCurve,
-    inputName: "chart-curve"
-  });
-  const compareAgainst = resolveEnum({
-    value: inputCompareAgainst || fileConfig.compareAgainst,
-    allowed: Object.values(CompareAgainst),
-    fallback: DEFAULTS2.compareAgainst,
-    inputName: "compare-against"
-  });
-  const notificationMode = resolveEnum({
-    value: inputNotificationMode || fileConfig.notificationMode,
-    allowed: Object.values(NotificationMode),
-    fallback: DEFAULTS2.notificationMode,
-    inputName: "notification-mode"
-  });
+  const tabled = resolveTabledFields(fileConfig);
   const config = {
-    visibility,
-    includeArchived: parseOrWarn({
-      input: inputIncludeArchived,
-      inputName: "include-archived",
-      parse: parseBool
-    }) ?? parseFileBool(fileConfig.includeArchived) ?? DEFAULTS2.includeArchived,
-    includeForks: parseOrWarn({ input: inputIncludeForks, inputName: "include-forks", parse: parseBool }) ?? parseFileBool(fileConfig.includeForks) ?? DEFAULTS2.includeForks,
-    excludeRepos: parseList(inputExcludeRepos) ?? toStringList(fileConfig.excludeRepos) ?? DEFAULTS2.excludeRepos,
-    onlyRepos: parseList(inputOnlyRepos) ?? toStringList(fileConfig.onlyRepos) ?? DEFAULTS2.onlyRepos,
-    excludeOrgs: parseList(inputExcludeOrgs) ?? toStringList(fileConfig.excludeOrgs) ?? DEFAULTS2.excludeOrgs,
-    onlyOrgs: parseList(inputOnlyOrgs) ?? toStringList(fileConfig.onlyOrgs) ?? DEFAULTS2.onlyOrgs,
-    minStars: parseOrWarn({
-      input: inputMinStars,
-      inputName: "min-stars",
-      parse: parseNonNegativeNumber
-    }) ?? parseNonNegativeNumber(fileConfig.minStars) ?? DEFAULTS2.minStars,
-    dataBranch,
-    maxHistory: parseOrWarn({
-      input: inputMaxHistory,
-      inputName: "max-history",
-      parse: parsePositiveNumber
-    }) ?? parsePositiveNumber(fileConfig.maxHistory) ?? DEFAULTS2.maxHistory,
-    compareAgainst,
-    readOnly: parseOrWarn({ input: inputReadOnly, inputName: "read-only", parse: parseBool }) ?? parseFileBool(fileConfig.readOnly) ?? DEFAULTS2.readOnly,
+    ...tabled,
+    visibility: resolveVisibility(fileConfig),
+    dataBranch: resolveDataBranch(fileConfig),
     sendOnNoChanges: parseBool(getInput("send-on-no-changes")) ?? DEFAULTS2.sendOnNoChanges,
-    includeCharts: parseOrWarn({ input: inputIncludeCharts, inputName: "include-charts", parse: parseBool }) ?? parseFileBool(fileConfig.includeCharts) ?? DEFAULTS2.includeCharts,
-    locale,
-    notificationThreshold: parseOrWarn({
-      input: inputNotificationThreshold,
-      inputName: "notification-threshold",
-      parse: parseNotificationThreshold
-    }) ?? parseNotificationThreshold(fileConfig.notificationThreshold) ?? DEFAULTS2.notificationThreshold,
-    notificationMode,
-    trackStargazers: parseOrWarn({
-      input: inputTrackStargazers,
-      inputName: "track-stargazers",
-      parse: parseBool
-    }) ?? parseFileBool(fileConfig.trackStargazers) ?? DEFAULTS2.trackStargazers,
-    topRepos: parseOrWarn({
-      input: inputTopRepos,
-      inputName: "top-repos",
-      parse: parsePositiveNumber
-    }) ?? parsePositiveNumber(fileConfig.topRepos) ?? DEFAULTS2.topRepos,
-    smartSampling: parseOrWarn({ input: inputSmartSampling, inputName: "smart-sampling", parse: parseBool }) ?? parseFileBool(fileConfig.smartSampling) ?? DEFAULTS2.smartSampling,
-    smartSamplingThreshold: parseOrWarn({
-      input: inputSmartSamplingThreshold,
-      inputName: "smart-sampling-threshold",
-      parse: parseNonNegativeNumber
-    }) ?? parseNonNegativeNumber(fileConfig.smartSamplingThreshold) ?? DEFAULTS2.smartSamplingThreshold,
-    smartSamplingPages: parseOrWarn({
-      input: inputSmartSamplingPages,
-      inputName: "smart-sampling-pages",
-      parse: parsePositiveNumber
-    }) ?? parsePositiveNumber(fileConfig.smartSamplingPages) ?? DEFAULTS2.smartSamplingPages,
-    chartLineColor,
-    chartLineWidth,
-    chartMaxPoints: parseOrWarn({
-      input: inputChartMaxPoints,
-      inputName: "chart-max-points",
-      parse: parseNonNegativeNumber
-    }) ?? parseNonNegativeNumber(fileConfig.chartMaxPoints) ?? DEFAULTS2.chartMaxPoints,
-    chartYAxisSide,
-    chartSmoothing: parseOrWarn({ input: inputChartSmoothing, inputName: "chart-smoothing", parse: parseBool }) ?? parseFileBool(fileConfig.chartSmoothing) ?? DEFAULTS2.chartSmoothing,
-    chartCurve,
-    chartShowPoints: parseOrWarn({
-      input: inputChartShowPoints,
-      inputName: "chart-show-points",
-      parse: parseBool
-    }) ?? parseFileBool(fileConfig.chartShowPoints) ?? DEFAULTS2.chartShowPoints,
-    chartAnimation: parseOrWarn({ input: inputChartAnimation, inputName: "chart-animation", parse: parseBool }) ?? parseFileBool(fileConfig.chartAnimation) ?? DEFAULTS2.chartAnimation,
-    chartMilestones: parseOrWarn({
-      input: inputChartMilestones,
-      inputName: "chart-milestones",
-      parse: parseBool
-    }) ?? parseFileBool(fileConfig.chartMilestones) ?? DEFAULTS2.chartMilestones,
-    chartBeginAtZero: parseOrWarn({
-      input: inputChartBeginAtZero,
-      inputName: "chart-begin-at-zero",
-      parse: parseBool
-    }) ?? parseFileBool(fileConfig.chartBeginAtZero) ?? DEFAULTS2.chartBeginAtZero,
-    chartTheme,
-    emailTheme,
-    chartCustomMilestones: inputChartCustomMilestones ? parseNumberList(inputChartCustomMilestones) : fileCustomMilestones.length > 0 ? fileCustomMilestones : DEFAULTS2.chartCustomMilestones,
-    chartRange,
-    chartTrendLine: parseOrWarn({
-      input: inputChartTrendLine,
-      inputName: "chart-trend-line",
-      parse: parseBool
-    }) ?? parseFileBool(fileConfig.chartTrendLine) ?? DEFAULTS2.chartTrendLine,
-    velocityMetrics: parseOrWarn({
-      input: inputVelocityMetrics,
-      inputName: "velocity-metrics",
-      parse: parseBool
-    }) ?? parseFileBool(fileConfig.velocityMetrics) ?? DEFAULTS2.velocityMetrics
+    chartCustomMilestones: resolveCustomMilestones(fileConfig),
+    emailTheme: tabled.emailTheme === ChartTheme.AUTO ? tabled.chartTheme : tabled.emailTheme
   };
   if (config.readOnly && config.notificationThreshold !== 0) {
     warning(
@@ -40299,19 +40346,252 @@ function loadConfig() {
   info(
     `Config: visibility=${config.visibility}, includeArchived=${config.includeArchived}, includeForks=${config.includeForks}`
   );
-  if (config.onlyRepos.length > 0) {
-    info(`Config: tracking only repos: ${config.onlyRepos.join(", ")}`);
-  }
-  if (config.excludeRepos.length > 0) {
-    info(`Config: excluding repos: ${config.excludeRepos.join(", ")}`);
-  }
-  if (config.onlyOrgs.length > 0) {
-    info(`Config: tracking only orgs: ${config.onlyOrgs.join(", ")}`);
-  }
-  if (config.excludeOrgs.length > 0) {
-    info(`Config: excluding orgs: ${config.excludeOrgs.join(", ")}`);
+  for (const [key, label] of Object.entries(LIST_LOG_LABELS)) {
+    const values = config[key];
+    if (values.length > 0) {
+      info(`Config: ${label}: ${values.join(", ")}`);
+    }
   }
   return config;
+}
+
+// src/domain/constants.ts
+var MS_PER_DAY = 864e5;
+var DAYS_PER_WEEK = 7;
+var MS_PER_YEAR = 365 * MS_PER_DAY;
+var MIN_SNAPSHOTS_FOR_FORECAST = 3;
+var FORECAST_WEEKS = 4;
+var MIN_RATE_INTERVAL_DAYS = 0.25;
+var STAR_MILESTONES = [
+  10,
+  50,
+  100,
+  500,
+  1e3,
+  5e3,
+  1e4,
+  5e4,
+  1e5,
+  5e5,
+  1e6
+];
+var NOTIFICATION_THRESHOLDS = [
+  { limit: 50, value: 1 },
+  { limit: 200, value: 5 },
+  { limit: 500, value: 10 }
+];
+var NOTIFICATION_THRESHOLD_MAX_PACE = 20;
+var MAX_REACHABLE_STARGAZERS = 4e4;
+
+// src/domain/time.ts
+function toEpochMs(timestamp) {
+  const parsed = new Date(timestamp).getTime();
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+// src/domain/growth.ts
+var MIN_POINTS_FOR_RATE = 2;
+function calendarDays(history) {
+  const times = history.snapshots.map((snapshot) => toEpochMs(snapshot.timestamp));
+  if (times.some((timeMs) => timeMs === null)) {
+    return history.snapshots.map((_, index) => index * DAYS_PER_WEEK);
+  }
+  const first = times[0];
+  return times.map((timeMs) => (timeMs - first) / MS_PER_DAY);
+}
+function latestRateInterval(points) {
+  if (points.length < MIN_POINTS_FOR_RATE) return null;
+  const to = points[points.length - 1];
+  for (let index = points.length - 2; index >= 0; index--) {
+    const days = to.day - points[index].day;
+    if (days < MIN_RATE_INTERVAL_DAYS) continue;
+    return { from: points[index], to, days };
+  }
+  return null;
+}
+function weightedDailyRate(points) {
+  if (points.length < MIN_POINTS_FOR_RATE) return 0;
+  const dailyRates = [];
+  for (let index = 1; index < points.length; index++) {
+    const elapsedDays = points[index].day - points[index - 1].day;
+    if (elapsedDays < MIN_RATE_INTERVAL_DAYS) continue;
+    dailyRates.push((points[index].value - points[index - 1].value) / elapsedDays);
+  }
+  if (dailyRates.length === 0) return 0;
+  let weightedSum = 0;
+  let totalWeight = 0;
+  for (let index = 0; index < dailyRates.length; index++) {
+    const weight = index + 1;
+    weightedSum += dailyRates[index] * weight;
+    totalWeight += weight;
+  }
+  return weightedSum / totalWeight;
+}
+function fitTrend(points) {
+  const pointCount = points.length;
+  let sumX = 0;
+  let sumY = 0;
+  let sumXY = 0;
+  let sumXX = 0;
+  for (const point of points) {
+    sumX += point.day;
+    sumY += point.value;
+    sumXY += point.day * point.value;
+    sumXX += point.day * point.day;
+  }
+  const denominator = pointCount * sumXX - sumX * sumX;
+  if (denominator === 0) {
+    return { slope: 0, intercept: points.at(-1)?.value ?? 0 };
+  }
+  const slope = (pointCount * sumXY - sumX * sumY) / denominator;
+  const intercept = (sumY - slope * sumX) / pointCount;
+  return { slope, intercept };
+}
+
+// src/domain/snapshot.ts
+var COMPARE_WINDOW_DAYS = {
+  [CompareAgainst.H24]: 1,
+  [CompareAgainst.D7]: 7,
+  [CompareAgainst.D30]: 30
+};
+var COMPARE_WINDOW_TOLERANCE_MS = 6 * 60 * 60 * 1e3;
+function getLastSnapshot(history) {
+  for (let index = history.snapshots.length - 1; index >= 0; index--) {
+    if (toEpochMs(history.snapshots[index].timestamp) !== null) return history.snapshots[index];
+  }
+  return null;
+}
+function getBaselineSnapshot({
+  history,
+  compareAgainst,
+  now = /* @__PURE__ */ new Date()
+}) {
+  const snapshots = history.snapshots;
+  if (snapshots.length === 0) return null;
+  if (compareAgainst === CompareAgainst.LAST_RUN) return getLastSnapshot(history);
+  const window2 = COMPARE_WINDOW_DAYS[compareAgainst] * MS_PER_DAY;
+  const cutoff = now.getTime() - window2 + COMPARE_WINDOW_TOLERANCE_MS;
+  const datable = snapshots.filter((snapshot) => toEpochMs(snapshot.timestamp) !== null);
+  const olderThanCutoff = datable.filter(
+    (snapshot) => toEpochMs(snapshot.timestamp) <= cutoff
+  );
+  return olderThanCutoff.at(-1) ?? datable[0] ?? null;
+}
+function repoStarSeries({ snapshots, repoFullName }) {
+  return snapshots.map(
+    (snapshot) => snapshot.repos.find((candidate) => candidate.fullName === repoFullName)?.stars ?? 0
+  );
+}
+function addSnapshot({ history, snapshot, maxHistory }) {
+  const snapshots = [...history.snapshots, snapshot].slice(-maxHistory);
+  return { ...history, snapshots };
+}
+
+// src/domain/forecast.ts
+var ForecastMethod = {
+  LINEAR_REGRESSION: "linear-regression",
+  WEIGHTED_MOVING_AVERAGE: "weighted-moving-average"
+};
+function clampPrediction(value) {
+  return Math.max(0, Math.round(value));
+}
+function forecastFromSeries(points) {
+  const last = points.at(-1) ?? { day: 0, value: 0 };
+  const regression = fitTrend(points);
+  const wmaDailyRate = weightedDailyRate(points);
+  const lrPoints = [];
+  const wmaPoints = [];
+  for (let weekOffset = 1; weekOffset <= FORECAST_WEEKS; weekOffset++) {
+    const forecastDays = weekOffset * DAYS_PER_WEEK;
+    lrPoints.push({
+      weekOffset,
+      predicted: clampPrediction(last.value + regression.slope * forecastDays)
+    });
+    wmaPoints.push({
+      weekOffset,
+      predicted: clampPrediction(last.value + wmaDailyRate * forecastDays)
+    });
+  }
+  return [
+    { method: ForecastMethod.LINEAR_REGRESSION, points: lrPoints },
+    { method: ForecastMethod.WEIGHTED_MOVING_AVERAGE, points: wmaPoints }
+  ];
+}
+function computeForecast({
+  history,
+  topRepoNames
+}) {
+  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) {
+    return null;
+  }
+  const days = calendarDays(history);
+  const toSeries = (values) => values.map((value, index) => ({ day: days[index], value }));
+  const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
+  const aggregateForecasts = forecastFromSeries(toSeries(totalValues));
+  const repos = topRepoNames.map((repoFullName) => {
+    const values = repoStarSeries({ snapshots: history.snapshots, repoFullName });
+    return { repoFullName, forecasts: forecastFromSeries(toSeries(values)) };
+  });
+  return { aggregate: { forecasts: aggregateForecasts }, repos };
+}
+
+// src/domain/formatting.ts
+var UP_ARROW = "\u2B06\uFE0F";
+var DOWN_ARROW = "\u2B07\uFE0F";
+var DASH = "\u2796";
+var COMPACT_MAX_FRACTION_DIGITS = 1;
+var compactFormatters = /* @__PURE__ */ new Map();
+function compactFormatter(locale) {
+  const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
+  const cached = compactFormatters.get(localeCode);
+  if (cached) return cached;
+  const formatter = new Intl.NumberFormat(localeCode, {
+    notation: "compact",
+    maximumFractionDigits: COMPACT_MAX_FRACTION_DIGITS
+  });
+  compactFormatters.set(localeCode, formatter);
+  return formatter;
+}
+function formatCount({ count, locale }) {
+  return compactFormatter(locale).format(count);
+}
+function deltaIndicator(delta) {
+  if (delta > 0) return `+${delta}`;
+  if (delta < 0) return `${delta}`;
+  return "0";
+}
+function formatSignedPercent(value) {
+  return `${value >= 0 ? "+" : ""}${value}%`;
+}
+function trendIcon(delta) {
+  if (delta > 0) return UP_ARROW;
+  if (delta < 0) return DOWN_ARROW;
+  return DASH;
+}
+function formatDate({ timestamp, locale }) {
+  const epochMs = toEpochMs(timestamp);
+  if (epochMs === null) return "";
+  const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
+  return new Date(epochMs).toLocaleDateString(localeCode, {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC"
+  });
+}
+function buildAxisLabels({ timestamps, locale }) {
+  const times = timestamps.map((timestamp) => toEpochMs(timestamp)).filter((timeMs) => timeMs !== null);
+  if (times.length < 2 || Math.max(...times) - Math.min(...times) < MS_PER_YEAR) {
+    return timestamps.map((timestamp) => formatDate({ timestamp, locale }));
+  }
+  let lastYear = null;
+  return timestamps.map((timestamp) => {
+    const time = toEpochMs(timestamp);
+    if (time === null) return "";
+    const year = new Date(time).getUTCFullYear();
+    if (year === lastYear) return "";
+    lastYear = year;
+    return String(year);
+  });
 }
 
 // src/domain/comparison.ts
@@ -40382,233 +40662,6 @@ function createSnapshot({ currentRepos, summary: summary2 }) {
   };
 }
 
-// src/domain/constants.ts
-var MS_PER_DAY = 864e5;
-var MS_PER_YEAR = 365 * MS_PER_DAY;
-var MIN_SNAPSHOTS_FOR_FORECAST = 3;
-var FORECAST_WEEKS = 4;
-var MIN_RATE_INTERVAL_DAYS = 0.25;
-var STAR_MILESTONES = [
-  10,
-  50,
-  100,
-  500,
-  1e3,
-  5e3,
-  1e4,
-  5e4,
-  1e5,
-  5e5,
-  1e6
-];
-var NOTIFICATION_THRESHOLDS = [
-  { limit: 50, value: 1 },
-  { limit: 200, value: 5 },
-  { limit: 500, value: 10 }
-];
-var NOTIFICATION_THRESHOLD_MAX_PACE = 20;
-var MAX_REACHABLE_STARGAZERS = 4e4;
-
-// src/domain/time.ts
-function toEpochMs(timestamp) {
-  const parsed = new Date(timestamp).getTime();
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-// src/domain/snapshot.ts
-var COMPARE_WINDOW_DAYS = {
-  [CompareAgainst.H24]: 1,
-  [CompareAgainst.D7]: 7,
-  [CompareAgainst.D30]: 30
-};
-var COMPARE_WINDOW_TOLERANCE_MS = 6 * 60 * 60 * 1e3;
-function getLastSnapshot(history) {
-  for (let index = history.snapshots.length - 1; index >= 0; index--) {
-    if (toEpochMs(history.snapshots[index].timestamp) !== null) return history.snapshots[index];
-  }
-  return null;
-}
-function getBaselineSnapshot({
-  history,
-  compareAgainst,
-  now = /* @__PURE__ */ new Date()
-}) {
-  const snapshots = history.snapshots;
-  if (snapshots.length === 0) return null;
-  if (compareAgainst === CompareAgainst.LAST_RUN) return getLastSnapshot(history);
-  const window2 = COMPARE_WINDOW_DAYS[compareAgainst] * MS_PER_DAY;
-  const cutoff = now.getTime() - window2 + COMPARE_WINDOW_TOLERANCE_MS;
-  const datable = snapshots.filter((snapshot) => toEpochMs(snapshot.timestamp) !== null);
-  const olderThanCutoff = datable.filter(
-    (snapshot) => toEpochMs(snapshot.timestamp) <= cutoff
-  );
-  return olderThanCutoff.at(-1) ?? datable[0] ?? null;
-}
-function repoStarSeries({ snapshots, repoFullName }) {
-  return snapshots.map(
-    (snapshot) => snapshot.repos.find((candidate) => candidate.fullName === repoFullName)?.stars ?? 0
-  );
-}
-function addSnapshot({ history, snapshot, maxHistory }) {
-  const snapshots = [...history.snapshots, snapshot].slice(-maxHistory);
-  return { ...history, snapshots };
-}
-
-// src/domain/forecast.ts
-var DAYS_PER_WEEK = 7;
-var ForecastMethod = {
-  LINEAR_REGRESSION: "linear-regression",
-  WEIGHTED_MOVING_AVERAGE: "weighted-moving-average"
-};
-function linearRegression(points) {
-  const pointCount = points.length;
-  let sumX = 0;
-  let sumY = 0;
-  let sumXY = 0;
-  let sumXX = 0;
-  for (const point of points) {
-    sumX += point.day;
-    sumY += point.value;
-    sumXY += point.day * point.value;
-    sumXX += point.day * point.day;
-  }
-  const denominator = pointCount * sumXX - sumX * sumX;
-  if (denominator === 0) {
-    return { slope: 0, intercept: points.at(-1)?.value ?? 0 };
-  }
-  const slope = (pointCount * sumXY - sumX * sumY) / denominator;
-  const intercept = (sumY - slope * sumX) / pointCount;
-  return { slope, intercept };
-}
-var MIN_POINTS_FOR_WEIGHTED_AVERAGE = 2;
-function weightedMovingAverage(points) {
-  if (points.length < MIN_POINTS_FOR_WEIGHTED_AVERAGE) return 0;
-  const dailyRates = [];
-  for (let index = 1; index < points.length; index++) {
-    const elapsedDays = points[index].day - points[index - 1].day;
-    if (elapsedDays < MIN_RATE_INTERVAL_DAYS) continue;
-    dailyRates.push((points[index].value - points[index - 1].value) / elapsedDays);
-  }
-  if (dailyRates.length === 0) return 0;
-  let weightedSum = 0;
-  let totalWeight = 0;
-  for (let index = 0; index < dailyRates.length; index++) {
-    const weight = index + 1;
-    weightedSum += dailyRates[index] * weight;
-    totalWeight += weight;
-  }
-  return weightedSum / totalWeight;
-}
-function clampPrediction(value) {
-  return Math.max(0, Math.round(value));
-}
-function forecastFromSeries(points) {
-  const last = points.at(-1) ?? { day: 0, value: 0 };
-  const regression = linearRegression(points);
-  const wmaDailyRate = weightedMovingAverage(points);
-  const lrPoints = [];
-  const wmaPoints = [];
-  for (let weekOffset = 1; weekOffset <= FORECAST_WEEKS; weekOffset++) {
-    const forecastDays = weekOffset * DAYS_PER_WEEK;
-    lrPoints.push({
-      weekOffset,
-      predicted: clampPrediction(last.value + regression.slope * forecastDays)
-    });
-    wmaPoints.push({
-      weekOffset,
-      predicted: clampPrediction(last.value + wmaDailyRate * forecastDays)
-    });
-  }
-  return [
-    { method: ForecastMethod.LINEAR_REGRESSION, points: lrPoints },
-    { method: ForecastMethod.WEIGHTED_MOVING_AVERAGE, points: wmaPoints }
-  ];
-}
-function snapshotDays(history) {
-  const times = history.snapshots.map((snapshot) => toEpochMs(snapshot.timestamp));
-  if (times.some((timeMs) => timeMs === null)) {
-    return history.snapshots.map((_, index) => index * DAYS_PER_WEEK);
-  }
-  const first = times[0];
-  return times.map((timeMs) => (timeMs - first) / MS_PER_DAY);
-}
-function computeForecast({
-  history,
-  topRepoNames
-}) {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) {
-    return null;
-  }
-  const days = snapshotDays(history);
-  const toSeries = (values) => values.map((value, index) => ({ day: days[index], value }));
-  const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
-  const aggregateForecasts = forecastFromSeries(toSeries(totalValues));
-  const repos = topRepoNames.map((repoFullName) => {
-    const values = repoStarSeries({ snapshots: history.snapshots, repoFullName });
-    return { repoFullName, forecasts: forecastFromSeries(toSeries(values)) };
-  });
-  return { aggregate: { forecasts: aggregateForecasts }, repos };
-}
-
-// src/domain/formatting.ts
-var UP_ARROW = "\u2B06\uFE0F";
-var DOWN_ARROW = "\u2B07\uFE0F";
-var DASH = "\u2796";
-var COMPACT_MAX_FRACTION_DIGITS = 1;
-var compactFormatters = /* @__PURE__ */ new Map();
-function compactFormatter(locale) {
-  const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
-  const cached = compactFormatters.get(localeCode);
-  if (cached) return cached;
-  const formatter = new Intl.NumberFormat(localeCode, {
-    notation: "compact",
-    maximumFractionDigits: COMPACT_MAX_FRACTION_DIGITS
-  });
-  compactFormatters.set(localeCode, formatter);
-  return formatter;
-}
-function formatCount({ count, locale }) {
-  return compactFormatter(locale).format(count);
-}
-function deltaIndicator(delta) {
-  if (delta > 0) return `+${delta}`;
-  if (delta < 0) return `${delta}`;
-  return "0";
-}
-function formatSignedPercent(value) {
-  return `${value >= 0 ? "+" : ""}${value}%`;
-}
-function trendIcon(delta) {
-  if (delta > 0) return UP_ARROW;
-  if (delta < 0) return DOWN_ARROW;
-  return DASH;
-}
-function formatDate({ timestamp, locale }) {
-  const epochMs = toEpochMs(timestamp);
-  if (epochMs === null) return "";
-  const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
-  return new Date(epochMs).toLocaleDateString(localeCode, {
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC"
-  });
-}
-function buildAxisLabels({ timestamps, locale }) {
-  const times = timestamps.map((timestamp) => toEpochMs(timestamp)).filter((timeMs) => timeMs !== null);
-  if (times.length < 2 || Math.max(...times) - Math.min(...times) < MS_PER_YEAR) {
-    return timestamps.map((timestamp) => formatDate({ timestamp, locale }));
-  }
-  let lastYear = null;
-  return timestamps.map((timestamp) => {
-    const time = toEpochMs(timestamp);
-    if (time === null) return "";
-    const year = new Date(time).getUTCFullYear();
-    if (year === lastYear) return "";
-    lastYear = year;
-    return String(year);
-  });
-}
-
 // src/domain/notification.ts
 function getAdaptiveThreshold(totalStars) {
   return NOTIFICATION_THRESHOLDS.find((threshold) => totalStars <= threshold.limit)?.value ?? NOTIFICATION_THRESHOLD_MAX_PACE;
@@ -40624,6 +40677,42 @@ function shouldNotify({
   const delta = totalStars - (starsAtLastNotification ?? 0);
   const accumulatedDelta = mode === NotificationMode.GAINS ? delta : Math.abs(delta);
   return accumulatedDelta >= effectiveThreshold;
+}
+
+// src/domain/measurement.ts
+function measureRun({
+  trackedSet,
+  storedHistory,
+  comparisonWindow,
+  maxHistory,
+  notificationThreshold,
+  notificationMode,
+  now
+}) {
+  const baseline = getBaselineSnapshot({
+    history: storedHistory,
+    compareAgainst: comparisonWindow,
+    now
+  });
+  const results = compareStars({ currentRepos: trackedSet, previousSnapshot: baseline });
+  const { summary: summary2 } = results;
+  const snapshot = createSnapshot({ currentRepos: trackedSet, summary: summary2 });
+  return {
+    baselineTimestamp: baseline === null ? null : baseline.timestamp,
+    results,
+    summary: summary2,
+    updatedHistory: addSnapshot({ history: storedHistory, snapshot, maxHistory }),
+    droppedSnapshots: Math.max(0, storedHistory.snapshots.length + 1 - maxHistory),
+    thresholdReached: shouldNotify({
+      totalStars: summary2.totalStars,
+      starsAtLastNotification: storedHistory.starsAtLastNotification,
+      threshold: notificationThreshold,
+      mode: notificationMode
+    })
+  };
+}
+function recordNotification({ history, totalStars }) {
+  return { ...history, starsAtLastNotification: totalStars };
 }
 
 // src/domain/star-history.ts
@@ -40771,93 +40860,6 @@ function buildStargazerMap({
     map[repo.repoFullName] = repo.stargazers.map((stargazer) => stargazer.login);
   }
   return map;
-}
-
-// src/infrastructure/git/worktree.ts
-var fs4 = __toESM(require("node:fs"));
-var path2 = __toESM(require("node:path"));
-
-// src/infrastructure/git/commands.ts
-var import_node_child_process = require("node:child_process");
-function execute({ args, options = {} }) {
-  try {
-    return (0, import_node_child_process.execFileSync)("git", args, {
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"],
-      ...options
-    }).trim();
-  } catch (error2) {
-    const err = error2;
-    const stderr = err.stderr?.trim() || "";
-    const detail = stderr || err.message || "Unknown error";
-    throw new Error(`Git command failed: "git ${args.join(" ")}"
-${detail}`);
-  }
-}
-
-// src/infrastructure/git/worktree.ts
-function ensureGitRepository() {
-  try {
-    execute({ args: ["rev-parse", "--is-inside-work-tree"] });
-  } catch {
-    throw new Error(
-      'This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.'
-    );
-  }
-}
-function initializeDataBranch({
-  dataBranch,
-  readOnly = false
-}) {
-  const dataDir = `.${dataBranch}`;
-  ensureGitRepository();
-  execute({ args: ["config", "user.name", "github-actions[bot]"] });
-  execute({ args: ["config", "user.email", "github-actions[bot]@users.noreply.github.com"] });
-  let branchExists = false;
-  try {
-    execute({ args: ["ls-remote", "--exit-code", "--heads", "origin", dataBranch] });
-    branchExists = true;
-  } catch {
-    info(`Branch "${dataBranch}" does not exist on remote, will create it`);
-  }
-  if (fs4.existsSync(dataDir)) {
-    try {
-      execute({ args: ["worktree", "remove", dataDir, "--force"] });
-    } catch {
-      debug(`Could not remove existing worktree at ${dataDir}, proceeding anyway`);
-    }
-  }
-  if (!branchExists && readOnly) {
-    throw new Error(
-      `Branch "${dataBranch}" does not exist on the remote and this is a read-only run, so it cannot be created. Point data-branch at the branch your tracking workflow maintains, or drop read-only so this run can create it.`
-    );
-  }
-  if (!branchExists) {
-    info(`Creating new orphan branch: ${dataBranch}`);
-    const cwd = path2.resolve(dataDir);
-    execute({ args: ["worktree", "add", "--detach", dataDir] });
-    execute({ args: ["checkout", "--orphan", dataBranch], options: { cwd } });
-    try {
-      execute({ args: ["rm", "-rf", "."], options: { cwd } });
-    } catch {
-      debug("Nothing to remove on the new orphan branch, proceeding anyway");
-    }
-    execute({
-      args: ["commit", "--allow-empty", "-m", "Initialize star tracker data"],
-      options: { cwd }
-    });
-    return dataDir;
-  }
-  execute({ args: ["fetch", "origin", dataBranch] });
-  execute({ args: ["worktree", "add", dataDir, `origin/${dataBranch}`] });
-  return dataDir;
-}
-function cleanup(dataDir) {
-  try {
-    execute({ args: ["worktree", "remove", dataDir, "--force"] });
-  } catch {
-    debug(`Worktree cleanup for "${dataDir}" failed, it may have already been removed`);
-  }
 }
 
 // src/infrastructure/github/errors.ts
@@ -41194,6 +41196,93 @@ async function sendEmail({
   return true;
 }
 
+// src/infrastructure/git/worktree.ts
+var fs4 = __toESM(require("node:fs"));
+var path2 = __toESM(require("node:path"));
+
+// src/infrastructure/git/commands.ts
+var import_node_child_process = require("node:child_process");
+function execute({ args, options = {} }) {
+  try {
+    return (0, import_node_child_process.execFileSync)("git", args, {
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
+      ...options
+    }).trim();
+  } catch (error2) {
+    const err = error2;
+    const stderr = err.stderr?.trim() || "";
+    const detail = stderr || err.message || "Unknown error";
+    throw new Error(`Git command failed: "git ${args.join(" ")}"
+${detail}`);
+  }
+}
+
+// src/infrastructure/git/worktree.ts
+function ensureGitRepository() {
+  try {
+    execute({ args: ["rev-parse", "--is-inside-work-tree"] });
+  } catch {
+    throw new Error(
+      'This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.'
+    );
+  }
+}
+function initializeDataBranch({
+  dataBranch,
+  readOnly = false
+}) {
+  const dataDir = `.${dataBranch}`;
+  ensureGitRepository();
+  execute({ args: ["config", "user.name", "github-actions[bot]"] });
+  execute({ args: ["config", "user.email", "github-actions[bot]@users.noreply.github.com"] });
+  let branchExists = false;
+  try {
+    execute({ args: ["ls-remote", "--exit-code", "--heads", "origin", dataBranch] });
+    branchExists = true;
+  } catch {
+    info(`Branch "${dataBranch}" does not exist on remote, will create it`);
+  }
+  if (fs4.existsSync(dataDir)) {
+    try {
+      execute({ args: ["worktree", "remove", dataDir, "--force"] });
+    } catch {
+      debug(`Could not remove existing worktree at ${dataDir}, proceeding anyway`);
+    }
+  }
+  if (!branchExists && readOnly) {
+    throw new Error(
+      `Branch "${dataBranch}" does not exist on the remote and this is a read-only run, so it cannot be created. Point data-branch at the branch your tracking workflow maintains, or drop read-only so this run can create it.`
+    );
+  }
+  if (!branchExists) {
+    info(`Creating new orphan branch: ${dataBranch}`);
+    const cwd = path2.resolve(dataDir);
+    execute({ args: ["worktree", "add", "--detach", dataDir] });
+    execute({ args: ["checkout", "--orphan", dataBranch], options: { cwd } });
+    try {
+      execute({ args: ["rm", "-rf", "."], options: { cwd } });
+    } catch {
+      debug("Nothing to remove on the new orphan branch, proceeding anyway");
+    }
+    execute({
+      args: ["commit", "--allow-empty", "-m", "Initialize star tracker data"],
+      options: { cwd }
+    });
+    return dataDir;
+  }
+  execute({ args: ["fetch", "origin", dataBranch] });
+  execute({ args: ["worktree", "add", dataDir, `origin/${dataBranch}`] });
+  return dataDir;
+}
+function cleanup(dataDir) {
+  try {
+    execute({ args: ["worktree", "remove", dataDir, "--force"] });
+  } catch {
+    debug(`Worktree cleanup for "${dataDir}" failed, it may have already been removed`);
+  }
+}
+
 // src/infrastructure/persistence/storage.ts
 var fs5 = __toESM(require("node:fs"));
 var path3 = __toESM(require("node:path"));
@@ -41310,6 +41399,43 @@ function commitAndPush({
   });
   info(`Data committed and pushed to ${dataBranch}`);
   return true;
+}
+
+// src/infrastructure/persistence/data-branch.ts
+async function withDataBranch({
+  dataBranch,
+  readOnly,
+  token,
+  run
+}) {
+  const dataDir = initializeDataBranch({ dataBranch, readOnly });
+  try {
+    return await run({
+      readHistory: () => readHistory(dataDir),
+      readStargazers: () => readStargazers(dataDir),
+      publish: (artefacts) => publish({ dataDir, dataBranch, readOnly, token, artefacts })
+    });
+  } finally {
+    cleanup(dataDir);
+  }
+}
+function publish({ dataDir, dataBranch, readOnly, token, artefacts }) {
+  writeHistory({ dataDir, history: artefacts.history });
+  writeReport({ dataDir, markdown: artefacts.report });
+  writeBadge({ dataDir, svg: artefacts.badge });
+  writeCsv({ dataDir, csv: artefacts.csv });
+  if (artefacts.stargazerMap !== void 0) {
+    writeStargazers({ dataDir, stargazerMap: artefacts.stargazerMap });
+  }
+  for (const chart of artefacts.charts) {
+    writeChart({ dataDir, filename: chart.filename, svg: chart.svg });
+  }
+  pruneCharts({ dataDir, keep: artefacts.charts.map((chart) => chart.filename) });
+  if (readOnly) {
+    info(`Read-only run: leaving ${dataBranch} untouched`);
+    return;
+  }
+  commitAndPush({ dataDir, dataBranch, message: artefacts.commitMessage, token });
 }
 
 // node_modules/.pnpm/@octokit+plugin-retry@8.1.1_@octokit+core@7.0.6/node_modules/@octokit/plugin-retry/dist-bundle/index.js
@@ -41540,14 +41666,76 @@ var CHART_FILES = {
   forecast: "forecast.svg"
 };
 
+// src/presentation/escaping.ts
+var EscapeDialect = {
+  MARKUP: "markup",
+  XML: "xml",
+  MARKDOWN: "markdown",
+  CSV: "csv"
+};
+var MARKUP_ESCAPES = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+};
+var XML_ESCAPES = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;"
+};
+var MARKDOWN_ESCAPES = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  "[": "\\[",
+  "]": "\\]",
+  "(": "\\(",
+  ")": "\\)",
+  "`": "\\`"
+};
+var CSV_DELIMITER = ",";
+var CSV_QUOTE = '"';
+var CSV_NEW_LINE = "\n";
+var CSV_FORMULA_TRIGGERS = ["=", "+", "-", "@"];
+var CSV_FORMULA_GUARD = "'";
+function replacerFor(escapes) {
+  const pattern = new RegExp(
+    `[${Object.keys(escapes).join("").replace(/[\]\\^-]/g, "\\$&")}]`,
+    "g"
+  );
+  return (text) => text.replaceAll(pattern, (char) => escapes[char]);
+}
+function escapeCsvField(field) {
+  const neutralized = CSV_FORMULA_TRIGGERS.some((trigger) => field.startsWith(trigger)) ? `${CSV_FORMULA_GUARD}${field}` : field;
+  if (neutralized.includes(CSV_DELIMITER) || neutralized.includes(CSV_QUOTE) || neutralized.includes(CSV_NEW_LINE) || neutralized !== field) {
+    return `${CSV_QUOTE}${neutralized.replaceAll(CSV_QUOTE, `${CSV_QUOTE}${CSV_QUOTE}`)}${CSV_QUOTE}`;
+  }
+  return neutralized;
+}
+var ESCAPERS = {
+  [EscapeDialect.MARKUP]: replacerFor(MARKUP_ESCAPES),
+  [EscapeDialect.XML]: replacerFor(XML_ESCAPES),
+  [EscapeDialect.MARKDOWN]: replacerFor(MARKDOWN_ESCAPES),
+  [EscapeDialect.CSV]: escapeCsvField
+};
+function escapeFor(dialect) {
+  return ESCAPERS[dialect];
+}
+
 // src/presentation/badge.ts
+var escapeXml = escapeFor(EscapeDialect.XML);
 function generateBadge({ totalStars, locale }) {
   const t = getTranslations(locale);
-  const label = t.badge.totalStars;
-  const value = `\u2605 ${formatCount({ count: totalStars, locale })}`;
-  const labelWidth = label.length * BADGE.labelCharWidth + BADGE.horizontalPadding;
-  const valueWidth = value.length * BADGE.valueCharWidth + BADGE.horizontalPadding;
+  const rawLabel = t.badge.totalStars;
+  const rawValue = `\u2605 ${formatCount({ count: totalStars, locale })}`;
+  const labelWidth = rawLabel.length * BADGE.labelCharWidth + BADGE.horizontalPadding;
+  const valueWidth = rawValue.length * BADGE.valueCharWidth + BADGE.horizontalPadding;
   const totalWidth = labelWidth + valueWidth;
+  const label = escapeXml(rawLabel);
+  const value = escapeXml(rawValue);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${BADGE.height}" role="img" aria-label="${label}: ${value}">
   <title>${label}: ${value}</title>
   <linearGradient id="s" x2="0" y2="100%">
@@ -41639,17 +41827,6 @@ function prepareReportData({
     prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun
   };
 }
-var HTML_ESCAPE_MAP = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;"
-};
-var HTML_ESCAPABLE_CHAR_PATTERN = /[&<>"']/g;
-function escapeHtml(text) {
-  return text.replaceAll(HTML_ESCAPABLE_CHAR_PATTERN, (char) => HTML_ESCAPE_MAP[char]);
-}
 function perRepoChartFile(repoFullName) {
   return `${repoFullName.replace("/", "-")}.svg`;
 }
@@ -41686,14 +41863,181 @@ function buildForecastChartSeries({
   };
 }
 
-// src/presentation/svg-chart.ts
-var XML_ESCAPE_MAP = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;"
+// src/presentation/chart-spec.ts
+var AxisLabels = {
+  THINNED: "thinned",
+  DATES: "dates"
 };
-var XML_ESCAPABLE_CHAR_PATTERN = /[&<>"]/g;
+var SeriesDash = {
+  NONE: "none",
+  TREND: "trend",
+  LINEAR_REGRESSION: "linear-regression",
+  WEIGHTED_MOVING_AVERAGE: "weighted-moving-average"
+};
+var SeriesWeight = {
+  PRIMARY: "primary",
+  SECONDARY: "secondary",
+  HIDDEN: "hidden"
+};
+function selectWindow({ history, locale, range, maxPoints, axisLabels }) {
+  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
+  const timestamps = snapshots.map((snapshot) => snapshot.timestamp);
+  return {
+    snapshots,
+    labels: axisLabels === AxisLabels.THINNED ? buildAxisLabels({ timestamps, locale }) : timestamps.map((timestamp) => formatDate({ timestamp, locale }))
+  };
+}
+function resolveMilestones(customMilestones) {
+  return customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
+}
+function starHistorySpec({
+  title,
+  palette,
+  lineColor,
+  milestones = true,
+  customMilestones,
+  trendLine = false,
+  ...window2
+}) {
+  if (window2.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) return null;
+  const t = getTranslations(window2.locale);
+  const { snapshots, labels } = selectWindow(window2);
+  const data = snapshots.map((snapshot) => snapshot.totalStars);
+  const series = [
+    {
+      label: "Stars",
+      data,
+      color: lineColor ?? palette.accent,
+      fill: true,
+      dash: SeriesDash.NONE,
+      weight: SeriesWeight.PRIMARY
+    }
+  ];
+  if (trendLine) {
+    series.push({
+      label: t.report.trendLine,
+      data: movingAverageSeries({ values: data, window: TREND_WINDOW }),
+      color: palette.neutral,
+      fill: false,
+      dash: SeriesDash.TREND,
+      weight: SeriesWeight.HIDDEN
+    });
+  }
+  return {
+    labels,
+    series,
+    title,
+    showLegend: false,
+    milestoneThresholds: milestones ? resolveMilestones(customMilestones) : null
+  };
+}
+function perRepoSpec({
+  repoFullName,
+  title,
+  palette,
+  lineColor,
+  ...window2
+}) {
+  if (window2.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) return null;
+  const { snapshots, labels } = selectWindow(window2);
+  return {
+    labels,
+    series: [
+      {
+        label: "Stars",
+        data: repoStarSeries({ snapshots, repoFullName }),
+        color: lineColor ?? palette.accent,
+        fill: true,
+        dash: SeriesDash.NONE,
+        weight: SeriesWeight.PRIMARY
+      }
+    ],
+    title,
+    showLegend: false,
+    milestoneThresholds: null
+  };
+}
+function comparisonSpec({
+  repoNames,
+  title,
+  ...window2
+}) {
+  if (window2.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
+    return null;
+  }
+  const { snapshots, labels } = selectWindow(window2);
+  const capped = repoNames.slice(0, CHART.maxComparison);
+  const owners = new Set(capped.map((name) => name.split("/")[0]));
+  const useShortLabels = owners.size === 1;
+  return {
+    labels,
+    series: capped.map((repoName, index) => ({
+      label: useShortLabels ? repoName.split("/")[1] : repoName,
+      data: repoStarSeries({ snapshots, repoFullName: repoName }),
+      color: CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length],
+      fill: false,
+      dash: SeriesDash.NONE,
+      weight: SeriesWeight.SECONDARY
+    })),
+    title,
+    showLegend: true,
+    milestoneThresholds: null
+  };
+}
+function forecastSpec({
+  forecastData,
+  title,
+  palette,
+  lineColor,
+  ...window2
+}) {
+  if (window2.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) return null;
+  const t = getTranslations(window2.locale);
+  const { snapshots, labels: historicalLabels } = selectWindow({
+    ...window2,
+    axisLabels: AxisLabels.DATES
+  });
+  const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
+  const forecastLabels = forecastData.aggregate.forecasts[0].points.map(
+    (point) => interpolate({ template: t.forecast.week, params: { n: point.weekOffset } })
+  );
+  const series = buildForecastChartSeries({ historicalData, forecastData });
+  return {
+    labels: [...historicalLabels, ...forecastLabels],
+    series: [
+      {
+        label: t.report.starHistory,
+        data: series.historical,
+        color: lineColor ?? palette.accent,
+        fill: true,
+        dash: SeriesDash.NONE,
+        weight: SeriesWeight.PRIMARY
+      },
+      {
+        label: t.forecast.linearRegression,
+        data: series.linearRegression,
+        color: palette.positive,
+        fill: false,
+        dash: SeriesDash.LINEAR_REGRESSION,
+        weight: SeriesWeight.SECONDARY
+      },
+      {
+        label: t.forecast.weightedMovingAverage,
+        data: series.weightedMovingAverage,
+        color: palette.negative,
+        fill: false,
+        dash: SeriesDash.WEIGHTED_MOVING_AVERAGE,
+        weight: SeriesWeight.SECONDARY
+      }
+    ],
+    title,
+    showLegend: true,
+    milestoneThresholds: null
+  };
+}
+
+// src/presentation/svg-chart.ts
+var escapeXml2 = escapeFor(EscapeDialect.XML);
 var BEZIER_CONTROL_DIVISOR = 3;
 var MONOTONE_TANGENT_LIMIT = 3;
 var TANGENT_AVERAGE_DIVISOR = 2;
@@ -41873,9 +42217,6 @@ function niceAxisSteps({ min, max, count }) {
   }
   return [...new Set(steps)];
 }
-function escapeXml(text) {
-  return text.replaceAll(XML_ESCAPABLE_CHAR_PATTERN, (char) => XML_ESCAPE_MAP[char]);
-}
 function renderSvg({
   labels,
   datasets,
@@ -41949,7 +42290,7 @@ function renderSvg({
   const lastLabelIndex = nonEmptyLabelIndices.at(-1);
   const xLabels = nonEmptyLabelIndices.filter((labelIndex, position) => position % labelStep === 0 || labelIndex === lastLabelIndex).map((labelIndex) => {
     const x = margin.left + labelIndex / Math.max(1, labels.length - 1) * chartWidth;
-    return `<text x="${x}" y="${CHART.height - margin.bottom + xAxis.labelOffset}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(labels[labelIndex])}</text>`;
+    return `<text x="${x}" y="${CHART.height - margin.bottom + xAxis.labelOffset}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml2(labels[labelIndex])}</text>`;
   }).join("\n    ");
   const datasetSvg = datasets.map((dataset, datasetIndex) => {
     const validSegments = [];
@@ -42030,7 +42371,7 @@ function renderSvg({
       const rectAttr = dataset.dashed ? ` rx="${legendStyle.rectBorderRadius}"` : "";
       return `<rect x="${x}" y="${legendY - legendStyle.markerYOffset}" width="${legendStyle.markerWidth}" height="${legendStyle.markerHeight}" fill="${dataset.color}"${rectAttr} />
     <line x1="${x}" y1="${legendY - legendStyle.lineYOffset}" x2="${x + legendStyle.markerWidth}" y2="${legendY - legendStyle.lineYOffset}" stroke="${dataset.color}" stroke-width="${legendStyle.lineStrokeWidth}"${dashAttr} />
-    <text x="${x + legendStyle.labelGap}" y="${legendY}" class="chart-text" font-size="${fontSize.legend}" font-family="${font}">${escapeXml(dataset.label)}</text>`;
+    <text x="${x + legendStyle.labelGap}" y="${legendY}" class="chart-text" font-size="${fontSize.legend}" font-family="${font}">${escapeXml2(dataset.label)}</text>`;
     }).join("\n    ");
   })() : "";
   const titleY = margin.top - SVG_CHART.header.titleOffset;
@@ -42064,7 +42405,7 @@ function renderSvg({
     .chart-axis { stroke: ${basePalette.neutral}; }${darkModeStyles}
   </style>
   <rect width="${CHART.width}" height="${CHART.height}" class="chart-bg" />
-  <text x="${CHART.width / 2}" y="${titleY}" text-anchor="middle" class="chart-text" font-size="${fontSize.title}" font-weight="bold" font-family="${font}">${escapeXml(title)}</text>
+  <text x="${CHART.width / 2}" y="${titleY}" text-anchor="middle" class="chart-text" font-size="${fontSize.title}" font-weight="bold" font-family="${font}">${escapeXml2(title)}</text>
   ${legendSection ? `<g class="legend">
     ${legendSection}
   </g>` : ""}
@@ -42086,6 +42427,25 @@ function renderSvg({
   </g>
 </svg>`;
 }
+function renderSpec({ spec, locale, style }) {
+  if (spec === null) return null;
+  return renderSvg({
+    locale,
+    ...style,
+    labels: spec.labels,
+    datasets: spec.series.map((series) => ({
+      label: series.label,
+      data: series.data,
+      color: series.color,
+      dashed: series.dash !== SeriesDash.NONE,
+      fill: series.fill
+    })),
+    title: spec.title,
+    showLegend: spec.showLegend,
+    milestones: spec.milestoneThresholds !== null,
+    milestoneThresholds: spec.milestoneThresholds ?? STAR_MILESTONES
+  });
+}
 function generateSvgChart({
   history,
   title,
@@ -42098,36 +42458,22 @@ function generateSvgChart({
   trendLine = false,
   ...style
 }) {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
-    return null;
-  }
-  const t = getTranslations(locale);
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
-  const labels = buildAxisLabels({
-    timestamps: snapshots.map((snapshot) => snapshot.timestamp),
-    locale
-  });
-  const palette = resolvePalette(style.theme);
-  const data = snapshots.map((snapshot) => snapshot.totalStars);
-  const datasets = [{ label: "Stars", data, color: lineColor ?? palette.accent }];
-  if (trendLine) {
-    datasets.push({
-      label: t.report.trendLine,
-      data: movingAverageSeries({ values: data, window: TREND_WINDOW }),
-      color: palette.neutral,
-      dashed: true,
-      fill: false
-    });
-  }
-  return renderSvg({
+  return renderSpec({
+    spec: starHistorySpec({
+      history,
+      locale,
+      range,
+      maxPoints,
+      axisLabels: AxisLabels.THINNED,
+      title: title ?? "Star History",
+      palette: resolvePalette(style.theme),
+      lineColor,
+      milestones,
+      customMilestones,
+      trendLine
+    }),
     locale,
-    ...style,
-    labels,
-    datasets,
-    title: title ?? "Star History",
-    showLegend: false,
-    milestones,
-    milestoneThresholds: customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES
+    style
   });
 }
 function generatePerRepoSvgChart({
@@ -42140,23 +42486,20 @@ function generatePerRepoSvgChart({
   range,
   ...style
 }) {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
-    return null;
-  }
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
-  const labels = buildAxisLabels({
-    timestamps: snapshots.map((snapshot) => snapshot.timestamp),
-    locale
-  });
-  const data = repoStarSeries({ snapshots, repoFullName });
-  return renderSvg({
+  return renderSpec({
+    spec: perRepoSpec({
+      history,
+      locale,
+      range,
+      maxPoints,
+      axisLabels: AxisLabels.THINNED,
+      repoFullName,
+      title: title ?? `${repoFullName} Star History`,
+      palette: resolvePalette(style.theme),
+      lineColor
+    }),
     locale,
-    ...style,
-    labels,
-    datasets: [{ label: "Stars", data, color: lineColor ?? resolvePalette(style.theme).accent }],
-    title: title ?? `${repoFullName} Star History`,
-    showLegend: false,
-    milestones: false
+    style
   });
 }
 function generateComparisonSvgChart({
@@ -42168,36 +42511,18 @@ function generateComparisonSvgChart({
   range,
   ...style
 }) {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
-    return null;
-  }
-  const t = getTranslations(locale);
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
-  const labels = buildAxisLabels({
-    timestamps: snapshots.map((snapshot) => snapshot.timestamp),
-    locale
-  });
-  const capped = repoNames.slice(0, CHART.maxComparison);
-  const owners = new Set(capped.map((name) => name.split("/")[0]));
-  const useShortLabels = owners.size === 1;
-  const datasets = capped.map((repoName, index) => {
-    const data = repoStarSeries({ snapshots, repoFullName: repoName });
-    const color = CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length];
-    return {
-      label: useShortLabels ? repoName.split("/")[1] : repoName,
-      data,
-      color,
-      fill: false
-    };
-  });
-  return renderSvg({
+  return renderSpec({
+    spec: comparisonSpec({
+      history,
+      locale,
+      range,
+      maxPoints,
+      axisLabels: AxisLabels.THINNED,
+      repoNames,
+      title: title ?? getTranslations(locale).report.topRepositories
+    }),
     locale,
-    ...style,
-    labels,
-    datasets,
-    title: title ?? t.report.topRepositories,
-    showLegend: true,
-    milestones: false
+    style
   });
 }
 function generateForecastSvgChart({
@@ -42210,51 +42535,20 @@ function generateForecastSvgChart({
   range,
   ...style
 }) {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
-    return null;
-  }
-  const t = getTranslations(locale);
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
-  const historicalLabels = snapshots.map(
-    (snapshot) => formatDate({ timestamp: snapshot.timestamp, locale })
-  );
-  const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
-  const forecastLabels = forecastData.aggregate.forecasts[0].points.map(
-    (point) => interpolate({ template: t.forecast.week, params: { n: point.weekOffset } })
-  );
-  const allLabels = [...historicalLabels, ...forecastLabels];
-  const series = buildForecastChartSeries({ historicalData, forecastData });
-  const palette = resolvePalette(style.theme);
-  const datasets = [
-    {
-      label: t.report.starHistory,
-      data: series.historical,
-      color: lineColor ?? palette.accent,
-      fill: true
-    },
-    {
-      label: t.forecast.linearRegression,
-      data: series.linearRegression,
-      color: palette.positive,
-      dashed: true,
-      fill: false
-    },
-    {
-      label: t.forecast.weightedMovingAverage,
-      data: series.weightedMovingAverage,
-      color: palette.negative,
-      dashed: true,
-      fill: false
-    }
-  ];
-  return renderSvg({
+  return renderSpec({
+    spec: forecastSpec({
+      history,
+      locale,
+      range,
+      maxPoints,
+      axisLabels: AxisLabels.DATES,
+      forecastData,
+      title: title ?? getTranslations(locale).forecast.sectionTitle,
+      palette: resolvePalette(style.theme),
+      lineColor
+    }),
     locale,
-    ...style,
-    labels: allLabels,
-    datasets,
-    title: title ?? t.forecast.sectionTitle,
-    showLegend: true,
-    milestones: false
+    style
   });
 }
 
@@ -42350,14 +42644,7 @@ function buildChartFiles({
 // src/presentation/csv.ts
 var CSV_HEADER = "repository,owner,name,stars,previous,delta,status";
 var NEW_LINE = "\n";
-var FORMULA_TRIGGERS = ["=", "+", "-", "@"];
-function escapeCsvField(field) {
-  const neutralized = FORMULA_TRIGGERS.some((trigger) => field.startsWith(trigger)) ? `'${field}` : field;
-  if (neutralized.includes(",") || neutralized.includes('"') || neutralized.includes(NEW_LINE) || neutralized !== field) {
-    return `"${neutralized.replaceAll('"', '""')}"`;
-  }
-  return neutralized;
-}
+var escapeCsvField2 = escapeFor(EscapeDialect.CSV);
 var REPO_STATUS = {
   new: "new",
   removed: "removed",
@@ -42371,9 +42658,9 @@ function repoStatus(repo) {
 function generateCsvReport({ repos }) {
   const rows = repos.map(
     (repo) => [
-      escapeCsvField(repo.fullName),
-      escapeCsvField(repo.owner),
-      escapeCsvField(repo.name),
+      escapeCsvField2(repo.fullName),
+      escapeCsvField2(repo.owner),
+      escapeCsvField2(repo.name),
       repo.current,
       repo.previous ?? "",
       repo.delta,
@@ -42381,44 +42668,6 @@ function generateCsvReport({ repos }) {
     ].join(",")
   );
   return [CSV_HEADER, ...rows].join(NEW_LINE);
-}
-
-// src/domain/velocity.ts
-var MIN_SNAPSHOTS_FOR_VELOCITY = 2;
-var PERCENT_MULTIPLIER = 100;
-var STARS_PER_DAY_DECIMALS = 2;
-var GROWTH_PERCENT_DECIMALS = 1;
-function roundTo(value, decimals) {
-  const factor = 10 ** decimals;
-  return Math.round(value * factor) / factor;
-}
-function nextMilestoneAbove(value) {
-  return STAR_MILESTONES.find((milestone) => milestone > value) ?? null;
-}
-function computeVelocity({ history }) {
-  const snapshots = history.snapshots;
-  if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
-  const last = snapshots[snapshots.length - 1];
-  const lastMs = toEpochMs(last.timestamp);
-  if (lastMs === null) return null;
-  let previous = null;
-  let elapsedDays = 0;
-  for (let index = snapshots.length - 2; index >= 0; index--) {
-    const candidateMs = toEpochMs(snapshots[index].timestamp);
-    if (candidateMs === null) continue;
-    const candidateDays = (lastMs - candidateMs) / MS_PER_DAY;
-    if (candidateDays < MIN_RATE_INTERVAL_DAYS) continue;
-    previous = snapshots[index];
-    elapsedDays = candidateDays;
-    break;
-  }
-  if (previous === null) return null;
-  const gained = last.totalStars - previous.totalStars;
-  const starsPerDay = roundTo(gained / elapsedDays, STARS_PER_DAY_DECIMALS);
-  const growthPercent = previous.totalStars > 0 ? roundTo(gained / previous.totalStars * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS) : null;
-  const nextMilestone = nextMilestoneAbove(last.totalStars);
-  const daysToNextMilestone = nextMilestone !== null && starsPerDay > 0 ? Math.ceil((nextMilestone - last.totalStars) / starsPerDay) : null;
-  return { starsPerDay, growthPercent, nextMilestone, daysToNextMilestone };
 }
 
 // src/presentation/chart.ts
@@ -42523,34 +42772,73 @@ function buildChartOptions({
     }
   };
 }
-function buildStarsDataset({
-  data,
-  curveProps,
-  showPoints,
-  palette
-}) {
-  return {
-    label: "Stars",
-    data,
-    borderColor: palette.accent,
-    backgroundColor: `${palette.accent}${CHART_STYLE.translucentAlpha}`,
-    fill: true,
-    ...curveProps,
-    pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
-    pointHoverRadius: CHART_POINT.primaryHoverRadius
-  };
-}
 function buildChartUrl({ config, palette }) {
   const encodedConfig = encodeURIComponent(JSON.stringify(config));
   const backgroundColor = encodeURIComponent(palette.white);
   return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&backgroundColor=${backgroundColor}&c=${encodedConfig}`;
 }
-function prepareChartData({ history, locale, range }) {
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range });
+var DASH_PATTERNS = {
+  [SeriesDash.NONE]: null,
+  [SeriesDash.TREND]: CHART_STYLE.trendDash,
+  [SeriesDash.LINEAR_REGRESSION]: CHART_STYLE.linearRegressionDash,
+  [SeriesDash.WEIGHTED_MOVING_AVERAGE]: CHART_STYLE.weightedMovingAverageDash
+};
+var POINT_SIZES = {
+  [SeriesWeight.PRIMARY]: {
+    radius: CHART_POINT.primaryRadius,
+    hoverRadius: CHART_POINT.primaryHoverRadius
+  },
+  [SeriesWeight.SECONDARY]: {
+    radius: CHART_POINT.secondaryRadius,
+    hoverRadius: CHART_POINT.secondaryHoverRadius
+  },
+  [SeriesWeight.HIDDEN]: { radius: CHART_POINT.hidden, hoverRadius: CHART_POINT.hidden }
+};
+function toDataset({ series, curveProps, showPoints }) {
+  const dash = DASH_PATTERNS[series.dash];
+  const point = POINT_SIZES[series.weight];
   return {
-    labels: snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale })),
-    data: snapshots.map((snapshot) => snapshot.totalStars)
+    label: series.label,
+    data: series.data,
+    borderColor: series.color,
+    backgroundColor: series.dash === SeriesDash.NONE ? `${series.color}${CHART_STYLE.translucentAlpha}` : "transparent",
+    fill: series.fill,
+    ...curveProps,
+    pointRadius: series.weight === SeriesWeight.HIDDEN ? CHART_POINT.hidden : pointRadiusFor({ showPoints, radius: point.radius }),
+    pointHoverRadius: point.hoverRadius,
+    ...dash ? { borderDash: dash } : {}
   };
+}
+function renderSpec2({
+  spec,
+  smoothing,
+  curve,
+  showPoints,
+  beginAtZero,
+  palette
+}) {
+  if (spec === null) return null;
+  const curveProps = curvePropsFor({ smoothing, curve });
+  const datasets = spec.series.map((series) => toDataset({ series, curveProps, showPoints }));
+  const primary = spec.series[0].data.filter((value) => value !== null);
+  const annotation = spec.milestoneThresholds ? buildMilestoneAnnotations({
+    minStars: Math.min(...primary),
+    maxStars: Math.max(...primary),
+    palette,
+    thresholds: spec.milestoneThresholds
+  }) : null;
+  return buildChartUrl({
+    config: buildChartConfig({
+      labels: spec.labels,
+      datasets,
+      title: spec.title,
+      showLegend: spec.showLegend,
+      beginAtZero,
+      palette,
+      annotation
+    }),
+    palette
+  });
 }
 function buildChartConfig({
   labels,
@@ -42581,42 +42869,25 @@ function generateChartUrl({
   range = ChartRange.ALL,
   trendLine = false
 }) {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
-    return null;
-  }
-  const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const curveProps = curvePropsFor({ smoothing, curve });
-  const chartTitle = title ?? t.report.starHistory;
-  const { labels, data } = prepareChartData({ history, locale, range });
-  const datasets = [buildStarsDataset({ data, curveProps, showPoints, palette })];
-  if (trendLine) {
-    datasets.push({
-      label: t.report.trendLine,
-      data: movingAverageSeries({ values: data, window: TREND_WINDOW }),
-      borderColor: palette.neutral,
-      backgroundColor: "transparent",
-      fill: false,
-      ...curveProps,
-      pointRadius: CHART_POINT.hidden,
-      pointHoverRadius: CHART_POINT.hidden,
-      borderDash: CHART_STYLE.trendDash
-    });
-  }
-  const minStars = Math.min(...data);
-  const maxStars = Math.max(...data);
-  const thresholds = customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
-  const annotation = milestones ? buildMilestoneAnnotations({ minStars, maxStars, palette, thresholds }) : null;
-  const config = buildChartConfig({
-    labels,
-    datasets,
-    title: chartTitle,
-    showLegend: false,
+  return renderSpec2({
+    spec: starHistorySpec({
+      history,
+      locale,
+      range,
+      axisLabels: AxisLabels.DATES,
+      title: title ?? getTranslations(locale).report.starHistory,
+      palette,
+      milestones,
+      customMilestones,
+      trendLine
+    }),
+    smoothing,
+    curve,
+    showPoints,
     beginAtZero,
-    palette,
-    annotation
+    palette
   });
-  return buildChartUrl({ config, palette });
 }
 function generatePerRepoChartUrl({
   history,
@@ -42630,25 +42901,23 @@ function generatePerRepoChartUrl({
   theme = ChartTheme.AUTO,
   range = ChartRange.ALL
 }) {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
-    return null;
-  }
   const palette = resolvePalette(theme);
-  const curveProps = curvePropsFor({ smoothing, curve });
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range });
-  const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
-  const data = repoStarSeries({ snapshots, repoFullName });
-  const chartTitle = title ?? `${repoFullName} Star History`;
-  const datasets = [buildStarsDataset({ data, curveProps, showPoints, palette })];
-  const config = buildChartConfig({
-    labels,
-    datasets,
-    title: chartTitle,
-    showLegend: false,
+  return renderSpec2({
+    spec: perRepoSpec({
+      history,
+      locale,
+      range,
+      axisLabels: AxisLabels.DATES,
+      repoFullName,
+      title: title ?? `${repoFullName} Star History`,
+      palette
+    }),
+    smoothing,
+    curve,
+    showPoints,
     beginAtZero,
     palette
   });
-  return buildChartUrl({ config, palette });
 }
 function generateComparisonChartUrl({
   history,
@@ -42662,41 +42931,22 @@ function generateComparisonChartUrl({
   theme = ChartTheme.AUTO,
   range = ChartRange.ALL
 }) {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
-    return null;
-  }
-  const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const curveProps = curvePropsFor({ smoothing, curve });
-  const chartTitle = title ?? t.report.topRepositories;
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range });
-  const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
-  const capped = repoNames.slice(0, CHART.maxComparison);
-  const owners = new Set(capped.map((name) => name.split("/")[0]));
-  const useShortLabels = owners.size === 1;
-  const datasets = capped.map((repoName, index) => {
-    const data = repoStarSeries({ snapshots, repoFullName: repoName });
-    const color = CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length];
-    return {
-      label: useShortLabels ? repoName.split("/")[1] : repoName,
-      data,
-      borderColor: color,
-      backgroundColor: `${color}${CHART_STYLE.translucentAlpha}`,
-      fill: false,
-      ...curveProps,
-      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
-      pointHoverRadius: CHART_POINT.secondaryHoverRadius
-    };
-  });
-  const config = buildChartConfig({
-    labels,
-    datasets,
-    title: chartTitle,
-    showLegend: true,
+  return renderSpec2({
+    spec: comparisonSpec({
+      history,
+      locale,
+      range,
+      axisLabels: AxisLabels.DATES,
+      repoNames,
+      title: title ?? getTranslations(locale).report.topRepositories
+    }),
+    smoothing,
+    curve,
+    showPoints,
     beginAtZero,
     palette
   });
-  return buildChartUrl({ config, palette });
 }
 function generateForecastChartUrl({
   history,
@@ -42710,104 +42960,164 @@ function generateForecastChartUrl({
   theme = ChartTheme.AUTO,
   range = ChartRange.ALL
 }) {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
-    return null;
-  }
-  const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const curveProps = curvePropsFor({ smoothing, curve });
-  const chartTitle = title ?? t.forecast.sectionTitle;
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range });
-  const historicalLabels = snapshots.map(
-    (snapshot) => formatDate({ timestamp: snapshot.timestamp, locale })
-  );
-  const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
-  const forecastLabels = forecastData.aggregate.forecasts[0].points.map(
-    (point) => interpolate({ template: t.forecast.week, params: { n: point.weekOffset } })
-  );
-  const allLabels = [...historicalLabels, ...forecastLabels];
-  const series = buildForecastChartSeries({ historicalData, forecastData });
-  const datasets = [
-    {
-      label: t.report.starHistory,
-      data: series.historical,
-      borderColor: palette.accent,
-      backgroundColor: `${palette.accent}${CHART_STYLE.translucentAlpha}`,
-      fill: true,
-      ...curveProps,
-      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
-      pointHoverRadius: CHART_POINT.primaryHoverRadius
-    },
-    {
-      label: t.forecast.linearRegression,
-      data: series.linearRegression,
-      borderColor: palette.positive,
-      backgroundColor: "transparent",
-      fill: false,
-      ...curveProps,
-      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
-      pointHoverRadius: CHART_POINT.secondaryHoverRadius,
-      borderDash: CHART_STYLE.linearRegressionDash
-    },
-    {
-      label: t.forecast.weightedMovingAverage,
-      data: series.weightedMovingAverage,
-      borderColor: palette.negative,
-      backgroundColor: "transparent",
-      fill: false,
-      ...curveProps,
-      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
-      pointHoverRadius: CHART_POINT.secondaryHoverRadius,
-      borderDash: CHART_STYLE.weightedMovingAverageDash
-    }
-  ];
-  const config = buildChartConfig({
-    labels: allLabels,
-    datasets,
-    title: chartTitle,
-    showLegend: true,
+  return renderSpec2({
+    spec: forecastSpec({
+      history,
+      locale,
+      range,
+      axisLabels: AxisLabels.DATES,
+      forecastData,
+      title: title ?? getTranslations(locale).forecast.sectionTitle,
+      palette
+    }),
+    smoothing,
+    curve,
+    showPoints,
     beginAtZero,
     palette
   });
-  return buildChartUrl({ config, palette });
 }
 
-// src/presentation/html.ts
-function deltaColor({ delta, palette }) {
-  if (delta > 0) return palette.positive;
-  if (delta < 0) return palette.negative;
-  return palette.neutral;
+// src/domain/velocity.ts
+var MIN_SNAPSHOTS_FOR_VELOCITY = 2;
+var PERCENT_MULTIPLIER = 100;
+var STARS_PER_DAY_DECIMALS = 2;
+var GROWTH_PERCENT_DECIMALS = 1;
+function roundTo(value, decimals) {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
 }
-function generateHtmlReport({
-  results,
-  previousTimestamp,
-  locale,
-  history = null,
-  velocityHistory = null,
-  includeCharts = true,
-  stargazerDiff = null,
-  forecastData = null,
-  topRepos: topReposCount = 10,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
-  milestones = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
-  customMilestones,
-  range = ChartRange.ALL,
-  trendLine = false,
-  velocityMetrics = false
-}) {
-  const { summary: summary2 } = results;
+function nextMilestoneAbove(value) {
+  return STAR_MILESTONES.find((milestone) => milestone > value) ?? null;
+}
+function computeVelocity({ history }) {
+  const snapshots = history.snapshots;
+  if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
+  const last = snapshots[snapshots.length - 1];
+  if (toEpochMs(last.timestamp) === null) return null;
+  const points = snapshots.reduce((observed, snapshot) => {
+    const timeMs = toEpochMs(snapshot.timestamp);
+    if (timeMs !== null) observed.push({ day: timeMs / MS_PER_DAY, value: snapshot.totalStars });
+    return observed;
+  }, []);
+  const interval = latestRateInterval(points);
+  if (interval === null) return null;
+  const gained = interval.to.value - interval.from.value;
+  const starsPerDay = roundTo(gained / interval.days, STARS_PER_DAY_DECIMALS);
+  const growthPercent = interval.from.value > 0 ? roundTo(gained / interval.from.value * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS) : null;
+  const nextMilestone = nextMilestoneAbove(last.totalStars);
+  const daysToNextMilestone = nextMilestone !== null && starsPerDay > 0 ? Math.ceil((nextMilestone - last.totalStars) / starsPerDay) : null;
+  return { starsPerDay, growthPercent, nextMilestone, daysToNextMilestone };
+}
+
+// src/presentation/report-model.ts
+var StargazerOutcome = {
+  NEW: "new",
+  NONE: "none"
+};
+function toStargazerSection(params) {
+  const diff = params.stargazerDiff ?? null;
+  if (diff === null) return null;
+  return {
+    outcome: diff.totalNew > 0 ? StargazerOutcome.NEW : StargazerOutcome.NONE,
+    totalNew: diff.totalNew,
+    entries: diff.entries,
+    sampledRepos: diff.sampledRepos ?? []
+  };
+}
+function toVelocitySection(metrics) {
+  if (metrics === null) return null;
+  return {
+    starsPerDay: metrics.starsPerDay,
+    growthPercent: metrics.growthPercent,
+    projection: metrics.nextMilestone !== null && metrics.daysToNextMilestone !== null ? { days: metrics.daysToNextMilestone, milestone: metrics.nextMilestone } : null
+  };
+}
+function buildReportModel(params) {
+  const {
+    results,
+    previousTimestamp,
+    locale,
+    history = null,
+    velocityHistory = null,
+    includeCharts = true,
+    forecastData = null,
+    topRepos: topReposCount = 10,
+    velocityMetrics = false
+  } = params;
   const t = getTranslations(locale);
-  const palette = resolvePalette(theme);
-  const { sorted, removedRepos, now, prev } = prepareReportData({
+  const { sorted, newRepos, removedRepos, now, prev } = prepareReportData({
     results,
     previousTimestamp,
     locale
   });
   const hasChartHistory = includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
+  const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
+  return {
+    summary: results.summary,
+    now,
+    prev,
+    isFirstRun: prev === t.report.firstRun,
+    sorted,
+    newRepos,
+    removedRepos,
+    topRepos: sorted.slice(0, topReposCount).map((repo) => repo.fullName),
+    hasChartHistory,
+    chartHistory: hasChartHistory ? history : null,
+    stargazers: toStargazerSection(params),
+    velocity: toVelocitySection(velocity),
+    velocityIsNested: forecastData !== null,
+    forecast: forecastData
+  };
+}
+function buildForecastTable({
+  title,
+  forecasts,
+  t
+}) {
+  return {
+    title,
+    weekHeaders: buildForecastWeekHeaders(t),
+    rows: forecasts.map((forecast) => ({
+      method: forecastMethodLabel({ method: forecast.method, t }),
+      predicted: forecast.points.map((point) => point.predicted)
+    }))
+  };
+}
+
+// src/presentation/html.ts
+var escapeHtml = escapeFor(EscapeDialect.MARKUP);
+function deltaColor({ delta, palette }) {
+  if (delta > 0) return palette.positive;
+  if (delta < 0) return palette.negative;
+  return palette.neutral;
+}
+function generateHtmlReport(params) {
+  const {
+    locale,
+    smoothing = true,
+    curve = ChartCurve.MONOTONE,
+    showPoints = true,
+    milestones = true,
+    beginAtZero = false,
+    theme = ChartTheme.AUTO,
+    customMilestones,
+    range = ChartRange.ALL,
+    trendLine = false
+  } = params;
+  const t = getTranslations(locale);
+  const palette = resolvePalette(theme);
+  const model = buildReportModel(params);
+  const {
+    summary: summary2,
+    sorted,
+    removedRepos,
+    now,
+    prev,
+    chartHistory: history,
+    forecast: forecastData
+  } = model;
   const rows = sorted.map((repo) => {
     const badge = repo.isNew ? ` <span style="background:${palette.positive};color:${palette.white};padding:1px 6px;border-radius:3px;font-size:11px;">${t.report.badges.new}</span>` : "";
     return `
@@ -42826,8 +43136,8 @@ function generateHtmlReport({
         <h3 style="color:${palette.negative};font-size:14px;">${t.report.removedRepositories}</h3>
         <ul>${removedRepos.map((repo) => `<li>${interpolate({ template: t.report.removedRepoText, params: { name: escapeHtml(repo.fullName), count: repo.previous ?? 0 } })}</li>`).join("")}</ul>
       </div>` : "";
-  const topRepos = sorted.slice(0, topReposCount).map((repo) => repo.fullName);
-  const comparisonChartUrl = hasChartHistory && topRepos.length > 0 ? generateComparisonChartUrl({
+  const topRepos = model.topRepos;
+  const comparisonChartUrl = history !== null && topRepos.length > 0 ? generateComparisonChartUrl({
     history,
     repoNames: topRepos,
     title: t.report.topRepositories,
@@ -42839,7 +43149,7 @@ function generateHtmlReport({
     theme,
     range
   }) : null;
-  const individualRepoChartsHtml = hasChartHistory ? topRepos.map((repoName) => {
+  const individualRepoChartsHtml = history !== null ? topRepos.map((repoName) => {
     const chartUrl = generatePerRepoChartUrl({
       history,
       repoFullName: repoName,
@@ -42858,7 +43168,7 @@ function generateHtmlReport({
           <img src="${chartUrl}" alt="${escapeHtml(repoName)}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
   }).filter(Boolean).join("") : "";
-  const chartSection = hasChartHistory ? `
+  const chartSection = history !== null ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.starTrend} ${t.report.starTrend}</h2>
         <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, curve, showPoints, milestones, beginAtZero, theme, customMilestones, range, trendLine })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
@@ -42870,13 +43180,14 @@ function generateHtmlReport({
         <h3 style="font-size:16px;margin:24px 0 12px;">${t.report.individualRepoCharts}</h3>
         ${individualRepoChartsHtml}` : ""}
       </div>` : "";
-  const sampledNoteHtml = stargazerDiff?.sampledRepos && stargazerDiff.sampledRepos.length > 0 ? `<p style="color:${palette.neutral};">${interpolate({ template: t.stargazers.sampledNote, params: { repos: stargazerDiff.sampledRepos.join(", ") } })}</p>` : "";
-  const stargazerSection = stargazerDiff && stargazerDiff.totalNew > 0 ? `
+  const stargazers = model.stargazers;
+  const sampledNoteHtml = stargazers && stargazers.sampledRepos.length > 0 ? `<p style="color:${palette.neutral};">${interpolate({ template: t.stargazers.sampledNote, params: { repos: stargazers.sampledRepos.join(", ") } })}</p>` : "";
+  const stargazerSection = stargazers && stargazers.outcome === StargazerOutcome.NEW ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.stargazers} ${t.stargazers.sectionTitle}</h2>
-        <p>${interpolate({ template: t.stargazers.newStargazers, params: { count: stargazerDiff.totalNew } })}</p>
+        <p>${interpolate({ template: t.stargazers.newStargazers, params: { count: stargazers.totalNew } })}</p>
         ${sampledNoteHtml}
-        ${stargazerDiff.entries.map(
+        ${stargazers.entries.map(
     (entry) => `
         <div style="margin-top:12px;">
           <h3 style="font-size:14px;margin-bottom:8px;">${escapeHtml(entry.repoFullName)} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</h3>
@@ -42890,18 +43201,18 @@ function generateHtmlReport({
     ).join("")}
         </div>`
   ).join("")}
-      </div>` : stargazerDiff ? `
+      </div>` : stargazers ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.stargazers} ${t.stargazers.sectionTitle}</h2>
         ${sampledNoteHtml}
         <p style="color:${palette.neutral};">${t.stargazers.noNewStargazers}</p>
       </div>` : "";
-  const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
+  const velocity = model.velocity;
   const velocityList = velocity ? `
         <ul style="margin:0;padding-left:20px;">
           <li><strong>${t.velocity.starsPerDay}:</strong> ${velocity.starsPerDay}</li>
           ${velocity.growthPercent !== null ? `<li><strong>${t.velocity.growth}:</strong> <span style="color:${deltaColor({ delta: velocity.growthPercent, palette })};">${formatSignedPercent(velocity.growthPercent)}</span></li>` : ""}
-          ${velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null ? `<li>${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}</li>` : ""}
+          ${velocity.projection ? `<li>${interpolate({ template: t.velocity.projection, params: { days: velocity.projection.days, milestone: velocity.projection.milestone } })}</li>` : ""}
         </ul>` : "";
   const forecastSection = forecastData ? `
       <div style="margin-top:24px;">
@@ -42911,7 +43222,7 @@ function generateHtmlReport({
           ${velocityList}
         </div>` : ""}
         ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t, palette })}
-        ${hasChartHistory ? `<div style="margin-top:16px;text-align:center;">
+        ${history !== null ? `<div style="margin-top:16px;text-align:center;">
           <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, curve, showPoints, beginAtZero, theme, range })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>` : ""}
         ${forecastData.repos.map(
@@ -42921,7 +43232,7 @@ function generateHtmlReport({
         </div>`
   ).join("")}
       </div>` : "";
-  const velocitySection = !forecastData && velocityList ? `
+  const velocitySection = !model.velocityIsNested && velocityList ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.velocity} ${t.velocity.sectionTitle}</h2>
         ${velocityList}
@@ -42932,7 +43243,7 @@ function generateHtmlReport({
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${palette.text};background-color:${palette.white};">
   <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${palette.accent};">
     <h1 style="margin:0;font-size:24px;">${t.report.title}</h1>
-    <p style="color:${palette.neutral};margin:8px 0 0;">${now} ${prev === t.report.firstRun ? `| ${t.report.firstRun}` : `| ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`}</p>
+    <p style="color:${palette.neutral};margin:8px 0 0;">${now} ${model.isFirstRun ? `| ${t.report.firstRun}` : `| ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`}</p>
   </div>
 
   <div style="display:flex;justify-content:space-around;padding:20px 0;text-align:center;">
@@ -42991,22 +43302,22 @@ function buildHtmlForecastTable({
   t,
   palette
 }) {
-  const weekHeaders = buildForecastWeekHeaders(t);
+  const table = buildForecastTable({ title, forecasts, t });
   return `
-    <h4 style="font-size:14px;margin-bottom:8px;">${title}</h4>
+    <h4 style="font-size:14px;margin-bottom:8px;">${table.title}</h4>
     <table style="width:100%;border-collapse:collapse;">
       <thead>
         <tr style="background:${palette.tableHeaderBg};">
           <th style="padding:6px 8px;text-align:left;border-bottom:2px solid ${palette.tableHeaderBorder};font-size:12px;">${t.forecast.method}</th>
-          ${weekHeaders.map((header) => `<th style="padding:6px 8px;text-align:right;border-bottom:2px solid ${palette.tableHeaderBorder};font-size:12px;">${header}</th>`).join("")}
+          ${table.weekHeaders.map((header) => `<th style="padding:6px 8px;text-align:right;border-bottom:2px solid ${palette.tableHeaderBorder};font-size:12px;">${header}</th>`).join("")}
         </tr>
       </thead>
       <tbody>
-        ${forecasts.map(
-    (forecast) => `
+        ${table.rows.map(
+    (row) => `
         <tr>
-          <td style="padding:6px 8px;border-bottom:1px solid ${palette.cellBorder};font-size:12px;">${forecastMethodLabel({ method: forecast.method, t })}</td>
-          ${forecast.points.map((point) => `<td style="padding:6px 8px;border-bottom:1px solid ${palette.cellBorder};text-align:right;font-size:12px;">${point.predicted}</td>`).join("")}
+          <td style="padding:6px 8px;border-bottom:1px solid ${palette.cellBorder};font-size:12px;">${row.method}</td>
+          ${row.predicted.map((predicted) => `<td style="padding:6px 8px;border-bottom:1px solid ${palette.cellBorder};text-align:right;font-size:12px;">${predicted}</td>`).join("")}
         </tr>`
   ).join("")}
       </tbody>
@@ -43014,39 +43325,34 @@ function buildHtmlForecastTable({
 }
 
 // src/presentation/markdown.ts
-function generateMarkdownReport({
-  results,
-  previousTimestamp,
-  locale,
-  history = null,
-  velocityHistory = null,
-  includeCharts = true,
-  stargazerDiff = null,
-  forecastData = null,
-  topRepos: topReposCount = 10,
-  velocityMetrics = false
-}) {
-  const { summary: summary2 } = results;
-  const t = getTranslations(locale);
-  const { sorted, newRepos, removedRepos, now, prev } = prepareReportData({
-    results,
-    previousTimestamp,
-    locale
-  });
-  const hasChartHistory = includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
+var escapeMarkdown = escapeFor(EscapeDialect.MARKDOWN);
+var escapeMarkup = escapeFor(EscapeDialect.MARKUP);
+function generateMarkdownReport(params) {
+  const t = getTranslations(params.locale);
+  const model = buildReportModel(params);
+  const {
+    summary: summary2,
+    sorted,
+    newRepos,
+    removedRepos,
+    now,
+    prev,
+    hasChartHistory,
+    forecast: forecastData
+  } = model;
   const header = [
     `# ${t.report.title}`,
     "",
     `**${now}** | ${t.report.total}: **${interpolate({ template: t.report.starsCount, params: { count: summary2.totalStars } })}** | ${t.report.change}: **${deltaIndicator(summary2.totalDelta)}**`,
     ""
   ];
-  const comparison = prev === t.report.firstRun ? [] : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ""];
-  const topRepos = sorted.slice(0, topReposCount).map((repo) => repo.fullName);
+  const comparison = model.isFirstRun ? [] : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ""];
+  const topRepos = model.topRepos;
   const hasComparisonChart = hasChartHistory && topRepos.length > 0;
   const individualRepoCharts = hasChartHistory ? topRepos.flatMap((repoName) => [
-    `#### ${repoName}`,
+    `#### ${escapeMarkdown(repoName)}`,
     "",
-    `![${repoName}](./charts/${perRepoChartFile(repoName)})`,
+    `![${escapeMarkdown(repoName)}](./charts/${perRepoChartFile(repoName)})`,
     ""
   ]) : [];
   const chartSection = hasChartHistory ? [
@@ -43076,7 +43382,7 @@ function generateMarkdownReport({
     "|:-----------|------:|-------:|:-----:|",
     ...sorted.map((repo) => {
       const badge = repo.isNew ? ` \`${t.report.badges.new}\`` : "";
-      return `| [${repo.fullName}](https://github.com/${repo.fullName})${badge} | ${repo.current} | ${deltaIndicator(repo.delta)} | ${trendIcon(repo.delta)} |`;
+      return `| [${escapeMarkdown(repo.fullName)}](https://github.com/${escapeMarkdown(repo.fullName)})${badge} | ${repo.current} | ${deltaIndicator(repo.delta)} | ${trendIcon(repo.delta)} |`;
     }),
     ""
   ] : [];
@@ -43084,7 +43390,7 @@ function generateMarkdownReport({
     `## ${t.report.newRepositories}`,
     "",
     ...newRepos.map(
-      (repo) => `- [${repo.fullName}](https://github.com/${repo.fullName}): ${interpolate({ template: t.report.starsCount, params: { count: repo.current } })}`
+      (repo) => `- [${escapeMarkdown(repo.fullName)}](https://github.com/${escapeMarkdown(repo.fullName)}): ${interpolate({ template: t.report.starsCount, params: { count: repo.current } })}`
     ),
     ""
   ] : [];
@@ -43094,7 +43400,7 @@ function generateMarkdownReport({
     ...removedRepos.map(
       (repo) => interpolate({
         template: t.report.removedRepoText,
-        params: { name: repo.fullName, count: repo.previous ?? 0 }
+        params: { name: escapeMarkdown(repo.fullName), count: repo.previous ?? 0 }
       })
     ),
     ""
@@ -43107,53 +43413,54 @@ function generateMarkdownReport({
     `- **${t.report.netChange}:** ${deltaIndicator(summary2.totalDelta)}`,
     ""
   ];
-  const sampledNote = stargazerDiff?.sampledRepos && stargazerDiff.sampledRepos.length > 0 ? [
+  const stargazers = model.stargazers;
+  const sampledNote = stargazers && stargazers.sampledRepos.length > 0 ? [
     interpolate({
       template: t.stargazers.sampledNote,
-      params: { repos: stargazerDiff.sampledRepos.join(", ") }
+      params: { repos: stargazers.sampledRepos.join(", ") }
     }),
     ""
   ] : [];
-  const stargazerSection = stargazerDiff && stargazerDiff.totalNew > 0 ? [
+  const stargazerSection = stargazers && stargazers.outcome === StargazerOutcome.NEW ? [
     `## ${SECTION_ICON.stargazers} ${t.stargazers.sectionTitle}`,
     "",
     interpolate({
       template: t.stargazers.newStargazers,
-      params: { count: stargazerDiff.totalNew }
+      params: { count: stargazers.totalNew }
     }),
     "",
     ...sampledNote,
-    ...stargazerDiff.entries.flatMap((entry) => [
+    ...stargazers.entries.flatMap((entry) => [
       "<details>",
-      `<summary>${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</summary>`,
+      `<summary>${escapeMarkup(entry.repoFullName)} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</summary>`,
       "",
       ...entry.newStargazers.map(
-        (stargazer) => `- <img src="${stargazer.avatarUrl}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${stargazer.login}](${stargazer.profileUrl}): ${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split("T")[0] } })}`
+        (stargazer) => `- <img src="${escapeMarkup(stargazer.avatarUrl)}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${escapeMarkdown(stargazer.login)}](${escapeMarkdown(stargazer.profileUrl)}): ${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split("T")[0] } })}`
       ),
       "",
       "</details>",
       ""
     ])
-  ] : stargazerDiff ? [
+  ] : stargazers ? [
     `## ${SECTION_ICON.stargazers} ${t.stargazers.sectionTitle}`,
     "",
     ...sampledNote,
     t.stargazers.noNewStargazers,
     ""
   ] : [];
-  const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
+  const velocity = model.velocity;
   const velocityLines = velocity ? [
     `- **${t.velocity.starsPerDay}:** ${velocity.starsPerDay}`,
     ...velocity.growthPercent !== null ? [`- **${t.velocity.growth}:** ${formatSignedPercent(velocity.growthPercent)}`] : [],
-    ...velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null ? [
-      `- ${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}`
+    ...velocity.projection ? [
+      `- ${interpolate({ template: t.velocity.projection, params: { days: velocity.projection.days, milestone: velocity.projection.milestone } })}`
     ] : []
   ] : [];
   const forecastSection = forecastData ? [
     `## ${SECTION_ICON.forecast} ${t.forecast.sectionTitle}`,
     "",
     ...velocityLines.length > 0 ? [`### ${SECTION_ICON.velocity} ${t.velocity.sectionTitle}`, "", ...velocityLines, ""] : [],
-    buildForecastTable({
+    renderForecastTable({
       title: t.forecast.aggregate,
       forecasts: forecastData.aggregate.forecasts,
       t
@@ -43164,9 +43471,9 @@ function generateMarkdownReport({
       "",
       ...forecastData.repos.flatMap((repo) => [
         "<details>",
-        `<summary>${repo.repoFullName}</summary>`,
+        `<summary>${escapeMarkup(repo.repoFullName)}</summary>`,
         "",
-        buildForecastTable({
+        renderForecastTable({
           title: repo.repoFullName,
           forecasts: repo.forecasts,
           t
@@ -43177,7 +43484,7 @@ function generateMarkdownReport({
       ])
     ] : []
   ] : [];
-  const velocitySection = !forecastData && velocityLines.length > 0 ? [`## ${SECTION_ICON.velocity} ${t.velocity.sectionTitle}`, "", ...velocityLines, ""] : [];
+  const velocitySection = !model.velocityIsNested && velocityLines.length > 0 ? [`## ${SECTION_ICON.velocity} ${t.velocity.sectionTitle}`, "", ...velocityLines, ""] : [];
   const footer = [
     "---",
     `*${interpolate({ template: t.footer.generated, params: { project: "[GitHub Star Tracker](https://github.com/fbuireu/github-star-tracker)", date: (/* @__PURE__ */ new Date()).toISOString() } })}*`,
@@ -43201,29 +43508,18 @@ function generateMarkdownReport({
     ...footer
   ].join("\n");
 }
-function buildForecastTable({ title, forecasts, t }) {
-  const weekHeaders = buildForecastWeekHeaders(t);
-  const lines = [
-    `**${title}**`,
+function renderForecastTable({ title, forecasts, t }) {
+  const table = buildForecastTable({ title, forecasts, t });
+  return [
+    `**${table.title}**`,
     "",
-    `| ${t.forecast.method} | ${weekHeaders.join(" | ")} |`,
-    `|:---|${weekHeaders.map(() => "---:").join("|")}|`,
-    ...forecasts.map(
-      (forecast) => `| ${forecastMethodLabel({ method: forecast.method, t })} | ${forecast.points.map((point) => String(point.predicted)).join(" | ")} |`
-    )
-  ];
-  return lines.join("\n");
+    `| ${t.forecast.method} | ${table.weekHeaders.join(" | ")} |`,
+    `|:---|${table.weekHeaders.map(() => "---:").join("|")}|`,
+    ...table.rows.map((row) => `| ${row.method} | ${row.predicted.map(String).join(" | ")} |`)
+  ].join("\n");
 }
 
 // src/application/tracker.ts
-async function withDataDir({ branch, readOnly, fn }) {
-  const dataDir = initializeDataBranch({ dataBranch: branch, readOnly });
-  try {
-    await fn(dataDir);
-  } finally {
-    cleanup(dataDir);
-  }
-}
 async function trackStars() {
   try {
     const config = loadConfig();
@@ -43238,48 +43534,43 @@ async function trackStars() {
       setEmptyOutputs();
       return;
     }
-    await withDataDir({
-      branch: config.dataBranch,
+    await withDataBranch({
+      dataBranch: config.dataBranch,
       readOnly: config.readOnly,
-      fn: async (dataDir) => {
+      token,
+      run: async (branch) => {
         info(`Tracking ${repos.length} repositories...`);
-        const storedHistory = readHistory(dataDir);
-        const baselineSnapshot = getBaselineSnapshot({
-          history: storedHistory,
-          compareAgainst: config.compareAgainst
+        const storedHistory = branch.readHistory();
+        const measurement = measureRun({
+          trackedSet: repos,
+          storedHistory,
+          comparisonWindow: config.compareAgainst,
+          maxHistory: config.maxHistory,
+          notificationThreshold: config.notificationThreshold,
+          notificationMode: config.notificationMode
         });
-        const previousTimestamp = baselineSnapshot ? baselineSnapshot.timestamp : null;
+        const { results, summary: summary2, updatedHistory } = measurement;
+        const previousTimestamp = measurement.baselineTimestamp;
         info(`Comparing star counts (baseline: ${previousTimestamp ?? "first run"})...`);
-        const results = compareStars({ currentRepos: repos, previousSnapshot: baselineSnapshot });
-        const { summary: summary2 } = results;
         info(`Total: ${summary2.totalStars} stars (${deltaIndicator(summary2.totalDelta)})`);
+        if (measurement.droppedSnapshots > 0) {
+          warning(
+            `max-history is ${config.maxHistory} but ${storedHistory.snapshots.length} snapshots are stored, so this run drops the oldest ${measurement.droppedSnapshots}. Raise max-history before this run if you want to keep them.`
+          );
+        }
         let repoStargazers = [];
         if (config.includeCharts || config.trackStargazers) {
           info("Fetching stargazers...");
           repoStargazers = await fetchAllStargazers({ octokit, repos, config });
         }
         let stargazerDiff = null;
+        let stargazerMap;
         if (config.trackStargazers) {
-          const previousMap = readStargazers(dataDir);
+          const previousMap = branch.readStargazers();
           stargazerDiff = diffStargazers({ current: repoStargazers, previousMap });
-          writeStargazers({
-            dataDir,
-            stargazerMap: buildStargazerMap({ repoStargazers, previousMap })
-          });
+          stargazerMap = buildStargazerMap({ repoStargazers, previousMap });
           info(`Found ${stargazerDiff.totalNew} new stargazers`);
         }
-        const snapshot = createSnapshot({ currentRepos: repos, summary: summary2 });
-        const prunedCount = storedHistory.snapshots.length + 1 - config.maxHistory;
-        if (prunedCount > 0) {
-          warning(
-            `max-history is ${config.maxHistory} but ${storedHistory.snapshots.length} snapshots are stored, so this run drops the oldest ${prunedCount}. Raise max-history before this run if you want to keep them.`
-          );
-        }
-        const updatedHistory = addSnapshot({
-          history: storedHistory,
-          snapshot,
-          maxHistory: config.maxHistory
-        });
         const sorted = [...results.repos].filter((repo) => !repo.isRemoved).sort((repoA, repoB) => repoB.current - repoA.current);
         const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
         const chartNow = /* @__PURE__ */ new Date();
@@ -43325,13 +43616,7 @@ async function trackStars() {
         const htmlReport = generateHtmlReport({ ...reportParams, theme: config.emailTheme });
         const csvReport = generateCsvReport(results);
         const badge = generateBadge({ totalStars: summary2.totalStars, locale: config.locale });
-        const thresholdReached = shouldNotify({
-          totalStars: summary2.totalStars,
-          starsAtLastNotification: storedHistory.starsAtLastNotification,
-          threshold: config.notificationThreshold,
-          mode: config.notificationMode
-        });
-        const notify = summary2.changed && thresholdReached;
+        const notify = summary2.changed && measurement.thresholdReached;
         const emailConfig = getEmailConfig(config.locale);
         let notificationDelivered = notify;
         let mailDelivered = false;
@@ -43355,33 +43640,25 @@ async function trackStars() {
         } else if (emailConfig) {
           info("Notification threshold not reached, skipping email");
         }
-        if (notificationDelivered) {
-          updatedHistory.starsAtLastNotification = summary2.totalStars;
-        }
-        writeHistory({ dataDir, history: updatedHistory });
-        writeReport({ dataDir, markdown: markdownReport });
-        writeBadge({ dataDir, svg: badge });
-        writeCsv({ dataDir, csv: csvReport });
-        const chartFiles = buildChartFiles({
-          config,
-          history,
-          fallbackHistory: updatedHistory,
-          forecastData,
-          topRepoNames,
-          repoTotals,
-          repoStargazers,
-          now: chartNow
+        const historyToPersist = notificationDelivered ? recordNotification({ history: updatedHistory, totalStars: summary2.totalStars }) : updatedHistory;
+        branch.publish({
+          history: historyToPersist,
+          stargazerMap,
+          report: markdownReport,
+          badge,
+          csv: csvReport,
+          charts: buildChartFiles({
+            config,
+            history,
+            fallbackHistory: updatedHistory,
+            forecastData,
+            topRepoNames,
+            repoTotals,
+            repoStargazers,
+            now: chartNow
+          }),
+          commitMessage: `Update star data: ${summary2.totalStars} total (${deltaIndicator(summary2.totalDelta)})`
         });
-        for (const chartFile of chartFiles) {
-          writeChart({ dataDir, filename: chartFile.filename, svg: chartFile.svg });
-        }
-        pruneCharts({ dataDir, keep: chartFiles.map((chartFile) => chartFile.filename) });
-        if (config.readOnly) {
-          info(`Read-only run: leaving ${config.dataBranch} untouched`);
-        } else {
-          const commitMsg = `Update star data: ${summary2.totalStars} total (${deltaIndicator(summary2.totalDelta)})`;
-          commitAndPush({ dataDir, dataBranch: config.dataBranch, message: commitMsg, token });
-        }
         setOutputs({
           summary: summary2,
           markdownReport,

@@ -10,7 +10,7 @@ import type { ColorPalette } from './types';
 
 type Translations = ReturnType<typeof getTranslations>;
 
-export interface GenerateReportParams {
+export interface ReportParams {
   results: ComparisonResults;
   previousTimestamp: string | null;
   locale: Locale;
@@ -20,6 +20,10 @@ export interface GenerateReportParams {
   stargazerDiff?: StargazerDiffResult | null;
   forecastData?: ForecastData | null;
   topRepos?: number;
+  velocityMetrics?: boolean;
+}
+
+export interface EmailChartStyle {
   smoothing?: boolean;
   curve?: ChartCurve;
   showPoints?: boolean;
@@ -29,8 +33,9 @@ export interface GenerateReportParams {
   customMilestones?: readonly number[];
   range?: ChartRange;
   trendLine?: boolean;
-  velocityMetrics?: boolean;
 }
+
+export interface GenerateHtmlReportParams extends ReportParams, EmailChartStyle {}
 
 const THEME_CONFIG: Record<ChartTheme, { palette: ColorPalette; colorScheme: string }> = {
   [ChartTheme.AUTO]: { palette: LIGHT_PALETTE, colorScheme: 'light dark' },
@@ -145,20 +150,6 @@ export function prepareReportData({
     now: new Date().toISOString().split('T')[0],
     prev: previousTimestamp ? previousTimestamp.split('T')[0] : t.report.firstRun,
   };
-}
-
-const HTML_ESCAPE_MAP: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-};
-
-const HTML_ESCAPABLE_CHAR_PATTERN = /[&<>"']/g;
-
-export function escapeHtml(text: string): string {
-  return text.replaceAll(HTML_ESCAPABLE_CHAR_PATTERN, (char) => HTML_ESCAPE_MAP[char]);
 }
 
 export function perRepoChartFile(repoFullName: string): string {

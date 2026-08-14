@@ -4,9 +4,9 @@ import type { StargazerDiffResult } from '@domain/stargazers';
 import { makeComparisonResults, makeHistory, makeMultiRepoHistory } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
 import { generateMarkdownReport } from './markdown';
-import type { GenerateReportParams } from './shared';
+import type { ReportParams } from './shared';
 
-function renderMarkdown(overrides: Partial<GenerateReportParams> = {}): string {
+function renderMarkdown(overrides: Partial<ReportParams> = {}): string {
   return generateMarkdownReport({
     results: makeComparisonResults(),
     previousTimestamp: '2026-01-01T00:00:00Z',

@@ -1,25 +1,20 @@
 import { ChartCurve, ChartRange, ChartTheme } from '@config/types';
 import { STAR_MILESTONES } from '@domain/constants';
 import type { ForecastData } from '@domain/forecast';
-import { formatDate } from '@domain/formatting';
-import { repoStarSeries } from '@domain/snapshot';
 import type { History } from '@domain/types';
-import { getTranslations, interpolate, type Locale } from '@i18n';
+import { getTranslations, type Locale } from '@i18n';
+import type { ChartSeries, ChartSpec } from './chart-spec';
 import {
-  CHART,
-  CHART_COMPARISON_COLORS,
-  CHART_POINT,
-  CHART_TENSION,
-  LIGHT_PALETTE,
-  MIN_SNAPSHOTS_FOR_CHART,
-  TREND_WINDOW,
-} from './constants';
-import {
-  buildForecastChartSeries,
-  movingAverageSeries,
-  resolvePalette,
-  selectChartSnapshots,
-} from './shared';
+  AxisLabels,
+  comparisonSpec,
+  forecastSpec,
+  perRepoSpec,
+  SeriesDash,
+  SeriesWeight,
+  starHistorySpec,
+} from './chart-spec';
+import { CHART, CHART_POINT, CHART_TENSION, LIGHT_PALETTE } from './constants';
+import { resolvePalette } from './shared';
 import type { ColorPalette } from './types';
 
 const CHART_STYLE = {
@@ -239,31 +234,6 @@ function buildChartOptions({
   };
 }
 
-interface BuildStarsDatasetParams {
-  data: number[];
-  curveProps: CurveProps;
-  showPoints: boolean;
-  palette: ColorPalette;
-}
-
-function buildStarsDataset({
-  data,
-  curveProps,
-  showPoints,
-  palette,
-}: BuildStarsDatasetParams): Dataset {
-  return {
-    label: 'Stars',
-    data,
-    borderColor: palette.accent,
-    backgroundColor: `${palette.accent}${CHART_STYLE.translucentAlpha}`,
-    fill: true,
-    ...curveProps,
-    pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
-    pointHoverRadius: CHART_POINT.primaryHoverRadius,
-  };
-}
-
 interface BuildChartUrlParams {
   config: ChartConfig;
   palette: ColorPalette;
@@ -276,22 +246,97 @@ function buildChartUrl({ config, palette }: BuildChartUrlParams): string {
   return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&backgroundColor=${backgroundColor}&c=${encodedConfig}`;
 }
 
-interface PrepareChartDataParams {
-  history: History;
-  locale: Locale;
-  range?: ChartRange;
+const DASH_PATTERNS: Record<SeriesDash, number[] | null> = {
+  [SeriesDash.NONE]: null,
+  [SeriesDash.TREND]: CHART_STYLE.trendDash,
+  [SeriesDash.LINEAR_REGRESSION]: CHART_STYLE.linearRegressionDash,
+  [SeriesDash.WEIGHTED_MOVING_AVERAGE]: CHART_STYLE.weightedMovingAverageDash,
+};
+
+const POINT_SIZES: Record<SeriesWeight, { radius: number; hoverRadius: number }> = {
+  [SeriesWeight.PRIMARY]: {
+    radius: CHART_POINT.primaryRadius,
+    hoverRadius: CHART_POINT.primaryHoverRadius,
+  },
+  [SeriesWeight.SECONDARY]: {
+    radius: CHART_POINT.secondaryRadius,
+    hoverRadius: CHART_POINT.secondaryHoverRadius,
+  },
+  [SeriesWeight.HIDDEN]: { radius: CHART_POINT.hidden, hoverRadius: CHART_POINT.hidden },
+};
+
+interface ToDatasetParams {
+  series: ChartSeries;
+  curveProps: CurveProps;
+  showPoints: boolean;
 }
 
-function prepareChartData({ history, locale, range }: PrepareChartDataParams): {
-  labels: string[];
-  data: number[];
-} {
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range });
+function toDataset({ series, curveProps, showPoints }: ToDatasetParams): Dataset {
+  const dash = DASH_PATTERNS[series.dash];
+  const point = POINT_SIZES[series.weight];
 
   return {
-    labels: snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale })),
-    data: snapshots.map((snapshot) => snapshot.totalStars),
+    label: series.label,
+    data: series.data,
+    borderColor: series.color,
+    backgroundColor:
+      series.dash === SeriesDash.NONE
+        ? `${series.color}${CHART_STYLE.translucentAlpha}`
+        : 'transparent',
+    fill: series.fill,
+    ...curveProps,
+    pointRadius:
+      series.weight === SeriesWeight.HIDDEN
+        ? CHART_POINT.hidden
+        : pointRadiusFor({ showPoints, radius: point.radius }),
+    pointHoverRadius: point.hoverRadius,
+    ...(dash ? { borderDash: dash } : {}),
   };
+}
+
+interface RenderSpecParams {
+  spec: ChartSpec | null;
+  smoothing: boolean;
+  curve: ChartCurve;
+  showPoints: boolean;
+  beginAtZero: boolean;
+  palette: ColorPalette;
+}
+
+function renderSpec({
+  spec,
+  smoothing,
+  curve,
+  showPoints,
+  beginAtZero,
+  palette,
+}: RenderSpecParams): string | null {
+  if (spec === null) return null;
+
+  const curveProps = curvePropsFor({ smoothing, curve });
+  const datasets = spec.series.map((series) => toDataset({ series, curveProps, showPoints }));
+  const primary = spec.series[0].data.filter((value): value is number => value !== null);
+  const annotation = spec.milestoneThresholds
+    ? buildMilestoneAnnotations({
+        minStars: Math.min(...primary),
+        maxStars: Math.max(...primary),
+        palette,
+        thresholds: spec.milestoneThresholds,
+      })
+    : null;
+
+  return buildChartUrl({
+    config: buildChartConfig({
+      labels: spec.labels,
+      datasets,
+      title: spec.title,
+      showLegend: spec.showLegend,
+      beginAtZero,
+      palette,
+      annotation,
+    }),
+    palette,
+  });
 }
 
 interface BuildChartConfigParams {
@@ -349,49 +394,26 @@ export function generateChartUrl({
   range = ChartRange.ALL,
   trendLine = false,
 }: GenerateChartUrlParams): string | null {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
-    return null;
-  }
-
-  const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const curveProps = curvePropsFor({ smoothing, curve });
-  const chartTitle = title ?? t.report.starHistory;
-  const { labels, data } = prepareChartData({ history, locale, range });
-  const datasets: Dataset[] = [buildStarsDataset({ data, curveProps, showPoints, palette })];
 
-  if (trendLine) {
-    datasets.push({
-      label: t.report.trendLine,
-      data: movingAverageSeries({ values: data, window: TREND_WINDOW }),
-      borderColor: palette.neutral,
-      backgroundColor: 'transparent',
-      fill: false,
-      ...curveProps,
-      pointRadius: CHART_POINT.hidden,
-      pointHoverRadius: CHART_POINT.hidden,
-      borderDash: CHART_STYLE.trendDash,
-    });
-  }
-
-  const minStars = Math.min(...data);
-  const maxStars = Math.max(...data);
-  const thresholds =
-    customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
-  const annotation = milestones
-    ? buildMilestoneAnnotations({ minStars, maxStars, palette, thresholds })
-    : null;
-  const config = buildChartConfig({
-    labels,
-    datasets,
-    title: chartTitle,
-    showLegend: false,
+  return renderSpec({
+    spec: starHistorySpec({
+      history,
+      locale,
+      range,
+      axisLabels: AxisLabels.DATES,
+      title: title ?? getTranslations(locale).report.starHistory,
+      palette,
+      milestones,
+      customMilestones,
+      trendLine,
+    }),
+    smoothing,
+    curve,
+    showPoints,
     beginAtZero,
     palette,
-    annotation,
   });
-
-  return buildChartUrl({ config, palette });
 }
 
 interface GeneratePerRepoChartUrlParams {
@@ -419,28 +441,24 @@ export function generatePerRepoChartUrl({
   theme = ChartTheme.AUTO,
   range = ChartRange.ALL,
 }: GeneratePerRepoChartUrlParams): string | null {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
-    return null;
-  }
-
   const palette = resolvePalette(theme);
-  const curveProps = curvePropsFor({ smoothing, curve });
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range });
-  const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
-  const data = repoStarSeries({ snapshots, repoFullName });
-  const chartTitle = title ?? `${repoFullName} Star History`;
-  const datasets: Dataset[] = [buildStarsDataset({ data, curveProps, showPoints, palette })];
 
-  const config = buildChartConfig({
-    labels,
-    datasets,
-    title: chartTitle,
-    showLegend: false,
+  return renderSpec({
+    spec: perRepoSpec({
+      history,
+      locale,
+      range,
+      axisLabels: AxisLabels.DATES,
+      repoFullName,
+      title: title ?? `${repoFullName} Star History`,
+      palette,
+    }),
+    smoothing,
+    curve,
+    showPoints,
     beginAtZero,
     palette,
   });
-
-  return buildChartUrl({ config, palette });
 }
 
 interface GenerateComparisonChartUrlParams {
@@ -468,44 +486,23 @@ export function generateComparisonChartUrl({
   theme = ChartTheme.AUTO,
   range = ChartRange.ALL,
 }: GenerateComparisonChartUrlParams): string | null {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
-    return null;
-  }
-
-  const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const curveProps = curvePropsFor({ smoothing, curve });
-  const chartTitle = title ?? t.report.topRepositories;
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range });
-  const labels = snapshots.map((snapshot) => formatDate({ timestamp: snapshot.timestamp, locale }));
-  const capped = repoNames.slice(0, CHART.maxComparison);
-  const owners = new Set(capped.map((name) => name.split('/')[0]));
-  const useShortLabels = owners.size === 1;
-  const datasets: Dataset[] = capped.map((repoName, index) => {
-    const data = repoStarSeries({ snapshots, repoFullName: repoName });
-    const color = CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length];
 
-    return {
-      label: useShortLabels ? repoName.split('/')[1] : repoName,
-      data,
-      borderColor: color,
-      backgroundColor: `${color}${CHART_STYLE.translucentAlpha}`,
-      fill: false,
-      ...curveProps,
-      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
-      pointHoverRadius: CHART_POINT.secondaryHoverRadius,
-    };
-  });
-  const config = buildChartConfig({
-    labels,
-    datasets,
-    title: chartTitle,
-    showLegend: true,
+  return renderSpec({
+    spec: comparisonSpec({
+      history,
+      locale,
+      range,
+      axisLabels: AxisLabels.DATES,
+      repoNames,
+      title: title ?? getTranslations(locale).report.topRepositories,
+    }),
+    smoothing,
+    curve,
+    showPoints,
     beginAtZero,
     palette,
   });
-
-  return buildChartUrl({ config, palette });
 }
 
 interface GenerateForecastChartUrlParams {
@@ -533,67 +530,22 @@ export function generateForecastChartUrl({
   theme = ChartTheme.AUTO,
   range = ChartRange.ALL,
 }: GenerateForecastChartUrlParams): string | null {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
-    return null;
-  }
-
-  const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const curveProps = curvePropsFor({ smoothing, curve });
-  const chartTitle = title ?? t.forecast.sectionTitle;
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range });
-  const historicalLabels = snapshots.map((snapshot) =>
-    formatDate({ timestamp: snapshot.timestamp, locale }),
-  );
-  const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
-  const forecastLabels = forecastData.aggregate.forecasts[0].points.map((point) =>
-    interpolate({ template: t.forecast.week, params: { n: point.weekOffset } }),
-  );
-  const allLabels = [...historicalLabels, ...forecastLabels];
-  const series = buildForecastChartSeries({ historicalData, forecastData });
-  const datasets: Dataset[] = [
-    {
-      label: t.report.starHistory,
-      data: series.historical,
-      borderColor: palette.accent,
-      backgroundColor: `${palette.accent}${CHART_STYLE.translucentAlpha}`,
-      fill: true,
-      ...curveProps,
-      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.primaryRadius }),
-      pointHoverRadius: CHART_POINT.primaryHoverRadius,
-    },
-    {
-      label: t.forecast.linearRegression,
-      data: series.linearRegression,
-      borderColor: palette.positive,
-      backgroundColor: 'transparent',
-      fill: false,
-      ...curveProps,
-      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
-      pointHoverRadius: CHART_POINT.secondaryHoverRadius,
-      borderDash: CHART_STYLE.linearRegressionDash,
-    },
-    {
-      label: t.forecast.weightedMovingAverage,
-      data: series.weightedMovingAverage,
-      borderColor: palette.negative,
-      backgroundColor: 'transparent',
-      fill: false,
-      ...curveProps,
-      pointRadius: pointRadiusFor({ showPoints, radius: CHART_POINT.secondaryRadius }),
-      pointHoverRadius: CHART_POINT.secondaryHoverRadius,
-      borderDash: CHART_STYLE.weightedMovingAverageDash,
-    },
-  ];
 
-  const config = buildChartConfig({
-    labels: allLabels,
-    datasets,
-    title: chartTitle,
-    showLegend: true,
+  return renderSpec({
+    spec: forecastSpec({
+      history,
+      locale,
+      range,
+      axisLabels: AxisLabels.DATES,
+      forecastData,
+      title: title ?? getTranslations(locale).forecast.sectionTitle,
+      palette,
+    }),
+    smoothing,
+    curve,
+    showPoints,
     beginAtZero,
     palette,
   });
-
-  return buildChartUrl({ config, palette });
 }

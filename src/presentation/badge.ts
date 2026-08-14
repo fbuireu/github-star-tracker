@@ -1,6 +1,9 @@
 import { formatCount } from '@domain/formatting';
 import { getTranslations, type Locale } from '@i18n';
 import { BADGE, COLORS } from './constants';
+import { EscapeDialect, escapeFor } from './escaping';
+
+const escapeXml = escapeFor(EscapeDialect.XML);
 
 interface GenerateBadgeParams {
   totalStars: number;
@@ -9,11 +12,13 @@ interface GenerateBadgeParams {
 
 export function generateBadge({ totalStars, locale }: GenerateBadgeParams): string {
   const t = getTranslations(locale);
-  const label = t.badge.totalStars;
-  const value = `\u2605 ${formatCount({ count: totalStars, locale })}`;
-  const labelWidth = label.length * BADGE.labelCharWidth + BADGE.horizontalPadding;
-  const valueWidth = value.length * BADGE.valueCharWidth + BADGE.horizontalPadding;
+  const rawLabel = t.badge.totalStars;
+  const rawValue = `\u2605 ${formatCount({ count: totalStars, locale })}`;
+  const labelWidth = rawLabel.length * BADGE.labelCharWidth + BADGE.horizontalPadding;
+  const valueWidth = rawValue.length * BADGE.valueCharWidth + BADGE.horizontalPadding;
   const totalWidth = labelWidth + valueWidth;
+  const label = escapeXml(rawLabel);
+  const value = escapeXml(rawValue);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${BADGE.height}" role="img" aria-label="${label}: ${value}">
   <title>${label}: ${value}</title>

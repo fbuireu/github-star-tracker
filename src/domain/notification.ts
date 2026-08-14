@@ -1,7 +1,7 @@
 import { NOTIFICATION_THRESHOLD_MAX_PACE, NOTIFICATION_THRESHOLDS } from './constants';
 import { NotificationMode } from './types';
 
-export function getAdaptiveThreshold(totalStars: number): number {
+function getAdaptiveThreshold(totalStars: number): number {
   return (
     NOTIFICATION_THRESHOLDS.find((threshold) => totalStars <= threshold.limit)?.value ??
     NOTIFICATION_THRESHOLD_MAX_PACE

@@ -1,7 +1,6 @@
 import { ChartCurve, ChartRange, ChartTheme } from '@config/types';
 import type { ForecastResult } from '@domain/forecast';
 import { deltaIndicator, formatSignedPercent } from '@domain/formatting';
-import { computeVelocity } from '@domain/velocity';
 import { getTranslations, interpolate } from '@i18n';
 import {
   generateChartUrl,
@@ -9,17 +8,14 @@ import {
   generateForecastChartUrl,
   generatePerRepoChartUrl,
 } from './chart';
-import { MIN_SNAPSHOTS_FOR_CHART, SECTION_ICON } from './constants';
-import type { GenerateReportParams } from './shared';
-import {
-  buildForecastWeekHeaders,
-  colorSchemeFor,
-  escapeHtml,
-  forecastMethodLabel,
-  prepareReportData,
-  resolvePalette,
-} from './shared';
+import { SECTION_ICON } from './constants';
+import { EscapeDialect, escapeFor } from './escaping';
+import { buildForecastTable, buildReportModel, StargazerOutcome } from './report-model';
+import type { GenerateHtmlReportParams } from './shared';
+import { colorSchemeFor, resolvePalette } from './shared';
 import type { ColorPalette } from './types';
+
+const escapeHtml = escapeFor(EscapeDialect.MARKUP);
 
 interface DeltaColorParams {
   delta: number;
@@ -32,38 +28,32 @@ function deltaColor({ delta, palette }: DeltaColorParams): string {
   return palette.neutral;
 }
 
-export function generateHtmlReport({
-  results,
-  previousTimestamp,
-  locale,
-  history = null,
-  velocityHistory = null,
-  includeCharts = true,
-  stargazerDiff = null,
-  forecastData = null,
-  topRepos: topReposCount = 10,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
-  milestones = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
-  customMilestones,
-  range = ChartRange.ALL,
-  trendLine = false,
-  velocityMetrics = false,
-}: GenerateReportParams): string {
-  const { summary } = results;
+export function generateHtmlReport(params: GenerateHtmlReportParams): string {
+  const {
+    locale,
+    smoothing = true,
+    curve = ChartCurve.MONOTONE,
+    showPoints = true,
+    milestones = true,
+    beginAtZero = false,
+    theme = ChartTheme.AUTO,
+    customMilestones,
+    range = ChartRange.ALL,
+    trendLine = false,
+  } = params;
+
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const { sorted, removedRepos, now, prev } = prepareReportData({
-    results,
-    previousTimestamp,
-    locale,
-  });
-
-  const hasChartHistory =
-    includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
+  const model = buildReportModel(params);
+  const {
+    summary,
+    sorted,
+    removedRepos,
+    now,
+    prev,
+    chartHistory: history,
+    forecast: forecastData,
+  } = model;
 
   const rows = sorted
     .map((repo) => {
@@ -92,9 +82,9 @@ export function generateHtmlReport({
       </div>`
       : '';
 
-  const topRepos = sorted.slice(0, topReposCount).map((repo) => repo.fullName);
+  const topRepos = model.topRepos;
   const comparisonChartUrl =
-    hasChartHistory && topRepos.length > 0
+    history !== null && topRepos.length > 0
       ? generateComparisonChartUrl({
           history,
           repoNames: topRepos,
@@ -109,33 +99,35 @@ export function generateHtmlReport({
         })
       : null;
 
-  const individualRepoChartsHtml = hasChartHistory
-    ? topRepos
-        .map((repoName) => {
-          const chartUrl = generatePerRepoChartUrl({
-            history,
-            repoFullName: repoName,
-            locale,
-            smoothing,
-            curve,
-            showPoints,
-            beginAtZero,
-            theme,
-            range,
-          });
-          if (!chartUrl) return '';
-          return `
+  const individualRepoChartsHtml =
+    history !== null
+      ? topRepos
+          .map((repoName) => {
+            const chartUrl = generatePerRepoChartUrl({
+              history,
+              repoFullName: repoName,
+              locale,
+              smoothing,
+              curve,
+              showPoints,
+              beginAtZero,
+              theme,
+              range,
+            });
+            if (!chartUrl) return '';
+            return `
         <div style="margin-top:16px;">
           <h4 style="font-size:14px;margin-bottom:8px;">${escapeHtml(repoName)}</h4>
           <img src="${chartUrl}" alt="${escapeHtml(repoName)}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
-        })
-        .filter(Boolean)
-        .join('')
-    : '';
+          })
+          .filter(Boolean)
+          .join('')
+      : '';
 
-  const chartSection = hasChartHistory
-    ? `
+  const chartSection =
+    history !== null
+      ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.starTrend} ${t.report.starTrend}</h2>
         <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, curve, showPoints, milestones, beginAtZero, theme, customMilestones, range, trendLine })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
@@ -155,21 +147,22 @@ export function generateHtmlReport({
             : ''
         }
       </div>`
-    : '';
+      : '';
 
+  const stargazers = model.stargazers;
   const sampledNoteHtml =
-    stargazerDiff?.sampledRepos && stargazerDiff.sampledRepos.length > 0
-      ? `<p style="color:${palette.neutral};">${interpolate({ template: t.stargazers.sampledNote, params: { repos: stargazerDiff.sampledRepos.join(', ') } })}</p>`
+    stargazers && stargazers.sampledRepos.length > 0
+      ? `<p style="color:${palette.neutral};">${interpolate({ template: t.stargazers.sampledNote, params: { repos: stargazers.sampledRepos.join(', ') } })}</p>`
       : '';
 
   const stargazerSection =
-    stargazerDiff && stargazerDiff.totalNew > 0
+    stargazers && stargazers.outcome === StargazerOutcome.NEW
       ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.stargazers} ${t.stargazers.sectionTitle}</h2>
-        <p>${interpolate({ template: t.stargazers.newStargazers, params: { count: stargazerDiff.totalNew } })}</p>
+        <p>${interpolate({ template: t.stargazers.newStargazers, params: { count: stargazers.totalNew } })}</p>
         ${sampledNoteHtml}
-        ${stargazerDiff.entries
+        ${stargazers.entries
           .map(
             (entry) => `
         <div style="margin-top:12px;">
@@ -188,7 +181,7 @@ export function generateHtmlReport({
           )
           .join('')}
       </div>`
-      : stargazerDiff
+      : stargazers
         ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.stargazers} ${t.stargazers.sectionTitle}</h2>
@@ -197,10 +190,7 @@ export function generateHtmlReport({
       </div>`
         : '';
 
-  const velocity =
-    velocityMetrics && velocityHistory !== null
-      ? computeVelocity({ history: velocityHistory })
-      : null;
+  const velocity = model.velocity;
   const velocityList = velocity
     ? `
         <ul style="margin:0;padding-left:20px;">
@@ -211,8 +201,8 @@ export function generateHtmlReport({
               : ''
           }
           ${
-            velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null
-              ? `<li>${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}</li>`
+            velocity.projection
+              ? `<li>${interpolate({ template: t.velocity.projection, params: { days: velocity.projection.days, milestone: velocity.projection.milestone } })}</li>`
               : ''
           }
         </ul>`
@@ -232,7 +222,7 @@ export function generateHtmlReport({
         }
         ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t, palette })}
         ${
-          hasChartHistory
+          history !== null
             ? `<div style="margin-top:16px;text-align:center;">
           <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, curve, showPoints, beginAtZero, theme, range })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`
@@ -250,7 +240,7 @@ export function generateHtmlReport({
     : '';
 
   const velocitySection =
-    !forecastData && velocityList
+    !model.velocityIsNested && velocityList
       ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.velocity} ${t.velocity.sectionTitle}</h2>
@@ -264,7 +254,7 @@ export function generateHtmlReport({
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${palette.text};background-color:${palette.white};">
   <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${palette.accent};">
     <h1 style="margin:0;font-size:24px;">${t.report.title}</h1>
-    <p style="color:${palette.neutral};margin:8px 0 0;">${now} ${prev === t.report.firstRun ? `| ${t.report.firstRun}` : `| ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`}</p>
+    <p style="color:${palette.neutral};margin:8px 0 0;">${now} ${model.isFirstRun ? `| ${t.report.firstRun}` : `| ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`}</p>
   </div>
 
   <div style="display:flex;justify-content:space-around;padding:20px 0;text-align:center;">
@@ -331,24 +321,24 @@ function buildHtmlForecastTable({
   t,
   palette,
 }: BuildHtmlForecastTableParams): string {
-  const weekHeaders = buildForecastWeekHeaders(t);
+  const table = buildForecastTable({ title, forecasts, t });
 
   return `
-    <h4 style="font-size:14px;margin-bottom:8px;">${title}</h4>
+    <h4 style="font-size:14px;margin-bottom:8px;">${table.title}</h4>
     <table style="width:100%;border-collapse:collapse;">
       <thead>
         <tr style="background:${palette.tableHeaderBg};">
           <th style="padding:6px 8px;text-align:left;border-bottom:2px solid ${palette.tableHeaderBorder};font-size:12px;">${t.forecast.method}</th>
-          ${weekHeaders.map((header) => `<th style="padding:6px 8px;text-align:right;border-bottom:2px solid ${palette.tableHeaderBorder};font-size:12px;">${header}</th>`).join('')}
+          ${table.weekHeaders.map((header) => `<th style="padding:6px 8px;text-align:right;border-bottom:2px solid ${palette.tableHeaderBorder};font-size:12px;">${header}</th>`).join('')}
         </tr>
       </thead>
       <tbody>
-        ${forecasts
+        ${table.rows
           .map(
-            (forecast) => `
+            (row) => `
         <tr>
-          <td style="padding:6px 8px;border-bottom:1px solid ${palette.cellBorder};font-size:12px;">${forecastMethodLabel({ method: forecast.method, t })}</td>
-          ${forecast.points.map((point) => `<td style="padding:6px 8px;border-bottom:1px solid ${palette.cellBorder};text-align:right;font-size:12px;">${point.predicted}</td>`).join('')}
+          <td style="padding:6px 8px;border-bottom:1px solid ${palette.cellBorder};font-size:12px;">${row.method}</td>
+          ${row.predicted.map((predicted) => `<td style="padding:6px 8px;border-bottom:1px solid ${palette.cellBorder};text-align:right;font-size:12px;">${predicted}</td>`).join('')}
         </tr>`,
           )
           .join('')}

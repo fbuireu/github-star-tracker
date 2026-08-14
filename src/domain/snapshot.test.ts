@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { addSnapshot, getBaselineSnapshot, getLastSnapshot } from './snapshot';
+import { addSnapshot, getBaselineSnapshot } from './snapshot';
 import { CompareAgainst, type History, type Snapshot } from './types';
+
+function lastRunBaseline(history: History): Snapshot | null {
+  return getBaselineSnapshot({ history, compareAgainst: CompareAgainst.LAST_RUN });
+}
 
 const NOW = new Date('2026-03-31T00:00:00Z');
 
@@ -14,7 +18,7 @@ function makeDailyHistory(days: number): History {
   };
 }
 
-describe('getLastSnapshot skips corrupt timestamps', () => {
+describe('getBaselineSnapshot against the last run', () => {
   it('falls back to the newest snapshot whose timestamp parses', () => {
     const history = {
       snapshots: [
@@ -23,18 +27,25 @@ describe('getLastSnapshot skips corrupt timestamps', () => {
       ],
     };
 
-    expect(getLastSnapshot(history)?.totalStars).toBe(10);
+    expect(lastRunBaseline(history)?.totalStars).toBe(10);
   });
-});
 
-describe('getLastSnapshot', () => {
   it('returns null for empty history', () => {
-    const history: History = { snapshots: [] };
-
-    expect(getLastSnapshot(history)).toBeNull();
+    expect(lastRunBaseline({ snapshots: [] })).toBeNull();
   });
 
-  it('returns the last snapshot', () => {
+  it('returns null when no timestamp parses at all', () => {
+    const history: History = {
+      snapshots: [
+        { timestamp: 'not-a-date', totalStars: 10, repos: [] },
+        { timestamp: '', totalStars: 20, repos: [] },
+      ],
+    };
+
+    expect(lastRunBaseline(history)).toBeNull();
+  });
+
+  it('returns the newest snapshot', () => {
     const snapshot1: Snapshot = {
       timestamp: '2024-01-01T00:00:00Z',
       totalStars: 100,
@@ -47,7 +58,7 @@ describe('getLastSnapshot', () => {
     };
     const history: History = { snapshots: [snapshot1, snapshot2] };
 
-    expect(getLastSnapshot(history)).toEqual(snapshot2);
+    expect(lastRunBaseline(history)).toEqual(snapshot2);
   });
 });
 

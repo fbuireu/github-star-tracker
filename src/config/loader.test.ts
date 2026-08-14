@@ -12,7 +12,6 @@ import {
   parseList,
   parseNonNegativeNumber,
   parseNotificationThreshold,
-  parseNumber,
   parsePositiveNumber,
   toStringList,
 } from './parsers';
@@ -163,36 +162,37 @@ describe('parseNonNegativeNumber', () => {
   });
 });
 
-describe('parseNumber', () => {
+describe('integer coercion, through the signed parsers that use it', () => {
   it('returns undefined for empty/null/undefined', () => {
-    expect(parseNumber('')).toBeUndefined();
-    expect(parseNumber(null)).toBeUndefined();
+    expect(parseNonNegativeNumber('')).toBeUndefined();
+    expect(parseNonNegativeNumber(null)).toBeUndefined();
   });
 
   it('parses valid integers', () => {
-    expect(parseNumber('42')).toBe(42);
-    expect(parseNumber('0')).toBe(0);
+    expect(parseNonNegativeNumber('42')).toBe(42);
+    expect(parseNonNegativeNumber('0')).toBe(0);
   });
 
   it('returns undefined for non-numeric strings', () => {
-    expect(parseNumber('abc')).toBeUndefined();
+    expect(parseNonNegativeNumber('abc')).toBeUndefined();
   });
 
   it('rejects partially numeric strings instead of truncating them', () => {
-    expect(parseNumber('1o')).toBeUndefined();
-    expect(parseNumber('42abc')).toBeUndefined();
-    expect(parseNumber('3.7')).toBeUndefined();
+    expect(parseNonNegativeNumber('1o')).toBeUndefined();
+    expect(parseNonNegativeNumber('42abc')).toBeUndefined();
+    expect(parseNonNegativeNumber('3.7')).toBeUndefined();
   });
 
   it('accepts surrounding whitespace and a sign', () => {
-    expect(parseNumber(' 42 ')).toBe(42);
-    expect(parseNumber('-5')).toBe(-5);
+    expect(parseNonNegativeNumber(' 42 ')).toBe(42);
+    expect(parsePositiveNumber(' 42 ')).toBe(42);
+    expect(parseNotificationThreshold('-5')).toBe(-5);
   });
 
   it('truncates real numbers coming from the config file', () => {
-    expect(parseNumber(7)).toBe(7);
-    expect(parseNumber(7.9)).toBe(7);
-    expect(parseNumber(Number.POSITIVE_INFINITY)).toBeUndefined();
+    expect(parseNonNegativeNumber(7)).toBe(7);
+    expect(parseNonNegativeNumber(7.9)).toBe(7);
+    expect(parseNonNegativeNumber(Number.POSITIVE_INFINITY)).toBeUndefined();
   });
 });
 

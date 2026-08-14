@@ -10,12 +10,13 @@ root and their only consumer. They hold no business logic and build no user-faci
 | --- | --- | --- |
 | `github/` | Repo discovery, filtering, stargazer pagination | Network (octokit) |
 | `git/` | `git` CLI wrapper and the data-branch worktree lifecycle | `child_process`, fs |
-| `persistence/` | Data-branch filenames, reads/writes, commit & push | fs, `git` (via `../git/commands`) |
+| `persistence/` | The Data Branch lifecycle, filenames, reads/writes, commit & push | fs, `git` (via `../git/*`) |
 | `notification/` | SMTP config from action inputs, sending the digest | `@actions/core` inputs, SMTP |
 
 "Same layer" means all of `src/infrastructure`, not one adapter: `persistence/storage.ts` imports
-`../git/commands` relatively, exactly like `github/filters.ts` imports `./client`. That is the only
-cross-adapter dependency, and it is the only one allowed.
+`../git/commands` and `persistence/data-branch.ts` imports `../git/worktree`, exactly like
+`github/filters.ts` imports `./client`. Persistence depending on git is the **only** cross-adapter direction
+allowed, and it does not run the other way.
 
 **Failure policy.** Repository fetching and worktree setup are **fatal** — they throw wrapped errors with
 remediation text and fail the action. Per-repo stargazer failures are **degradable**: swallowed here and
@@ -87,6 +88,22 @@ downstream can see a repository outside it.
 
 ## persistence/
 
+**`withDataBranch` is the folder's only external surface.** It opens the worktree, hands the caller a
+`DataBranch` — `readHistory`, `readStargazers`, `publish` — and removes the worktree in a `finally`.
+Everything else here is behind it.
+
+- **`dataDir` never leaves this folder.** `initializeDataBranch` returns it, `withDataBranch` closes over it,
+  and every read and write derives its path from that closure. `@application` no longer holds it, so it
+  cannot thread a stale one into a later call.
+- **`publish` is one call and its order is load-bearing**: history, report, badge, CSV, the Stargazer map
+  when there is one, then every chart, then `pruneCharts`, then the commit. `add -A` inside `commitAndPush`
+  is what stages all of it, so any new write must go **before** the commit — which is exactly what putting
+  them in one function enforces. `data-branch.test.ts` pins that ordering.
+- **The read-only guard lives here**, not in the tracker: `publish` writes everything into the worktree and
+  then returns without committing when `readOnly` is set. `commitAndPush` itself still has no read-only
+  awareness and must not gain any.
+- The `write*`/`read*` helpers in `storage.ts` are internal to this folder. Only `writeHtmlReport` is
+  consumed from outside, and it deliberately writes **off** the Data Branch.
 - **`readHistory` always returns a usable `History`.** Missing file → `{ snapshots: [] }`; a stored
   `snapshots` that is not an array normalizes to `[]` while `starsAtLastNotification` survives untouched.
   Downstream domain code never null-checks it.
@@ -104,7 +121,7 @@ downstream can see a repository outside it.
   `-c http.extraheader=…`, and `execute` embeds the whole argv in any thrown error — the mask is what keeps a
   push failure from leaking the token. Any new call passing a secret in argv must do the same.
 - `commitAndPush` has **no read-only awareness**; calling it on a read-only run would push. The guard lives in
-  `@application/tracker`. All `write*` calls must complete before it, since `add -A` is what stages them.
+  `data-branch.ts`, which is also what guarantees every `write*` has completed before it.
 - Filenames are module-private but referenced by users' workflows and READMEs — renaming `stars-badge.svg`,
   `stars-data.json`, `stars-data.csv`, `stargazers.json` or the report `README.md` is a breaking change to
   consumers outside this repo.
@@ -129,9 +146,8 @@ downstream can see a repository outside it.
 - `getEmailConfig` is one of the few infrastructure functions that reads `@actions/core` inputs directly
   rather than receiving a parsed `Config`. Only `locale` is passed in, to resolve the default sender name —
   so changing `locale` changes the visible sender.
-- **`smtp-password` is never passed to `core.setSecret`.** Masking relies on the user supplying it via
-  `secrets.*`, which GitHub masks itself. A password hardcoded in a workflow would appear unmasked in
-  nodemailer error text.
+- **`smtp-password` is passed to `core.setSecret`** as soon as it is read, so it is masked in the Action log
+  even when a workflow hardcodes it instead of supplying it through `secrets.*`. `email.test.ts` pins that.
 - A non-null `EmailConfig` does **not** mean email will be sent — `to` is only checked at send time.
 
 ## Gotchas
@@ -143,7 +159,7 @@ downstream can see a repository outside it.
   Adding a `core.warning(...)` to `storage.ts` fails the suite with "not a function", not a useful assertion.
 - **`filters.test.ts` is the spec for `client.ts` too**, so a change to `client.ts` can fail here.
 - **Stale charts are pruned, but not by the writer.** `writeChart` only writes; `pruneCharts({ dataDir, keep })`
-  deletes the `charts/*.svg` files the current run did not produce, and the tracker calls it immediately after
+  deletes the `charts/*.svg` files the current run did not produce, and `publish` calls it immediately after
   the write loop — which is what stops a repo dropping out of `top-repos` from stranding its chart forever.
 - `writeHtmlReport` falls back to `process.cwd()` when `RUNNER_TEMP` is unset, writing the report into the
   checkout root on local runs.

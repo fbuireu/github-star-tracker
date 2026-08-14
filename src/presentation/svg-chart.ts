@@ -1,34 +1,23 @@
 import { ChartAxisSide, ChartCurve, type ChartRange, ChartTheme } from '@config/types';
 import { STAR_MILESTONES } from '@domain/constants';
 import type { ForecastData } from '@domain/forecast';
-import { buildAxisLabels, formatCount, formatDate } from '@domain/formatting';
-import { repoStarSeries } from '@domain/snapshot';
+import { formatCount } from '@domain/formatting';
 import type { History } from '@domain/types';
-import { getTranslations, interpolate, type Locale } from '@i18n';
+import { getTranslations, type Locale } from '@i18n';
+import type { ChartSpec } from './chart-spec';
 import {
-  CHART,
-  CHART_COMPARISON_COLORS,
-  CHART_TENSION,
-  DARK_PALETTE,
-  MIN_SNAPSHOTS_FOR_CHART,
-  SVG_CHART,
-  TREND_WINDOW,
-} from './constants';
-import {
-  buildForecastChartSeries,
-  movingAverageSeries,
-  resolvePalette,
-  selectChartSnapshots,
-} from './shared';
+  AxisLabels,
+  comparisonSpec,
+  forecastSpec,
+  perRepoSpec,
+  SeriesDash,
+  starHistorySpec,
+} from './chart-spec';
+import { CHART, CHART_TENSION, DARK_PALETTE, SVG_CHART } from './constants';
+import { EscapeDialect, escapeFor } from './escaping';
+import { resolvePalette } from './shared';
 
-const XML_ESCAPE_MAP: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-};
-
-const XML_ESCAPABLE_CHAR_PATTERN = /[&<>"]/g;
+const escapeXml = escapeFor(EscapeDialect.XML);
 
 const BEZIER_CONTROL_DIVISOR = 3;
 const MONOTONE_TANGENT_LIMIT = 3;
@@ -280,9 +269,6 @@ function niceAxisSteps({ min, max, count }: NiceAxisStepsParams): number[] {
   }
 
   return [...new Set(steps)];
-}
-function escapeXml(text: string): string {
-  return text.replaceAll(XML_ESCAPABLE_CHAR_PATTERN, (char) => XML_ESCAPE_MAP[char]);
 }
 
 interface SvgDataset {
@@ -583,6 +569,33 @@ function renderSvg({
 </svg>`;
 }
 
+interface RenderSpecParams {
+  spec: ChartSpec | null;
+  locale: Locale;
+  style: SvgChartStyle;
+}
+
+function renderSpec({ spec, locale, style }: RenderSpecParams): string | null {
+  if (spec === null) return null;
+
+  return renderSvg({
+    locale,
+    ...style,
+    labels: spec.labels,
+    datasets: spec.series.map((series) => ({
+      label: series.label,
+      data: series.data,
+      color: series.color,
+      dashed: series.dash !== SeriesDash.NONE,
+      fill: series.fill,
+    })),
+    title: spec.title,
+    showLegend: spec.showLegend,
+    milestones: spec.milestoneThresholds !== null,
+    milestoneThresholds: spec.milestoneThresholds ?? STAR_MILESTONES,
+  });
+}
+
 interface GenerateSvgChartParams extends SvgChartStyle {
   history: History;
   title?: string;
@@ -607,40 +620,22 @@ export function generateSvgChart({
   trendLine = false,
   ...style
 }: GenerateSvgChartParams): string | null {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
-    return null;
-  }
-
-  const t = getTranslations(locale);
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
-  const labels = buildAxisLabels({
-    timestamps: snapshots.map((snapshot) => snapshot.timestamp),
+  return renderSpec({
+    spec: starHistorySpec({
+      history,
+      locale,
+      range,
+      maxPoints,
+      axisLabels: AxisLabels.THINNED,
+      title: title ?? 'Star History',
+      palette: resolvePalette(style.theme),
+      lineColor,
+      milestones,
+      customMilestones,
+      trendLine,
+    }),
     locale,
-  });
-  const palette = resolvePalette(style.theme);
-  const data = snapshots.map((snapshot) => snapshot.totalStars);
-  const datasets: SvgDataset[] = [{ label: 'Stars', data, color: lineColor ?? palette.accent }];
-
-  if (trendLine) {
-    datasets.push({
-      label: t.report.trendLine,
-      data: movingAverageSeries({ values: data, window: TREND_WINDOW }),
-      color: palette.neutral,
-      dashed: true,
-      fill: false,
-    });
-  }
-
-  return renderSvg({
-    locale,
-    ...style,
-    labels,
-    datasets,
-    title: title ?? 'Star History',
-    showLegend: false,
-    milestones,
-    milestoneThresholds:
-      customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES,
+    style,
   });
 }
 
@@ -664,25 +659,20 @@ export function generatePerRepoSvgChart({
   range,
   ...style
 }: GeneratePerRepoSvgChartParams): string | null {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
-    return null;
-  }
-
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
-  const labels = buildAxisLabels({
-    timestamps: snapshots.map((snapshot) => snapshot.timestamp),
+  return renderSpec({
+    spec: perRepoSpec({
+      history,
+      locale,
+      range,
+      maxPoints,
+      axisLabels: AxisLabels.THINNED,
+      repoFullName,
+      title: title ?? `${repoFullName} Star History`,
+      palette: resolvePalette(style.theme),
+      lineColor,
+    }),
     locale,
-  });
-  const data = repoStarSeries({ snapshots, repoFullName });
-
-  return renderSvg({
-    locale,
-    ...style,
-    labels,
-    datasets: [{ label: 'Stars', data, color: lineColor ?? resolvePalette(style.theme).accent }],
-    title: title ?? `${repoFullName} Star History`,
-    showLegend: false,
-    milestones: false,
+    style,
   });
 }
 
@@ -704,40 +694,18 @@ export function generateComparisonSvgChart({
   range,
   ...style
 }: GenerateComparisonSvgChartParams): string | null {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
-    return null;
-  }
-
-  const t = getTranslations(locale);
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
-  const labels = buildAxisLabels({
-    timestamps: snapshots.map((snapshot) => snapshot.timestamp),
+  return renderSpec({
+    spec: comparisonSpec({
+      history,
+      locale,
+      range,
+      maxPoints,
+      axisLabels: AxisLabels.THINNED,
+      repoNames,
+      title: title ?? getTranslations(locale).report.topRepositories,
+    }),
     locale,
-  });
-  const capped = repoNames.slice(0, CHART.maxComparison);
-  const owners = new Set(capped.map((name) => name.split('/')[0]));
-  const useShortLabels = owners.size === 1;
-  const datasets: SvgDataset[] = capped.map((repoName, index) => {
-    const data = repoStarSeries({ snapshots, repoFullName: repoName });
-
-    const color = CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length];
-
-    return {
-      label: useShortLabels ? repoName.split('/')[1] : repoName,
-      data,
-      color,
-      fill: false,
-    };
-  });
-
-  return renderSvg({
-    locale,
-    ...style,
-    labels,
-    datasets,
-    title: title ?? t.report.topRepositories,
-    showLegend: true,
-    milestones: false,
+    style,
   });
 }
 
@@ -761,52 +729,19 @@ export function generateForecastSvgChart({
   range,
   ...style
 }: GenerateForecastSvgChartParams): string | null {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
-    return null;
-  }
-
-  const t = getTranslations(locale);
-  const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
-  const historicalLabels = snapshots.map((snapshot) =>
-    formatDate({ timestamp: snapshot.timestamp, locale }),
-  );
-  const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
-  const forecastLabels = forecastData.aggregate.forecasts[0].points.map((point) =>
-    interpolate({ template: t.forecast.week, params: { n: point.weekOffset } }),
-  );
-  const allLabels = [...historicalLabels, ...forecastLabels];
-  const series = buildForecastChartSeries({ historicalData, forecastData });
-  const palette = resolvePalette(style.theme);
-  const datasets: SvgDataset[] = [
-    {
-      label: t.report.starHistory,
-      data: series.historical,
-      color: lineColor ?? palette.accent,
-      fill: true,
-    },
-    {
-      label: t.forecast.linearRegression,
-      data: series.linearRegression,
-      color: palette.positive,
-      dashed: true,
-      fill: false,
-    },
-    {
-      label: t.forecast.weightedMovingAverage,
-      data: series.weightedMovingAverage,
-      color: palette.negative,
-      dashed: true,
-      fill: false,
-    },
-  ];
-
-  return renderSvg({
+  return renderSpec({
+    spec: forecastSpec({
+      history,
+      locale,
+      range,
+      maxPoints,
+      axisLabels: AxisLabels.DATES,
+      forecastData,
+      title: title ?? getTranslations(locale).forecast.sectionTitle,
+      palette: resolvePalette(style.theme),
+      lineColor,
+    }),
     locale,
-    ...style,
-    labels: allLabels,
-    datasets,
-    title: title ?? t.forecast.sectionTitle,
-    showLegend: true,
-    milestones: false,
+    style,
   });
 }

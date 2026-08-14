@@ -1,14 +1,7 @@
-import {
-  FORECAST_WEEKS,
-  MIN_RATE_INTERVAL_DAYS,
-  MIN_SNAPSHOTS_FOR_FORECAST,
-  MS_PER_DAY,
-} from './constants';
+import { DAYS_PER_WEEK, FORECAST_WEEKS, MIN_SNAPSHOTS_FOR_FORECAST } from './constants';
+import { calendarDays, fitTrend, type SeriesPoint, weightedDailyRate } from './growth';
 import { repoStarSeries } from './snapshot';
-import { toEpochMs } from './time';
 import type { History } from './types';
-
-const DAYS_PER_WEEK = 7;
 
 export interface ForecastPoint {
   weekOffset: number;
@@ -37,69 +30,6 @@ export interface ForecastData {
   repos: RepoForecast[];
 }
 
-export interface SeriesPoint {
-  day: number;
-  value: number;
-}
-
-interface LinearRegressionResult {
-  slope: number;
-  intercept: number;
-}
-
-export function linearRegression(points: SeriesPoint[]): LinearRegressionResult {
-  const pointCount = points.length;
-  let sumX = 0;
-  let sumY = 0;
-  let sumXY = 0;
-  let sumXX = 0;
-
-  for (const point of points) {
-    sumX += point.day;
-    sumY += point.value;
-    sumXY += point.day * point.value;
-    sumXX += point.day * point.day;
-  }
-
-  const denominator = pointCount * sumXX - sumX * sumX;
-
-  if (denominator === 0) {
-    return { slope: 0, intercept: points.at(-1)?.value ?? 0 };
-  }
-
-  const slope = (pointCount * sumXY - sumX * sumY) / denominator;
-  const intercept = (sumY - slope * sumX) / pointCount;
-
-  return { slope, intercept };
-}
-
-const MIN_POINTS_FOR_WEIGHTED_AVERAGE = 2;
-
-export function weightedMovingAverage(points: SeriesPoint[]): number {
-  if (points.length < MIN_POINTS_FOR_WEIGHTED_AVERAGE) return 0;
-
-  const dailyRates: number[] = [];
-
-  for (let index = 1; index < points.length; index++) {
-    const elapsedDays = points[index].day - points[index - 1].day;
-    if (elapsedDays < MIN_RATE_INTERVAL_DAYS) continue;
-    dailyRates.push((points[index].value - points[index - 1].value) / elapsedDays);
-  }
-
-  if (dailyRates.length === 0) return 0;
-
-  let weightedSum = 0;
-  let totalWeight = 0;
-
-  for (let index = 0; index < dailyRates.length; index++) {
-    const weight = index + 1;
-    weightedSum += dailyRates[index] * weight;
-    totalWeight += weight;
-  }
-
-  return weightedSum / totalWeight;
-}
-
 interface ComputeForecastParams {
   history: History;
   topRepoNames: string[];
@@ -111,8 +41,8 @@ function clampPrediction(value: number): number {
 
 function forecastFromSeries(points: SeriesPoint[]): ForecastResult[] {
   const last = points.at(-1) ?? { day: 0, value: 0 };
-  const regression = linearRegression(points);
-  const wmaDailyRate = weightedMovingAverage(points);
+  const regression = fitTrend(points);
+  const wmaDailyRate = weightedDailyRate(points);
   const lrPoints: ForecastPoint[] = [];
   const wmaPoints: ForecastPoint[] = [];
 
@@ -134,18 +64,6 @@ function forecastFromSeries(points: SeriesPoint[]): ForecastResult[] {
   ];
 }
 
-function snapshotDays(history: History): number[] {
-  const times = history.snapshots.map((snapshot) => toEpochMs(snapshot.timestamp));
-
-  if (times.some((timeMs) => timeMs === null)) {
-    return history.snapshots.map((_, index) => index * DAYS_PER_WEEK);
-  }
-
-  const first = times[0] as number;
-
-  return times.map((timeMs) => ((timeMs as number) - first) / MS_PER_DAY);
-}
-
 export function computeForecast({
   history,
   topRepoNames,
@@ -154,7 +72,7 @@ export function computeForecast({
     return null;
   }
 
-  const days = snapshotDays(history);
+  const days = calendarDays(history);
   const toSeries = (values: number[]): SeriesPoint[] =>
     values.map((value, index) => ({ day: days[index], value }));
 

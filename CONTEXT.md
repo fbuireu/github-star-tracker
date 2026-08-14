@@ -84,11 +84,19 @@ _Avoid_: diff, change, difference, growth, movement, variance
 The aggregate figures for one Run — current total, previous total, net change, Stars gained, Stars lost, and whether anything moved at all. It describes the Run, not any single Repository.
 _Avoid_: report, overview, totals, digest, stats
 
+**Run Measurement**:
+Everything one Run works out from a single observation and the Stored History: which Snapshot was the Baseline, what each Repository's Delta was, the Summary, the Stored History with this Run appended, and whether the Notification Threshold was cleared. It is arrived at as one act, because the parts are only correct in relation to each other.
+_Avoid_: calculation, analysis, computation, result set
+
 ## Growth and Projection
 
 **Velocity**:
 The rate at which the Tracked Set is accumulating Stars, expressed per day and as a percentage of the previous total.
 _Avoid_: speed, rate, momentum, pace, growth rate
+
+**Rate Interval**:
+The stretch of time between two Snapshots that a rate is measured over. A pair closer together than the minimum is skipped rather than measured, so a re-run minutes after a scheduled Run cannot inflate Velocity or a Forecast.
+_Avoid_: sample window, gap, spacing, delta time
 
 **Milestone**:
 A round Star Count treated as a landmark worth reaching or marking. Milestones serve two distinct purposes: projecting how far away the next one is, and drawing reference lines on a chart.

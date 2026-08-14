@@ -6,23 +6,51 @@ side-effect free — it returns a string or `null`, never writes a file, never c
 `@actions/core`. Deciding *what* to render is the caller's job; deciding *how many stars a repo gained* is
 the domain's.
 
-## The chart trio
+## The chart quartet
 
-There are three chart modules rather than one library call for two reasons: the SVG is emitted by hand so it
+There are four chart modules rather than one library call for two reasons: the SVG is emitted by hand so it
 stays self-contained and theme-aware ([ADR 0006](../../docs/adr/0006-hand-rendered-svg-charts.md)), and the
 email path goes through QuickChart because mail clients will not display inline SVG
 ([ADR 0010](../../docs/adr/0010-quickchart-renders-the-email-charts.md)).
 
+- **`chart-spec.ts` decides what a Chart is.** `starHistorySpec`, `perRepoSpec`, `comparisonSpec` and
+  `forecastSpec` each return a `ChartSpec` — labels, an ordered list of series with a resolved colour, the
+  title, whether to show a legend, and the Milestone thresholds — or `null` when there is too little
+  history. Both renderers read it and neither re-derives it
+  ([ADR 0014](../../docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
 - **`charts.ts` orchestrates.** `buildChartFiles` reads `Config`, builds the shared style object once, and
   returns `{ filename, svg }[]`. It renders nothing itself and returns `[]` when charts are off or the
   history has fewer than 2 snapshots.
 - **`svg-chart.ts` draws.** One private `renderSvg` does all the drawing; the four exported generators only
-  shape datasets and labels, then delegate.
+  build a spec and map it onto `SvgDataset`s.
 - **`chart.ts` is the email path**, producing `quickchart.io` URLs consumed by `html.ts`. It is a parallel,
-  lower-fidelity rendering — never an input to the SVG files.
+  lower-fidelity rendering of the *same* spec — never an input to the SVG files.
 
-The other modules are one per format: `markdown.ts`, `html.ts`, `csv.ts`, `badge.ts`, with `shared.ts` for
-cross-renderer helpers and `constants.ts` / `types.ts` for palettes, geometry and the `ColorPalette` contract.
+`SeriesDash` and `SeriesWeight` are emphasis, not pixels: each adapter maps them through its own table
+(`DASH_PATTERNS` / `POINT_SIZES` in `chart.ts`, a `dashed` boolean in `svg-chart.ts`). Keep dash arrays and
+point radii out of the spec.
+
+The report modules are one per format: `markdown.ts`, `html.ts`, `csv.ts`, `badge.ts`, over a shared
+`report-model.ts`; with `escaping.ts` for every dialect's escaper, `shared.ts` for cross-renderer helpers and
+`constants.ts` / `types.ts` for palettes, geometry and the `ColorPalette` contract.
+
+## The report model
+
+`buildReportModel` (`src/presentation/report-model.ts`) decides **which sections a Report has and what is in
+them**, once. `markdown.ts` and `html.ts` are dialects over it and own only markup.
+
+- The model resolves `hasChartHistory`, `chartHistory` (the history *only* when it is plottable, so the
+  dialects narrow on `!== null`), `topRepos`, `isFirstRun`, the Velocity figures and the three-way Stargazer
+  outcome. A dialect that recomputes any of these has reintroduced the drift this module exists to stop.
+- `StargazerOutcome` is `NEW` or `NONE`; the section is omitted entirely when `stargazers` is `null`, which
+  is what "`track-stargazers` is off" looks like.
+- `VelocitySection.projection` is already `null`-or-present, so neither dialect repeats the
+  `nextMilestone !== null && daysToNextMilestone !== null` pair.
+- `buildForecastTable` returns headers and rows; each dialect wraps them in its own table markup. Headers are
+  always `FORECAST_WEEKS` long regardless of how many points a forecast carries.
+- **The two dialects take different params.** `generateMarkdownReport` takes `ReportParams`;
+  `generateHtmlReport` takes `GenerateHtmlReportParams`, which adds `EmailChartStyle`. Markdown emits
+  relative `./charts/*.svg` links and has no use for chart styling, and the types now say so.
 
 ## Invariants & rules
 
@@ -68,16 +96,26 @@ cross-renderer helpers and `constants.ts` / `types.ts` for palettes, geometry an
 
 ## Escaping & injection safety
 
-- `svg-chart.ts` has its own `escapeXml` (`& < > "`, not `'`, because every attribute uses double quotes),
-  applied to **exactly three** things: the chart title, x-axis labels and legend labels. If you interpolate
-  user text into a new attribute, wrap it.
-- `html.ts` escapes every GitHub-sourced string it interpolates — repo names, logins, avatar and profile URLs
-  — through `escapeHtml`. `markdown.ts` interpolates raw, which is safe only because its output is markdown
-  on a data branch; treat any new field from a less-constrained source as needing an escaper.
-- `csv.ts` escapes CSV delimiters **and** neutralises spreadsheet formula injection: a field starting with
-  `=`, `+`, `-` or `@` is prefixed with `'` and quoted.
+**Every escaper in this layer lives in `src/presentation/escaping.ts`,** behind one function. A renderer
+binds the dialect it needs once at module load — `const escapeHtml = escapeFor(EscapeDialect.MARKUP);` — and
+uses that everywhere. Do not write a second escape map.
+
+| Dialect | Escapes | Used by |
+| --- | --- | --- |
+| `MARKUP` | `& < > " '` | `html.ts` throughout; `markdown.ts` for values landing inside its raw HTML |
+| `XML` | `& < > "` — not `'`, because every attribute uses double quotes | `svg-chart.ts`, `badge.ts` |
+| `MARKDOWN` | `& < >` plus `[ ] ( ) \`` | `markdown.ts` for link text, link targets and headings |
+| `CSV` | delimiter, quote, newline, **and** the `= + - @` formula prefix | `csv.ts` |
+
+- `svg-chart.ts` wraps **exactly three** things: the chart title, x-axis labels and legend labels. If you
+  interpolate user text into a new attribute, wrap it.
+- `badge.ts` measures the **raw** label and value to compute its widths and escapes only at interpolation.
+  Escaping first would let a single `&` widen the badge by four characters.
+- `markdown.ts` escapes every GitHub-sourced string: repo names, logins, avatar and profile URLs. It emits
+  raw HTML (`<details>`, `<img>`) around them, so a login is markup-escaped inside a tag and
+  markdown-escaped inside `[...](...)`. It used to interpolate raw — that is the divergence this table
+  exists to prevent recurring.
 - `chart.ts` needs no escaper — the whole config goes through `JSON.stringify` + `encodeURIComponent`.
-  `badge.ts` performs none; its only dynamic values are an i18n label and a formatted count.
 
 ## Gotchas
 
@@ -94,13 +132,14 @@ cross-renderer helpers and `constants.ts` / `types.ts` for palettes, geometry an
   produce an invalid filename.
 - `repoStarSeries` returns `0`, not `null`, for a repo missing from a snapshot, so a per-repo chart for an
   unknown repo renders a flat zero line rather than returning `null`. The `chart.test.ts` case named
-  "returns null for non-existent repository" actually asserts `"data":[0,0,0]`.
-- `charts.ts` is the only logic-bearing file here without a colocated test; it is covered indirectly by
-  `tracker.test.ts`, which mocks `@presentation/svg-chart` but not `@presentation/charts`.
+  "renders a flat zero series for a repository absent from every snapshot" asserts exactly that.
+- `charts.ts` now has a colocated `charts.test.ts` covering the `Config`-to-style projection, the per-repo
+  reconstruction fallback and which files a run produces. `tracker.test.ts` still runs it unmocked, so a
+  break there shows up twice.
+- **`escapeXml`'s pattern is built from the dialect's map** in `escaping.ts` and used with `replaceAll`,
+  which resets `lastIndex`. Safe as written; do not switch it to `.exec`/`.test`.
 - `chart.ts` maps `rounded-step` to Chart.js `monotone` and both `catmull-rom` and `cubic-bezier` to a plain
   tension spline — email charts are deliberately an approximation.
-- `escapeXml`'s pattern is a module-level `/g` literal used with `replaceAll`, which resets `lastIndex`. Safe
-  as written; do not switch it to `.exec`/`.test`.
 
 Every `chart-*` option is documented for users in
 [`docs/wiki/Configuration.md`](../../docs/wiki/Configuration.md) and shown as a rendered before/after in

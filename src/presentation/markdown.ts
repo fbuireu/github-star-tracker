@@ -1,38 +1,28 @@
 import type { ForecastResult } from '@domain/forecast';
 import { deltaIndicator, formatSignedPercent, trendIcon } from '@domain/formatting';
-import { computeVelocity } from '@domain/velocity';
 import { getTranslations, interpolate } from '@i18n';
-import { CHART_FILES, MIN_SNAPSHOTS_FOR_CHART, SECTION_ICON } from './constants';
-import type { GenerateReportParams } from './shared';
-import {
-  buildForecastWeekHeaders,
-  forecastMethodLabel,
-  perRepoChartFile,
-  prepareReportData,
-} from './shared';
+import { CHART_FILES, SECTION_ICON } from './constants';
+import { EscapeDialect, escapeFor } from './escaping';
+import { buildForecastTable, buildReportModel, StargazerOutcome } from './report-model';
+import type { ReportParams } from './shared';
+import { perRepoChartFile } from './shared';
 
-export function generateMarkdownReport({
-  results,
-  previousTimestamp,
-  locale,
-  history = null,
-  velocityHistory = null,
-  includeCharts = true,
-  stargazerDiff = null,
-  forecastData = null,
-  topRepos: topReposCount = 10,
-  velocityMetrics = false,
-}: GenerateReportParams): string {
-  const { summary } = results;
-  const t = getTranslations(locale);
-  const { sorted, newRepos, removedRepos, now, prev } = prepareReportData({
-    results,
-    previousTimestamp,
-    locale,
-  });
+const escapeMarkdown = escapeFor(EscapeDialect.MARKDOWN);
+const escapeMarkup = escapeFor(EscapeDialect.MARKUP);
 
-  const hasChartHistory =
-    includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
+export function generateMarkdownReport(params: ReportParams): string {
+  const t = getTranslations(params.locale);
+  const model = buildReportModel(params);
+  const {
+    summary,
+    sorted,
+    newRepos,
+    removedRepos,
+    now,
+    prev,
+    hasChartHistory,
+    forecast: forecastData,
+  } = model;
 
   const header = [
     `# ${t.report.title}`,
@@ -41,19 +31,18 @@ export function generateMarkdownReport({
     '',
   ];
 
-  const comparison =
-    prev === t.report.firstRun
-      ? []
-      : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ''];
+  const comparison = model.isFirstRun
+    ? []
+    : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ''];
 
-  const topRepos = sorted.slice(0, topReposCount).map((repo) => repo.fullName);
+  const topRepos = model.topRepos;
   const hasComparisonChart = hasChartHistory && topRepos.length > 0;
 
   const individualRepoCharts = hasChartHistory
     ? topRepos.flatMap((repoName) => [
-        `#### ${repoName}`,
+        `#### ${escapeMarkdown(repoName)}`,
         '',
-        `![${repoName}](./charts/${perRepoChartFile(repoName)})`,
+        `![${escapeMarkdown(repoName)}](./charts/${perRepoChartFile(repoName)})`,
         '',
       ])
     : [];
@@ -94,7 +83,7 @@ export function generateMarkdownReport({
           '|:-----------|------:|-------:|:-----:|',
           ...sorted.map((repo) => {
             const badge = repo.isNew ? ` \`${t.report.badges.new}\`` : '';
-            return `| [${repo.fullName}](https://github.com/${repo.fullName})${badge} | ${repo.current} | ${deltaIndicator(repo.delta)} | ${trendIcon(repo.delta)} |`;
+            return `| [${escapeMarkdown(repo.fullName)}](https://github.com/${escapeMarkdown(repo.fullName)})${badge} | ${repo.current} | ${deltaIndicator(repo.delta)} | ${trendIcon(repo.delta)} |`;
           }),
           '',
         ]
@@ -107,7 +96,7 @@ export function generateMarkdownReport({
           '',
           ...newRepos.map(
             (repo) =>
-              `- [${repo.fullName}](https://github.com/${repo.fullName}): ${interpolate({ template: t.report.starsCount, params: { count: repo.current } })}`,
+              `- [${escapeMarkdown(repo.fullName)}](https://github.com/${escapeMarkdown(repo.fullName)}): ${interpolate({ template: t.report.starsCount, params: { count: repo.current } })}`,
           ),
           '',
         ]
@@ -121,7 +110,7 @@ export function generateMarkdownReport({
           ...removedRepos.map((repo) =>
             interpolate({
               template: t.report.removedRepoText,
-              params: { name: repo.fullName, count: repo.previous ?? 0 },
+              params: { name: escapeMarkdown(repo.fullName), count: repo.previous ?? 0 },
             }),
           ),
           '',
@@ -140,42 +129,43 @@ export function generateMarkdownReport({
           '',
         ];
 
+  const stargazers = model.stargazers;
   const sampledNote =
-    stargazerDiff?.sampledRepos && stargazerDiff.sampledRepos.length > 0
+    stargazers && stargazers.sampledRepos.length > 0
       ? [
           interpolate({
             template: t.stargazers.sampledNote,
-            params: { repos: stargazerDiff.sampledRepos.join(', ') },
+            params: { repos: stargazers.sampledRepos.join(', ') },
           }),
           '',
         ]
       : [];
 
   const stargazerSection =
-    stargazerDiff && stargazerDiff.totalNew > 0
+    stargazers && stargazers.outcome === StargazerOutcome.NEW
       ? [
           `## ${SECTION_ICON.stargazers} ${t.stargazers.sectionTitle}`,
           '',
           interpolate({
             template: t.stargazers.newStargazers,
-            params: { count: stargazerDiff.totalNew },
+            params: { count: stargazers.totalNew },
           }),
           '',
           ...sampledNote,
-          ...stargazerDiff.entries.flatMap((entry) => [
+          ...stargazers.entries.flatMap((entry) => [
             '<details>',
-            `<summary>${entry.repoFullName} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</summary>`,
+            `<summary>${escapeMarkup(entry.repoFullName)} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</summary>`,
             '',
             ...entry.newStargazers.map(
               (stargazer) =>
-                `- <img src="${stargazer.avatarUrl}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${stargazer.login}](${stargazer.profileUrl}): ${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split('T')[0] } })}`,
+                `- <img src="${escapeMarkup(stargazer.avatarUrl)}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${escapeMarkdown(stargazer.login)}](${escapeMarkdown(stargazer.profileUrl)}): ${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split('T')[0] } })}`,
             ),
             '',
             '</details>',
             '',
           ]),
         ]
-      : stargazerDiff
+      : stargazers
         ? [
             `## ${SECTION_ICON.stargazers} ${t.stargazers.sectionTitle}`,
             '',
@@ -185,19 +175,16 @@ export function generateMarkdownReport({
           ]
         : [];
 
-  const velocity =
-    velocityMetrics && velocityHistory !== null
-      ? computeVelocity({ history: velocityHistory })
-      : null;
+  const velocity = model.velocity;
   const velocityLines = velocity
     ? [
         `- **${t.velocity.starsPerDay}:** ${velocity.starsPerDay}`,
         ...(velocity.growthPercent !== null
           ? [`- **${t.velocity.growth}:** ${formatSignedPercent(velocity.growthPercent)}`]
           : []),
-        ...(velocity.nextMilestone !== null && velocity.daysToNextMilestone !== null
+        ...(velocity.projection
           ? [
-              `- ${interpolate({ template: t.velocity.projection, params: { days: velocity.daysToNextMilestone, milestone: velocity.nextMilestone } })}`,
+              `- ${interpolate({ template: t.velocity.projection, params: { days: velocity.projection.days, milestone: velocity.projection.milestone } })}`,
             ]
           : []),
       ]
@@ -210,7 +197,7 @@ export function generateMarkdownReport({
         ...(velocityLines.length > 0
           ? [`### ${SECTION_ICON.velocity} ${t.velocity.sectionTitle}`, '', ...velocityLines, '']
           : []),
-        buildForecastTable({
+        renderForecastTable({
           title: t.forecast.aggregate,
           forecasts: forecastData.aggregate.forecasts,
           t,
@@ -224,9 +211,9 @@ export function generateMarkdownReport({
               '',
               ...forecastData.repos.flatMap((repo) => [
                 '<details>',
-                `<summary>${repo.repoFullName}</summary>`,
+                `<summary>${escapeMarkup(repo.repoFullName)}</summary>`,
                 '',
-                buildForecastTable({
+                renderForecastTable({
                   title: repo.repoFullName,
                   forecasts: repo.forecasts,
                   t,
@@ -241,7 +228,7 @@ export function generateMarkdownReport({
     : [];
 
   const velocitySection =
-    !forecastData && velocityLines.length > 0
+    !model.velocityIsNested && velocityLines.length > 0
       ? [`## ${SECTION_ICON.velocity} ${t.velocity.sectionTitle}`, '', ...velocityLines, '']
       : [];
 
@@ -270,25 +257,20 @@ export function generateMarkdownReport({
   ].join('\n');
 }
 
-interface BuildForecastTableParams {
+interface RenderForecastTableParams {
   title: string;
   forecasts: ForecastResult[];
   t: ReturnType<typeof getTranslations>;
 }
 
-function buildForecastTable({ title, forecasts, t }: BuildForecastTableParams): string {
-  const weekHeaders = buildForecastWeekHeaders(t);
+function renderForecastTable({ title, forecasts, t }: RenderForecastTableParams): string {
+  const table = buildForecastTable({ title, forecasts, t });
 
-  const lines = [
-    `**${title}**`,
+  return [
+    `**${table.title}**`,
     '',
-    `| ${t.forecast.method} | ${weekHeaders.join(' | ')} |`,
-    `|:---|${weekHeaders.map(() => '---:').join('|')}|`,
-    ...forecasts.map(
-      (forecast) =>
-        `| ${forecastMethodLabel({ method: forecast.method, t })} | ${forecast.points.map((point) => String(point.predicted)).join(' | ')} |`,
-    ),
-  ];
-
-  return lines.join('\n');
+    `| ${t.forecast.method} | ${table.weekHeaders.join(' | ')} |`,
+    `|:---|${table.weekHeaders.map(() => '---:').join('|')}|`,
+    ...table.rows.map((row) => `| ${row.method} | ${row.predicted.map(String).join(' | ')} |`),
+  ].join('\n');
 }

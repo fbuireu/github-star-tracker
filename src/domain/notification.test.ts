@@ -1,42 +1,29 @@
 import { describe, expect, it } from 'vitest';
-import { getAdaptiveThreshold, shouldNotify } from './notification';
+import { shouldNotify } from './notification';
 import { NotificationMode } from './types';
 
-describe('getAdaptiveThreshold', () => {
-  it('returns 1 for 0 stars', () => {
-    expect(getAdaptiveThreshold(0)).toBe(1);
+describe("shouldNotify with an 'auto' threshold", () => {
+  function firesAt({ totalStars, gained }: { totalStars: number; gained: number }): boolean {
+    return shouldNotify({
+      totalStars,
+      starsAtLastNotification: totalStars - gained,
+      threshold: 'auto',
+    });
+  }
+
+  it.each([
+    { band: 'up to 50 stars', totalStars: 50, threshold: 1 },
+    { band: '51 to 200 stars', totalStars: 200, threshold: 5 },
+    { band: '201 to 500 stars', totalStars: 500, threshold: 10 },
+    { band: 'above 500 stars', totalStars: 1000, threshold: 20 },
+  ])('scales the threshold to $threshold for a set of $band', ({ totalStars, threshold }) => {
+    expect(firesAt({ totalStars, gained: threshold })).toBe(true);
+    expect(firesAt({ totalStars, gained: threshold - 1 })).toBe(false);
   });
 
-  it('returns 1 for 25 stars', () => {
-    expect(getAdaptiveThreshold(25)).toBe(1);
-  });
-
-  it('returns 1 for 50 stars (upper boundary)', () => {
-    expect(getAdaptiveThreshold(50)).toBe(1);
-  });
-
-  it('returns 5 for 51 stars', () => {
-    expect(getAdaptiveThreshold(51)).toBe(5);
-  });
-
-  it('returns 5 for 200 stars (upper boundary)', () => {
-    expect(getAdaptiveThreshold(200)).toBe(5);
-  });
-
-  it('returns 10 for 201 stars', () => {
-    expect(getAdaptiveThreshold(201)).toBe(10);
-  });
-
-  it('returns 10 for 500 stars (upper boundary)', () => {
-    expect(getAdaptiveThreshold(500)).toBe(10);
-  });
-
-  it('returns 20 for 501 stars', () => {
-    expect(getAdaptiveThreshold(501)).toBe(20);
-  });
-
-  it('returns 20 for 1000 stars', () => {
-    expect(getAdaptiveThreshold(1000)).toBe(20);
+  it('reads the band from the current total, so crossing a boundary raises the bar', () => {
+    expect(firesAt({ totalStars: 50, gained: 1 })).toBe(true);
+    expect(firesAt({ totalStars: 51, gained: 1 })).toBe(false);
   });
 });
 

@@ -5,9 +5,9 @@ import { makeComparisonResults, makeHistory, makeMultiRepoHistory } from '@share
 import { describe, expect, it } from 'vitest';
 import { COLORS } from './constants';
 import { generateHtmlReport } from './html';
-import type { GenerateReportParams } from './shared';
+import type { GenerateHtmlReportParams } from './shared';
 
-function renderHtml(overrides: Partial<GenerateReportParams> = {}): string {
+function renderHtml(overrides: Partial<GenerateHtmlReportParams> = {}): string {
   return generateHtmlReport({
     results: makeComparisonResults(),
     previousTimestamp: '2026-01-01T00:00:00Z',
