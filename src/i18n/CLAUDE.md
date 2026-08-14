@@ -25,10 +25,13 @@ keys) and the bundles sit beside them as `.json`, typed by the `Record<Locale, T
 - **`LOCALES` order is `en, es, ca, it`**, derived from the locale map and pinned by a test. It is the order
   shown in the loader's "Must be …" warning, so reordering the map changes user-visible output.
 - **Every locale-map value must match `/^[a-z]{2}-[A-Z]{2}$/`** (pinned by a test), because it goes straight
-  to `Date#toLocaleDateString` in `@domain/formatting`.
+  to both `Date#toLocaleDateString` and `Intl.NumberFormat` in `@domain/formatting`.
 - **`report.title` must be non-empty in every bundle** — a test iterates `LOCALES` and asserts truthiness.
-- Locale affects text and date formatting only. `formatCount` uses a fixed `'en'` compact number format, so
-  `1.2K` is identical in every locale.
+- **Locale affects text, dates *and* compact numbers.** `formatCount` builds its `Intl.NumberFormat` from
+  `LOCALE_MAP[locale]`, so 1,200 renders `1.2K` in `en`, `1,2 mil` in `es`, `1,2 k` in `ca` and `1,2K` in
+  `it`. `formatting.test.ts` pins this under the name *follows the report locale instead of always using
+  English*. It is load-bearing beyond wording: `@presentation/badge` derives its widths from the **rendered**
+  length, so `★ 1,2 mil` is three characters wider than `★ 1.2K`.
 
 ## Adding a locale
 

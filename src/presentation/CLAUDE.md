@@ -76,11 +76,17 @@ its spec — assert a section rule there, not through one dialect's markup.
   `generateHtmlReport` takes `GenerateHtmlReportParams`, which adds `EmailChartStyle`. Markdown emits
   relative `./charts/*.svg` links and has no use for chart styling, and the types now say so.
 - **`EmailChartStyle`'s fields split two ways at the call site**, and `html.ts` is the only place that knows
-  which is which: `milestones`, `customMilestones` and `trendLine` become part of the star-history
-  `ChartRequest`; `smoothing`, `curve`, `showPoints`, `beginAtZero` and `range` are the adapter style and
-  reach `chartImageUrl` **undefaulted**, because `chartImageUrl` owns those defaults. Only `theme` is
-  defaulted in `html.ts`, because the document itself needs a resolved palette and a `color-scheme`. Do not
-  reintroduce the other defaults here — the two sets drifting apart is the failure mode.
+  which is which: `milestones`, `customMilestones`, `trendLine` and `lineColor` become part of the
+  `ChartRequest`; `smoothing`, `curve`, `showPoints`, `beginAtZero`, `range` and `lineWidth` are the adapter
+  style and reach `chartImageUrl` **undefaulted**, because `chartImageUrl` owns those defaults. Only `theme`
+  is defaulted in `html.ts`, because the document itself needs a resolved palette and a `color-scheme`. Do
+  not reintroduce the other defaults here — the two sets drifting apart is the failure mode.
+- **`lineColor` and `lineWidth` reach the email charts too**, so the Notification and the Data Branch draw
+  the same stroke. `lineColor` goes on the star-history, per-repo and forecast requests only — the comparison
+  chart has a per-series palette and takes none, on both paths. `lineWidth` becomes Chart.js `borderWidth`,
+  emitted **only when supplied**: `chart.ts` must not default it to `SVG_CHART.lineWidth`, which is the SVG
+  renderer's own fallback and would put the same literal in a third place. They used to be SVG-only while
+  four documents said otherwise, which meant one run produced a purple README chart and a gold email chart.
 
 ## Invariants & rules
 

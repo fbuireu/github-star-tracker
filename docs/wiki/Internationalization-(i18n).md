@@ -50,9 +50,13 @@ locale: es
 | Locale | Example Subject |
 |---|---|
 | `en` | `GitHub Star Tracker Report: 523 (+15)` |
-| `es` | `Informe de estrellas de GitHub: 523 (+15)` |
-| `ca` | `Informe d'estrelles de GitHub: 523 (+15)` |
-| `it` | `Rapporto stelle GitHub: 523 (+15)` |
+| `es` | `Informe de Seguimiento de Estrellas en GitHub: 523 (+15)` |
+| `ca` | `Informe de Seguiment d'Estrelles a GitHub: 523 (+15)` |
+| `it` | `Report Tracciamento Stelle GitHub: 523 (+15)` |
+
+The shape is `email.subjectLine` (`{subject}: {totalStars} ({delta})`, identical in all four bundles)
+interpolated over `email.subject`. This is the only place the subject is written out; do not restate it
+elsewhere.
 
 ---
 
@@ -77,9 +81,10 @@ Each JSON file implements the `Translations` interface with these sections:
 | Section | Keys | Description |
 |---|---|---|
 | `badge` | `totalStars` | Badge label text |
-| `report` | `title`, `total`, `change`, `comparedTo`, `firstRun`, `repositories`, `stars`, `starsCount`, `trend`, `newRepositories`, `removedRepositories`, `removedRepoText`, `summary`, `starsGained`, `starsLost`, `netChange`, `starTrend`, `starHistory`, `topRepositories`, `byRepository`, `individualRepoCharts`, `badges.new` | Report sections and labels |
+| `report` | `title`, `total`, `change`, `comparedTo`, `firstRun`, `repositories`, `stars`, `starsCount`, `trend`, `newRepositories`, `removedRepositories`, `removedRepoText`, `summary`, `starsGained`, `starsLost`, `netChange`, `starTrend`, `starHistory`, `topRepositories`, `byRepository`, `individualRepoCharts`, `trendLine`, `badges.new` | Report sections and labels |
 | `email` | `subject`, `subjectLine`, `defaultFrom` | Email content |
 | `trends` | `up`, `down`, `stable` | Trend direction labels |
+| `velocity` | `sectionTitle`, `starsPerDay`, `growth`, `projection` | Growth velocity section |
 | `footer` | `generated`, `madeBy` | Report footer |
 | `stargazers` | `sectionTitle`, `newStargazers`, `starredOn`, `noNewStargazers`, `stargazerCount`, `sampledNote` | Stargazer section |
 | `forecast` | `sectionTitle`, `predictedStars`, `week`, `linearRegression`, `weightedMovingAverage`, `aggregate`, `byRepository`, `insufficientData`, `method`, `predicted` | Forecast tables |

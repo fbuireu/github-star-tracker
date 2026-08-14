@@ -39,6 +39,12 @@ describe('smtp-port default', () => {
   });
 });
 
+describe('send-on-no-changes default', () => {
+  it('matches DEFAULTS.sendOnNoChanges in @config/defaults', () => {
+    expect(manifest.inputs['send-on-no-changes'].default).toBe(String(DEFAULTS.sendOnNoChanges));
+  });
+});
+
 describe('action.yml inputs', () => {
   it.each(OVERRIDABLE)('declares an input for the %s config key', (key) => {
     expect(manifest.inputs).toHaveProperty(toKebabCase(key));

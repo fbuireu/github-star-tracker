@@ -34,15 +34,27 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
     showPoints,
     beginAtZero,
     range,
+    lineWidth,
     milestones,
     customMilestones,
     trendLine,
+    lineColor,
   } = params;
 
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
   const chartUrl = (request: ChartRequest): string | null =>
-    chartImageUrl({ request, locale, smoothing, curve, showPoints, beginAtZero, theme, range });
+    chartImageUrl({
+      request,
+      locale,
+      smoothing,
+      curve,
+      showPoints,
+      beginAtZero,
+      theme,
+      range,
+      lineWidth,
+    });
   const model = buildReportModel(params);
   const {
     summary,
@@ -95,6 +107,7 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
               kind: ChartKind.PER_REPO,
               history,
               repoFullName: repoName,
+              lineColor,
             });
             if (!repoChartUrl) return '';
             return `
@@ -112,7 +125,7 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
       ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.starTrend} ${t.report.starTrend}</h2>
-        <img src="${chartUrl({ kind: ChartKind.STAR_HISTORY, history, milestones, customMilestones, trendLine })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${chartUrl({ kind: ChartKind.STAR_HISTORY, history, milestones, customMilestones, trendLine, lineColor })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
 
         ${
           comparisonChartUrl
@@ -206,7 +219,7 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
         ${
           history !== null
             ? `<div style="margin-top:16px;text-align:center;">
-          <img src="${chartUrl({ kind: ChartKind.FORECAST, history, forecastData })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${chartUrl({ kind: ChartKind.FORECAST, history, forecastData, lineColor })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`
             : ''
         }

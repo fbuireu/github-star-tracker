@@ -75,6 +75,7 @@ interface Dataset {
   pointRadius: number;
   pointHoverRadius: number;
   borderDash?: number[];
+  borderWidth?: number;
 }
 
 interface MilestoneAnnotation {
@@ -252,9 +253,10 @@ interface ToDatasetParams {
   series: ChartSeries;
   curveProps: CurveProps;
   showPoints: boolean;
+  lineWidth?: number;
 }
 
-function toDataset({ series, curveProps, showPoints }: ToDatasetParams): Dataset {
+function toDataset({ series, curveProps, showPoints, lineWidth }: ToDatasetParams): Dataset {
   const dash = DASH_PATTERNS[series.dash];
   const point = POINT_SIZES[series.weight];
 
@@ -274,6 +276,7 @@ function toDataset({ series, curveProps, showPoints }: ToDatasetParams): Dataset
         : pointRadiusFor({ showPoints, radius: point.radius }),
     pointHoverRadius: point.hoverRadius,
     ...(dash ? { borderDash: dash } : {}),
+    ...(lineWidth ? { borderWidth: lineWidth } : {}),
   };
 }
 
@@ -286,6 +289,7 @@ interface ChartImageUrlParams {
   beginAtZero?: boolean;
   theme?: ChartTheme;
   range?: ChartRange;
+  lineWidth?: number;
 }
 
 export function chartImageUrl({
@@ -297,6 +301,7 @@ export function chartImageUrl({
   beginAtZero = false,
   theme = ChartTheme.AUTO,
   range = ChartRange.ALL,
+  lineWidth,
 }: ChartImageUrlParams): string | null {
   const palette = resolvePalette(theme);
   const spec = buildChartSpec({
@@ -310,7 +315,9 @@ export function chartImageUrl({
   if (spec === null) return null;
 
   const curveProps = curvePropsFor({ smoothing, curve });
-  const datasets = spec.series.map((series) => toDataset({ series, curveProps, showPoints }));
+  const datasets = spec.series.map((series) =>
+    toDataset({ series, curveProps, showPoints, lineWidth }),
+  );
   const annotation = buildMilestoneAnnotations({ milestones: spec.milestones, palette });
 
   return buildChartUrl({

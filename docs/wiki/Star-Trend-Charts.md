@@ -83,7 +83,7 @@ GitHub Star Tracker uses two complementary chart systems:
 
 ### Curve fidelity
 
-The SVG charts implement every [`chart-curve`](Configuration#chart-curve) option exactly. QuickChart can only draw the curves Chart.js supports natively, so the email charts approximate: `monotone` is exact, `rounded-step` falls back to `monotone`, and `catmull-rom` and `cubic-bezier` both render as a tensioned spline. Everything else (colors, points, milestones, range) matches between the two systems.
+The SVG charts implement every [`chart-curve`](Configuration#chart-curve) option exactly. QuickChart can only draw the curves Chart.js supports natively, so the email charts approximate: `monotone` is exact, `rounded-step` falls back to `monotone`, and `catmull-rom` and `cubic-bezier` both render as a tensioned spline. Colors, line width, points, milestones and range match between the two systems. What the email charts genuinely drop is `chart-max-points` (always 30), `chart-animation` (a PNG cannot animate) and `chart-y-axis-side`.
 
 ---
 
@@ -234,10 +234,10 @@ The chart appearance is configurable via these inputs:
 
 | Input | Default | Description |
 |---|---|---|
-| `chart-line-color` | `#dfb317` | Hex color for the primary chart line/fill/points (star-history, per-repo and forecast historical series; not the comparison palette or forecast trend lines). A bare `#` starts a YAML comment, so quote it (`"#6b63ff"`) or drop the `#` (`6b63ff`). |
-| `chart-line-width` | `2.5` | Stroke width in px of data lines across all charts. |
+| `chart-line-color` | `#dfb317` | Hex color for the primary chart line/fill/points (star-history, per-repo and forecast historical series; not the comparison palette or forecast trend lines). A bare `#` starts a YAML comment, so quote it (`"#6b63ff"`) or drop the `#` (`6b63ff`). Applies to email charts too. |
+| `chart-line-width` | `2.5` | Stroke width in px of data lines across all charts. Applies to email charts too. |
 | `chart-max-points` | `30` | Curve granularity: points sampled across the full span (capped at `365`); `0` reconstructs at weekly resolution. Resolution, not a time window (see `chart-range`). Email is always 30. |
-| `chart-y-axis-side` | `left` | Y-axis label side: `left` or `right`. |
+| `chart-y-axis-side` | `left` | Y-axis label side: `left` or `right`. SVG-only. |
 | `chart-smoothing` | `true` | `true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. Applies to email charts too. |
 | `chart-curve` | `monotone` | Curve used when smoothing is on: `monotone` (no overshoot, best for stars), `catmull-rom` (natural spline, can overshoot), `cubic-bezier` (eased S-curves), `rounded-step` (straight segments, rounded corners). Email approximates the non-monotone curves (see [Two Chart Systems](#two-chart-systems)). |
 | `chart-show-points` | `true` | `true` marks each data point with a dot; `false` hides them for a cleaner dense line. Applies to email charts too. |

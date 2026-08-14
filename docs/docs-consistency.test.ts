@@ -37,6 +37,10 @@ const ADR_DATE_PATTERN = /\nDate: \d{4}-\d{2}-\d{2}\n/;
 const ADR_REFERENCE_PATTERNS = [/ADR (\d{4})/g, /docs\/adr\/(\d{4})-/g];
 const adrHeadingPattern = (number: number): RegExp => new RegExp(`^# ${number}\\. \\S`);
 
+const I18N_PAGE = 'docs/wiki/Internationalization-(i18n).md';
+const I18N_SECTION_ROW_PATTERN = /^\| `(\w+)` \| ((?:`[\w.]+`(?:, )?)+) \|/gm;
+const I18N_KEY_PATTERN = /`([\w.]+)`/g;
+
 const LINE_CITATION_ALLOWLIST = new Set([GUIDE, ADR_TEMPLATE]);
 
 function walk(dir: string, keep: (filename: string) => boolean): string[] {
@@ -555,5 +559,50 @@ describe('citations name symbols, not line numbers', () => {
       );
 
     expect(cited).toEqual([]);
+  });
+});
+
+describe('the i18n key table matches the bundles', () => {
+  it('lists every section and every key of en.json, and invents none', () => {
+    const bundle = JSON.parse(read('src/i18n/en.json')) as Record<
+      string,
+      Record<string, unknown>
+    >;
+    const documented = new Map(
+      [...read(I18N_PAGE).matchAll(I18N_SECTION_ROW_PATTERN)].map(([, section, keys]) => [
+        section,
+        [...keys.matchAll(I18N_KEY_PATTERN)].map(([, key]) => key).sort(),
+      ]),
+    );
+    const actualKeys = (section: Record<string, unknown>): string[] =>
+      Object.entries(section)
+        .flatMap(([key, value]) =>
+          value !== null && typeof value === 'object'
+            ? Object.keys(value as Record<string, unknown>).map((leaf) => `${key}.${leaf}`)
+            : [key],
+        )
+        .sort();
+
+    const mismatches = [
+      ...Object.keys(bundle)
+        .filter((section) => !documented.has(section))
+        .map((section) => `undocumented section: ${section}`),
+      ...[...documented.keys()]
+        .filter((section) => !(section in bundle))
+        .map((section) => `section is not in en.json: ${section}`),
+      ...Object.entries(bundle)
+        .filter(([section]) => documented.has(section))
+        .flatMap(([section, keys]) => {
+          const expected = actualKeys(keys);
+          const listed = documented.get(section) ?? [];
+
+          return expected.join() === listed.join()
+            ? []
+            : [`${section}: documented [${listed.join(', ')}] but en.json has [${expected.join(', ')}]`];
+        }),
+    ];
+
+    expect(documented.size).toBeGreaterThan(0);
+    expect(mismatches).toEqual([]);
   });
 });

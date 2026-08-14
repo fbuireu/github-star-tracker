@@ -42757,7 +42757,7 @@ var POINT_SIZES = {
   },
   [SeriesWeight.HIDDEN]: { radius: CHART_POINT.hidden, hoverRadius: CHART_POINT.hidden }
 };
-function toDataset({ series, curveProps, showPoints }) {
+function toDataset({ series, curveProps, showPoints, lineWidth }) {
   const dash = DASH_PATTERNS[series.dash];
   const point = POINT_SIZES[series.weight];
   return {
@@ -42769,7 +42769,8 @@ function toDataset({ series, curveProps, showPoints }) {
     ...curveProps,
     pointRadius: series.weight === SeriesWeight.HIDDEN ? CHART_POINT.hidden : pointRadiusFor({ showPoints, radius: point.radius }),
     pointHoverRadius: point.hoverRadius,
-    ...dash ? { borderDash: dash } : {}
+    ...dash ? { borderDash: dash } : {},
+    ...lineWidth ? { borderWidth: lineWidth } : {}
   };
 }
 function chartImageUrl({
@@ -42780,7 +42781,8 @@ function chartImageUrl({
   showPoints = true,
   beginAtZero = false,
   theme = ChartTheme.AUTO,
-  range = ChartRange.ALL
+  range = ChartRange.ALL,
+  lineWidth
 }) {
   const palette = resolvePalette(theme);
   const spec = buildChartSpec({
@@ -42792,7 +42794,9 @@ function chartImageUrl({
   });
   if (spec === null) return null;
   const curveProps = curvePropsFor({ smoothing, curve });
-  const datasets = spec.series.map((series) => toDataset({ series, curveProps, showPoints }));
+  const datasets = spec.series.map(
+    (series) => toDataset({ series, curveProps, showPoints, lineWidth })
+  );
   const annotation = buildMilestoneAnnotations({ milestones: spec.milestones, palette });
   return buildChartUrl({
     config: buildChartConfig({
@@ -42946,13 +42950,25 @@ function generateHtmlReport(params) {
     showPoints,
     beginAtZero,
     range,
+    lineWidth,
     milestones,
     customMilestones,
-    trendLine
+    trendLine,
+    lineColor
   } = params;
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const chartUrl = (request2) => chartImageUrl({ request: request2, locale, smoothing, curve, showPoints, beginAtZero, theme, range });
+  const chartUrl = (request2) => chartImageUrl({
+    request: request2,
+    locale,
+    smoothing,
+    curve,
+    showPoints,
+    beginAtZero,
+    theme,
+    range,
+    lineWidth
+  });
   const model = buildReportModel(params);
   const {
     summary: summary2,
@@ -42987,7 +43003,8 @@ function generateHtmlReport(params) {
     const repoChartUrl = chartUrl({
       kind: ChartKind.PER_REPO,
       history,
-      repoFullName: repoName
+      repoFullName: repoName,
+      lineColor
     });
     if (!repoChartUrl) return "";
     return `
@@ -42999,7 +43016,7 @@ function generateHtmlReport(params) {
   const chartSection = history !== null ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.starTrend} ${t.report.starTrend}</h2>
-        <img src="${chartUrl({ kind: ChartKind.STAR_HISTORY, history, milestones, customMilestones, trendLine })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${chartUrl({ kind: ChartKind.STAR_HISTORY, history, milestones, customMilestones, trendLine, lineColor })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
 
         ${comparisonChartUrl ? `
         <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
@@ -43051,7 +43068,7 @@ function generateHtmlReport(params) {
         </div>` : ""}
         ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t, palette })}
         ${history !== null ? `<div style="margin-top:16px;text-align:center;">
-          <img src="${chartUrl({ kind: ChartKind.FORECAST, history, forecastData })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${chartUrl({ kind: ChartKind.FORECAST, history, forecastData, lineColor })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>` : ""}
         ${forecastData.repos.map(
     (repo) => `
@@ -43437,7 +43454,9 @@ async function trackStars() {
           customMilestones: config.chartCustomMilestones,
           range: config.chartRange,
           trendLine: config.chartTrendLine,
-          velocityMetrics: config.velocityMetrics
+          velocityMetrics: config.velocityMetrics,
+          lineColor: config.chartLineColor,
+          lineWidth: config.chartLineWidth
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport({ ...reportParams, theme: config.emailTheme });

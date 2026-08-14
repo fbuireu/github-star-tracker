@@ -34,6 +34,8 @@ export interface EmailChartStyle {
   customMilestones?: readonly number[];
   range?: ChartRange;
   trendLine?: boolean;
+  lineColor?: string;
+  lineWidth?: number;
 }
 
 export interface GenerateHtmlReportParams extends ReportParams, EmailChartStyle {}

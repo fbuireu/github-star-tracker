@@ -137,6 +137,8 @@ export async function trackStars(): Promise<void> {
           range: config.chartRange,
           trendLine: config.chartTrendLine,
           velocityMetrics: config.velocityMetrics,
+          lineColor: config.chartLineColor,
+          lineWidth: config.chartLineWidth,
         };
         const markdownReport = generateMarkdownReport(reportParams);
         const htmlReport = generateHtmlReport({ ...reportParams, theme: config.emailTheme });
