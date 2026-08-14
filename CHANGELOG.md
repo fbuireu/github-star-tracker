@@ -1,3 +1,10 @@
+## [1.25.1](https://github.com/fbuireu/github-star-tracker/compare/v1.25.0...v1.25.1) (2026-08-14)
+
+
+### Bug Fixes
+
+* simplify arch and di + bump deps ([1bb4989](https://github.com/fbuireu/github-star-tracker/commit/1bb4989d3c33490f38a177fc9c8e7ab14b62f4d0))
+
 # [1.25.0](https://github.com/fbuireu/github-star-tracker/compare/v1.24.2...v1.25.0) (2026-08-06)
 
 
