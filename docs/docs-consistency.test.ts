@@ -37,6 +37,11 @@ const ADR_DATE_PATTERN = /\nDate: \d{4}-\d{2}-\d{2}\n/;
 const ADR_REFERENCE_PATTERNS = [/ADR (\d{4})/g, /docs\/adr\/(\d{4})-/g];
 const adrHeadingPattern = (number: number): RegExp => new RegExp(`^# ${number}\\. \\S`);
 
+const STORAGE_MODULE = 'src/infrastructure/persistence/storage.ts';
+const DATA_FORMAT_VERSION_PATTERN = /const DATA_FORMAT_VERSION = (\d+);/;
+const DOCUMENTED_VERSION_PATTERN = /"version": (\d+)/g;
+const HISTORY_FILE_SURFACES = ['docs/wiki/API-Reference.md', 'docs/wiki/Data-Management.md'];
+
 const I18N_PAGE = 'docs/wiki/Internationalization-(i18n).md';
 const I18N_SECTION_ROW_PATTERN = /^\| `(\w+)` \| ((?:`[\w.]+`(?:, )?)+) \|/gm;
 const I18N_KEY_PATTERN = /`([\w.]+)`/g;
@@ -604,5 +609,20 @@ describe('the i18n key table matches the bundles', () => {
 
     expect(documented.size).toBeGreaterThan(0);
     expect(mismatches).toEqual([]);
+  });
+});
+
+describe('the documented data-branch format matches the writer', () => {
+  it('shows the version stars-data.json is actually stamped with', () => {
+    const stamped = read(STORAGE_MODULE).match(DATA_FORMAT_VERSION_PATTERN)?.[1];
+    const stale = HISTORY_FILE_SURFACES.flatMap((surface) =>
+      [...read(surface).matchAll(DOCUMENTED_VERSION_PATTERN)]
+        .map(([, documented]) => documented)
+        .filter((documented) => documented !== stamped)
+        .map((documented) => `${surface} shows version ${documented}, storage.ts writes ${stamped}`),
+    );
+
+    expect(stamped).toBeDefined();
+    expect(stale).toEqual([]);
   });
 });
