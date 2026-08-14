@@ -89,7 +89,7 @@ interface StarHistorySpecParams extends WindowParams {
   trendLine?: boolean;
 }
 
-export function starHistorySpec({
+function starHistorySpec({
   title,
   palette,
   lineColor,
@@ -141,7 +141,7 @@ interface PerRepoSpecParams extends WindowParams {
   lineColor?: string;
 }
 
-export function perRepoSpec({
+function perRepoSpec({
   repoFullName,
   title,
   palette,
@@ -175,11 +175,7 @@ interface ComparisonSpecParams extends WindowParams {
   title: string;
 }
 
-export function comparisonSpec({
-  repoNames,
-  title,
-  ...window
-}: ComparisonSpecParams): ChartSpec | null {
+function comparisonSpec({ repoNames, title, ...window }: ComparisonSpecParams): ChartSpec | null {
   if (window.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
   }
@@ -205,14 +201,14 @@ export function comparisonSpec({
   };
 }
 
-interface ForecastSpecParams extends WindowParams {
+interface ForecastSpecParams extends Omit<WindowParams, 'axisLabels'> {
   forecastData: ForecastData;
   title: string;
   palette: ColorPalette;
   lineColor?: string;
 }
 
-export function forecastSpec({
+function forecastSpec({
   forecastData,
   title,
   palette,
@@ -264,4 +260,105 @@ export function forecastSpec({
     showLegend: true,
     milestoneThresholds: null,
   };
+}
+
+export const ChartKind = {
+  STAR_HISTORY: 'star-history',
+  PER_REPO: 'per-repo',
+  COMPARISON: 'comparison',
+  FORECAST: 'forecast',
+} as const;
+
+export type ChartKind = (typeof ChartKind)[keyof typeof ChartKind];
+
+interface ChartRequestBase {
+  history: History;
+  title?: string;
+}
+
+export interface StarHistoryChartRequest extends ChartRequestBase {
+  kind: typeof ChartKind.STAR_HISTORY;
+  lineColor?: string;
+  milestones?: boolean;
+  customMilestones?: readonly number[];
+  trendLine?: boolean;
+}
+
+export interface PerRepoChartRequest extends ChartRequestBase {
+  kind: typeof ChartKind.PER_REPO;
+  repoFullName: string;
+  lineColor?: string;
+}
+
+export interface ComparisonChartRequest extends ChartRequestBase {
+  kind: typeof ChartKind.COMPARISON;
+  repoNames: string[];
+}
+
+export interface ForecastChartRequest extends ChartRequestBase {
+  kind: typeof ChartKind.FORECAST;
+  forecastData: ForecastData;
+  lineColor?: string;
+}
+
+export type ChartRequest =
+  | StarHistoryChartRequest
+  | PerRepoChartRequest
+  | ComparisonChartRequest
+  | ForecastChartRequest;
+
+interface BuildChartSpecParams {
+  request: ChartRequest;
+  locale: Locale;
+  palette: ColorPalette;
+  axisLabels: AxisLabels;
+  range?: ChartRange;
+  maxPoints?: number;
+}
+
+export function buildChartSpec({
+  request,
+  locale,
+  palette,
+  axisLabels,
+  range,
+  maxPoints,
+}: BuildChartSpecParams): ChartSpec | null {
+  const t = getTranslations(locale);
+  const window = { history: request.history, locale, range, maxPoints, axisLabels };
+
+  switch (request.kind) {
+    case ChartKind.STAR_HISTORY:
+      return starHistorySpec({
+        ...window,
+        title: request.title ?? t.report.starHistory,
+        palette,
+        lineColor: request.lineColor,
+        milestones: request.milestones,
+        customMilestones: request.customMilestones,
+        trendLine: request.trendLine,
+      });
+    case ChartKind.PER_REPO:
+      return perRepoSpec({
+        ...window,
+        repoFullName: request.repoFullName,
+        title: request.title ?? `${request.repoFullName} Star History`,
+        palette,
+        lineColor: request.lineColor,
+      });
+    case ChartKind.COMPARISON:
+      return comparisonSpec({
+        ...window,
+        repoNames: request.repoNames,
+        title: request.title ?? t.report.topRepositories,
+      });
+    case ChartKind.FORECAST:
+      return forecastSpec({
+        ...window,
+        forecastData: request.forecastData,
+        title: request.title ?? t.forecast.sectionTitle,
+        palette,
+        lineColor: request.lineColor,
+      });
+  }
 }

@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { loadConfig } from '@config/loader';
+import { topRepositories } from '@domain/comparison';
 import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
 import { measureRun, recordNotification } from '@domain/measurement';
@@ -91,10 +92,7 @@ export async function trackStars(): Promise<void> {
           core.info(`Found ${stargazerDiff.totalNew} new stargazers`);
         }
 
-        const sorted = [...results.repos]
-          .filter((repo) => !repo.isRemoved)
-          .sort((repoA, repoB) => repoB.current - repoA.current);
-        const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
+        const topRepoNames = topRepositories({ repos: results.repos, limit: config.topRepos });
 
         const chartNow = new Date();
         const repoTotals = repos.map((repo) => ({

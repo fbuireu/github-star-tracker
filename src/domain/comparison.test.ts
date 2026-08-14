@@ -1,6 +1,6 @@
-import { makeRepoInfo } from '@shared/tests';
+import { makeRepoInfo, makeRepoResult } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
-import { compareStars, createSnapshot } from './comparison';
+import { compareStars, createSnapshot, rankByStars, topRepositories } from './comparison';
 import type { Snapshot } from './types';
 
 describe('compareStars', () => {
@@ -136,5 +136,38 @@ describe('createSnapshot', () => {
       owner: 'user',
       stars: 10,
     });
+  });
+});
+
+describe('topRepositories', () => {
+  const repos = [
+    makeRepoResult('small', { current: 5 }),
+    makeRepoResult('large', { current: 90 }),
+    makeRepoResult('gone', { current: 0, isRemoved: true }),
+    makeRepoResult('middling', { current: 40 }),
+  ];
+
+  it('ranks by Star Count, descending', () => {
+    expect(rankByStars(repos).map((repo) => repo.name)).toEqual(['large', 'middling', 'small']);
+  });
+
+  it('excludes Removed Repositories', () => {
+    expect(topRepositories({ repos, limit: 10 })).not.toContain('user/gone');
+  });
+
+  it('cuts the ranking at the limit and returns full names', () => {
+    expect(topRepositories({ repos, limit: 2 })).toEqual(['user/large', 'user/middling']);
+  });
+
+  it('leaves the caller array untouched', () => {
+    const order = repos.map((repo) => repo.name);
+    topRepositories({ repos, limit: 2 });
+
+    expect(repos.map((repo) => repo.name)).toEqual(order);
+  });
+
+  it('returns an empty list when nothing survives', () => {
+    expect(topRepositories({ repos: [], limit: 5 })).toEqual([]);
+    expect(topRepositories({ repos, limit: 0 })).toEqual([]);
   });
 });

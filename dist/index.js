@@ -34803,10 +34803,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -37098,7 +37098,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -37221,7 +37221,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_88f1cfdccbcd12f9bd89a662a3d08bce/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -40355,6 +40355,80 @@ function loadConfig() {
   return config;
 }
 
+// src/domain/comparison.ts
+function compareStars({
+  currentRepos,
+  previousSnapshot
+}) {
+  const previousStars = /* @__PURE__ */ new Map();
+  for (const repo of previousSnapshot?.repos ?? []) {
+    previousStars.set(repo.fullName, repo.stars);
+  }
+  const currentNames = new Set(currentRepos.map((repo) => repo.fullName));
+  const repoResults = [];
+  for (const repo of currentRepos) {
+    const previous = previousStars.get(repo.fullName) ?? null;
+    const current = repo.stars;
+    const delta = previous === null ? 0 : current - previous;
+    repoResults.push({
+      name: repo.name,
+      fullName: repo.fullName,
+      owner: repo.owner,
+      current,
+      previous,
+      delta,
+      isNew: previous === null,
+      isRemoved: false
+    });
+  }
+  for (const repo of previousSnapshot?.repos ?? []) {
+    if (currentNames.has(repo.fullName)) continue;
+    const [owner, name] = repo.fullName.split("/");
+    repoResults.push({
+      name: repo.name || name,
+      fullName: repo.fullName,
+      owner: repo.owner || owner,
+      current: 0,
+      previous: repo.stars,
+      delta: -repo.stars,
+      isNew: false,
+      isRemoved: true
+    });
+  }
+  const totalStars = repoResults.filter((repo) => !repo.isRemoved).reduce((sum, repo) => sum + repo.current, 0);
+  const totalPrevious = previousSnapshot?.totalStars ?? 0;
+  const gained = repoResults.filter((repo) => repo.delta > 0).reduce((sum, repo) => sum + repo.delta, 0);
+  const lost = repoResults.filter((repo) => repo.delta < 0).reduce((sum, repo) => sum + Math.abs(repo.delta), 0);
+  const changed = repoResults.some((repo) => repo.delta !== 0 || repo.isNew || repo.isRemoved);
+  const summary2 = {
+    totalStars,
+    totalPrevious,
+    totalDelta: totalStars - totalPrevious,
+    newStars: gained,
+    lostStars: lost,
+    changed
+  };
+  return { repos: repoResults, summary: summary2 };
+}
+function rankByStars(repos) {
+  return repos.filter((repo) => !repo.isRemoved).sort((repoA, repoB) => repoB.current - repoA.current);
+}
+function topRepositories({ repos, limit }) {
+  return rankByStars(repos).slice(0, limit).map((repo) => repo.fullName);
+}
+function createSnapshot({ currentRepos, summary: summary2 }) {
+  return {
+    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    totalStars: summary2.totalStars,
+    repos: currentRepos.map((repo) => ({
+      fullName: repo.fullName,
+      name: repo.name,
+      owner: repo.owner,
+      stars: repo.stars
+    }))
+  };
+}
+
 // src/domain/constants.ts
 var MS_PER_DAY = 864e5;
 var DAYS_PER_WEEK = 7;
@@ -40592,74 +40666,6 @@ function buildAxisLabels({ timestamps, locale }) {
     lastYear = year;
     return String(year);
   });
-}
-
-// src/domain/comparison.ts
-function compareStars({
-  currentRepos,
-  previousSnapshot
-}) {
-  const previousStars = /* @__PURE__ */ new Map();
-  for (const repo of previousSnapshot?.repos ?? []) {
-    previousStars.set(repo.fullName, repo.stars);
-  }
-  const currentNames = new Set(currentRepos.map((repo) => repo.fullName));
-  const repoResults = [];
-  for (const repo of currentRepos) {
-    const previous = previousStars.get(repo.fullName) ?? null;
-    const current = repo.stars;
-    const delta = previous === null ? 0 : current - previous;
-    repoResults.push({
-      name: repo.name,
-      fullName: repo.fullName,
-      owner: repo.owner,
-      current,
-      previous,
-      delta,
-      isNew: previous === null,
-      isRemoved: false
-    });
-  }
-  for (const repo of previousSnapshot?.repos ?? []) {
-    if (currentNames.has(repo.fullName)) continue;
-    const [owner, name] = repo.fullName.split("/");
-    repoResults.push({
-      name: repo.name || name,
-      fullName: repo.fullName,
-      owner: repo.owner || owner,
-      current: 0,
-      previous: repo.stars,
-      delta: -repo.stars,
-      isNew: false,
-      isRemoved: true
-    });
-  }
-  const totalStars = repoResults.filter((repo) => !repo.isRemoved).reduce((sum, repo) => sum + repo.current, 0);
-  const totalPrevious = previousSnapshot?.totalStars ?? 0;
-  const gained = repoResults.filter((repo) => repo.delta > 0).reduce((sum, repo) => sum + repo.delta, 0);
-  const lost = repoResults.filter((repo) => repo.delta < 0).reduce((sum, repo) => sum + Math.abs(repo.delta), 0);
-  const changed = repoResults.some((repo) => repo.delta !== 0 || repo.isNew || repo.isRemoved);
-  const summary2 = {
-    totalStars,
-    totalPrevious,
-    totalDelta: totalStars - totalPrevious,
-    newStars: gained,
-    lostStars: lost,
-    changed
-  };
-  return { repos: repoResults, summary: summary2 };
-}
-function createSnapshot({ currentRepos, summary: summary2 }) {
-  return {
-    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-    totalStars: summary2.totalStars,
-    repos: currentRepos.map((repo) => ({
-      fullName: repo.fullName,
-      name: repo.name,
-      owner: repo.owner,
-      stars: repo.stars
-    }))
-  };
 }
 
 // src/domain/notification.ts
@@ -41817,12 +41823,11 @@ function prepareReportData({
 }) {
   const { repos } = results;
   const t = getTranslations(locale);
-  const activeRepos = repos.filter((repo) => !repo.isRemoved);
   return {
-    activeRepos,
+    activeRepos: repos.filter((repo) => !repo.isRemoved),
     newRepos: repos.filter((repo) => repo.isNew),
     removedRepos: repos.filter((repo) => repo.isRemoved),
-    sorted: [...activeRepos].sort((repoA, repoB) => repoB.current - repoA.current),
+    sorted: rankByStars(repos),
     now: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
     prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun
   };
@@ -41957,11 +41962,7 @@ function perRepoSpec({
     milestoneThresholds: null
   };
 }
-function comparisonSpec({
-  repoNames,
-  title,
-  ...window2
-}) {
+function comparisonSpec({ repoNames, title, ...window2 }) {
   if (window2.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
     return null;
   }
@@ -42034,6 +42035,57 @@ function forecastSpec({
     showLegend: true,
     milestoneThresholds: null
   };
+}
+var ChartKind = {
+  STAR_HISTORY: "star-history",
+  PER_REPO: "per-repo",
+  COMPARISON: "comparison",
+  FORECAST: "forecast"
+};
+function buildChartSpec({
+  request: request2,
+  locale,
+  palette,
+  axisLabels,
+  range,
+  maxPoints
+}) {
+  const t = getTranslations(locale);
+  const window2 = { history: request2.history, locale, range, maxPoints, axisLabels };
+  switch (request2.kind) {
+    case ChartKind.STAR_HISTORY:
+      return starHistorySpec({
+        ...window2,
+        title: request2.title ?? t.report.starHistory,
+        palette,
+        lineColor: request2.lineColor,
+        milestones: request2.milestones,
+        customMilestones: request2.customMilestones,
+        trendLine: request2.trendLine
+      });
+    case ChartKind.PER_REPO:
+      return perRepoSpec({
+        ...window2,
+        repoFullName: request2.repoFullName,
+        title: request2.title ?? `${request2.repoFullName} Star History`,
+        palette,
+        lineColor: request2.lineColor
+      });
+    case ChartKind.COMPARISON:
+      return comparisonSpec({
+        ...window2,
+        repoNames: request2.repoNames,
+        title: request2.title ?? t.report.topRepositories
+      });
+    case ChartKind.FORECAST:
+      return forecastSpec({
+        ...window2,
+        forecastData: request2.forecastData,
+        title: request2.title ?? t.forecast.sectionTitle,
+        palette,
+        lineColor: request2.lineColor
+      });
+  }
 }
 
 // src/presentation/svg-chart.ts
@@ -42427,7 +42479,21 @@ function renderSvg({
   </g>
 </svg>`;
 }
-function renderSpec({ spec, locale, style }) {
+function renderSvgChart({
+  request: request2,
+  locale,
+  maxPoints,
+  range,
+  ...style
+}) {
+  const spec = buildChartSpec({
+    request: request2,
+    locale,
+    palette: resolvePalette(style.theme),
+    axisLabels: AxisLabels.THINNED,
+    range,
+    maxPoints
+  });
   if (spec === null) return null;
   return renderSvg({
     locale,
@@ -42444,111 +42510,6 @@ function renderSpec({ spec, locale, style }) {
     showLegend: spec.showLegend,
     milestones: spec.milestoneThresholds !== null,
     milestoneThresholds: spec.milestoneThresholds ?? STAR_MILESTONES
-  });
-}
-function generateSvgChart({
-  history,
-  title,
-  locale,
-  lineColor,
-  maxPoints,
-  milestones = true,
-  customMilestones,
-  range,
-  trendLine = false,
-  ...style
-}) {
-  return renderSpec({
-    spec: starHistorySpec({
-      history,
-      locale,
-      range,
-      maxPoints,
-      axisLabels: AxisLabels.THINNED,
-      title: title ?? "Star History",
-      palette: resolvePalette(style.theme),
-      lineColor,
-      milestones,
-      customMilestones,
-      trendLine
-    }),
-    locale,
-    style
-  });
-}
-function generatePerRepoSvgChart({
-  history,
-  repoFullName,
-  title,
-  locale,
-  lineColor,
-  maxPoints,
-  range,
-  ...style
-}) {
-  return renderSpec({
-    spec: perRepoSpec({
-      history,
-      locale,
-      range,
-      maxPoints,
-      axisLabels: AxisLabels.THINNED,
-      repoFullName,
-      title: title ?? `${repoFullName} Star History`,
-      palette: resolvePalette(style.theme),
-      lineColor
-    }),
-    locale,
-    style
-  });
-}
-function generateComparisonSvgChart({
-  history,
-  repoNames,
-  title,
-  locale,
-  maxPoints,
-  range,
-  ...style
-}) {
-  return renderSpec({
-    spec: comparisonSpec({
-      history,
-      locale,
-      range,
-      maxPoints,
-      axisLabels: AxisLabels.THINNED,
-      repoNames,
-      title: title ?? getTranslations(locale).report.topRepositories
-    }),
-    locale,
-    style
-  });
-}
-function generateForecastSvgChart({
-  history,
-  forecastData,
-  locale,
-  title,
-  lineColor,
-  maxPoints,
-  range,
-  ...style
-}) {
-  return renderSpec({
-    spec: forecastSpec({
-      history,
-      locale,
-      range,
-      maxPoints,
-      axisLabels: AxisLabels.DATES,
-      forecastData,
-      title: title ?? getTranslations(locale).forecast.sectionTitle,
-      palette: resolvePalette(style.theme),
-      lineColor
-    }),
-    locale,
-    style
   });
 }
 
@@ -42569,7 +42530,6 @@ function buildChartFiles({
   if (!config.includeCharts || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return [];
   }
-  const t = getTranslations(config.locale);
   const style = {
     locale: config.locale,
     lineWidth: config.chartLineWidth,
@@ -42583,11 +42543,11 @@ function buildChartFiles({
     theme: config.chartTheme,
     range: config.chartRange
   };
+  const renderChart = (request2) => renderSvgChart({ ...style, request: request2 });
   const files = [];
-  const starHistoryChart = generateSvgChart({
-    ...style,
+  const starHistoryChart = renderChart({
+    kind: ChartKind.STAR_HISTORY,
     history,
-    title: t.report.starHistory,
     lineColor: config.chartLineColor,
     milestones: config.chartMilestones,
     customMilestones: config.chartCustomMilestones,
@@ -42606,8 +42566,8 @@ function buildChartFiles({
       maxPoints: config.chartMaxPoints,
       now
     }) : { snapshots: [] };
-    const repoChart = generatePerRepoSvgChart({
-      ...style,
+    const repoChart = renderChart({
+      kind: ChartKind.PER_REPO,
       history: resolveChartHistory({ candidate: repoStarHistory, fallback: fallbackHistory }),
       repoFullName,
       lineColor: config.chartLineColor
@@ -42617,19 +42577,18 @@ function buildChartFiles({
     }
   }
   if (topRepoNames.length > 0) {
-    const comparisonChart = generateComparisonSvgChart({
-      ...style,
+    const comparisonChart = renderChart({
+      kind: ChartKind.COMPARISON,
       history,
-      repoNames: topRepoNames,
-      title: t.report.topRepositories
+      repoNames: topRepoNames
     });
     if (comparisonChart) {
       files.push({ filename: CHART_FILES.comparison, svg: comparisonChart });
     }
   }
   if (forecastData) {
-    const forecastChart = generateForecastSvgChart({
-      ...style,
+    const forecastChart = renderChart({
+      kind: ChartKind.FORECAST,
       history,
       forecastData,
       lineColor: config.chartLineColor
@@ -42809,14 +42768,24 @@ function toDataset({ series, curveProps, showPoints }) {
     ...dash ? { borderDash: dash } : {}
   };
 }
-function renderSpec2({
-  spec,
-  smoothing,
-  curve,
-  showPoints,
-  beginAtZero,
-  palette
+function chartImageUrl({
+  request: request2,
+  locale,
+  smoothing = true,
+  curve = ChartCurve.MONOTONE,
+  showPoints = true,
+  beginAtZero = false,
+  theme = ChartTheme.AUTO,
+  range = ChartRange.ALL
 }) {
+  const palette = resolvePalette(theme);
+  const spec = buildChartSpec({
+    request: request2,
+    locale,
+    palette,
+    axisLabels: AxisLabels.DATES,
+    range
+  });
   if (spec === null) return null;
   const curveProps = curvePropsFor({ smoothing, curve });
   const datasets = spec.series.map((series) => toDataset({ series, curveProps, showPoints }));
@@ -42854,129 +42823,6 @@ function buildChartConfig({
     data: { labels, datasets },
     options: buildChartOptions({ title, showLegend, beginAtZero, palette, annotation })
   };
-}
-function generateChartUrl({
-  history,
-  title,
-  locale,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
-  milestones = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
-  customMilestones,
-  range = ChartRange.ALL,
-  trendLine = false
-}) {
-  const palette = resolvePalette(theme);
-  return renderSpec2({
-    spec: starHistorySpec({
-      history,
-      locale,
-      range,
-      axisLabels: AxisLabels.DATES,
-      title: title ?? getTranslations(locale).report.starHistory,
-      palette,
-      milestones,
-      customMilestones,
-      trendLine
-    }),
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    palette
-  });
-}
-function generatePerRepoChartUrl({
-  history,
-  repoFullName,
-  title,
-  locale,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
-  range = ChartRange.ALL
-}) {
-  const palette = resolvePalette(theme);
-  return renderSpec2({
-    spec: perRepoSpec({
-      history,
-      locale,
-      range,
-      axisLabels: AxisLabels.DATES,
-      repoFullName,
-      title: title ?? `${repoFullName} Star History`,
-      palette
-    }),
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    palette
-  });
-}
-function generateComparisonChartUrl({
-  history,
-  repoNames,
-  title,
-  locale,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
-  range = ChartRange.ALL
-}) {
-  const palette = resolvePalette(theme);
-  return renderSpec2({
-    spec: comparisonSpec({
-      history,
-      locale,
-      range,
-      axisLabels: AxisLabels.DATES,
-      repoNames,
-      title: title ?? getTranslations(locale).report.topRepositories
-    }),
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    palette
-  });
-}
-function generateForecastChartUrl({
-  history,
-  forecastData,
-  locale,
-  title,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
-  range = ChartRange.ALL
-}) {
-  const palette = resolvePalette(theme);
-  return renderSpec2({
-    spec: forecastSpec({
-      history,
-      locale,
-      range,
-      axisLabels: AxisLabels.DATES,
-      forecastData,
-      title: title ?? getTranslations(locale).forecast.sectionTitle,
-      palette
-    }),
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    palette
-  });
 }
 
 // src/domain/velocity.ts
@@ -43062,7 +42908,7 @@ function buildReportModel(params) {
     sorted,
     newRepos,
     removedRepos,
-    topRepos: sorted.slice(0, topReposCount).map((repo) => repo.fullName),
+    topRepos: topRepositories({ repos: results.repos, limit: topReposCount }),
     hasChartHistory,
     chartHistory: hasChartHistory ? history : null,
     stargazers: toStargazerSection(params),
@@ -43096,18 +42942,19 @@ function deltaColor({ delta, palette }) {
 function generateHtmlReport(params) {
   const {
     locale,
-    smoothing = true,
-    curve = ChartCurve.MONOTONE,
-    showPoints = true,
-    milestones = true,
-    beginAtZero = false,
     theme = ChartTheme.AUTO,
+    smoothing,
+    curve,
+    showPoints,
+    beginAtZero,
+    range,
+    milestones,
     customMilestones,
-    range = ChartRange.ALL,
-    trendLine = false
+    trendLine
   } = params;
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
+  const chartUrl = (request2) => chartImageUrl({ request: request2, locale, smoothing, curve, showPoints, beginAtZero, theme, range });
   const model = buildReportModel(params);
   const {
     summary: summary2,
@@ -43137,41 +42984,24 @@ function generateHtmlReport(params) {
         <ul>${removedRepos.map((repo) => `<li>${interpolate({ template: t.report.removedRepoText, params: { name: escapeHtml(repo.fullName), count: repo.previous ?? 0 } })}</li>`).join("")}</ul>
       </div>` : "";
   const topRepos = model.topRepos;
-  const comparisonChartUrl = history !== null && topRepos.length > 0 ? generateComparisonChartUrl({
-    history,
-    repoNames: topRepos,
-    title: t.report.topRepositories,
-    locale,
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    theme,
-    range
-  }) : null;
+  const comparisonChartUrl = history !== null && topRepos.length > 0 ? chartUrl({ kind: ChartKind.COMPARISON, history, repoNames: topRepos }) : null;
   const individualRepoChartsHtml = history !== null ? topRepos.map((repoName) => {
-    const chartUrl = generatePerRepoChartUrl({
+    const repoChartUrl = chartUrl({
+      kind: ChartKind.PER_REPO,
       history,
-      repoFullName: repoName,
-      locale,
-      smoothing,
-      curve,
-      showPoints,
-      beginAtZero,
-      theme,
-      range
+      repoFullName: repoName
     });
-    if (!chartUrl) return "";
+    if (!repoChartUrl) return "";
     return `
         <div style="margin-top:16px;">
           <h4 style="font-size:14px;margin-bottom:8px;">${escapeHtml(repoName)}</h4>
-          <img src="${chartUrl}" alt="${escapeHtml(repoName)}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${repoChartUrl}" alt="${escapeHtml(repoName)}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
   }).filter(Boolean).join("") : "";
   const chartSection = history !== null ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.starTrend} ${t.report.starTrend}</h2>
-        <img src="${generateChartUrl({ history, title: t.report.starHistory, locale, smoothing, curve, showPoints, milestones, beginAtZero, theme, customMilestones, range, trendLine })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img src="${chartUrl({ kind: ChartKind.STAR_HISTORY, history, milestones, customMilestones, trendLine })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
 
         ${comparisonChartUrl ? `
         <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
@@ -43223,7 +43053,7 @@ function generateHtmlReport(params) {
         </div>` : ""}
         ${buildHtmlForecastTable({ title: t.forecast.aggregate, forecasts: forecastData.aggregate.forecasts, t, palette })}
         ${history !== null ? `<div style="margin-top:16px;text-align:center;">
-          <img src="${generateForecastChartUrl({ history, forecastData, locale, smoothing, curve, showPoints, beginAtZero, theme, range })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${chartUrl({ kind: ChartKind.FORECAST, history, forecastData })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>` : ""}
         ${forecastData.repos.map(
     (repo) => `
@@ -43571,8 +43401,7 @@ async function trackStars() {
           stargazerMap = buildStargazerMap({ repoStargazers, previousMap });
           info(`Found ${stargazerDiff.totalNew} new stargazers`);
         }
-        const sorted = [...results.repos].filter((repo) => !repo.isRemoved).sort((repoA, repoB) => repoB.current - repoA.current);
-        const topRepoNames = sorted.slice(0, config.topRepos).map((repo) => repo.fullName);
+        const topRepoNames = topRepositories({ repos: results.repos, limit: config.topRepos });
         const chartNow = /* @__PURE__ */ new Date();
         const repoTotals = repos.map((repo) => ({
           fullName: repo.fullName,

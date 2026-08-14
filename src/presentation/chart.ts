@@ -1,18 +1,8 @@
 import { ChartCurve, ChartRange, ChartTheme } from '@config/types';
 import { STAR_MILESTONES } from '@domain/constants';
-import type { ForecastData } from '@domain/forecast';
-import type { History } from '@domain/types';
-import { getTranslations, type Locale } from '@i18n';
-import type { ChartSeries, ChartSpec } from './chart-spec';
-import {
-  AxisLabels,
-  comparisonSpec,
-  forecastSpec,
-  perRepoSpec,
-  SeriesDash,
-  SeriesWeight,
-  starHistorySpec,
-} from './chart-spec';
+import type { Locale } from '@i18n';
+import type { ChartRequest, ChartSeries } from './chart-spec';
+import { AxisLabels, buildChartSpec, SeriesDash, SeriesWeight } from './chart-spec';
 import { CHART, CHART_POINT, CHART_TENSION, LIGHT_PALETTE } from './constants';
 import { resolvePalette } from './shared';
 import type { ColorPalette } from './types';
@@ -294,23 +284,36 @@ function toDataset({ series, curveProps, showPoints }: ToDatasetParams): Dataset
   };
 }
 
-interface RenderSpecParams {
-  spec: ChartSpec | null;
-  smoothing: boolean;
-  curve: ChartCurve;
-  showPoints: boolean;
-  beginAtZero: boolean;
-  palette: ColorPalette;
+interface ChartImageUrlParams {
+  request: ChartRequest;
+  locale: Locale;
+  smoothing?: boolean;
+  curve?: ChartCurve;
+  showPoints?: boolean;
+  beginAtZero?: boolean;
+  theme?: ChartTheme;
+  range?: ChartRange;
 }
 
-function renderSpec({
-  spec,
-  smoothing,
-  curve,
-  showPoints,
-  beginAtZero,
-  palette,
-}: RenderSpecParams): string | null {
+export function chartImageUrl({
+  request,
+  locale,
+  smoothing = true,
+  curve = ChartCurve.MONOTONE,
+  showPoints = true,
+  beginAtZero = false,
+  theme = ChartTheme.AUTO,
+  range = ChartRange.ALL,
+}: ChartImageUrlParams): string | null {
+  const palette = resolvePalette(theme);
+  const spec = buildChartSpec({
+    request,
+    locale,
+    palette,
+    axisLabels: AxisLabels.DATES,
+    range,
+  });
+
   if (spec === null) return null;
 
   const curveProps = curvePropsFor({ smoothing, curve });
@@ -363,189 +366,4 @@ function buildChartConfig({
     data: { labels, datasets },
     options: buildChartOptions({ title, showLegend, beginAtZero, palette, annotation }),
   };
-}
-
-interface GenerateChartUrlParams {
-  history: History;
-  title?: string;
-  locale: Locale;
-  smoothing?: boolean;
-  curve?: ChartCurve;
-  showPoints?: boolean;
-  milestones?: boolean;
-  beginAtZero?: boolean;
-  theme?: ChartTheme;
-  customMilestones?: readonly number[];
-  range?: ChartRange;
-  trendLine?: boolean;
-}
-
-export function generateChartUrl({
-  history,
-  title,
-  locale,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
-  milestones = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
-  customMilestones,
-  range = ChartRange.ALL,
-  trendLine = false,
-}: GenerateChartUrlParams): string | null {
-  const palette = resolvePalette(theme);
-
-  return renderSpec({
-    spec: starHistorySpec({
-      history,
-      locale,
-      range,
-      axisLabels: AxisLabels.DATES,
-      title: title ?? getTranslations(locale).report.starHistory,
-      palette,
-      milestones,
-      customMilestones,
-      trendLine,
-    }),
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    palette,
-  });
-}
-
-interface GeneratePerRepoChartUrlParams {
-  history: History;
-  repoFullName: string;
-  title?: string;
-  locale: Locale;
-  smoothing?: boolean;
-  curve?: ChartCurve;
-  showPoints?: boolean;
-  beginAtZero?: boolean;
-  theme?: ChartTheme;
-  range?: ChartRange;
-}
-
-export function generatePerRepoChartUrl({
-  history,
-  repoFullName,
-  title,
-  locale,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
-  range = ChartRange.ALL,
-}: GeneratePerRepoChartUrlParams): string | null {
-  const palette = resolvePalette(theme);
-
-  return renderSpec({
-    spec: perRepoSpec({
-      history,
-      locale,
-      range,
-      axisLabels: AxisLabels.DATES,
-      repoFullName,
-      title: title ?? `${repoFullName} Star History`,
-      palette,
-    }),
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    palette,
-  });
-}
-
-interface GenerateComparisonChartUrlParams {
-  history: History;
-  repoNames: string[];
-  title?: string;
-  locale: Locale;
-  smoothing?: boolean;
-  curve?: ChartCurve;
-  showPoints?: boolean;
-  beginAtZero?: boolean;
-  theme?: ChartTheme;
-  range?: ChartRange;
-}
-
-export function generateComparisonChartUrl({
-  history,
-  repoNames,
-  title,
-  locale,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
-  range = ChartRange.ALL,
-}: GenerateComparisonChartUrlParams): string | null {
-  const palette = resolvePalette(theme);
-
-  return renderSpec({
-    spec: comparisonSpec({
-      history,
-      locale,
-      range,
-      axisLabels: AxisLabels.DATES,
-      repoNames,
-      title: title ?? getTranslations(locale).report.topRepositories,
-    }),
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    palette,
-  });
-}
-
-interface GenerateForecastChartUrlParams {
-  history: History;
-  forecastData: ForecastData;
-  locale: Locale;
-  title?: string;
-  smoothing?: boolean;
-  curve?: ChartCurve;
-  showPoints?: boolean;
-  beginAtZero?: boolean;
-  theme?: ChartTheme;
-  range?: ChartRange;
-}
-
-export function generateForecastChartUrl({
-  history,
-  forecastData,
-  locale,
-  title,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
-  range = ChartRange.ALL,
-}: GenerateForecastChartUrlParams): string | null {
-  const palette = resolvePalette(theme);
-
-  return renderSpec({
-    spec: forecastSpec({
-      history,
-      locale,
-      range,
-      axisLabels: AxisLabels.DATES,
-      forecastData,
-      title: title ?? getTranslations(locale).forecast.sectionTitle,
-      palette,
-    }),
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    palette,
-  });
 }

@@ -1,18 +1,9 @@
 import { ChartAxisSide, ChartCurve, type ChartRange, ChartTheme } from '@config/types';
 import { STAR_MILESTONES } from '@domain/constants';
-import type { ForecastData } from '@domain/forecast';
 import { formatCount } from '@domain/formatting';
-import type { History } from '@domain/types';
-import { getTranslations, type Locale } from '@i18n';
-import type { ChartSpec } from './chart-spec';
-import {
-  AxisLabels,
-  comparisonSpec,
-  forecastSpec,
-  perRepoSpec,
-  SeriesDash,
-  starHistorySpec,
-} from './chart-spec';
+import type { Locale } from '@i18n';
+import type { ChartRequest } from './chart-spec';
+import { AxisLabels, buildChartSpec, SeriesDash } from './chart-spec';
 import { CHART, CHART_TENSION, DARK_PALETTE, SVG_CHART } from './constants';
 import { EscapeDialect, escapeFor } from './escaping';
 import { resolvePalette } from './shared';
@@ -569,13 +560,29 @@ function renderSvg({
 </svg>`;
 }
 
-interface RenderSpecParams {
-  spec: ChartSpec | null;
+interface RenderSvgChartParams extends SvgChartStyle {
+  request: ChartRequest;
   locale: Locale;
-  style: SvgChartStyle;
+  maxPoints?: number;
+  range?: ChartRange;
 }
 
-function renderSpec({ spec, locale, style }: RenderSpecParams): string | null {
+export function renderSvgChart({
+  request,
+  locale,
+  maxPoints,
+  range,
+  ...style
+}: RenderSvgChartParams): string | null {
+  const spec = buildChartSpec({
+    request,
+    locale,
+    palette: resolvePalette(style.theme),
+    axisLabels: AxisLabels.THINNED,
+    range,
+    maxPoints,
+  });
+
   if (spec === null) return null;
 
   return renderSvg({
@@ -593,155 +600,5 @@ function renderSpec({ spec, locale, style }: RenderSpecParams): string | null {
     showLegend: spec.showLegend,
     milestones: spec.milestoneThresholds !== null,
     milestoneThresholds: spec.milestoneThresholds ?? STAR_MILESTONES,
-  });
-}
-
-interface GenerateSvgChartParams extends SvgChartStyle {
-  history: History;
-  title?: string;
-  locale: Locale;
-  lineColor?: string;
-  maxPoints?: number;
-  milestones?: boolean;
-  customMilestones?: readonly number[];
-  range?: ChartRange;
-  trendLine?: boolean;
-}
-
-export function generateSvgChart({
-  history,
-  title,
-  locale,
-  lineColor,
-  maxPoints,
-  milestones = true,
-  customMilestones,
-  range,
-  trendLine = false,
-  ...style
-}: GenerateSvgChartParams): string | null {
-  return renderSpec({
-    spec: starHistorySpec({
-      history,
-      locale,
-      range,
-      maxPoints,
-      axisLabels: AxisLabels.THINNED,
-      title: title ?? 'Star History',
-      palette: resolvePalette(style.theme),
-      lineColor,
-      milestones,
-      customMilestones,
-      trendLine,
-    }),
-    locale,
-    style,
-  });
-}
-
-interface GeneratePerRepoSvgChartParams extends SvgChartStyle {
-  history: History;
-  repoFullName: string;
-  title?: string;
-  locale: Locale;
-  lineColor?: string;
-  maxPoints?: number;
-  range?: ChartRange;
-}
-
-export function generatePerRepoSvgChart({
-  history,
-  repoFullName,
-  title,
-  locale,
-  lineColor,
-  maxPoints,
-  range,
-  ...style
-}: GeneratePerRepoSvgChartParams): string | null {
-  return renderSpec({
-    spec: perRepoSpec({
-      history,
-      locale,
-      range,
-      maxPoints,
-      axisLabels: AxisLabels.THINNED,
-      repoFullName,
-      title: title ?? `${repoFullName} Star History`,
-      palette: resolvePalette(style.theme),
-      lineColor,
-    }),
-    locale,
-    style,
-  });
-}
-
-interface GenerateComparisonSvgChartParams extends SvgChartStyle {
-  history: History;
-  repoNames: string[];
-  title?: string;
-  locale: Locale;
-  maxPoints?: number;
-  range?: ChartRange;
-}
-
-export function generateComparisonSvgChart({
-  history,
-  repoNames,
-  title,
-  locale,
-  maxPoints,
-  range,
-  ...style
-}: GenerateComparisonSvgChartParams): string | null {
-  return renderSpec({
-    spec: comparisonSpec({
-      history,
-      locale,
-      range,
-      maxPoints,
-      axisLabels: AxisLabels.THINNED,
-      repoNames,
-      title: title ?? getTranslations(locale).report.topRepositories,
-    }),
-    locale,
-    style,
-  });
-}
-
-interface GenerateForecastSvgChartParams extends SvgChartStyle {
-  history: History;
-  forecastData: ForecastData;
-  locale: Locale;
-  title?: string;
-  lineColor?: string;
-  maxPoints?: number;
-  range?: ChartRange;
-}
-
-export function generateForecastSvgChart({
-  history,
-  forecastData,
-  locale,
-  title,
-  lineColor,
-  maxPoints,
-  range,
-  ...style
-}: GenerateForecastSvgChartParams): string | null {
-  return renderSpec({
-    spec: forecastSpec({
-      history,
-      locale,
-      range,
-      maxPoints,
-      axisLabels: AxisLabels.DATES,
-      forecastData,
-      title: title ?? getTranslations(locale).forecast.sectionTitle,
-      palette: resolvePalette(style.theme),
-      lineColor,
-    }),
-    locale,
-    style,
   });
 }

@@ -1,3 +1,4 @@
+import { topRepositories } from '@domain/comparison';
 import type { ForecastData, ForecastResult } from '@domain/forecast';
 import type { StargazerDiffEntry } from '@domain/stargazers';
 import type { History, RepoResult, Summary } from '@domain/types';
@@ -106,7 +107,7 @@ export function buildReportModel(params: ReportParams): ReportModel {
     sorted,
     newRepos,
     removedRepos,
-    topRepos: sorted.slice(0, topReposCount).map((repo) => repo.fullName),
+    topRepos: topRepositories({ repos: results.repos, limit: topReposCount }),
     hasChartHistory,
     chartHistory: hasChartHistory ? history : null,
     stargazers: toStargazerSection(params),

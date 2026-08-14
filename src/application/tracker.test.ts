@@ -15,15 +15,12 @@ import type { DataBranch, PublishedArtefacts } from '@infrastructure/persistence
 import { withDataBranch } from '@infrastructure/persistence/data-branch';
 import { retry } from '@octokit/plugin-retry';
 import { generateBadge } from '@presentation/badge';
+import type { ChartRequest } from '@presentation/chart-spec';
+import { ChartKind } from '@presentation/chart-spec';
 import { generateCsvReport } from '@presentation/csv';
 import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
-import {
-  generateComparisonSvgChart,
-  generateForecastSvgChart,
-  generatePerRepoSvgChart,
-  generateSvgChart,
-} from '@presentation/svg-chart';
+import { renderSvgChart } from '@presentation/svg-chart';
 import { makeConfig, makeRepoInfo, makeRepoResult, makeStargazerSeries } from '@shared/tests';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { trackStars } from './tracker';
@@ -60,11 +57,19 @@ vi.mock('@presentation/csv', () => ({ generateCsvReport: vi.fn() }));
 vi.mock('@presentation/html', () => ({ generateHtmlReport: vi.fn() }));
 vi.mock('@presentation/markdown', () => ({ generateMarkdownReport: vi.fn() }));
 vi.mock('@presentation/svg-chart', () => ({
-  generateSvgChart: vi.fn(),
-  generatePerRepoSvgChart: vi.fn(),
-  generateComparisonSvgChart: vi.fn(),
-  generateForecastSvgChart: vi.fn(),
+  renderSvgChart: vi.fn(),
 }));
+function chartRequests(kind: ChartKind): ChartRequest[] {
+  return vi
+    .mocked(renderSvgChart)
+    .mock.calls.map(([params]) => params.request)
+    .filter((request) => request.kind === kind);
+}
+
+function mockCharts(svgByKind: Partial<Record<ChartKind, string>>): void {
+  vi.mocked(renderSvgChart).mockImplementation(({ request }) => svgByKind[request.kind] ?? null);
+}
+
 const defaultConfig = makeConfig({ dataBranch: 'star-data', notificationThreshold: 0 });
 const defaultSummary = {
   totalStars: 100,
@@ -126,10 +131,7 @@ function setupDefaults() {
   vi.mocked(sendEmail).mockResolvedValue(true);
   vi.mocked(computeForecast).mockReturnValue(null);
   vi.mocked(generateCsvReport).mockReturnValue('repository,owner,name,stars,previous,delta,status');
-  vi.mocked(generateSvgChart).mockReturnValue(null);
-  vi.mocked(generatePerRepoSvgChart).mockReturnValue(null);
-  vi.mocked(generateComparisonSvgChart).mockReturnValue(null);
-  vi.mocked(generateForecastSvgChart).mockReturnValue(null);
+  vi.mocked(renderSvgChart).mockReturnValue(null);
   vi.mocked(fetchAllStargazers).mockResolvedValue([]);
   branch.readStargazers.mockReturnValue({});
   vi.mocked(diffStargazers).mockReturnValue({ entries: [], totalNew: 0 });
@@ -337,10 +339,16 @@ describe('trackStars', () => {
       };
       branch.readHistory.mockReturnValue({ snapshots: historyWithSnapshots.snapshots.slice(0, 1) });
       mockMeasurement({ updatedHistory: historyWithSnapshots });
-      vi.mocked(generateSvgChart).mockReturnValue('<svg>chart</svg>');
+      mockCharts({ [ChartKind.STAR_HISTORY]: '<svg>chart</svg>' });
       await trackStars();
-      expect(generateSvgChart).toHaveBeenCalledWith(
-        expect.objectContaining({ history: historyWithSnapshots, locale: 'en' }),
+      expect(renderSvgChart).toHaveBeenCalledWith(
+        expect.objectContaining({
+          locale: 'en',
+          request: expect.objectContaining({
+            kind: ChartKind.STAR_HISTORY,
+            history: historyWithSnapshots,
+          }),
+        }),
       );
       expect(publishedChart('star-history.svg')?.svg).toBe('<svg>chart</svg>');
     });
@@ -374,8 +382,8 @@ describe('trackStars', () => {
       ]);
       const perRepo: Record<string, { snapshots: { timestamp: string; totalStars: number }[] }> =
         {};
-      vi.mocked(generatePerRepoSvgChart).mockImplementation((params) => {
-        perRepo[params.repoFullName] = params.history;
+      vi.mocked(renderSvgChart).mockImplementation(({ request }) => {
+        if (request.kind === ChartKind.PER_REPO) perRepo[request.repoFullName] = request.history;
         return '<svg/>';
       });
       await trackStars();
@@ -423,8 +431,8 @@ describe('trackStars', () => {
         { repoFullName: 'u/restricted', stargazers: [] },
       ]);
       const perRepo: Record<string, { snapshots: { totalStars: number }[] }> = {};
-      vi.mocked(generatePerRepoSvgChart).mockImplementation((params) => {
-        perRepo[params.repoFullName] = params.history;
+      vi.mocked(renderSvgChart).mockImplementation(({ request }) => {
+        if (request.kind === ChartKind.PER_REPO) perRepo[request.repoFullName] = request.history;
         return '<svg/>';
       });
       await trackStars();
@@ -455,15 +463,15 @@ describe('trackStars', () => {
       };
       branch.readHistory.mockReturnValue(historyWithSnapshots);
       await trackStars();
-      expect(generateSvgChart).not.toHaveBeenCalled();
+      expect(renderSvgChart).not.toHaveBeenCalled();
       expect(published().charts).toHaveLength(0);
     });
     it('skips SVG chart when history has fewer than 2 snapshots', async () => {
       await trackStars();
-      expect(generateSvgChart).not.toHaveBeenCalled();
+      expect(renderSvgChart).not.toHaveBeenCalled();
       expect(published().charts).toHaveLength(0);
     });
-    it('skips writeChart when generateSvgChart returns null', async () => {
+    it('skips writeChart when the star-history chart comes back null', async () => {
       const historyWithSnapshots = {
         snapshots: [
           { timestamp: '2026-01-01T00:00:00Z', totalStars: 80, repos: [] },
@@ -472,9 +480,9 @@ describe('trackStars', () => {
       };
       branch.readHistory.mockReturnValue({ snapshots: historyWithSnapshots.snapshots.slice(0, 1) });
       mockMeasurement({ updatedHistory: historyWithSnapshots });
-      vi.mocked(generateSvgChart).mockReturnValue(null);
+      vi.mocked(renderSvgChart).mockReturnValue(null);
       await trackStars();
-      expect(generateSvgChart).toHaveBeenCalled();
+      expect(renderSvgChart).toHaveBeenCalled();
       expect(published().charts).toHaveLength(0);
     });
   });
@@ -506,38 +514,40 @@ describe('trackStars', () => {
       vi.mocked(computeForecast).mockReturnValue(forecastData);
     });
     it('writes per-repo, comparison and forecast charts when they are generated', async () => {
-      vi.mocked(generatePerRepoSvgChart).mockReturnValue('<svg>repo</svg>');
-      vi.mocked(generateComparisonSvgChart).mockReturnValue('<svg>cmp</svg>');
-      vi.mocked(generateForecastSvgChart).mockReturnValue('<svg>fc</svg>');
+      mockCharts({
+        [ChartKind.PER_REPO]: '<svg>repo</svg>',
+        [ChartKind.COMPARISON]: '<svg>cmp</svg>',
+        [ChartKind.FORECAST]: '<svg>fc</svg>',
+      });
       await trackStars();
-      expect(generatePerRepoSvgChart).toHaveBeenCalledWith(
+      expect(chartRequests(ChartKind.PER_REPO)).toContainEqual(
         expect.objectContaining({ repoFullName: 'user/repo-a' }),
       );
       expect(publishedChart('user-repo-a.svg')?.svg).toBe('<svg>repo</svg>');
       expect(publishedChart('comparison.svg')?.svg).toBe('<svg>cmp</svg>');
-      expect(generateForecastSvgChart).toHaveBeenCalledWith(
+      expect(chartRequests(ChartKind.FORECAST)).toContainEqual(
         expect.objectContaining({ forecastData }),
       );
       expect(publishedChart('forecast.svg')?.svg).toBe('<svg>fc</svg>');
     });
     it('excludes removed repos from the chart set', async () => {
-      vi.mocked(generatePerRepoSvgChart).mockReturnValue('<svg>repo</svg>');
+      mockCharts({ [ChartKind.PER_REPO]: '<svg>repo</svg>' });
       await trackStars();
-      expect(generatePerRepoSvgChart).not.toHaveBeenCalledWith(
+      expect(chartRequests(ChartKind.PER_REPO)).not.toContainEqual(
         expect.objectContaining({ repoFullName: 'user/repo-c' }),
       );
     });
     it('skips writing charts that come back null', async () => {
       await trackStars();
-      expect(generatePerRepoSvgChart).toHaveBeenCalled();
-      expect(generateComparisonSvgChart).toHaveBeenCalled();
-      expect(generateForecastSvgChart).toHaveBeenCalled();
+      expect(chartRequests(ChartKind.PER_REPO).length).toBeGreaterThan(0);
+      expect(chartRequests(ChartKind.COMPARISON).length).toBeGreaterThan(0);
+      expect(chartRequests(ChartKind.FORECAST).length).toBeGreaterThan(0);
       expect(publishedChart('forecast.svg')).toBeUndefined();
     });
     it('skips the forecast chart when no forecast data is available', async () => {
       vi.mocked(computeForecast).mockReturnValue(null);
       await trackStars();
-      expect(generateForecastSvgChart).not.toHaveBeenCalled();
+      expect(chartRequests(ChartKind.FORECAST)).toHaveLength(0);
     });
   });
   describe('github enterprise (GHES)', () => {
