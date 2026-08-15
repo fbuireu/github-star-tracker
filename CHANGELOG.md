@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/fbuireu/github-star-tracker/compare/v1.25.1...v1.26.0) (2026-08-15)
+
+
+### Features
+
+* **report:** close the HTML report gaps against the markdown one ([88ac546](https://github.com/fbuireu/github-star-tracker/commit/88ac5460aa73a91529f540525120c846ad77a9e7))
+
 ## [1.25.1](https://github.com/fbuireu/github-star-tracker/compare/v1.25.0...v1.25.1) (2026-08-14)
 
 
