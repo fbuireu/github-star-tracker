@@ -4,7 +4,7 @@ First off, thank you for considering contributing to GitHub Star Tracker! It's p
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by our commitment to providing a welcoming and inclusive environment. By participating, you are expected to uphold this code:
+This project and everyone participating in it is governed by our [Code of Conduct](./CODE_OF_CONDUCT.md). By participating, you are expected to uphold it. In short:
 
 - **Be respectful**: Different viewpoints and experiences are valuable
 - **Be constructive**: Focus on what is best for the community
