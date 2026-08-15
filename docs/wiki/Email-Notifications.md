@@ -6,9 +6,11 @@ GitHub Star Tracker can send HTML email reports with charts and star data. This 
 
 - HTML formatted report with inline CSS
 - Embedded charts (via QuickChart.io URLs)
-- Repository table with star counts and deltas
+- Repository table with star counts, deltas and a trend column
+- New and removed repository lists, each with the star count that entered or left
+- Per-repo charts headed by that repo's star count and delta, so a curve never has to be read against the table
 - Stargazer section (if `track-stargazers` enabled)
-- Forecast tables (if enough history)
+- Forecast tables (if enough history), aggregate first and then one per repository
 - Localized content based on `locale` setting
 - Responsive design for desktop and mobile
 

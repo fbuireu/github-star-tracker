@@ -30,6 +30,12 @@ export interface VelocitySection {
   projection: { days: number; milestone: number } | null;
 }
 
+export interface TopRepo {
+  fullName: string;
+  current: number;
+  delta: number;
+}
+
 export interface ReportModel {
   summary: Summary;
   now: string;
@@ -38,13 +44,27 @@ export interface ReportModel {
   sorted: RepoResult[];
   newRepos: RepoResult[];
   removedRepos: RepoResult[];
-  topRepos: string[];
+  topRepos: TopRepo[];
   hasChartHistory: boolean;
   chartHistory: History | null;
   stargazers: StargazerSection | null;
   velocity: VelocitySection | null;
   velocityIsNested: boolean;
   forecast: ForecastData | null;
+}
+
+interface ToTopReposParams {
+  repos: RepoResult[];
+  ranked: RepoResult[];
+  limit: number;
+}
+
+function toTopRepos({ repos, ranked, limit }: ToTopReposParams): TopRepo[] {
+  const top = new Set(topRepositories({ repos, limit }));
+
+  return ranked
+    .filter((repo) => top.has(repo.fullName))
+    .map(({ fullName, current, delta }) => ({ fullName, current, delta }));
 }
 
 function toStargazerSection(params: ReportParams): StargazerSection | null {
@@ -107,7 +127,7 @@ export function buildReportModel(params: ReportParams): ReportModel {
     sorted,
     newRepos,
     removedRepos,
-    topRepos: topRepositories({ repos: results.repos, limit: topReposCount }),
+    topRepos: toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount }),
     hasChartHistory,
     chartHistory: hasChartHistory ? history : null,
     stargazers: toStargazerSection(params),

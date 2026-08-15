@@ -81,7 +81,7 @@ Each JSON file implements the `Translations` interface with these sections:
 | Section | Keys | Description |
 |---|---|---|
 | `badge` | `totalStars` | Badge label text |
-| `report` | `title`, `total`, `change`, `comparedTo`, `firstRun`, `repositories`, `stars`, `starsCount`, `trend`, `newRepositories`, `removedRepositories`, `removedRepoText`, `summary`, `starsGained`, `starsLost`, `netChange`, `starTrend`, `starHistory`, `topRepositories`, `byRepository`, `individualRepoCharts`, `trendLine`, `badges.new` | Report sections and labels |
+| `report` | `title`, `total`, `change`, `comparedTo`, `firstRun`, `repositories`, `stars`, `starsCount`, `trend`, `newRepositories`, `removedRepositories`, `removedRepoText`, `summary`, `starsGained`, `starsLost`, `netChange`, `starTrend`, `starHistory`, `topRepositories`, `byRepository`, `individualRepoCharts`, `repoChartHeading`, `trendLine`, `badges.new` | Report sections and labels |
 | `email` | `subject`, `subjectLine`, `defaultFrom` | Email content |
 | `trends` | `up`, `down`, `stable` | Trend direction labels |
 | `velocity` | `sectionTitle`, `starsPerDay`, `growth`, `projection` | Growth velocity section |
@@ -97,6 +97,7 @@ Templates use `{placeholder}` syntax:
 {
   "comparedTo": "Compared to snapshot from {date}",
   "starsCount": "{count} stars",
+  "repoChartHeading": "{name} — {count} ★ ({delta})",
   "week": "Week {n}"
 }
 ```

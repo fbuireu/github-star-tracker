@@ -210,6 +210,21 @@ describe('generateMarkdownReport', () => {
     expect(report).toContain('</details>');
   });
 
+  it('heads each individual repo chart with its Star Count and Delta', () => {
+    const history = makeMultiRepoHistory(
+      [
+        { 'user/repo-a': 10, 'user/repo-b': 10 },
+        { 'user/repo-a': 15, 'user/repo-b': 8 },
+      ],
+      { stepDays: 1 },
+    );
+
+    const report = renderMarkdown({ history, includeCharts: true });
+
+    expect(report).toContain('#### user/repo-a — 15 ★ (+5)');
+    expect(report).toContain('#### user/repo-b — 8 ★ (-2)');
+  });
+
   it('includes stargazer section with new stargazers', () => {
     const stargazerDiff: StargazerDiffResult = {
       entries: [

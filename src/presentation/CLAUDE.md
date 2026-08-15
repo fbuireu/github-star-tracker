@@ -66,6 +66,13 @@ its spec — assert a section rule there, not through one dialect's markup.
 - **`topRepos` is not derived here.** It calls `topRepositories` in `@domain/comparison`, the same function
   `@application/tracker` uses for the charts and the Forecast, so the Report and the Charts cannot rank the
   Tracked Set differently. `prepareReportData`'s `sorted` is that module's `rankByStars`.
+- **`topRepos` is a `TopRepo[]`, not a list of names**: each entry carries the `fullName` the chart request
+  needs *and* the Star Count and Delta the per-repo chart heading shows. The figures are looked up in
+  `sorted` rather than recomputed, and the list is still cut by `topRepositories`, so name and figures cannot
+  drift apart the way two parallel arrays would. A caller that only wants identities maps to `fullName` —
+  `html.ts` does exactly that for the comparison chart's `repoNames`. `toTopRepos` takes the *membership* from
+  `topRepositories` as a Set and reads the figures off `sorted`, so there is no "repo not found" branch to
+  cover and no second ranking.
 - `StargazerOutcome` is `NEW` or `NONE`; the section is omitted entirely when `stargazers` is `null`, which
   is what "`track-stargazers` is off" looks like.
 - `VelocitySection.projection` is already `null`-or-present, so neither dialect repeats the
@@ -121,6 +128,12 @@ its spec — assert a section rule there, not through one dialect's markup.
 - **Empty x-axis labels are ticks that must not render.** `buildAxisLabels` returns `''` for suppressed
   positions; `renderSvg` filters those out, thins the rest to at most 10, and always keeps the last non-empty
   index.
+- **The two dialects show the same sections.** Both carry a trend column in the repo table, both list New and
+  Removed Repositories, both head the per-repo charts with `report.repoChartHeading` and both label the
+  per-repo Forecast tables with `forecast.byRepository`. The HTML used to omit all four, so the email was a
+  strictly poorer report than the markdown one for no stated reason. Markup and section *placement* still
+  differ — `html.ts` puts New and Removed after the charts, and renders the stat boxes where the markdown has
+  a Summary section — but a section present in one and absent from the other is a bug now.
 - **`markdown.ts` section order is fixed**: header, comparison note, charts, repo table, new, removed,
   summary, stargazers, forecast, velocity, footer. Velocity nests as an `h3` inside the forecast section when
   a forecast exists, otherwise it is a top-level `h2`; both levels are asserted.

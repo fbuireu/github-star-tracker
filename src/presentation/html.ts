@@ -1,13 +1,18 @@
 import { ChartTheme } from '@config/types';
 import type { ForecastResult } from '@domain/forecast';
-import { deltaIndicator, formatSignedPercent } from '@domain/formatting';
+import { deltaIndicator, formatSignedPercent, trendIcon } from '@domain/formatting';
 import { getTranslations, interpolate } from '@i18n';
 import { chartImageUrl } from './chart';
 import type { ChartRequest } from './chart-spec';
 import { ChartKind } from './chart-spec';
 import { SECTION_ICON } from './constants';
 import { EscapeDialect, escapeFor } from './escaping';
-import { buildForecastTable, buildReportModel, StargazerOutcome } from './report-model';
+import {
+  buildForecastTable,
+  buildReportModel,
+  StargazerOutcome,
+  type TopRepo,
+} from './report-model';
 import type { GenerateHtmlReportParams } from './shared';
 import { colorSchemeFor, resolvePalette } from './shared';
 import type { ColorPalette } from './types';
@@ -23,6 +28,23 @@ function deltaColor({ delta, palette }: DeltaColorParams): string {
   if (delta > 0) return palette.positive;
   if (delta < 0) return palette.negative;
   return palette.neutral;
+}
+
+interface RepoChartHeadingParams {
+  repo: TopRepo;
+  palette: ColorPalette;
+  t: ReturnType<typeof getTranslations>;
+}
+
+function repoChartHeading({ repo, palette, t }: RepoChartHeadingParams): string {
+  return interpolate({
+    template: t.report.repoChartHeading,
+    params: {
+      name: escapeHtml(repo.fullName),
+      count: repo.current,
+      delta: `<span style="color:${deltaColor({ delta: repo.delta, palette })};font-weight:600;">${deltaIndicator(repo.delta)}</span>`,
+    },
+  });
 }
 
 export function generateHtmlReport(params: GenerateHtmlReportParams): string {
@@ -59,6 +81,7 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
   const {
     summary,
     sorted,
+    newRepos,
     removedRepos,
     now,
     prev,
@@ -80,9 +103,24 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
         <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};text-align:right;color:${deltaColor({ delta: repo.delta, palette })};font-weight:600;">
           ${deltaIndicator(repo.delta)}
         </td>
+        <td style="padding:8px 12px;border-bottom:1px solid ${palette.cellBorder};text-align:center;">${trendIcon(repo.delta)}</td>
       </tr>`;
     })
     .join('');
+
+  const newSection =
+    newRepos.length > 0
+      ? `
+      <div style="margin-top:16px;">
+        <h3 style="color:${palette.positive};font-size:14px;">${t.report.newRepositories}</h3>
+        <ul>${newRepos
+          .map(
+            (repo) =>
+              `<li><a href="https://github.com/${escapeHtml(repo.fullName)}" style="color:${palette.link};text-decoration:none;">${escapeHtml(repo.fullName)}</a>: ${interpolate({ template: t.report.starsCount, params: { count: repo.current } })}</li>`,
+          )
+          .join('')}</ul>
+      </div>`
+      : '';
 
   const removedSection =
     removedRepos.length > 0
@@ -96,24 +134,28 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
   const topRepos = model.topRepos;
   const comparisonChartUrl =
     history !== null && topRepos.length > 0
-      ? chartUrl({ kind: ChartKind.COMPARISON, history, repoNames: topRepos })
+      ? chartUrl({
+          kind: ChartKind.COMPARISON,
+          history,
+          repoNames: topRepos.map((repo) => repo.fullName),
+        })
       : null;
 
   const individualRepoChartsHtml =
     history !== null
       ? topRepos
-          .map((repoName) => {
+          .map((repo) => {
             const repoChartUrl = chartUrl({
               kind: ChartKind.PER_REPO,
               history,
-              repoFullName: repoName,
+              repoFullName: repo.fullName,
               lineColor,
             });
             if (!repoChartUrl) return '';
             return `
         <div style="margin-top:16px;">
-          <h4 style="font-size:14px;margin-bottom:8px;">${escapeHtml(repoName)}</h4>
-          <img src="${repoChartUrl}" alt="${escapeHtml(repoName)}" style="max-width:100%;height:auto;border-radius:4px;">
+          <h4 style="font-size:14px;margin-bottom:8px;">${repoChartHeading({ repo, palette, t })}</h4>
+          <img src="${repoChartUrl}" alt="${escapeHtml(repo.fullName)}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
           })
           .filter(Boolean)
@@ -223,6 +265,11 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
         </div>`
             : ''
         }
+        ${
+          forecastData.repos.length > 0
+            ? `<h3 style="font-size:16px;margin:20px 0 12px;">${t.forecast.byRepository}</h3>`
+            : ''
+        }
         ${forecastData.repos
           .map(
             (repo) => `
@@ -277,6 +324,7 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
         <th style="padding:8px 12px;text-align:left;border-bottom:2px solid ${palette.tableHeaderBorder};">${t.report.repositories}</th>
         <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${palette.tableHeaderBorder};">${t.report.stars}</th>
         <th style="padding:8px 12px;text-align:right;border-bottom:2px solid ${palette.tableHeaderBorder};">${t.report.change}</th>
+        <th style="padding:8px 12px;text-align:center;border-bottom:2px solid ${palette.tableHeaderBorder};">${t.report.trend}</th>
       </tr>
     </thead>
     <tbody>
@@ -285,6 +333,8 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
   </table>
 
   ${chartSection}
+
+  ${newSection}
 
   ${removedSection}
 

@@ -24,6 +24,7 @@
     "topRepositories": "Repository Principali",
     "byRepository": "Per Repository",
     "individualRepoCharts": "Grafici per Repository",
+    "repoChartHeading": "{name} — {count} ★ ({delta})",
     "trendLine": "Tendenza",
     "badges": {
       "new": "NUOVO"

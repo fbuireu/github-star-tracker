@@ -1,5 +1,6 @@
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
+import { DOWN_ARROW, UP_ARROW } from '@domain/formatting';
 import type { StargazerDiffResult } from '@domain/stargazers';
 import { makeComparisonResults, makeHistory, makeMultiRepoHistory } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
@@ -122,6 +123,39 @@ describe('generateHtmlReport', () => {
     expect(html).toContain('Net change');
   });
 
+  it('gives the repository table a trend column', () => {
+    const html = renderHtml();
+
+    expect(html).toContain('>Trend</th>');
+    expect(html).toContain(UP_ARROW);
+    expect(html).toContain(DOWN_ARROW);
+  });
+
+  it('lists new repositories with their Star Count', () => {
+    const results = makeComparisonResults();
+
+    results.repos.push({
+      name: 'fresh',
+      fullName: 'user/fresh',
+      owner: 'user',
+      current: 7,
+      previous: null,
+      delta: 0,
+      isNew: true,
+      isRemoved: false,
+    });
+
+    const html = renderHtml({ results });
+
+    expect(html).toContain('New Repositories');
+    expect(html).toContain('href="https://github.com/user/fresh"');
+    expect(html).toContain('7 stars');
+  });
+
+  it('omits the new repositories section when nothing entered the tracked set', () => {
+    expect(renderHtml()).not.toContain('New Repositories');
+  });
+
   it('shows removed repos section when applicable', () => {
     const results = makeComparisonResults();
 
@@ -182,6 +216,23 @@ describe('generateHtmlReport', () => {
     expect(html).toContain('alt="user/repo-a"');
     expect(html).toContain('alt="user/repo-b"');
     expect(html).not.toContain('<details>');
+  });
+
+  it('heads each individual repo chart with its Star Count and Delta', () => {
+    const history = makeMultiRepoHistory(
+      [
+        { 'user/repo-a': 10, 'user/repo-b': 10 },
+        { 'user/repo-a': 15, 'user/repo-b': 8 },
+      ],
+      { stepDays: 1 },
+    );
+
+    const html = renderHtml({ history, includeCharts: true });
+
+    expect(html).toContain(`user/repo-a — 15 ★ (<span style="color:${COLORS.positive}`);
+    expect(html).toContain('+5</span>)');
+    expect(html).toContain(`user/repo-b — 8 ★ (<span style="color:${COLORS.negative}`);
+    expect(html).toContain('-2</span>)');
   });
 
   it('applies chart-line-color to the star history, per-repo and forecast charts', () => {
@@ -392,6 +443,7 @@ describe('generateHtmlReport', () => {
     expect(html).toContain('Weighted Moving Average');
     expect(html).toContain('Week 1');
     expect(html).toContain('25');
+    expect(html).toContain('By Repository');
     expect(html).toContain('user/repo-a');
     expect(html).not.toContain('<details>');
   });

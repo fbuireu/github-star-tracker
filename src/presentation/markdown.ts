@@ -3,12 +3,33 @@ import { deltaIndicator, formatSignedPercent, trendIcon } from '@domain/formatti
 import { getTranslations, interpolate } from '@i18n';
 import { CHART_FILES, SECTION_ICON } from './constants';
 import { EscapeDialect, escapeFor } from './escaping';
-import { buildForecastTable, buildReportModel, StargazerOutcome } from './report-model';
+import {
+  buildForecastTable,
+  buildReportModel,
+  StargazerOutcome,
+  type TopRepo,
+} from './report-model';
 import type { ReportParams } from './shared';
 import { perRepoChartFile } from './shared';
 
 const escapeMarkdown = escapeFor(EscapeDialect.MARKDOWN);
 const escapeMarkup = escapeFor(EscapeDialect.MARKUP);
+
+interface RepoChartHeadingParams {
+  repo: TopRepo;
+  t: ReturnType<typeof getTranslations>;
+}
+
+function repoChartHeading({ repo, t }: RepoChartHeadingParams): string {
+  return interpolate({
+    template: t.report.repoChartHeading,
+    params: {
+      name: escapeMarkdown(repo.fullName),
+      count: repo.current,
+      delta: deltaIndicator(repo.delta),
+    },
+  });
+}
 
 export function generateMarkdownReport(params: ReportParams): string {
   const t = getTranslations(params.locale);
@@ -39,10 +60,10 @@ export function generateMarkdownReport(params: ReportParams): string {
   const hasComparisonChart = hasChartHistory && topRepos.length > 0;
 
   const individualRepoCharts = hasChartHistory
-    ? topRepos.flatMap((repoName) => [
-        `#### ${escapeMarkdown(repoName)}`,
+    ? topRepos.flatMap((repo) => [
+        `#### ${repoChartHeading({ repo, t })}`,
         '',
-        `![${escapeMarkdown(repoName)}](./charts/${perRepoChartFile(repoName)})`,
+        `![${escapeMarkdown(repo.fullName)}](./charts/${perRepoChartFile(repo.fullName)})`,
         '',
       ])
     : [];

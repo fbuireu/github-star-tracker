@@ -51,10 +51,10 @@ describe('buildReportModel', () => {
   describe('Top Repositories', () => {
     const results = makeComparisonResults({
       repos: [
-        makeRepoResult('small', { current: 5 }),
-        makeRepoResult('large', { current: 90 }),
+        makeRepoResult('small', { current: 5, delta: 1 }),
+        makeRepoResult('large', { current: 90, delta: -4 }),
         makeRepoResult('gone', { current: 0, isRemoved: true }),
-        makeRepoResult('middling', { current: 40 }),
+        makeRepoResult('middling', { current: 40, delta: 0 }),
       ],
     });
 
@@ -62,12 +62,27 @@ describe('buildReportModel', () => {
       const model = modelOf({ results });
 
       expect(model.sorted.map((repo) => repo.name)).toEqual(['large', 'middling', 'small']);
-      expect(model.topRepos).toEqual(['user/large', 'user/middling', 'user/small']);
+      expect(model.topRepos.map((repo) => repo.fullName)).toEqual([
+        'user/large',
+        'user/middling',
+        'user/small',
+      ]);
       expect(model.removedRepos.map((repo) => repo.name)).toEqual(['gone']);
     });
 
+    it('carries each top repository Star Count and Delta', () => {
+      expect(modelOf({ results }).topRepos).toEqual([
+        { fullName: 'user/large', current: 90, delta: -4 },
+        { fullName: 'user/middling', current: 40, delta: 0 },
+        { fullName: 'user/small', current: 5, delta: 1 },
+      ]);
+    });
+
     it('cuts the set at the requested limit', () => {
-      expect(modelOf({ results, topRepos: 2 }).topRepos).toEqual(['user/large', 'user/middling']);
+      expect(modelOf({ results, topRepos: 2 }).topRepos.map((repo) => repo.fullName)).toEqual([
+        'user/large',
+        'user/middling',
+      ]);
     });
 
     it('does not reorder the results it was handed', () => {
