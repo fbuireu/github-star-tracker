@@ -249,6 +249,81 @@ describe('action.yml is documented', () => {
   });
 });
 
+const PINNED_INPUT = 'github-token';
+const NAME_ROW_PATTERN = /^\| `([a-z][a-z\d-]*)`/gm;
+const OPTION_HEADING_PATTERN = /^### `([a-z][a-z\d-]*)`$/gm;
+const ORDERED_SURFACES = ['README.md', 'docs/wiki/API-Reference.md', 'docs/wiki/Viewing-Reports.md'];
+const OPTION_GUIDE = 'docs/wiki/Configuration.md';
+const GROUP_HEADING_PATTERN = /^## /m;
+
+const declaredInputs = Object.keys(manifest.inputs);
+
+const alphabetically = (a: string, b: string): number => a.localeCompare(b, 'en');
+
+function inOrder(names: string[]): string[] {
+  return [
+    ...names.filter((name) => name === PINNED_INPUT),
+    ...names.filter((name) => name !== PINNED_INPUT).sort(alphabetically),
+  ];
+}
+
+const isOrdered = (names: string[]): boolean => names.join() === inOrder(names).join();
+
+interface ListedParams {
+  surface: string;
+  declared: string[];
+}
+
+function listed({ surface, declared }: ListedParams): string[] {
+  const names = new Set(declared);
+
+  return [...read(surface).matchAll(NAME_ROW_PATTERN)]
+    .map(([, name]) => name)
+    .filter((name) => names.has(name));
+}
+
+describe('inputs and outputs are listed alphabetically', () => {
+  it('declares them in that order in action.yml, after the required github-token', () => {
+    expect(declaredInputs).toEqual(inOrder(declaredInputs));
+    expect(declaredOutputs).toEqual(inOrder(declaredOutputs));
+  });
+
+  it('tabulates them in that order on every surface that tabulates them at all', () => {
+    const tables = ORDERED_SURFACES.flatMap((surface) =>
+      [declaredInputs, declaredOutputs].map((declared) => ({
+        surface,
+        names: listed({ surface, declared }),
+      })),
+    );
+    const silent = ORDERED_SURFACES.filter((surface) =>
+      tables.every((table) => table.surface !== surface || table.names.length === 0),
+    );
+    const misordered = tables
+      .filter((table) => table.names.length > 0 && !isOrdered(table.names))
+      .map(({ surface, names }) => `${surface}: ${names.join(', ')}`);
+
+    expect(silent).toEqual([]);
+    expect(misordered).toEqual([]);
+  });
+
+  it('orders the option sections of the configuration guide within each group', () => {
+    const groups = read(OPTION_GUIDE)
+      .split(GROUP_HEADING_PATTERN)
+      .slice(1)
+      .map((group) => ({
+        title: group.split('\n')[0],
+        names: [...group.matchAll(OPTION_HEADING_PATTERN)].map(([, name]) => name),
+      }))
+      .filter(({ names }) => names.length > 0);
+    const misordered = groups
+      .filter(({ names }) => !isOrdered(names))
+      .map(({ title, names }) => `${title}: ${names.join(', ')}`);
+
+    expect(groups.length).toBeGreaterThan(0);
+    expect(misordered).toEqual([]);
+  });
+});
+
 interface PackageManifest {
   scripts: Record<string, string>;
 }

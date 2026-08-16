@@ -11,153 +11,23 @@ inputs:
     description: 'Personal Access Token (PAT) with repo or public_repo scope - GITHUB_TOKEN does not work'
     required: true
 
-  github-api-url:
-    description: 'GitHub API base URL for GitHub Enterprise Server (e.g. https://github.example.com/api/v3). Auto-detected on GHES runners.'
+  chart-animation:
+    description: 'Animate the SVG charts with a draw-on line and fading points (true) or render them static (false). Static is better for email and other contexts that do not play CSS animations. (default true)'
     required: false
     default: ''
 
-  config-path:
-    description: 'Path to the configuration file (relative to repo root)'
-    required: false
-    default: 'star-tracker.yml'
-
-  visibility:
-    description: 'Repository visibility filter: public, private, all, or owned (only repos you own). (default all) (overrides config file)'
+  chart-begin-at-zero:
+    description: 'Start the chart Y-axis at zero (true) for absolute scale, or zoom into the data range (false) to emphasize recent changes. Applies to all charts. (default false)'
     required: false
     default: ''
 
-  include-archived:
-    description: 'Include archived repositories. (default false) (overrides config file)'
+  chart-curve:
+    description: 'Curve used when chart-smoothing is true: "monotone" (smooth, never overshoots, best for star data), "catmull-rom" (natural spline, can overshoot on sharp steps), "cubic-bezier" (eased S-curves, flat at every point), or "rounded-step" (flat segments with rounded corners). Email charts render monotone and rounded-step as monotone, and catmull-rom and cubic-bezier as a smooth spline. (default monotone)'
     required: false
     default: ''
 
-  include-forks:
-    description: 'Include forked repositories. (default false) (overrides config file)'
-    required: false
-    default: ''
-
-  exclude-repos:
-    description: 'Comma-separated list of repository names or regex patterns (e.g. /^test-.*/) to exclude. (default empty) (overrides config file)'
-    required: false
-    default: ''
-
-  only-repos:
-    description: 'Comma-separated list of repository names to exclusively track. (default empty) (overrides config file)'
-    required: false
-    default: ''
-
-  only-orgs:
-    description: 'Comma-separated list of organization/owner names or regex patterns (e.g. /^my-org$/) to exclusively track. (default empty) (overrides config file)'
-    required: false
-    default: ''
-
-  exclude-orgs:
-    description: 'Comma-separated list of organization/owner names or regex patterns to exclude. (default empty) (overrides config file)'
-    required: false
-    default: ''
-
-  min-stars:
-    description: 'Only track repos with at least this many stars. (default 0) (overrides config file)'
-    required: false
-    default: ''
-
-  data-branch:
-    description: 'Branch name for storing tracking data. (default star-tracker-data) (overrides config file)'
-    required: false
-    default: ''
-
-  max-history:
-    description: 'Maximum number of snapshots to keep in history. (default 52) (overrides config file)'
-    required: false
-    default: ''
-
-  read-only:
-    description: 'Run without writing to the data branch (true/false). The run still fetches repositories, builds the report, sets every output and sends the email - it just never commits or pushes. Use it for a second workflow (e.g. a weekly digest with compare-against) that shares a data branch with your tracking workflow, so it cannot add snapshots to that branch or race the run that writes it. (default false) (overrides config file)'
-    required: false
-    default: ''
-
-  compare-against:
-    description: 'Which stored snapshot to compare the current star counts against: "last-run" (the most recent snapshot), or "24h", "7d" or "30d" (the most recent snapshot at least that old). Use this to get a true daily/weekly/monthly digest even when the tracker runs more frequently. Falls back to the oldest stored snapshot when history is shorter than the window. Only affects the comparison baseline - every run still appends its own snapshot, and charts, forecast and velocity always use the full history. (default last-run) (overrides config file)'
-    required: false
-    default: ''
-
-  smtp-host:
-    description: 'SMTP server host. Providing this enables built-in email notifications'
-    required: false
-    default: ''
-
-  smtp-port:
-    description: 'SMTP server port'
-    required: false
-    default: '587'
-
-  smtp-username:
-    description: 'SMTP authentication username'
-    required: false
-    default: ''
-
-  smtp-password:
-    description: 'SMTP authentication password'
-    required: false
-    default: ''
-
-  email-to:
-    description: 'Email recipient address'
-    required: false
-    default: ''
-
-  email-from:
-    description: 'Email sender name or address. Defaults to a localized sender name derived from the locale input'
-    required: false
-    default: ''
-
-  send-on-no-changes:
-    description: 'Send email even when no star changes are detected'
-    required: false
-    default: 'false'
-
-  include-charts:
-    description: 'Include star trend charts in reports (true/false). (default true) (overrides config file)'
-    required: false
-    default: ''
-
-  notification-threshold:
-    description: 'Star change threshold before sending a notification: 0 (every run with changes), a number (e.g. 500), or "auto" (adaptive to total stars). The change accumulates across runs against the star total captured when the last notification fired, and only resets when a notification actually fires - it is not a per-run figure. (default 0) (overrides config file)'
-    required: false
-    default: ''
-
-  notification-mode:
-    description: 'How notification-threshold measures accumulated change: "net" counts the absolute change in total stars, so gains and losses cancel out and a large drop also reaches the threshold; "gains" only counts upward movement, so a drop never notifies. (default net) (overrides config file)'
-    required: false
-    default: ''
-
-  locale:
-    description: 'Language for reports and emails: en, es, ca, it. Affects wording and date formatting; compact star counts (1.5K, 2.5M) stay English. (default en) (overrides config file)'
-    required: false
-    default: ''
-
-  top-repos:
-    description: 'Number of top repositories to feature in charts and forecasts (by star count). (default 10) (overrides config file)'
-    required: false
-    default: ''
-
-  track-stargazers:
-    description: 'Track individual stargazers and show new ones in reports (true/false). (default false) (overrides config file)'
-    required: false
-    default: ''
-
-  smart-sampling:
-    description: 'Sample stargazer pages for high-star repos instead of fetching every page, to avoid API rate limits (true/false). Sampled repos lose exact new-stargazer lists. (default false) (overrides config file)'
-    required: false
-    default: ''
-
-  smart-sampling-threshold:
-    description: 'Star count above which a repo is sampled instead of fully fetched (only when smart-sampling is enabled). (default 1500) (overrides config file)'
-    required: false
-    default: ''
-
-  smart-sampling-pages:
-    description: 'Maximum number of evenly-spaced stargazer pages (100 stargazers each) to fetch per sampled repo. (default 30) (overrides config file)'
+  chart-custom-milestones:
+    description: 'Comma-separated star counts to use as milestone reference lines instead of the built-in defaults (e.g. "250, 750, 2500"). Values are sorted and de-duplicated; non-positive or non-numeric entries are ignored, and an input with no valid numbers warns and falls back to the built-in milestones. Requires chart-milestones to be enabled. When empty, the built-in milestones are used. (default empty)'
     required: false
     default: ''
 
@@ -176,53 +46,8 @@ inputs:
     required: false
     default: ''
 
-  chart-y-axis-side:
-    description: 'Which side to render the Y-axis value labels on: left or right. (default left)'
-    required: false
-    default: ''
-
-  chart-smoothing:
-    description: 'Smooth chart lines with a curve (true) or draw straight segments between points to reveal small spikes (false). (default true)'
-    required: false
-    default: ''
-
-  chart-curve:
-    description: 'Curve used when chart-smoothing is true: "monotone" (smooth, never overshoots, best for star data), "catmull-rom" (natural spline, can overshoot on sharp steps), "cubic-bezier" (eased S-curves, flat at every point), or "rounded-step" (flat segments with rounded corners). Email charts render monotone and rounded-step as monotone, and catmull-rom and cubic-bezier as a smooth spline. (default monotone)'
-    required: false
-    default: ''
-
-  chart-show-points:
-    description: 'Draw a marker on each data point (true) or hide them for a cleaner line on dense charts (false). (default true)'
-    required: false
-    default: ''
-
-  chart-animation:
-    description: 'Animate the SVG charts with a draw-on line and fading points (true) or render them static (false). Static is better for email and other contexts that do not play CSS animations. (default true)'
-    required: false
-    default: ''
-
   chart-milestones:
     description: 'Draw milestone reference lines (10, 50, 100, 500, 1k, 5k, 10k, 50k, 100k, 500k, 1M stars) on the main star-history chart (true) or hide them (false). Only milestones that fall strictly between the lowest and highest plotted values are drawn. (default true)'
-    required: false
-    default: ''
-
-  chart-begin-at-zero:
-    description: 'Start the chart Y-axis at zero (true) for absolute scale, or zoom into the data range (false) to emphasize recent changes. Applies to all charts. (default false)'
-    required: false
-    default: ''
-
-  chart-theme:
-    description: 'Color theme for the SVG charts, and the fallback for the email report when email-theme is auto: auto, light or dark. auto follows the readers prefers-color-scheme in the SVG charts; email clients that ignore it fall back to light. Force light or dark to override. (default auto)'
-    required: false
-    default: ''
-
-  email-theme:
-    description: 'Color theme for the HTML email report and its charts: auto, light or dark. auto means "same as chart-theme", so set this only when the email should differ from the SVG charts. The email charts are PNG images with the background baked in, so a reader in dark mode sees a white chart background unless this resolves to dark - prefers-color-scheme cannot reach a raster image. (default auto)'
-    required: false
-    default: ''
-
-  chart-custom-milestones:
-    description: 'Comma-separated star counts to use as milestone reference lines instead of the built-in defaults (e.g. "250, 750, 2500"). Values are sorted and de-duplicated; non-positive or non-numeric entries are ignored, and an input with no valid numbers warns and falls back to the built-in milestones. Requires chart-milestones to be enabled. When empty, the built-in milestones are used. (default empty)'
     required: false
     default: ''
 
@@ -231,8 +56,178 @@ inputs:
     required: false
     default: ''
 
+  chart-show-points:
+    description: 'Draw a marker on each data point (true) or hide them for a cleaner line on dense charts (false). (default true)'
+    required: false
+    default: ''
+
+  chart-smoothing:
+    description: 'Smooth chart lines with a curve (true) or draw straight segments between points to reveal small spikes (false). (default true)'
+    required: false
+    default: ''
+
+  chart-theme:
+    description: 'Color theme for the SVG charts, and the fallback for the email report when email-theme is auto: auto, light or dark. auto follows the readers prefers-color-scheme in the SVG charts; email clients that ignore it fall back to light. Force light or dark to override. (default auto)'
+    required: false
+    default: ''
+
   chart-trend-line:
     description: 'Overlay a dashed moving-average trend line on the main star-history chart to smooth out noise and show the underlying direction (true) or hide it (false). (default false)'
+    required: false
+    default: ''
+
+  chart-y-axis-side:
+    description: 'Which side to render the Y-axis value labels on: left or right. (default left)'
+    required: false
+    default: ''
+
+  compare-against:
+    description: 'Which stored snapshot to compare the current star counts against: "last-run" (the most recent snapshot), or "24h", "7d" or "30d" (the most recent snapshot at least that old). Use this to get a true daily/weekly/monthly digest even when the tracker runs more frequently. Falls back to the oldest stored snapshot when history is shorter than the window. Only affects the comparison baseline - every run still appends its own snapshot, and charts, forecast and velocity always use the full history. (default last-run) (overrides config file)'
+    required: false
+    default: ''
+
+  config-path:
+    description: 'Path to the configuration file (relative to repo root)'
+    required: false
+    default: 'star-tracker.yml'
+
+  data-branch:
+    description: 'Branch name for storing tracking data. (default star-tracker-data) (overrides config file)'
+    required: false
+    default: ''
+
+  email-from:
+    description: 'Email sender name or address. Defaults to a localized sender name derived from the locale input'
+    required: false
+    default: ''
+
+  email-theme:
+    description: 'Color theme for the HTML email report and its charts: auto, light or dark. auto means "same as chart-theme", so set this only when the email should differ from the SVG charts. The email charts are PNG images with the background baked in, so a reader in dark mode sees a white chart background unless this resolves to dark - prefers-color-scheme cannot reach a raster image. (default auto)'
+    required: false
+    default: ''
+
+  email-to:
+    description: 'Email recipient address'
+    required: false
+    default: ''
+
+  exclude-orgs:
+    description: 'Comma-separated list of organization/owner names or regex patterns to exclude. (default empty) (overrides config file)'
+    required: false
+    default: ''
+
+  exclude-repos:
+    description: 'Comma-separated list of repository names or regex patterns (e.g. /^test-.*/) to exclude. (default empty) (overrides config file)'
+    required: false
+    default: ''
+
+  github-api-url:
+    description: 'GitHub API base URL for GitHub Enterprise Server (e.g. https://github.example.com/api/v3). Auto-detected on GHES runners.'
+    required: false
+    default: ''
+
+  include-archived:
+    description: 'Include archived repositories. (default false) (overrides config file)'
+    required: false
+    default: ''
+
+  include-charts:
+    description: 'Include star trend charts in reports (true/false). (default true) (overrides config file)'
+    required: false
+    default: ''
+
+  include-forks:
+    description: 'Include forked repositories. (default false) (overrides config file)'
+    required: false
+    default: ''
+
+  locale:
+    description: 'Language for reports and emails: en, es, ca, it. Affects wording and date formatting; compact star counts (1.5K, 2.5M) stay English. (default en) (overrides config file)'
+    required: false
+    default: ''
+
+  max-history:
+    description: 'Maximum number of snapshots to keep in history. (default 52) (overrides config file)'
+    required: false
+    default: ''
+
+  min-stars:
+    description: 'Only track repos with at least this many stars. (default 0) (overrides config file)'
+    required: false
+    default: ''
+
+  notification-mode:
+    description: 'How notification-threshold measures accumulated change: "net" counts the absolute change in total stars, so gains and losses cancel out and a large drop also reaches the threshold; "gains" only counts upward movement, so a drop never notifies. (default net) (overrides config file)'
+    required: false
+    default: ''
+
+  notification-threshold:
+    description: 'Star change threshold before sending a notification: 0 (every run with changes), a number (e.g. 500), or "auto" (adaptive to total stars). The change accumulates across runs against the star total captured when the last notification fired, and only resets when a notification actually fires - it is not a per-run figure. (default 0) (overrides config file)'
+    required: false
+    default: ''
+
+  only-orgs:
+    description: 'Comma-separated list of organization/owner names or regex patterns (e.g. /^my-org$/) to exclusively track. (default empty) (overrides config file)'
+    required: false
+    default: ''
+
+  only-repos:
+    description: 'Comma-separated list of repository names to exclusively track. (default empty) (overrides config file)'
+    required: false
+    default: ''
+
+  read-only:
+    description: 'Run without writing to the data branch (true/false). The run still fetches repositories, builds the report, sets every output and sends the email - it just never commits or pushes. Use it for a second workflow (e.g. a weekly digest with compare-against) that shares a data branch with your tracking workflow, so it cannot add snapshots to that branch or race the run that writes it. (default false) (overrides config file)'
+    required: false
+    default: ''
+
+  send-on-no-changes:
+    description: 'Send email even when no star changes are detected'
+    required: false
+    default: 'false'
+
+  smart-sampling:
+    description: 'Sample stargazer pages for high-star repos instead of fetching every page, to avoid API rate limits (true/false). Sampled repos lose exact new-stargazer lists. (default false) (overrides config file)'
+    required: false
+    default: ''
+
+  smart-sampling-pages:
+    description: 'Maximum number of evenly-spaced stargazer pages (100 stargazers each) to fetch per sampled repo. (default 30) (overrides config file)'
+    required: false
+    default: ''
+
+  smart-sampling-threshold:
+    description: 'Star count above which a repo is sampled instead of fully fetched (only when smart-sampling is enabled). (default 1500) (overrides config file)'
+    required: false
+    default: ''
+
+  smtp-host:
+    description: 'SMTP server host. Providing this enables built-in email notifications'
+    required: false
+    default: ''
+
+  smtp-password:
+    description: 'SMTP authentication password'
+    required: false
+    default: ''
+
+  smtp-port:
+    description: 'SMTP server port'
+    required: false
+    default: '587'
+
+  smtp-username:
+    description: 'SMTP authentication username'
+    required: false
+    default: ''
+
+  top-repos:
+    description: 'Number of top repositories to feature in charts and forecasts (by star count). (default 10) (overrides config file)'
+    required: false
+    default: ''
+
+  track-stargazers:
+    description: 'Track individual stargazers and show new ones in reports (true/false). (default false) (overrides config file)'
     required: false
     default: ''
 
@@ -241,9 +236,29 @@ inputs:
     required: false
     default: ''
 
+  visibility:
+    description: 'Repository visibility filter: public, private, all, or owned (only repos you own). (default all) (overrides config file)'
+    required: false
+    default: ''
+
 outputs:
+  lost-stars:
+    description: 'Stars lost against the compare-against baseline (last run by default). Per-run figure, like new-stars'
+
+  new-stargazers:
+    description: 'Number of new stargazers detected since last run (0 if tracking disabled)'
+
+  new-stars:
+    description: 'Stars gained against the compare-against baseline (last run by default). Per-run figure: it does not accumulate across runs and has no memory of whether a notification was sent - use should-notify for that'
+
+  notification-sent:
+    description: 'Whether an email was actually delivered this run (true/false). Unlike should-notify, which reports the threshold decision, this is false when SMTP is not configured, when email-to is empty, or when the send failed'
+
   report:
     description: 'Markdown report of star changes'
+
+  report-csv:
+    description: 'CSV report of star changes'
 
   report-html:
     description: 'HTML report of star changes (for email)'
@@ -251,28 +266,14 @@ outputs:
   report-html-path:
     description: 'Path to a file containing the HTML report. Use this instead of report-html when piping into a custom mailer step, as large reports can exceed the shell environment variable size limit. Written to RUNNER_TEMP (falling back to the working directory) on every run, including read-only runs and runs where no repository matched, so the file outlives the action'
 
-  total-stars:
-    description: 'Total star count across all tracked repositories'
+  should-notify:
+    description: 'Whether the notification threshold was reached (true/false). Unlike new-stars, this accumulates across runs and only resets when a notification actually fires'
 
   stars-changed:
     description: 'Whether any star counts changed against the compare-against baseline (true/false)'
 
-  new-stars:
-    description: 'Stars gained against the compare-against baseline (last run by default). Per-run figure: it does not accumulate across runs and has no memory of whether a notification was sent - use should-notify for that'
-
-  lost-stars:
-    description: 'Stars lost against the compare-against baseline (last run by default). Per-run figure, like new-stars'
-
-  should-notify:
-    description: 'Whether the notification threshold was reached (true/false). Unlike new-stars, this accumulates across runs and only resets when a notification actually fires'
-
-  notification-sent:
-    description: 'Whether an email was actually delivered this run (true/false). Unlike should-notify, which reports the threshold decision, this is false when SMTP is not configured, when email-to is empty, or when the send failed'
-  report-csv:
-    description: 'CSV report of star changes'
-
-  new-stargazers:
-    description: 'Number of new stargazers detected since last run (0 if tracking disabled)'
+  total-stars:
+    description: 'Total star count across all tracked repositories'
 
 runs:
   using: 'node24'

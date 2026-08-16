@@ -113,7 +113,7 @@ promise, not a fix.
 `docs/docs-consistency.test.ts` makes the mechanical half of that contract executable: it reads every
 document and asserts the checkable claims against the repo — no dead markdown links, no citation of a source
 or test file that does not exist, no sample chart in `examples/README.md` without its SVG, every `action.yml`
-input and output named on the surfaces that list them, the translation-key table in
+input and output named on the surfaces that list them **and listed alphabetically** there, the translation-key table in
 `docs/wiki/Internationalization-(i18n).md` matching `src/i18n/en.json` section for section and key for key,
 every documented `stars-data.json` example showing the `version` the writer actually stamps,
 and the ADR set held to its template (sequential
@@ -129,7 +129,7 @@ wrong. It cannot check prose or rationale — that part is still on you. Keep it
 | What a domain word means, or introduce a new one | [`CONTEXT.md`](./CONTEXT.md) — the glossary, vocabulary only |
 | A behaviour a doc states as an invariant or a gotcha | that bullet, or delete it if it stopped being true |
 | A layer's rules, or the files a concept is made of | that layer's nested `CLAUDE.md` (table above) |
-| A default, an input name, or an output | `action.yml`, `docs/wiki/Configuration.md`, `docs/wiki/API-Reference.md`, the README table, and the *Outputs* section of `src/application/CLAUDE.md` |
+| A default, an input name, or an output | `action.yml`, `docs/wiki/Configuration.md`, `docs/wiki/API-Reference.md`, the README table, `docs/wiki/Viewing-Reports.md`, and the *Outputs* section of `src/application/CLAUDE.md` — **alphabetically**, never appended at the end (`github-token` stays pinned first) |
 | A package script, a path alias, or a layer boundary | the *Commands* / *Structure & aliases* sections here |
 | The run order, the layer map, or the build pipeline | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
 | A decision an ADR records | that ADR — amend it, or supersede it with a new one and say so in both `## Status` blocks |

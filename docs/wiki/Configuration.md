@@ -123,142 +123,6 @@ with:
 
 ## Core Options
 
-### `github-api-url`
-
-GitHub API base URL for GitHub Enterprise Server (GHES) instances.
-
-| Property | Value |
-|---|---|
-| **Type** | `string` |
-| **Default** | - (auto-detected on GHES runners via `GITHUB_API_URL`) |
-
-When running on a GHES runner, the action automatically detects the API URL from the `GITHUB_API_URL` environment variable. Only set this input if you need to override the auto-detected value or if you're running on a github.com runner targeting a GHES instance.
-
-```yaml
-with:
-  github-api-url: 'https://github.example.com/api/v3'
-```
-
----
-
-### `config-path`
-
-Path to the YAML configuration file (relative to repo root).
-
-| Property | Value |
-|---|---|
-| **Type** | `string` |
-| **Default** | `star-tracker.yml` |
-
-```yaml
-with:
-  config-path: '.github/star-tracker.yml'
-```
-
----
-
-### `visibility`
-
-Filter repositories by visibility.
-
-| Property | Value |
-|---|---|
-| **Type** | `string` |
-| **Default** | `all` |
-| **Options** | `all`, `public`, `private`, `owned` |
-
-- `all` - all repos accessible to the token (including collaborator repos)
-- `public` - only public repos
-- `private` - only private repos
-- `owned` - only repos you own (excludes collaborator repos)
-
-```yaml
-with:
-  visibility: 'public'
-```
-
----
-
-### `locale`
-
-Language for reports, charts, badges, and emails.
-
-| Property | Value |
-|---|---|
-| **Type** | `string` |
-| **Default** | `en` |
-| **Options** | `en` (English), `es` (Spanish), `ca` (Catalan), `it` (Italian) |
-
-```yaml
-with:
-  locale: 'es'
-```
-
-See **[Internationalization (i18n)](<Internationalization-(i18n)>)**.
-
----
-
-### `include-charts`
-
-Enable star trend chart generation.
-
-| Property | Value |
-|---|---|
-| **Type** | `boolean` |
-| **Default** | `true` |
-
-When enabled, generates animated SVG charts committed to the `charts/` directory on the data branch, and QuickChart.io URLs in HTML email reports.
-
-When enabled, the action fetches each repo's stargazers to read their `starred_at` dates and reconstruct the true cumulative star history; this happens whenever charts are on, independent of `track-stargazers`. For very large repos (GitHub caps stargazer listing at ~40,000/repo) the earliest part of the curve is approximated; pair with `smart-sampling`.
-
-```yaml
-with:
-  include-charts: true
-```
-
-See **[Star Trend Charts](Star-Trend-Charts)**.
-
----
-
-### `data-branch`
-
-Branch name for storing tracking data.
-
-| Property | Value |
-|---|---|
-| **Type** | `string` |
-| **Default** | `star-tracker-data` |
-
-The action creates this branch as an orphan branch (separate history from `main`). All reports, charts, badges, and historical data are committed here.
-
-```yaml
-with:
-  data-branch: 'my-star-data'
-```
-
----
-
-### `max-history`
-
-Maximum number of snapshots to keep in history.
-
-| Property | Value |
-|---|---|
-| **Type** | `number` |
-| **Default** | `52` |
-
-Older snapshots are pruned when the limit is exceeded. With daily runs, `52` keeps roughly one year of data. With weekly runs, it keeps one year exactly.
-
-```yaml
-with:
-  max-history: '104' # ~2 years of weekly data
-```
-
----
-
-> [!NOTE]
-> Velocity metrics need at least two *stored* snapshots, so `max-history: 1` leaves exactly one after every run and [`velocity-metrics`](#velocity-metrics) renders nothing.
-
 ### `compare-against`
 
 Which stored snapshot the current star counts are compared against. Config file key: `compare_against`.
@@ -284,6 +148,120 @@ This input **only** changes the comparison baseline. Every run still appends its
 with:
   compare-against: '7d'
 ```
+
+---
+
+### `config-path`
+
+Path to the YAML configuration file (relative to repo root).
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | `star-tracker.yml` |
+
+```yaml
+with:
+  config-path: '.github/star-tracker.yml'
+```
+
+---
+
+### `data-branch`
+
+Branch name for storing tracking data.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | `star-tracker-data` |
+
+The action creates this branch as an orphan branch (separate history from `main`). All reports, charts, badges, and historical data are committed here.
+
+```yaml
+with:
+  data-branch: 'my-star-data'
+```
+
+---
+
+### `github-api-url`
+
+GitHub API base URL for GitHub Enterprise Server (GHES) instances.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | - (auto-detected on GHES runners via `GITHUB_API_URL`) |
+
+When running on a GHES runner, the action automatically detects the API URL from the `GITHUB_API_URL` environment variable. Only set this input if you need to override the auto-detected value or if you're running on a github.com runner targeting a GHES instance.
+
+```yaml
+with:
+  github-api-url: 'https://github.example.com/api/v3'
+```
+
+---
+
+### `include-charts`
+
+Enable star trend chart generation.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `true` |
+
+When enabled, generates animated SVG charts committed to the `charts/` directory on the data branch, and QuickChart.io URLs in HTML email reports.
+
+When enabled, the action fetches each repo's stargazers to read their `starred_at` dates and reconstruct the true cumulative star history; this happens whenever charts are on, independent of `track-stargazers`. For very large repos (GitHub caps stargazer listing at ~40,000/repo) the earliest part of the curve is approximated; pair with `smart-sampling`.
+
+```yaml
+with:
+  include-charts: true
+```
+
+See **[Star Trend Charts](Star-Trend-Charts)**.
+
+---
+
+### `locale`
+
+Language for reports, charts, badges, and emails.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | `en` |
+| **Options** | `en` (English), `es` (Spanish), `ca` (Catalan), `it` (Italian) |
+
+```yaml
+with:
+  locale: 'es'
+```
+
+See **[Internationalization (i18n)](<Internationalization-(i18n)>)**.
+
+---
+
+### `max-history`
+
+Maximum number of snapshots to keep in history.
+
+| Property | Value |
+|---|---|
+| **Type** | `number` |
+| **Default** | `52` |
+
+Older snapshots are pruned when the limit is exceeded. With daily runs, `52` keeps roughly one year of data. With weekly runs, it keeps one year exactly.
+
+```yaml
+with:
+  max-history: '104' # ~2 years of weekly data
+```
+
+> [!NOTE]
+> Velocity metrics need at least two *stored* snapshots, so `max-history: 1` leaves exactly one after every run and [`velocity-metrics`](#velocity-metrics) renders nothing.
 
 ---
 
@@ -350,6 +328,29 @@ with:
 
 ---
 
+### `visibility`
+
+Filter repositories by visibility.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | `all` |
+| **Options** | `all`, `public`, `private`, `owned` |
+
+- `all` - all repos accessible to the token (including collaborator repos)
+- `public` - only public repos
+- `private` - only private repos
+- `owned` - only repos you own (excludes collaborator repos)
+
+```yaml
+with:
+  visibility: 'public'
+```
+
+---
+
+
 ## Smart Sampling
 
 For high-star repos, sampling stargazer pages instead of fetching every page keeps the action within GitHub API rate limits.
@@ -370,14 +371,7 @@ with:
   smart-sampling: true
 ```
 
-### `smart-sampling-threshold`
-
-Star count above which a repo is sampled instead of fully fetched (only when `smart-sampling` is enabled).
-
-| Property | Value |
-|---|---|
-| **Type** | `number` |
-| **Default** | `1500` |
+---
 
 ### `smart-sampling-pages`
 
@@ -390,66 +384,45 @@ Max evenly-spaced stargazer pages (100 stargazers each) to fetch per sampled rep
 
 ---
 
+### `smart-sampling-threshold`
+
+Star count above which a repo is sampled instead of fully fetched (only when `smart-sampling` is enabled).
+
+| Property | Value |
+|---|---|
+| **Type** | `number` |
+| **Default** | `1500` |
+
+---
+
+
 ## Chart Customization
 
 These inputs control the appearance of the generated charts. See **[Star Trend Charts](Star-Trend-Charts)**.
 
-### `chart-line-color`
+### `chart-animation`
 
-Hex color for the primary chart line/fill/points (star-history, per-repo and forecast historical series; not the comparison palette or forecast trend lines).
-
-| Property | Value |
-|---|---|
-| **Type** | `string` |
-| **Default** | `#dfb317` |
-
-Accepts 3/4/6/8-digit hex with or without a leading `#`. In YAML a bare `#` starts a comment, so quote it (`"#6b63ff"`) or drop the `#` (`6b63ff`).
-
-```yaml
-with:
-  chart-line-color: '#6b63ff'
-```
-
-### `chart-line-width`
-
-Stroke width in px (>0) of data lines across all charts.
-
-| Property | Value |
-|---|---|
-| **Type** | `number` |
-| **Default** | `2.5` |
-
-### `chart-max-points`
-
-How many points are sampled across the full reconstructed history. This is the curve's granularity, not a time window: every chart already spans the whole history (from the first star to now), and a higher value just samples that same span more finely for a more detailed line. To narrow the time window instead, use [`chart-range`](#chart-range).
-
-| Property | Value |
-|---|---|
-| **Type** | `number` |
-| **Default** | `30` |
-
-Values above `30` are allowed and capped at `365`. Set to `0` to reconstruct the full history at weekly resolution (the number of points then scales with the repository's age). Email charts are always limited to 30 points regardless of this setting.
-
-### `chart-y-axis-side`
-
-Y-axis label side.
-
-| Property | Value |
-|---|---|
-| **Type** | `string` |
-| **Default** | `left` |
-| **Options** | `left`, `right` |
-
-### `chart-smoothing`
-
-Curve style between points.
+Whether the SVG charts animate when first rendered.
 
 | Property | Value |
 |---|---|
 | **Type** | `boolean` |
 | **Default** | `true` |
 
-`true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. Applies to every chart, including the ones embedded in the email report. When `true`, the exact curve is chosen by [`chart-curve`](#chart-curve).
+`true` draws the line and fades in the points with CSS animations; `false` renders the charts static. Static is preferable for contexts that do not play CSS animations (most email clients, raster previews). Only affects the SVG charts; the QuickChart images embedded in the email are static regardless.
+
+---
+
+### `chart-begin-at-zero`
+
+Where the chart Y-axis starts.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `false` |
+
+`false` (the default) zooms the Y-axis into the data range so day-to-day changes are visible; `true` anchors the Y-axis at zero for an absolute view of scale. Applies to all charts (SVG and email).
 
 ---
 
@@ -471,94 +444,6 @@ The curve used to connect points when [`chart-smoothing`](#chart-smoothing) is `
 See the **[examples gallery](https://github.com/fbuireu/github-star-tracker/blob/main/examples/README.md#curve-styles-chart-curve)** for a rendered comparison.
 
 **Email charts** (rendered via QuickChart) respect this setting with one caveat, since QuickChart cannot draw every curve natively: `monotone` is reproduced exactly, `rounded-step` falls back to `monotone`, and `catmull-rom` and `cubic-bezier` both render as a tensioned spline. The SVG charts on the data branch always use the exact curve.
-
----
-
-### `chart-show-points`
-
-Whether to draw a marker on each data point.
-
-| Property | Value |
-|---|---|
-| **Type** | `boolean` |
-| **Default** | `true` |
-
-`true` marks each snapshot with a dot; `false` hides the markers for a cleaner line on dense charts. Applies to every chart, including the ones embedded in the email report.
-
----
-
-### `chart-animation`
-
-Whether the SVG charts animate when first rendered.
-
-| Property | Value |
-|---|---|
-| **Type** | `boolean` |
-| **Default** | `true` |
-
-`true` draws the line and fades in the points with CSS animations; `false` renders the charts static. Static is preferable for contexts that do not play CSS animations (most email clients, raster previews). Only affects the SVG charts; the QuickChart images embedded in the email are static regardless.
-
----
-
-### `chart-milestones`
-
-Whether to draw milestone reference lines on the main star-history chart.
-
-| Property | Value |
-|---|---|
-| **Type** | `boolean` |
-| **Default** | `true` |
-
-`true` draws dashed reference lines at the star milestones (10, 50, 100, 500, 1k, 5k, 10k, 50k, 100k, 500k, 1M) that fall strictly between the lowest and highest plotted values; `false` hides them. Applies to the main chart in both the SVG output and the email report.
-
----
-
-### `chart-begin-at-zero`
-
-Where the chart Y-axis starts.
-
-| Property | Value |
-|---|---|
-| **Type** | `boolean` |
-| **Default** | `false` |
-
-`false` (the default) zooms the Y-axis into the data range so day-to-day changes are visible; `true` anchors the Y-axis at zero for an absolute view of scale. Applies to all charts (SVG and email).
-
----
-
-### `chart-theme`
-
-Color theme for the SVG charts, and the fallback for the email report when [`email-theme`](#email-theme) is `auto`.
-
-| Property | Value |
-|---|---|
-| **Type** | `auto`, `light`, `dark` |
-| **Default** | `auto` |
-
-`auto` makes the SVG charts follow the reader's `prefers-color-scheme` (light or dark) via a media query. `light` and `dark` force that palette. Most email clients ignore `prefers-color-scheme`, so under `auto` the email body and its charts render in light; use [`email-theme`](#email-theme) to give the email a palette of its own.
-
----
-
-### `email-theme`
-
-Color theme for the HTML email report and the chart images inside it.
-
-| Property | Value |
-|---|---|
-| **Type** | `auto`, `light`, `dark` |
-| **Default** | `auto` |
-
-`auto` means "same as [`chart-theme`](#chart-theme)", so you only need to set this when the email should differ from the SVG charts on the data branch — for example `chart-theme: auto` (the README charts follow each viewer's system theme) together with `email-theme: dark` (every recipient gets a dark digest).
-
-This is the input to reach for when a reader in dark mode sees a **white background behind the email charts**. Those charts are PNG images rendered by QuickChart with the background baked into the request ([ADR 0010](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0010-quickchart-renders-the-email-charts.md)), so `prefers-color-scheme` cannot reach them the way it reaches an SVG: the mail client darkens the surrounding HTML and leaves the image untouched. `email-theme: dark` bakes the dark palette into both the body and the images instead.
-
-The trade-off is that a raster has exactly one background for every recipient. `light` and `dark` are a bet on how your audience reads mail; there is no per-reader answer.
-
-```yaml
-with:
-  chart-theme: auto
-  email-theme: dark
-```
 
 ---
 
@@ -591,6 +476,61 @@ with:
 
 ---
 
+### `chart-line-color`
+
+Hex color for the primary chart line/fill/points (star-history, per-repo and forecast historical series; not the comparison palette or forecast trend lines).
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | `#dfb317` |
+
+Accepts 3/4/6/8-digit hex with or without a leading `#`. In YAML a bare `#` starts a comment, so quote it (`"#6b63ff"`) or drop the `#` (`6b63ff`).
+
+```yaml
+with:
+  chart-line-color: '#6b63ff'
+```
+
+---
+
+### `chart-line-width`
+
+Stroke width in px (>0) of data lines across all charts.
+
+| Property | Value |
+|---|---|
+| **Type** | `number` |
+| **Default** | `2.5` |
+
+---
+
+### `chart-max-points`
+
+How many points are sampled across the full reconstructed history. This is the curve's granularity, not a time window: every chart already spans the whole history (from the first star to now), and a higher value just samples that same span more finely for a more detailed line. To narrow the time window instead, use [`chart-range`](#chart-range).
+
+| Property | Value |
+|---|---|
+| **Type** | `number` |
+| **Default** | `30` |
+
+Values above `30` are allowed and capped at `365`. Set to `0` to reconstruct the full history at weekly resolution (the number of points then scales with the repository's age). Email charts are always limited to 30 points regardless of this setting.
+
+---
+
+### `chart-milestones`
+
+Whether to draw milestone reference lines on the main star-history chart.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `true` |
+
+`true` draws dashed reference lines at the star milestones (10, 50, 100, 500, 1k, 5k, 10k, 50k, 100k, 500k, 1M) that fall strictly between the lowest and highest plotted values; `false` hides them. Applies to the main chart in both the SVG output and the email report.
+
+---
+
 ### `chart-range`
 
 Time window of history to plot.
@@ -601,6 +541,45 @@ Time window of history to plot.
 | **Default** | `all` |
 
 Keeps only the snapshots within the selected window before applying [`chart-max-points`](#chart-max-points). The window is measured back from the most recent data point (not wall-clock time), so it is deterministic across runs. `all` plots the full reconstructed history. Applies to all charts (SVG and email).
+
+---
+
+### `chart-show-points`
+
+Whether to draw a marker on each data point.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `true` |
+
+`true` marks each snapshot with a dot; `false` hides the markers for a cleaner line on dense charts. Applies to every chart, including the ones embedded in the email report.
+
+---
+
+### `chart-smoothing`
+
+Curve style between points.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `true` |
+
+`true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. Applies to every chart, including the ones embedded in the email report. When `true`, the exact curve is chosen by [`chart-curve`](#chart-curve).
+
+---
+
+### `chart-theme`
+
+Color theme for the SVG charts, and the fallback for the email report when [`email-theme`](#email-theme) is `auto`.
+
+| Property | Value |
+|---|---|
+| **Type** | `auto`, `light`, `dark` |
+| **Default** | `auto` |
+
+`auto` makes the SVG charts follow the reader's `prefers-color-scheme` (light or dark) via a media query. `light` and `dark` force that palette. Most email clients ignore `prefers-color-scheme`, so under `auto` the email body and its charts render in light; use [`email-theme`](#email-theme) to give the email a palette of its own.
 
 ---
 
@@ -617,6 +596,41 @@ When `true`, a dashed line is drawn over the main chart showing a 7-point simple
 
 ---
 
+### `chart-y-axis-side`
+
+Y-axis label side.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | `left` |
+| **Options** | `left`, `right` |
+
+---
+
+### `email-theme`
+
+Color theme for the HTML email report and the chart images inside it.
+
+| Property | Value |
+|---|---|
+| **Type** | `auto`, `light`, `dark` |
+| **Default** | `auto` |
+
+`auto` means "same as [`chart-theme`](#chart-theme)", so you only need to set this when the email should differ from the SVG charts on the data branch — for example `chart-theme: auto` (the README charts follow each viewer's system theme) together with `email-theme: dark` (every recipient gets a dark digest).
+
+This is the input to reach for when a reader in dark mode sees a **white background behind the email charts**. Those charts are PNG images rendered by QuickChart with the background baked into the request ([ADR 0010](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0010-quickchart-renders-the-email-charts.md)), so `prefers-color-scheme` cannot reach them the way it reaches an SVG: the mail client darkens the surrounding HTML and leaves the image untouched. `email-theme: dark` bakes the dark palette into both the body and the images instead.
+
+The trade-off is that a raster has exactly one background for every recipient. `light` and `dark` are a bet on how your audience reads mail; there is no per-reader answer.
+
+```yaml
+with:
+  chart-theme: auto
+  email-theme: dark
+```
+
+---
+
 ### `velocity-metrics`
 
 Whether to add a growth-velocity section to the Markdown and HTML reports.
@@ -630,7 +644,53 @@ When `true`, the report includes a "Growth Velocity" section measured period ove
 
 ---
 
+
 ## Filtering Options
+
+### `exclude-orgs`
+
+Comma-separated list of organization/owner names or regex patterns to exclude.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` (comma-separated) |
+| **Default** | - |
+
+Accepts an exact owner name or a `/regex/` pattern (e.g. `/^my-org$/`), case-sensitive. Composes with `only-repos`/`exclude-repos`.
+
+```yaml
+with:
+  exclude-orgs: 'old-org,/^test-.*/'
+```
+
+---
+
+### `exclude-repos`
+
+Comma-separated list of repository names or regex patterns to exclude.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` (comma-separated) |
+| **Default** | - |
+
+Supports exact names and regex patterns (wrapped in `/`):
+
+```yaml
+with:
+  exclude-repos: 'test-repo,old-project,/^demo-.*/'
+```
+
+In a config file:
+
+```yaml
+exclude_repos:
+  - test-repo
+  - old-project
+  - /^demo-.*/
+```
+
+---
 
 ### `include-archived`
 
@@ -664,47 +724,18 @@ with:
 
 ---
 
-### `exclude-repos`
+### `min-stars`
 
-Comma-separated list of repository names or regex patterns to exclude.
-
-| Property | Value |
-|---|---|
-| **Type** | `string` (comma-separated) |
-| **Default** | - |
-
-Supports exact names and regex patterns (wrapped in `/`):
-
-```yaml
-with:
-  exclude-repos: 'test-repo,old-project,/^demo-.*/'
-```
-
-In a config file:
-
-```yaml
-exclude_repos:
-  - test-repo
-  - old-project
-  - /^demo-.*/
-```
-
----
-
-### `only-repos`
-
-Comma-separated list of repository names to exclusively track.
+Only track repositories with at least this many stars.
 
 | Property | Value |
 |---|---|
-| **Type** | `string` (comma-separated) |
-| **Default** | - |
-
-When set, **only** these repos are tracked, and the archived/fork/exclude/min-stars filters are skipped. Accepts exact names or `/regex/` patterns, like `exclude-repos`. [`only-orgs`](#only-orgs) still applies first and narrows the set this selects from.
+| **Type** | `number` |
+| **Default** | `0` |
 
 ```yaml
 with:
-  only-repos: 'my-awesome-project,another-repo'
+  min-stars: '10'
 ```
 
 ---
@@ -727,91 +758,37 @@ with:
 
 ---
 
-### `exclude-orgs`
+### `only-repos`
 
-Comma-separated list of organization/owner names or regex patterns to exclude.
+Comma-separated list of repository names to exclusively track.
 
 | Property | Value |
 |---|---|
 | **Type** | `string` (comma-separated) |
 | **Default** | - |
 
-Accepts an exact owner name or a `/regex/` pattern (e.g. `/^my-org$/`), case-sensitive. Composes with `only-repos`/`exclude-repos`.
+When set, **only** these repos are tracked, and the archived/fork/exclude/min-stars filters are skipped. Accepts exact names or `/regex/` patterns, like `exclude-repos`. [`only-orgs`](#only-orgs) still applies first and narrows the set this selects from.
 
 ```yaml
 with:
-  exclude-orgs: 'old-org,/^test-.*/'
+  only-repos: 'my-awesome-project,another-repo'
 ```
 
 ---
 
-### `min-stars`
-
-Only track repositories with at least this many stars.
-
-| Property | Value |
-|---|---|
-| **Type** | `number` |
-| **Default** | `0` |
-
-```yaml
-with:
-  min-stars: '10'
-```
-
----
 
 ## Email Configuration
 
 All email inputs are optional. Providing `smtp-host` enables the built-in email feature.
 
-### `smtp-host`
+### `email-from`
 
-SMTP server hostname. **Providing this enables built-in email notifications.**
-
-| Property | Value |
-|---|---|
-| **Type** | `string` |
-| **Default** | - |
-
-Common values: `smtp.gmail.com`, `smtp-mail.outlook.com`, `smtp.office365.com`, `smtp.sendgrid.net`
-
----
-
-### `smtp-port`
-
-SMTP server port.
+Sender name or email address.
 
 | Property | Value |
 |---|---|
 | **Type** | `string` |
-| **Default** | `587` |
-
-Common ports: `587` (STARTTLS, recommended), `465` (SSL/TLS).
-
----
-
-### `smtp-username`
-
-SMTP authentication username.
-
-| Property | Value |
-|---|---|
-| **Type** | `string` |
-| **Default** | - |
-
----
-
-### `smtp-password`
-
-SMTP authentication password.
-
-| Property | Value |
-|---|---|
-| **Type** | `string` (secret) |
-| **Default** | - |
-
-For Gmail, use an app-specific password. For SendGrid, use your API key.
+| **Default** | _(localized)_ |
 
 ---
 
@@ -826,30 +803,30 @@ Recipient email address.
 
 ---
 
-### `email-from`
+### `notification-mode`
 
-Sender name or email address.
+How [`notification-threshold`](#notification-threshold) measures the accumulated change since the last notification. Config file key: `notification_mode`.
 
 | Property | Value |
 |---|---|
 | **Type** | `string` |
-| **Default** | _(localized)_ |
+| **Default** | `net` |
+| **Options** | `net`, `gains` |
 
----
-
-### `send-on-no-changes`
-
-Send email even when no star changes are detected.
-
-| Property | Value |
+| Value | Behavior |
 |---|---|
-| **Type** | `boolean` |
-| **Default** | `false` |
+| `net` | The absolute value of the change in total stars since the last notification. Gains and losses across repos cancel out, and a large **drop** also reaches the threshold |
+| `gains` | Only upward movement counts. The threshold is reached when the total has risen by at least N since the last notification; a drop never triggers a notification |
+
+Both modes measure against `starsAtLastNotification`, which is only updated when a notification actually fires, so the counter accumulates across runs instead of resetting on every run. `notification-threshold: '0'` still means "notify on every run that has changes", regardless of mode.
 
 ```yaml
 with:
-  send-on-no-changes: true
+  notification-threshold: '500'
+  notification-mode: 'gains'
 ```
+
+With that pair, guard the email step with `if: steps.tracker.outputs.should-notify == 'true'` to be notified once per 500 stars gained.
 
 ---
 
@@ -900,32 +877,72 @@ See **[Email Notifications](Email-Notifications)** for complete setup.
 
 ---
 
-### `notification-mode`
+### `send-on-no-changes`
 
-How [`notification-threshold`](#notification-threshold) measures the accumulated change since the last notification. Config file key: `notification_mode`.
+Send email even when no star changes are detected.
+
+| Property | Value |
+|---|---|
+| **Type** | `boolean` |
+| **Default** | `false` |
+
+```yaml
+with:
+  send-on-no-changes: true
+```
+
+---
+
+### `smtp-host`
+
+SMTP server hostname. **Providing this enables built-in email notifications.**
 
 | Property | Value |
 |---|---|
 | **Type** | `string` |
-| **Default** | `net` |
-| **Options** | `net`, `gains` |
+| **Default** | - |
 
-| Value | Behavior |
-|---|---|
-| `net` | The absolute value of the change in total stars since the last notification. Gains and losses across repos cancel out, and a large **drop** also reaches the threshold |
-| `gains` | Only upward movement counts. The threshold is reached when the total has risen by at least N since the last notification; a drop never triggers a notification |
-
-Both modes measure against `starsAtLastNotification`, which is only updated when a notification actually fires, so the counter accumulates across runs instead of resetting on every run. `notification-threshold: '0'` still means "notify on every run that has changes", regardless of mode.
-
-```yaml
-with:
-  notification-threshold: '500'
-  notification-mode: 'gains'
-```
-
-With that pair, guard the email step with `if: steps.tracker.outputs.should-notify == 'true'` to be notified once per 500 stars gained.
+Common values: `smtp.gmail.com`, `smtp-mail.outlook.com`, `smtp.office365.com`, `smtp.sendgrid.net`
 
 ---
+
+### `smtp-password`
+
+SMTP authentication password.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` (secret) |
+| **Default** | - |
+
+For Gmail, use an app-specific password. For SendGrid, use your API key.
+
+---
+
+### `smtp-port`
+
+SMTP server port.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | `587` |
+
+Common ports: `587` (STARTTLS, recommended), `465` (SSL/TLS).
+
+---
+
+### `smtp-username`
+
+SMTP authentication username.
+
+| Property | Value |
+|---|---|
+| **Type** | `string` |
+| **Default** | - |
+
+---
+
 
 ## Validation
 

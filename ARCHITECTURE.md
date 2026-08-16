@@ -138,7 +138,7 @@ State has to survive between runs of a stateless Action. Artifacts expire and ar
 | Email | `@presentation/html` body | `@infrastructure/notification/email` `sendEmail` |
 | Action outputs (11) | - | `setOutputs` in `tracker.ts` |
 
-The eleven action outputs: `report`, `report-html`, `report-html-path`, `report-csv`, `total-stars`, `stars-changed`, `new-stars`, `lost-stars`, `should-notify`, `notification-sent`, `new-stargazers`. Their values, and the difference between `should-notify` (the decision) and `notification-sent` (delivery), are in [src/application/CLAUDE.md](./src/application/CLAUDE.md).
+The eleven action outputs, alphabetically as `action.yml` declares them: `lost-stars`, `new-stargazers`, `new-stars`, `notification-sent`, `report`, `report-csv`, `report-html`, `report-html-path`, `should-notify`, `stars-changed`, `total-stars`. Their values, and the difference between `should-notify` (the decision) and `notification-sent` (delivery), are in [src/application/CLAUDE.md](./src/application/CLAUDE.md).
 
 ## 5. Build & release
 
