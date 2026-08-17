@@ -6,13 +6,8 @@ import type { ChartRequest } from './chart-spec';
 import { ChartKind } from './chart-spec';
 import { SECTION_ICON } from './constants';
 import { EscapeDialect, escapeFor } from './escaping';
-import {
-  buildForecastTable,
-  buildReportModel,
-  StargazerOutcome,
-  type TopRepo,
-} from './report-model';
-import type { ReportParams } from './shared';
+import { buildForecastTable, StargazerOutcome, type TopRepo } from './report-model';
+import type { RenderReportParams } from './shared';
 import { colorSchemeFor, emailChartStyle, resolvePalette } from './shared';
 import type { ColorPalette } from './types';
 
@@ -46,8 +41,7 @@ function repoChartHeading({ repo, palette, t }: RepoChartHeadingParams): string 
   });
 }
 
-export function generateHtmlReport(params: ReportParams): string {
-  const { config } = params;
+export function generateHtmlReport({ model, config }: RenderReportParams): string {
   const {
     locale,
     emailTheme: theme,
@@ -62,7 +56,6 @@ export function generateHtmlReport(params: ReportParams): string {
   const palette = resolvePalette(theme);
   const chartUrl = (request: ChartRequest): string | null =>
     chartImageUrl({ request, locale, theme, ...style });
-  const model = buildReportModel(params);
   const {
     summary,
     sorted,

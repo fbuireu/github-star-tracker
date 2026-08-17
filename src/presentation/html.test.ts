@@ -14,6 +14,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import { COLORS, DARK_PALETTE, LIGHT_PALETTE } from './constants';
 import { generateHtmlReport } from './html';
+import { buildReportModel } from './report-model';
 import type { ReportParams } from './shared';
 
 const QUICKCHART_CONFIG = /https:\/\/quickchart\.io\/chart\?[^"]*&c=([^"]+)/g;
@@ -23,11 +24,16 @@ interface RenderHtml extends Partial<Omit<ReportParams, 'config'>> {
 }
 
 function renderHtml({ config, ...overrides }: RenderHtml = {}): string {
+  const resolved = makeConfig(config);
+
   return generateHtmlReport({
-    config: makeConfig(config),
-    results: makeComparisonResults(),
-    previousTimestamp: '2026-01-01T00:00:00Z',
-    ...overrides,
+    config: resolved,
+    model: buildReportModel({
+      config: resolved,
+      results: makeComparisonResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      ...overrides,
+    }),
   });
 }
 

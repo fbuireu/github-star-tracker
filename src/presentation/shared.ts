@@ -7,6 +7,7 @@ import { toEpochMs } from '@domain/time';
 import type { ComparisonResults, History, RepoResult } from '@domain/types';
 import { getTranslations, interpolate, type Locale, type Translations } from '@i18n';
 import { CHART, DARK_PALETTE, LIGHT_PALETTE } from './constants';
+import type { ReportModel } from './report-model';
 import type { ColorPalette } from './types';
 
 export interface ReportParams {
@@ -17,6 +18,11 @@ export interface ReportParams {
   velocityHistory?: History | null;
   stargazerDiff?: StargazerDiffResult | null;
   forecastData?: ForecastData | null;
+}
+
+export interface RenderReportParams {
+  model: ReportModel;
+  config: Config;
 }
 
 export interface EmailChartStyle {

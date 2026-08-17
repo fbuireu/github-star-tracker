@@ -76,6 +76,12 @@ type `Omit`s the field so the caller cannot believe otherwise. `maxPoints` is li
 (`measureRun` for `@domain`, `withDataBranch` for `@infrastructure`); this one had five, and the shell was
 assembling the params for each.
 
+- **It builds the `ReportModel` once and hands the same one to both dialects.** They used to build their
+  own, and `prepareReportData` reads `new Date()` — so a run crossing midnight could date the markdown
+  Report and the HTML Report differently. One model also means one Top Repositories list.
+- **`topRepoNames` is not a parameter.** `renderRun` derives it from `model.topRepos`, so the per-repo SVGs
+  `charts.ts` writes and the `./charts/<file>` links `markdown.ts` emits are the same set by construction.
+  Passing it in left a caller able to chart one set and link another — broken images, silently.
 - **It takes `chartHistories` and `storedHistory`, not two `History` values.** That is the point: `history`
   and `velocityHistory` used to be adjacent fields of the same type that were **not** interchangeable, and
   swapping them silently turned Velocity into an average over a chart bucket. `renderRun` derives
@@ -84,7 +90,10 @@ assembling the params for each.
 - It renders; it decides nothing about **whether** to render. Charts still come back `[]` when charts are
   off, and the report renderers still read `config` for the options they honour.
 - The individual renderers stay exported and stay tested — they are internal seams within this layer, the
-  same way `@domain`'s five are behind `measureRun`.
+  same way `@domain`'s five are behind `measureRun`. `generateMarkdownReport` and `generateHtmlReport` take
+  `{ model, config }`: the model is the data, the config is which options that dialect honours.
+- `run.test.ts` is where the front door's own contract lives — one date across both Reports, Velocity read
+  from the stored History, and the charted set matching the linked set.
 
 The report modules are one per format: `markdown.ts`, `html.ts`, `csv.ts`, `badge.ts`, over a shared
 `report-model.ts`; with `escaping.ts` for every dialect's escaper, `shared.ts` for cross-renderer helpers and

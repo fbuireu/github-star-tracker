@@ -8,6 +8,7 @@ import { buildChartFiles } from './charts';
 import { generateCsvReport } from './csv';
 import { generateHtmlReport } from './html';
 import { generateMarkdownReport } from './markdown';
+import { buildReportModel } from './report-model';
 import type { ReportParams } from './shared';
 
 export interface RenderedRun {
@@ -26,7 +27,6 @@ interface RenderRunParams {
   storedHistory: History;
   stargazerDiff?: StargazerDiffResult | null;
   forecastData: ForecastData | null;
-  topRepoNames: string[];
 }
 
 export function renderRun({
@@ -37,7 +37,6 @@ export function renderRun({
   storedHistory,
   stargazerDiff,
   forecastData,
-  topRepoNames,
 }: RenderRunParams): RenderedRun {
   const reportParams: ReportParams = {
     config,
@@ -49,11 +48,19 @@ export function renderRun({
     forecastData,
   };
 
+  const model = buildReportModel(reportParams);
+  const rendering = { model, config };
+
   return {
-    markdown: generateMarkdownReport(reportParams),
-    html: generateHtmlReport(reportParams),
+    markdown: generateMarkdownReport(rendering),
+    html: generateHtmlReport(rendering),
     csv: generateCsvReport(results),
     badge: generateBadge({ totalStars: results.summary.totalStars, locale: config.locale }),
-    charts: buildChartFiles({ config, chartHistories, forecastData, topRepoNames }),
+    charts: buildChartFiles({
+      config,
+      chartHistories,
+      forecastData,
+      topRepoNames: model.topRepos.map((repo) => repo.fullName),
+    }),
   };
 }

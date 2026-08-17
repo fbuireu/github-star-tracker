@@ -3,13 +3,8 @@ import { deltaIndicator, formatSignedPercent, trendIcon } from '@domain/formatti
 import { getTranslations, interpolate, type Translations } from '@i18n';
 import { CHART_FILES, SECTION_ICON } from './constants';
 import { EscapeDialect, escapeFor } from './escaping';
-import {
-  buildForecastTable,
-  buildReportModel,
-  StargazerOutcome,
-  type TopRepo,
-} from './report-model';
-import type { ReportParams } from './shared';
+import { buildForecastTable, StargazerOutcome, type TopRepo } from './report-model';
+import type { RenderReportParams } from './shared';
 import { perRepoChartFile } from './shared';
 
 const escapeMarkdown = escapeFor(EscapeDialect.MARKDOWN);
@@ -31,9 +26,8 @@ function repoChartHeading({ repo, t }: RepoChartHeadingParams): string {
   });
 }
 
-export function generateMarkdownReport(params: ReportParams): string {
-  const t = getTranslations(params.config.locale);
-  const model = buildReportModel(params);
+export function generateMarkdownReport({ model, config }: RenderReportParams): string {
+  const t = getTranslations(config.locale);
   const {
     summary,
     sorted,

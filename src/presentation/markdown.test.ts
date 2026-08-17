@@ -10,6 +10,7 @@ import {
 } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
 import { generateMarkdownReport } from './markdown';
+import { buildReportModel } from './report-model';
 import type { ReportParams } from './shared';
 
 interface RenderMarkdown extends Partial<Omit<ReportParams, 'config'>> {
@@ -17,11 +18,16 @@ interface RenderMarkdown extends Partial<Omit<ReportParams, 'config'>> {
 }
 
 function renderMarkdown({ config, ...overrides }: RenderMarkdown = {}): string {
+  const resolved = makeConfig(config);
+
   return generateMarkdownReport({
-    config: makeConfig(config),
-    results: makeComparisonResults(),
-    previousTimestamp: '2026-01-01T00:00:00Z',
-    ...overrides,
+    config: resolved,
+    model: buildReportModel({
+      config: resolved,
+      results: makeComparisonResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      ...overrides,
+    }),
   });
 }
 

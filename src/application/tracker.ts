@@ -115,7 +115,6 @@ export async function trackStars(): Promise<void> {
           storedHistory: updatedHistory,
           stargazerDiff,
           forecastData,
-          topRepoNames,
         });
         const notify = summary.changed && measurement.thresholdReached;
 

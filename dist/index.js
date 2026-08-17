@@ -43105,8 +43105,7 @@ function repoChartHeading({ repo, palette, t }) {
     }
   });
 }
-function generateHtmlReport(params) {
-  const { config } = params;
+function generateHtmlReport({ model, config }) {
   const {
     locale,
     emailTheme: theme,
@@ -43119,7 +43118,6 @@ function generateHtmlReport(params) {
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
   const chartUrl = (request2) => chartImageUrl({ request: request2, locale, theme, ...style });
-  const model = buildReportModel(params);
   const {
     summary: summary2,
     sorted,
@@ -43349,9 +43347,8 @@ function repoChartHeading2({ repo, t }) {
     }
   });
 }
-function generateMarkdownReport(params) {
-  const t = getTranslations(params.config.locale);
-  const model = buildReportModel(params);
+function generateMarkdownReport({ model, config }) {
+  const t = getTranslations(config.locale);
   const {
     summary: summary2,
     sorted,
@@ -43549,8 +43546,7 @@ function renderRun({
   chartHistories,
   storedHistory,
   stargazerDiff,
-  forecastData,
-  topRepoNames
+  forecastData
 }) {
   const reportParams = {
     config,
@@ -43561,12 +43557,19 @@ function renderRun({
     stargazerDiff,
     forecastData
   };
+  const model = buildReportModel(reportParams);
+  const rendering = { model, config };
   return {
-    markdown: generateMarkdownReport(reportParams),
-    html: generateHtmlReport(reportParams),
+    markdown: generateMarkdownReport(rendering),
+    html: generateHtmlReport(rendering),
     csv: generateCsvReport(results),
     badge: generateBadge({ totalStars: results.summary.totalStars, locale: config.locale }),
-    charts: buildChartFiles({ config, chartHistories, forecastData, topRepoNames })
+    charts: buildChartFiles({
+      config,
+      chartHistories,
+      forecastData,
+      topRepoNames: model.topRepos.map((repo) => repo.fullName)
+    })
   };
 }
 
@@ -43645,8 +43648,7 @@ async function trackStars() {
           chartHistories,
           storedHistory: updatedHistory,
           stargazerDiff,
-          forecastData,
-          topRepoNames
+          forecastData
         });
         const notify = summary2.changed && measurement.thresholdReached;
         const emailConfig = getEmailConfig(config.locale);

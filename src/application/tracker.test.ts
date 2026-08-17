@@ -653,9 +653,11 @@ describe('trackStars', () => {
     it('derives previousTimestamp from the measured baseline when present', async () => {
       mockMeasurement({ baselineTimestamp: '2026-01-01T00:00:00Z' });
       await trackStars();
-      expect(generateMarkdownReport).toHaveBeenCalledWith(
-        expect.objectContaining({ previousTimestamp: '2026-01-01T00:00:00Z' }),
-      );
+
+      const { model } = vi.mocked(generateMarkdownReport).mock.calls[0][0];
+
+      expect(model.prev).toBe('2026-01-01');
+      expect(model.isFirstRun).toBe(false);
     });
     it('warns when max-history drops stored snapshots', async () => {
       mockMeasurement({ droppedSnapshots: 3 });
@@ -665,13 +667,6 @@ describe('trackStars', () => {
     it('does not warn about max-history when nothing is dropped', async () => {
       await trackStars();
       expect(core.warning).not.toHaveBeenCalledWith(expect.stringContaining('drops the oldest'));
-    });
-    it('passes the stored history as velocityHistory, not the resolved chart history', async () => {
-      const measurement = mockMeasurement();
-      await trackStars();
-      const params = vi.mocked(generateMarkdownReport).mock.calls[0][0];
-      expect(params.velocityHistory).toBeDefined();
-      expect(params.velocityHistory).toBe(measurement.updatedHistory);
     });
     it('does not advance the notification baseline when the email fails to send', async () => {
       vi.mocked(getEmailConfig).mockReturnValue({
