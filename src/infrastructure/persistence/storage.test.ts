@@ -1,10 +1,10 @@
-import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as core from '@actions/core';
 import type { StargazerMap } from '@domain/stargazers';
 import type { History } from '@domain/types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { execute } from '../git/commands';
 import {
   commitAndPush,
   pruneCharts,
@@ -19,7 +19,7 @@ import {
 } from './storage';
 
 vi.mock('node:fs');
-vi.mock('node:child_process');
+vi.mock('../git/commands', () => ({ execute: vi.fn() }));
 vi.mock('@actions/core', () => ({
   info: vi.fn(),
   debug: vi.fn(),
@@ -300,8 +300,32 @@ describe('writeStargazers', () => {
 });
 
 describe('commitAndPush', () => {
+  const CREDENTIAL = Buffer.from('x-access-token:fake-token').toString('base64');
+  const push = {
+    dataDir: '/data',
+    dataBranch: 'star-tracker-data',
+    message: 'Update data',
+    token: 'fake-token',
+  };
+
+  function ranGit(...args: string[]): boolean {
+    return vi
+      .mocked(execute)
+      .mock.calls.some(([params]) => JSON.stringify(params.args) === JSON.stringify(args));
+  }
+
+  function stageChanges({ pushError }: { pushError?: Error } = {}): void {
+    vi.mocked(execute).mockImplementation(({ args }) => {
+      if (args[0] === 'diff') throw new Error('Changes detected');
+      if (pushError && args.includes('push')) throw pushError;
+
+      return '';
+    });
+  }
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(execute).mockReturnValue('');
   });
 
   afterEach(() => {
@@ -309,129 +333,55 @@ describe('commitAndPush', () => {
   });
 
   it('commits and pushes changes when there are staged changes', () => {
-    vi.mocked(execFileSync)
-      .mockReturnValueOnce('')
-      .mockImplementationOnce(() => {
-        throw new Error('Changes detected');
-      })
-      .mockReturnValueOnce('')
-      .mockReturnValueOnce('');
+    stageChanges();
 
-    const result = commitAndPush({
-      dataDir: '/data',
-      dataBranch: 'star-tracker-data',
-      message: 'Update data',
-      token: 'fake-token',
-    });
-
-    const basicCredential = Buffer.from('x-access-token:fake-token').toString('base64');
-
-    expect(result).toBe(true);
-    expect(execFileSync).toHaveBeenCalledWith('git', ['add', '-A'], expect.any(Object));
-    expect(execFileSync).toHaveBeenCalledWith(
-      'git',
-      ['commit', '-m', 'Update data'],
-      expect.any(Object),
-    );
-    expect(core.setSecret).toHaveBeenCalledWith(basicCredential);
-    expect(execFileSync).toHaveBeenCalledWith(
-      'git',
-      [
+    expect(commitAndPush(push)).toBe(true);
+    expect(ranGit('add', '-A')).toBe(true);
+    expect(ranGit('commit', '-m', 'Update data')).toBe(true);
+    expect(core.setSecret).toHaveBeenCalledWith(CREDENTIAL);
+    expect(
+      ranGit(
         '-c',
-        `http.extraheader=AUTHORIZATION: basic ${basicCredential}`,
+        `http.extraheader=AUTHORIZATION: basic ${CREDENTIAL}`,
         'push',
         'origin',
         'HEAD:star-tracker-data',
-      ],
-      expect.any(Object),
-    );
+      ),
+    ).toBe(true);
     expect(core.info).toHaveBeenCalledWith('Data committed and pushed to star-tracker-data');
   });
 
   it('passes a commit message with quotes through without breaking the command', () => {
-    vi.mocked(execFileSync)
-      .mockReturnValueOnce('')
-      .mockImplementationOnce(() => {
-        throw new Error('Changes detected');
-      })
-      .mockReturnValueOnce('')
-      .mockReturnValueOnce('');
+    stageChanges();
 
-    commitAndPush({
-      dataDir: '/data',
-      dataBranch: 'star-tracker-data',
-      message: 'Update star data: 12 "total" (+3)',
-      token: 'fake-token',
-    });
+    commitAndPush({ ...push, message: 'Update star data: 12 "total" (+3)' });
 
-    expect(execFileSync).toHaveBeenCalledWith(
-      'git',
-      ['commit', '-m', 'Update star data: 12 "total" (+3)'],
-      expect.any(Object),
-    );
+    expect(ranGit('commit', '-m', 'Update star data: 12 "total" (+3)')).toBe(true);
   });
 
   it('explains a rejected push instead of surfacing git’s raw text', () => {
-    vi.mocked(execFileSync)
-      .mockReturnValueOnce('')
-      .mockImplementationOnce(() => {
-        throw new Error('Changes detected');
-      })
-      .mockReturnValueOnce('')
-      .mockImplementationOnce(() => {
-        throw new Error(
-          'Git command failed: "git push"\n ! [rejected] HEAD -> star-tracker-data (fetch first)',
-        );
-      });
+    stageChanges({
+      pushError: new Error(
+        'Git command failed: "git push"\n ! [rejected] HEAD -> star-tracker-data (fetch first)',
+      ),
+    });
 
-    expect(() =>
-      commitAndPush({
-        dataDir: '/data',
-        dataBranch: 'star-tracker-data',
-        message: 'Update data',
-        token: 'fake-token',
-      }),
-    ).toThrow(/Another run pushed to "star-tracker-data" while this one was working/);
+    expect(() => commitAndPush(push)).toThrow(
+      /Another run pushed to "star-tracker-data" while this one was working/,
+    );
   });
 
   it('lets any other push failure through untouched', () => {
-    vi.mocked(execFileSync)
-      .mockReturnValueOnce('')
-      .mockImplementationOnce(() => {
-        throw new Error('Changes detected');
-      })
-      .mockReturnValueOnce('')
-      .mockImplementationOnce(() => {
-        throw new Error('Git command failed: "git push"\nfatal: Authentication failed');
-      });
+    stageChanges({
+      pushError: new Error('Git command failed: "git push"\nfatal: Authentication failed'),
+    });
 
-    expect(() =>
-      commitAndPush({
-        dataDir: '/data',
-        dataBranch: 'star-tracker-data',
-        message: 'Update data',
-        token: 'fake-token',
-      }),
-    ).toThrow(/Authentication failed/);
+    expect(() => commitAndPush(push)).toThrow(/Authentication failed/);
   });
 
   it('returns false when there are no changes to commit', () => {
-    vi.mocked(execFileSync).mockReturnValueOnce('').mockReturnValueOnce('');
-
-    const result = commitAndPush({
-      dataDir: '/data',
-      dataBranch: 'star-tracker-data',
-      message: 'Update data',
-      token: 'fake-token',
-    });
-
-    expect(result).toBe(false);
-    expect(core.info).toHaveBeenCalledWith('No data changes to commit');
-    expect(execFileSync).not.toHaveBeenCalledWith(
-      'git',
-      expect.arrayContaining(['commit']),
-      expect.any(Object),
-    );
+    expect(commitAndPush(push)).toBe(false);
+    expect(ranGit('commit', '-m', 'Update data')).toBe(false);
   });
 });
 

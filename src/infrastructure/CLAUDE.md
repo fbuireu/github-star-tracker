@@ -183,9 +183,11 @@ Everything else here is behind it.
 
 ## Gotchas
 
-- **`worktree.test.ts`, `storage.test.ts` and the `commitAndPush` tests drive `execFileSync` with positional
-  `mockReturnValueOnce` chains.** Adding, removing or reordering a single git call shifts every later mock and
-  breaks tests that look unrelated.
+- **`worktree.test.ts` and the `commitAndPush` tests mock `../git/commands`, not `node:child_process`.**
+  `execute` is the seam, so a test scripts failures by *which git command ran* (`args[0] === 'ls-remote'`)
+  and asserts on argv through a local `ranGit(...)` helper. They used to drive `execFileSync` with positional
+  `mockReturnValueOnce` chains up to seven deep, where adding or reordering one git call shifted every later
+  mock and broke tests that looked unrelated. Do not mock a level deeper than the seam again.
 - `storage.test.ts` mocks `@actions/core` with a factory exposing only `info`, `debug` and `setSecret`.
   Adding a `core.warning(...)` to `storage.ts` fails the suite with "not a function", not a useful assertion.
 - **`filters.test.ts` is the spec for `client.ts` too**, so a change to `client.ts` can fail here.
