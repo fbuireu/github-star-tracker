@@ -31,17 +31,14 @@ is not repeated here. What follows is what that table cannot express.
   alone so the accumulated change is not lost, while an unconfigured transport advances it because the
   `should-notify` output *is* the notification
   ([ADR 0011](../../docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md)).
-- **Two variables track the send, and conflating them is a bug that already happened.**
-  `notificationDelivered` is `notify && sent` and gates the baseline only: a courtesy send under
-  `send-on-no-changes` must not consume the accumulated threshold, so it stays `false` there on purpose.
-  `mailDelivered` is plain `sent` and feeds the `notification-sent` output, which is a factual claim about
-  delivery. Feeding the output from `notificationDelivered` made it report `false` after a successful
-  courtesy email; `tracker.test.ts` now pins both outputs for that case.
-- **The Notification baseline advances by returning a new History, not by mutation.** When
-  `notificationDelivered` is true the tracker persists `recordNotification({ history: updatedHistory,
-  totalStars })`; otherwise it persists `updatedHistory` untouched. `measureRun` already read the
-  **pre-append** `starsAtLastNotification`, which is what makes the threshold accumulate across runs, and it
-  never writes it back.
+- **This layer reports what the transport did; it does not decide what that means.** It sets one
+  `Delivery` — `NOT_ATTEMPTED`, `SENT` or `FAILED` — and hands it to `settleNotification` in
+  `@domain/notification`, which returns `shouldNotify`, `notificationSent` and `historyToPersist` together.
+  The three booleans that used to be mutated across the `try/catch` are gone, and so is the bug they caused:
+  conflating "an email left the runner" with "the accumulated threshold was consumed" once made a successful
+  courtesy send report `notification-sent: false`. Both outputs come off the one outcome now.
+- **A `sendEmail` that resolves `false` is a `FAILED` delivery, not an unattempted one.** That is the empty
+  `email-to` case: the transport was configured and did not deliver, so the baseline must not advance.
 - **The reports receive two histories and they are not interchangeable.** `history` is the *resolved* chart
   history (stargazer-reconstructed when it has >= 2 snapshots, stored otherwise) and drives charts and the
   forecast. `velocityHistory` is always the stored per-run series, so velocity measures real elapsed time

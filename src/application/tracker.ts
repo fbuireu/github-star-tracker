@@ -4,7 +4,8 @@ import { loadConfig } from '@config/loader';
 import { topRepositories } from '@domain/comparison';
 import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
-import { measureRun, recordNotification } from '@domain/measurement';
+import { measureRun } from '@domain/measurement';
+import { Delivery, settleNotification } from '@domain/notification';
 import { buildStarHistory } from '@domain/star-history';
 import {
   buildStargazerMap,
@@ -134,8 +135,7 @@ export async function trackStars(): Promise<void> {
         const notify = summary.changed && measurement.thresholdReached;
 
         const emailConfig = getEmailConfig(config.locale);
-        let notificationDelivered = notify;
-        let mailDelivered = false;
+        let delivery: Delivery = Delivery.NOT_ATTEMPTED;
 
         if (emailConfig && (notify || config.sendOnNoChanges)) {
           const subject = interpolate({
@@ -150,11 +150,10 @@ export async function trackStars(): Promise<void> {
           try {
             const sent = await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
 
-            mailDelivered = sent;
-            notificationDelivered = notify && sent;
+            delivery = sent ? Delivery.SENT : Delivery.FAILED;
           } catch (error) {
             core.warning(`Failed to send email: ${(error as Error).message}`);
-            notificationDelivered = false;
+            delivery = Delivery.FAILED;
           }
         } else if (emailConfig) {
           core.info(
@@ -164,12 +163,16 @@ export async function trackStars(): Promise<void> {
           );
         }
 
-        const historyToPersist = notificationDelivered
-          ? recordNotification({ history: updatedHistory, totalStars: summary.totalStars })
-          : updatedHistory;
+        const notification = settleNotification({
+          changed: summary.changed,
+          thresholdReached: measurement.thresholdReached,
+          delivery,
+          history: updatedHistory,
+          totalStars: summary.totalStars,
+        });
 
         branch.publish({
-          history: historyToPersist,
+          history: notification.historyToPersist,
           stargazerMap,
           report: markdownReport,
           badge,
@@ -192,8 +195,8 @@ export async function trackStars(): Promise<void> {
           markdownReport,
           htmlReport,
           csvReport,
-          shouldNotify: notify,
-          notificationSent: mailDelivered,
+          shouldNotify: notification.shouldNotify,
+          notificationSent: notification.notificationSent,
           newStargazers: stargazerDiff?.totalNew ?? 0,
         });
       },

@@ -62,12 +62,3 @@ export function measureRun({
     }),
   };
 }
-
-interface RecordNotificationParams {
-  history: History;
-  totalStars: number;
-}
-
-export function recordNotification({ history, totalStars }: RecordNotificationParams): History {
-  return { ...history, starsAtLastNotification: totalStars };
-}

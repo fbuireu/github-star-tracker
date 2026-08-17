@@ -5,7 +5,7 @@ import { ChartTheme } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { computeForecast, ForecastMethod } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
-import { measureRun, recordNotification } from '@domain/measurement';
+import { measureRun } from '@domain/measurement';
 import { buildStargazerMap, diffStargazers } from '@domain/stargazers';
 import { CompareAgainst, NotificationMode } from '@domain/types';
 import { getRepos } from '@infrastructure/github/filters';
@@ -35,7 +35,7 @@ vi.mock('@actions/core', () => ({
 }));
 vi.mock('@actions/github', () => ({ getOctokit: vi.fn(() => ({})) }));
 vi.mock('@config/loader', () => ({ loadConfig: vi.fn() }));
-vi.mock('@domain/measurement', () => ({ measureRun: vi.fn(), recordNotification: vi.fn() }));
+vi.mock('@domain/measurement', () => ({ measureRun: vi.fn() }));
 vi.mock('@domain/forecast', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@domain/forecast')>()),
   computeForecast: vi.fn(),
@@ -119,10 +119,6 @@ function setupDefaults() {
   vi.mocked(withDataBranch).mockImplementation(({ run }) => run(branch as unknown as DataBranch));
   branch.readHistory.mockReturnValue(defaultHistory);
   mockMeasurement();
-  vi.mocked(recordNotification).mockImplementation(({ history, totalStars }) => ({
-    ...history,
-    starsAtLastNotification: totalStars,
-  }));
   vi.mocked(deltaIndicator).mockReturnValue('+10');
   vi.mocked(generateMarkdownReport).mockReturnValue('# MD Report');
   vi.mocked(generateHtmlReport).mockReturnValue('<p>HTML</p>');
@@ -620,13 +616,11 @@ describe('trackStars', () => {
     it('updates starsAtLastNotification when notifying', async () => {
       mockMeasurement({ thresholdReached: true });
       await trackStars();
-      expect(recordNotification).toHaveBeenCalledWith(expect.objectContaining({ totalStars: 100 }));
       expect(published().history.starsAtLastNotification).toBe(100);
     });
     it('does not update starsAtLastNotification when threshold not reached', async () => {
       mockMeasurement({ thresholdReached: false, summary: { ...defaultSummary, changed: true } });
       await trackStars();
-      expect(recordNotification).not.toHaveBeenCalled();
       expect(published().history.starsAtLastNotification).toBeUndefined();
     });
     it('passes notificationThreshold to the measurement', async () => {

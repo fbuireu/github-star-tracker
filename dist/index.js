@@ -40773,6 +40773,29 @@ function shouldNotify({
   const accumulatedDelta = mode === NotificationMode.GAINS ? delta : Math.abs(delta);
   return accumulatedDelta >= effectiveThreshold;
 }
+var Delivery = {
+  NOT_ATTEMPTED: "not-attempted",
+  SENT: "sent",
+  FAILED: "failed"
+};
+function recordNotification({ history, totalStars }) {
+  return { ...history, starsAtLastNotification: totalStars };
+}
+function settleNotification({
+  changed,
+  thresholdReached,
+  delivery,
+  history,
+  totalStars
+}) {
+  const shouldNotify2 = changed && thresholdReached;
+  const baselineAdvances = shouldNotify2 && delivery !== Delivery.FAILED;
+  return {
+    shouldNotify: shouldNotify2,
+    notificationSent: delivery === Delivery.SENT,
+    historyToPersist: baselineAdvances ? recordNotification({ history, totalStars }) : history
+  };
+}
 
 // src/domain/measurement.ts
 function measureRun({
@@ -40806,9 +40829,6 @@ function measureRun({
       mode: notificationMode
     })
   };
-}
-function recordNotification({ history, totalStars }) {
-  return { ...history, starsAtLastNotification: totalStars };
 }
 
 // src/domain/star-history.ts
@@ -43569,8 +43589,7 @@ async function trackStars() {
         const badge = generateBadge({ totalStars: summary2.totalStars, locale: config.locale });
         const notify = summary2.changed && measurement.thresholdReached;
         const emailConfig = getEmailConfig(config.locale);
-        let notificationDelivered = notify;
-        let mailDelivered = false;
+        let delivery = Delivery.NOT_ATTEMPTED;
         if (emailConfig && (notify || config.sendOnNoChanges)) {
           const subject = interpolate({
             template: t.email.subjectLine,
@@ -43582,20 +43601,25 @@ async function trackStars() {
           });
           try {
             const sent = await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
-            mailDelivered = sent;
-            notificationDelivered = notify && sent;
+            delivery = sent ? Delivery.SENT : Delivery.FAILED;
           } catch (error2) {
             warning(`Failed to send email: ${error2.message}`);
-            notificationDelivered = false;
+            delivery = Delivery.FAILED;
           }
         } else if (emailConfig) {
           info(
             summary2.changed ? "Notification threshold not reached, skipping email" : "No stars changed since the baseline, skipping email"
           );
         }
-        const historyToPersist = notificationDelivered ? recordNotification({ history: updatedHistory, totalStars: summary2.totalStars }) : updatedHistory;
+        const notification = settleNotification({
+          changed: summary2.changed,
+          thresholdReached: measurement.thresholdReached,
+          delivery,
+          history: updatedHistory,
+          totalStars: summary2.totalStars
+        });
         branch.publish({
-          history: historyToPersist,
+          history: notification.historyToPersist,
           stargazerMap,
           report: markdownReport,
           badge,
@@ -43617,8 +43641,8 @@ async function trackStars() {
           markdownReport,
           htmlReport,
           csvReport,
-          shouldNotify: notify,
-          notificationSent: mailDelivered,
+          shouldNotify: notification.shouldNotify,
+          notificationSent: notification.notificationSent,
           newStargazers: stargazerDiff?.totalNew ?? 0
         });
       }

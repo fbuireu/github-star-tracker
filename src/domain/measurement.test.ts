@@ -1,6 +1,6 @@
 import { makeMultiRepoHistory, makeRepoInfo } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
-import { measureRun, recordNotification } from './measurement';
+import { measureRun } from './measurement';
 import type { History } from './types';
 import { CompareAgainst, NotificationMode } from './types';
 
@@ -194,26 +194,5 @@ describe('measureRun', () => {
       measureRun({ ...lost, storedHistory, notificationMode: NotificationMode.GAINS })
         .thresholdReached,
     ).toBe(false);
-  });
-});
-
-describe('recordNotification', () => {
-  it('advances the notification baseline to the delivered total', () => {
-    const history: History = {
-      ...makeMultiRepoHistory([{ 'user/repo-a': 100 }]),
-      starsAtLastNotification: 50,
-    };
-
-    expect(recordNotification({ history, totalStars: 100 }).starsAtLastNotification).toBe(100);
-  });
-
-  it('returns a new history so the undelivered one is still persistable', () => {
-    const history: History = makeMultiRepoHistory([{ 'user/repo-a': 100 }]);
-
-    const advanced = recordNotification({ history, totalStars: 100 });
-
-    expect(advanced).not.toBe(history);
-    expect(history.starsAtLastNotification).toBeUndefined();
-    expect(advanced.snapshots).toBe(history.snapshots);
   });
 });

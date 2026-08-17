@@ -20,9 +20,15 @@ records why. It composes `getBaselineSnapshot`, `compareStars`, `createSnapshot`
 - **The five it composes stay exported and stay tested.** They are internal seams within this layer, not a
   surface another layer crosses. Do not call them from outside `@domain` — the ordering rules they carry are
   what `measureRun` exists to make unreachable.
-- **`measureRun` never advances the Notification baseline.** It reports `thresholdReached`; `@application`
-  decides delivery and then calls `recordNotification`, which returns a **new** History rather than mutating
-  the one it was handed. That split is [ADR 0011](../../docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md).
+- **`measureRun` never advances the Notification baseline.** It reports `thresholdReached` and stops there.
+  `settleNotification` in `notification.ts` is what turns that plus a `Delivery` into the History to persist,
+  and it calls `recordNotification`, which returns a **new** History rather than mutating the one it was
+  handed. That split is [ADR 0011](../../docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md).
+- **`settleNotification` is the only place the delivery rules live.** `shouldNotify` is `changed &&
+  thresholdReached` — the decision; `notificationSent` is `delivery === SENT` — a fact about the transport;
+  and the baseline advances only when the decision held *and* the delivery did not fail, which is why an
+  unconfigured transport (`NOT_ATTEMPTED`) still advances it while a configured-and-failed one does not.
+  `@application` supplies the `Delivery` and reads the outcome; it decides none of this.
 - **`droppedSnapshots` is a count, not a warning.** This layer is pure and cannot log; the shell raises the
   `max-history` warning from it. It is **derived from the History `addSnapshot` actually returned**, not
   recomputed from `maxHistory` — the trimming rule is written once, in `addSnapshot`, so the count cannot
