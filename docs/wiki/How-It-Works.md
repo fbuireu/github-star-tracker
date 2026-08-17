@@ -321,11 +321,15 @@ Forecasts are computed for:
 
 ## Phase 7: Report Generation
 
+**File:** `src/presentation/run.ts` > `renderRun()`
+
+The presentation layer's single entry point. It builds one `ReportModel` and hands the same one to both report dialects, then returns the Markdown, HTML, CSV, badge and chart files together. One model means both reports carry the same date and the same Top Repositories.
+
 ### Shared Data Preparation
 
-**File:** `src/presentation/shared.ts` > `prepareReportData()`
+**File:** `src/presentation/report-model.ts` > `buildReportModel()`, over `shared.ts` > `prepareReportData()`
 
-Pre-processes data for both Markdown and HTML reports: filters active/new/removed repos, sorts by stars, formats dates.
+Decides which sections a report has and what is in them: filters active/new/removed repos, sorts by stars, formats dates, and resolves the chart history, Velocity figures and Stargazer outcome once.
 
 ### Markdown Report
 
@@ -526,13 +530,14 @@ src/
 │       └── storage.ts                # readHistory(), writeArtefact(), writeChart(), commitAndPush()
 └── presentation/
     ├── constants.ts                  # COLORS, CHART, BADGE, SVG_CHART, CHART_FILES, SECTION_ICON
-    ├── shared.ts                     # prepareReportData(), selectChartSnapshots(), resolvePalette()
+    ├── run.ts                        # renderRun() - the layer's single entry point
+    ├── shared.ts                     # prepareReportData(), resolvePalette(), emailChartStyle()
     ├── report-model.ts               # buildReportModel() - which sections a report has
     ├── escaping.ts                   # escapeFor(dialect) - every escaper in the layer
     ├── markdown.ts                   # generateMarkdownReport()
     ├── html.ts                       # generateHtmlReport()
     ├── csv.ts                        # generateCsvReport()
-    ├── chart-spec.ts                 # ChartRequest, buildChartSpec() - what a chart contains
+    ├── chart-spec.ts                 # ChartRequest, buildChartSpec(), selectChartSnapshots() - what a chart contains
     ├── chart.ts                      # chartImageUrl() (QuickChart for HTML emails)
     ├── svg-chart.ts                  # renderSvgChart() (animated SVGs for data branch)
     ├── charts.ts                     # resolveChartHistories(), buildChartFiles() - which charts a run produces
