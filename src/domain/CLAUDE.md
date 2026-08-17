@@ -6,8 +6,14 @@ notification is due, and how numbers and dates become short strings. No I/O of a
 reports (`@presentation/*`) and does not sequence anything (`@application/tracker`).
 
 One module per concept, each with a colocated `*.test.ts`: `measurement`, `comparison`, `snapshot`,
-`forecast`, `velocity`, `growth`, `stargazers`, `star-history`, `formatting`, `notification`, `time`, plus
-`types.ts` and `constants.ts`.
+`forecast`, `velocity`, `growth`, `stargazers`, `star-history`, `sampling`, `formatting`, `notification`,
+`time`, plus `types.ts` and `constants.ts`.
+
+`sampling.ts` is the one module `@infrastructure` calls rather than `@application`: it plans a Stargazer
+fetch without performing one. `shouldSample` applies the strict threshold, `reachablePages` clamps to
+GitHub's paging ceiling, `sampledPages` picks the evenly-spread pages Smart Sampling reads, and
+`coveredStars` says how many Stars those pages account for — the figure `star-history.ts` reads to decide
+whether to draw a Ramped Tail. All four are arithmetic, so they belong here and not behind an HTTP client.
 
 ## The Run Measurement is the layer's front door
 

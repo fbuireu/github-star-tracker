@@ -500,8 +500,8 @@ const QUOTED_CONSTANTS = [
     mention: (count: number) => `fixed at ${count} points`,
   },
   {
-    name: 'STARGAZERS_PER_PAGE',
-    file: 'src/infrastructure/github/stargazers.ts',
+    name: 'STARGAZER_PAGE_SIZE',
+    file: 'src/domain/sampling.ts',
     doc: IO_GUIDE,
     mention: (size: number) => `shorter than ${size}`,
   },
@@ -542,10 +542,9 @@ describe('the guides quote the constants the code declares', () => {
   });
 
   it('derives the reachable page cap rather than restating it', () => {
-    const stargazers = 'src/infrastructure/github/stargazers.ts';
     const pages = Math.floor(
       value({ file: DOMAIN_CONSTANTS, name: 'MAX_REACHABLE_STARGAZERS' }) /
-        value({ file: stargazers, name: 'STARGAZERS_PER_PAGE' }),
+        value({ file: 'src/domain/sampling.ts', name: 'STARGAZER_PAGE_SIZE' }),
     );
 
     expect(prose(IO_GUIDE)).toContain(`is ${pages} because`);

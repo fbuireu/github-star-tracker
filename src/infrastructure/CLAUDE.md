@@ -59,10 +59,16 @@ downstream can see a repository outside it.
   what it has if a later page fails; a **sampled** fetch attempts every selected page regardless, then
   rethrows only if nothing at all was collected. Sampled pages have no early break, so gaps in the page
   sequence are expected.
+- **This folder decides no Smart Sampling arithmetic.** `@domain/sampling` owns all of it — `shouldSample`,
+  `reachablePages`, `sampledPages` (which pages to read) and `coveredStars` (how many Stars those pages
+  account for). This folder fetches the pages it is handed and reports what came back. That is why the page
+  spread, the rounding collisions and the ceiling clamp are asserted in `sampling.test.ts` against plain
+  numbers instead of through a fake octokit.
 - `sampled` is decided *before* the request, so it stays `true` on failure. The threshold comparison is
   strict: 1500 stars with threshold 1500 is not sampled. A sampled repo loses new-stargazer detection
   downstream ([ADR 0008](../../docs/adr/0008-sampled-repositories-are-excluded-from-stargazer-diffing.md)).
-- `MAX_REACHABLE_PAGE` is 400 because GitHub only pages through a repo's oldest 40,000 stargazers.
+- `MAX_REACHABLE_PAGE` is 400 because GitHub only pages through a repo's oldest 40,000 stargazers. It is
+  derived in `@domain/sampling` from `MAX_REACHABLE_STARGAZERS` and `STARGAZER_PAGE_SIZE`, never written down.
 - **`fetchAllStargazers` is sequential on purpose** — parallelising would blow through the secondary rate
   limit that `@octokit/plugin-retry` exists to absorb. Retries happen inside octokit; this folder only ever
   sees the final failure, so its own handling is "give up on this page/repo", never "retry".

@@ -33,7 +33,7 @@ flowchart TD
     pres --> dom
     pres --> i18n
     infra --> cfg
-    infra -->|types + constants| dom
+    infra -->|types, constants,<br/>sampling plan| dom
     infra --> i18n
     dom -->|"Locale, LOCALE_MAP<br/>(formatting.ts only)"| i18n
 
@@ -62,7 +62,7 @@ that performs I/O at all.
 | config | `@config/*` | Action inputs + `star-tracker.yml` -> a fully-populated `Config` | `@domain/types`, `@i18n`, `@actions/core`, `js-yaml`, `node:fs/path` | application, infrastructure, presentation |
 | domain | `@domain/*` | Pure business core: comparison, snapshots, forecast, velocity, stargazer diffing, star-history reconstruction, formatting | `@i18n` only | everything else, incl. `@actions/*`, octokit, `node:fs` |
 | i18n | `@i18n` | Translation bundles, `getTranslations`, `interpolate` | nothing (true leaf) | everything |
-| infrastructure | `@infrastructure/*` | All I/O: octokit REST, `git` CLI, `fs`, nodemailer | config, domain (types/constants), i18n, `node:*`, `@actions/*`, `nodemailer` | application, presentation |
+| infrastructure | `@infrastructure/*` | All I/O: octokit REST, `git` CLI, `fs`, nodemailer | config, domain (types, constants, and `sampling`'s pure planners), i18n, `node:*`, `@actions/*`, `nodemailer` | application, presentation |
 | presentation | `@presentation/*` | Pure rendering: data in, string out (markdown/HTML/SVG/CSV/badge) | `@config/types`, domain, i18n | infrastructure, `@actions/*`, `node:fs`, any network |
 | shared | `@shared/*` | Cross-cutting non-layer code; today only `shared/tests` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only) | used from `*.test.ts` only |
 
