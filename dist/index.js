@@ -41560,6 +41560,114 @@ function retry(octokit, octokitOptions) {
 }
 retry.VERSION = VERSION7;
 
+// src/domain/star-history.ts
+var MIN_HISTORY_BUCKETS = 2;
+var MAX_HISTORY_BUCKETS = 365;
+var FULL_HISTORY_CADENCE_MS = 7 * MS_PER_DAY;
+function cumulativeCounts(sortedTimes, edges) {
+  const counts = [];
+  let pointer = 0;
+  for (const edge of edges) {
+    while (pointer < sortedTimes.length && sortedTimes[pointer] <= edge) {
+      pointer++;
+    }
+    counts.push(pointer);
+  }
+  return counts;
+}
+function scaleToTrueTotal(fetchedCounts, trueTotal) {
+  const fetchedTotal = fetchedCounts.at(-1) ?? 0;
+  const scale = fetchedTotal > 0 ? trueTotal / fetchedTotal : 0;
+  const scaled = fetchedCounts.map(
+    (count) => fetchedTotal === trueTotal ? count : Math.round(count * scale)
+  );
+  for (let index = 0; index < scaled.length; index++) {
+    scaled[index] = Math.min(scaled[index], trueTotal);
+    if (index > 0) scaled[index] = Math.max(scaled[index], scaled[index - 1]);
+  }
+  if (scaled.length > 0) {
+    scaled[scaled.length - 1] = trueTotal;
+  }
+  return scaled;
+}
+function scaleCappedToTrueTotal(counts, trueTotal, reachable) {
+  const fetchedTotal = counts.at(-1) ?? 0;
+  const scale = fetchedTotal > 0 ? reachable / fetchedTotal : 0;
+  const scaled = counts.map((count) => Math.round(count * scale));
+  let tailStart = scaled.length - 1;
+  while (tailStart > 0 && counts[tailStart - 1] === fetchedTotal) {
+    tailStart--;
+  }
+  const last = scaled.length - 1;
+  const span = last - tailStart;
+  if (span > 0) {
+    const startValue = scaled[tailStart];
+    for (let index = tailStart; index <= last; index++) {
+      scaled[index] = Math.round(
+        startValue + (index - tailStart) / span * (trueTotal - startValue)
+      );
+    }
+  }
+  for (let index = 1; index < scaled.length; index++) {
+    if (scaled[index] < scaled[index - 1]) scaled[index] = scaled[index - 1];
+  }
+  if (scaled.length > 0) scaled[last] = trueTotal;
+  return scaled;
+}
+function buildStarHistory({
+  repoStargazers,
+  repos,
+  maxPoints,
+  now
+}) {
+  const stargazersByRepo = new Map(repoStargazers.map((entry) => [entry.repoFullName, entry]));
+  const eventsByRepo = /* @__PURE__ */ new Map();
+  let earliest = Number.POSITIVE_INFINITY;
+  for (const repo of repos) {
+    const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? []).map((stargazer) => toEpochMs(stargazer.starredAt)).filter((timeMs) => timeMs !== null).sort((earlier, later) => earlier - later);
+    eventsByRepo.set(repo.fullName, times);
+    if (times.length > 0 && times[0] < earliest) earliest = times[0];
+  }
+  if (!Number.isFinite(earliest)) {
+    return { snapshots: [] };
+  }
+  const end = (now ?? /* @__PURE__ */ new Date()).getTime();
+  const edges = earliest >= end ? [earliest - MS_PER_DAY, end] : (() => {
+    const requested = maxPoints > 0 ? Math.floor(maxPoints) : Math.ceil((end - earliest) / FULL_HISTORY_CADENCE_MS) + 1;
+    const buckets = Math.min(MAX_HISTORY_BUCKETS, Math.max(MIN_HISTORY_BUCKETS, requested));
+    const step = (end - earliest) / (buckets - 1);
+    return Array.from(
+      { length: buckets },
+      (_, bucketIndex) => bucketIndex === buckets - 1 ? end : earliest + bucketIndex * step
+    );
+  })();
+  const cumulativeByRepo = /* @__PURE__ */ new Map();
+  for (const repo of repos) {
+    const events = eventsByRepo.get(repo.fullName) ?? [];
+    const counts = cumulativeCounts(events, edges);
+    const reachable = Math.min(
+      stargazersByRepo.get(repo.fullName)?.coveredStars ?? MAX_REACHABLE_STARGAZERS,
+      repo.stars
+    );
+    const scaled = events.length === 0 ? edges.map(() => repo.stars) : reachable < repo.stars ? scaleCappedToTrueTotal(counts, repo.stars, reachable) : scaleToTrueTotal(counts, repo.stars);
+    cumulativeByRepo.set(repo.fullName, scaled);
+  }
+  const snapshots = edges.map((edge, edgeIndex) => {
+    const snapshotRepos = repos.map((repo) => ({
+      fullName: repo.fullName,
+      name: repo.name,
+      owner: repo.owner,
+      stars: cumulativeByRepo.get(repo.fullName)?.[edgeIndex] ?? 0
+    }));
+    return {
+      timestamp: new Date(edge).toISOString(),
+      totalStars: snapshotRepos.reduce((sum, repo) => sum + repo.stars, 0),
+      repos: snapshotRepos
+    };
+  });
+  return { snapshots };
+}
+
 // src/presentation/constants.ts
 var CHART_DEFAULTS = {
   smoothing: true,
@@ -41679,207 +41787,6 @@ var CHART_FILES = {
   comparison: "comparison.svg",
   forecast: "forecast.svg"
 };
-
-// src/presentation/escaping.ts
-var EscapeDialect = {
-  MARKUP: "markup",
-  XML: "xml",
-  MARKDOWN: "markdown",
-  CSV: "csv"
-};
-var MARKUP_ESCAPES = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;"
-};
-var XML_ESCAPES = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;"
-};
-var MARKDOWN_ESCAPES = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  "[": "\\[",
-  "]": "\\]",
-  "(": "\\(",
-  ")": "\\)",
-  "`": "\\`"
-};
-var CSV_DELIMITER = ",";
-var CSV_QUOTE = '"';
-var CSV_NEW_LINE = "\n";
-var CSV_FORMULA_TRIGGERS = ["=", "+", "-", "@"];
-var CSV_FORMULA_GUARD = "'";
-function replacerFor(escapes) {
-  const pattern = new RegExp(
-    `[${Object.keys(escapes).join("").replace(/[\]\\^-]/g, "\\$&")}]`,
-    "g"
-  );
-  return (text) => text.replaceAll(pattern, (char) => escapes[char]);
-}
-function escapeCsvField(field) {
-  const neutralized = CSV_FORMULA_TRIGGERS.some((trigger) => field.startsWith(trigger)) ? `${CSV_FORMULA_GUARD}${field}` : field;
-  if (neutralized.includes(CSV_DELIMITER) || neutralized.includes(CSV_QUOTE) || neutralized.includes(CSV_NEW_LINE) || neutralized !== field) {
-    return `${CSV_QUOTE}${neutralized.replaceAll(CSV_QUOTE, `${CSV_QUOTE}${CSV_QUOTE}`)}${CSV_QUOTE}`;
-  }
-  return neutralized;
-}
-var ESCAPERS = {
-  [EscapeDialect.MARKUP]: replacerFor(MARKUP_ESCAPES),
-  [EscapeDialect.XML]: replacerFor(XML_ESCAPES),
-  [EscapeDialect.MARKDOWN]: replacerFor(MARKDOWN_ESCAPES),
-  [EscapeDialect.CSV]: escapeCsvField
-};
-function escapeFor(dialect) {
-  return ESCAPERS[dialect];
-}
-
-// src/presentation/badge.ts
-var escapeXml = escapeFor(EscapeDialect.XML);
-function generateBadge({ totalStars, locale }) {
-  const t = getTranslations(locale);
-  const rawLabel = t.badge.totalStars;
-  const rawValue = `\u2605 ${formatCount({ count: totalStars, locale })}`;
-  const labelWidth = rawLabel.length * BADGE.labelCharWidth + BADGE.horizontalPadding;
-  const valueWidth = rawValue.length * BADGE.valueCharWidth + BADGE.horizontalPadding;
-  const totalWidth = labelWidth + valueWidth;
-  const label = escapeXml(rawLabel);
-  const value = escapeXml(rawValue);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${BADGE.height}" role="img" aria-label="${label}: ${value}">
-  <title>${label}: ${value}</title>
-  <linearGradient id="s" x2="0" y2="100%">
-    <stop offset="0" stop-color="${COLORS.gradientStart}" stop-opacity="${BADGE.gradientOpacity}"/>
-    <stop offset="1" stop-opacity="${BADGE.gradientOpacity}"/>
-  </linearGradient>
-  <clipPath id="r">
-    <rect width="${totalWidth}" height="${BADGE.height}" rx="${BADGE.borderRadius}" fill="${COLORS.white}"/>
-  </clipPath>
-  <g clip-path="url(#r)">
-    <rect width="${labelWidth}" height="${BADGE.height}" fill="${COLORS.muted}"/>
-    <rect x="${labelWidth}" width="${valueWidth}" height="${BADGE.height}" fill="${COLORS.accent}"/>
-    <rect width="${totalWidth}" height="${BADGE.height}" fill="url(#s)"/>
-  </g>
-  <g fill="${COLORS.white}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="${BADGE.fontSize}">
-    <text aria-hidden="true" x="${labelWidth / 2}" y="${BADGE.shadowBaseline}" fill="${COLORS.shadow}" fill-opacity="${BADGE.shadowOpacity}">${label}</text>
-    <text x="${labelWidth / 2}" y="${BADGE.textBaseline}">${label}</text>
-    <text aria-hidden="true" x="${labelWidth + valueWidth / 2}" y="${BADGE.shadowBaseline}" fill="${COLORS.shadow}" fill-opacity="${BADGE.shadowOpacity}">${value}</text>
-    <text x="${labelWidth + valueWidth / 2}" y="${BADGE.textBaseline}">${value}</text>
-  </g>
-</svg>`;
-}
-
-// src/domain/star-history.ts
-var MIN_HISTORY_BUCKETS = 2;
-var MAX_HISTORY_BUCKETS = 365;
-var FULL_HISTORY_CADENCE_MS = 7 * MS_PER_DAY;
-function cumulativeCounts(sortedTimes, edges) {
-  const counts = [];
-  let pointer = 0;
-  for (const edge of edges) {
-    while (pointer < sortedTimes.length && sortedTimes[pointer] <= edge) {
-      pointer++;
-    }
-    counts.push(pointer);
-  }
-  return counts;
-}
-function scaleToTrueTotal(fetchedCounts, trueTotal) {
-  const fetchedTotal = fetchedCounts.at(-1) ?? 0;
-  const scale = fetchedTotal > 0 ? trueTotal / fetchedTotal : 0;
-  const scaled = fetchedCounts.map(
-    (count) => fetchedTotal === trueTotal ? count : Math.round(count * scale)
-  );
-  for (let index = 0; index < scaled.length; index++) {
-    scaled[index] = Math.min(scaled[index], trueTotal);
-    if (index > 0) scaled[index] = Math.max(scaled[index], scaled[index - 1]);
-  }
-  if (scaled.length > 0) {
-    scaled[scaled.length - 1] = trueTotal;
-  }
-  return scaled;
-}
-function scaleCappedToTrueTotal(counts, trueTotal, reachable) {
-  const fetchedTotal = counts.at(-1) ?? 0;
-  const scale = fetchedTotal > 0 ? reachable / fetchedTotal : 0;
-  const scaled = counts.map((count) => Math.round(count * scale));
-  let tailStart = scaled.length - 1;
-  while (tailStart > 0 && counts[tailStart - 1] === fetchedTotal) {
-    tailStart--;
-  }
-  const last = scaled.length - 1;
-  const span = last - tailStart;
-  if (span > 0) {
-    const startValue = scaled[tailStart];
-    for (let index = tailStart; index <= last; index++) {
-      scaled[index] = Math.round(
-        startValue + (index - tailStart) / span * (trueTotal - startValue)
-      );
-    }
-  }
-  for (let index = 1; index < scaled.length; index++) {
-    if (scaled[index] < scaled[index - 1]) scaled[index] = scaled[index - 1];
-  }
-  if (scaled.length > 0) scaled[last] = trueTotal;
-  return scaled;
-}
-function buildStarHistory({
-  repoStargazers,
-  repos,
-  maxPoints,
-  now
-}) {
-  const stargazersByRepo = new Map(repoStargazers.map((entry) => [entry.repoFullName, entry]));
-  const eventsByRepo = /* @__PURE__ */ new Map();
-  let earliest = Number.POSITIVE_INFINITY;
-  for (const repo of repos) {
-    const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? []).map((stargazer) => toEpochMs(stargazer.starredAt)).filter((timeMs) => timeMs !== null).sort((earlier, later) => earlier - later);
-    eventsByRepo.set(repo.fullName, times);
-    if (times.length > 0 && times[0] < earliest) earliest = times[0];
-  }
-  if (!Number.isFinite(earliest)) {
-    return { snapshots: [] };
-  }
-  const end = (now ?? /* @__PURE__ */ new Date()).getTime();
-  const edges = earliest >= end ? [earliest - MS_PER_DAY, end] : (() => {
-    const requested = maxPoints > 0 ? Math.floor(maxPoints) : Math.ceil((end - earliest) / FULL_HISTORY_CADENCE_MS) + 1;
-    const buckets = Math.min(MAX_HISTORY_BUCKETS, Math.max(MIN_HISTORY_BUCKETS, requested));
-    const step = (end - earliest) / (buckets - 1);
-    return Array.from(
-      { length: buckets },
-      (_, bucketIndex) => bucketIndex === buckets - 1 ? end : earliest + bucketIndex * step
-    );
-  })();
-  const cumulativeByRepo = /* @__PURE__ */ new Map();
-  for (const repo of repos) {
-    const events = eventsByRepo.get(repo.fullName) ?? [];
-    const counts = cumulativeCounts(events, edges);
-    const reachable = Math.min(
-      stargazersByRepo.get(repo.fullName)?.coveredStars ?? MAX_REACHABLE_STARGAZERS,
-      repo.stars
-    );
-    const scaled = events.length === 0 ? edges.map(() => repo.stars) : reachable < repo.stars ? scaleCappedToTrueTotal(counts, repo.stars, reachable) : scaleToTrueTotal(counts, repo.stars);
-    cumulativeByRepo.set(repo.fullName, scaled);
-  }
-  const snapshots = edges.map((edge, edgeIndex) => {
-    const snapshotRepos = repos.map((repo) => ({
-      fullName: repo.fullName,
-      name: repo.name,
-      owner: repo.owner,
-      stars: cumulativeByRepo.get(repo.fullName)?.[edgeIndex] ?? 0
-    }));
-    return {
-      timestamp: new Date(edge).toISOString(),
-      totalStars: snapshotRepos.reduce((sum, repo) => sum + repo.stars, 0),
-      repos: snapshotRepos
-    };
-  });
-  return { snapshots };
-}
 
 // src/presentation/shared.ts
 function emailChartStyle(config) {
@@ -42231,8 +42138,67 @@ function buildChartSpec({
   }
 }
 
+// src/presentation/escaping.ts
+var EscapeDialect = {
+  MARKUP: "markup",
+  XML: "xml",
+  MARKDOWN: "markdown",
+  CSV: "csv"
+};
+var MARKUP_ESCAPES = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+};
+var XML_ESCAPES = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;"
+};
+var MARKDOWN_ESCAPES = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  "[": "\\[",
+  "]": "\\]",
+  "(": "\\(",
+  ")": "\\)",
+  "`": "\\`"
+};
+var CSV_DELIMITER = ",";
+var CSV_QUOTE = '"';
+var CSV_NEW_LINE = "\n";
+var CSV_FORMULA_TRIGGERS = ["=", "+", "-", "@"];
+var CSV_FORMULA_GUARD = "'";
+function replacerFor(escapes) {
+  const pattern = new RegExp(
+    `[${Object.keys(escapes).join("").replace(/[\]\\^-]/g, "\\$&")}]`,
+    "g"
+  );
+  return (text) => text.replaceAll(pattern, (char) => escapes[char]);
+}
+function escapeCsvField(field) {
+  const neutralized = CSV_FORMULA_TRIGGERS.some((trigger) => field.startsWith(trigger)) ? `${CSV_FORMULA_GUARD}${field}` : field;
+  if (neutralized.includes(CSV_DELIMITER) || neutralized.includes(CSV_QUOTE) || neutralized.includes(CSV_NEW_LINE) || neutralized !== field) {
+    return `${CSV_QUOTE}${neutralized.replaceAll(CSV_QUOTE, `${CSV_QUOTE}${CSV_QUOTE}`)}${CSV_QUOTE}`;
+  }
+  return neutralized;
+}
+var ESCAPERS = {
+  [EscapeDialect.MARKUP]: replacerFor(MARKUP_ESCAPES),
+  [EscapeDialect.XML]: replacerFor(XML_ESCAPES),
+  [EscapeDialect.MARKDOWN]: replacerFor(MARKDOWN_ESCAPES),
+  [EscapeDialect.CSV]: escapeCsvField
+};
+function escapeFor(dialect) {
+  return ESCAPERS[dialect];
+}
+
 // src/presentation/svg-chart.ts
-var escapeXml2 = escapeFor(EscapeDialect.XML);
+var escapeXml = escapeFor(EscapeDialect.XML);
 var BEZIER_CONTROL_DIVISOR = 3;
 var MONOTONE_TANGENT_LIMIT = 3;
 var TANGENT_AVERAGE_DIVISOR = 2;
@@ -42473,7 +42439,7 @@ function renderSvg({
   const milestoneLines = milestones.map(({ value, label }) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="${milestoneStyle.strokeWidth}" stroke-dasharray="${milestoneStyle.dashArray}" />
-    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${escapeXml2(label)}</text>`;
+    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${escapeXml(label)}</text>`;
   }).join("\n    ");
   const maxLabels = xAxis.maxLabels;
   const nonEmptyLabelIndices = labels.reduce((indices, label, labelIndex) => {
@@ -42484,7 +42450,7 @@ function renderSvg({
   const lastLabelIndex = nonEmptyLabelIndices.at(-1);
   const xLabels = nonEmptyLabelIndices.filter((labelIndex, position) => position % labelStep === 0 || labelIndex === lastLabelIndex).map((labelIndex) => {
     const x = margin.left + labelIndex / Math.max(1, labels.length - 1) * chartWidth;
-    return `<text x="${x}" y="${CHART.height - margin.bottom + xAxis.labelOffset}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml2(labels[labelIndex])}</text>`;
+    return `<text x="${x}" y="${CHART.height - margin.bottom + xAxis.labelOffset}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(labels[labelIndex])}</text>`;
   }).join("\n    ");
   const datasetSvg = datasets.map((dataset, datasetIndex) => {
     const validSegments = [];
@@ -42565,7 +42531,7 @@ function renderSvg({
       const rectAttr = dataset.dashed ? ` rx="${legendStyle.rectBorderRadius}"` : "";
       return `<rect x="${x}" y="${legendY - legendStyle.markerYOffset}" width="${legendStyle.markerWidth}" height="${legendStyle.markerHeight}" fill="${dataset.color}"${rectAttr} />
     <line x1="${x}" y1="${legendY - legendStyle.lineYOffset}" x2="${x + legendStyle.markerWidth}" y2="${legendY - legendStyle.lineYOffset}" stroke="${dataset.color}" stroke-width="${legendStyle.lineStrokeWidth}"${dashAttr} />
-    <text x="${x + legendStyle.labelGap}" y="${legendY}" class="chart-text" font-size="${fontSize.legend}" font-family="${font}">${escapeXml2(dataset.label)}</text>`;
+    <text x="${x + legendStyle.labelGap}" y="${legendY}" class="chart-text" font-size="${fontSize.legend}" font-family="${font}">${escapeXml(dataset.label)}</text>`;
     }).join("\n    ");
   })() : "";
   const titleY = margin.top - SVG_CHART.header.titleOffset;
@@ -42599,7 +42565,7 @@ function renderSvg({
     .chart-axis { stroke: ${basePalette.neutral}; }${darkModeStyles}
   </style>
   <rect width="${CHART.width}" height="${CHART.height}" class="chart-bg" />
-  <text x="${CHART.width / 2}" y="${titleY}" text-anchor="middle" class="chart-text" font-size="${fontSize.title}" font-weight="bold" font-family="${font}">${escapeXml2(title)}</text>
+  <text x="${CHART.width / 2}" y="${titleY}" text-anchor="middle" class="chart-text" font-size="${fontSize.title}" font-weight="bold" font-family="${font}">${escapeXml(title)}</text>
   ${legendSection ? `<g class="legend">
     ${legendSection}
   </g>` : ""}
@@ -42757,6 +42723,40 @@ function buildChartFiles({
     }
   }
   return files;
+}
+
+// src/presentation/badge.ts
+var escapeXml2 = escapeFor(EscapeDialect.XML);
+function generateBadge({ totalStars, locale }) {
+  const t = getTranslations(locale);
+  const rawLabel = t.badge.totalStars;
+  const rawValue = `\u2605 ${formatCount({ count: totalStars, locale })}`;
+  const labelWidth = rawLabel.length * BADGE.labelCharWidth + BADGE.horizontalPadding;
+  const valueWidth = rawValue.length * BADGE.valueCharWidth + BADGE.horizontalPadding;
+  const totalWidth = labelWidth + valueWidth;
+  const label = escapeXml2(rawLabel);
+  const value = escapeXml2(rawValue);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${BADGE.height}" role="img" aria-label="${label}: ${value}">
+  <title>${label}: ${value}</title>
+  <linearGradient id="s" x2="0" y2="100%">
+    <stop offset="0" stop-color="${COLORS.gradientStart}" stop-opacity="${BADGE.gradientOpacity}"/>
+    <stop offset="1" stop-opacity="${BADGE.gradientOpacity}"/>
+  </linearGradient>
+  <clipPath id="r">
+    <rect width="${totalWidth}" height="${BADGE.height}" rx="${BADGE.borderRadius}" fill="${COLORS.white}"/>
+  </clipPath>
+  <g clip-path="url(#r)">
+    <rect width="${labelWidth}" height="${BADGE.height}" fill="${COLORS.muted}"/>
+    <rect x="${labelWidth}" width="${valueWidth}" height="${BADGE.height}" fill="${COLORS.accent}"/>
+    <rect width="${totalWidth}" height="${BADGE.height}" fill="url(#s)"/>
+  </g>
+  <g fill="${COLORS.white}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="${BADGE.fontSize}">
+    <text aria-hidden="true" x="${labelWidth / 2}" y="${BADGE.shadowBaseline}" fill="${COLORS.shadow}" fill-opacity="${BADGE.shadowOpacity}">${label}</text>
+    <text x="${labelWidth / 2}" y="${BADGE.textBaseline}">${label}</text>
+    <text aria-hidden="true" x="${labelWidth + valueWidth / 2}" y="${BADGE.shadowBaseline}" fill="${COLORS.shadow}" fill-opacity="${BADGE.shadowOpacity}">${value}</text>
+    <text x="${labelWidth + valueWidth / 2}" y="${BADGE.textBaseline}">${value}</text>
+  </g>
+</svg>`;
 }
 
 // src/presentation/csv.ts
@@ -43541,6 +43541,35 @@ function renderForecastTable({ title, forecasts, t }) {
   ].join("\n");
 }
 
+// src/presentation/run.ts
+function renderRun({
+  config,
+  results,
+  previousTimestamp,
+  chartHistories,
+  storedHistory,
+  stargazerDiff,
+  forecastData,
+  topRepoNames
+}) {
+  const reportParams = {
+    config,
+    results,
+    previousTimestamp,
+    history: chartHistories.aggregate,
+    velocityHistory: storedHistory,
+    stargazerDiff,
+    forecastData
+  };
+  return {
+    markdown: generateMarkdownReport(reportParams),
+    html: generateHtmlReport(reportParams),
+    csv: generateCsvReport(results),
+    badge: generateBadge({ totalStars: results.summary.totalStars, locale: config.locale }),
+    charts: buildChartFiles({ config, chartHistories, forecastData, topRepoNames })
+  };
+}
+
 // src/application/tracker.ts
 async function trackStars() {
   try {
@@ -43605,21 +43634,20 @@ async function trackStars() {
           })),
           repoStargazers
         });
-        const history = chartHistories.aggregate;
-        const forecastData = computeForecast({ history, topRepoNames });
-        const reportParams = {
+        const forecastData = computeForecast({
+          history: chartHistories.aggregate,
+          topRepoNames
+        });
+        const rendered = renderRun({
           config,
           results,
           previousTimestamp,
-          history,
-          velocityHistory: updatedHistory,
+          chartHistories,
+          storedHistory: updatedHistory,
           stargazerDiff,
-          forecastData
-        };
-        const markdownReport = generateMarkdownReport(reportParams);
-        const htmlReport = generateHtmlReport(reportParams);
-        const csvReport = generateCsvReport(results);
-        const badge = generateBadge({ totalStars: summary2.totalStars, locale: config.locale });
+          forecastData,
+          topRepoNames
+        });
         const notify = summary2.changed && measurement.thresholdReached;
         const emailConfig = getEmailConfig(config.locale);
         let delivery = Delivery.NOT_ATTEMPTED;
@@ -43633,7 +43661,7 @@ async function trackStars() {
             }
           });
           try {
-            const sent = await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
+            const sent = await sendEmail({ emailConfig, subject, htmlBody: rendered.html });
             delivery = sent ? Delivery.SENT : Delivery.FAILED;
           } catch (error2) {
             warning(`Failed to send email: ${error2.message}`);
@@ -43654,17 +43682,17 @@ async function trackStars() {
         branch.publish({
           history: notification.historyToPersist,
           stargazerMap,
-          report: markdownReport,
-          badge,
-          csv: csvReport,
-          charts: buildChartFiles({ config, chartHistories, forecastData, topRepoNames }),
+          report: rendered.markdown,
+          badge: rendered.badge,
+          csv: rendered.csv,
+          charts: rendered.charts,
           commitMessage: `Update star data: ${summary2.totalStars} total (${deltaIndicator(summary2.totalDelta)})`
         });
         setOutputs({
           summary: summary2,
-          markdownReport,
-          htmlReport,
-          csvReport,
+          markdownReport: rendered.markdown,
+          htmlReport: rendered.html,
+          csvReport: rendered.csv,
           shouldNotify: notification.shouldNotify,
           notificationSent: notification.notificationSent,
           newStargazers: stargazerDiff?.totalNew ?? 0
