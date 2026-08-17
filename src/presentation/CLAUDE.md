@@ -36,6 +36,13 @@ email path goes through QuickChart because mail clients will not display inline 
 - **`charts.ts` orchestrates.** `buildChartFiles` reads `Config`, builds the shared style object once, binds
   it into a local `renderChart(request)`, and returns `{ filename, svg }[]`. It renders nothing itself and
   returns `[]` when charts are off or the history has fewer than 2 snapshots.
+- **`resolveChartHistories` owns the Reconstructed History at both altitudes, and owns the instant.** It
+  reconstructs via `@domain/star-history` and resolves each result against the Stored History — reconstruction
+  wins at >= 2 snapshots, otherwise the fallback — exposing `.aggregate` for the Tracked Set and
+  `.forRepo(name)` for one Repository, which falls back for a name outside the set. `now` defaults to a
+  `Date` it creates, so every chart in a run ends on the same moment without the caller threading one.
+  `resolveChartHistory` is private: the aggregate and the per-repo resolution used to happen in two layers,
+  with `@application` doing one and `charts.ts` the other, sharing a `Date` by convention.
 - **`svg-chart.ts` draws.** `renderSvgChart({ request, locale, ...style })` is its only export: it builds the
   spec with year-thinned axis labels and maps the series onto `SvgDataset`s. One private `renderSvg` does all
   the drawing.

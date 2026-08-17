@@ -49,8 +49,10 @@ is not repeated here. What follows is what that table cannot express.
   style at all, and `generateHtmlReport` reads `config.emailTheme` itself
   ([ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md)). This layer no longer
   relays chart options, so a new one costs nothing here.
-- **One `chartNow` `Date` is created and reused** for `buildStarHistory` and `buildChartFiles`, so the global
-  chart and every per-repo chart end on the same instant.
+- **Chart histories are resolved once, by one module.** `resolveChartHistories` returns `.aggregate` and
+  `.forRepo(name)`; this layer reads `.aggregate` for the Forecast and the Reports and hands the whole thing
+  to `buildChartFiles`. It creates the instant itself, so the global chart and every per-repo chart end on
+  the same moment by construction rather than by the shell remembering to share a `Date`.
 - **`topRepoNames` is not computed here.** It is `topRepositories({ repos: results.repos, limit:
   config.topRepos })` from `@domain/comparison`, the same call `@presentation/report-model` makes for the
   Report. It ranks a **copy**, so `results.repos` is never reordered in place, and Removed Repositories are

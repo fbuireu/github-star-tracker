@@ -6,7 +6,6 @@ import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
 import { measureRun } from '@domain/measurement';
 import { Delivery, settleNotification } from '@domain/notification';
-import { buildStarHistory } from '@domain/star-history';
 import {
   buildStargazerMap,
   diffStargazers,
@@ -22,7 +21,7 @@ import { withDataBranch } from '@infrastructure/persistence/data-branch';
 import { writeHtmlReport } from '@infrastructure/persistence/storage';
 import { retry } from '@octokit/plugin-retry';
 import { generateBadge } from '@presentation/badge';
-import { buildChartFiles, resolveChartHistory } from '@presentation/charts';
+import { buildChartFiles, resolveChartHistories } from '@presentation/charts';
 import { generateCsvReport } from '@presentation/csv';
 import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
@@ -95,26 +94,18 @@ export async function trackStars(): Promise<void> {
 
         const topRepoNames = topRepositories({ repos: results.repos, limit: config.topRepos });
 
-        const chartNow = new Date();
-        const repoTotals = repos.map((repo) => ({
-          fullName: repo.fullName,
-          name: repo.name,
-          owner: repo.owner,
-          stars: repo.stars,
-        }));
-
-        const starHistory = config.includeCharts
-          ? buildStarHistory({
-              repoStargazers,
-              repos: repoTotals,
-              maxPoints: config.chartMaxPoints,
-              now: chartNow,
-            })
-          : { snapshots: [] };
-        const history = resolveChartHistory({
-          candidate: starHistory,
-          fallback: updatedHistory,
+        const chartHistories = resolveChartHistories({
+          config,
+          storedHistory: updatedHistory,
+          repos: repos.map(({ fullName, name, owner, stars }) => ({
+            fullName,
+            name,
+            owner,
+            stars,
+          })),
+          repoStargazers,
         });
+        const history = chartHistories.aggregate;
 
         const forecastData = computeForecast({ history, topRepoNames });
 
@@ -177,16 +168,7 @@ export async function trackStars(): Promise<void> {
           report: markdownReport,
           badge,
           csv: csvReport,
-          charts: buildChartFiles({
-            config,
-            history,
-            fallbackHistory: updatedHistory,
-            forecastData,
-            topRepoNames,
-            repoTotals,
-            repoStargazers,
-            now: chartNow,
-          }),
+          charts: buildChartFiles({ config, chartHistories, forecastData, topRepoNames }),
           commitMessage: `Update star data: ${summary.totalStars} total (${deltaIndicator(summary.totalDelta)})`,
         });
 

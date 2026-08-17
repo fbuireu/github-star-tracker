@@ -40831,114 +40831,6 @@ function measureRun({
   };
 }
 
-// src/domain/star-history.ts
-var MIN_HISTORY_BUCKETS = 2;
-var MAX_HISTORY_BUCKETS = 365;
-var FULL_HISTORY_CADENCE_MS = 7 * MS_PER_DAY;
-function cumulativeCounts(sortedTimes, edges) {
-  const counts = [];
-  let pointer = 0;
-  for (const edge of edges) {
-    while (pointer < sortedTimes.length && sortedTimes[pointer] <= edge) {
-      pointer++;
-    }
-    counts.push(pointer);
-  }
-  return counts;
-}
-function scaleToTrueTotal(fetchedCounts, trueTotal) {
-  const fetchedTotal = fetchedCounts.at(-1) ?? 0;
-  const scale = fetchedTotal > 0 ? trueTotal / fetchedTotal : 0;
-  const scaled = fetchedCounts.map(
-    (count) => fetchedTotal === trueTotal ? count : Math.round(count * scale)
-  );
-  for (let index = 0; index < scaled.length; index++) {
-    scaled[index] = Math.min(scaled[index], trueTotal);
-    if (index > 0) scaled[index] = Math.max(scaled[index], scaled[index - 1]);
-  }
-  if (scaled.length > 0) {
-    scaled[scaled.length - 1] = trueTotal;
-  }
-  return scaled;
-}
-function scaleCappedToTrueTotal(counts, trueTotal, reachable) {
-  const fetchedTotal = counts.at(-1) ?? 0;
-  const scale = fetchedTotal > 0 ? reachable / fetchedTotal : 0;
-  const scaled = counts.map((count) => Math.round(count * scale));
-  let tailStart = scaled.length - 1;
-  while (tailStart > 0 && counts[tailStart - 1] === fetchedTotal) {
-    tailStart--;
-  }
-  const last = scaled.length - 1;
-  const span = last - tailStart;
-  if (span > 0) {
-    const startValue = scaled[tailStart];
-    for (let index = tailStart; index <= last; index++) {
-      scaled[index] = Math.round(
-        startValue + (index - tailStart) / span * (trueTotal - startValue)
-      );
-    }
-  }
-  for (let index = 1; index < scaled.length; index++) {
-    if (scaled[index] < scaled[index - 1]) scaled[index] = scaled[index - 1];
-  }
-  if (scaled.length > 0) scaled[last] = trueTotal;
-  return scaled;
-}
-function buildStarHistory({
-  repoStargazers,
-  repos,
-  maxPoints,
-  now
-}) {
-  const stargazersByRepo = new Map(repoStargazers.map((entry) => [entry.repoFullName, entry]));
-  const eventsByRepo = /* @__PURE__ */ new Map();
-  let earliest = Number.POSITIVE_INFINITY;
-  for (const repo of repos) {
-    const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? []).map((stargazer) => toEpochMs(stargazer.starredAt)).filter((timeMs) => timeMs !== null).sort((earlier, later) => earlier - later);
-    eventsByRepo.set(repo.fullName, times);
-    if (times.length > 0 && times[0] < earliest) earliest = times[0];
-  }
-  if (!Number.isFinite(earliest)) {
-    return { snapshots: [] };
-  }
-  const end = (now ?? /* @__PURE__ */ new Date()).getTime();
-  const edges = earliest >= end ? [earliest - MS_PER_DAY, end] : (() => {
-    const requested = maxPoints > 0 ? Math.floor(maxPoints) : Math.ceil((end - earliest) / FULL_HISTORY_CADENCE_MS) + 1;
-    const buckets = Math.min(MAX_HISTORY_BUCKETS, Math.max(MIN_HISTORY_BUCKETS, requested));
-    const step = (end - earliest) / (buckets - 1);
-    return Array.from(
-      { length: buckets },
-      (_, bucketIndex) => bucketIndex === buckets - 1 ? end : earliest + bucketIndex * step
-    );
-  })();
-  const cumulativeByRepo = /* @__PURE__ */ new Map();
-  for (const repo of repos) {
-    const events = eventsByRepo.get(repo.fullName) ?? [];
-    const counts = cumulativeCounts(events, edges);
-    const reachable = Math.min(
-      stargazersByRepo.get(repo.fullName)?.coveredStars ?? MAX_REACHABLE_STARGAZERS,
-      repo.stars
-    );
-    const scaled = events.length === 0 ? edges.map(() => repo.stars) : reachable < repo.stars ? scaleCappedToTrueTotal(counts, repo.stars, reachable) : scaleToTrueTotal(counts, repo.stars);
-    cumulativeByRepo.set(repo.fullName, scaled);
-  }
-  const snapshots = edges.map((edge, edgeIndex) => {
-    const snapshotRepos = repos.map((repo) => ({
-      fullName: repo.fullName,
-      name: repo.name,
-      owner: repo.owner,
-      stars: cumulativeByRepo.get(repo.fullName)?.[edgeIndex] ?? 0
-    }));
-    return {
-      timestamp: new Date(edge).toISOString(),
-      totalStars: snapshotRepos.reduce((sum, repo) => sum + repo.stars, 0),
-      repos: snapshotRepos
-    };
-  });
-  return { snapshots };
-}
-
 // src/domain/stargazers.ts
 function diffStargazers({
   current,
@@ -41861,6 +41753,114 @@ function generateBadge({ totalStars, locale }) {
 </svg>`;
 }
 
+// src/domain/star-history.ts
+var MIN_HISTORY_BUCKETS = 2;
+var MAX_HISTORY_BUCKETS = 365;
+var FULL_HISTORY_CADENCE_MS = 7 * MS_PER_DAY;
+function cumulativeCounts(sortedTimes, edges) {
+  const counts = [];
+  let pointer = 0;
+  for (const edge of edges) {
+    while (pointer < sortedTimes.length && sortedTimes[pointer] <= edge) {
+      pointer++;
+    }
+    counts.push(pointer);
+  }
+  return counts;
+}
+function scaleToTrueTotal(fetchedCounts, trueTotal) {
+  const fetchedTotal = fetchedCounts.at(-1) ?? 0;
+  const scale = fetchedTotal > 0 ? trueTotal / fetchedTotal : 0;
+  const scaled = fetchedCounts.map(
+    (count) => fetchedTotal === trueTotal ? count : Math.round(count * scale)
+  );
+  for (let index = 0; index < scaled.length; index++) {
+    scaled[index] = Math.min(scaled[index], trueTotal);
+    if (index > 0) scaled[index] = Math.max(scaled[index], scaled[index - 1]);
+  }
+  if (scaled.length > 0) {
+    scaled[scaled.length - 1] = trueTotal;
+  }
+  return scaled;
+}
+function scaleCappedToTrueTotal(counts, trueTotal, reachable) {
+  const fetchedTotal = counts.at(-1) ?? 0;
+  const scale = fetchedTotal > 0 ? reachable / fetchedTotal : 0;
+  const scaled = counts.map((count) => Math.round(count * scale));
+  let tailStart = scaled.length - 1;
+  while (tailStart > 0 && counts[tailStart - 1] === fetchedTotal) {
+    tailStart--;
+  }
+  const last = scaled.length - 1;
+  const span = last - tailStart;
+  if (span > 0) {
+    const startValue = scaled[tailStart];
+    for (let index = tailStart; index <= last; index++) {
+      scaled[index] = Math.round(
+        startValue + (index - tailStart) / span * (trueTotal - startValue)
+      );
+    }
+  }
+  for (let index = 1; index < scaled.length; index++) {
+    if (scaled[index] < scaled[index - 1]) scaled[index] = scaled[index - 1];
+  }
+  if (scaled.length > 0) scaled[last] = trueTotal;
+  return scaled;
+}
+function buildStarHistory({
+  repoStargazers,
+  repos,
+  maxPoints,
+  now
+}) {
+  const stargazersByRepo = new Map(repoStargazers.map((entry) => [entry.repoFullName, entry]));
+  const eventsByRepo = /* @__PURE__ */ new Map();
+  let earliest = Number.POSITIVE_INFINITY;
+  for (const repo of repos) {
+    const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? []).map((stargazer) => toEpochMs(stargazer.starredAt)).filter((timeMs) => timeMs !== null).sort((earlier, later) => earlier - later);
+    eventsByRepo.set(repo.fullName, times);
+    if (times.length > 0 && times[0] < earliest) earliest = times[0];
+  }
+  if (!Number.isFinite(earliest)) {
+    return { snapshots: [] };
+  }
+  const end = (now ?? /* @__PURE__ */ new Date()).getTime();
+  const edges = earliest >= end ? [earliest - MS_PER_DAY, end] : (() => {
+    const requested = maxPoints > 0 ? Math.floor(maxPoints) : Math.ceil((end - earliest) / FULL_HISTORY_CADENCE_MS) + 1;
+    const buckets = Math.min(MAX_HISTORY_BUCKETS, Math.max(MIN_HISTORY_BUCKETS, requested));
+    const step = (end - earliest) / (buckets - 1);
+    return Array.from(
+      { length: buckets },
+      (_, bucketIndex) => bucketIndex === buckets - 1 ? end : earliest + bucketIndex * step
+    );
+  })();
+  const cumulativeByRepo = /* @__PURE__ */ new Map();
+  for (const repo of repos) {
+    const events = eventsByRepo.get(repo.fullName) ?? [];
+    const counts = cumulativeCounts(events, edges);
+    const reachable = Math.min(
+      stargazersByRepo.get(repo.fullName)?.coveredStars ?? MAX_REACHABLE_STARGAZERS,
+      repo.stars
+    );
+    const scaled = events.length === 0 ? edges.map(() => repo.stars) : reachable < repo.stars ? scaleCappedToTrueTotal(counts, repo.stars, reachable) : scaleToTrueTotal(counts, repo.stars);
+    cumulativeByRepo.set(repo.fullName, scaled);
+  }
+  const snapshots = edges.map((edge, edgeIndex) => {
+    const snapshotRepos = repos.map((repo) => ({
+      fullName: repo.fullName,
+      name: repo.name,
+      owner: repo.owner,
+      stars: cumulativeByRepo.get(repo.fullName)?.[edgeIndex] ?? 0
+    }));
+    return {
+      timestamp: new Date(edge).toISOString(),
+      totalStars: snapshotRepos.reduce((sum, repo) => sum + repo.stars, 0),
+      repos: snapshotRepos
+    };
+  });
+  return { snapshots };
+}
+
 // src/presentation/shared.ts
 function emailChartStyle(config) {
   return {
@@ -42638,16 +42638,43 @@ function renderSvgChart({
 function resolveChartHistory({ candidate, fallback }) {
   return candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : fallback;
 }
+function resolveChartHistories({
+  config,
+  storedHistory,
+  repos,
+  repoStargazers,
+  now = /* @__PURE__ */ new Date()
+}) {
+  const reconstruct = (subset, stargazers) => config.includeCharts ? buildStarHistory({
+    repoStargazers: stargazers,
+    repos: subset,
+    maxPoints: config.chartMaxPoints,
+    now
+  }) : { snapshots: [] };
+  return {
+    aggregate: resolveChartHistory({
+      candidate: reconstruct(repos, repoStargazers),
+      fallback: storedHistory
+    }),
+    forRepo: (repoFullName) => {
+      const repo = repos.find((candidate) => candidate.fullName === repoFullName);
+      return resolveChartHistory({
+        candidate: repo ? reconstruct(
+          [repo],
+          repoStargazers.filter((entry) => entry.repoFullName === repoFullName)
+        ) : { snapshots: [] },
+        fallback: storedHistory
+      });
+    }
+  };
+}
 function buildChartFiles({
   config,
-  history,
-  fallbackHistory,
+  chartHistories,
   forecastData,
-  topRepoNames,
-  repoTotals,
-  repoStargazers,
-  now
+  topRepoNames
 }) {
+  const history = chartHistories.aggregate;
   if (!config.includeCharts || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return [];
   }
@@ -42678,18 +42705,9 @@ function buildChartFiles({
     files.push({ filename: CHART_FILES.starHistory, svg: starHistoryChart });
   }
   for (const repoFullName of topRepoNames) {
-    const repoTotal = repoTotals.find((repo) => repo.fullName === repoFullName);
-    const repoStarHistory = repoTotal ? buildStarHistory({
-      repoStargazers: repoStargazers.filter(
-        (stargazerEntry) => stargazerEntry.repoFullName === repoFullName
-      ),
-      repos: [repoTotal],
-      maxPoints: config.chartMaxPoints,
-      now
-    }) : { snapshots: [] };
     const repoChart = renderChart({
       kind: ChartKind.PER_REPO,
-      history: resolveChartHistory({ candidate: repoStarHistory, fallback: fallbackHistory }),
+      history: chartHistories.forRepo(repoFullName),
       repoFullName,
       lineColor: config.chartLineColor
     });
@@ -43556,23 +43574,18 @@ async function trackStars() {
           info(`Found ${stargazerDiff.totalNew} new stargazers`);
         }
         const topRepoNames = topRepositories({ repos: results.repos, limit: config.topRepos });
-        const chartNow = /* @__PURE__ */ new Date();
-        const repoTotals = repos.map((repo) => ({
-          fullName: repo.fullName,
-          name: repo.name,
-          owner: repo.owner,
-          stars: repo.stars
-        }));
-        const starHistory = config.includeCharts ? buildStarHistory({
-          repoStargazers,
-          repos: repoTotals,
-          maxPoints: config.chartMaxPoints,
-          now: chartNow
-        }) : { snapshots: [] };
-        const history = resolveChartHistory({
-          candidate: starHistory,
-          fallback: updatedHistory
+        const chartHistories = resolveChartHistories({
+          config,
+          storedHistory: updatedHistory,
+          repos: repos.map(({ fullName, name, owner, stars }) => ({
+            fullName,
+            name,
+            owner,
+            stars
+          })),
+          repoStargazers
         });
+        const history = chartHistories.aggregate;
         const forecastData = computeForecast({ history, topRepoNames });
         const reportParams = {
           config,
@@ -43624,16 +43637,7 @@ async function trackStars() {
           report: markdownReport,
           badge,
           csv: csvReport,
-          charts: buildChartFiles({
-            config,
-            history,
-            fallbackHistory: updatedHistory,
-            forecastData,
-            topRepoNames,
-            repoTotals,
-            repoStargazers,
-            now: chartNow
-          }),
+          charts: buildChartFiles({ config, chartHistories, forecastData, topRepoNames }),
           commitMessage: `Update star data: ${summary2.totalStars} total (${deltaIndicator(summary2.totalDelta)})`
         });
         setOutputs({
