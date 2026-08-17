@@ -1,22 +1,15 @@
 import { MAX_REACHABLE_STARGAZERS, MS_PER_DAY } from './constants';
 import type { RepoStargazers } from './stargazers';
 import { toEpochMs } from './time';
-import type { History, Snapshot } from './types';
+import type { History, Snapshot, SnapshotRepo } from './types';
 
 const MIN_HISTORY_BUCKETS = 2;
 const MAX_HISTORY_BUCKETS = 365;
 const FULL_HISTORY_CADENCE_MS = 7 * MS_PER_DAY;
 
-export interface RepoTotal {
-  fullName: string;
-  name: string;
-  owner: string;
-  stars: number;
-}
-
 interface BuildStarHistoryParams {
   repoStargazers: RepoStargazers[];
-  repos: RepoTotal[];
+  repos: SnapshotRepo[];
   maxPoints: number;
   now?: Date;
 }

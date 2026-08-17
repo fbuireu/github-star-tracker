@@ -79,6 +79,10 @@ function toDelimited({ key, delimiter }: ToDelimitedParams): string {
   );
 }
 
+export function toActionInputName(key: string): string {
+  return toDelimited({ key, delimiter: '-' });
+}
+
 function formatChoices(choices: readonly string[]): string {
   const quoted = choices.map((choice) => `"${choice}"`);
 
@@ -243,7 +247,7 @@ const TABLED_KEYS = Object.keys(FIELD_SOURCES) as TabledKey[];
 
 function resolveTabledFields(fileConfig: FileConfig): Pick<Config, TabledKey> {
   const resolved = TABLED_KEYS.map((key) => {
-    const inputName = toDelimited({ key, delimiter: '-' });
+    const inputName = toActionInputName(key);
     const fallback = DEFAULTS[key];
     const value = FIELD_SOURCES[key]({
       input: core.getInput(inputName),

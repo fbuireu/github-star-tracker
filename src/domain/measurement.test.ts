@@ -109,6 +109,19 @@ describe('measureRun', () => {
     ).toBe(0);
   });
 
+  it('counts what the appended history actually lost, even when max-history keeps everything', () => {
+    const storedHistory = makeMultiRepoHistory([{ 'user/repo-a': 1 }, { 'user/repo-a': 2 }]);
+    const measurement = measureRun({
+      ...BASE,
+      maxHistory: 0,
+      trackedSet: [makeRepoInfo('repo-a', 3)],
+      storedHistory,
+    });
+
+    expect(measurement.updatedHistory.snapshots).toHaveLength(3);
+    expect(measurement.droppedSnapshots).toBe(0);
+  });
+
   it('trims the appended history to max-history', () => {
     const storedHistory = makeMultiRepoHistory([
       { 'user/repo-a': 1 },

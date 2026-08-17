@@ -100,10 +100,10 @@ fetch is gated on `includeCharts || trackStargazers`.
 - **`branch.publish` is called once, at the end, with everything.** The Stargazer map is handed to it rather
   than written when it is computed, because `add -A` is what stages the writes and it runs inside `publish`.
   Splitting the call would put a write after the commit.
-- The `else if (emailConfig)` branch logs `'Notification threshold not reached, skipping email'`, but it also
-  fires when `summary.changed` is false, since `notify` needs both. So the message names the threshold even
-  when nothing changed at all. It is pinned verbatim by `tracker.test.ts`, so fix the wording and the test
-  together or not at all.
+- The `else if (emailConfig)` branch names the actual reason: `notify` needs both `summary.changed` and
+  `thresholdReached`, so it logs `'No stars changed since the baseline, skipping email'` when nothing moved
+  and `'Notification threshold not reached, skipping email'` otherwise. Both strings are pinned verbatim by
+  `tracker.test.ts` — change the wording and the test together or not at all.
 - `tracker.test.ts` mocks most of the tree but deliberately **not** `@presentation/charts` or
   `@domain/star-history`, so `buildChartFiles` and `buildStarHistory` execute for real. Both now also have
   colocated tests of their own, so this is belt-and-braces rather than their only coverage.

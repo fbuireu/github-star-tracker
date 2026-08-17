@@ -83,6 +83,12 @@ has a kebab-case input whose `default` is **empty**, and that only `config-path`
 `smtp-port` carry a non-empty default. **Never add a `default:` to an overridable input** — the test fails and
 the config file would stop working, because a non-empty default always beats it.
 
+It derives the input name with **`toActionInputName`, exported from `loader.ts`** — the same function the
+fold uses — so the test cannot disagree with the loader about what a key is called. It also pins the
+`outputs:` block: eleven keys, alphabetical, each described. That list is the only executable check on the
+output contract, which is otherwise restated in `setOutputs`, `setEmptyOutputs`, `ARCHITECTURE.md` and
+[`src/application/CLAUDE.md`](../application/CLAUDE.md).
+
 Real defaults therefore live in `defaults.ts` and are only *described* in the `action.yml` prose. Every
 overridable input does state its default in that prose today, so check `defaults.ts` before trusting a
 description rather than assuming one is missing. Two of those descriptions promise behaviour this folder does

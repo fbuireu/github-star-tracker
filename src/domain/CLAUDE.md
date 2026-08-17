@@ -24,7 +24,9 @@ records why. It composes `getBaselineSnapshot`, `compareStars`, `createSnapshot`
   decides delivery and then calls `recordNotification`, which returns a **new** History rather than mutating
   the one it was handed. That split is [ADR 0011](../../docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md).
 - **`droppedSnapshots` is a count, not a warning.** This layer is pure and cannot log; the shell raises the
-  `max-history` warning from it.
+  `max-history` warning from it. It is **derived from the History `addSnapshot` actually returned**, not
+  recomputed from `maxHistory` — the trimming rule is written once, in `addSnapshot`, so the count cannot
+  disagree with the array it describes.
 - `now` is injectable and reaches `getBaselineSnapshot` only. `createSnapshot` still reads the wall clock.
 
 ## Purity and time
@@ -66,8 +68,10 @@ snapshot everything else is diffed against.
 - Windowed modes pick the **newest** snapshot at or before `now - windowDays + 6h`. That 6-hour slack exists
   so cron jitter does not push a run just under the window.
 - No snapshot old enough → falls back to the **oldest parseable** one; none parseable → `null`.
-- `addSnapshot` trims with `.slice(-maxHistory)`. `maxHistory: 0` would keep the whole array
+- `addSnapshot` trims with `.slice(-maxHistory)`. `maxHistory: 0` keeps the whole array
   (`slice(-0) === slice(0)`), which is why `@config/loader` rejects a non-positive `max-history` upstream.
+  `measureRun` reports `droppedSnapshots: 0` for that case rather than a fabricated count, because it counts
+  the difference rather than restating the rule.
 - `repoStarSeries` yields `0` for snapshots where the repo is absent — a gap reads as a drop to zero. The
   returned array always matches `snapshots` in length.
 

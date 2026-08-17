@@ -40228,6 +40228,9 @@ function toDelimited({ key, delimiter }) {
     (letter) => `${delimiter}${letter.toLowerCase()}`
   );
 }
+function toActionInputName(key) {
+  return toDelimited({ key, delimiter: "-" });
+}
 function formatChoices(choices) {
   const quoted = choices.map((choice) => `"${choice}"`);
   if (quoted.length <= 2) return quoted.join(" or ");
@@ -40337,7 +40340,7 @@ var FIELD_SOURCES = {
 var TABLED_KEYS = Object.keys(FIELD_SOURCES);
 function resolveTabledFields(fileConfig) {
   const resolved = TABLED_KEYS.map((key) => {
-    const inputName = toDelimited({ key, delimiter: "-" });
+    const inputName = toActionInputName(key);
     const fallback = DEFAULTS2[key];
     const value = FIELD_SOURCES[key]({
       input: getInput(inputName),
@@ -40789,12 +40792,13 @@ function measureRun({
   const results = compareStars({ currentRepos: trackedSet, previousSnapshot: baseline });
   const { summary: summary2 } = results;
   const snapshot = createSnapshot({ currentRepos: trackedSet, summary: summary2 });
+  const updatedHistory = addSnapshot({ history: storedHistory, snapshot, maxHistory });
   return {
     baselineTimestamp: baseline === null ? null : baseline.timestamp,
     results,
     summary: summary2,
-    updatedHistory: addSnapshot({ history: storedHistory, snapshot, maxHistory }),
-    droppedSnapshots: Math.max(0, storedHistory.snapshots.length + 1 - maxHistory),
+    updatedHistory,
+    droppedSnapshots: storedHistory.snapshots.length + 1 - updatedHistory.snapshots.length,
     thresholdReached: shouldNotify({
       totalStars: summary2.totalStars,
       starsAtLastNotification: storedHistory.starsAtLastNotification,
@@ -43605,7 +43609,9 @@ async function trackStars() {
             notificationDelivered = false;
           }
         } else if (emailConfig) {
-          info("Notification threshold not reached, skipping email");
+          info(
+            summary2.changed ? "Notification threshold not reached, skipping email" : "No stars changed since the baseline, skipping email"
+          );
         }
         const historyToPersist = notificationDelivered ? recordNotification({ history: updatedHistory, totalStars: summary2.totalStars }) : updatedHistory;
         branch.publish({

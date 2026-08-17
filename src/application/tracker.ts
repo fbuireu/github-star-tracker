@@ -171,7 +171,11 @@ export async function trackStars(): Promise<void> {
             notificationDelivered = false;
           }
         } else if (emailConfig) {
-          core.info('Notification threshold not reached, skipping email');
+          core.info(
+            summary.changed
+              ? 'Notification threshold not reached, skipping email'
+              : 'No stars changed since the baseline, skipping email',
+          );
         }
 
         const historyToPersist = notificationDelivered

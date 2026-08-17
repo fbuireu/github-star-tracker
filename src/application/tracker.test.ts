@@ -212,7 +212,7 @@ describe('trackStars', () => {
       vi.mocked(getEmailConfig).mockReturnValue(emailConfig);
       await trackStars();
       expect(sendEmail).not.toHaveBeenCalled();
-      expect(core.info).toHaveBeenCalledWith('Notification threshold not reached, skipping email');
+      expect(core.info).toHaveBeenCalledWith('No stars changed since the baseline, skipping email');
     });
     it('skips email when threshold is not reached', async () => {
       vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, notificationThreshold: 10 });
@@ -221,6 +221,7 @@ describe('trackStars', () => {
       await trackStars();
       expect(sendEmail).not.toHaveBeenCalled();
       expect(core.setOutput).toHaveBeenCalledWith('should-notify', 'false');
+      expect(core.info).toHaveBeenCalledWith('Notification threshold not reached, skipping email');
     });
     it('sends email when threshold is reached', async () => {
       vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, notificationThreshold: 5 });

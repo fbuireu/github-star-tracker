@@ -1,12 +1,13 @@
 import { makeStargazer } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
-import { buildStarHistory, type RepoTotal } from './star-history';
+import { buildStarHistory } from './star-history';
 import type { RepoStargazers } from './stargazers';
+import type { SnapshotRepo } from './types';
 
 const NOW = new Date('2026-06-25T00:00:00Z');
 const MAX_REACHABLE_STARS = 40_000;
 
-function repoTotal(fullName: string, stars: number): RepoTotal {
+function repoTotal(fullName: string, stars: number): SnapshotRepo {
   const [owner, name] = fullName.split('/');
 
   return { fullName, name, owner, stars };
