@@ -123,17 +123,21 @@ describe('buildStarHistory', () => {
 
     const stars = result.snapshots.map((snapshot) => snapshot.repos[0].stars);
 
+    const risesTowardTheTotalInsteadOfSittingFlatAtIt = (stars.at(-2) ?? 0) < 50000;
+    const climbsThroughTheRampAboveTheCap = stars.some(
+      (starCount) => starCount > MAX_REACHABLE_STARS && starCount < 50000,
+    );
+    const stillPeaksWithinTheReachablePortion = stars.some(
+      (starCount) => starCount > 0 && starCount <= MAX_REACHABLE_STARS,
+    );
+
     expect(stars.at(-1)).toBe(50000);
     for (let index = 1; index < stars.length; index++) {
       expect(stars[index]).toBeGreaterThanOrEqual(stars[index - 1]);
     }
-    // The recent tail rises toward the total rather than sitting flat at it.
-    expect(stars.at(-2)).toBeLessThan(50000);
-    expect(stars.some((starCount) => starCount > MAX_REACHABLE_STARS && starCount < 50000)).toBe(
-      true,
-    );
-    // The reachable portion still peaks around the 40k cap before ramping.
-    expect(stars.some((starCount) => starCount > 0 && starCount <= MAX_REACHABLE_STARS)).toBe(true);
+    expect(risesTowardTheTotalInsteadOfSittingFlatAtIt).toBe(true);
+    expect(climbsThroughTheRampAboveTheCap).toBe(true);
+    expect(stillPeaksWithinTheReachablePortion).toBe(true);
   });
 
   it('holds a repo with stars but no fetched dates flat at its true total', () => {

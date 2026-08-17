@@ -4,7 +4,18 @@ import { ForecastMethod } from '@domain/forecast';
 import type { History, Snapshot } from '@domain/types';
 import { describe, expect, it } from 'vitest';
 import { ChartKind } from './chart-spec';
-import { CHART_COMPARISON_COLORS, COLORS, DARK_PALETTE, LIGHT_PALETTE } from './constants';
+import {
+  CHART,
+  CHART_COMPARISON_COLORS,
+  COLORS,
+  DARK_PALETTE,
+  LIGHT_PALETTE,
+  SVG_CHART,
+} from './constants';
+
+const PLOT_TOP_Y = SVG_CHART.margin.top;
+const PLOT_BOTTOM_Y = CHART.height - SVG_CHART.margin.bottom;
+
 import { renderSvgChart } from './svg-chart';
 
 const LINE_PATH_D = /<path d="([^"]+)" fill="none"/;
@@ -435,7 +446,7 @@ describe('renderSvgChart: star history', () => {
       renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: 'en' }),
     );
     const ys = linePathYs(result);
-    const baselineY = 400 - 50;
+    const baselineY = PLOT_BOTTOM_Y;
 
     expect(ys[0]).toBe(baselineY);
     expect(ys[1]).toBeLessThan(baselineY);
@@ -565,9 +576,8 @@ describe('renderSvgChart: star history', () => {
     );
     const ys = linePathYs(result);
 
-    // bottom axis is at CHART.height - margin.bottom = 350, top axis at margin.top = 50
-    expect(Math.max(...ys)).toBeLessThanOrEqual(350);
-    expect(Math.min(...ys)).toBeGreaterThanOrEqual(50);
+    expect(Math.max(...ys)).toBeLessThanOrEqual(PLOT_BOTTOM_Y);
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(PLOT_TOP_Y);
   });
 
   it('does not overshoot above the top axis on spikes', () => {
@@ -577,8 +587,8 @@ describe('renderSvgChart: star history', () => {
     );
     const ys = linePathYs(result);
 
-    expect(Math.max(...ys)).toBeLessThanOrEqual(350);
-    expect(Math.min(...ys)).toBeGreaterThanOrEqual(50);
+    expect(Math.max(...ys)).toBeLessThanOrEqual(PLOT_BOTTOM_Y);
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(PLOT_TOP_Y);
   });
 
   it('limits points to maxPoints', () => {
@@ -686,7 +696,7 @@ describe('renderSvgChart: star history', () => {
     );
 
     expect(Math.max(...smooth)).toBeGreaterThan(Math.max(...straight));
-    expect(Math.max(...smooth)).toBeLessThanOrEqual(350);
+    expect(Math.max(...smooth)).toBeLessThanOrEqual(PLOT_BOTTOM_Y);
   });
 
   it('does not overshoot the data point at a valley with the monotone curve', () => {
@@ -745,7 +755,7 @@ describe('renderSvgChart: star history', () => {
       ),
     );
 
-    expect(Math.max(...ys)).toBeLessThanOrEqual(350);
+    expect(Math.max(...ys)).toBeLessThanOrEqual(PLOT_BOTTOM_Y);
   });
 
   it('rounds corners with quadratic segments for the rounded-step curve', () => {
@@ -774,7 +784,7 @@ describe('renderSvgChart: star history', () => {
     const linePath = result.match(LINE_PATH_D)?.[1] ?? '';
 
     expect(linePath).toContain(' C');
-    expect(Math.max(...curveYsOf(result))).toBeLessThanOrEqual(350);
+    expect(Math.max(...curveYsOf(result))).toBeLessThanOrEqual(PLOT_BOTTOM_Y);
   });
 });
 
