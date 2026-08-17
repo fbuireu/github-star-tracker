@@ -47,11 +47,11 @@ is not repeated here. What follows is what that table cannot express.
   forecast. `velocityHistory` is always the stored per-run series, so velocity measures real elapsed time
   between runs instead of a chart bucket whose width follows `chart-max-points`. What gets persisted is
   always the stored history.
-- **The two reports share one `reportParams` object except for `theme`.** `generateMarkdownReport` takes
-  `ReportParams` and ignores the chart style entirely; `generateHtmlReport` takes
-  `GenerateHtmlReportParams`, which adds it, and gets `config.emailTheme` spread over the shared object.
-  Passing `reportParams` unchanged to both is the regression to watch for: it silently gives the email the
-  SVG palette again, which is what left dark-mode readers with a white chart background.
+- **The two reports take one identical `reportParams` object**, which carries `config` rather than fifteen
+  fields copied off it. Each renderer reads the options it honours — `generateMarkdownReport` reads no chart
+  style at all, and `generateHtmlReport` reads `config.emailTheme` itself
+  ([ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md)). This layer no longer
+  relays chart options, so a new one costs nothing here.
 - **One `chartNow` `Date` is created and reused** for `buildStarHistory` and `buildChartFiles`, so the global
   chart and every per-repo chart end on the same instant.
 - **`topRepoNames` is not computed here.** It is `topRepositories({ repos: results.repos, limit:

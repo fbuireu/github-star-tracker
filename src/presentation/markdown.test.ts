@@ -1,16 +1,26 @@
+import type { Config } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
-import { makeComparisonResults, makeHistory, makeMultiRepoHistory } from '@shared/tests';
+import {
+  makeComparisonResults,
+  makeConfig,
+  makeHistory,
+  makeMultiRepoHistory,
+} from '@shared/tests';
 import { describe, expect, it } from 'vitest';
 import { generateMarkdownReport } from './markdown';
 import type { ReportParams } from './shared';
 
-function renderMarkdown(overrides: Partial<ReportParams> = {}): string {
+interface RenderMarkdown extends Partial<Omit<ReportParams, 'config'>> {
+  config?: Partial<Config>;
+}
+
+function renderMarkdown({ config, ...overrides }: RenderMarkdown = {}): string {
   return generateMarkdownReport({
+    config: makeConfig(config),
     results: makeComparisonResults(),
     previousTimestamp: '2026-01-01T00:00:00Z',
-    locale: 'en',
     ...overrides,
   });
 }
@@ -35,7 +45,7 @@ describe('generateMarkdownReport', () => {
   const velocityHistory = makeHistory([100, 200], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
   it('renders the velocity section when velocity-metrics is enabled', () => {
-    const report = renderMarkdown({ velocityHistory, velocityMetrics: true });
+    const report = renderMarkdown({ velocityHistory, config: { velocityMetrics: true } });
 
     expect(report).toContain('Growth Velocity');
     expect(report).toContain('Stars per day');
@@ -57,7 +67,7 @@ describe('generateMarkdownReport', () => {
     const report = renderMarkdown({
       history: chartHistory,
       velocityHistory,
-      velocityMetrics: true,
+      config: { velocityMetrics: true },
     });
 
     expect(report).toContain('**Stars per day:** 10');
@@ -67,7 +77,7 @@ describe('generateMarkdownReport', () => {
   it('omits velocity when only a chart history is available', () => {
     const chartHistory = makeHistory([100, 200], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
-    const report = renderMarkdown({ history: chartHistory, velocityMetrics: true });
+    const report = renderMarkdown({ history: chartHistory, config: { velocityMetrics: true } });
 
     expect(report).not.toContain('Growth Velocity');
   });
@@ -75,7 +85,10 @@ describe('generateMarkdownReport', () => {
   it('renders velocity with only the daily rate when growth and projection are unavailable', () => {
     const flatHistory = makeHistory([0, 0], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
-    const report = renderMarkdown({ velocityHistory: flatHistory, velocityMetrics: true });
+    const report = renderMarkdown({
+      velocityHistory: flatHistory,
+      config: { velocityMetrics: true },
+    });
 
     expect(report).toContain('Growth Velocity');
     expect(report).toContain('Stars per day');
@@ -88,7 +101,10 @@ describe('generateMarkdownReport', () => {
       stepDays: 10,
     });
 
-    const report = renderMarkdown({ velocityHistory: decliningHistory, velocityMetrics: true });
+    const report = renderMarkdown({
+      velocityHistory: decliningHistory,
+      config: { velocityMetrics: true },
+    });
 
     expect(report).toContain('-25%');
     expect(report).not.toContain('+-25%');
@@ -114,7 +130,7 @@ describe('generateMarkdownReport', () => {
 
     const report = renderMarkdown({
       velocityHistory,
-      velocityMetrics: true,
+      config: { velocityMetrics: true },
       forecastData,
     });
 
@@ -169,7 +185,7 @@ describe('generateMarkdownReport', () => {
       stepDays: 1,
     });
 
-    const report = renderMarkdown({ history, includeCharts: true });
+    const report = renderMarkdown({ history, config: { includeCharts: true } });
 
     expect(report).toContain('Star Trend');
     expect(report).toContain('![Star History](./charts/star-history.svg)');
@@ -184,7 +200,7 @@ describe('generateMarkdownReport', () => {
       { stepDays: 1 },
     );
 
-    const report = renderMarkdown({ history, includeCharts: true });
+    const report = renderMarkdown({ history, config: { includeCharts: true } });
 
     expect(report).toContain('Top Repositories');
     expect(report).toContain('![Top Repositories](./charts/comparison.svg)');
@@ -199,7 +215,7 @@ describe('generateMarkdownReport', () => {
       { stepDays: 1 },
     );
 
-    const report = renderMarkdown({ history, includeCharts: true });
+    const report = renderMarkdown({ history, config: { includeCharts: true } });
 
     expect(report).toContain('<details>');
     expect(report).toContain('<summary>Individual Repository Charts</summary>');
@@ -219,7 +235,7 @@ describe('generateMarkdownReport', () => {
       { stepDays: 1 },
     );
 
-    const report = renderMarkdown({ history, includeCharts: true });
+    const report = renderMarkdown({ history, config: { includeCharts: true } });
 
     expect(report).toContain('#### user/repo-a — 15 ★ (+5)');
     expect(report).toContain('#### user/repo-b — 8 ★ (-2)');

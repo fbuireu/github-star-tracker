@@ -1,9 +1,10 @@
+import type { Config } from '@config/types';
 import { FORECAST_WEEKS } from '@domain/constants';
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
 import { getTranslations } from '@i18n';
-import { makeComparisonResults, makeHistory, makeRepoResult } from '@shared/tests';
+import { makeComparisonResults, makeConfig, makeHistory, makeRepoResult } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
 import { buildForecastTable, buildReportModel, StargazerOutcome } from './report-model';
 import type { ReportParams } from './shared';
@@ -21,11 +22,15 @@ const forecastData: ForecastData = {
   repos: [],
 };
 
-function modelOf(overrides: Partial<ReportParams> = {}) {
+interface ModelOf extends Partial<Omit<ReportParams, 'config'>> {
+  config?: Partial<Config>;
+}
+
+function modelOf({ config, ...overrides }: ModelOf = {}) {
   return buildReportModel({
+    config: makeConfig(config),
     results: makeComparisonResults(),
     previousTimestamp: '2026-01-01T00:00:00Z',
-    locale: 'en',
     ...overrides,
   });
 }
@@ -79,10 +84,9 @@ describe('buildReportModel', () => {
     });
 
     it('cuts the set at the requested limit', () => {
-      expect(modelOf({ results, topRepos: 2 }).topRepos.map((repo) => repo.fullName)).toEqual([
-        'user/large',
-        'user/middling',
-      ]);
+      expect(
+        modelOf({ results, config: { topRepos: 2 } }).topRepos.map((repo) => repo.fullName),
+      ).toEqual(['user/large', 'user/middling']);
     });
 
     it('does not reorder the results it was handed', () => {
@@ -97,10 +101,10 @@ describe('buildReportModel', () => {
     it('is plottable only with charts on and at least two snapshots', () => {
       const history = makeHistory([10, 20]);
       const outcomes = [
-        modelOf({ history, includeCharts: true }),
-        modelOf({ history, includeCharts: false }),
-        modelOf({ history: makeHistory([10]), includeCharts: true }),
-        modelOf({ history: null, includeCharts: true }),
+        modelOf({ history, config: { includeCharts: true } }),
+        modelOf({ history, config: { includeCharts: false } }),
+        modelOf({ history: makeHistory([10]), config: { includeCharts: true } }),
+        modelOf({ history: null, config: { includeCharts: true } }),
       ].map((model) => [model.hasChartHistory, model.chartHistory]);
 
       expect(outcomes).toEqual([
@@ -154,12 +158,14 @@ describe('buildReportModel', () => {
 
     it('is absent unless the metrics are enabled and a stored history is supplied', () => {
       expect(modelOf({ velocityHistory }).velocity).toBeNull();
-      expect(modelOf({ velocityMetrics: true }).velocity).toBeNull();
-      expect(modelOf({ velocityMetrics: true, velocityHistory }).velocity).not.toBeNull();
+      expect(modelOf({ config: { velocityMetrics: true } }).velocity).toBeNull();
+      expect(
+        modelOf({ velocityHistory, config: { velocityMetrics: true } }).velocity,
+      ).not.toBeNull();
     });
 
     it('resolves the projection to a single present-or-absent value', () => {
-      const model = modelOf({ velocityMetrics: true, velocityHistory });
+      const model = modelOf({ velocityHistory, config: { velocityMetrics: true } });
 
       expect(model.velocity).toMatchObject({
         starsPerDay: expect.any(Number),

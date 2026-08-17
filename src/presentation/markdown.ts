@@ -32,7 +32,7 @@ function repoChartHeading({ repo, t }: RepoChartHeadingParams): string {
 }
 
 export function generateMarkdownReport(params: ReportParams): string {
-  const t = getTranslations(params.locale);
+  const t = getTranslations(params.config.locale);
   const model = buildReportModel(params);
   const {
     summary,

@@ -1,4 +1,3 @@
-import { ChartTheme } from '@config/types';
 import type { ForecastResult } from '@domain/forecast';
 import { deltaIndicator, formatSignedPercent, trendIcon } from '@domain/formatting';
 import { getTranslations, interpolate } from '@i18n';
@@ -13,8 +12,8 @@ import {
   StargazerOutcome,
   type TopRepo,
 } from './report-model';
-import type { GenerateHtmlReportParams } from './shared';
-import { colorSchemeFor, resolvePalette } from './shared';
+import type { ReportParams } from './shared';
+import { colorSchemeFor, emailChartStyle, resolvePalette } from './shared';
 import type { ColorPalette } from './types';
 
 const escapeHtml = escapeFor(EscapeDialect.MARKUP);
@@ -47,36 +46,22 @@ function repoChartHeading({ repo, palette, t }: RepoChartHeadingParams): string 
   });
 }
 
-export function generateHtmlReport(params: GenerateHtmlReportParams): string {
+export function generateHtmlReport(params: ReportParams): string {
+  const { config } = params;
   const {
     locale,
-    theme = ChartTheme.AUTO,
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    range,
-    lineWidth,
-    milestones,
-    customMilestones,
-    trendLine,
-    lineColor,
-  } = params;
+    emailTheme: theme,
+    chartMilestones: milestones,
+    chartCustomMilestones: customMilestones,
+    chartTrendLine: trendLine,
+    chartLineColor: lineColor,
+  } = config;
+  const style = emailChartStyle(config);
 
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
   const chartUrl = (request: ChartRequest): string | null =>
-    chartImageUrl({
-      request,
-      locale,
-      smoothing,
-      curve,
-      showPoints,
-      beginAtZero,
-      theme,
-      range,
-      lineWidth,
-    });
+    chartImageUrl({ request, locale, theme, ...style });
   const model = buildReportModel(params);
   const {
     summary,

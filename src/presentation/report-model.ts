@@ -95,16 +95,14 @@ function toVelocitySection(metrics: VelocityMetrics | null): VelocitySection | n
 
 export function buildReportModel(params: ReportParams): ReportModel {
   const {
+    config,
     results,
     previousTimestamp,
-    locale,
     history = null,
     velocityHistory = null,
-    includeCharts = true,
     forecastData = null,
-    topRepos: topReposCount = 10,
-    velocityMetrics = false,
   } = params;
+  const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config;
 
   const t = getTranslations(locale);
   const { sorted, newRepos, removedRepos, now, prev } = prepareReportData({

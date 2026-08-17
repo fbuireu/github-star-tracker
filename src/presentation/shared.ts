@@ -1,4 +1,4 @@
-import { type ChartCurve, ChartRange, ChartTheme } from '@config/types';
+import { type ChartCurve, ChartRange, ChartTheme, type Config } from '@config/types';
 import { rankByStars } from '@domain/comparison';
 import { FORECAST_WEEKS, MS_PER_DAY } from '@domain/constants';
 import { type ForecastData, ForecastMethod } from '@domain/forecast';
@@ -12,33 +12,34 @@ import type { ColorPalette } from './types';
 type Translations = ReturnType<typeof getTranslations>;
 
 export interface ReportParams {
+  config: Config;
   results: ComparisonResults;
   previousTimestamp: string | null;
-  locale: Locale;
   history?: History | null;
   velocityHistory?: History | null;
-  includeCharts?: boolean;
   stargazerDiff?: StargazerDiffResult | null;
   forecastData?: ForecastData | null;
-  topRepos?: number;
-  velocityMetrics?: boolean;
 }
 
 export interface EmailChartStyle {
-  smoothing?: boolean;
-  curve?: ChartCurve;
-  showPoints?: boolean;
-  milestones?: boolean;
-  beginAtZero?: boolean;
-  theme?: ChartTheme;
-  customMilestones?: readonly number[];
-  range?: ChartRange;
-  trendLine?: boolean;
-  lineColor?: string;
-  lineWidth?: number;
+  smoothing: boolean;
+  curve: ChartCurve;
+  showPoints: boolean;
+  beginAtZero: boolean;
+  range: ChartRange;
+  lineWidth: number;
 }
 
-export interface GenerateHtmlReportParams extends ReportParams, EmailChartStyle {}
+export function emailChartStyle(config: Config): EmailChartStyle {
+  return {
+    smoothing: config.chartSmoothing,
+    curve: config.chartCurve,
+    showPoints: config.chartShowPoints,
+    beginAtZero: config.chartBeginAtZero,
+    range: config.chartRange,
+    lineWidth: config.chartLineWidth,
+  };
+}
 
 const THEME_CONFIG: Record<ChartTheme, { palette: ColorPalette; colorScheme: string }> = {
   [ChartTheme.AUTO]: { palette: LIGHT_PALETTE, colorScheme: 'light dark' },

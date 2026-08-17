@@ -41842,6 +41842,16 @@ function generateBadge({ totalStars, locale }) {
 }
 
 // src/presentation/shared.ts
+function emailChartStyle(config) {
+  return {
+    smoothing: config.chartSmoothing,
+    curve: config.chartCurve,
+    showPoints: config.chartShowPoints,
+    beginAtZero: config.chartBeginAtZero,
+    range: config.chartRange,
+    lineWidth: config.chartLineWidth
+  };
+}
 var THEME_CONFIG = {
   [ChartTheme.AUTO]: { palette: LIGHT_PALETTE, colorScheme: "light dark" },
   [ChartTheme.LIGHT]: { palette: LIGHT_PALETTE, colorScheme: ChartTheme.LIGHT },
@@ -42972,16 +42982,14 @@ function toVelocitySection(metrics) {
 }
 function buildReportModel(params) {
   const {
+    config,
     results,
     previousTimestamp,
-    locale,
     history = null,
     velocityHistory = null,
-    includeCharts = true,
-    forecastData = null,
-    topRepos: topReposCount = 10,
-    velocityMetrics = false
+    forecastData = null
   } = params;
+  const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config;
   const t = getTranslations(locale);
   const { sorted, newRepos, removedRepos, now, prev } = prepareReportData({
     results,
@@ -43040,33 +43048,19 @@ function repoChartHeading({ repo, palette, t }) {
   });
 }
 function generateHtmlReport(params) {
+  const { config } = params;
   const {
     locale,
-    theme = ChartTheme.AUTO,
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    range,
-    lineWidth,
-    milestones,
-    customMilestones,
-    trendLine,
-    lineColor
-  } = params;
+    emailTheme: theme,
+    chartMilestones: milestones,
+    chartCustomMilestones: customMilestones,
+    chartTrendLine: trendLine,
+    chartLineColor: lineColor
+  } = config;
+  const style = emailChartStyle(config);
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const chartUrl = (request2) => chartImageUrl({
-    request: request2,
-    locale,
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    theme,
-    range,
-    lineWidth
-  });
+  const chartUrl = (request2) => chartImageUrl({ request: request2, locale, theme, ...style });
   const model = buildReportModel(params);
   const {
     summary: summary2,
@@ -43298,7 +43292,7 @@ function repoChartHeading2({ repo, t }) {
   });
 }
 function generateMarkdownReport(params) {
-  const t = getTranslations(params.locale);
+  const t = getTranslations(params.config.locale);
   const model = buildReportModel(params);
   const {
     summary: summary2,
@@ -43561,30 +43555,16 @@ async function trackStars() {
         });
         const forecastData = computeForecast({ history, topRepoNames });
         const reportParams = {
+          config,
           results,
           previousTimestamp,
-          locale: config.locale,
           history,
           velocityHistory: updatedHistory,
-          includeCharts: config.includeCharts,
           stargazerDiff,
-          forecastData,
-          topRepos: config.topRepos,
-          smoothing: config.chartSmoothing,
-          curve: config.chartCurve,
-          showPoints: config.chartShowPoints,
-          milestones: config.chartMilestones,
-          beginAtZero: config.chartBeginAtZero,
-          theme: config.chartTheme,
-          customMilestones: config.chartCustomMilestones,
-          range: config.chartRange,
-          trendLine: config.chartTrendLine,
-          velocityMetrics: config.velocityMetrics,
-          lineColor: config.chartLineColor,
-          lineWidth: config.chartLineWidth
+          forecastData
         };
         const markdownReport = generateMarkdownReport(reportParams);
-        const htmlReport = generateHtmlReport({ ...reportParams, theme: config.emailTheme });
+        const htmlReport = generateHtmlReport(reportParams);
         const csvReport = generateCsvReport(results);
         const badge = generateBadge({ totalStars: summary2.totalStars, locale: config.locale });
         const notify = summary2.changed && measurement.thresholdReached;

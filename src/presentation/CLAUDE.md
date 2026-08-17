@@ -85,19 +85,24 @@ its spec — assert a section rule there, not through one dialect's markup.
   `nextMilestone !== null && daysToNextMilestone !== null` pair.
 - `buildForecastTable` returns headers and rows; each dialect wraps them in its own table markup. Headers are
   always `FORECAST_WEEKS` long regardless of how many points a forecast carries.
-- **The two dialects take different params.** `generateMarkdownReport` takes `ReportParams`;
-  `generateHtmlReport` takes `GenerateHtmlReportParams`, which adds `EmailChartStyle`. Markdown emits
-  relative `./charts/*.svg` links and has no use for chart styling, and the types now say so.
-- **`EmailChartStyle`'s fields split two ways at the call site**, and `html.ts` is the only place that knows
-  which is which: `milestones`, `customMilestones`, `trendLine` and `lineColor` become part of the
-  `ChartRequest`; `smoothing`, `curve`, `showPoints`, `beginAtZero`, `range` and `lineWidth` are the adapter
-  style and reach `chartImageUrl` **undefaulted**, because `chartImageUrl` owns those defaults. Only `theme`
-  is defaulted in `html.ts`, because the document itself needs a resolved palette and a `color-scheme`. Do
-  not reintroduce the other defaults here — the two sets drifting apart is the failure mode.
+- **The two dialects take the same params.** `ReportParams` carries `config: Config` plus the run's data,
+  and each dialect reads the options it honours ([ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md)).
+  Markdown emits relative `./charts/*.svg` links and reads no chart style at all; `html.ts` reads
+  `config.emailTheme` — never `chartTheme` — because a QuickChart PNG bakes its background in.
+  **`@application` no longer relays chart options**, so a new one is an input, a `Config` field and one read
+  in the renderer that wants it.
+- **`html.ts` splits `config` two ways, and it is the only place that knows which is which**:
+  `chartMilestones`, `chartCustomMilestones`, `chartTrendLine` and `chartLineColor` become part of the
+  `ChartRequest`; `emailChartStyle(config)` in `shared.ts` projects the six adapter-style fields
+  (`smoothing`, `curve`, `showPoints`, `beginAtZero`, `range`, `lineWidth`) that reach `chartImageUrl`. That
+  projection is the email counterpart of the `style` object `charts.ts` builds for the SVG path; keep the
+  two lists in step deliberately rather than by accident.
 - **`lineColor` and `lineWidth` reach the email charts too**, so the Notification and the Data Branch draw
   the same stroke. `lineColor` goes on the star-history, per-repo and forecast requests only — the comparison
   chart has a per-series palette and takes none, on both paths. `lineWidth` becomes Chart.js `borderWidth`,
-  emitted **only when supplied**: `chart.ts` must not default it to `SVG_CHART.lineWidth`, which is the SVG
+  emitted **only when supplied** — and `emailChartStyle` always supplies it, because `Config.chartLineWidth`
+  always has a value, so in a real run the email chart always carries a `borderWidth`. The optionality is
+  there for direct callers of `chartImageUrl`: it must not default to `SVG_CHART.lineWidth`, which is the SVG
   renderer's own fallback and would put the same literal in a third place. They used to be SVG-only while
   four documents said otherwise, which meant one run produced a purple README chart and a gold email chart.
 

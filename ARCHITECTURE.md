@@ -91,7 +91,7 @@ All step numbers refer to `src/application/tracker.ts`.
 | 13 | `buildStarHistory({ repoStargazers, repos, maxPoints, now: chartNow })` | domain/star-history | Reconstructs a dense monotonic history from `starred_at`; capped at 365 buckets |
 | 14 | `resolveChartHistory({ candidate, fallback: updatedHistory })` | presentation/charts | Reconstruction wins when it has >= 2 snapshots, otherwise the stored history |
 | 15 | `computeForecast({ history, topRepoNames })` | domain/forecast | `null` below 3 snapshots; always 2 methods x 4 weekly points |
-| 16 | `generateMarkdownReport(reportParams)` / `generateHtmlReport(reportParams)` / `generateCsvReport(results)` / `generateBadge({ totalStars, locale })` | presentation | Both reports build one `ReportModel` from the same params; only HTML also takes the chart style |
+| 16 | `generateMarkdownReport(reportParams)` / `generateHtmlReport(reportParams)` / `generateCsvReport(results)` / `generateBadge({ totalStars, locale })` | presentation | Both reports take the **same** `ReportParams`, which carries `config`; each reads the fields it honours ([ADR 0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md)) |
 | 17 | `notify` = `summary.changed && measurement.thresholdReached` | application | The decision, from the figure the measurement already produced |
 | 18 | `getEmailConfig(locale)` + `sendEmail({ emailConfig, subject, htmlBody })` | infrastructure/notification | Sent when `emailConfig && (notify \|\| sendOnNoChanges)`; failures downgrade to `core.warning` and clear `notificationDelivered`. **Runs before persistence** — see [ADR 0011](./docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md) |
 | 19 | `recordNotification({ history: updatedHistory, totalStars })` | domain/measurement | Only when `notificationDelivered`. Returns a **new** History; the undelivered one is persisted unchanged |
@@ -182,6 +182,7 @@ Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain gl
 | [0013](./docs/adr/0013-a-run-is-measured-in-one-place.md) | A Run is measured in one place |
 | [0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md) | Charts are built as a spec and rendered by adapters |
 | [0015](./docs/adr/0015-the-stored-history-declares-its-format-version.md) | The Stored History declares its format version |
+| [0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md) | The Report renderers read `Config` themselves |
 
 Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md) — `# N. Title`, a date, a
 status, then *Context*, *Decision*, *Consequences*. A new ADR starts by copying that file, not by writing

@@ -440,19 +440,20 @@ describe('trackStars', () => {
       expect(perRepo['u/restricted']).toBe(storedSnapshots);
       expect(perRepo['u/reachable']).not.toBe(storedSnapshots);
     });
-    it('renders the HTML report with emailTheme and the markdown report with chartTheme', async () => {
-      vi.mocked(loadConfig).mockReturnValue({
+    it('hands both report renderers the same params, config included', async () => {
+      const config = {
         ...defaultConfig,
         chartTheme: ChartTheme.LIGHT,
         emailTheme: ChartTheme.DARK,
-      });
+      };
+      vi.mocked(loadConfig).mockReturnValue(config);
       await trackStars();
-      expect(generateHtmlReport).toHaveBeenCalledWith(
-        expect.objectContaining({ theme: ChartTheme.DARK }),
-      );
-      expect(generateMarkdownReport).toHaveBeenCalledWith(
-        expect.objectContaining({ theme: ChartTheme.LIGHT }),
-      );
+
+      const markdownParams = vi.mocked(generateMarkdownReport).mock.calls[0][0];
+      const htmlParams = vi.mocked(generateHtmlReport).mock.calls[0][0];
+
+      expect(markdownParams.config).toBe(config);
+      expect(htmlParams).toBe(markdownParams);
     });
     it('skips SVG chart when includeCharts is false', async () => {
       vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, includeCharts: false });

@@ -118,30 +118,16 @@ export async function trackStars(): Promise<void> {
         const forecastData = computeForecast({ history, topRepoNames });
 
         const reportParams = {
+          config,
           results,
           previousTimestamp,
-          locale: config.locale,
           history,
           velocityHistory: updatedHistory,
-          includeCharts: config.includeCharts,
           stargazerDiff,
           forecastData,
-          topRepos: config.topRepos,
-          smoothing: config.chartSmoothing,
-          curve: config.chartCurve,
-          showPoints: config.chartShowPoints,
-          milestones: config.chartMilestones,
-          beginAtZero: config.chartBeginAtZero,
-          theme: config.chartTheme,
-          customMilestones: config.chartCustomMilestones,
-          range: config.chartRange,
-          trendLine: config.chartTrendLine,
-          velocityMetrics: config.velocityMetrics,
-          lineColor: config.chartLineColor,
-          lineWidth: config.chartLineWidth,
         };
         const markdownReport = generateMarkdownReport(reportParams);
-        const htmlReport = generateHtmlReport({ ...reportParams, theme: config.emailTheme });
+        const htmlReport = generateHtmlReport(reportParams);
 
         const csvReport = generateCsvReport(results);
         const badge = generateBadge({ totalStars: summary.totalStars, locale: config.locale });
