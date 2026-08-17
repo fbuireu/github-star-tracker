@@ -395,9 +395,9 @@ Creates a Shields.io-style SVG badge with the localized "Total Stars" label and 
 | Function | File Written |
 |---|---|
 | `writeHistory()` | `stars-data.json` |
-| `writeReport()` | `README.md` |
-| `writeBadge()` | `stars-badge.svg` |
-| `writeCsv()` | `stars-data.csv` |
+| `writeArtefact()` (`REPORT`) | `README.md` |
+| `writeArtefact()` (`BADGE`) | `stars-badge.svg` |
+| `writeArtefact()` (`CSV`) | `stars-data.csv` |
 | `writeChart()` | `charts/{filename}` |
 | `writeStargazers()` | `stargazers.json` |
 

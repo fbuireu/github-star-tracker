@@ -41361,13 +41361,13 @@ function writeHistory({ dataDir, history }) {
     data: { version: DATA_FORMAT_VERSION, ...history }
   });
 }
-function writeReport({ dataDir, markdown }) {
-  const filePath = path3.join(dataDir, DATA_FILES.report);
-  fs5.writeFileSync(filePath, markdown);
-}
-function writeBadge({ dataDir, svg }) {
-  const filePath = path3.join(dataDir, DATA_FILES.badge);
-  fs5.writeFileSync(filePath, svg);
+var Artefact = {
+  REPORT: "report",
+  BADGE: "badge",
+  CSV: "csv"
+};
+function writeArtefact({ dataDir, artefact, contents }) {
+  fs5.writeFileSync(path3.join(dataDir, DATA_FILES[artefact]), contents);
 }
 function writeChart({ dataDir, filename, svg }) {
   const chartsDir = path3.join(dataDir, DATA_FILES.chartsDir);
@@ -41404,10 +41404,6 @@ function writeHtmlReport({ htmlReport }) {
   const filePath = path3.join(outputDir, DATA_FILES.htmlReport);
   fs5.writeFileSync(filePath, htmlReport);
   return filePath;
-}
-function writeCsv({ dataDir, csv }) {
-  const filePath = path3.join(dataDir, DATA_FILES.csv);
-  fs5.writeFileSync(filePath, csv);
 }
 function commitAndPush({
   dataDir,
@@ -41468,9 +41464,9 @@ async function withDataBranch({
 }
 function publish({ dataDir, dataBranch, readOnly, token, artefacts }) {
   writeHistory({ dataDir, history: artefacts.history });
-  writeReport({ dataDir, markdown: artefacts.report });
-  writeBadge({ dataDir, svg: artefacts.badge });
-  writeCsv({ dataDir, csv: artefacts.csv });
+  writeArtefact({ dataDir, artefact: Artefact.REPORT, contents: artefacts.report });
+  writeArtefact({ dataDir, artefact: Artefact.BADGE, contents: artefacts.badge });
+  writeArtefact({ dataDir, artefact: Artefact.CSV, contents: artefacts.csv });
   if (artefacts.stargazerMap !== void 0) {
     writeStargazers({ dataDir, stargazerMap: artefacts.stargazerMap });
   }

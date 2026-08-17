@@ -1,6 +1,6 @@
 import type { ForecastResult } from '@domain/forecast';
 import { deltaIndicator, formatSignedPercent, trendIcon } from '@domain/formatting';
-import { getTranslations, interpolate } from '@i18n';
+import { getTranslations, interpolate, type Translations } from '@i18n';
 import { CHART_FILES, SECTION_ICON } from './constants';
 import { EscapeDialect, escapeFor } from './escaping';
 import {
@@ -17,7 +17,7 @@ const escapeMarkup = escapeFor(EscapeDialect.MARKUP);
 
 interface RepoChartHeadingParams {
   repo: TopRepo;
-  t: ReturnType<typeof getTranslations>;
+  t: Translations;
 }
 
 function repoChartHeading({ repo, t }: RepoChartHeadingParams): string {
@@ -281,7 +281,7 @@ export function generateMarkdownReport(params: ReportParams): string {
 interface RenderForecastTableParams {
   title: string;
   forecasts: ForecastResult[];
-  t: ReturnType<typeof getTranslations>;
+  t: Translations;
 }
 
 function renderForecastTable({ title, forecasts, t }: RenderForecastTableParams): string {

@@ -5,11 +5,9 @@ import { type ForecastData, ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
 import { toEpochMs } from '@domain/time';
 import type { ComparisonResults, History, RepoResult } from '@domain/types';
-import { getTranslations, interpolate, type Locale } from '@i18n';
+import { getTranslations, interpolate, type Locale, type Translations } from '@i18n';
 import { CHART, DARK_PALETTE, LIGHT_PALETTE } from './constants';
 import type { ColorPalette } from './types';
-
-type Translations = ReturnType<typeof getTranslations>;
 
 export interface ReportParams {
   config: Config;

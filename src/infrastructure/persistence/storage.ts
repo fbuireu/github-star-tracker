@@ -82,26 +82,22 @@ export function writeHistory({ dataDir, history }: WriteHistoryParams): void {
   });
 }
 
-interface WriteReportParams {
+export const Artefact = {
+  REPORT: 'report',
+  BADGE: 'badge',
+  CSV: 'csv',
+} as const;
+
+export type Artefact = (typeof Artefact)[keyof typeof Artefact];
+
+interface WriteArtefactParams {
   dataDir: string;
-  markdown: string;
+  artefact: Artefact;
+  contents: string;
 }
 
-export function writeReport({ dataDir, markdown }: WriteReportParams): void {
-  const filePath = path.join(dataDir, DATA_FILES.report);
-
-  fs.writeFileSync(filePath, markdown);
-}
-
-interface WriteBadgeParams {
-  dataDir: string;
-  svg: string;
-}
-
-export function writeBadge({ dataDir, svg }: WriteBadgeParams): void {
-  const filePath = path.join(dataDir, DATA_FILES.badge);
-
-  fs.writeFileSync(filePath, svg);
+export function writeArtefact({ dataDir, artefact, contents }: WriteArtefactParams): void {
+  fs.writeFileSync(path.join(dataDir, DATA_FILES[artefact]), contents);
 }
 
 interface WriteChartParams {
@@ -174,17 +170,6 @@ export function writeHtmlReport({ htmlReport }: WriteHtmlReportParams): string {
   fs.writeFileSync(filePath, htmlReport);
 
   return filePath;
-}
-
-interface WriteCsvParams {
-  dataDir: string;
-  csv: string;
-}
-
-export function writeCsv({ dataDir, csv }: WriteCsvParams): void {
-  const filePath = path.join(dataDir, DATA_FILES.csv);
-
-  fs.writeFileSync(filePath, csv);
 }
 
 interface CommitAndPushParams {

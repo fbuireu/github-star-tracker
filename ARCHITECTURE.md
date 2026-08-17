@@ -126,12 +126,12 @@ State has to survive between runs of a stateless Action. Artifacts expire and ar
 
 | Artefact | Rendered by | Written / emitted by |
 | --- | --- | --- |
-| `README.md` (markdown report) | `@presentation/markdown` `generateMarkdownReport` | `writeReport` (persistence) |
+| `README.md` (markdown report) | `@presentation/markdown` `generateMarkdownReport` | `writeArtefact` (persistence) |
 | HTML report | `@presentation/html` `generateHtmlReport` | `writeHtmlReport` -> `$RUNNER_TEMP \|\| cwd`, **not** committed |
-| `stars-data.csv` | `@presentation/csv` `generateCsvReport` | `writeCsv` |
+| `stars-data.csv` | `@presentation/csv` `generateCsvReport` | `writeArtefact` |
 | `stars-data.json` | `@domain/snapshot` `addSnapshot` | `writeHistory` |
 | `stargazers.json` | `@domain/stargazers` `buildStargazerMap` | `writeStargazers` |
-| `stars-badge.svg` | `@presentation/badge` `generateBadge` | `writeBadge` |
+| `stars-badge.svg` | `@presentation/badge` `generateBadge` | `writeArtefact` |
 | `charts/*.svg` | `@presentation/charts` -> `@presentation/svg-chart` | `writeChart` |
 | Email chart images | `@presentation/chart` (quickchart.io URLs, no SVG) | embedded by `html.ts` |
 | Email | `@presentation/html` body | `@infrastructure/notification/email` `sendEmail` |

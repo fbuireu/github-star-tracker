@@ -3,12 +3,10 @@ import type { ForecastData, ForecastResult } from '@domain/forecast';
 import type { StargazerDiffEntry } from '@domain/stargazers';
 import type { History, RepoResult, Summary } from '@domain/types';
 import { computeVelocity, type VelocityMetrics } from '@domain/velocity';
-import { getTranslations } from '@i18n';
+import { getTranslations, type Translations } from '@i18n';
 import { MIN_SNAPSHOTS_FOR_CHART } from './constants';
 import type { ReportParams } from './shared';
 import { buildForecastWeekHeaders, forecastMethodLabel, prepareReportData } from './shared';
-
-type Translations = ReturnType<typeof getTranslations>;
 
 export const StargazerOutcome = {
   NEW: 'new',

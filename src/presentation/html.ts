@@ -1,6 +1,6 @@
 import type { ForecastResult } from '@domain/forecast';
 import { deltaIndicator, formatSignedPercent, trendIcon } from '@domain/formatting';
-import { getTranslations, interpolate } from '@i18n';
+import { getTranslations, interpolate, type Translations } from '@i18n';
 import { chartImageUrl } from './chart';
 import type { ChartRequest } from './chart-spec';
 import { ChartKind } from './chart-spec';
@@ -32,7 +32,7 @@ function deltaColor({ delta, palette }: DeltaColorParams): string {
 interface RepoChartHeadingParams {
   repo: TopRepo;
   palette: ColorPalette;
-  t: ReturnType<typeof getTranslations>;
+  t: Translations;
 }
 
 function repoChartHeading({ repo, palette, t }: RepoChartHeadingParams): string {
@@ -341,7 +341,7 @@ export function generateHtmlReport(params: ReportParams): string {
 interface BuildHtmlForecastTableParams {
   title: string;
   forecasts: ForecastResult[];
-  t: ReturnType<typeof getTranslations>;
+  t: Translations;
   palette: ColorPalette;
 }
 

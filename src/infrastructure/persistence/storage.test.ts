@@ -6,15 +6,15 @@ import type { History } from '@domain/types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { execute } from '../git/commands';
 import {
+  Artefact,
   commitAndPush,
   pruneCharts,
   readHistory,
   readStargazers,
-  writeBadge,
+  writeArtefact,
   writeChart,
   writeHistory,
   writeHtmlReport,
-  writeReport,
   writeStargazers,
 } from './storage';
 
@@ -159,17 +159,19 @@ describe('writeHistory', () => {
   });
 });
 
-describe('writeReport', () => {
+describe('writeArtefact', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('writes markdown report to file', () => {
-    const markdown = '# Test Report\n\nContent';
+  it.each([
+    [Artefact.REPORT, 'README.md', '# Test Report\n\nContent'],
+    [Artefact.BADGE, 'stars-badge.svg', '<svg>badge</svg>'],
+    [Artefact.CSV, 'stars-data.csv', 'repository,stars'],
+  ])('writes the %s artefact to %s', (artefact, filename, contents) => {
+    writeArtefact({ dataDir: '/data', artefact, contents });
 
-    writeReport({ dataDir: '/data', markdown });
-
-    expect(fs.writeFileSync).toHaveBeenCalledWith(path.join('/data', 'README.md'), markdown);
+    expect(fs.writeFileSync).toHaveBeenCalledWith(path.join('/data', filename), contents);
   });
 });
 
@@ -206,20 +208,6 @@ describe('writeHtmlReport', () => {
     const filePath = writeHtmlReport({ htmlReport });
 
     expect(filePath).toBe(path.join(process.cwd(), 'star-tracker-report.html'));
-  });
-});
-
-describe('writeBadge', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('writes SVG badge to file', () => {
-    const svg = '<svg>badge</svg>';
-
-    writeBadge({ dataDir: '/data', svg });
-
-    expect(fs.writeFileSync).toHaveBeenCalledWith(path.join('/data', 'stars-badge.svg'), svg);
   });
 });
 

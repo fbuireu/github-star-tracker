@@ -117,6 +117,12 @@ Everything else here is behind it.
   awareness and must not gain any.
 - The `write*`/`read*` helpers in `storage.ts` are internal to this folder. Only `writeHtmlReport` is
   consumed from outside, and it deliberately writes **off** the Data Branch.
+- **One writer covers every plain-text artefact.** `writeArtefact({ dataDir, artefact, contents })` takes an
+  `Artefact` — `REPORT`, `BADGE` or `CSV` — and looks the filename up in `DATA_FILES`. Adding a text format
+  is one entry in that enum and one in the table, not a fourth function that is `path.join` plus
+  `writeFileSync` under a different field name. `writeHistory` and `writeStargazers` stay separate because
+  they are JSON and one of them stamps the format version; `writeChart` stays separate because it creates a
+  directory.
 - **`readHistory` always returns a usable `History`.** Missing file → `{ snapshots: [] }`; a stored
   `snapshots` that is not an array normalizes to `[]` while `starsAtLastNotification` survives untouched.
   Downstream domain code never null-checks it.
