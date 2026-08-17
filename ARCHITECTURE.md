@@ -33,7 +33,7 @@ flowchart TD
     pres --> dom
     pres --> i18n
     infra --> cfg
-    infra -->|types, constants,<br/>sampling plan| dom
+    infra -->|types, constants,<br/>tracked set, sampling plan| dom
     infra --> i18n
     dom -->|"Locale, LOCALE_MAP<br/>(formatting.ts only)"| i18n
 
@@ -60,9 +60,9 @@ that performs I/O at all.
 | application | `@application/*` | Sequencing the single use case; composition root for Octokit | config, domain, i18n, infrastructure, presentation, `@actions/*`, `@octokit/plugin-retry` | nothing forbidden — it is the top |
 | assets | `@assets/*` | Not a layer: the star mark the README embeds, no code | nothing — it imports nothing and nothing imports it | — |
 | config | `@config/*` | Action inputs + `star-tracker.yml` -> a fully-populated `Config` | `@domain/types`, `@i18n`, `@actions/core`, `js-yaml`, `node:fs/path` | application, infrastructure, presentation |
-| domain | `@domain/*` | Pure business core: comparison, snapshots, forecast, velocity, stargazer diffing, star-history reconstruction, formatting | `@i18n` only | everything else, incl. `@actions/*`, octokit, `node:fs` |
+| domain | `@domain/*` | Pure business core: the Tracked Set, comparison, snapshots, forecast, velocity, stargazer diffing and sampling, star-history reconstruction, formatting | `@i18n` only | everything else, incl. `@actions/*`, octokit, `node:fs` |
 | i18n | `@i18n` | Translation bundles, `getTranslations`, `interpolate` | nothing (true leaf) | everything |
-| infrastructure | `@infrastructure/*` | All I/O: octokit REST, `git` CLI, `fs`, nodemailer | config, domain (types, constants, and `sampling`'s pure planners), i18n, `node:*`, `@actions/*`, `nodemailer` | application, presentation |
+| infrastructure | `@infrastructure/*` | All I/O: octokit REST, `git` CLI, `fs`, nodemailer | config, domain (types, constants, and the pure deciders in `tracked-set` / `sampling`), i18n, `node:*`, `@actions/*`, `nodemailer` | application, presentation |
 | presentation | `@presentation/*` | Pure rendering: data in, string out (markdown/HTML/SVG/CSV/badge) | `@config/types`, domain, i18n | infrastructure, `@actions/*`, `node:fs`, any network |
 | shared | `@shared/*` | Cross-cutting non-layer code; today only `shared/tests` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only) | used from `*.test.ts` only |
 
@@ -79,7 +79,7 @@ All step numbers refer to `src/application/tracker.ts`.
 | 1 | `trackStars()` from `src/index.ts` | entry | Un-awaited; `trackStars` never rejects |
 | 2 | `loadConfig()` | config | Precedence: action input -> config file -> `DEFAULTS`. Only unknown `visibility` and an invalid `data-branch` throw |
 | 3 | `core.getInput('github-token' / 'github-api-url')`, `github.getOctokit(token, baseUrl?, retry)` | application | The only place an Octokit instance is built; `@octokit/plugin-retry` attached here |
-| 4 | `getRepos({ octokit, config })` | infrastructure/github | Paginates, filters, maps; result sorted by `full_name`. Fetch failure is fatal |
+| 4 | `getRepos({ octokit, config })` | infrastructure/github | Paginates and maps, then narrows via `resolveTrackedSet` (`@domain/tracked-set`) and logs the counts it reports; result sorted by `full_name`. Fetch failure is fatal |
 | 5 | empty result -> `setEmptyOutputs()` and `return` | application | Returns **before** `withDataBranch`, so no worktree, no commit, no email |
 | 6 | `withDataBranch({ dataBranch, readOnly, token, run })` | infrastructure/persistence | Opens the worktree via `initializeDataBranch`, hands the body a `DataBranch`, and runs `cleanup` in `finally`. `dataDir` never escapes the module |
 | 7 | `branch.readHistory()` | infrastructure/persistence | Normalizes to `{ ...raw, snapshots: Array.isArray(raw.snapshots) ? raw.snapshots : [] }` — a non-array `snapshots` becomes `[]`, everything else survives; invalid JSON throws rather than resetting |

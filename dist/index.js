@@ -40870,6 +40870,53 @@ function buildStargazerMap({
   return map;
 }
 
+// src/domain/tracked-set.ts
+var REGEX_PATTERN = /^\/(.+)\/([gimsuy]*)$/;
+function matchesPattern({ name, patterns, invalidPatterns }) {
+  return patterns.some((pattern) => {
+    const match = REGEX_PATTERN.exec(pattern);
+    if (match === null) return name === pattern;
+    try {
+      return new RegExp(match[1], match[2]).test(name);
+    } catch {
+      if (!invalidPatterns.includes(pattern)) invalidPatterns.push(pattern);
+      return false;
+    }
+  });
+}
+function resolveTrackedSet({ repos, filters }) {
+  const invalidPatterns = [];
+  const matches = (name, patterns) => matchesPattern({ name, patterns, invalidPatterns });
+  let candidates = repos;
+  let afterOnlyOrgs = null;
+  if (filters.onlyOrgs.length > 0) {
+    candidates = candidates.filter((repo) => matches(repo.owner, filters.onlyOrgs));
+    afterOnlyOrgs = candidates.length;
+  }
+  if (filters.onlyRepos.length > 0) {
+    const onlyRepos = candidates.filter((repo) => matches(repo.name, filters.onlyRepos));
+    return {
+      repos: onlyRepos,
+      afterOnlyOrgs,
+      afterOnlyRepos: onlyRepos.length,
+      invalidPatterns
+    };
+  }
+  let filtered = candidates;
+  if (!filters.includeArchived) filtered = filtered.filter((repo) => !repo.archived);
+  if (!filters.includeForks) filtered = filtered.filter((repo) => !repo.fork);
+  if (filters.excludeRepos.length > 0) {
+    filtered = filtered.filter((repo) => !matches(repo.name, filters.excludeRepos));
+  }
+  if (filters.excludeOrgs.length > 0) {
+    filtered = filtered.filter((repo) => !matches(repo.owner, filters.excludeOrgs));
+  }
+  if (filters.minStars > 0) {
+    filtered = filtered.filter((repo) => repo.stars >= filters.minStars);
+  }
+  return { repos: filtered, afterOnlyOrgs, afterOnlyRepos: null, invalidPatterns };
+}
+
 // src/infrastructure/github/errors.ts
 function describeFetchError(error2) {
   const { status, message } = error2 ?? {};
@@ -40917,61 +40964,6 @@ async function fetchRepos({ octokit, config }) {
 }
 
 // src/infrastructure/github/filters.ts
-var REGEX_PATTERN = /^\/(.+)\/([gimsuy]*)$/;
-function matchesPattern({ name, patterns }) {
-  return patterns.some((pattern) => {
-    const match = REGEX_PATTERN.exec(pattern);
-    if (match) {
-      try {
-        return new RegExp(match[1], match[2]).test(name);
-      } catch (error2) {
-        warning(
-          `Ignoring invalid pattern "${pattern}": ${error2.message}. Filters expect either an exact name or /pattern/flags.`
-        );
-        return false;
-      }
-    }
-    return name === pattern;
-  });
-}
-function filterRepos({ repos, config }) {
-  let candidates = repos;
-  if (config.onlyOrgs.length > 0) {
-    candidates = candidates.filter(
-      (repo) => matchesPattern({ name: repo.owner.login, patterns: config.onlyOrgs })
-    );
-    info(`After only_orgs filter: ${candidates.length} repos`);
-  }
-  if (config.onlyRepos.length > 0) {
-    const filtered2 = candidates.filter(
-      (repo) => matchesPattern({ name: repo.name, patterns: config.onlyRepos })
-    );
-    info(`After only_repos filter: ${filtered2.length} repos`);
-    return filtered2;
-  }
-  let filtered = candidates;
-  if (!config.includeArchived) {
-    filtered = filtered.filter((repo) => !repo.archived);
-  }
-  if (!config.includeForks) {
-    filtered = filtered.filter((repo) => !repo.fork);
-  }
-  if (config.excludeRepos.length > 0) {
-    filtered = filtered.filter(
-      (repo) => !matchesPattern({ name: repo.name, patterns: config.excludeRepos })
-    );
-  }
-  if (config.excludeOrgs.length > 0) {
-    filtered = filtered.filter(
-      (repo) => !matchesPattern({ name: repo.owner.login, patterns: config.excludeOrgs })
-    );
-  }
-  if (config.minStars > 0) {
-    filtered = filtered.filter((repo) => repo.stargazers_count >= config.minStars);
-  }
-  info(`After filtering: ${filtered.length} repos`);
-  return filtered;
-}
 function mapRepos(repos) {
   return repos.map((repo) => ({
     owner: repo.owner.login,
@@ -40984,9 +40976,22 @@ function mapRepos(repos) {
   }));
 }
 async function getRepos({ octokit, config }) {
-  const allRepos = await fetchRepos({ octokit, config });
-  const filtered = filterRepos({ repos: allRepos, config });
-  return mapRepos(filtered);
+  const fetched = await fetchRepos({ octokit, config });
+  const trackedSet = resolveTrackedSet({ repos: mapRepos(fetched), filters: config });
+  for (const pattern of trackedSet.invalidPatterns) {
+    warning(
+      `Ignoring invalid pattern "${pattern}". Filters expect either an exact name or /pattern/flags.`
+    );
+  }
+  if (trackedSet.afterOnlyOrgs !== null) {
+    info(`After only_orgs filter: ${trackedSet.afterOnlyOrgs} repos`);
+  }
+  if (trackedSet.afterOnlyRepos !== null) {
+    info(`After only_repos filter: ${trackedSet.afterOnlyRepos} repos`);
+    return trackedSet.repos;
+  }
+  info(`After filtering: ${trackedSet.repos.length} repos`);
+  return trackedSet.repos;
 }
 
 // src/domain/sampling.ts

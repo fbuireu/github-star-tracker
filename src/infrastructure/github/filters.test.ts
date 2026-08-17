@@ -2,9 +2,9 @@ import * as core from '@actions/core';
 import type { Config } from '@config/types';
 import { Visibility } from '@config/types';
 import { makeConfig } from '@shared/tests';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchRepos } from './client';
-import { filterRepos, getRepos, mapRepos } from './filters';
+import { getRepos, mapRepos } from './filters';
 import type { GitHubRepo, Octokit } from './types';
 
 vi.mock('@actions/core', () => ({
@@ -38,215 +38,6 @@ function makeRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
 }
 
 const defaultConfig: Config = makeConfig({ includeCharts: false, notificationThreshold: 0 });
-
-describe('filterRepos', () => {
-  it('matches only-repos by regex, like its sibling filters', () => {
-    const repos = [makeRepo({ name: 'app-web' }), makeRepo({ name: 'docs' })];
-    const config = makeConfig({ onlyRepos: ['/^app-/'] });
-
-    expect(filterRepos({ repos, config }).map((repo) => repo.name)).toEqual(['app-web']);
-  });
-
-  it('warns and skips a malformed regex pattern instead of failing the run', () => {
-    const repos = [makeRepo({ name: 'keep-me' }), makeRepo({ name: 'drop-me' })];
-    const config = makeConfig({ excludeRepos: ['/[unclosed/', 'drop-me'] });
-
-    const filtered = filterRepos({ repos, config });
-
-    expect(filtered.map((repo) => repo.name)).toEqual(['keep-me']);
-    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Ignoring invalid pattern'));
-  });
-
-  it('returns all repos with default config', () => {
-    const repos = [makeRepo(), makeRepo({ name: 'other' })];
-
-    expect(filterRepos({ repos, config: defaultConfig })).toHaveLength(2);
-  });
-
-  it('filters out archived repos by default', () => {
-    const repos = [makeRepo(), makeRepo({ name: 'archived', archived: true })];
-    const result = filterRepos({ repos, config: defaultConfig });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('test-repo');
-  });
-
-  it('includes archived repos when configured', () => {
-    const repos = [makeRepo(), makeRepo({ name: 'archived', archived: true })];
-    const config = { ...defaultConfig, includeArchived: true };
-
-    expect(filterRepos({ repos, config })).toHaveLength(2);
-  });
-
-  it('filters out forks by default', () => {
-    const repos = [makeRepo(), makeRepo({ name: 'forked', fork: true })];
-
-    expect(filterRepos({ repos, config: defaultConfig })).toHaveLength(1);
-  });
-
-  it('includes forks when configured', () => {
-    const repos = [makeRepo(), makeRepo({ name: 'forked', fork: true })];
-    const config = { ...defaultConfig, includeForks: true };
-
-    expect(filterRepos({ repos, config })).toHaveLength(2);
-  });
-
-  it('excludes repos by name', () => {
-    const repos = [makeRepo(), makeRepo({ name: 'excluded' })];
-    const config = { ...defaultConfig, excludeRepos: ['excluded'] };
-
-    expect(filterRepos({ repos, config })).toHaveLength(1);
-  });
-
-  it('excludes repos by regex pattern', () => {
-    const repos = [
-      makeRepo({ name: 'my-app' }),
-      makeRepo({ name: 'test-utils' }),
-      makeRepo({ name: 'test-helpers' }),
-    ];
-    const config = { ...defaultConfig, excludeRepos: ['/^test-/'] };
-    const result = filterRepos({ repos, config });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('my-app');
-  });
-
-  it('supports mixed exact names and regex patterns in exclude', () => {
-    const repos = [
-      makeRepo({ name: 'keep-me' }),
-      makeRepo({ name: 'drop-this' }),
-      makeRepo({ name: 'experiment-1' }),
-      makeRepo({ name: 'experiment-2' }),
-    ];
-    const config = { ...defaultConfig, excludeRepos: ['drop-this', '/^experiment-/'] };
-    const result = filterRepos({ repos, config });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('keep-me');
-  });
-
-  it('supports regex flags in exclude pattern', () => {
-    const repos = [
-      makeRepo({ name: 'MyProject' }),
-      makeRepo({ name: 'mylib' }),
-      makeRepo({ name: 'other' }),
-    ];
-    const config = { ...defaultConfig, excludeRepos: ['/^my/i'] };
-    const result = filterRepos({ repos, config });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('other');
-  });
-
-  it('filters by minimum stars', () => {
-    const repos = [
-      makeRepo({ stargazers_count: 5 }),
-      makeRepo({ name: 'popular', stargazers_count: 50 }),
-    ];
-    const config = { ...defaultConfig, minStars: 10 };
-    const result = filterRepos({ repos, config });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('popular');
-  });
-
-  it('only_repos overrides all other filters', () => {
-    const repos = [
-      makeRepo({ name: 'wanted', archived: true, fork: true }),
-      makeRepo({ name: 'unwanted' }),
-    ];
-    const config = { ...defaultConfig, onlyRepos: ['wanted'] };
-    const result = filterRepos({ repos, config });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('wanted');
-  });
-
-  it('returns empty array when no repos match only_repos', () => {
-    const repos = [makeRepo()];
-    const config = { ...defaultConfig, onlyRepos: ['nonexistent'] };
-
-    expect(filterRepos({ repos, config })).toHaveLength(0);
-  });
-
-  it('filters by org with only-orgs', () => {
-    const repos = [
-      makeRepo({ name: 'a', owner: { login: 'org-a' } }),
-      makeRepo({ name: 'b', owner: { login: 'org-b' } }),
-    ];
-    const config = { ...defaultConfig, onlyOrgs: ['org-a'] };
-    const result = filterRepos({ repos, config });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].owner.login).toBe('org-a');
-  });
-
-  it('supports regex pattern in only-orgs', () => {
-    const repos = [
-      makeRepo({ name: 'web', owner: { login: 'acme-web' } }),
-      makeRepo({ name: 'api', owner: { login: 'acme-api' } }),
-      makeRepo({ name: 'x', owner: { login: 'other' } }),
-    ];
-    const config = { ...defaultConfig, onlyOrgs: ['/^acme-/'] };
-
-    expect(filterRepos({ repos, config })).toHaveLength(2);
-  });
-
-  it('excludes repos by org with exclude-orgs', () => {
-    const repos = [
-      makeRepo({ name: 'a', owner: { login: 'keep' } }),
-      makeRepo({ name: 'b', owner: { login: 'drop' } }),
-    ];
-    const config = { ...defaultConfig, excludeOrgs: ['drop'] };
-    const result = filterRepos({ repos, config });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].owner.login).toBe('keep');
-  });
-
-  it('supports mixed exact names and regex in exclude-orgs', () => {
-    const repos = [
-      makeRepo({ name: 'a', owner: { login: 'keep' } }),
-      makeRepo({ name: 'b', owner: { login: 'drop-this' } }),
-      makeRepo({ name: 'c', owner: { login: 'experiment-1' } }),
-    ];
-    const config = { ...defaultConfig, excludeOrgs: ['drop-this', '/^experiment-/'] };
-    const result = filterRepos({ repos, config });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].owner.login).toBe('keep');
-  });
-
-  it('matches orgs case-sensitively', () => {
-    const repos = [makeRepo({ name: 'a', owner: { login: 'Org-A' } })];
-    const config = { ...defaultConfig, onlyOrgs: ['org-a'] };
-
-    expect(filterRepos({ repos, config })).toHaveLength(0);
-  });
-
-  it('applies only-orgs before the only-repos override on the narrowed set', () => {
-    const repos = [
-      makeRepo({ name: 'wanted', owner: { login: 'org-a' }, archived: true, fork: true }),
-      makeRepo({ name: 'wanted', owner: { login: 'org-b' } }),
-      makeRepo({ name: 'unwanted', owner: { login: 'org-a' } }),
-    ];
-    const config = { ...defaultConfig, onlyOrgs: ['org-a'], onlyRepos: ['wanted'] };
-    const result = filterRepos({ repos, config });
-
-    expect(result).toHaveLength(1);
-    expect(result[0].owner.login).toBe('org-a');
-    expect(result[0].name).toBe('wanted');
-  });
-
-  it('does not filter by org when org lists are empty', () => {
-    const repos = [
-      makeRepo({ name: 'a', owner: { login: 'org-a' } }),
-      makeRepo({ name: 'b', owner: { login: 'org-b' } }),
-    ];
-
-    expect(filterRepos({ repos, config: defaultConfig })).toHaveLength(2);
-  });
-});
 
 describe('mapRepos', () => {
   it('maps raw GitHub API repos to clean objects', () => {
@@ -437,6 +228,53 @@ describe('fetchRepos', () => {
 });
 
 describe('getRepos', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function octokitReturning(repos: GitHubRepo[]): Octokit {
+    return createMockOctokit({
+      rest: { repos: { listForAuthenticatedUser: vi.fn().mockResolvedValue({ data: repos }) } },
+    });
+  }
+
+  it('reports every pattern the tracked set could not read', async () => {
+    await getRepos({
+      octokit: octokitReturning([makeRepo({ name: 'keep-me' })]),
+      config: makeConfig({ excludeRepos: ['/[unclosed/'] }),
+    });
+
+    expect(core.warning).toHaveBeenCalledWith(
+      'Ignoring invalid pattern "/[unclosed/". Filters expect either an exact name or /pattern/flags.',
+    );
+  });
+
+  it('logs the narrowing at each stage the filters actually ran', async () => {
+    const repos = [
+      makeRepo({ name: 'a', owner: { login: 'org-a' } }),
+      makeRepo({ name: 'b', owner: { login: 'org-b' } }),
+    ];
+
+    await getRepos({
+      octokit: octokitReturning(repos),
+      config: makeConfig({ onlyOrgs: ['org-a'] }),
+    });
+
+    expect(core.info).toHaveBeenCalledWith('After only_orgs filter: 1 repos');
+    expect(core.info).toHaveBeenCalledWith('After filtering: 1 repos');
+    expect(core.info).not.toHaveBeenCalledWith(expect.stringContaining('only_repos'));
+  });
+
+  it('reports the only-repos count instead of the general one when it short-circuits', async () => {
+    await getRepos({
+      octokit: octokitReturning([makeRepo({ name: 'wanted' }), makeRepo({ name: 'other' })]),
+      config: makeConfig({ onlyRepos: ['wanted'] }),
+    });
+
+    expect(core.info).toHaveBeenCalledWith('After only_repos filter: 1 repos');
+    expect(core.info).not.toHaveBeenCalledWith(expect.stringContaining('After filtering'));
+  });
+
   it('fetches, filters, and maps repos', async () => {
     const mockRepos = [
       makeRepo({ name: 'repo1', stargazers_count: 10 }),

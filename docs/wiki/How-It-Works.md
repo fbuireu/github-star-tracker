@@ -164,7 +164,7 @@ Queries `GET /user/repos` with pagination (`100` per page). The `visibility` con
 
 ### Repository Filtering
 
-**File:** `src/infrastructure/github/filters.ts` > `filterRepos()`
+**File:** `src/domain/tracked-set.ts` > `resolveTrackedSet()`
 
 Client-side filtering pipeline:
 
@@ -487,11 +487,13 @@ src/
 │   ├── types.ts                      # RepoInfo, Snapshot, History, Summary, CompareAgainst, NotificationMode
 │   ├── constants.ts                  # MS_PER_DAY, STAR_MILESTONES, NOTIFICATION_THRESHOLDS
 │   ├── time.ts                       # toEpochMs() - the layer's only timestamp entry point
-│   ├── measurement.ts                # measureRun(), recordNotification() - the layer's front door
+│   ├── measurement.ts                # measureRun() - the layer's front door
 │   ├── comparison.ts                 # compareStars(), createSnapshot(), rankByStars(), topRepositories()
 │   ├── snapshot.ts                   # getBaselineSnapshot(), addSnapshot(), repoStarSeries()
 │   ├── formatting.ts                 # formatCount(), deltaIndicator(), trendIcon(), formatDate(), buildAxisLabels()
-│   ├── notification.ts               # shouldNotify()
+│   ├── notification.ts               # shouldNotify(), settleNotification(), recordNotification()
+│   ├── tracked-set.ts                # resolveTrackedSet() - which repositories a Run measures
+│   ├── sampling.ts                   # shouldSample(), sampledPages(), coveredStars()
 │   ├── growth.ts                     # calendarDays(), latestRateInterval(), weightedDailyRate(), fitTrend()
 │   ├── forecast.ts                   # computeForecast()
 │   ├── velocity.ts                   # computeVelocity()
@@ -508,7 +510,7 @@ src/
 │   ├── github/
 │   │   ├── types.ts                  # Octokit, GitHubRepo types
 │   │   ├── client.ts                 # fetchRepos()
-│   │   ├── filters.ts                # filterRepos(), mapRepos(), getRepos()
+│   │   ├── filters.ts                # mapRepos(), getRepos()
 │   │   └── stargazers.ts             # fetchAllStargazers()
 │   ├── notification/
 │   │   └── email.ts                  # getEmailConfig(), sendEmail()

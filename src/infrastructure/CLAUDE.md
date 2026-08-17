@@ -25,8 +25,16 @@ the caller catches and warns.
 
 ## github/
 
-Fetch, then filter, then map. What survives every configured filter is the **Tracked Set**, and nothing
-downstream can see a repository outside it.
+Fetch, then map, then narrow. `getRepos` maps GitHub's rows onto `RepoInfo` **first** and hands them to
+`resolveTrackedSet` in `@domain/tracked-set`, which decides what survives. What survives is the
+**Tracked Set**, and nothing downstream can see a repository outside it.
+
+**The narrowing rules are not in this folder.** They are pure and they read domain vocabulary
+(`repo.owner`, `repo.name`, `repo.stars`), not GitHub's `owner.login` / `stargazers_count`, so
+`tracked-set.test.ts` asserts them without a fake octokit or a mocked logger. This folder does the two things
+the domain cannot: it fetches, and it logs. `resolveTrackedSet` returns `afterOnlyOrgs`, `afterOnlyRepos` and
+`invalidPatterns` as **numbers and strings**; `getRepos` turns them into `core.info` and `core.warning`
+lines.
 
 - **The `accept: application/vnd.github.star+json` header is load-bearing** and is set per request, not on
   the client. Without it GitHub returns bare user objects with **no `starred_at`** and the whole star-history
@@ -34,12 +42,15 @@ downstream can see a repository outside it.
 - The token is always a user-supplied PAT, never the injected `GITHUB_TOKEN`, and the role it carries decides
   whether the stargazer endpoint answers at all
   ([ADR 0002](../../docs/adr/0002-require-a-personal-access-token.md)).
-- **`filterRepos`' order of operations is part of the contract**: `onlyOrgs` narrows first, then `onlyRepos`
-  **short-circuits** — it returns the org-narrowed matches and skips archived/fork/exclude/min-stars
-  entirely. `onlyRepos` can never bring back a repo `onlyOrgs` excluded.
+- **`resolveTrackedSet`'s order of operations is part of the contract**: `onlyOrgs` narrows first, then
+  `onlyRepos` **short-circuits** — it returns the org-narrowed matches and skips archived/fork/exclude/min-stars
+  entirely. `onlyRepos` can never bring back a repo `onlyOrgs` excluded. `afterOnlyRepos` is non-`null`
+  exactly when that short-circuit fired, which is how `getRepos` knows to log that count instead of the
+  general one.
 - Every list filter accepts an exact name **or** a `/body/flags` regex literal. Exact matching is
   case-sensitive; regex patterns honour their own flags. Matching is on the short `repo.name`, org matching on
-  `owner.login`. An invalid regex is caught, warned about and treated as non-matching — never fatal.
+  `repo.owner`. An invalid regex is collected into `invalidPatterns` and treated as non-matching — never
+  fatal — and each distinct pattern is reported once.
 - `fetchRepos` requests `sort: 'full_name'`, so downstream ordering is GitHub's ascending full-name order.
   Anything relying on stable report ordering depends on it. The loop stops on any page shorter than 100, so a
   page of exactly 100 always triggers one more request.

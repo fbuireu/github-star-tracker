@@ -6,10 +6,16 @@ notification is due, and how numbers and dates become short strings. No I/O of a
 reports (`@presentation/*`) and does not sequence anything (`@application/tracker`).
 
 One module per concept, each with a colocated `*.test.ts`: `measurement`, `comparison`, `snapshot`,
-`forecast`, `velocity`, `growth`, `stargazers`, `star-history`, `sampling`, `formatting`, `notification`,
-`time`, plus `types.ts` and `constants.ts`.
+`forecast`, `velocity`, `growth`, `stargazers`, `star-history`, `tracked-set`, `sampling`, `formatting`,
+`notification`, `time`, plus `types.ts` and `constants.ts`.
 
-`sampling.ts` is the one module `@infrastructure` calls rather than `@application`: it plans a Stargazer
+`tracked-set.ts` and `sampling.ts` are the two modules `@infrastructure` calls rather than `@application`.
+Both decide something the network layer would otherwise decide for itself, and both return plain data the
+shell turns into log lines — this layer still cannot log.
+
+`resolveTrackedSet` answers *which repositories a Run measures*: it applies the `only`/`exclude` lists, the
+archived/fork/min-stars rules and the `onlyRepos` short-circuit over `RepoInfo`, and reports
+`afterOnlyOrgs`, `afterOnlyRepos` and the patterns it could not compile. `sampling.ts` plans a Stargazer
 fetch without performing one. `shouldSample` applies the strict threshold, `reachablePages` clamps to
 GitHub's paging ceiling, `sampledPages` picks the evenly-spread pages Smart Sampling reads, and
 `coveredStars` says how many Stars those pages account for — the figure `star-history.ts` reads to decide
