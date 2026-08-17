@@ -168,6 +168,10 @@ _Avoid_: sensitivity, trigger level, minimum delta, cutoff
 Whether the Notification Threshold measures movement in both directions or only upward — that is, whether losing a large number of Stars is as newsworthy as gaining them.
 _Avoid_: direction, polarity, trigger mode
 
+**Delivery**:
+What actually became of a Notification: it was never attempted, it was sent, or it was attempted and failed. It is a fact about the transport, deliberately separate from the decision that a Notification was due — a Run can decide to notify and fail to deliver, or deliver without a Notification being due at all.
+_Avoid_: send result, email status, sent flag
+
 ## Operation
 
 **Read-Only Run**:

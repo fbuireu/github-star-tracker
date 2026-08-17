@@ -74,8 +74,8 @@ as-is; the rest are wrapped in `String()`.
 | `report` / `report-html` / `report-csv` | the rendered markdown / HTML / CSV report |
 | `report-html-path` | return value of `writeHtmlReport` — a filesystem path |
 | `total-stars` / `stars-changed` / `new-stars` / `lost-stars` | the matching `Summary` fields |
-| `should-notify` | `summary.changed && thresholdReached` — the *decision* |
-| `notification-sent` | `mailDelivered` — an email actually left the runner |
+| `should-notify` | `notification.shouldNotify` — the *decision* |
+| `notification-sent` | `notification.notificationSent` — an email actually left the runner |
 | `new-stargazers` | `stargazerDiff?.totalNew ?? 0` |
 
 `setEmptyOutputs()` emits the same eleven keys zeroed, with a "No repositories matched the configured

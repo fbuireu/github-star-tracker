@@ -23,10 +23,14 @@ SMTP. There is exactly one use case: `trackStars()`.
 - **esbuild** (`platform: node`, `target: node24`, `format: cjs`), **Vitest** (v8 coverage), **Biome**
   (lint + format), **semantic-release** + commitlint, **husky** + lint-staged.
 
-## Versions (pinned by hand — not enforced by the docs test, since routine dependency bumps would break CI on it)
+## Versions (pinned by hand, and asserted against `package.json` by the docs test)
 
 - Node **26.2.0** (`engines.node`)
-- pnpm **11.15.1** (`packageManager`) — always use pnpm, never npm/yarn
+- pnpm **11.21.0** (`packageManager`) — always use pnpm, never npm/yarn
+
+Both are deliberate pins rather than dependency ranges, so bumping one means editing this section in the same
+commit. That is the point: this section had already drifted a patch release behind `packageManager` while it
+was documented as untested.
 
 ## Commands
 
@@ -116,6 +120,7 @@ or test file that does not exist, no sample chart in `examples/README.md` withou
 input and output named on the surfaces that list them **and listed alphabetically** there, the translation-key table in
 `docs/wiki/Internationalization-(i18n).md` matching `src/i18n/en.json` section for section and key for key,
 every documented `stars-data.json` example showing the `version` the writer actually stamps,
+the Node and pnpm pins above matching `package.json`,
 and the ADR set held to its template (sequential
 numbering, `NNNN-kebab-title.md` filenames, the `# N. Title` / date / status / *Context* / *Decision* /
 *Consequences* shape, a row in the `ARCHITECTURE.md` index, and — the one that rots quietly — a link from

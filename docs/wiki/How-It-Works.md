@@ -84,7 +84,7 @@ trackStars();
 
 **File:** `src/application/tracker.ts` > `trackStars()`
 
-Coordinates all layers in a single `try`/`finally` flow: PAT extraction, Octokit instantiation, configuration loading, i18n bootstrap, and the full data pipeline.
+Coordinates all layers inside one `try`/`catch` that ends in `core.setFailed`: PAT extraction, Octokit instantiation, configuration loading, i18n bootstrap, and the full data pipeline.
 
 ### Configuration Resolution
 
@@ -113,10 +113,12 @@ visibility: public
 include_archived: false
 include_forks: false
 exclude_repos: [test-repo, /^demo-.*/]
+only_repos: []
 only_orgs: []
 exclude_orgs: []
 min_stars: 5
 data_branch: star-tracker-data
+read_only: false
 max_history: 52
 include_charts: true
 locale: en
@@ -139,6 +141,7 @@ chart_animation: true
 chart_milestones: true
 chart_begin_at_zero: false
 chart_theme: auto
+email_theme: auto # 'auto' inherits chart_theme
 chart_custom_milestones: [] # e.g. [250, 750, 2500] to override the default milestones
 chart_range: all
 chart_trend_line: false
@@ -162,27 +165,29 @@ Queries `GET /user/repos` with pagination (`100` per page). The `visibility` con
 | `all` | `visibility=all` |
 | `owned` | `visibility=all, affiliation=owner` |
 
+### Data Transformation
+
+**File:** `src/infrastructure/github/filters.ts` > `mapRepos()`
+
+Transforms GitHub API objects into the domain `RepoInfo` schema, flattening `owner.login`, normalizing `stargazers_count` to `stars`, etc. This happens **before** filtering, so every filter below is expressed over the domain shape rather than GitHub's.
+
 ### Repository Filtering
 
 **File:** `src/domain/tracked-set.ts` > `resolveTrackedSet()`
 
-Client-side filtering pipeline:
+Client-side filtering pipeline, in this order:
 
-1. **Whitelist** (`onlyRepos`) - short-circuits all other filters
-2. **Org whitelist** (`onlyOrgs`) - restricts to owners whose name matches a listed name or `/regex/`
+1. **Org whitelist** (`onlyOrgs`) - restricts to owners whose name matches a listed name or `/regex/`
+2. **Whitelist** (`onlyRepos`) - short-circuits everything below it, on the set step 1 already narrowed
 3. **Archived** - removes archived repos unless `includeArchived` is `true`
 4. **Forks** - removes forks unless `includeForks` is `true`
 5. **Blacklist** (`excludeRepos`) - removes by exact name or regex (e.g. `/^test-.*/`)
 6. **Org blacklist** (`excludeOrgs`) - removes repos whose owner matches a listed name or `/regex/`
 7. **Star threshold** (`minStars`) - removes repos below minimum
 
-The org filters (`only-orgs`/`exclude-orgs`) compose with the repo filters (`only-repos`/`exclude-repos`). Separately, `smart-sampling` (with `smart-sampling-threshold`/`smart-sampling-pages`) and the `chart-*` options also exist as inputs.
+The order matters in one direction: `only-repos` can never bring back a repository `only-orgs` excluded, because it runs on the already-narrowed set. Separately, `smart-sampling` (with `smart-sampling-threshold`/`smart-sampling-pages`) and the `chart-*` options also exist as inputs.
 
-### Data Transformation
-
-**File:** `src/infrastructure/github/filters.ts` > `mapRepos()`
-
-Transforms GitHub API objects into the domain `RepoInfo` schema, flattening `owner.login`, normalizing `stargazers_count` to `stars`, etc.
+What survives is the **Tracked Set**. The rules are pure and return counts rather than logging them; `getRepos` writes those counts to the Action log.
 
 ---
 
@@ -424,12 +429,14 @@ Idempotent: no empty commits if data hasn't changed.
 |---|---|
 | `report` | Full Markdown report |
 | `report-html` | HTML report (for email) |
+| `report-html-path` | Filesystem path the HTML report was written to, outside the data branch |
 | `report-csv` | CSV report (for data pipelines) |
 | `total-stars` | Total star count |
 | `stars-changed` | Per-run: whether any counts changed against the baseline (`true`/`false`) |
 | `new-stars` | Per-run: stars gained since the comparison baseline |
 | `lost-stars` | Per-run: stars lost since the comparison baseline |
 | `should-notify` | Cumulative: whether the notification threshold was reached since the last notification fired |
+| `notification-sent` | Whether an email actually left the runner. Distinct from `should-notify`: a courtesy send under `send-on-no-changes` sets this without the threshold being reached, and a configured send that failed leaves it `false` |
 | `new-stargazers` | New stargazers detected by diffing against the stored `stargazers.json`, which every writing run rewrites - not affected by `compare-against` (0 if tracking disabled) |
 
 **Per-run vs cumulative.** `new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the baseline selected in Phase 4. They are not cumulative across runs and carry no memory of whether an email was ever sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: it is driven by `notification-threshold` plus `notification-mode` against `starsAtLastNotification`, and its counter only resets when a notification actually fires.
@@ -516,7 +523,7 @@ src/
 │   │   └── email.ts                  # getEmailConfig(), sendEmail()
 │   └── persistence/
 │       ├── data-branch.ts            # withDataBranch() - the folder's only external surface
-│       └── storage.ts                # read/write History, Report, Badge, CSV, Chart, Stargazers; commitAndPush()
+│       └── storage.ts                # readHistory(), writeArtefact(), writeChart(), commitAndPush()
 └── presentation/
     ├── constants.ts                  # COLORS, CHART, BADGE, SVG_CHART, CHART_FILES, SECTION_ICON
     ├── shared.ts                     # prepareReportData(), selectChartSnapshots(), resolvePalette()
@@ -528,7 +535,7 @@ src/
     ├── chart-spec.ts                 # ChartRequest, buildChartSpec() - what a chart contains
     ├── chart.ts                      # chartImageUrl() (QuickChart for HTML emails)
     ├── svg-chart.ts                  # renderSvgChart() (animated SVGs for data branch)
-    ├── charts.ts                     # buildChartFiles() - which charts a run produces
+    ├── charts.ts                     # resolveChartHistories(), buildChartFiles() - which charts a run produces
     └── badge.ts                      # generateBadge()
 ```
 

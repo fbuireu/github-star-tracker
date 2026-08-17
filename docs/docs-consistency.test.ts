@@ -524,6 +524,19 @@ describe('the guides quote the constants the code declares', () => {
     expect(prose(doc)).toContain(mention(value({ file, name })));
   });
 
+  it('pins the hand-maintained toolchain versions to package.json', () => {
+    const manifest = JSON.parse(read('package.json')) as {
+      engines: { node: string };
+      packageManager: string;
+    };
+    const guide = prose(GUIDE);
+
+    expect(guide).toContain(`Node **${manifest.engines.node}** (\`engines.node\`)`);
+    expect(guide).toContain(
+      `pnpm **${manifest.packageManager.replace('pnpm@', '')}** (\`packageManager\`)`,
+    );
+  });
+
   it('states the compare-window tolerance in hours', () => {
     const hours =
       value({ file: 'src/domain/snapshot.ts', name: 'COMPARE_WINDOW_TOLERANCE_MS' }) / MS_PER_HOUR;
