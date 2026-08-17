@@ -6,12 +6,12 @@ import { DEFAULTS } from './defaults';
 import { loadConfig, loadConfigFile } from './loader';
 import {
   parseBool,
-  parseDecimal,
   parseFileBool,
   parseHexColor,
   parseList,
   parseNonNegativeNumber,
   parseNotificationThreshold,
+  parsePositiveDecimal,
   parsePositiveNumber,
   toStringList,
 } from './parsers';
@@ -23,8 +23,8 @@ vi.mock('@actions/core', () => ({
   warning: vi.fn(),
 }));
 
-vi.mock('fs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('fs')>();
+vi.mock('node:fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs')>();
 
   return {
     ...actual,
@@ -228,24 +228,24 @@ describe('parseHexColor', () => {
   });
 });
 
-describe('parseDecimal', () => {
+describe('parsePositiveDecimal', () => {
   it('returns undefined for empty/null/undefined', () => {
-    expect(parseDecimal('')).toBeUndefined();
-    expect(parseDecimal(null)).toBeUndefined();
-    expect(parseDecimal(undefined)).toBeUndefined();
+    expect(parsePositiveDecimal('')).toBeUndefined();
+    expect(parsePositiveDecimal(null)).toBeUndefined();
+    expect(parsePositiveDecimal(undefined)).toBeUndefined();
   });
 
   it('parses positive decimals and integers', () => {
-    expect(parseDecimal('2.5')).toBe(2.5);
-    expect(parseDecimal('3')).toBe(3);
+    expect(parsePositiveDecimal('2.5')).toBe(2.5);
+    expect(parsePositiveDecimal('3')).toBe(3);
   });
 
   it('returns undefined for non-positive, non-finite or non-numeric values', () => {
-    expect(parseDecimal('abc')).toBeUndefined();
-    expect(parseDecimal('0')).toBeUndefined();
-    expect(parseDecimal('-1')).toBeUndefined();
-    expect(parseDecimal('Infinity')).toBeUndefined();
-    expect(parseDecimal('1e999')).toBeUndefined();
+    expect(parsePositiveDecimal('abc')).toBeUndefined();
+    expect(parsePositiveDecimal('0')).toBeUndefined();
+    expect(parsePositiveDecimal('-1')).toBeUndefined();
+    expect(parsePositiveDecimal('Infinity')).toBeUndefined();
+    expect(parsePositiveDecimal('1e999')).toBeUndefined();
   });
 });
 

@@ -1,5 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import type { Config } from '@config/types';
+import { DEFAULTS } from '@config/defaults';
+import { toActionInputName } from '@config/loader';
 import * as yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 
@@ -221,7 +224,43 @@ const declaredOutputs = [
   ...read('action.yml').split('\noutputs:')[1].matchAll(OUTPUT_KEY_PATTERN),
 ].map((match) => match[1]);
 
+const PROSE_DEFAULT_PATTERN = /\(default ([^)]+)\)/;
+
+function proseDefault(description: string): string | null {
+  return PROSE_DEFAULT_PATTERN.exec(description)?.[1] ?? null;
+}
+
+function describedAs(value: Config[keyof Config]): string {
+  if (Array.isArray(value)) return value.length === 0 ? 'empty' : value.join(', ');
+
+  return String(value);
+}
+
 describe('action.yml is documented', () => {
+  it('states a default in prose for every overridable input, and states the real one', () => {
+    const wrong = Object.entries(DEFAULTS)
+      .filter(([key]) => key !== 'sendOnNoChanges')
+      .map(([key, value]) => {
+        const name = toActionInputName(key);
+        const stated = proseDefault(manifest.inputs[name]?.description ?? '');
+        const actual = describedAs(value);
+
+        return stated === actual ? null : `${name}: says ${stated ?? '(nothing)'}, is ${actual}`;
+      })
+      .filter((mismatch) => mismatch !== null);
+
+    expect(wrong).toEqual([]);
+  });
+
+  it('tells the reader every overridable input can also come from the config file', () => {
+    const silent = Object.keys(DEFAULTS)
+      .filter((key) => key !== 'sendOnNoChanges')
+      .map(toActionInputName)
+      .filter((name) => !(manifest.inputs[name]?.description ?? '').includes('(overrides config file)'));
+
+    expect(silent).toEqual([]);
+  });
+
   it('declares outputs this test can read', () => {
     expect(declaredOutputs.length).toBeGreaterThan(0);
   });

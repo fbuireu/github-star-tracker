@@ -120,7 +120,8 @@ or test file that does not exist, no sample chart in `examples/README.md` withou
 input and output named on the surfaces that list them **and listed alphabetically** there, the translation-key table in
 `docs/wiki/Internationalization-(i18n).md` matching `src/i18n/en.json` section for section and key for key,
 every documented `stars-data.json` example showing the `version` the writer actually stamps,
-the Node and pnpm pins above matching `package.json`,
+the Node and pnpm pins above matching `package.json`, every overridable `action.yml` input stating its real
+default in prose and saying the config file can override it,
 and the ADR set held to its template (sequential
 numbering, `NNNN-kebab-title.md` filenames, the `# N. Title` / date / status / *Context* / *Decision* /
 *Consequences* shape, a row in the `ARCHITECTURE.md` index, and — the one that rots quietly — a link from

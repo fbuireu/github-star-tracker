@@ -40187,7 +40187,7 @@ function parseFileHexColor(value) {
   if (typeof value === "string") return parseHexColor(value);
   return void 0;
 }
-function parseDecimal(value) {
+function parsePositiveDecimal(value) {
   if (isBlank(value)) return void 0;
   const parsed = typeof value === "number" ? value : Number.parseFloat(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : void 0;
@@ -40253,20 +40253,17 @@ function resolveEnum({
   );
   return fallback;
 }
-function scalarField({ fromInput, fromFile }) {
-  return ({ input, inputName, fileValue }) => {
-    const parsed = fromInput(input);
-    if (input !== "" && parsed === void 0) {
-      warning(`Invalid ${inputName} "${input}". Ignoring it.`);
-    }
-    return parsed ?? fromFile(fileValue);
-  };
-}
-function namedFallbackField({ fromInput, fromFile }) {
+function scalarField({
+  fromInput,
+  fromFile,
+  namesFallback = false
+}) {
   return ({ input, inputName, fileValue, fallback }) => {
     const parsed = fromInput(input);
     if (input !== "" && parsed === void 0) {
-      warning(`Invalid ${inputName} "${input}". Falling back to ${formatFallback(fallback)}`);
+      warning(
+        namesFallback ? `Invalid ${inputName} "${input}". Falling back to ${formatFallback(fallback)}` : `Invalid ${inputName} "${input}". Ignoring it.`
+      );
     }
     return parsed ?? fromFile(fileValue);
   };
@@ -40315,13 +40312,15 @@ var FIELD_SOURCES = {
   smartSampling: boolField,
   smartSamplingThreshold: nonNegativeField,
   smartSamplingPages: positiveField,
-  chartLineColor: namedFallbackField({
+  chartLineColor: scalarField({
     fromInput: parseHexColor,
-    fromFile: parseFileHexColor
+    fromFile: parseFileHexColor,
+    namesFallback: true
   }),
-  chartLineWidth: namedFallbackField({
-    fromInput: parseDecimal,
-    fromFile: fromFileScalar(parseDecimal)
+  chartLineWidth: scalarField({
+    fromInput: parsePositiveDecimal,
+    fromFile: fromFileScalar(parsePositiveDecimal),
+    namesFallback: true
   }),
   chartMaxPoints: nonNegativeField,
   chartYAxisSide: enumField(Object.values(ChartAxisSide)),

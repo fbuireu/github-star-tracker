@@ -17,9 +17,10 @@ naming how to parse the action input and how to parse the config-file value; `re
 deriving the kebab-case input name from the key and falling back to `DEFAULTS`. Adding a `Config` field
 means adding a row, not four lines in four places.
 
-The row types are the vocabulary: `boolField`, `positiveField`, `nonNegativeField`, `listField`,
-`enumField(allowed)` and `namedFallbackField` — the last being the two keys whose warning names the fallback
-(`chart-line-color`, `chart-line-width`) rather than saying "Ignoring it."
+The row types are the vocabulary: `boolField`, `positiveField`, `nonNegativeField`, `listField` and
+`enumField(allowed)`. Two rows (`chart-line-color`, `chart-line-width`) pass `namesFallback: true` to
+`scalarField`, which is what makes their warning name the fallback rather than say "Ignoring it." That used
+to be a second combinator, byte-identical to `scalarField` but for the one template literal.
 
 **Four keys are deliberately outside the table**, and each is a documented exception: `visibility` throws
 instead of warning, `dataBranch` runs an extra validator, `sendOnNoChanges` never reads the config file and
@@ -77,6 +78,11 @@ table.
   a branch a read-only run never updates.
 
 ## action.yml cross-check
+
+`docs/docs-consistency.test.ts` reads the real `action.yml` too, and asserts the **prose**: every overridable
+input states its real `DEFAULTS` value as `(default X)` and carries `(overrides config file)`. Those two
+strings had drifted — sixteen `chart-*` and `velocity-metrics` inputs were file-readable while saying
+nothing about it, which reads as "input only".
 
 `action-inputs.test.ts` reads the real `action.yml` and asserts every `Config` key except `sendOnNoChanges`
 has a kebab-case input whose `default` is **empty**, and that only `config-path`, `send-on-no-changes` and
