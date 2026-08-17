@@ -1,6 +1,6 @@
 import { ChartCurve, ChartRange, ChartTheme } from '@config/types';
 import type { Locale } from '@i18n';
-import type { ChartRequest, ChartSeries } from './chart-spec';
+import type { ChartMilestone, ChartRequest, ChartSeries } from './chart-spec';
 import { AxisLabels, buildChartSpec, SeriesDash, SeriesWeight } from './chart-spec';
 import { CHART, CHART_POINT, CHART_TENSION } from './constants';
 import { resolvePalette } from './shared';
@@ -133,7 +133,7 @@ interface ChartOptions {
 }
 
 interface BuildMilestoneAnnotationsParams {
-  milestones: readonly number[];
+  milestones: readonly ChartMilestone[];
   palette: ColorPalette;
 }
 
@@ -146,16 +146,16 @@ function buildMilestoneAnnotations({
   const annotations: Record<string, MilestoneAnnotation> = {};
 
   for (const milestone of milestones) {
-    annotations[`milestone${milestone}`] = {
+    annotations[`milestone${milestone.value}`] = {
       type: 'line',
-      yMin: milestone,
-      yMax: milestone,
+      yMin: milestone.value,
+      yMax: milestone.value,
       borderColor: palette.neutral,
       borderWidth: CHART_STYLE.milestoneBorderWidth,
       borderDash: CHART_STYLE.milestoneDash,
       label: {
         display: true,
-        content: `${milestone.toLocaleString('en-US')} ★`,
+        content: milestone.label,
         position: 'start',
         backgroundColor: `${palette.neutral}${CHART_STYLE.translucentAlpha}`,
         color: palette.neutral,

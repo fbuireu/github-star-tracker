@@ -1,7 +1,7 @@
 import type { ChartRange } from '@config/types';
 import { STAR_MILESTONES } from '@domain/constants';
 import type { ForecastData } from '@domain/forecast';
-import { buildAxisLabels, formatDate } from '@domain/formatting';
+import { buildAxisLabels, formatCount, formatDate } from '@domain/formatting';
 import { repoStarSeries } from '@domain/snapshot';
 import type { History, Snapshot } from '@domain/types';
 import { getTranslations, interpolate, type Locale } from '@i18n';
@@ -42,12 +42,17 @@ export interface ChartSeries {
   weight: SeriesWeight;
 }
 
+export interface ChartMilestone {
+  value: number;
+  label: string;
+}
+
 export interface ChartSpec {
   labels: string[];
   series: ChartSeries[];
   title: string;
   showLegend: boolean;
-  milestones: readonly number[];
+  milestones: readonly ChartMilestone[];
 }
 
 interface WindowParams {
@@ -83,9 +88,14 @@ function resolveMilestones(customMilestones?: readonly number[]): readonly numbe
 interface VisibleMilestonesParams {
   series: ChartSeries[];
   thresholds: readonly number[];
+  locale: Locale;
 }
 
-function visibleMilestones({ series, thresholds }: VisibleMilestonesParams): readonly number[] {
+function visibleMilestones({
+  series,
+  thresholds,
+  locale,
+}: VisibleMilestonesParams): readonly ChartMilestone[] {
   const values = series.flatMap((entry) =>
     entry.data.filter((value): value is number => value !== null),
   );
@@ -95,7 +105,9 @@ function visibleMilestones({ series, thresholds }: VisibleMilestonesParams): rea
   const min = Math.min(...values);
   const max = Math.max(...values);
 
-  return thresholds.filter((milestone) => milestone > min && milestone < max);
+  return thresholds
+    .filter((milestone) => milestone > min && milestone < max)
+    .map((value) => ({ value, label: `${formatCount({ count: value, locale })} ★` }));
 }
 
 interface StarHistorySpecParams extends WindowParams {
@@ -149,7 +161,11 @@ function starHistorySpec({
     title,
     showLegend: false,
     milestones: milestones
-      ? visibleMilestones({ series, thresholds: resolveMilestones(customMilestones) })
+      ? visibleMilestones({
+          series,
+          thresholds: resolveMilestones(customMilestones),
+          locale: window.locale,
+        })
       : [],
   };
 }

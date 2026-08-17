@@ -34891,10 +34891,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -37186,7 +37186,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -37309,7 +37309,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -41967,14 +41967,18 @@ function selectWindow({ history, locale, range, maxPoints, axisLabels }) {
 function resolveMilestones(customMilestones) {
   return customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
 }
-function visibleMilestones({ series, thresholds }) {
+function visibleMilestones({
+  series,
+  thresholds,
+  locale
+}) {
   const values = series.flatMap(
     (entry) => entry.data.filter((value) => value !== null)
   );
   if (values.length === 0) return [];
   const min = Math.min(...values);
   const max = Math.max(...values);
-  return thresholds.filter((milestone) => milestone > min && milestone < max);
+  return thresholds.filter((milestone) => milestone > min && milestone < max).map((value) => ({ value, label: `${formatCount({ count: value, locale })} \u2605` }));
 }
 function starHistorySpec({
   title,
@@ -42014,7 +42018,11 @@ function starHistorySpec({
     series,
     title,
     showLegend: false,
-    milestones: milestones ? visibleMilestones({ series, thresholds: resolveMilestones(customMilestones) }) : []
+    milestones: milestones ? visibleMilestones({
+      series,
+      thresholds: resolveMilestones(customMilestones),
+      locale: window2.locale
+    }) : []
   };
 }
 function perRepoSpec({
@@ -42408,10 +42416,10 @@ function renderSvg({
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
     <text x="${yLabelX}" y="${y + yAxis.labelBaselineOffset}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount({ count: value, locale })}</text>`;
   }).join("\n    ");
-  const milestoneLines = milestones.map((value) => {
+  const milestoneLines = milestones.map(({ value, label }) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="${milestoneStyle.strokeWidth}" stroke-dasharray="${milestoneStyle.dashArray}" />
-    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount({ count: value, locale })} \u2605</text>`;
+    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${escapeXml2(label)}</text>`;
   }).join("\n    ");
   const maxLabels = xAxis.maxLabels;
   const nonEmptyLabelIndices = labels.reduce((indices, label, labelIndex) => {
@@ -42746,16 +42754,16 @@ function buildMilestoneAnnotations({
   if (milestones.length === 0) return null;
   const annotations = {};
   for (const milestone of milestones) {
-    annotations[`milestone${milestone}`] = {
+    annotations[`milestone${milestone.value}`] = {
       type: "line",
-      yMin: milestone,
-      yMax: milestone,
+      yMin: milestone.value,
+      yMax: milestone.value,
       borderColor: palette.neutral,
       borderWidth: CHART_STYLE.milestoneBorderWidth,
       borderDash: CHART_STYLE.milestoneDash,
       label: {
         display: true,
-        content: `${milestone.toLocaleString("en-US")} \u2605`,
+        content: milestone.label,
         position: "start",
         backgroundColor: `${palette.neutral}${CHART_STYLE.translucentAlpha}`,
         color: palette.neutral,

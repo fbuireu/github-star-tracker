@@ -2,7 +2,9 @@ import { ChartRange } from '@config/types';
 import { STAR_MILESTONES } from '@domain/constants';
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
+import { formatCount } from '@domain/formatting';
 import type { History } from '@domain/types';
+import type { Locale } from '@i18n';
 import { makeHistory, makeMultiRepoHistory } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
 import type { ChartRequest, ChartSpec } from './chart-spec';
@@ -36,12 +38,19 @@ interface SpecOf {
   axisLabels?: AxisLabels;
   range?: ChartRange;
   maxPoints?: number;
+  locale?: Locale;
 }
 
-function specOf({ request, axisLabels = AxisLabels.THINNED, range, maxPoints }: SpecOf): ChartSpec {
+function specOf({
+  request,
+  axisLabels = AxisLabels.THINNED,
+  range,
+  maxPoints,
+  locale = 'en',
+}: SpecOf): ChartSpec {
   const spec = buildChartSpec({
     request,
-    locale: 'en',
+    locale,
     palette: LIGHT_PALETTE,
     axisLabels,
     range,
@@ -51,6 +60,10 @@ function specOf({ request, axisLabels = AxisLabels.THINNED, range, maxPoints }: 
   expect(spec).not.toBeNull();
 
   return spec as ChartSpec;
+}
+
+function milestoneValues(spec: ChartSpec): number[] {
+  return spec.milestones.map((milestone) => milestone.value);
 }
 
 const singleSnapshot: History = makeHistory([10]);
@@ -174,18 +187,35 @@ describe('buildChartSpec', () => {
     it('resolves milestones: custom beats built-in, empty falls back, off is none', () => {
       const history = makeHistory([10, 600]);
       const resolved = [
-        specOf({ request: { kind: ChartKind.STAR_HISTORY, history } }).milestones,
-        specOf({
-          request: { kind: ChartKind.STAR_HISTORY, history, customMilestones: [90, 110] },
-        }).milestones,
-        specOf({ request: { kind: ChartKind.STAR_HISTORY, history, customMilestones: [] } })
-          .milestones,
-        specOf({ request: { kind: ChartKind.STAR_HISTORY, history, milestones: false } })
-          .milestones,
+        milestoneValues(specOf({ request: { kind: ChartKind.STAR_HISTORY, history } })),
+        milestoneValues(
+          specOf({
+            request: { kind: ChartKind.STAR_HISTORY, history, customMilestones: [90, 110] },
+          }),
+        ),
+        milestoneValues(
+          specOf({ request: { kind: ChartKind.STAR_HISTORY, history, customMilestones: [] } }),
+        ),
+        milestoneValues(
+          specOf({ request: { kind: ChartKind.STAR_HISTORY, history, milestones: false } }),
+        ),
       ];
 
       expect(resolved).toEqual([[50, 100, 500], [90, 110], [50, 100, 500], []]);
       expect(STAR_MILESTONES).toContain(500);
+    });
+
+    it('labels each milestone once, in the spec, using the requested locale', () => {
+      const request = {
+        kind: ChartKind.STAR_HISTORY,
+        history: makeHistory([10, 6000]),
+        customMilestones: [1000],
+      } as const;
+
+      expect(specOf({ request }).milestones).toEqual([{ value: 1000, label: '1K ★' }]);
+      expect(specOf({ request, locale: 'es' }).milestones).toEqual([
+        { value: 1000, label: `${formatCount({ count: 1000, locale: 'es' })} ★` },
+      ]);
     });
 
     it('keeps only the milestones strictly inside the observed extremes', () => {
@@ -197,7 +227,7 @@ describe('buildChartSpec', () => {
         },
       });
 
-      expect(spec.milestones).toEqual([50]);
+      expect(milestoneValues(spec)).toEqual([50]);
     });
 
     it('measures the extremes across every series, not just the primary one', () => {
@@ -212,7 +242,7 @@ describe('buildChartSpec', () => {
       });
 
       expect(spec.series).toHaveLength(2);
-      expect(spec.milestones).toEqual([12, 25, 35]);
+      expect(milestoneValues(spec)).toEqual([12, 25, 35]);
     });
   });
 

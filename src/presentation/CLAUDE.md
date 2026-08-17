@@ -18,15 +18,21 @@ email path goes through QuickChart because mail clients will not display inline 
   forecast — carrying only that kind's own inputs (`repoFullName`, `repoNames`, `forecastData`, the
   star-history Milestone and trend flags) plus an optional `title`. `buildChartSpec({ request, locale,
   palette, axisLabels, range, maxPoints })` maps one onto a `ChartSpec` — labels, an ordered list of series
-  with a resolved colour, the title, whether to show a legend, and **the Milestones to draw, already resolved
-  and already filtered to the visible ones** — or `null` when there is too little history. The four spec
-  builders behind it are module-private; both renderers read the spec and neither re-derives it
+  with a resolved colour, the title, whether to show a legend, and **the Milestones to draw, already resolved,
+  already filtered to the visible ones and already labelled** — or `null` when there is too little history.
+  The four spec builders behind it are module-private; both renderers read the spec and neither re-derives it
   ([ADR 0014](../../docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
 - **Milestone visibility is decided once, in `starHistorySpec`.** The extremes are taken over **every series
   in the spec**, not just the primary one, and the comparison is **strict** (`> min && < max`), so a Milestone
   equal to an extreme is never drawn. They are the raw data extremes, not the padded axis bounds. `milestones`
   is `[]` — never `null` — when `chart-milestones` is off, for a kind that has none, or when everything
   filtered out; the adapters draw exactly what they are given and neither owns a threshold list any more.
+- **A `ChartMilestone` carries its own `label`.** The text is formatted once, in `visibleMilestones`, with
+  `formatCount` and the requested Locale; both adapters draw the string they are handed and neither formats a
+  number. `chart.ts` used to call `toLocaleString('en-US')` while `svg-chart.ts` used `formatCount`, so the
+  same Milestone read `1,000 ★` in the Notification and `1K ★` on the Data Branch — content drift of exactly
+  the kind [ADR 0014](../../docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md) exists to
+  prevent, which survived because label *text* had been filed as appearance.
 - **`charts.ts` orchestrates.** `buildChartFiles` reads `Config`, builds the shared style object once, binds
   it into a local `renderChart(request)`, and returns `{ filename, svg }[]`. It renders nothing itself and
   returns `[]` when charts are off or the history has fewer than 2 snapshots.

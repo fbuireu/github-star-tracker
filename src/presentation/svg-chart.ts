@@ -1,7 +1,7 @@
 import { ChartAxisSide, ChartCurve, type ChartRange, ChartTheme } from '@config/types';
 import { formatCount } from '@domain/formatting';
 import type { Locale } from '@i18n';
-import type { ChartRequest } from './chart-spec';
+import type { ChartMilestone, ChartRequest } from './chart-spec';
 import { AxisLabels, buildChartSpec, SeriesDash } from './chart-spec';
 import { CHART, CHART_TENSION, DARK_PALETTE, SVG_CHART } from './constants';
 import { EscapeDialect, escapeFor } from './escaping';
@@ -286,7 +286,7 @@ interface RenderSvgParams extends SvgChartStyle {
   title: string;
   showLegend: boolean;
   locale: Locale;
-  milestones: readonly number[];
+  milestones: readonly ChartMilestone[];
 }
 
 function renderSvg({
@@ -355,10 +355,10 @@ function renderSvg({
     .join('\n    ');
 
   const milestoneLines = milestones
-    .map((value) => {
+    .map(({ value, label }) => {
       const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
       return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="${milestoneStyle.strokeWidth}" stroke-dasharray="${milestoneStyle.dashArray}" />
-    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount({ count: value, locale })} ★</text>`;
+    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${escapeXml(label)}</text>`;
     })
     .join('\n    ');
 

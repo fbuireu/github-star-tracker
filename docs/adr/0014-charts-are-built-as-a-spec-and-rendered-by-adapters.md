@@ -62,6 +62,10 @@ a dash array or a point radius. Each adapter maps them through its own table.
 - **The spec must stay free of dialect vocabulary.** No SVG attributes, no Chart.js option names, no
   `borderDash` arrays. The moment one leaks in, the other adapter has to work around it and the seam stops
   paying for itself.
+- **Rendered text is content, not appearance.** A `ChartMilestone` carries both its `value` and its `label`,
+  because leaving the label to the adapters is what let `chart.ts` format with a hardcoded `en-US` while
+  `svg-chart.ts` used the run's Locale. Anything a reader reads is decided here; only how it is drawn is the
+  adapter's.
 - **A new chart kind is a `ChartRequest` variant plus a `case` in `buildChartSpec`**, not two parallel
   implementations — neither adapter is touched. A new *style* option is one field on `ChartSpec` and one line
   in each adapter; a new *content* option is one field on the request variant.
