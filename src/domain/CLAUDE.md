@@ -109,8 +109,11 @@ snapshot everything else is diffed against.
 - `calendarDays` normalizes by real calendar spacing, so the projection is in calendar weeks whatever the run
   cadence. If **any** timestamp is unparseable it falls back to a synthetic weekly cadence for *all* points.
   `computeVelocity` does **not** share that policy: it drops unparseable snapshots and returns `null` when
-  the newest one does not parse. The two policies are deliberately different and both are stated here
-  because neither signature says so.
+  the newest one does not parse. The two policies are deliberately different, and
+  [ADR 0017](../../docs/adr/0017-velocity-and-forecast-read-unparseable-timestamps-differently.md) records
+  why — a Forecast needs plausible *spacing*, a Velocity needs a true *duration*, and a synthetic cadence
+  supplies the first honestly and the second not at all. Routing `computeVelocity` through `calendarDays`
+  would turn a `null` into a fabricated rate with no test failing.
 - `computeVelocity` uses the last snapshot and the newest earlier one at least 0.25 days back, skipping
   closer pairs so a manual re-run minutes after a scheduled one cannot inflate the rate. It is a
   recent-period rate, never an all-time average. Callers must pass the **stored** history, not a
