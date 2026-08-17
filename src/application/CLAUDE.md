@@ -39,16 +39,15 @@ is not repeated here. What follows is what that table cannot express.
   courtesy send report `notification-sent: false`. Both outputs come off the one outcome now.
 - **A `sendEmail` that resolves `false` is a `FAILED` delivery, not an unattempted one.** That is the empty
   `email-to` case: the transport was configured and did not deliver, so the baseline must not advance.
-- **The reports receive two histories and they are not interchangeable.** `history` is the *resolved* chart
-  history (stargazer-reconstructed when it has >= 2 snapshots, stored otherwise) and drives charts and the
-  forecast. `velocityHistory` is always the stored per-run series, so velocity measures real elapsed time
-  between runs instead of a chart bucket whose width follows `chart-max-points`. What gets persisted is
-  always the stored history.
-- **The two reports take one identical `reportParams` object**, which carries `config` rather than fifteen
-  fields copied off it. Each renderer reads the options it honours — `generateMarkdownReport` reads no chart
-  style at all, and `generateHtmlReport` reads `config.emailTheme` itself
-  ([ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md)). This layer no longer
-  relays chart options, so a new one costs nothing here.
+- **Rendering is one call.** `renderRun` in `@presentation/run` returns the markdown, HTML, CSV, badge and
+  chart files together, so this layer never calls a renderer directly and never assembles report params.
+  It passes `chartHistories` and the **stored** History under separate names, and `renderRun` derives the
+  chart history from the first — which is what retired the old hazard of handing the reports two
+  interchangeable-looking `History` values, where swapping them made Velocity an average over a chart bucket.
+  What gets persisted is always the stored History.
+- **This layer relays no chart options.** The renderers read `config` themselves
+  ([ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md)), so a new one costs
+  nothing here.
 - **Chart histories are resolved once, by one module.** `resolveChartHistories` returns `.aggregate` and
   `.forRepo(name)`; this layer reads `.aggregate` for the Forecast and the Reports and hands the whole thing
   to `buildChartFiles`. It creates the instant itself, so the global chart and every per-repo chart end on
@@ -90,8 +89,6 @@ fetch is gated on `includeCharts || trackStargazers`.
 - **`setOutputs` performs a filesystem write.** `writeHtmlReport` targets `RUNNER_TEMP || cwd`, i.e. *outside*
   the worktree, so it happens on read-only runs and on the empty-repos path too, and the file survives
   `cleanup`. Do not assume "setting outputs" is side-effect free.
-- `generateCsvReport(results)` is called positionally — it is a single-argument function that destructures
-  the results object itself, so it does not violate the named-params convention.
 - `getEmailConfig` reads the SMTP inputs itself, inside `@infrastructure/notification/email`; the tracker
   never reads them. A missing `smtp-host` returns `null` and silently skips email.
 - `withDataBranch` throws when the data branch is absent from the remote **and** the run is read-only. That
@@ -103,9 +100,11 @@ fetch is gated on `includeCharts || trackStargazers`.
   `thresholdReached`, so it logs `'No stars changed since the baseline, skipping email'` when nothing moved
   and `'Notification threshold not reached, skipping email'` otherwise. Both strings are pinned verbatim by
   `tracker.test.ts` — change the wording and the test together or not at all.
-- `tracker.test.ts` mocks most of the tree but deliberately **not** `@presentation/charts` or
-  `@domain/star-history`, so `buildChartFiles` and `buildStarHistory` execute for real. Both now also have
-  colocated tests of their own, so this is belt-and-braces rather than their only coverage.
+- `tracker.test.ts` mocks most of the tree but deliberately **not** `@presentation/run`,
+  `@presentation/charts` or `@domain/star-history`, so `renderRun`, `buildChartFiles` and `buildStarHistory`
+  execute for real and the four renderer mocks still apply underneath. Mocking `@presentation/run` instead
+  would cut four mocks and also stop `buildChartFiles` running, which is what the chart-request assertions
+  pinning #148 and the per-repo timelines depend on — so the mock count stays at 17 on purpose.
 - `tracker.test.ts` mocks `@presentation/svg-chart` down to its single `renderSvgChart`, so "which chart was
   drawn" is read off the `request.kind` of each call — the local `chartRequests(kind)` and `mockCharts({
   [kind]: svg })` helpers exist for exactly that. There is no per-kind mock to assert on any more.

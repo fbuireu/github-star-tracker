@@ -9,7 +9,7 @@ import { CHART_FILES, MIN_SNAPSHOTS_FOR_CHART } from './constants';
 import { perRepoChartFile } from './shared';
 import { renderSvgChart } from './svg-chart';
 
-interface ChartFile {
+export interface ChartFile {
   filename: string;
   svg: string;
 }

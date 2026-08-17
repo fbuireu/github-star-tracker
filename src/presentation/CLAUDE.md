@@ -69,6 +69,23 @@ point radii out of the spec.
 type `Omit`s the field so the caller cannot believe otherwise. `maxPoints` is likewise passed only by
 `renderSvgChart`, which is what fixes email charts at 30 points.
 
+## The layer's front door
+
+`renderRun` (`src/presentation/run.ts`) is what `@application` calls: one function in, one `RenderedRun` out
+— markdown, html, csv, badge and the chart files. Every other layer already had a single entry point
+(`measureRun` for `@domain`, `withDataBranch` for `@infrastructure`); this one had five, and the shell was
+assembling the params for each.
+
+- **It takes `chartHistories` and `storedHistory`, not two `History` values.** That is the point: `history`
+  and `velocityHistory` used to be adjacent fields of the same type that were **not** interchangeable, and
+  swapping them silently turned Velocity into an average over a chart bucket. `renderRun` derives
+  `history` from `chartHistories.aggregate` itself, so there is no longer a call site that could pass the
+  wrong one.
+- It renders; it decides nothing about **whether** to render. Charts still come back `[]` when charts are
+  off, and the report renderers still read `config` for the options they honour.
+- The individual renderers stay exported and stay tested — they are internal seams within this layer, the
+  same way `@domain`'s five are behind `measureRun`.
+
 The report modules are one per format: `markdown.ts`, `html.ts`, `csv.ts`, `badge.ts`, over a shared
 `report-model.ts`; with `escaping.ts` for every dialect's escaper, `shared.ts` for cross-renderer helpers and
 `constants.ts` / `types.ts` for palettes, geometry and the `ColorPalette` contract.

@@ -20,11 +20,8 @@ import { getEmailConfig, sendEmail } from '@infrastructure/notification/email';
 import { withDataBranch } from '@infrastructure/persistence/data-branch';
 import { writeHtmlReport } from '@infrastructure/persistence/storage';
 import { retry } from '@octokit/plugin-retry';
-import { generateBadge } from '@presentation/badge';
-import { buildChartFiles, resolveChartHistories } from '@presentation/charts';
-import { generateCsvReport } from '@presentation/csv';
-import { generateHtmlReport } from '@presentation/html';
-import { generateMarkdownReport } from '@presentation/markdown';
+import { resolveChartHistories } from '@presentation/charts';
+import { renderRun } from '@presentation/run';
 
 export async function trackStars(): Promise<void> {
   try {
@@ -105,24 +102,21 @@ export async function trackStars(): Promise<void> {
           })),
           repoStargazers,
         });
-        const history = chartHistories.aggregate;
+        const forecastData = computeForecast({
+          history: chartHistories.aggregate,
+          topRepoNames,
+        });
 
-        const forecastData = computeForecast({ history, topRepoNames });
-
-        const reportParams = {
+        const rendered = renderRun({
           config,
           results,
           previousTimestamp,
-          history,
-          velocityHistory: updatedHistory,
+          chartHistories,
+          storedHistory: updatedHistory,
           stargazerDiff,
           forecastData,
-        };
-        const markdownReport = generateMarkdownReport(reportParams);
-        const htmlReport = generateHtmlReport(reportParams);
-
-        const csvReport = generateCsvReport(results);
-        const badge = generateBadge({ totalStars: summary.totalStars, locale: config.locale });
+          topRepoNames,
+        });
         const notify = summary.changed && measurement.thresholdReached;
 
         const emailConfig = getEmailConfig(config.locale);
@@ -139,7 +133,7 @@ export async function trackStars(): Promise<void> {
           });
 
           try {
-            const sent = await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
+            const sent = await sendEmail({ emailConfig, subject, htmlBody: rendered.html });
 
             delivery = sent ? Delivery.SENT : Delivery.FAILED;
           } catch (error) {
@@ -165,18 +159,18 @@ export async function trackStars(): Promise<void> {
         branch.publish({
           history: notification.historyToPersist,
           stargazerMap,
-          report: markdownReport,
-          badge,
-          csv: csvReport,
-          charts: buildChartFiles({ config, chartHistories, forecastData, topRepoNames }),
+          report: rendered.markdown,
+          badge: rendered.badge,
+          csv: rendered.csv,
+          charts: rendered.charts,
           commitMessage: `Update star data: ${summary.totalStars} total (${deltaIndicator(summary.totalDelta)})`,
         });
 
         setOutputs({
           summary,
-          markdownReport,
-          htmlReport,
-          csvReport,
+          markdownReport: rendered.markdown,
+          htmlReport: rendered.html,
+          csvReport: rendered.csv,
           shouldNotify: notification.shouldNotify,
           notificationSent: notification.notificationSent,
           newStargazers: stargazerDiff?.totalNew ?? 0,
