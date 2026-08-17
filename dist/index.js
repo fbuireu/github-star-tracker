@@ -41668,6 +41668,12 @@ function buildStarHistory({
 }
 
 // src/presentation/constants.ts
+var CHART_CHROME = {
+  titleFontSize: 16,
+  milestoneFontSize: 10,
+  milestoneStrokeWidth: 1,
+  milestoneDash: [6, 6]
+};
 var CHART_DEFAULTS = {
   smoothing: true,
   curve: ChartCurve.MONOTONE,
@@ -41755,12 +41761,22 @@ var SVG_CHART = {
   gridOpacity: 0.3,
   fillOpacity: 0.1,
   axisStrokeWidth: 1,
-  fontSize: { title: 16, label: 11, milestone: 10, legend: 10 },
+  fontSize: {
+    title: CHART_CHROME.titleFontSize,
+    label: 11,
+    milestone: CHART_CHROME.milestoneFontSize,
+    legend: 10
+  },
   header: { titleOffset: 36, legendOffset: 14 },
   animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
   yAxis: { stepCount: 5, labelGap: 8, labelBaselineOffset: 4 },
   xAxis: { maxLabels: 10, labelOffset: 20 },
-  milestone: { strokeWidth: 1, dashArray: "6,6", labelXOffset: 4, labelYOffset: 4 },
+  milestone: {
+    strokeWidth: CHART_CHROME.milestoneStrokeWidth,
+    dashArray: CHART_CHROME.milestoneDash.join(","),
+    labelXOffset: 4,
+    labelYOffset: 4
+  },
   dash: { line: "8,4", legend: "4,2" },
   legend: {
     itemWidth: 120,
@@ -41787,28 +41803,7 @@ var CHART_FILES = {
   forecast: "forecast.svg"
 };
 
-// src/presentation/shared.ts
-function emailChartStyle(config) {
-  return {
-    smoothing: config.chartSmoothing,
-    curve: config.chartCurve,
-    showPoints: config.chartShowPoints,
-    beginAtZero: config.chartBeginAtZero,
-    range: config.chartRange,
-    lineWidth: config.chartLineWidth
-  };
-}
-var THEME_CONFIG = {
-  [ChartTheme.AUTO]: { palette: LIGHT_PALETTE, colorScheme: "light dark" },
-  [ChartTheme.LIGHT]: { palette: LIGHT_PALETTE, colorScheme: ChartTheme.LIGHT },
-  [ChartTheme.DARK]: { palette: DARK_PALETTE, colorScheme: ChartTheme.DARK }
-};
-function resolvePalette(theme = ChartTheme.AUTO) {
-  return THEME_CONFIG[theme].palette;
-}
-function colorSchemeFor(theme) {
-  return THEME_CONFIG[theme].colorScheme;
-}
+// src/presentation/chart-spec.ts
 var CHART_RANGE_DAYS = {
   [ChartRange.D30]: 30,
   [ChartRange.D90]: 90,
@@ -41848,38 +41843,6 @@ function movingAverageSeries({ values, window: window2 }) {
     return Math.round(sum / slice.length);
   });
 }
-function prepareReportData({
-  results,
-  previousTimestamp,
-  locale
-}) {
-  const { repos } = results;
-  const t = getTranslations(locale);
-  return {
-    activeRepos: repos.filter((repo) => !repo.isRemoved),
-    newRepos: repos.filter((repo) => repo.isNew),
-    removedRepos: repos.filter((repo) => repo.isRemoved),
-    sorted: rankByStars(repos),
-    now: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-    prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun
-  };
-}
-function perRepoChartFile(repoFullName) {
-  return `${repoFullName.replace("/", "-")}.svg`;
-}
-function buildForecastWeekHeaders(t) {
-  return Array.from(
-    { length: FORECAST_WEEKS },
-    (_, index) => interpolate({ template: t.forecast.week, params: { n: index + 1 } })
-  );
-}
-var FORECAST_METHOD_LABELS = {
-  [ForecastMethod.LINEAR_REGRESSION]: "linearRegression",
-  [ForecastMethod.WEIGHTED_MOVING_AVERAGE]: "weightedMovingAverage"
-};
-function forecastMethodLabel({ method, t }) {
-  return t.forecast[FORECAST_METHOD_LABELS[method]];
-}
 function buildForecastChartSeries({
   historicalData,
   forecastData
@@ -41899,8 +41862,6 @@ function buildForecastChartSeries({
     weightedMovingAverage: projectFromLast(findPoints(ForecastMethod.WEIGHTED_MOVING_AVERAGE))
   };
 }
-
-// src/presentation/chart-spec.ts
 var AxisLabels = {
   THINNED: "thinned",
   DATES: "dates"
@@ -42135,6 +42096,61 @@ function buildChartSpec({
         lineColor: request2.lineColor
       });
   }
+}
+
+// src/presentation/shared.ts
+function emailChartStyle(config) {
+  return {
+    smoothing: config.chartSmoothing,
+    curve: config.chartCurve,
+    showPoints: config.chartShowPoints,
+    beginAtZero: config.chartBeginAtZero,
+    range: config.chartRange,
+    lineWidth: config.chartLineWidth
+  };
+}
+var THEME_CONFIG = {
+  [ChartTheme.AUTO]: { palette: LIGHT_PALETTE, colorScheme: "light dark" },
+  [ChartTheme.LIGHT]: { palette: LIGHT_PALETTE, colorScheme: ChartTheme.LIGHT },
+  [ChartTheme.DARK]: { palette: DARK_PALETTE, colorScheme: ChartTheme.DARK }
+};
+function resolvePalette(theme = ChartTheme.AUTO) {
+  return THEME_CONFIG[theme].palette;
+}
+function colorSchemeFor(theme) {
+  return THEME_CONFIG[theme].colorScheme;
+}
+function prepareReportData({
+  results,
+  previousTimestamp,
+  locale
+}) {
+  const { repos } = results;
+  const t = getTranslations(locale);
+  return {
+    activeRepos: repos.filter((repo) => !repo.isRemoved),
+    newRepos: repos.filter((repo) => repo.isNew),
+    removedRepos: repos.filter((repo) => repo.isRemoved),
+    sorted: rankByStars(repos),
+    now: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+    prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun
+  };
+}
+function perRepoChartFile(repoFullName) {
+  return `${repoFullName.replace("/", "-")}.svg`;
+}
+function buildForecastWeekHeaders(t) {
+  return Array.from(
+    { length: FORECAST_WEEKS },
+    (_, index) => interpolate({ template: t.forecast.week, params: { n: index + 1 } })
+  );
+}
+var FORECAST_METHOD_LABELS = {
+  [ForecastMethod.LINEAR_REGRESSION]: "linearRegression",
+  [ForecastMethod.WEIGHTED_MOVING_AVERAGE]: "weightedMovingAverage"
+};
+function forecastMethodLabel({ method, t }) {
+  return t.forecast[FORECAST_METHOD_LABELS[method]];
 }
 
 // src/presentation/escaping.ts
@@ -42790,12 +42806,12 @@ function generateCsvReport({ repos }) {
 // src/presentation/chart.ts
 var CHART_STYLE = {
   translucentAlpha: "33",
-  titleFontSize: 16,
+  titleFontSize: CHART_CHROME.titleFontSize,
   legendFontSize: 11,
   legendHiddenFontSize: 12,
-  milestoneBorderWidth: 1,
-  milestoneFontSize: 10,
-  milestoneDash: [6, 6],
+  milestoneBorderWidth: CHART_CHROME.milestoneStrokeWidth,
+  milestoneFontSize: CHART_CHROME.milestoneFontSize,
+  milestoneDash: CHART_CHROME.milestoneDash,
   trendDash: [6, 4],
   linearRegressionDash: [8, 4],
   weightedMovingAverageDash: [4, 4]
@@ -43055,6 +43071,8 @@ function buildReportModel(params) {
   });
   const hasChartHistory = includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
   const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
+  const topRepos = toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount });
+  const chartHistory = hasChartHistory ? history : null;
   return {
     summary: results.summary,
     now,
@@ -43063,9 +43081,9 @@ function buildReportModel(params) {
     sorted,
     newRepos,
     removedRepos,
-    topRepos: toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount }),
-    hasChartHistory,
-    chartHistory: hasChartHistory ? history : null,
+    topRepos,
+    chartHistory,
+    showComparisonChart: chartHistory !== null && topRepos.length > 0,
     stargazers: toStargazerSection(params),
     velocity: toVelocitySection(velocity),
     velocityIsNested: forecastData !== null,
@@ -43154,7 +43172,7 @@ function generateHtmlReport({ model, config }) {
         <ul>${removedRepos.map((repo) => `<li>${interpolate({ template: t.report.removedRepoText, params: { name: escapeHtml(repo.fullName), count: repo.previous ?? 0 } })}</li>`).join("")}</ul>
       </div>` : "";
   const topRepos = model.topRepos;
-  const comparisonChartUrl = history !== null && topRepos.length > 0 ? chartUrl({
+  const comparisonChartUrl = history !== null && model.showComparisonChart ? chartUrl({
     kind: ChartKind.COMPARISON,
     history,
     repoNames: topRepos.map((repo) => repo.fullName)
@@ -43355,9 +43373,10 @@ function generateMarkdownReport({ model, config }) {
     removedRepos,
     now,
     prev,
-    hasChartHistory,
+    chartHistory,
     forecast: forecastData
   } = model;
+  const hasChartHistory = chartHistory !== null;
   const header = [
     `# ${t.report.title}`,
     "",
@@ -43366,7 +43385,7 @@ function generateMarkdownReport({ model, config }) {
   ];
   const comparison = model.isFirstRun ? [] : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ""];
   const topRepos = model.topRepos;
-  const hasComparisonChart = hasChartHistory && topRepos.length > 0;
+  const hasComparisonChart = model.showComparisonChart;
   const individualRepoCharts = hasChartHistory ? topRepos.flatMap((repo) => [
     `#### ${repoChartHeading2({ repo, t })}`,
     "",

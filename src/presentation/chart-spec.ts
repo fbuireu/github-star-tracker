@@ -1,13 +1,114 @@
-import type { ChartRange } from '@config/types';
-import { STAR_MILESTONES } from '@domain/constants';
-import type { ForecastData } from '@domain/forecast';
+import { ChartRange } from '@config/types';
+import { MS_PER_DAY, STAR_MILESTONES } from '@domain/constants';
+import { type ForecastData, ForecastMethod } from '@domain/forecast';
 import { buildAxisLabels, formatCount, formatDate } from '@domain/formatting';
 import { repoStarSeries } from '@domain/snapshot';
+import { toEpochMs } from '@domain/time';
 import type { History, Snapshot } from '@domain/types';
 import { getTranslations, interpolate, type Locale } from '@i18n';
 import { CHART, CHART_COMPARISON_COLORS, MIN_SNAPSHOTS_FOR_CHART, TREND_WINDOW } from './constants';
-import { buildForecastChartSeries, movingAverageSeries, selectChartSnapshots } from './shared';
+
 import type { ColorPalette } from './types';
+
+const CHART_RANGE_DAYS: Record<ChartRange, number> = {
+  [ChartRange.D30]: 30,
+  [ChartRange.D90]: 90,
+  [ChartRange.Y1]: 365,
+  [ChartRange.ALL]: Number.POSITIVE_INFINITY,
+};
+
+interface FilterSnapshotsByRangeParams<T> {
+  snapshots: T[];
+  range?: ChartRange;
+}
+
+function filterSnapshotsByRange<T extends { timestamp: string }>({
+  snapshots,
+  range = ChartRange.ALL,
+}: FilterSnapshotsByRangeParams<T>): T[] {
+  const days = CHART_RANGE_DAYS[range];
+  if (!Number.isFinite(days) || snapshots.length === 0) return snapshots;
+
+  const lastTimestamp = toEpochMs(snapshots[snapshots.length - 1].timestamp);
+  if (lastTimestamp === null) return snapshots;
+
+  const cutoff = lastTimestamp - days * MS_PER_DAY;
+
+  return snapshots.filter((snapshot) => {
+    const timestamp = toEpochMs(snapshot.timestamp);
+
+    return timestamp !== null && timestamp >= cutoff;
+  });
+}
+
+interface SelectChartSnapshotsParams<T> {
+  snapshots: T[];
+  range?: ChartRange;
+  maxPoints?: number;
+}
+
+export function selectChartSnapshots<T extends { timestamp: string }>({
+  snapshots,
+  range,
+  maxPoints,
+}: SelectChartSnapshotsParams<T>): T[] {
+  const windowed = filterSnapshotsByRange({ snapshots, range });
+  const limit = maxPoints ?? CHART.maxDataPoints;
+
+  if (limit <= 0 || windowed.length <= limit) return [...windowed];
+  if (limit === 1) return windowed.slice(-1);
+
+  const step = (windowed.length - 1) / (limit - 1);
+
+  return Array.from({ length: limit }, (_, index) => windowed[Math.round(index * step)]);
+}
+
+interface MovingAverageSeriesParams {
+  values: number[];
+  window: number;
+}
+
+export function movingAverageSeries({ values, window }: MovingAverageSeriesParams): number[] {
+  return values.map((_, index) => {
+    const slice = values.slice(Math.max(0, index - window + 1), index + 1);
+    const sum = slice.reduce((total, value) => total + value, 0);
+
+    return Math.round(sum / slice.length);
+  });
+}
+
+interface ForecastChartSeries {
+  historical: (number | null)[];
+  linearRegression: (number | null)[];
+  weightedMovingAverage: (number | null)[];
+}
+
+interface BuildForecastChartSeriesParams {
+  historicalData: number[];
+  forecastData: ForecastData;
+}
+
+export function buildForecastChartSeries({
+  historicalData,
+  forecastData,
+}: BuildForecastChartSeriesParams): ForecastChartSeries {
+  const forecastLength = forecastData.aggregate.forecasts[0]?.points.length ?? 0;
+  const findPoints = (method: string): { predicted: number }[] | undefined =>
+    forecastData.aggregate.forecasts.find((forecast) => forecast.method === method)?.points;
+  const lastHistorical = historicalData.at(-1) ?? 0;
+  const padLength = historicalData.length;
+  const projectFromLast = (points: { predicted: number }[] | undefined): (number | null)[] => [
+    ...new Array(padLength - 1).fill(null),
+    lastHistorical,
+    ...(points?.map((point) => point.predicted) ?? []),
+  ];
+
+  return {
+    historical: [...historicalData, ...new Array(forecastLength).fill(null)],
+    linearRegression: projectFromLast(findPoints(ForecastMethod.LINEAR_REGRESSION)),
+    weightedMovingAverage: projectFromLast(findPoints(ForecastMethod.WEIGHTED_MOVING_AVERAGE)),
+  };
+}
 
 export const AxisLabels = {
   THINNED: 'thinned',

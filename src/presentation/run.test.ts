@@ -86,6 +86,23 @@ describe('renderRun', () => {
     expect(rendered.markdown).toContain(perRepoCharts[0]);
   });
 
+  it('agrees between the two Reports on whether the comparison Chart appears', () => {
+    const withTopRepos = render();
+    const withoutTopRepos = renderRun({
+      config: makeConfig({ includeCharts: true, topRepos: 2 }),
+      results: makeComparisonResults({ repos: [] }),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      chartHistories: chartHistories(),
+      storedHistory: STORED,
+      forecastData: null,
+    });
+
+    expect(withTopRepos.markdown).toContain('comparison.svg');
+    expect(withTopRepos.html).toContain('quickchart.io');
+    expect(withoutTopRepos.markdown).not.toContain('comparison.svg');
+    expect(withoutTopRepos.charts.map((chart) => chart.filename)).not.toContain('comparison.svg');
+  });
+
   it('produces no charts when they are turned off', () => {
     expect(render(makeConfig({ includeCharts: false })).charts).toEqual([]);
   });

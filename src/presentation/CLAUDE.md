@@ -54,6 +54,12 @@ email path goes through QuickChart because mail clients will not display inline 
 kind are always named the same thing and both are localized. Only the per-repo default is composed rather
 than translated (`` `${repoFullName} Star History` ``).
 
+**The chrome both adapters draw identically lives in `CHART_CHROME`** (`constants.ts`): the title and
+milestone font sizes, the milestone stroke width and its dash pattern. Both charts are the same 800x400
+canvas, so those are one visual decision, not two — `SVG_CHART` and `chart.ts`'s `CHART_STYLE` both read
+them, and the SVG side turns the dash array into its `'6,6'` string. The **series** dash patterns stay
+per-adapter on purpose: the SVG uses one dash for every dashed series, Chart.js uses three.
+
 **The style options both adapters share default in `CHART_DEFAULTS`** (`constants.ts`): `smoothing`,
 `curve`, `showPoints`, `beginAtZero` and `theme`. Each adapter still writes its own
 `option = CHART_DEFAULTS.option`, because a destructured default cannot be spread — but the *values* live in
@@ -96,8 +102,11 @@ assembling the params for each.
   from the stored History, and the charted set matching the linked set.
 
 The report modules are one per format: `markdown.ts`, `html.ts`, `csv.ts`, `badge.ts`, over a shared
-`report-model.ts`; with `escaping.ts` for every dialect's escaper, `shared.ts` for cross-renderer helpers and
-`constants.ts` / `types.ts` for palettes, geometry and the `ColorPalette` contract.
+`report-model.ts`; with `escaping.ts` for every dialect's escaper, `shared.ts` for the report params, the
+theme projection and `prepareReportData`, and `constants.ts` / `types.ts` for palettes, geometry and the
+`ColorPalette` contract. Chart windowing and series maths (`selectChartSnapshots`, `movingAverageSeries`,
+`buildForecastChartSeries`) live in `chart-spec.ts`, their only consumer — they were in `shared.ts` when
+"shared" meant "imported by more than one file" rather than a concept.
 
 ## The report model
 
@@ -105,9 +114,15 @@ The report modules are one per format: `markdown.ts`, `html.ts`, `csv.ts`, `badg
 them**, once. `markdown.ts` and `html.ts` are dialects over it and own only markup. `report-model.test.ts` is
 its spec — assert a section rule there, not through one dialect's markup.
 
-- The model resolves `hasChartHistory`, `chartHistory` (the history *only* when it is plottable, so the
-  dialects narrow on `!== null`), `topRepos`, `isFirstRun`, the Velocity figures and the three-way Stargazer
-  outcome. A dialect that recomputes any of these has reintroduced the drift this module exists to stop.
+- The model resolves `chartHistory` (the history *only* when it is plottable, so the dialects narrow on
+  `!== null`), `showComparisonChart`, `topRepos`, `isFirstRun`, the Velocity figures and the three-way
+  Stargazer outcome. A dialect that recomputes any of these has reintroduced the drift this module exists to
+  stop.
+- **There is no `hasChartHistory`.** It was `chartHistory !== null` by construction and both were public, so
+  the two dialects picked different ones and expressed the same rule two ways. Likewise
+  `showComparisonChart` is the model's answer to "is there a comparison Chart", which both dialects used to
+  compute themselves from `chartHistory` and `topRepos.length`. In `html.ts` a `chartHistory !== null &&`
+  still sits beside it — that is TypeScript narrowing, not the rule.
 - **`topRepos` is not derived here.** It calls `topRepositories` in `@domain/comparison`, the same function
   `@application/tracker` uses for the charts and the Forecast, so the Report and the Charts cannot rank the
   Tracked Set differently. `prepareReportData`'s `sorted` is that module's `rankByStars`.

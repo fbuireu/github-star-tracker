@@ -111,7 +111,7 @@ export function generateHtmlReport({ model, config }: RenderReportParams): strin
 
   const topRepos = model.topRepos;
   const comparisonChartUrl =
-    history !== null && topRepos.length > 0
+    history !== null && model.showComparisonChart
       ? chartUrl({
           kind: ChartKind.COMPARISON,
           history,

@@ -2,18 +2,18 @@ import { ChartCurve, ChartRange, type ChartTheme } from '@config/types';
 import type { Locale } from '@i18n';
 import type { ChartMilestone, ChartRequest, ChartSeries } from './chart-spec';
 import { AxisLabels, buildChartSpec, SeriesDash, SeriesWeight } from './chart-spec';
-import { CHART, CHART_DEFAULTS, CHART_POINT, CHART_TENSION } from './constants';
+import { CHART, CHART_CHROME, CHART_DEFAULTS, CHART_POINT, CHART_TENSION } from './constants';
 import { resolvePalette } from './shared';
 import type { ColorPalette } from './types';
 
 const CHART_STYLE = {
   translucentAlpha: '33',
-  titleFontSize: 16,
+  titleFontSize: CHART_CHROME.titleFontSize,
   legendFontSize: 11,
   legendHiddenFontSize: 12,
-  milestoneBorderWidth: 1,
-  milestoneFontSize: 10,
-  milestoneDash: [6, 6] as [number, number],
+  milestoneBorderWidth: CHART_CHROME.milestoneStrokeWidth,
+  milestoneFontSize: CHART_CHROME.milestoneFontSize,
+  milestoneDash: CHART_CHROME.milestoneDash,
   trendDash: [6, 4],
   linearRegressionDash: [8, 4],
   weightedMovingAverageDash: [4, 4],

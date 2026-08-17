@@ -105,7 +105,7 @@ describe('buildReportModel', () => {
         modelOf({ history, config: { includeCharts: false } }),
         modelOf({ history: makeHistory([10]), config: { includeCharts: true } }),
         modelOf({ history: null, config: { includeCharts: true } }),
-      ].map((model) => [model.hasChartHistory, model.chartHistory]);
+      ].map((model) => [model.chartHistory !== null, model.chartHistory]);
 
       expect(outcomes).toEqual([
         [true, history],

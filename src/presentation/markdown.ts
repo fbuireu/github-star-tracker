@@ -35,9 +35,10 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
     removedRepos,
     now,
     prev,
-    hasChartHistory,
+    chartHistory,
     forecast: forecastData,
   } = model;
+  const hasChartHistory = chartHistory !== null;
 
   const header = [
     `# ${t.report.title}`,
@@ -51,7 +52,7 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
     : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ''];
 
   const topRepos = model.topRepos;
-  const hasComparisonChart = hasChartHistory && topRepos.length > 0;
+  const hasComparisonChart = model.showComparisonChart;
 
   const individualRepoCharts = hasChartHistory
     ? topRepos.flatMap((repo) => [

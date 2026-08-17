@@ -43,8 +43,8 @@ export interface ReportModel {
   newRepos: RepoResult[];
   removedRepos: RepoResult[];
   topRepos: TopRepo[];
-  hasChartHistory: boolean;
   chartHistory: History | null;
+  showComparisonChart: boolean;
   stargazers: StargazerSection | null;
   velocity: VelocitySection | null;
   velocityIsNested: boolean;
@@ -115,6 +115,9 @@ export function buildReportModel(params: ReportParams): ReportModel {
       ? computeVelocity({ history: velocityHistory })
       : null;
 
+  const topRepos = toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount });
+  const chartHistory = hasChartHistory ? history : null;
+
   return {
     summary: results.summary,
     now,
@@ -123,9 +126,9 @@ export function buildReportModel(params: ReportParams): ReportModel {
     sorted,
     newRepos,
     removedRepos,
-    topRepos: toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount }),
-    hasChartHistory,
-    chartHistory: hasChartHistory ? history : null,
+    topRepos,
+    chartHistory,
+    showComparisonChart: chartHistory !== null && topRepos.length > 0,
     stargazers: toStargazerSection(params),
     velocity: toVelocitySection(velocity),
     velocityIsNested: forecastData !== null,
