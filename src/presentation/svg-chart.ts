@@ -3,7 +3,7 @@ import { formatCount } from '@domain/formatting';
 import type { Locale } from '@i18n';
 import type { ChartMilestone, ChartRequest } from './chart-spec';
 import { AxisLabels, buildChartSpec, SeriesDash } from './chart-spec';
-import { CHART, CHART_TENSION, DARK_PALETTE, SVG_CHART } from './constants';
+import { CHART, CHART_DEFAULTS, CHART_TENSION, DARK_PALETTE, SVG_CHART } from './constants';
 import { EscapeDialect, escapeFor } from './escaping';
 import { resolvePalette } from './shared';
 
@@ -298,12 +298,12 @@ function renderSvg({
   milestones,
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
+  smoothing = CHART_DEFAULTS.smoothing,
+  curve = CHART_DEFAULTS.curve,
+  showPoints = CHART_DEFAULTS.showPoints,
   animate = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
+  beginAtZero = CHART_DEFAULTS.beginAtZero,
+  theme = CHART_DEFAULTS.theme,
 }: RenderSvgParams): string | null {
   const {
     margin,

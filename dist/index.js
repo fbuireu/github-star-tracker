@@ -41556,6 +41556,13 @@ function retry(octokit, octokitOptions) {
 retry.VERSION = VERSION7;
 
 // src/presentation/constants.ts
+var CHART_DEFAULTS = {
+  smoothing: true,
+  curve: ChartCurve.MONOTONE,
+  showPoints: true,
+  beginAtZero: false,
+  theme: ChartTheme.AUTO
+};
 var LIGHT_PALETTE = {
   accent: "#dfb317",
   positive: "#28a745",
@@ -42409,12 +42416,12 @@ function renderSvg({
   milestones,
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
+  smoothing = CHART_DEFAULTS.smoothing,
+  curve = CHART_DEFAULTS.curve,
+  showPoints = CHART_DEFAULTS.showPoints,
   animate = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO
+  beginAtZero = CHART_DEFAULTS.beginAtZero,
+  theme = CHART_DEFAULTS.theme
 }) {
   const {
     margin,
@@ -42916,11 +42923,11 @@ function toDataset({ series, curveProps, showPoints, lineWidth }) {
 function chartImageUrl({
   request: request2,
   locale,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
+  smoothing = CHART_DEFAULTS.smoothing,
+  curve = CHART_DEFAULTS.curve,
+  showPoints = CHART_DEFAULTS.showPoints,
+  beginAtZero = CHART_DEFAULTS.beginAtZero,
+  theme = CHART_DEFAULTS.theme,
   range = ChartRange.ALL,
   lineWidth
 }) {

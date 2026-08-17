@@ -1,8 +1,8 @@
-import { ChartCurve, ChartRange, ChartTheme } from '@config/types';
+import { ChartCurve, ChartRange, type ChartTheme } from '@config/types';
 import type { Locale } from '@i18n';
 import type { ChartMilestone, ChartRequest, ChartSeries } from './chart-spec';
 import { AxisLabels, buildChartSpec, SeriesDash, SeriesWeight } from './chart-spec';
-import { CHART, CHART_POINT, CHART_TENSION } from './constants';
+import { CHART, CHART_DEFAULTS, CHART_POINT, CHART_TENSION } from './constants';
 import { resolvePalette } from './shared';
 import type { ColorPalette } from './types';
 
@@ -295,11 +295,11 @@ interface ChartImageUrlParams {
 export function chartImageUrl({
   request,
   locale,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
+  smoothing = CHART_DEFAULTS.smoothing,
+  curve = CHART_DEFAULTS.curve,
+  showPoints = CHART_DEFAULTS.showPoints,
+  beginAtZero = CHART_DEFAULTS.beginAtZero,
+  theme = CHART_DEFAULTS.theme,
   range = ChartRange.ALL,
   lineWidth,
 }: ChartImageUrlParams): string | null {

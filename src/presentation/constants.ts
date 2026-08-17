@@ -1,4 +1,13 @@
+import { ChartCurve, ChartTheme } from '@config/types';
 import type { ColorPalette } from './types';
+
+export const CHART_DEFAULTS = {
+  smoothing: true,
+  curve: ChartCurve.MONOTONE,
+  showPoints: true,
+  beginAtZero: false,
+  theme: ChartTheme.AUTO,
+} as const;
 
 export const LIGHT_PALETTE: ColorPalette = {
   accent: '#dfb317',

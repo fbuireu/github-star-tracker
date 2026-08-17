@@ -54,6 +54,12 @@ email path goes through QuickChart because mail clients will not display inline 
 kind are always named the same thing and both are localized. Only the per-repo default is composed rather
 than translated (`` `${repoFullName} Star History` ``).
 
+**The style options both adapters share default in `CHART_DEFAULTS`** (`constants.ts`): `smoothing`,
+`curve`, `showPoints`, `beginAtZero` and `theme`. Each adapter still writes its own
+`option = CHART_DEFAULTS.option`, because a destructured default cannot be spread — but the *values* live in
+one place, so the two cannot drift the way five duplicated literals could. `yAxisSide` and `animate` (SVG
+only) and `range` (email only) stay local, because they are genuinely not shared.
+
 `SeriesDash` and `SeriesWeight` are emphasis, not pixels: each adapter maps them through its own table
 (`DASH_PATTERNS` / `POINT_SIZES` in `chart.ts`, a `dashed` boolean in `svg-chart.ts`). Keep dash arrays and
 point radii out of the spec.
@@ -186,6 +192,11 @@ uses that everywhere. Do not write a second escape map.
 
 - `COLORS` is an alias for `LIGHT_PALETTE` and `badge.ts` uses it unconditionally, so **the badge is always
   light-themed** and ignores `chart-theme` — though its number *is* localized.
+- **The Reports print Star Counts raw; the Badge and the Charts compact them.** `formatCount` is a *compact*
+  formatter (`1.2K`), which is right where space is fixed — a badge, an axis tick, a Milestone label — and
+  wrong in a Report, where the table is the place a reader goes for the exact figure. So a run can show
+  `1.2M` on the badge and `1234567` in the table beside it, and that is deliberate rather than drift. Do not
+  "unify" them by putting `formatCount` in `markdown.ts` or `html.ts`: that trades precision for symmetry.
 - In `ColorPalette`, `white` is the *background* colour: it is `#0d1117` in the dark palette, not white.
 - **`theme` means different things to the two chart paths.** `svg-chart.ts` can honour `auto` because CSS
   travels with the SVG; `chart.ts` cannot, because `buildChartUrl` bakes `palette.white` into the QuickChart
