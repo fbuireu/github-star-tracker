@@ -1,5 +1,7 @@
+import { EMPTY_SUMMARY } from '@domain/comparison';
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
+import { deltaIndicator } from '@domain/formatting';
 import type { StargazerDiffResult } from '@domain/stargazers';
 import { getTranslations } from '@i18n';
 import {
@@ -10,7 +12,8 @@ import {
 } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
 import type { ChartHistories } from './charts';
-import { renderRun } from './run';
+import { generateCsvReport } from './csv';
+import { renderEmptyRun, renderRun } from './run';
 
 const STORED = makeMultiRepoHistory(
   [
@@ -202,5 +205,54 @@ describe('the two Report dialects stay in step', () => {
       expect(rendered.markdown).not.toContain(heading);
       expect(rendered.html).not.toContain(heading);
     }
+  });
+});
+
+describe('renderEmptyRun', () => {
+  it('says why there is nothing to report, in the run locale', () => {
+    const english = renderEmptyRun(makeConfig());
+    const spanish = renderEmptyRun(makeConfig({ locale: 'es' }));
+
+    expect(english.markdown).toBe(getTranslations('en').report.noRepositories);
+    expect(spanish.markdown).toBe(getTranslations('es').report.noRepositories);
+    expect(english.html).toContain(getTranslations('en').report.noRepositories);
+  });
+
+  it('emits a CSV header, so report-csv has one shape on every path', () => {
+    expect(renderEmptyRun(makeConfig()).csv).toBe(
+      generateCsvReport({ repos: [], summary: EMPTY_SUMMARY }),
+    );
+  });
+
+  it('draws no charts and a zero badge', () => {
+    const rendered = renderEmptyRun(makeConfig());
+
+    expect(rendered.charts).toEqual([]);
+    expect(rendered.badge).toContain('<svg');
+  });
+});
+
+describe('the Notification subject', () => {
+  it('carries the total and the signed delta', () => {
+    const { summary } = makeComparisonResults();
+    const rendered = render();
+
+    expect(rendered.emailSubject).toContain(getTranslations('en').email.subject);
+    expect(rendered.emailSubject).toContain(String(summary.totalStars));
+    expect(rendered.emailSubject).toContain(deltaIndicator(summary.totalDelta));
+  });
+
+  it('follows the run locale', () => {
+    const spanish = renderRun({
+      config: makeConfig({ includeCharts: true, locale: 'es' }),
+      results: makeComparisonResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      chartHistories: chartHistories(),
+      storedHistory: STORED,
+      forecastData: null,
+    });
+
+    expect(spanish.emailSubject).toContain(getTranslations('es').email.subject);
+    expect(spanish.emailSubject).not.toContain(getTranslations('en').email.subject);
   });
 });

@@ -164,7 +164,9 @@ the moment anything above it moves — prefer naming the symbol.
   therefore produces no coverage signal, but many tests assert the resulting literals — expect failures far
   from the edit.
 - **One test file can cover two modules.** `src/infrastructure/github/filters.test.ts` is the spec for both
-  `filters.ts` and `client.ts`, and `src/config/action-inputs.test.ts` covers the manifest, not a module.
+  `filters.ts` and `client.ts` — the only sanctioned pair — and `src/config/action-inputs.test.ts` covers the
+  manifest, not a module. `client.ts` is the sole module with no colocated test; anything else missing one is
+  drift, not a convention.
 - **Biome allows no suppressions.** Fix the root cause instead of `biome-ignore`. 100-col, 2-space, LF,
   single quotes; `.gitattributes` pins `* text=auto eol=lf`.
 

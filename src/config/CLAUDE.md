@@ -6,9 +6,16 @@ repo's `star-tracker.yml`. It produces a fully-populated `Config` — every fiel
 inputs (`@infrastructure/notification` does), does **not** read `github-token` / `github-api-url`
 (`@application/tracker` does), and does **not** validate value *ranges*.
 
+**`loadConfig()` takes no arguments and reads the ambient inputs on purpose**, and
+[ADR 0018](../../docs/adr/0018-loadconfig-reads-the-ambient-action-inputs.md) records why: parameterising it
+deletes 49 test lines, 27 of them the same repeated mock, and forces the orchestrator to relearn every input
+name — the coupling [ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md) removed.
+Do not re-propose it.
+
 `types.ts` holds `Config` and the enums, `defaults.ts` holds `DEFAULTS`,
-`parsers.ts` holds pure coercions used only here, and `loader.ts` is the resolver. Every parser is reached
-through `loader.ts`'s field table, so none of them is exported purely for a test.
+`parsers.ts` holds pure coercions used only here, with its own colocated `parsers.test.ts`, and `loader.ts` is
+the resolver. Every parser is reached through `loader.ts`'s field table in production, so none is exported
+*only* for a test — but `parsers.test.ts` does exercise them directly, which is why they are exported at all.
 
 ## The field table
 
