@@ -101,7 +101,9 @@ Action Inputs > Config File (YAML) > Built-in Defaults
 1. File discovery: reads YAML from `config-path` input (default: `star-tracker.yml`)
 2. YAML parsing via `js-yaml`. Empty, whitespace-only, or malformed config files no longer crash the action - an empty file yields defaults, and a parse error is logged as a warning before falling back to defaults.
 3. Action input extraction via `@actions/core`
-4. Type-safe conversion using parsers (`parseBool`, `parseNumber`, `parseList`, `parseNotificationThreshold`)
+4. Type-safe conversion using parsers (`parseBool`, `parsePositiveNumber`, `parseNonNegativeNumber`,
+   `parseList`, `parseHexColor`, `parseNotificationThreshold`) — which number parser a key uses is
+   deliberate, not interchangeable
 5. Merge: inputs override file values; missing values fall through to defaults
 6. Validation of `visibility` enum and `locale`
 
@@ -256,7 +258,8 @@ Pure function computing the diff between current repos and the selected baseline
 
 **Edge cases:**
 
-- First run: all repos get `delta: 0`, `isNew: false`
+- First run: there is no baseline, so every repo is `isNew: true` with `previous: null` and `delta: 0` — new
+  repos never inflate `newStars`, but they do make `summary.changed` true
 - Repo renamed: appears as removed + new
 - Repo deleted: marked `isRemoved: true`, `current: 0`
 
@@ -264,7 +267,8 @@ Pure function computing the diff between current repos and the selected baseline
 
 **File:** `src/domain/snapshot.ts`
 
-- `getLastSnapshot(history)` - retrieves the most recent snapshot (the `compare-against: last-run` baseline)
+- The `compare-against: last-run` baseline is the most recent snapshot that parses, resolved inside
+  `getBaselineSnapshot` (the walk-back is module-private)
 - `addSnapshot({ history, snapshot, maxHistory })` - returns a new `History` with the snapshot appended and old entries pruned beyond `maxHistory`
 
 Both are pure functions returning new objects (no mutation). `addSnapshot()` runs on every execution regardless of `compare-against`, so the stored history is always the complete per-run series.
@@ -379,7 +383,7 @@ Generates self-contained animated SVG charts committed to `charts/` on the data 
 | Comparison | `charts/comparison.svg` | Top N repos overlaid |
 | Forecast | `charts/forecast.svg` | Historical + projected trends (dashed lines) |
 
-Features: smooth Catmull-Rom curves, CSS draw-line animation, fade-in data points, nice Y-axis steps, locale-aware date labels, legend (for multi-series).
+Features: smooth curves (`monotone` by default, four shapes available), CSS draw-line animation, fade-in data points, nice Y-axis steps, locale-aware date labels, legend (for multi-series).
 
 When charts are enabled, the History passed to chart generation is the real reconstructed star history (cumulative over actual star dates), not the per-run snapshot list. Requires at least **2 points** (`MIN_SNAPSHOTS_FOR_CHART`) in that reconstructed history.
 
@@ -416,7 +420,7 @@ Creates a Shields.io-style SVG badge with the localized "Total Stars" label and 
 
 1. `git add -A`
 2. `git diff --cached --quiet` (skip if no changes)
-3. `git commit -m "Update star data - 1,523 total (+15)"`
+3. `git commit -m "Update star data: 1523 total (+15)"`
 4. `git push origin HEAD:{dataBranch}`
 
 Idempotent: no empty commits if data hasn't changed.
@@ -492,7 +496,7 @@ src/
 ├── config/
 │   ├── types.ts                      # Config, Visibility, ChartCurve/Theme/Range types
 │   ├── defaults.ts                   # DEFAULTS
-│   ├── parsers.ts                    # parseBool, parseFileBool, parseNumber, parseList, toStringList
+│   ├── parsers.ts                    # parseBool, parseFileBool, parseList, parseHexColor, parsePositiveNumber
 │   └── loader.ts                     # loadConfig(), loadConfigFile(), resolveEnum()
 ├── domain/
 │   ├── types.ts                      # RepoInfo, Snapshot, History, Summary, CompareAgainst, NotificationMode

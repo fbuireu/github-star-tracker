@@ -62,7 +62,7 @@ elsewhere.
 
 ## Translation Architecture
 
-Translations live in `src/i18n/` as flat JSON files:
+Translations live in `src/i18n/` as JSON files, one per locale:
 
 ```
 src/i18n/

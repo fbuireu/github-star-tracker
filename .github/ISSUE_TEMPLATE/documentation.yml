@@ -20,7 +20,7 @@ body:
         - API reference
         - Troubleshooting guide
         - Contributing guide
-        - Code comments
+        - Agent guides (CLAUDE.md)
         - Other
     validations:
       required: true

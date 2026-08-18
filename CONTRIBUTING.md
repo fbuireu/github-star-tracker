@@ -57,7 +57,7 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
 
 2. **Install dependencies**
    ```bash
-   # Requires Node.js 24+ and pnpm
+   # Requires the Node and pnpm versions pinned in package.json (engines.node, packageManager)
    pnpm install
    ```
 
@@ -117,12 +117,12 @@ pnpm run format
 `pnpm run check` is the wider gate — it adds type-checking and the coverage run on top of `lint`.
 
 **Guidelines:**
-- TypeScript with strict mode
+- TypeScript — strict type-checking is on by default in the pinned version, so `tsconfig.json` does not declare it
 - Functional programming style preferred
 - No `any` types (use `unknown` if needed)
 - Functions with 2+ parameters should use destructured named parameters
 - Constants for magic numbers/strings
-- Comprehensive JSDoc for public APIs
+- No explanatory comments — the tree carries none by design; the `CLAUDE.md` guides carry the explanation
 
 ### Testing
 
@@ -144,7 +144,7 @@ describe('myFeature', () => {
 **Test requirements:**
 - ✅ Unit tests for all functions
 - ✅ Integration tests for complex flows
-- ✅ Minimum 80% code coverage
+- ✅ Minimum 85% code coverage, on lines, functions, branches and statements alike
 - ✅ Tests must pass before merging
 
 Run tests:

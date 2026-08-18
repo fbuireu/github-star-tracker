@@ -17,7 +17,8 @@ The `GITHUB_TOKEN` is scoped to the **current repository only**. GitHub Star Tra
 The action requires the user to create a PAT and store it as a repository secret (`STAR_TRACKER_TOKEN`). Both classic tokens and fine-grained tokens are supported.
 
 - Classic: `repo` (private + public) or `public_repo` (public only)
-- Fine-grained: `Repository access → All repositories` with `Metadata: Read-only`
+- Fine-grained: `Repository access → All repositories` with `Metadata: Read-only` **and `Contents: Read and
+  write`** — the action pushes the data branch with this same token, so a metadata-only token fails at the push
 
 See **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)** for a step-by-step setup guide.
 
@@ -113,14 +114,19 @@ Two complementary methods are provided, each with different strengths:
 **Linear Regression** fits a straight line through all historical data points using least squares. It is resilient to noise and captures long-term trends, but it reacts slowly to recent changes.
 
 ```
-predicted(week) = slope * (n - 1 + week) + intercept
+predicted(week) = lastValue + slope * week * 7
 ```
+
+The fitted line supplies the *slope* only. Both methods anchor the projection on the **last observed
+value**, never on the fitted one, so the first predicted point continues from where the curve actually is.
 
 **Weighted Moving Average** computes deltas between consecutive snapshots and weights recent deltas higher. It is more responsive to recent acceleration or deceleration, but more sensitive to short-term noise.
 
 ```
-predicted(week) = lastValue + avgWeightedDelta * week
+predicted(week) = lastValue + weightedDailyRate * week * 7
 ```
+
+The weighted rate is **per day**, so the week offset is multiplied by seven like the regression slope.
 
 Both methods clamp predictions to non-negative integers via `Math.max(0, Math.round(...))` to avoid nonsensical outputs (e.g., -3 stars).
 
@@ -162,7 +168,7 @@ Chrome elements - background, title, legend text, axis labels, grid lines, and a
 | GitHub README / Markdown | Yes - GitHub respects `prefers-color-scheme` in inline SVGs |
 | Browser (direct SVG open) | Yes |
 | HTML email reports | Not automatically - Gmail strips `<style>` blocks, so the media query cannot reach them. Set [`email-theme: dark`](Configuration#email-theme) to bake a dark palette into the body and the chart images instead |
-| QuickChart PNG fallbacks | No - PNGs are rasterized with a fixed white background |
+| QuickChart PNG fallbacks | Not per-reader - the PNG is rasterized once, on the background [`email-theme`](Configuration#email-theme) resolves to. `dark` gives a dark chart; it just cannot follow each reader's own scheme |
 
 ### Badges
 
@@ -177,7 +183,7 @@ The Shields.io-style badge (`stars-badge.svg`) does **not** include dark mode st
 The action produces two types of charts:
 
 1. **Animated SVG charts** - generated locally, committed to the data branch. Support dark/light mode via CSS media queries. No external dependencies.
-2. **QuickChart PNG charts** - generated via [QuickChart.io](https://quickchart.io), used in HTML email reports. Static images, light-only, dependent on an external service.
+2. **QuickChart PNG charts** - generated via [QuickChart.io](https://quickchart.io), used in HTML email reports. Static images that follow [`email-theme`](Configuration#email-theme) rather than the reader's own colour scheme, and dependent on an external service.
 
 There is no interactive zooming, panning, tooltips, or click-to-drill-down in either format.
 

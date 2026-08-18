@@ -144,7 +144,7 @@ Since v1.22.3, a single failing page no longer discards the rest of a repo's his
 
 ### No Forecast Chart
 
-**Cause:** the forecast needs 3 points in the series it is fitted to. With `include-charts` on that series is the history reconstructed from `starred_at`, so it is normally there from the first run — an empty forecast then means no stargazer dates were reachable (see [Charts Are Empty](#charts-are-empty-or-missing)). With `include-charts: false` the series is the stored per-run history instead.
+**Cause:** the forecast needs 3 points in the series it is fitted to. With `include-charts` on that series is the history reconstructed from `starred_at`, so it is normally there from the first run — an empty forecast then means no stargazer dates were reachable (see [No Charts Generated](#no-charts-generated)). With `include-charts: false` the series is the stored per-run history instead.
 
 **Fix:** check `include-charts` is on and the token can list stargazers. If charts are deliberately off, run the workflow 3+ times to accumulate stored snapshots.
 

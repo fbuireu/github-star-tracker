@@ -81,7 +81,8 @@ Action inputs always win. Missing values fall through to the config file, then t
 
 One tracking option sits outside this: [`send-on-no-changes`](#send-on-no-changes) is **input-only**, so
 `send_on_no_changes` in `star-tracker.yml` is read by nothing. The credentials and plumbing inputs —
-`github-token`, `github-api-url`, `config-path` and every `smtp-*` / `email-*` input — are workflow-only too,
+`github-token`, `github-api-url`, `config-path`, every `smtp-*` input and `email-from` / `email-to` — are
+workflow-only too,
 by design: secrets do not belong in a committed file.
 
 **Example:**
@@ -648,7 +649,7 @@ Whether to add a growth-velocity section to the Markdown and HTML reports.
 | **Type** | `boolean` |
 | **Default** | `false` |
 
-When `true`, the report includes a "Growth Velocity" section measured period over period (the latest snapshot against the previous one): the stars gained per day, the percent growth, and a projection of how many days remain until the next star milestone at the current pace. Measuring against the previous snapshot keeps the figures tied to recent momentum rather than an arbitrary all-time baseline. The section is nested under the Growth Forecast section when forecasts are enabled. Needs at least two snapshots spanning some time.
+When `true`, the report includes a "Growth Velocity" section measured period over period (the latest snapshot against the newest earlier one at least a quarter of a day back): the stars gained per day, the percent growth, and a projection of how many days remain until the next star milestone at the current pace. Measuring over a recent interval keeps the figures tied to current momentum rather than an arbitrary all-time baseline, and skipping any pair closer than that minimum stops a manual re-run minutes after a scheduled one from inflating the rate. The section is nested under the Growth Forecast section when forecasts are enabled. Needs at least two snapshots spanning some time.
 
 ---
 

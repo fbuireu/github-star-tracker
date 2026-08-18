@@ -51,7 +51,7 @@ body:
         ```yaml
         - uses: fbuireu/github-star-tracker@v1
           with:
-            github-token: ${{ secrets.GITHUB_TOKEN }}
+            github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
             config-path: 'star-tracker.yml'
         ```
       render: yaml
@@ -64,9 +64,8 @@ body:
       description: If you're using a config file, paste its contents here
       placeholder: |
         ```yaml
-        tracking:
-          visibility: public
-          include_archived: false
+        visibility: public
+        include_archived: false
         ```
       render: yaml
   - type: textarea

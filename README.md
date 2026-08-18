@@ -260,8 +260,10 @@ flowchart TD
     filter --> init --> read --> compare
     compare --> stargazers --> history --> forecast
     forecast --> md & json & csv & svg & html & charts
-    md & json & csv & svg & html & charts --> commit --> setout --> email
-    email -->|Yes| send
+    md & json & csv & svg & html & charts --> email
+    email -->|Yes| send --> commit
+    email -->|No| commit
+    commit --> setout
 
     style trigger fill:#e1f5ff,stroke:#01579b,stroke-width:2px
     style config fill:#fff3e0,stroke:#e65100,stroke-width:2px
