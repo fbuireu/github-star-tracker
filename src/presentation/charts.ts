@@ -8,6 +8,9 @@ import { ChartKind } from './chart-spec';
 import { CHART_FILES, MIN_SNAPSHOTS_FOR_CHART } from './constants';
 import { perRepoChartFile } from './shared';
 import { renderSvgChart } from './svg-chart';
+import type { ChartHistories } from './types';
+
+export type { ChartHistories };
 
 export interface ChartFile {
   filename: string;
@@ -21,11 +24,6 @@ interface ResolveChartHistoryParams {
 
 function resolveChartHistory({ candidate, fallback }: ResolveChartHistoryParams): History {
   return candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : fallback;
-}
-
-export interface ChartHistories {
-  aggregate: History;
-  forRepo: (repoFullName: string) => History;
 }
 
 interface ResolveChartHistoriesParams {

@@ -1,5 +1,5 @@
 import type { Config } from '@config/types';
-import { EMPTY_SUMMARY } from '@domain/comparison';
+import { EMPTY_SUMMARY, topRepositories } from '@domain/comparison';
 import type { ForecastData } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
 import type { StargazerDiffResult } from '@domain/stargazers';
@@ -13,6 +13,7 @@ import { generateHtmlReport } from './html';
 import { generateMarkdownReport } from './markdown';
 import { buildReportModel } from './report-model';
 import type { ReportParams } from './shared';
+import { perRepoChartFile } from './shared';
 
 export interface RenderedRun {
   markdown: string;
@@ -87,7 +88,18 @@ export function renderRun({
     now,
   };
 
-  const model = buildReportModel(reportParams);
+  const charts = buildChartFiles({
+    config,
+    chartHistories,
+    forecastData,
+    topRepoNames: topRepositories({ repos: results.repos, limit: config.topRepos }),
+  });
+  const drawn = new Set(charts.map((file) => file.filename));
+  const model = buildReportModel({
+    ...reportParams,
+    chartHistories,
+    hasChartFile: (repoFullName) => drawn.has(perRepoChartFile(repoFullName)),
+  });
   const rendering = { model, config };
 
   return {
@@ -96,11 +108,6 @@ export function renderRun({
     csv: generateCsvReport(results),
     badge: generateBadge({ totalStars: results.summary.totalStars, locale: config.locale }),
     emailSubject: emailSubject({ locale: config.locale, summary: results.summary }),
-    charts: buildChartFiles({
-      config,
-      chartHistories,
-      forecastData,
-      topRepoNames: model.topRepos.map((repo) => repo.fullName),
-    }),
+    charts,
   };
 }

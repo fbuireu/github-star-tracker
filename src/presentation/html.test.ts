@@ -5,6 +5,7 @@ import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
 import { DOWN_ARROW, UP_ARROW } from '@domain/formatting';
 import type { StargazerDiffResult } from '@domain/stargazers';
+import type { History } from '@domain/types';
 import {
   makeComparisonResults,
   makeConfig,
@@ -32,6 +33,9 @@ function renderHtml({ config, ...overrides }: RenderHtml = {}): string {
       config: resolved,
       results: makeComparisonResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      chartHistories: overrides.history
+        ? { aggregate: overrides.history, forRepo: () => overrides.history as History }
+        : null,
       ...overrides,
     }),
   });

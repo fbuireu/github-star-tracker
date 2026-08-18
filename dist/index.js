@@ -43079,7 +43079,9 @@ function buildReportModel(params) {
     history = null,
     velocityHistory = null,
     forecastData = null,
-    now
+    now,
+    chartHistories = null,
+    hasChartFile = () => true
   } = params;
   const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config;
   const t = getTranslations(locale);
@@ -43100,6 +43102,7 @@ function buildReportModel(params) {
   const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
   const topRepos = toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount });
   const chartHistory = hasChartHistory ? history : null;
+  const perRepoCharts = chartHistory !== null && chartHistories !== null ? topRepos.filter((repo) => hasChartFile(repo.fullName)).map((repo) => ({ ...repo, history: chartHistories.forRepo(repo.fullName) })) : [];
   return {
     summary: results.summary,
     now: reportDate,
@@ -43110,6 +43113,7 @@ function buildReportModel(params) {
     newRepos,
     removedRepos,
     topRepos,
+    perRepoCharts,
     chartHistory,
     showComparisonChart: chartHistory !== null && topRepos.length > 0,
     stargazers: toStargazerSection(params),
@@ -43205,10 +43209,10 @@ function generateHtmlReport({ model, config }) {
     history,
     repoNames: topRepos.map((repo) => repo.fullName)
   }) : null;
-  const individualRepoChartsHtml = history !== null ? topRepos.map((repo) => {
+  const individualRepoChartsHtml = model.perRepoCharts.map((repo) => {
     const repoChartUrl = chartUrl({
       kind: ChartKind.PER_REPO,
-      history,
+      history: repo.history,
       repoFullName: repo.fullName,
       lineColor
     });
@@ -43218,7 +43222,7 @@ function generateHtmlReport({ model, config }) {
           <h4 style="font-size:14px;margin-bottom:8px;">${repoChartHeading({ repo, palette, t })}</h4>
           <img src="${repoChartUrl}" alt="${escapeHtml(repo.fullName)}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
-  }).filter(Boolean).join("") : "";
+  }).filter(Boolean).join("");
   const chartSection = history !== null ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.starTrend} ${t.report.starTrend}</h2>
@@ -43413,12 +43417,12 @@ function generateMarkdownReport({ model, config }) {
   const comparison = model.isFirstRun ? [] : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ""];
   const topRepos = model.topRepos;
   const hasComparisonChart = model.showComparisonChart;
-  const individualRepoCharts = chartHistory !== null ? topRepos.flatMap((repo) => [
+  const individualRepoCharts = model.perRepoCharts.flatMap((repo) => [
     `#### ${repoChartHeading2({ repo, t })}`,
     "",
     `![${escapeMarkdown(repo.fullName)}](./charts/${perRepoChartFile(repo.fullName)})`,
     ""
-  ]) : [];
+  ]);
   const chartSection = chartHistory !== null ? [
     `## ${SECTION_ICON.starTrend} ${t.report.starTrend}`,
     "",
@@ -43627,7 +43631,18 @@ function renderRun({
     forecastData,
     now
   };
-  const model = buildReportModel(reportParams);
+  const charts = buildChartFiles({
+    config,
+    chartHistories,
+    forecastData,
+    topRepoNames: topRepositories({ repos: results.repos, limit: config.topRepos })
+  });
+  const drawn = new Set(charts.map((file) => file.filename));
+  const model = buildReportModel({
+    ...reportParams,
+    chartHistories,
+    hasChartFile: (repoFullName) => drawn.has(perRepoChartFile(repoFullName))
+  });
   const rendering = { model, config };
   return {
     markdown: generateMarkdownReport(rendering),
@@ -43635,12 +43650,7 @@ function renderRun({
     csv: generateCsvReport(results),
     badge: generateBadge({ totalStars: results.summary.totalStars, locale: config.locale }),
     emailSubject: emailSubject({ locale: config.locale, summary: results.summary }),
-    charts: buildChartFiles({
-      config,
-      chartHistories,
-      forecastData,
-      topRepoNames: model.topRepos.map((repo) => repo.fullName)
-    })
+    charts
   };
 }
 

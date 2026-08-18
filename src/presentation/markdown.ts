@@ -53,15 +53,12 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
   const topRepos = model.topRepos;
   const hasComparisonChart = model.showComparisonChart;
 
-  const individualRepoCharts =
-    chartHistory !== null
-      ? topRepos.flatMap((repo) => [
-          `#### ${repoChartHeading({ repo, t })}`,
-          '',
-          `![${escapeMarkdown(repo.fullName)}](./charts/${perRepoChartFile(repo.fullName)})`,
-          '',
-        ])
-      : [];
+  const individualRepoCharts = model.perRepoCharts.flatMap((repo) => [
+    `#### ${repoChartHeading({ repo, t })}`,
+    '',
+    `![${escapeMarkdown(repo.fullName)}](./charts/${perRepoChartFile(repo.fullName)})`,
+    '',
+  ]);
 
   const chartSection =
     chartHistory !== null

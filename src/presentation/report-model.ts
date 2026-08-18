@@ -7,6 +7,9 @@ import { getTranslations, type Translations } from '@i18n';
 import { MIN_SNAPSHOTS_FOR_CHART } from './constants';
 import type { ReportParams } from './shared';
 import { buildForecastWeekHeaders, forecastMethodLabel, prepareReportData } from './shared';
+import type { PerRepoChart, TopRepo } from './types';
+
+export type { PerRepoChart, TopRepo };
 
 export const StargazerOutcome = {
   NEW: 'new',
@@ -28,12 +31,6 @@ export interface VelocitySection {
   projection: { days: number; milestone: number } | null;
 }
 
-export interface TopRepo {
-  fullName: string;
-  current: number;
-  delta: number;
-}
-
 export interface ReportModel {
   summary: Summary;
   now: string;
@@ -44,6 +41,7 @@ export interface ReportModel {
   newRepos: RepoResult[];
   removedRepos: RepoResult[];
   topRepos: TopRepo[];
+  perRepoCharts: PerRepoChart[];
   chartHistory: History | null;
   showComparisonChart: boolean;
   stargazers: StargazerSection | null;
@@ -101,6 +99,8 @@ export function buildReportModel(params: ReportParams): ReportModel {
     velocityHistory = null,
     forecastData = null,
     now,
+    chartHistories = null,
+    hasChartFile = () => true,
   } = params;
   const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config;
 
@@ -127,6 +127,12 @@ export function buildReportModel(params: ReportParams): ReportModel {
 
   const topRepos = toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount });
   const chartHistory = hasChartHistory ? history : null;
+  const perRepoCharts: PerRepoChart[] =
+    chartHistory !== null && chartHistories !== null
+      ? topRepos
+          .filter((repo) => hasChartFile(repo.fullName))
+          .map((repo) => ({ ...repo, history: chartHistories.forRepo(repo.fullName) }))
+      : [];
 
   return {
     summary: results.summary,
@@ -138,6 +144,7 @@ export function buildReportModel(params: ReportParams): ReportModel {
     newRepos,
     removedRepos,
     topRepos,
+    perRepoCharts,
     chartHistory,
     showComparisonChart: chartHistory !== null && topRepos.length > 0,
     stargazers: toStargazerSection(params),

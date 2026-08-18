@@ -2,6 +2,7 @@ import type { Config } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
 import type { StargazerDiffResult } from '@domain/stargazers';
+import type { History } from '@domain/types';
 import {
   makeComparisonResults,
   makeConfig,
@@ -26,6 +27,9 @@ function renderMarkdown({ config, ...overrides }: RenderMarkdown = {}): string {
       config: resolved,
       results: makeComparisonResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
+      chartHistories: overrides.history
+        ? { aggregate: overrides.history, forRepo: () => overrides.history as History }
+        : null,
       ...overrides,
     }),
   });

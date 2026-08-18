@@ -127,6 +127,41 @@ describe('renderRun', () => {
     expect(rendered.markdown).toContain(perRepoCharts[0]);
   });
 
+  it('draws the per-repo email chart from that repo, not from the aggregate', () => {
+    const config = makeConfig({ includeCharts: true, topRepos: 2 });
+    const params = {
+      config,
+      results: makeComparisonResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      storedHistory: STORED,
+      forecastData: null,
+      now: new Date('2026-03-04T12:00:00Z'),
+    };
+    const shared = renderRun({ ...params, chartHistories: chartHistories() });
+    const perRepo = renderRun({
+      ...params,
+      chartHistories: { aggregate: RECONSTRUCTED, forRepo: () => STORED },
+    });
+
+    expect(perRepo.html).not.toBe(shared.html);
+  });
+
+  it('never links a per-repo Chart the run did not draw', () => {
+    const rendered = renderRun({
+      config: makeConfig({ includeCharts: true, topRepos: 2 }),
+      results: makeComparisonResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      chartHistories: { aggregate: RECONSTRUCTED, forRepo: () => ({ snapshots: [] }) },
+      storedHistory: STORED,
+      forecastData: null,
+    });
+    const drawn = rendered.charts.map((chart) => chart.filename);
+
+    expect(drawn).not.toContain('user-repo-a.svg');
+    expect(rendered.markdown).toContain('star-history.svg');
+    expect(rendered.markdown).not.toContain('user-repo-a.svg');
+  });
+
   it('agrees between the two Reports on whether the comparison Chart appears', () => {
     const withTopRepos = render();
     const withoutTopRepos = renderRun({

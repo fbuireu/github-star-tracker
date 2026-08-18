@@ -119,26 +119,23 @@ export function generateHtmlReport({ model, config }: RenderReportParams): strin
         })
       : null;
 
-  const individualRepoChartsHtml =
-    history !== null
-      ? topRepos
-          .map((repo) => {
-            const repoChartUrl = chartUrl({
-              kind: ChartKind.PER_REPO,
-              history,
-              repoFullName: repo.fullName,
-              lineColor,
-            });
-            if (!repoChartUrl) return '';
-            return `
+  const individualRepoChartsHtml = model.perRepoCharts
+    .map((repo) => {
+      const repoChartUrl = chartUrl({
+        kind: ChartKind.PER_REPO,
+        history: repo.history,
+        repoFullName: repo.fullName,
+        lineColor,
+      });
+      if (!repoChartUrl) return '';
+      return `
         <div style="margin-top:16px;">
           <h4 style="font-size:14px;margin-bottom:8px;">${repoChartHeading({ repo, palette, t })}</h4>
           <img src="${repoChartUrl}" alt="${escapeHtml(repo.fullName)}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
-          })
-          .filter(Boolean)
-          .join('')
-      : '';
+    })
+    .filter(Boolean)
+    .join('');
 
   const chartSection =
     history !== null

@@ -7,7 +7,7 @@ import type { ComparisonResults, History, RepoResult } from '@domain/types';
 import { getTranslations, interpolate, type Locale, type Translations } from '@i18n';
 import { DARK_PALETTE, LIGHT_PALETTE } from './constants';
 import type { ReportModel } from './report-model';
-import type { ColorPalette } from './types';
+import type { ChartHistories, ColorPalette } from './types';
 
 export interface ReportParams {
   config: Config;
@@ -18,6 +18,8 @@ export interface ReportParams {
   stargazerDiff?: StargazerDiffResult | null;
   forecastData?: ForecastData | null;
   now?: Date;
+  chartHistories?: ChartHistories | null;
+  hasChartFile?: (repoFullName: string) => boolean;
 }
 
 export interface RenderReportParams {

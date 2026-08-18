@@ -102,9 +102,18 @@ assembling the params for each.
   `model.generatedAt` (the ISO stamp both footers show). The two dialects used to call `new Date()` in their
   own footers, which left the *same* midnight hazard the bullet above describes open one layer down — the
   header agreed and the footers did not. Never read the clock in a renderer; take it off the model.
-- **`topRepoNames` is not a parameter.** `renderRun` derives it from `model.topRepos`, so the per-repo SVGs
-  `charts.ts` writes and the `./charts/<file>` links `markdown.ts` emits are the same set by construction.
-  Passing it in left a caller able to chart one set and link another — broken images, silently.
+- **`topRepoNames` is not a parameter, and the linked set is the *drawn* set.** `renderRun` takes the names
+  from `topRepositories` — the same domain rule `toTopRepos` uses for `model.topRepos` — draws the charts
+  first, then builds the model with a `hasChartFile` predicate closed over the filenames it actually got
+  back. `model.perRepoCharts` is therefore the repositories that have a chart, and both dialects iterate it.
+  Ranking alone was not enough: `renderSvgChart` also returns `null` for a top repository whose own
+  Reconstructed History is too short, so `markdown.ts` used to link an image no run had written.
+- **`model.perRepoCharts` carries the History each chart was drawn from.** `charts.ts` drew the per-repo SVG
+  from `chartHistories.forRepo(name)` while `html.ts` drew the same chart from the aggregate. Those are not
+  the same series — `buildStarHistory` anchors its earliest edge to the earliest Star among the repositories
+  it is handed, so the aggregate gives a young repository a long flat lead-in the SVG does not have. The
+  model now hands each dialect the per-repo History, so the email chart and the data-branch SVG plot the
+  same thing.
 - **It takes `chartHistories` and `storedHistory`, not two `History` values.** `ReportParams` still carries
   `history` and `velocityHistory` as adjacent, same-typed and **not** interchangeable fields — swapping them
   turns Velocity into an average over a chart bucket — but `renderRun` is now the only thing that fills them,
