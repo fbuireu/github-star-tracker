@@ -38,7 +38,6 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
     chartHistory,
     forecast: forecastData,
   } = model;
-  const hasChartHistory = chartHistory !== null;
 
   const header = [
     `# ${t.report.title}`,
@@ -54,41 +53,43 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
   const topRepos = model.topRepos;
   const hasComparisonChart = model.showComparisonChart;
 
-  const individualRepoCharts = hasChartHistory
-    ? topRepos.flatMap((repo) => [
-        `#### ${repoChartHeading({ repo, t })}`,
-        '',
-        `![${escapeMarkdown(repo.fullName)}](./charts/${perRepoChartFile(repo.fullName)})`,
-        '',
-      ])
-    : [];
+  const individualRepoCharts =
+    chartHistory !== null
+      ? topRepos.flatMap((repo) => [
+          `#### ${repoChartHeading({ repo, t })}`,
+          '',
+          `![${escapeMarkdown(repo.fullName)}](./charts/${perRepoChartFile(repo.fullName)})`,
+          '',
+        ])
+      : [];
 
-  const chartSection = hasChartHistory
-    ? [
-        `## ${SECTION_ICON.starTrend} ${t.report.starTrend}`,
-        '',
-        `![Star History](./charts/${CHART_FILES.starHistory})`,
-        '',
-        ...(hasComparisonChart
-          ? [
-              `### ${t.report.byRepository}`,
-              '',
-              `![${t.report.topRepositories}](./charts/${CHART_FILES.comparison})`,
-              '',
-            ]
-          : []),
-        ...(individualRepoCharts.length > 0
-          ? [
-              '<details>',
-              `<summary>${t.report.individualRepoCharts}</summary>`,
-              '',
-              ...individualRepoCharts,
-              '</details>',
-              '',
-            ]
-          : []),
-      ]
-    : [];
+  const chartSection =
+    chartHistory !== null
+      ? [
+          `## ${SECTION_ICON.starTrend} ${t.report.starTrend}`,
+          '',
+          `![Star History](./charts/${CHART_FILES.starHistory})`,
+          '',
+          ...(hasComparisonChart
+            ? [
+                `### ${t.report.byRepository}`,
+                '',
+                `![${t.report.topRepositories}](./charts/${CHART_FILES.comparison})`,
+                '',
+              ]
+            : []),
+          ...(individualRepoCharts.length > 0
+            ? [
+                '<details>',
+                `<summary>${t.report.individualRepoCharts}</summary>`,
+                '',
+                ...individualRepoCharts,
+                '</details>',
+                '',
+              ]
+            : []),
+        ]
+      : [];
 
   const repoTable =
     sorted.length > 0
@@ -218,7 +219,7 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
           forecasts: forecastData.aggregate.forecasts,
           t,
         }),
-        ...(hasChartHistory
+        ...(chartHistory !== null
           ? ['', `![${t.forecast.sectionTitle}](./charts/${CHART_FILES.forecast})`, '']
           : []),
         ...(forecastData.repos.length > 0

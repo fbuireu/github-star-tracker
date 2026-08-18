@@ -47,6 +47,15 @@ export function recordNotification({ history, totalStars }: RecordNotificationPa
   return { ...history, starsAtLastNotification: totalStars };
 }
 
+interface NotificationDueParams {
+  changed: boolean;
+  thresholdReached: boolean;
+}
+
+export function notificationIsDue({ changed, thresholdReached }: NotificationDueParams): boolean {
+  return changed && thresholdReached;
+}
+
 export interface NotificationOutcome {
   shouldNotify: boolean;
   notificationSent: boolean;
@@ -68,7 +77,7 @@ export function settleNotification({
   history,
   totalStars,
 }: SettleNotificationParams): NotificationOutcome {
-  const shouldNotify = changed && thresholdReached;
+  const shouldNotify = notificationIsDue({ changed, thresholdReached });
   const baselineAdvances = shouldNotify && delivery !== Delivery.FAILED;
 
   return {

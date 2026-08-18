@@ -1,4 +1,13 @@
-import { makeComparisonResults, makeConfig, makeMultiRepoHistory } from '@shared/tests';
+import type { ForecastData } from '@domain/forecast';
+import { ForecastMethod } from '@domain/forecast';
+import type { StargazerDiffResult } from '@domain/stargazers';
+import { getTranslations } from '@i18n';
+import {
+  makeComparisonResults,
+  makeConfig,
+  makeMultiRepoHistory,
+  makeRepoResult,
+} from '@shared/tests';
 import { describe, expect, it } from 'vitest';
 import type { ChartHistories } from './charts';
 import { renderRun } from './run';
@@ -105,5 +114,93 @@ describe('renderRun', () => {
 
   it('produces no charts when they are turned off', () => {
     expect(render(makeConfig({ includeCharts: false })).charts).toEqual([]);
+  });
+});
+
+describe('the two Report dialects stay in step', () => {
+  const t = getTranslations('en');
+  const stargazerDiff: StargazerDiffResult = {
+    totalNew: 1,
+    entries: [
+      {
+        repoFullName: 'user/repo-a',
+        newStargazers: [
+          { login: 'ada', avatarUrl: '', profileUrl: '', starredAt: '2026-01-02T00:00:00Z' },
+        ],
+      },
+    ],
+  };
+  const forecastData: ForecastData = {
+    aggregate: {
+      forecasts: [
+        { method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 1, predicted: 70 }] },
+        {
+          method: ForecastMethod.WEIGHTED_MOVING_AVERAGE,
+          points: [{ weekOffset: 1, predicted: 68 }],
+        },
+      ],
+    },
+    repos: [],
+  };
+  const withRemoved = makeComparisonResults({
+    repos: [
+      makeRepoResult('kept', { current: 60, delta: 10 }),
+      makeRepoResult('fresh', { current: 7, previous: null, isNew: true }),
+      makeRepoResult('gone', { current: 0, previous: 3, delta: -3, isRemoved: true }),
+    ],
+  });
+
+  const SECTIONS = [
+    { name: 'new repositories', heading: t.report.newRepositories, results: withRemoved },
+    { name: 'removed repositories', heading: t.report.removedRepositories, results: withRemoved },
+    { name: 'star trend', heading: t.report.starTrend },
+    { name: 'comparison chart', heading: t.report.byRepository },
+    { name: 'per-repo charts', heading: t.report.individualRepoCharts },
+    { name: 'stargazers', heading: t.stargazers.sectionTitle, stargazerDiff },
+    { name: 'forecast', heading: t.forecast.sectionTitle, forecastData },
+    {
+      name: 'velocity',
+      heading: t.velocity.sectionTitle,
+      config: makeConfig({ includeCharts: true, topRepos: 2, velocityMetrics: true }),
+    },
+  ];
+
+  it.each(SECTIONS)(
+    'renders the $name section in both the markdown and the HTML report',
+    ({ heading, results, stargazerDiff: diff, forecastData: forecast, config }) => {
+      const rendered = renderRun({
+        config: config ?? makeConfig({ includeCharts: true, topRepos: 2 }),
+        results: results ?? makeComparisonResults(),
+        previousTimestamp: '2026-01-01T00:00:00Z',
+        chartHistories: chartHistories(),
+        storedHistory: STORED,
+        stargazerDiff: diff,
+        forecastData: forecast ?? null,
+      });
+
+      expect(rendered.markdown).toContain(heading);
+      expect(rendered.html).toContain(heading);
+    },
+  );
+
+  it('omits every optional section from both when the model says it is absent', () => {
+    const rendered = renderRun({
+      config: makeConfig({ includeCharts: false }),
+      results: makeComparisonResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      chartHistories: chartHistories({ snapshots: [] }),
+      storedHistory: { snapshots: [] },
+      forecastData: null,
+    });
+
+    for (const heading of [
+      t.report.starTrend,
+      t.stargazers.sectionTitle,
+      t.forecast.sectionTitle,
+      t.velocity.sectionTitle,
+    ]) {
+      expect(rendered.markdown).not.toContain(heading);
+      expect(rendered.html).not.toContain(heading);
+    }
   });
 });

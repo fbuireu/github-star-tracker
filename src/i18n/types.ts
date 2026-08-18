@@ -13,6 +13,7 @@ export interface Translations {
     change: string;
     comparedTo: string;
     firstRun: string;
+    noRepositories: string;
     repositories: string;
     stars: string;
     starsCount: string;

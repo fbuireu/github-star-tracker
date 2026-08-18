@@ -8,6 +8,7 @@
     "change": "Cambio",
     "comparedTo": "Comparado con instantánea del {date}",
     "firstRun": "primera ejecución",
+    "noRepositories": "Ningún repositorio coincide con los filtros configurados",
     "repositories": "Repositorios",
     "stars": "Estrellas",
     "starsCount": "{count} estrellas",

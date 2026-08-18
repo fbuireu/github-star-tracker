@@ -98,8 +98,13 @@ assembling the params for each.
 - The individual renderers stay exported and stay tested — they are internal seams within this layer, the
   same way `@domain`'s five are behind `measureRun`. `generateMarkdownReport` and `generateHtmlReport` take
   `{ model, config }`: the model is the data, the config is which options that dialect honours.
+- **`renderRun` also renders the Notification subject** (`emailSubject` on `RenderedRun`) and
+  `renderEmptyRun(config)` renders the whole no-repositories run. Both were English literals built in the
+  shell; the subject is the one user-facing string `@application` used to compose itself.
 - `run.test.ts` is where the front door's own contract lives — one date across both Reports, Velocity read
-  from the stored History, and the charted set matching the linked set.
+  from the stored History, the charted set matching the linked set, and **dialect parity**: a table-driven
+  case asserts every section the model can switch on appears in *both* Reports. That invariant used to be
+  prose here, and one commit had to close four gaps in the HTML report at once.
 
 The report modules are one per format: `markdown.ts`, `html.ts`, `csv.ts`, `badge.ts`, over a shared
 `report-model.ts`; with `escaping.ts` for every dialect's escaper, `shared.ts` for the report params, the

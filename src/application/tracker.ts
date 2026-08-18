@@ -5,7 +5,7 @@ import { topRepositories } from '@domain/comparison';
 import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
 import { measureRun } from '@domain/measurement';
-import { Delivery, settleNotification } from '@domain/notification';
+import { Delivery, notificationIsDue, settleNotification } from '@domain/notification';
 import {
   buildStargazerMap,
   diffStargazers,
@@ -13,7 +13,6 @@ import {
   type StargazerMap,
 } from '@domain/stargazers';
 import type { Summary } from '@domain/types';
-import { getTranslations, interpolate } from '@i18n';
 import { getRepos } from '@infrastructure/github/filters';
 import { fetchAllStargazers } from '@infrastructure/github/stargazers';
 import { getEmailConfig, sendEmail } from '@infrastructure/notification/email';
@@ -21,7 +20,8 @@ import { withDataBranch } from '@infrastructure/persistence/data-branch';
 import { writeHtmlReport } from '@infrastructure/persistence/storage';
 import { retry } from '@octokit/plugin-retry';
 import { resolveChartHistories } from '@presentation/charts';
-import { renderRun } from '@presentation/run';
+import type { RenderedRun } from '@presentation/run';
+import { renderEmptyRun, renderRun } from '@presentation/run';
 
 export async function trackStars(): Promise<void> {
   try {
@@ -29,7 +29,6 @@ export async function trackStars(): Promise<void> {
     const token = core.getInput('github-token', { required: true });
     const apiUrl = core.getInput('github-api-url') || process.env.GITHUB_API_URL || '';
     const octokit = github.getOctokit(token, apiUrl ? { baseUrl: apiUrl } : undefined, retry);
-    const t = getTranslations(config.locale);
 
     core.info('Fetching repositories...');
 
@@ -38,7 +37,7 @@ export async function trackStars(): Promise<void> {
     if (repos.length === 0) {
       core.warning('No repositories matched the configured filters');
 
-      setEmptyOutputs();
+      setOutputs({ summary: EMPTY_SUMMARY, rendered: renderEmptyRun(config), newStargazers: 0 });
       return;
     }
 
@@ -116,23 +115,21 @@ export async function trackStars(): Promise<void> {
           stargazerDiff,
           forecastData,
         });
-        const notify = summary.changed && measurement.thresholdReached;
+        const notify = notificationIsDue({
+          changed: summary.changed,
+          thresholdReached: measurement.thresholdReached,
+        });
 
         const emailConfig = getEmailConfig(config.locale);
         let delivery: Delivery = Delivery.NOT_ATTEMPTED;
 
         if (emailConfig && (notify || config.sendOnNoChanges)) {
-          const subject = interpolate({
-            template: t.email.subjectLine,
-            params: {
-              subject: t.email.subject,
-              totalStars: summary.totalStars,
-              delta: deltaIndicator(summary.totalDelta),
-            },
-          });
-
           try {
-            const sent = await sendEmail({ emailConfig, subject, htmlBody: rendered.html });
+            const sent = await sendEmail({
+              emailConfig,
+              subject: rendered.emailSubject,
+              htmlBody: rendered.html,
+            });
 
             delivery = sent ? Delivery.SENT : Delivery.FAILED;
           } catch (error) {
@@ -167,9 +164,7 @@ export async function trackStars(): Promise<void> {
 
         setOutputs({
           summary,
-          markdownReport: rendered.markdown,
-          htmlReport: rendered.html,
-          csvReport: rendered.csv,
+          rendered,
           shouldNotify: notification.shouldNotify,
           notificationSent: notification.notificationSent,
           newStargazers: stargazerDiff?.totalNew ?? 0,
@@ -184,48 +179,34 @@ export async function trackStars(): Promise<void> {
   }
 }
 
-function setEmptyOutputs(): void {
-  setOutputs({
-    summary: {
-      totalStars: 0,
-      totalPrevious: 0,
-      totalDelta: 0,
-      newStars: 0,
-      lostStars: 0,
-      changed: false,
-    },
-    markdownReport: 'No repositories matched the configured filters.',
-    htmlReport: '<p>No repositories matched the configured filters.</p>',
-    csvReport: '',
-    shouldNotify: false,
-    notificationSent: false,
-    newStargazers: 0,
-  });
-}
+const EMPTY_SUMMARY: Summary = {
+  totalStars: 0,
+  totalPrevious: 0,
+  totalDelta: 0,
+  newStars: 0,
+  lostStars: 0,
+  changed: false,
+};
 
 interface SetOutputsParams {
   summary: Summary;
-  markdownReport: string;
-  htmlReport: string;
-  csvReport: string;
-  shouldNotify: boolean;
-  notificationSent: boolean;
+  rendered: RenderedRun;
+  shouldNotify?: boolean;
+  notificationSent?: boolean;
   newStargazers: number;
 }
 
 function setOutputs({
   summary,
-  markdownReport,
-  htmlReport,
-  csvReport,
-  shouldNotify,
-  notificationSent,
+  rendered,
+  shouldNotify = false,
+  notificationSent = false,
   newStargazers,
 }: SetOutputsParams): void {
-  core.setOutput('report', markdownReport);
-  core.setOutput('report-html', htmlReport);
-  core.setOutput('report-html-path', writeHtmlReport({ htmlReport }));
-  core.setOutput('report-csv', csvReport);
+  core.setOutput('report', rendered.markdown);
+  core.setOutput('report-html', rendered.html);
+  core.setOutput('report-html-path', writeHtmlReport({ htmlReport: rendered.html }));
+  core.setOutput('report-csv', rendered.csv);
   core.setOutput('total-stars', String(summary.totalStars));
   core.setOutput('stars-changed', String(summary.changed));
   core.setOutput('new-stars', String(summary.newStars));

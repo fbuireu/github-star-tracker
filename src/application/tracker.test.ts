@@ -8,6 +8,7 @@ import { deltaIndicator } from '@domain/formatting';
 import { measureRun } from '@domain/measurement';
 import { buildStargazerMap, diffStargazers } from '@domain/stargazers';
 import { CompareAgainst, NotificationMode } from '@domain/types';
+import { getTranslations } from '@i18n';
 import { getRepos } from '@infrastructure/github/filters';
 import { fetchAllStargazers } from '@infrastructure/github/stargazers';
 import { getEmailConfig, sendEmail } from '@infrastructure/notification/email';
@@ -282,18 +283,30 @@ describe('trackStars', () => {
       expect(core.setOutput).toHaveBeenCalledWith('new-stargazers', '0');
     });
     it('sets default outputs for empty repos', async () => {
+      const t = getTranslations('en');
+
       vi.mocked(getRepos).mockResolvedValue([]);
       await trackStars();
-      expect(core.setOutput).toHaveBeenCalledWith(
-        'report',
-        'No repositories matched the configured filters.',
-      );
+
+      expect(core.setOutput).toHaveBeenCalledWith('report', t.report.noRepositories);
       expect(core.setOutput).toHaveBeenCalledWith(
         'report-html',
-        '<p>No repositories matched the configured filters.</p>',
+        `<p>${t.report.noRepositories}</p>`,
       );
       expect(core.setOutput).toHaveBeenCalledWith('should-notify', 'false');
       expect(core.setOutput).toHaveBeenCalledWith('new-stargazers', '0');
+      expect(core.setOutput).toHaveBeenCalledWith('total-stars', '0');
+    });
+
+    it('emits a CSV header on the empty path, like every other run', async () => {
+      vi.mocked(getRepos).mockResolvedValue([]);
+      await trackStars();
+
+      const csv = vi
+        .mocked(core.setOutput)
+        .mock.calls.find(([key]) => key === 'report-csv')?.[1] as string;
+
+      expect(csv).toContain('repository');
     });
   });
   describe('stargazer tracking', () => {

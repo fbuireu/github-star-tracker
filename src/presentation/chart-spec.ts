@@ -68,7 +68,7 @@ interface MovingAverageSeriesParams {
   window: number;
 }
 
-export function movingAverageSeries({ values, window }: MovingAverageSeriesParams): number[] {
+function movingAverageSeries({ values, window }: MovingAverageSeriesParams): number[] {
   return values.map((_, index) => {
     const slice = values.slice(Math.max(0, index - window + 1), index + 1);
     const sum = slice.reduce((total, value) => total + value, 0);
@@ -88,7 +88,7 @@ interface BuildForecastChartSeriesParams {
   forecastData: ForecastData;
 }
 
-export function buildForecastChartSeries({
+function buildForecastChartSeries({
   historicalData,
   forecastData,
 }: BuildForecastChartSeriesParams): ForecastChartSeries {
@@ -360,7 +360,7 @@ function forecastSpec({
     axisLabels: AxisLabels.DATES,
   });
   const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
-  const forecastLabels = forecastData.aggregate.forecasts[0].points.map((point) =>
+  const forecastLabels = (forecastData.aggregate.forecasts[0]?.points ?? []).map((point) =>
     interpolate({ template: t.forecast.week, params: { n: point.weekOffset } }),
   );
   const series = buildForecastChartSeries({ historicalData, forecastData });

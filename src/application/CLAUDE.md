@@ -31,6 +31,9 @@ is not repeated here. What follows is what that table cannot express.
   alone so the accumulated change is not lost, while an unconfigured transport advances it because the
   `should-notify` output *is* the notification
   ([ADR 0011](../../docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md)).
+- **The due-notification predicate has one owner.** `notificationIsDue({ changed, thresholdReached })` in
+  `@domain/notification` gates the send here and is what `settleNotification` computes internally, so the
+  rule cannot be changed in one place and left stale in the other.
 - **This layer reports what the transport did; it does not decide what that means.** It sets one
   `Delivery` — `NOT_ATTEMPTED`, `SENT` or `FAILED` — and hands it to `settleNotification` in
   `@domain/notification`, which returns `shouldNotify`, `notificationSent` and `historyToPersist` together.
@@ -77,8 +80,11 @@ as-is; the rest are wrapped in `String()`.
 | `notification-sent` | `notification.notificationSent` — an email actually left the runner |
 | `new-stargazers` | `stargazerDiff?.totalNew ?? 0` |
 
-`setEmptyOutputs()` emits the same eleven keys zeroed, with a "No repositories matched the configured
-filters" message as the markdown and HTML bodies and `''` as the CSV.
+**There is one `setOutputs`, not two.** The empty-repos path calls it with `renderEmptyRun(config)` and a
+zeroed `Summary`, so the eleven keys cannot drift between the two paths. That render also emits a real CSV
+header rather than `''` — a consumer parsing `report-csv` used to get a header on one path and an empty
+string on the other — and its message comes from `report.noRepositories` in the locale bundle like every
+other user-facing string.
 
 `new-stargazers` is `0` whenever `track-stargazers` is off, even though stargazers may still have been
 fetched for chart reconstruction: the diff and the write are gated on `trackStargazers` alone, while the

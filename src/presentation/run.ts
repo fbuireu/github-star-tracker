@@ -1,7 +1,9 @@
 import type { Config } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
+import { deltaIndicator } from '@domain/formatting';
 import type { StargazerDiffResult } from '@domain/stargazers';
-import type { ComparisonResults, History } from '@domain/types';
+import type { ComparisonResults, History, Summary } from '@domain/types';
+import { getTranslations, interpolate, type Locale } from '@i18n';
 import { generateBadge } from './badge';
 import type { ChartFile, ChartHistories } from './charts';
 import { buildChartFiles } from './charts';
@@ -17,6 +19,48 @@ export interface RenderedRun {
   csv: string;
   badge: string;
   charts: ChartFile[];
+  emailSubject: string;
+}
+
+interface EmailSubjectParams {
+  locale: Locale;
+  summary: Summary;
+}
+
+function emailSubject({ locale, summary }: EmailSubjectParams): string {
+  const t = getTranslations(locale);
+
+  return interpolate({
+    template: t.email.subjectLine,
+    params: {
+      subject: t.email.subject,
+      totalStars: summary.totalStars,
+      delta: deltaIndicator(summary.totalDelta),
+    },
+  });
+}
+
+const EMPTY_SUMMARY: Summary = {
+  totalStars: 0,
+  totalPrevious: 0,
+  totalDelta: 0,
+  newStars: 0,
+  lostStars: 0,
+  changed: false,
+};
+
+export function renderEmptyRun(config: Config): RenderedRun {
+  const t = getTranslations(config.locale);
+  const results: ComparisonResults = { repos: [], summary: EMPTY_SUMMARY };
+
+  return {
+    markdown: t.report.noRepositories,
+    html: `<p>${t.report.noRepositories}</p>`,
+    csv: generateCsvReport(results),
+    badge: generateBadge({ totalStars: 0, locale: config.locale }),
+    charts: [],
+    emailSubject: emailSubject({ locale: config.locale, summary: EMPTY_SUMMARY }),
+  };
 }
 
 interface RenderRunParams {
@@ -56,6 +100,7 @@ export function renderRun({
     html: generateHtmlReport(rendering),
     csv: generateCsvReport(results),
     badge: generateBadge({ totalStars: results.summary.totalStars, locale: config.locale }),
+    emailSubject: emailSubject({ locale: config.locale, summary: results.summary }),
     charts: buildChartFiles({
       config,
       chartHistories,

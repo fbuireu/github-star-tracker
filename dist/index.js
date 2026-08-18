@@ -37500,6 +37500,7 @@ var ca_default = {
     change: "Canvi",
     comparedTo: "Comparat amb instant\xE0nia del {date}",
     firstRun: "primera execuci\xF3",
+    noRepositories: "Cap repositori coincideix amb els filtres configurats",
     repositories: "Repositoris",
     stars: "Estrelles",
     starsCount: "{count} estrelles",
@@ -37575,6 +37576,7 @@ var en_default = {
     change: "Change",
     comparedTo: "Compared to snapshot from {date}",
     firstRun: "first run",
+    noRepositories: "No repositories matched the configured filters",
     repositories: "Repositories",
     stars: "Stars",
     starsCount: "{count} stars",
@@ -37650,6 +37652,7 @@ var es_default = {
     change: "Cambio",
     comparedTo: "Comparado con instant\xE1nea del {date}",
     firstRun: "primera ejecuci\xF3n",
+    noRepositories: "Ning\xFAn repositorio coincide con los filtros configurados",
     repositories: "Repositorios",
     stars: "Estrellas",
     starsCount: "{count} estrellas",
@@ -37725,6 +37728,7 @@ var it_default = {
     change: "Variazione",
     comparedTo: "Confrontato con snapshot del {date}",
     firstRun: "prima esecuzione",
+    noRepositories: "Nessun repository corrisponde ai filtri configurati",
     repositories: "Repository",
     stars: "Stelle",
     starsCount: "{count} stelle",
@@ -40780,6 +40784,9 @@ var Delivery = {
 function recordNotification({ history, totalStars }) {
   return { ...history, starsAtLastNotification: totalStars };
 }
+function notificationIsDue({ changed, thresholdReached }) {
+  return changed && thresholdReached;
+}
 function settleNotification({
   changed,
   thresholdReached,
@@ -40787,7 +40794,7 @@ function settleNotification({
   history,
   totalStars
 }) {
-  const shouldNotify2 = changed && thresholdReached;
+  const shouldNotify2 = notificationIsDue({ changed, thresholdReached });
   const baselineAdvances = shouldNotify2 && delivery !== Delivery.FAILED;
   return {
     shouldNotify: shouldNotify2,
@@ -42009,7 +42016,7 @@ function forecastSpec({
     axisLabels: AxisLabels.DATES
   });
   const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
-  const forecastLabels = forecastData.aggregate.forecasts[0].points.map(
+  const forecastLabels = (forecastData.aggregate.forecasts[0]?.points ?? []).map(
     (point) => interpolate({ template: t.forecast.week, params: { n: point.weekOffset } })
   );
   const series = buildForecastChartSeries({ historicalData, forecastData });
@@ -43376,7 +43383,6 @@ function generateMarkdownReport({ model, config }) {
     chartHistory,
     forecast: forecastData
   } = model;
-  const hasChartHistory = chartHistory !== null;
   const header = [
     `# ${t.report.title}`,
     "",
@@ -43386,13 +43392,13 @@ function generateMarkdownReport({ model, config }) {
   const comparison = model.isFirstRun ? [] : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ""];
   const topRepos = model.topRepos;
   const hasComparisonChart = model.showComparisonChart;
-  const individualRepoCharts = hasChartHistory ? topRepos.flatMap((repo) => [
+  const individualRepoCharts = chartHistory !== null ? topRepos.flatMap((repo) => [
     `#### ${repoChartHeading2({ repo, t })}`,
     "",
     `![${escapeMarkdown(repo.fullName)}](./charts/${perRepoChartFile(repo.fullName)})`,
     ""
   ]) : [];
-  const chartSection = hasChartHistory ? [
+  const chartSection = chartHistory !== null ? [
     `## ${SECTION_ICON.starTrend} ${t.report.starTrend}`,
     "",
     `![Star History](./charts/${CHART_FILES.starHistory})`,
@@ -43502,7 +43508,7 @@ function generateMarkdownReport({ model, config }) {
       forecasts: forecastData.aggregate.forecasts,
       t
     }),
-    ...hasChartHistory ? ["", `![${t.forecast.sectionTitle}](./charts/${CHART_FILES.forecast})`, ""] : [],
+    ...chartHistory !== null ? ["", `![${t.forecast.sectionTitle}](./charts/${CHART_FILES.forecast})`, ""] : [],
     ...forecastData.repos.length > 0 ? [
       `### ${t.forecast.byRepository}`,
       "",
@@ -43557,6 +43563,37 @@ function renderForecastTable({ title, forecasts, t }) {
 }
 
 // src/presentation/run.ts
+function emailSubject({ locale, summary: summary2 }) {
+  const t = getTranslations(locale);
+  return interpolate({
+    template: t.email.subjectLine,
+    params: {
+      subject: t.email.subject,
+      totalStars: summary2.totalStars,
+      delta: deltaIndicator(summary2.totalDelta)
+    }
+  });
+}
+var EMPTY_SUMMARY = {
+  totalStars: 0,
+  totalPrevious: 0,
+  totalDelta: 0,
+  newStars: 0,
+  lostStars: 0,
+  changed: false
+};
+function renderEmptyRun(config) {
+  const t = getTranslations(config.locale);
+  const results = { repos: [], summary: EMPTY_SUMMARY };
+  return {
+    markdown: t.report.noRepositories,
+    html: `<p>${t.report.noRepositories}</p>`,
+    csv: generateCsvReport(results),
+    badge: generateBadge({ totalStars: 0, locale: config.locale }),
+    charts: [],
+    emailSubject: emailSubject({ locale: config.locale, summary: EMPTY_SUMMARY })
+  };
+}
 function renderRun({
   config,
   results,
@@ -43582,6 +43619,7 @@ function renderRun({
     html: generateHtmlReport(rendering),
     csv: generateCsvReport(results),
     badge: generateBadge({ totalStars: results.summary.totalStars, locale: config.locale }),
+    emailSubject: emailSubject({ locale: config.locale, summary: results.summary }),
     charts: buildChartFiles({
       config,
       chartHistories,
@@ -43598,12 +43636,11 @@ async function trackStars() {
     const token = getInput("github-token", { required: true });
     const apiUrl = getInput("github-api-url") || process.env.GITHUB_API_URL || "";
     const octokit = getOctokit(token, apiUrl ? { baseUrl: apiUrl } : void 0, retry);
-    const t = getTranslations(config.locale);
     info("Fetching repositories...");
     const repos = await getRepos({ octokit, config });
     if (repos.length === 0) {
       warning("No repositories matched the configured filters");
-      setEmptyOutputs();
+      setOutputs({ summary: EMPTY_SUMMARY2, rendered: renderEmptyRun(config), newStargazers: 0 });
       return;
     }
     await withDataBranch({
@@ -43668,20 +43705,19 @@ async function trackStars() {
           stargazerDiff,
           forecastData
         });
-        const notify = summary2.changed && measurement.thresholdReached;
+        const notify = notificationIsDue({
+          changed: summary2.changed,
+          thresholdReached: measurement.thresholdReached
+        });
         const emailConfig = getEmailConfig(config.locale);
         let delivery = Delivery.NOT_ATTEMPTED;
         if (emailConfig && (notify || config.sendOnNoChanges)) {
-          const subject = interpolate({
-            template: t.email.subjectLine,
-            params: {
-              subject: t.email.subject,
-              totalStars: summary2.totalStars,
-              delta: deltaIndicator(summary2.totalDelta)
-            }
-          });
           try {
-            const sent = await sendEmail({ emailConfig, subject, htmlBody: rendered.html });
+            const sent = await sendEmail({
+              emailConfig,
+              subject: rendered.emailSubject,
+              htmlBody: rendered.html
+            });
             delivery = sent ? Delivery.SENT : Delivery.FAILED;
           } catch (error2) {
             warning(`Failed to send email: ${error2.message}`);
@@ -43710,9 +43746,7 @@ async function trackStars() {
         });
         setOutputs({
           summary: summary2,
-          markdownReport: rendered.markdown,
-          htmlReport: rendered.html,
-          csvReport: rendered.csv,
+          rendered,
           shouldNotify: notification.shouldNotify,
           notificationSent: notification.notificationSent,
           newStargazers: stargazerDiff?.totalNew ?? 0
@@ -43725,37 +43759,25 @@ async function trackStars() {
     if (err.stack) debug(err.stack);
   }
 }
-function setEmptyOutputs() {
-  setOutputs({
-    summary: {
-      totalStars: 0,
-      totalPrevious: 0,
-      totalDelta: 0,
-      newStars: 0,
-      lostStars: 0,
-      changed: false
-    },
-    markdownReport: "No repositories matched the configured filters.",
-    htmlReport: "<p>No repositories matched the configured filters.</p>",
-    csvReport: "",
-    shouldNotify: false,
-    notificationSent: false,
-    newStargazers: 0
-  });
-}
+var EMPTY_SUMMARY2 = {
+  totalStars: 0,
+  totalPrevious: 0,
+  totalDelta: 0,
+  newStars: 0,
+  lostStars: 0,
+  changed: false
+};
 function setOutputs({
   summary: summary2,
-  markdownReport,
-  htmlReport,
-  csvReport,
-  shouldNotify: shouldNotify2,
-  notificationSent,
+  rendered,
+  shouldNotify: shouldNotify2 = false,
+  notificationSent = false,
   newStargazers
 }) {
-  setOutput("report", markdownReport);
-  setOutput("report-html", htmlReport);
-  setOutput("report-html-path", writeHtmlReport({ htmlReport }));
-  setOutput("report-csv", csvReport);
+  setOutput("report", rendered.markdown);
+  setOutput("report-html", rendered.html);
+  setOutput("report-html-path", writeHtmlReport({ htmlReport: rendered.html }));
+  setOutput("report-csv", rendered.csv);
   setOutput("total-stars", String(summary2.totalStars));
   setOutput("stars-changed", String(summary2.changed));
   setOutput("new-stars", String(summary2.newStars));

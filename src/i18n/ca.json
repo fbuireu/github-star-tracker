@@ -8,6 +8,7 @@
     "change": "Canvi",
     "comparedTo": "Comparat amb instantània del {date}",
     "firstRun": "primera execució",
+    "noRepositories": "Cap repositori coincideix amb els filtres configurats",
     "repositories": "Repositoris",
     "stars": "Estrelles",
     "starsCount": "{count} estrelles",

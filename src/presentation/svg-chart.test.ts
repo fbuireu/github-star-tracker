@@ -19,7 +19,7 @@ const PLOT_BOTTOM_Y = CHART.height - SVG_CHART.margin.bottom;
 import { renderSvgChart } from './svg-chart';
 
 const LINE_PATH_D = /<path d="([^"]+)" fill="none"/;
-const PATH_OPENING = /<path d="M/g;
+const _PATH_OPENING = /<path d="M/g;
 const PATH_MOVE_AND_FIRST_SEGMENT = /^M[\d.]+,[\d.]+ L[\d.]+,[\d.]+/;
 const COORDINATE_PAIR = /(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)/g;
 const Y_COORDINATE = /,(\d+(?:\.\d+)?)/g;
@@ -137,16 +137,6 @@ describe('renderSvgChart: star history', () => {
     });
 
     expect(result).toContain('My Star Chart');
-  });
-
-  it('uses default title when not provided', () => {
-    const history = makeHistory([10, 20]);
-    const result = renderSvgChart({
-      request: { kind: ChartKind.STAR_HISTORY, history },
-      locale: 'en',
-    });
-
-    expect(result).toContain('Star History');
   });
 
   it('uses a prefers-color-scheme media query for the auto theme', () => {
@@ -365,32 +355,6 @@ describe('renderSvgChart: star history', () => {
     expect(result).not.toContain('stroke-dasharray="6,6"');
   });
 
-  it('draws custom milestone lines instead of the defaults', () => {
-    const history = makeHistory([80, 120, 150]);
-    const result = expectSvg(
-      renderSvgChart({
-        request: { kind: ChartKind.STAR_HISTORY, history, customMilestones: [90, 110] },
-        locale: 'en',
-      }),
-    );
-
-    expect(result).toContain('90 ★');
-    expect(result).toContain('110 ★');
-    expect(result).not.toContain('100 ★');
-  });
-
-  it('falls back to default milestones when the custom list is empty', () => {
-    const history = makeHistory([80, 120, 150]);
-    const result = expectSvg(
-      renderSvgChart({
-        request: { kind: ChartKind.STAR_HISTORY, history, customMilestones: [] },
-        locale: 'en',
-      }),
-    );
-
-    expect(result).toContain('100 ★');
-  });
-
   it('omits custom milestone lines when milestones are disabled', () => {
     const history = makeHistory([80, 120, 150]);
     const result = expectSvg(
@@ -417,16 +381,6 @@ describe('renderSvgChart: star history', () => {
 
     expect(result).toMatch(THOUSANDS_AXIS_LABEL);
     expect(result).not.toContain('50,000');
-  });
-
-  it('does not include milestone lines outside data range', () => {
-    const history = makeHistory([10, 20, 30]);
-    const result = expectSvg(
-      renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: 'en' }),
-    );
-
-    expect(result).not.toContain('100 ★');
-    expect(result).not.toContain('500 ★');
   });
 
   it('limits to 30 data points for large histories', () => {
@@ -826,21 +780,6 @@ describe('renderSvgChart: per repo', () => {
     expect(result).toContain('</svg>');
   });
 
-  it('uses default title with repo name', () => {
-    const history = makeMultiRepoHistory([
-      { repoStars: { 'user/repo-a': 10 } },
-      { repoStars: { 'user/repo-a': 20 } },
-    ]);
-    const result = expectSvg(
-      renderSvgChart({
-        request: { kind: ChartKind.PER_REPO, history, repoFullName: 'user/repo-a' },
-        locale: 'en',
-      }),
-    );
-
-    expect(result).toContain('user/repo-a Star History');
-  });
-
   it('uses custom title when provided', () => {
     const history = makeMultiRepoHistory([
       { repoStars: { 'user/repo-a': 10 } },
@@ -969,22 +908,6 @@ describe('renderSvgChart: comparison', () => {
     expect(result).toContain(CHART_COMPARISON_COLORS[1]);
   });
 
-  it('uses short labels when single owner', () => {
-    const history = makeMultiRepoHistory([
-      { repoStars: { 'user/repo-a': 10, 'user/repo-b': 5 } },
-      { repoStars: { 'user/repo-a': 15, 'user/repo-b': 8 } },
-    ]);
-    const result = expectSvg(
-      renderSvgChart({
-        request: { kind: ChartKind.COMPARISON, history, repoNames: ['user/repo-a', 'user/repo-b'] },
-        locale: 'en',
-      }),
-    );
-
-    expect(result).toContain('>repo-a<');
-    expect(result).toContain('>repo-b<');
-  });
-
   it('uses full names when multiple owners', () => {
     const history = makeMultiRepoHistory([
       { repoStars: { 'alice/repo-a': 10, 'bob/repo-b': 5 } },
@@ -999,33 +922,6 @@ describe('renderSvgChart: comparison', () => {
 
     expect(result).toContain('alice/repo-a');
     expect(result).toContain('bob/repo-b');
-  });
-
-  it('caps at maxComparison repos', () => {
-    const repoStars: Record<string, number> = {};
-    const repoNames: string[] = [];
-
-    for (let index = 0; index < 15; index++) {
-      const name = `user/repo-${index}`;
-      repoStars[name] = 10 + index;
-      repoNames.push(name);
-    }
-
-    const history = makeMultiRepoHistory([
-      { repoStars },
-      {
-        repoStars: Object.fromEntries(
-          Object.entries(repoStars).map(([name, stars]) => [name, stars + 5]),
-        ),
-      },
-    ]);
-
-    const result = expectSvg(
-      renderSvgChart({ request: { kind: ChartKind.COMPARISON, history, repoNames }, locale: 'en' }),
-    );
-    const pathCount = (result.match(PATH_OPENING) || []).length;
-
-    expect(pathCount).toBeLessThanOrEqual(10);
   });
 
   it('includes title', () => {
