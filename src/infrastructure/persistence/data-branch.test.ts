@@ -75,6 +75,7 @@ describe('withDataBranch', () => {
     expect(initializeDataBranch).toHaveBeenCalledWith({
       dataBranch: 'star-data',
       readOnly: false,
+      token: 'tok',
     });
     expect(readHistory).toHaveBeenCalledWith(DATA_DIR);
     expect(readStargazers).toHaveBeenCalledWith(DATA_DIR);

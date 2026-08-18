@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as core from '@actions/core';
-import { execute } from './commands';
+import { authenticatedArgs, execute } from './commands';
 
 function ensureGitRepository(): void {
   try {
@@ -16,11 +16,13 @@ function ensureGitRepository(): void {
 interface InitializeDataBranchParams {
   dataBranch: string;
   readOnly?: boolean;
+  token?: string;
 }
 
 export function initializeDataBranch({
   dataBranch,
   readOnly = false,
+  token,
 }: InitializeDataBranchParams): string {
   const dataDir = `.${dataBranch}`;
 
@@ -29,12 +31,13 @@ export function initializeDataBranch({
   execute({ args: ['config', 'user.name', 'github-actions[bot]'] });
   execute({ args: ['config', 'user.email', 'github-actions[bot]@users.noreply.github.com'] });
 
-  let branchExists = false;
+  const remoteArgs = (args: string[]): string[] =>
+    token === undefined ? args : authenticatedArgs({ token, args });
 
-  try {
-    execute({ args: ['ls-remote', '--exit-code', '--heads', 'origin', dataBranch] });
-    branchExists = true;
-  } catch {
+  const branchExists =
+    execute({ args: remoteArgs(['ls-remote', '--heads', 'origin', dataBranch]) }).length > 0;
+
+  if (!branchExists) {
     core.info(`Branch "${dataBranch}" does not exist on remote, will create it`);
   }
 
@@ -74,7 +77,7 @@ export function initializeDataBranch({
     return dataDir;
   }
 
-  execute({ args: ['fetch', 'origin', dataBranch] });
+  execute({ args: remoteArgs(['fetch', 'origin', dataBranch]) });
   execute({ args: ['worktree', 'add', dataDir, `origin/${dataBranch}`] });
 
   return dataDir;

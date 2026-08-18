@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import * as core from '@actions/core';
 import type { StargazerMap } from '@domain/stargazers';
 import type { History } from '@domain/types';
-import { execute } from '../git/commands';
+import { authenticatedArgs, execute } from '../git/commands';
 
 const DATA_FORMAT_VERSION = 1;
 
@@ -201,18 +201,9 @@ export function commitAndPush({
 
   execute({ args: ['commit', '-m', message], options: { cwd } });
 
-  const basicCredential = Buffer.from(`x-access-token:${token}`).toString('base64');
-  core.setSecret(basicCredential);
-
   try {
     execute({
-      args: [
-        '-c',
-        `http.extraheader=AUTHORIZATION: basic ${basicCredential}`,
-        'push',
-        'origin',
-        `HEAD:${dataBranch}`,
-      ],
+      args: authenticatedArgs({ token, args: ['push', 'origin', `HEAD:${dataBranch}`] }),
       options: { cwd },
     });
   } catch (error) {

@@ -41280,6 +41280,11 @@ function execute({ args, options = {} }) {
 ${detail}`);
   }
 }
+function authenticatedArgs({ token, args }) {
+  const credential = Buffer.from(`x-access-token:${token}`).toString("base64");
+  setSecret(credential);
+  return ["-c", `http.extraheader=AUTHORIZATION: basic ${credential}`, ...args];
+}
 
 // src/infrastructure/git/worktree.ts
 function ensureGitRepository() {
@@ -41293,17 +41298,16 @@ function ensureGitRepository() {
 }
 function initializeDataBranch({
   dataBranch,
-  readOnly = false
+  readOnly = false,
+  token
 }) {
   const dataDir = `.${dataBranch}`;
   ensureGitRepository();
   execute({ args: ["config", "user.name", "github-actions[bot]"] });
   execute({ args: ["config", "user.email", "github-actions[bot]@users.noreply.github.com"] });
-  let branchExists = false;
-  try {
-    execute({ args: ["ls-remote", "--exit-code", "--heads", "origin", dataBranch] });
-    branchExists = true;
-  } catch {
+  const remoteArgs = (args) => token === void 0 ? args : authenticatedArgs({ token, args });
+  const branchExists = execute({ args: remoteArgs(["ls-remote", "--heads", "origin", dataBranch]) }).length > 0;
+  if (!branchExists) {
     info(`Branch "${dataBranch}" does not exist on remote, will create it`);
   }
   if (fs4.existsSync(dataDir)) {
@@ -41334,7 +41338,7 @@ function initializeDataBranch({
     });
     return dataDir;
   }
-  execute({ args: ["fetch", "origin", dataBranch] });
+  execute({ args: remoteArgs(["fetch", "origin", dataBranch]) });
   execute({ args: ["worktree", "add", dataDir, `origin/${dataBranch}`] });
   return dataDir;
 }
@@ -41458,17 +41462,9 @@ function commitAndPush({
     debug("Staged changes detected, proceeding with commit");
   }
   execute({ args: ["commit", "-m", message], options: { cwd } });
-  const basicCredential = Buffer.from(`x-access-token:${token}`).toString("base64");
-  setSecret(basicCredential);
   try {
     execute({
-      args: [
-        "-c",
-        `http.extraheader=AUTHORIZATION: basic ${basicCredential}`,
-        "push",
-        "origin",
-        `HEAD:${dataBranch}`
-      ],
+      args: authenticatedArgs({ token, args: ["push", "origin", `HEAD:${dataBranch}`] }),
       options: { cwd }
     });
   } catch (error2) {
@@ -41488,7 +41484,7 @@ async function withDataBranch({
   token,
   run
 }) {
-  const dataDir = initializeDataBranch({ dataBranch, readOnly });
+  const dataDir = initializeDataBranch({ dataBranch, readOnly, token });
   try {
     return await run({
       readHistory: () => readHistory(dataDir),

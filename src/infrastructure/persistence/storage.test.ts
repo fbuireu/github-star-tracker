@@ -19,7 +19,10 @@ import {
 } from './storage';
 
 vi.mock('node:fs');
-vi.mock('../git/commands', () => ({ execute: vi.fn() }));
+vi.mock('../git/commands', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../git/commands')>()),
+  execute: vi.fn(),
+}));
 vi.mock('@actions/core', () => ({
   info: vi.fn(),
   debug: vi.fn(),

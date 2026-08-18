@@ -102,6 +102,18 @@ lines.
 - **The order of operations in `initializeDataBranch` is load-bearing**: repo guard, commit identity, remote
   probe, stale-worktree removal, read-only guard, then create-orphan or fetch+add. Identity and cleanup
   therefore run even on a read-only run and even on a run about to throw.
+- **Branch absence is empty output, never a thrown probe.** `ls-remote --heads` exits 0 with no output when
+  nothing matches; `--exit-code` is what turns that into a failure, so it is deliberately *not* passed. The
+  probe used to carry it and sit in a bare `catch`, which read every network, DNS or auth failure as "the
+  branch is not there" — the run then built an orphan, pushed it over the real branch, was rejected, and told
+  the user another run had raced it and to add a `concurrency` group. That remediation could never work. A
+  failing probe now propagates git's own text.
+- **Every remote command carries the token.** `ls-remote` and `fetch` used to run unauthenticated while only
+  the push was authenticated, relying on whatever `actions/checkout` had persisted. On a private repository
+  with `persist-credentials: false` — what OpenSSF, zizmor and this repo's own workflows recommend — the
+  probe failed on *every* run, which is the systematic version of the trap above. `authenticatedArgs`
+  (`git/commands.ts`) builds the header and calls `core.setSecret` in one place; that masking is not
+  optional, because `execute` puts the whole argv into its error message.
 - **Branch missing + read-only → throw**, before any worktree exists. A read-only run may never bring the
   data branch into existence. Branch missing + writable → an *orphan* branch, so data history shares no
   ancestry with code history; it is local-only until the first push.
@@ -206,7 +218,8 @@ Everything else here is behind it.
 ## Gotchas
 
 - **`worktree.test.ts` and the `commitAndPush` tests mock `../git/commands`, not `node:child_process`.**
-  `execute` is the seam, so a test scripts failures by *which git command ran* (`args[0] === 'ls-remote'`)
+  `execute` is the seam, so a test scripts failures by *which git command ran* (`args.includes('ls-remote')` — match on membership, not
+  `args[0]`, since an authenticated command begins with `-c`)
   and asserts on argv through a local `ranGit(...)` helper. They used to drive `execFileSync` with positional
   `mockReturnValueOnce` chains up to seven deep, where adding or reordering one git call shifted every later
   mock and broke tests that looked unrelated. Do not mock a level deeper than the seam again.

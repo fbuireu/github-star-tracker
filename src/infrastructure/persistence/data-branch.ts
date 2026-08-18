@@ -48,7 +48,7 @@ export async function withDataBranch<T>({
   token,
   run,
 }: WithDataBranchParams<T>): Promise<T> {
-  const dataDir = initializeDataBranch({ dataBranch, readOnly });
+  const dataDir = initializeDataBranch({ dataBranch, readOnly, token });
 
   try {
     return await run({
