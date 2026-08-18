@@ -95,7 +95,7 @@ The rate at which the Tracked Set is accumulating Stars, expressed per day and a
 _Avoid_: speed, rate, momentum, pace, growth rate
 
 **Rate Interval**:
-The stretch of time between two Snapshots that a rate is measured over. A pair closer together than the minimum is skipped rather than measured, so a re-run minutes after a scheduled Run cannot inflate Velocity or a Forecast.
+The stretch of time between two Snapshots that a rate is measured over. A pair closer together than the minimum is skipped rather than measured.
 _Avoid_: sample window, gap, spacing, delta time
 
 **Milestone**:
@@ -129,7 +129,7 @@ Enumerating only a spread of a heavily starred Repository's Stargazers rather th
 _Avoid_: partial fetch, sampling mode, throttling, approximation mode
 
 **Sampled Repository**:
-A Repository observed through Smart Sampling. Its Reconstructed History remains usable, but it is deliberately excluded from New Stargazer detection because its Stargazer list is known to be incomplete.
+A Repository observed through Smart Sampling. Its Reconstructed History remains usable, but it is excluded from New Stargazer detection.
 _Avoid_: partial repo, approximated repo, throttled repo
 
 **Covered Stars**:
@@ -161,7 +161,7 @@ An email announcing a Run's Report, sent when the accumulated change clears the 
 _Avoid_: alert, email, digest, message, ping
 
 **Notification Threshold**:
-How much accumulated change must build up before a Notification fires, either as a fixed number or left adaptive so it scales with the size of the Tracked Set. The change accrues across Runs and only resets when a Notification fires, so it is never a per-Run figure.
+How much accumulated change must build up before a Notification fires, either as a fixed number or left adaptive so it scales with the size of the Tracked Set. It is cumulative across Runs, never a per-Run figure.
 _Avoid_: sensitivity, trigger level, minimum delta, cutoff
 
 **Notification Mode**:

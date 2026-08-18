@@ -827,7 +827,7 @@ How [`notification-threshold`](#notification-threshold) measures the accumulated
 | `net` | The absolute value of the change in total stars since the last notification. Gains and losses across repos cancel out, and a large **drop** also reaches the threshold |
 | `gains` | Only upward movement counts. The threshold is reached when the total has risen by at least N since the last notification; a drop never triggers a notification |
 
-Both modes measure against `starsAtLastNotification`, which only resets when the threshold trips — and not even then if a configured email failed to send, which leaves the counter alone so the change is not lost. With no SMTP configured at all the `should-notify` output *is* the notification, so the counter still resets. The result is that it accumulates across runs instead of resetting on every run. `notification-threshold: '0'` still means "notify on every run that has changes", regardless of mode.
+Both modes measure against `starsAtLastNotification`, which [`notification-threshold`](#notification-threshold) explains in full. `notification-threshold: '0'` still means "notify on every run that has changes", regardless of mode.
 
 ```yaml
 with:

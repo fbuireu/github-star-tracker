@@ -209,5 +209,6 @@ One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/
 
 None outstanding.
 
+
 When one is found, record it here with the evidence that proves it, and delete the entry in the commit that
 fixes it — an entry that has quietly become false is worse than no list at all.
