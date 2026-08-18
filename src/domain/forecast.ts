@@ -74,12 +74,14 @@ export function computeForecast({
     return null;
   }
 
-  const toSeries = (values: number[], days: number[]): SeriesPoint[] =>
+  const toSeries = ({ values, days }: { values: number[]; days: number[] }): SeriesPoint[] =>
     values.map((value, index) => ({ day: days[index], value }));
 
   const aggregateDays = calendarDays(history);
   const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
-  const aggregateForecasts = forecastFromSeries(toSeries(totalValues, aggregateDays));
+  const aggregateForecasts = forecastFromSeries(
+    toSeries({ values: totalValues, days: aggregateDays }),
+  );
   const repos: RepoForecast[] = topRepoNames.map((repoFullName) => {
     const candidate = historyForRepo?.(repoFullName);
     const source =
@@ -87,7 +89,7 @@ export function computeForecast({
     const days = source === history ? aggregateDays : calendarDays(source);
     const values = repoStarSeries({ snapshots: source.snapshots, repoFullName });
 
-    return { repoFullName, forecasts: forecastFromSeries(toSeries(values, days)) };
+    return { repoFullName, forecasts: forecastFromSeries(toSeries({ values, days })) };
   });
 
   return { aggregate: { forecasts: aggregateForecasts }, repos };

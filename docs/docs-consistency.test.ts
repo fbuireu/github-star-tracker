@@ -752,3 +752,20 @@ describe('the documented data-branch format matches the writer', () => {
     expect(stale).toEqual([]);
   });
 });
+
+describe('the source follows the named-parameter convention', () => {
+  it('declares no function or arrow taking two or more positional parameters', () => {
+    const sources = walk('src', (filename) => filename.endsWith('.ts')).filter(
+      (file) => !file.endsWith('.test.ts') && !toPosix(file).startsWith('src/shared/tests/'),
+    );
+    const declaration =
+      /(?:function\s+\w+|=)\s*\(\s*\w+\s*:\s*[^,()]+,\s*\w+\s*:/g;
+    const offenders = sources.flatMap((file) =>
+      [...read(file).matchAll(declaration)].map(
+        (match) => `${toPosix(file)} -> ${match[0].replace(/\s+/g, ' ').trim()}`,
+      ),
+    );
+
+    expect(offenders).toEqual([]);
+  });
+});

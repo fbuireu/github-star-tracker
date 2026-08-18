@@ -61,7 +61,12 @@ interface ClampParams {
   clampMaxY: number;
 }
 
-function catmullRomPath(points: Point[], { clampMinY, clampMaxY }: ClampParams): string {
+interface CatmullRomPathParams {
+  points: Point[];
+  clamp: ClampParams;
+}
+
+function catmullRomPath({ points, clamp: { clampMinY, clampMaxY } }: CatmullRomPathParams): string {
   const tension = CHART_TENSION.smooth;
   let path = `M${points[0].x},${points[0].y}`;
 
@@ -157,7 +162,12 @@ function cubicBezierPath(points: Point[]): string {
   return path;
 }
 
-function roundedStepPath(points: Point[], radius: number): string {
+interface RoundedStepPathParams {
+  points: Point[];
+  radius: number;
+}
+
+function roundedStepPath({ points, radius }: RoundedStepPathParams): string {
   if (points.length < MIN_POINTS_FOR_ROUNDED_CORNERS) return straightPath(points);
 
   let path = `M${points[0].x},${points[0].y}`;
@@ -189,10 +199,10 @@ function roundedStepPath(points: Point[], radius: number): string {
 }
 
 const CURVE_PATHS: Record<ChartCurve, (points: Point[], clamp: ClampParams) => string> = {
-  [ChartCurve.CATMULL_ROM]: (points, clamp) => catmullRomPath(points, clamp),
+  [ChartCurve.CATMULL_ROM]: (points, clamp) => catmullRomPath({ points, clamp }),
   [ChartCurve.MONOTONE]: (points) => monotonePath(points),
   [ChartCurve.CUBIC_BEZIER]: (points) => cubicBezierPath(points),
-  [ChartCurve.ROUNDED_STEP]: (points) => roundedStepPath(points, ROUNDED_STEP_RADIUS),
+  [ChartCurve.ROUNDED_STEP]: (points) => roundedStepPath({ points, radius: ROUNDED_STEP_RADIUS }),
 };
 
 interface GenerateCurvePathParams {

@@ -41,7 +41,13 @@ export function resolveChartHistories({
   repoStargazers,
   now = new Date(),
 }: ResolveChartHistoriesParams): ChartHistories {
-  const reconstruct = (subset: SnapshotRepo[], stargazers: RepoStargazers[]): History =>
+  const reconstruct = ({
+    subset,
+    stargazers,
+  }: {
+    subset: SnapshotRepo[];
+    stargazers: RepoStargazers[];
+  }): History =>
     config.includeCharts
       ? buildStarHistory({
           repoStargazers: stargazers,
@@ -53,7 +59,7 @@ export function resolveChartHistories({
 
   return {
     aggregate: resolveChartHistory({
-      candidate: reconstruct(repos, repoStargazers),
+      candidate: reconstruct({ subset: repos, stargazers: repoStargazers }),
       fallback: storedHistory,
     }),
     forRepo: (repoFullName) => {
@@ -61,10 +67,10 @@ export function resolveChartHistories({
 
       return resolveChartHistory({
         candidate: repo
-          ? reconstruct(
-              [repo],
-              repoStargazers.filter((entry) => entry.repoFullName === repoFullName),
-            )
+          ? reconstruct({
+              subset: [repo],
+              stargazers: repoStargazers.filter((entry) => entry.repoFullName === repoFullName),
+            })
           : { snapshots: [] },
         fallback: storedHistory,
       });

@@ -187,11 +187,8 @@ describe('buildStargazerMap', () => {
   });
 
   it('keeps a repository that left the Tracked Set, so its return is not a fabricated spike', () => {
-    const repoStargazers = [
-      {
-        repoFullName: 'user/still-tracked',
-        stargazers: [{ login: 'octocat', starredAt: '2026-01-01' }],
-      },
+    const repoStargazers: RepoStargazers[] = [
+      { repoFullName: 'user/still-tracked', stargazers: [makeStar('octocat')] },
     ];
     const previousMap = {
       'user/still-tracked': ['octocat'],

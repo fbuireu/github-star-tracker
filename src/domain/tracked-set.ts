@@ -48,19 +48,23 @@ interface ResolveTrackedSetParams {
 
 export function resolveTrackedSet({ repos, filters }: ResolveTrackedSetParams): TrackedSet {
   const invalidPatterns: string[] = [];
-  const matches = (name: string, patterns: string[]): boolean =>
+  const matches = ({ name, patterns }: { name: string; patterns: string[] }): boolean =>
     matchesPattern({ name, patterns, invalidPatterns });
 
   let candidates = repos;
   let afterOnlyOrgs: number | null = null;
 
   if (filters.onlyOrgs.length > 0) {
-    candidates = candidates.filter((repo) => matches(repo.owner, filters.onlyOrgs));
+    candidates = candidates.filter((repo) =>
+      matches({ name: repo.owner, patterns: filters.onlyOrgs }),
+    );
     afterOnlyOrgs = candidates.length;
   }
 
   if (filters.onlyRepos.length > 0) {
-    const onlyRepos = candidates.filter((repo) => matches(repo.name, filters.onlyRepos));
+    const onlyRepos = candidates.filter((repo) =>
+      matches({ name: repo.name, patterns: filters.onlyRepos }),
+    );
 
     return {
       repos: onlyRepos,
@@ -76,11 +80,15 @@ export function resolveTrackedSet({ repos, filters }: ResolveTrackedSetParams): 
   if (!filters.includeForks) filtered = filtered.filter((repo) => !repo.fork);
 
   if (filters.excludeRepos.length > 0) {
-    filtered = filtered.filter((repo) => !matches(repo.name, filters.excludeRepos));
+    filtered = filtered.filter(
+      (repo) => !matches({ name: repo.name, patterns: filters.excludeRepos }),
+    );
   }
 
   if (filters.excludeOrgs.length > 0) {
-    filtered = filtered.filter((repo) => !matches(repo.owner, filters.excludeOrgs));
+    filtered = filtered.filter(
+      (repo) => !matches({ name: repo.owner, patterns: filters.excludeOrgs }),
+    );
   }
 
   if (filters.minStars > 0) {

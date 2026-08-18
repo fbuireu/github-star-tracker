@@ -40699,16 +40699,16 @@ function computeForecast({
   if (history.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) {
     return null;
   }
-  const toSeries = (values, days) => values.map((value, index) => ({ day: days[index], value }));
+  const toSeries = ({ values, days }) => values.map((value, index) => ({ day: days[index], value }));
   const aggregateDays = calendarDays(history);
   const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
-  const aggregateForecasts = forecastFromSeries(toSeries(totalValues, aggregateDays));
+  const aggregateForecasts = forecastFromSeries(toSeries({ values: totalValues, days: aggregateDays }));
   const repos = topRepoNames.map((repoFullName) => {
     const candidate = historyForRepo?.(repoFullName);
     const source = candidate && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST ? candidate : history;
     const days = source === history ? aggregateDays : calendarDays(source);
     const values = repoStarSeries({ snapshots: source.snapshots, repoFullName });
-    return { repoFullName, forecasts: forecastFromSeries(toSeries(values, days)) };
+    return { repoFullName, forecasts: forecastFromSeries(toSeries({ values, days })) };
   });
   return { aggregate: { forecasts: aggregateForecasts }, repos };
 }
@@ -40900,15 +40900,19 @@ function matchesPattern({ name, patterns, invalidPatterns }) {
 }
 function resolveTrackedSet({ repos, filters }) {
   const invalidPatterns = [];
-  const matches = (name, patterns) => matchesPattern({ name, patterns, invalidPatterns });
+  const matches = ({ name, patterns }) => matchesPattern({ name, patterns, invalidPatterns });
   let candidates = repos;
   let afterOnlyOrgs = null;
   if (filters.onlyOrgs.length > 0) {
-    candidates = candidates.filter((repo) => matches(repo.owner, filters.onlyOrgs));
+    candidates = candidates.filter(
+      (repo) => matches({ name: repo.owner, patterns: filters.onlyOrgs })
+    );
     afterOnlyOrgs = candidates.length;
   }
   if (filters.onlyRepos.length > 0) {
-    const onlyRepos = candidates.filter((repo) => matches(repo.name, filters.onlyRepos));
+    const onlyRepos = candidates.filter(
+      (repo) => matches({ name: repo.name, patterns: filters.onlyRepos })
+    );
     return {
       repos: onlyRepos,
       afterOnlyOrgs,
@@ -40920,10 +40924,14 @@ function resolveTrackedSet({ repos, filters }) {
   if (!filters.includeArchived) filtered = filtered.filter((repo) => !repo.archived);
   if (!filters.includeForks) filtered = filtered.filter((repo) => !repo.fork);
   if (filters.excludeRepos.length > 0) {
-    filtered = filtered.filter((repo) => !matches(repo.name, filters.excludeRepos));
+    filtered = filtered.filter(
+      (repo) => !matches({ name: repo.name, patterns: filters.excludeRepos })
+    );
   }
   if (filters.excludeOrgs.length > 0) {
-    filtered = filtered.filter((repo) => !matches(repo.owner, filters.excludeOrgs));
+    filtered = filtered.filter(
+      (repo) => !matches({ name: repo.owner, patterns: filters.excludeOrgs })
+    );
   }
   if (filters.minStars > 0) {
     filtered = filtered.filter((repo) => repo.stars >= filters.minStars);
@@ -41056,7 +41064,7 @@ async function fetchAllStargazers({
         totalStars: repo.stars,
         maxPages: config.smartSamplingPages
       }) : await fetchRepoStargazers({ octokit, owner: repo.owner, name: repo.name });
-      warnWhenHistoryIsUnreconstructable(repo, stargazers);
+      warnWhenHistoryIsUnreconstructable({ repo, stargazers });
       results.push({
         repoFullName: repo.fullName,
         stargazers,
@@ -41080,7 +41088,10 @@ async function fetchAllStargazers({
   }
   return results;
 }
-function warnWhenHistoryIsUnreconstructable(repo, stargazers) {
+function warnWhenHistoryIsUnreconstructable({
+  repo,
+  stargazers
+}) {
   if (repo.stars === 0) return;
   if (stargazers.length === 0) {
     warning(
@@ -41578,7 +41589,7 @@ retry.VERSION = VERSION7;
 var MIN_HISTORY_BUCKETS = 2;
 var MAX_HISTORY_BUCKETS = 365;
 var FULL_HISTORY_CADENCE_MS = 7 * MS_PER_DAY;
-function cumulativeCounts(sortedTimes, edges) {
+function cumulativeCounts({ sortedTimes, edges }) {
   const counts = [];
   let pointer = 0;
   for (const edge of edges) {
@@ -41589,7 +41600,7 @@ function cumulativeCounts(sortedTimes, edges) {
   }
   return counts;
 }
-function scaleToTrueTotal(fetchedCounts, trueTotal) {
+function scaleToTrueTotal({ fetchedCounts, trueTotal }) {
   const fetchedTotal = fetchedCounts.at(-1) ?? 0;
   const scale = fetchedTotal > 0 ? trueTotal / fetchedTotal : 0;
   const scaled = fetchedCounts.map(
@@ -41604,7 +41615,11 @@ function scaleToTrueTotal(fetchedCounts, trueTotal) {
   }
   return scaled;
 }
-function scaleCappedToTrueTotal(counts, trueTotal, reachable) {
+function scaleCappedToTrueTotal({
+  counts,
+  trueTotal,
+  reachable
+}) {
   const fetchedTotal = counts.at(-1) ?? 0;
   const scale = fetchedTotal > 0 ? reachable / fetchedTotal : 0;
   const scaled = counts.map((count) => Math.round(count * scale));
@@ -41658,12 +41673,12 @@ function buildStarHistory({
   const cumulativeByRepo = /* @__PURE__ */ new Map();
   for (const repo of repos) {
     const events = eventsByRepo.get(repo.fullName) ?? [];
-    const counts = cumulativeCounts(events, edges);
+    const counts = cumulativeCounts({ sortedTimes: events, edges });
     const reachable = Math.min(
       stargazersByRepo.get(repo.fullName)?.coveredStars ?? MAX_REACHABLE_STARGAZERS,
       repo.stars
     );
-    const scaled = events.length === 0 ? edges.map(() => repo.stars) : reachable < repo.stars ? scaleCappedToTrueTotal(counts, repo.stars, reachable) : scaleToTrueTotal(counts, repo.stars);
+    const scaled = events.length === 0 ? edges.map(() => repo.stars) : reachable < repo.stars ? scaleCappedToTrueTotal({ counts, trueTotal: repo.stars, reachable }) : scaleToTrueTotal({ fetchedCounts: counts, trueTotal: repo.stars });
     cumulativeByRepo.set(repo.fullName, scaled);
   }
   const snapshots = edges.map((edge, edgeIndex) => {
@@ -42261,7 +42276,7 @@ function straightPath(points) {
   }
   return path4;
 }
-function catmullRomPath(points, { clampMinY, clampMaxY }) {
+function catmullRomPath({ points, clamp: { clampMinY, clampMaxY } }) {
   const tension = CHART_TENSION.smooth;
   let path4 = `M${points[0].x},${points[0].y}`;
   for (let index = 0; index < points.length - 1; index++) {
@@ -42341,7 +42356,7 @@ function cubicBezierPath(points) {
   }
   return path4;
 }
-function roundedStepPath(points, radius) {
+function roundedStepPath({ points, radius }) {
   if (points.length < MIN_POINTS_FOR_ROUNDED_CORNERS) return straightPath(points);
   let path4 = `M${points[0].x},${points[0].y}`;
   for (let index = 1; index < points.length - 1; index++) {
@@ -42367,10 +42382,10 @@ function roundedStepPath(points, radius) {
   return path4;
 }
 var CURVE_PATHS = {
-  [ChartCurve.CATMULL_ROM]: (points, clamp) => catmullRomPath(points, clamp),
+  [ChartCurve.CATMULL_ROM]: (points, clamp) => catmullRomPath({ points, clamp }),
   [ChartCurve.MONOTONE]: (points) => monotonePath(points),
   [ChartCurve.CUBIC_BEZIER]: (points) => cubicBezierPath(points),
-  [ChartCurve.ROUNDED_STEP]: (points) => roundedStepPath(points, ROUNDED_STEP_RADIUS)
+  [ChartCurve.ROUNDED_STEP]: (points) => roundedStepPath({ points, radius: ROUNDED_STEP_RADIUS })
 };
 function generateCurvePath({
   points,
@@ -42664,7 +42679,10 @@ function resolveChartHistories({
   repoStargazers,
   now = /* @__PURE__ */ new Date()
 }) {
-  const reconstruct = (subset, stargazers) => config.includeCharts ? buildStarHistory({
+  const reconstruct = ({
+    subset,
+    stargazers
+  }) => config.includeCharts ? buildStarHistory({
     repoStargazers: stargazers,
     repos: subset,
     maxPoints: config.chartMaxPoints,
@@ -42672,16 +42690,16 @@ function resolveChartHistories({
   }) : { snapshots: [] };
   return {
     aggregate: resolveChartHistory({
-      candidate: reconstruct(repos, repoStargazers),
+      candidate: reconstruct({ subset: repos, stargazers: repoStargazers }),
       fallback: storedHistory
     }),
     forRepo: (repoFullName) => {
       const repo = repos.find((candidate) => candidate.fullName === repoFullName);
       return resolveChartHistory({
-        candidate: repo ? reconstruct(
-          [repo],
-          repoStargazers.filter((entry) => entry.repoFullName === repoFullName)
-        ) : { snapshots: [] },
+        candidate: repo ? reconstruct({
+          subset: [repo],
+          stargazers: repoStargazers.filter((entry) => entry.repoFullName === repoFullName)
+        }) : { snapshots: [] },
         fallback: storedHistory
       });
     }
@@ -43017,7 +43035,7 @@ var MIN_SNAPSHOTS_FOR_VELOCITY = 2;
 var PERCENT_MULTIPLIER = 100;
 var STARS_PER_DAY_DECIMALS = 2;
 var GROWTH_PERCENT_DECIMALS = 1;
-function roundTo(value, decimals) {
+function roundTo({ value, decimals }) {
   const factor = 10 ** decimals;
   return Math.round(value * factor) / factor;
 }
@@ -43037,8 +43055,11 @@ function computeVelocity({ history }) {
   const interval = latestRateInterval(points);
   if (interval === null) return null;
   const gained = interval.to.value - interval.from.value;
-  const starsPerDay = roundTo(gained / interval.days, STARS_PER_DAY_DECIMALS);
-  const growthPercent = interval.from.value > 0 ? roundTo(gained / interval.from.value * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS) : null;
+  const starsPerDay = roundTo({ value: gained / interval.days, decimals: STARS_PER_DAY_DECIMALS });
+  const growthPercent = interval.from.value > 0 ? roundTo({
+    value: gained / interval.from.value * PERCENT_MULTIPLIER,
+    decimals: GROWTH_PERCENT_DECIMALS
+  }) : null;
   const nextMilestone = nextMilestoneAbove(last.totalStars);
   const daysToNextMilestone = nextMilestone !== null && starsPerDay > 0 ? Math.ceil((nextMilestone - last.totalStars) / starsPerDay) : null;
   return { starsPerDay, growthPercent, nextMilestone, daysToNextMilestone };

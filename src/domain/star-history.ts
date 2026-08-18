@@ -14,7 +14,12 @@ interface BuildStarHistoryParams {
   now?: Date;
 }
 
-function cumulativeCounts(sortedTimes: number[], edges: number[]): number[] {
+interface CumulativeCountsParams {
+  sortedTimes: number[];
+  edges: number[];
+}
+
+function cumulativeCounts({ sortedTimes, edges }: CumulativeCountsParams): number[] {
   const counts: number[] = [];
   let pointer = 0;
 
@@ -28,7 +33,12 @@ function cumulativeCounts(sortedTimes: number[], edges: number[]): number[] {
   return counts;
 }
 
-function scaleToTrueTotal(fetchedCounts: number[], trueTotal: number): number[] {
+interface ScaleToTrueTotalParams {
+  fetchedCounts: number[];
+  trueTotal: number;
+}
+
+function scaleToTrueTotal({ fetchedCounts, trueTotal }: ScaleToTrueTotalParams): number[] {
   const fetchedTotal = fetchedCounts.at(-1) ?? 0;
   const scale = fetchedTotal > 0 ? trueTotal / fetchedTotal : 0;
   const scaled = fetchedCounts.map((count) =>
@@ -47,7 +57,17 @@ function scaleToTrueTotal(fetchedCounts: number[], trueTotal: number): number[] 
   return scaled;
 }
 
-function scaleCappedToTrueTotal(counts: number[], trueTotal: number, reachable: number): number[] {
+interface ScaleCappedToTrueTotalParams {
+  counts: number[];
+  trueTotal: number;
+  reachable: number;
+}
+
+function scaleCappedToTrueTotal({
+  counts,
+  trueTotal,
+  reachable,
+}: ScaleCappedToTrueTotalParams): number[] {
   const fetchedTotal = counts.at(-1) ?? 0;
   const scale = fetchedTotal > 0 ? reachable / fetchedTotal : 0;
   const scaled = counts.map((count) => Math.round(count * scale));
@@ -120,7 +140,7 @@ export function buildStarHistory({
   const cumulativeByRepo = new Map<string, number[]>();
   for (const repo of repos) {
     const events = eventsByRepo.get(repo.fullName) ?? [];
-    const counts = cumulativeCounts(events, edges);
+    const counts = cumulativeCounts({ sortedTimes: events, edges });
     const reachable = Math.min(
       stargazersByRepo.get(repo.fullName)?.coveredStars ?? MAX_REACHABLE_STARGAZERS,
       repo.stars,
@@ -129,8 +149,8 @@ export function buildStarHistory({
       events.length === 0
         ? edges.map(() => repo.stars)
         : reachable < repo.stars
-          ? scaleCappedToTrueTotal(counts, repo.stars, reachable)
-          : scaleToTrueTotal(counts, repo.stars);
+          ? scaleCappedToTrueTotal({ counts, trueTotal: repo.stars, reachable })
+          : scaleToTrueTotal({ fetchedCounts: counts, trueTotal: repo.stars });
     cumulativeByRepo.set(repo.fullName, scaled);
   }
 

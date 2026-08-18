@@ -44,7 +44,7 @@ export async function fetchAllStargazers({
           })
         : await fetchRepoStargazers({ octokit, owner: repo.owner, name: repo.name });
 
-      warnWhenHistoryIsUnreconstructable(repo, stargazers);
+      warnWhenHistoryIsUnreconstructable({ repo, stargazers });
 
       results.push({
         repoFullName: repo.fullName,
@@ -74,7 +74,15 @@ export async function fetchAllStargazers({
   return results;
 }
 
-function warnWhenHistoryIsUnreconstructable(repo: RepoInfo, stargazers: Stargazer[]): void {
+interface WarnWhenHistoryIsUnreconstructableParams {
+  repo: RepoInfo;
+  stargazers: Stargazer[];
+}
+
+function warnWhenHistoryIsUnreconstructable({
+  repo,
+  stargazers,
+}: WarnWhenHistoryIsUnreconstructableParams): void {
   if (repo.stars === 0) return;
 
   if (stargazers.length === 0) {
