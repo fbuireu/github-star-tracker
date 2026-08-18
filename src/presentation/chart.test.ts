@@ -62,7 +62,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -78,7 +78,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -103,7 +103,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
       if (url) {
         const decodedUrl = decodeURIComponent(url);
         const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
@@ -121,7 +121,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -141,7 +141,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -160,7 +160,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -193,7 +193,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -215,7 +215,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -261,7 +261,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -280,7 +280,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -300,7 +300,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -342,7 +342,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -387,7 +387,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -406,7 +406,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -436,7 +436,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -469,7 +469,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -486,7 +486,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -513,7 +513,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
@@ -538,7 +538,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
