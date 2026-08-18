@@ -101,9 +101,10 @@ Action Inputs > Config File (YAML) > Built-in Defaults
 1. File discovery: reads YAML from `config-path` input (default: `star-tracker.yml`)
 2. YAML parsing via `js-yaml`. Empty, whitespace-only, or malformed config files no longer crash the action - an empty file yields defaults, and a parse error is logged as a warning before falling back to defaults.
 3. Action input extraction via `@actions/core`
-4. Type-safe conversion using parsers (`parseBool`, `parsePositiveNumber`, `parseNonNegativeNumber`,
-   `parseList`, `parseHexColor`, `parseNotificationThreshold`) — which number parser a key uses is
-   deliberate, not interchangeable
+4. Type-safe conversion using parsers (`parseBool`, `parseList`, `parseHexColor`,
+   `parseNotificationThreshold`, and the three number parsers `parsePositiveNumber`,
+   `parseNonNegativeNumber` and `parsePositiveDecimal`) — which number parser a key uses is deliberate,
+   not interchangeable
 5. Merge: inputs override file values; missing values fall through to defaults
 6. Validation of `visibility` enum and `locale`
 
@@ -502,7 +503,7 @@ src/
 ├── config/
 │   ├── types.ts                      # Config, Visibility, ChartCurve/Theme/Range types
 │   ├── defaults.ts                   # DEFAULTS
-│   ├── parsers.ts                    # parseBool, parseFileBool, parseList, parseHexColor, parsePositiveNumber
+│   ├── parsers.ts                    # bool, list, hex-colour and the three number parsers
 │   └── loader.ts                     # loadConfig(), loadConfigFile(), resolveEnum()
 ├── domain/
 │   ├── types.ts                      # RepoInfo, Snapshot, History, Summary, CompareAgainst, NotificationMode

@@ -26,10 +26,10 @@ The working directory for the branch is derived from the name: a dot followed by
 | `stars-data.csv` | Flat per-repo export (`repository,owner,name,stars,previous,delta,status`) | Every run |
 | `stars-badge.svg` | Star count badge | Every run |
 | `stargazers.json` | Stargazer login map | Only with `track-stargazers: true` |
-| `charts/star-history.svg` | Total stars chart | Every run (charts on) |
-| `charts/comparison.svg` | Top repos comparison | Charts on, and at least one tracked repository |
-| `charts/forecast.svg` | Growth forecast | Every run (when enough history points exist) |
-| `charts/{owner}-{repo}.svg` | Per-repo charts | Charts on, one per top repository with enough history to plot |
+| `charts/star-history.svg` | Total stars chart | Charts on, once the reconstructed history has at least 2 points |
+| `charts/comparison.svg` | Top repos comparison | Same condition as `star-history.svg` |
+| `charts/forecast.svg` | Growth forecast | Same, plus the 3 snapshots a forecast needs |
+| `charts/{owner}-{repo}.svg` | Per-repo charts | Same, one per top repository, and only where that repository's own history has 2 points |
 
 Charts this run did not produce are deleted from `charts/`, so a repository that drops out of `top-repos` does not leave its file behind. Nothing outside `charts/` is ever removed, and only `.svg` files are considered.
 

@@ -81,8 +81,7 @@ Action inputs always win. Missing values fall through to the config file, then t
 
 One tracking option sits outside this: [`send-on-no-changes`](#send-on-no-changes) is **input-only**, so
 `send_on_no_changes` in `star-tracker.yml` is read by nothing. The credentials and plumbing inputs —
-`github-token`, `github-api-url`, `config-path`, every `smtp-*` input and `email-from` / `email-to` — are
-workflow-only too,
+`github-token`, `github-api-url`, `config-path`, every `smtp-*` input and `email-from` / `email-to` — are workflow-only too,
 by design: secrets do not belong in a committed file.
 
 **Example:**
@@ -827,7 +826,7 @@ How [`notification-threshold`](#notification-threshold) measures the accumulated
 | `net` | The absolute value of the change in total stars since the last notification. Gains and losses across repos cancel out, and a large **drop** also reaches the threshold |
 | `gains` | Only upward movement counts. The threshold is reached when the total has risen by at least N since the last notification; a drop never triggers a notification |
 
-Both modes measure against `starsAtLastNotification`, which [`notification-threshold`](#notification-threshold) explains in full. `notification-threshold: '0'` still means "notify on every run that has changes", regardless of mode.
+Both modes measure against `starsAtLastNotification`. [`notification-threshold`](#notification-threshold) explains the accumulation rule in full. `notification-threshold: '0'` still means "notify on every run that has changes", regardless of mode.
 
 ```yaml
 with:

@@ -253,10 +253,11 @@ flowchart TD
     charts["SVG charts"]
     commit["Git commit & push (data branch)"]
     setout["Export action outputs"]
-    email{"SMTP configured?"}
+    email{"SMTP set up, and due to send?"}
     send["Dispatch notification"]
 
     trigger --> config --> fetch --> filter
+    filter -->|no repositories matched| setout
     filter --> init --> read --> compare
     compare --> stargazers --> history --> forecast
     forecast --> md & json & csv & svg & html & charts
