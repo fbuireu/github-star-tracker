@@ -45,7 +45,7 @@ export function measureRun({
   });
   const results = compareStars({ currentRepos: trackedSet, previousSnapshot: baseline });
   const { summary } = results;
-  const snapshot = createSnapshot({ currentRepos: trackedSet, summary });
+  const snapshot = createSnapshot({ currentRepos: trackedSet, summary, now });
   const updatedHistory = addSnapshot({ history: storedHistory, snapshot, maxHistory });
 
   return {

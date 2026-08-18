@@ -195,4 +195,17 @@ describe('measureRun', () => {
         .thresholdReached,
     ).toBe(false);
   });
+
+  it('stamps the appended Snapshot with the injected clock, not the wall clock', () => {
+    const now = new Date('2026-03-04T12:00:00.000Z');
+
+    const measurement = measureRun({
+      ...BASE,
+      trackedSet: [makeRepoInfo('repo-a', 10)],
+      storedHistory: EMPTY_HISTORY,
+      now,
+    });
+
+    expect(measurement.updatedHistory.snapshots.at(-1)?.timestamp).toBe(now.toISOString());
+  });
 });

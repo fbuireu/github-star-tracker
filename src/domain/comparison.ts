@@ -109,11 +109,16 @@ export function topRepositories({ repos, limit }: TopRepositoriesParams): string
 interface CreateSnapshotParams {
   currentRepos: RepoInfo[];
   summary: Summary;
+  now?: Date;
 }
 
-export function createSnapshot({ currentRepos, summary }: CreateSnapshotParams): Snapshot {
+export function createSnapshot({
+  currentRepos,
+  summary,
+  now = new Date(),
+}: CreateSnapshotParams): Snapshot {
   return {
-    timestamp: new Date().toISOString(),
+    timestamp: now.toISOString(),
     totalStars: summary.totalStars,
     repos: currentRepos.map((repo) => ({
       fullName: repo.fullName,

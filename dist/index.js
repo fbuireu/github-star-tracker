@@ -40516,9 +40516,13 @@ function rankByStars(repos) {
 function topRepositories({ repos, limit }) {
   return rankByStars(repos).slice(0, limit).map((repo) => repo.fullName);
 }
-function createSnapshot({ currentRepos, summary: summary2 }) {
+function createSnapshot({
+  currentRepos,
+  summary: summary2,
+  now = /* @__PURE__ */ new Date()
+}) {
   return {
-    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    timestamp: now.toISOString(),
     totalStars: summary2.totalStars,
     repos: currentRepos.map((repo) => ({
       fullName: repo.fullName,
@@ -40834,7 +40838,7 @@ function measureRun({
   });
   const results = compareStars({ currentRepos: trackedSet, previousSnapshot: baseline });
   const { summary: summary2 } = results;
-  const snapshot = createSnapshot({ currentRepos: trackedSet, summary: summary2 });
+  const snapshot = createSnapshot({ currentRepos: trackedSet, summary: summary2, now });
   const updatedHistory = addSnapshot({ history: storedHistory, snapshot, maxHistory });
   return {
     baselineTimestamp: baseline === null ? null : baseline.timestamp,

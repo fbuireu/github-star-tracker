@@ -45,13 +45,16 @@ records why. It composes `getBaselineSnapshot`, `compareStars`, `createSnapshot`
   `max-history` warning from it. It is **derived from the History `addSnapshot` actually returned**, not
   recomputed from `maxHistory` — the trimming rule is written once, in `addSnapshot`, so the count cannot
   disagree with the array it describes.
-- `now` is injectable and reaches `getBaselineSnapshot` only. `createSnapshot` still reads the wall clock.
+- **`now` governs the whole measurement, not half of it.** It reaches `getBaselineSnapshot` *and*
+  `createSnapshot`, so an injected clock dates the Snapshot the Run appends as well as the Baseline it
+  resolves. It used to reach only the first, which meant injecting a `now` produced an `updatedHistory`
+  whose newest Snapshot carried the real time — an interface promising more than it delivered, and two
+  tests were already relying on the half that worked.
 
 ## Purity and time
 
-- The only wall-clock reads are `createSnapshot` (`new Date().toISOString()`) and the *defaults* of
-  `getBaselineSnapshot({ now })` and `buildStarHistory({ now })`. Never add a third — prefer an injectable
-  `now`.
+- Every wall-clock read in this layer is the *default* of an injectable `now`: `createSnapshot`,
+  `getBaselineSnapshot` and `buildStarHistory`. Never add one that is not.
 - **`toEpochMs` (`src/domain/time.ts`) is the single timestamp entry point** for the whole layer, and it
   guarantees a finite number or `null`, never `NaN`. Never reintroduce a raw `Date.parse` here.
 - Internal arithmetic is in **milliseconds**; anything user-facing converts to **days** (`MS_PER_DAY`).
