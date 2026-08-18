@@ -63,8 +63,20 @@ per-adapter on purpose: the SVG uses one dash for every dashed series, Chart.js 
 **The style options both adapters share default in `CHART_DEFAULTS`** (`constants.ts`): `smoothing`,
 `curve`, `showPoints`, `beginAtZero` and `theme`. Each adapter still writes its own
 `option = CHART_DEFAULTS.option`, because a destructured default cannot be spread — but the *values* live in
-one place, so the two cannot drift the way five duplicated literals could. `yAxisSide` and `animate` (SVG
-only) and `range` (email only) stay local, because they are genuinely not shared.
+one place, so the two cannot drift the way five duplicated literals could. `yAxisSide` and `animate` are SVG
+only — a PNG has no axis side to choose and cannot animate. `range` is **not** email-only: `charts.ts` passes
+it too, and both adapters window on it.
+
+**Six options are projected from `Config` twice** — `charts.ts` builds the SVG bag inline, `emailChartStyle`
+in `shared.ts` builds the email one, and `smoothing`, `curve`, `showPoints`, `beginAtZero`, `range` and
+`lineWidth` appear in both. That has drifted twice in the past: `chart-smoothing`, and later
+`chart-line-color`/`chart-line-width`, shipped honoured by the SVG alone and needed a later `fix:` to reach
+the email. **Do not merge the two projections into one shared type.** It would save one line per new option
+and assert a parity that is false: `chart.ts` collapses `rounded-step` onto Chart.js `monotone` and both
+`catmull-rom` and `cubic-bezier` onto a plain tension spline, and `theme` diverges deliberately
+(`chartTheme` for the SVG, `emailTheme` for the email). What guards the drift instead is `run.test.ts`,
+which renders a run twice per shared option and asserts the change reaches **both** systems — and pins the
+`rounded-step` collapse as the one deliberate exception.
 
 `SeriesDash` and `SeriesWeight` are emphasis, not pixels: each adapter maps them through its own table
 (`DASH_PATTERNS` / `POINT_SIZES` in `chart.ts`, a `dashed` boolean in `svg-chart.ts`). Keep dash arrays and

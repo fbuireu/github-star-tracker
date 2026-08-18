@@ -1,3 +1,4 @@
+import { ChartCurve, type Config } from '@config/types';
 import { EMPTY_SUMMARY } from '@domain/comparison';
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
@@ -254,5 +255,53 @@ describe('the Notification subject', () => {
 
     expect(spanish.emailSubject).toContain(getTranslations('es').email.subject);
     expect(spanish.emailSubject).not.toContain(getTranslations('en').email.subject);
+  });
+});
+
+describe('both chart systems honour the options they share', () => {
+  const SHARED_OPTIONS: { name: string; changed: Partial<Config> }[] = [
+    { name: 'chart-smoothing', changed: { chartSmoothing: false } },
+    { name: 'chart-curve', changed: { chartCurve: ChartCurve.CATMULL_ROM } },
+    { name: 'chart-show-points', changed: { chartShowPoints: false } },
+    { name: 'chart-begin-at-zero', changed: { chartBeginAtZero: true } },
+    { name: 'chart-line-width', changed: { chartLineWidth: 7 } },
+    { name: 'chart-line-color', changed: { chartLineColor: '#6b63ff' } },
+  ];
+
+  function outputs(overrides: Partial<Config>) {
+    const rendered = renderRun({
+      config: makeConfig({ includeCharts: true, topRepos: 1, ...overrides }),
+      results: makeComparisonResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      chartHistories: chartHistories(),
+      storedHistory: STORED,
+      forecastData: null,
+    });
+
+    return {
+      svg: rendered.charts.map((chart) => chart.svg).join(''),
+      email: [...rendered.html.matchAll(/quickchart\.io\/chart\?[^"]+/g)]
+        .map((match) => decodeURIComponent(match[0]))
+        .join(''),
+    };
+  }
+
+  it.each(SHARED_OPTIONS)(
+    '$name reaches the data-branch SVG and the email chart alike',
+    ({ changed }) => {
+      const base = outputs({});
+      const altered = outputs(changed);
+
+      expect(altered.svg).not.toBe(base.svg);
+      expect(altered.email).not.toBe(base.email);
+    },
+  );
+
+  it('collapses rounded-step onto monotone for email, and only for email', () => {
+    const monotone = outputs({ chartCurve: ChartCurve.MONOTONE });
+    const roundedStep = outputs({ chartCurve: ChartCurve.ROUNDED_STEP });
+
+    expect(roundedStep.svg).not.toBe(monotone.svg);
+    expect(roundedStep.email).toBe(monotone.email);
   });
 });
