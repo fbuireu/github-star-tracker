@@ -225,3 +225,16 @@ describe('resolveChartHistories', () => {
     expect(resolved.aggregate.snapshots.at(-1)?.timestamp).toBe(NOW.toISOString());
   });
 });
+
+describe('reconstructedForRepo', () => {
+  it('returns null rather than the Stored History when a repo has no reachable dates', () => {
+    const resolved = histories({ repoStargazers: [] });
+
+    expect(resolved.reconstructedForRepo('user/repo-a')).toBeNull();
+    expect(resolved.forRepo('user/repo-a')).toBe(HISTORY);
+  });
+
+  it('returns null for a repo outside the Tracked Set', () => {
+    expect(histories().reconstructedForRepo('user/not-tracked')).toBeNull();
+  });
+});

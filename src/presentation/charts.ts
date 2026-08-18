@@ -57,24 +57,26 @@ export function resolveChartHistories({
         })
       : { snapshots: [] };
 
+  const reconstructedForRepo = (repoFullName: string): History | null => {
+    const repo = repos.find((candidate) => candidate.fullName === repoFullName);
+
+    if (!repo) return null;
+
+    const candidate = reconstruct({
+      subset: [repo],
+      stargazers: repoStargazers.filter((entry) => entry.repoFullName === repoFullName),
+    });
+
+    return candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : null;
+  };
+
   return {
     aggregate: resolveChartHistory({
       candidate: reconstruct({ subset: repos, stargazers: repoStargazers }),
       fallback: storedHistory,
     }),
-    forRepo: (repoFullName) => {
-      const repo = repos.find((candidate) => candidate.fullName === repoFullName);
-
-      return resolveChartHistory({
-        candidate: repo
-          ? reconstruct({
-              subset: [repo],
-              stargazers: repoStargazers.filter((entry) => entry.repoFullName === repoFullName),
-            })
-          : { snapshots: [] },
-        fallback: storedHistory,
-      });
-    },
+    forRepo: (repoFullName) => reconstructedForRepo(repoFullName) ?? storedHistory,
+    reconstructedForRepo,
   };
 }
 

@@ -33,7 +33,7 @@ export interface ForecastData {
 interface ComputeForecastParams {
   history: History;
   topRepoNames: string[];
-  historyForRepo?: (repoFullName: string) => History;
+  historyForRepo?: (repoFullName: string) => History | null;
 }
 
 function clampPrediction(value: number): number {

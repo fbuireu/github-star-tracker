@@ -104,7 +104,7 @@ export async function trackStars(): Promise<void> {
         const forecastData = computeForecast({
           history: chartHistories.aggregate,
           topRepoNames,
-          historyForRepo: chartHistories.forRepo,
+          historyForRepo: chartHistories.reconstructedForRepo,
         });
 
         const rendered = renderRun({

@@ -19,6 +19,7 @@ export interface ColorPalette {
 export interface ChartHistories {
   aggregate: History;
   forRepo: (repoFullName: string) => History;
+  reconstructedForRepo: (repoFullName: string) => History | null;
 }
 
 export interface TopRepo {

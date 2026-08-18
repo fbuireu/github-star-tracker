@@ -34,7 +34,11 @@ function renderHtml({ config, ...overrides }: RenderHtml = {}): string {
       results: makeComparisonResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
       chartHistories: overrides.history
-        ? { aggregate: overrides.history, forRepo: () => overrides.history as History }
+        ? {
+            aggregate: overrides.history,
+            forRepo: () => overrides.history as History,
+            reconstructedForRepo: () => overrides.history as History,
+          }
         : null,
       ...overrides,
     }),

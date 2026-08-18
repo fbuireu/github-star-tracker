@@ -108,6 +108,11 @@ assembling the params for each.
   back. `model.perRepoCharts` is therefore the repositories that have a chart, and both dialects iterate it.
   Ranking alone was not enough: `renderSvgChart` also returns `null` for a top repository whose own
   Reconstructed History is too short, so `markdown.ts` used to link an image no run had written.
+- **`ChartHistories` exposes two per-repo accessors, and they are not interchangeable.** `forRepo` resolves
+  to the Stored History when a repository has no usable reconstruction — right for a Chart, which would
+  otherwise have nothing to draw. `reconstructedForRepo` returns `null` instead. A Forecast must use the
+  second: the Stored History yields `0` for Snapshots predating the repository, which a curve reads as real
+  growth, while a Chart merely plots it.
 - **`model.perRepoCharts` carries the History each chart was drawn from.** `charts.ts` drew the per-repo SVG
   from `chartHistories.forRepo(name)` while `html.ts` drew the same chart from the aggregate. Those are not
   the same series — `buildStarHistory` anchors its earliest edge to the earliest Star among the repositories

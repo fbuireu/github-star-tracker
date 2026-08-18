@@ -104,15 +104,18 @@ snapshot everything else is diffed against.
 - Projections anchor on the **last observed value**, not the fitted one:
   `predicted = last.value + rate * weekOffset * 7`. Changing this changes every chart. Every prediction is
   clamped to a non-negative integer.
-- **Each Top Repository is fitted to its own History, and the rows need not share a time base.**
-  `historyForRepo` is the optional hook `@application` fills with `chartHistories.forRepo`; a repository
-  whose own History is shorter than `MIN_SNAPSHOTS_FOR_FORECAST` falls back to the aggregate. Because
-  `resolveChartHistory` itself falls back to the Stored History, one row can be fitted over a reconstructed
-  bucket cadence while its neighbour is fitted over the per-Run one. That is deliberate: `days` always comes
-  from the same History as `values`, so every row is internally coherent, and a row that is right for its own
-  repository beats a table that is uniformly wrong. Fitting them all to the aggregate gave a young repository
-  the long flat lead-in the aggregate's earliest edge creates, and reported it as static while the Chart
-  directly above it climbed.
+- **Each Top Repository is fitted to its own *reconstruction*, or to the aggregate — never to the Stored
+  History.** `historyForRepo` is the optional hook `@application` fills with
+  `chartHistories.reconstructedForRepo`, which returns `null` rather than falling back. A repository that
+  returns `null`, or whose own History is shorter than `MIN_SNAPSHOTS_FOR_FORECAST`, is fitted to the
+  aggregate. Fitting them all to the aggregate reported a young repository as static while the Chart above it
+  climbed; that is what the hook fixes. But **`forRepo` is the wrong hook to pass here**, and passing it was a
+  live bug: it falls back to the Stored History, where `repoStarSeries` yields `0` for every Snapshot taken
+  before the repository joined the Tracked Set. A repository whose Stargazers cannot be read has no
+  reconstruction at all, so it took that fallback and was projected off a fabricated `0 → total` ramp —
+  500 Stars became a 4,700 projection. The aggregate holds such a repository **flat at `repo.stars`**
+  (`edges.map(() => repo.stars)`, the issue #148 guard), which is the honest answer, so the aggregate is what
+  it must fall back to.
 - **All rate arithmetic lives in `src/domain/growth.ts`**, and both consumers cross it: `calendarDays`
   converts a History to day offsets, `latestRateInterval` finds the newest usable pair, `weightedDailyRate`
   is the Forecast Method that weights recent movement, and `fitTrend` is the least-squares one. The

@@ -176,20 +176,28 @@ describe('computeForecast', () => {
   });
 
   it('falls back to the aggregate when a repository has too little history of its own', () => {
+    const repo = 'user/a';
+    const withRepo = (stars: number) => [{ fullName: repo, name: 'a', owner: 'user', stars }];
     const history: History = {
       snapshots: [
-        { timestamp: '2026-01-01', totalStars: 10, repos: [] },
-        { timestamp: '2026-01-08', totalStars: 20, repos: [] },
-        { timestamp: '2026-01-15', totalStars: 30, repos: [] },
+        { timestamp: '2026-01-01T00:00:00Z', totalStars: 10, repos: withRepo(10) },
+        { timestamp: '2026-01-08T00:00:00Z', totalStars: 20, repos: withRepo(20) },
+        { timestamp: '2026-01-15T00:00:00Z', totalStars: 30, repos: withRepo(30) },
       ],
     };
-    const thin: History = { snapshots: [history.snapshots[0], history.snapshots[1]] };
+    const thin: History = {
+      snapshots: [
+        { timestamp: '2026-02-01T00:00:00Z', totalStars: 900, repos: withRepo(900) },
+        { timestamp: '2026-02-02T00:00:00Z', totalStars: 990, repos: withRepo(990) },
+      ],
+    };
 
     const withFallback = expectForecast(
-      computeForecast({ history, topRepoNames: ['user/a'], historyForRepo: () => thin }),
+      computeForecast({ history, topRepoNames: [repo], historyForRepo: () => thin }),
     );
-    const withoutHook = expectForecast(computeForecast({ history, topRepoNames: ['user/a'] }));
+    const withoutHook = expectForecast(computeForecast({ history, topRepoNames: [repo] }));
 
     expect(withFallback.repos[0]).toEqual(withoutHook.repos[0]);
+    expect(withFallback.repos[0].forecasts[0].points[0].predicted).toBe(40);
   });
 });

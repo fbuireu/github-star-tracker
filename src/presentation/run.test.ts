@@ -34,7 +34,7 @@ const RECONSTRUCTED = makeMultiRepoHistory(
 );
 
 function chartHistories(aggregate = RECONSTRUCTED): ChartHistories {
-  return { aggregate, forRepo: () => aggregate };
+  return { aggregate, forRepo: () => aggregate, reconstructedForRepo: () => aggregate };
 }
 
 function render(config = makeConfig({ includeCharts: true, topRepos: 2 })) {
@@ -140,7 +140,11 @@ describe('renderRun', () => {
     const shared = renderRun({ ...params, chartHistories: chartHistories() });
     const perRepo = renderRun({
       ...params,
-      chartHistories: { aggregate: RECONSTRUCTED, forRepo: () => STORED },
+      chartHistories: {
+        aggregate: RECONSTRUCTED,
+        forRepo: () => STORED,
+        reconstructedForRepo: () => STORED,
+      },
     });
 
     expect(perRepo.html).not.toBe(shared.html);
@@ -151,7 +155,11 @@ describe('renderRun', () => {
       config: makeConfig({ includeCharts: true, topRepos: 2 }),
       results: makeComparisonResults(),
       previousTimestamp: '2026-01-01T00:00:00Z',
-      chartHistories: { aggregate: RECONSTRUCTED, forRepo: () => ({ snapshots: [] }) },
+      chartHistories: {
+        aggregate: RECONSTRUCTED,
+        forRepo: () => ({ snapshots: [] }),
+        reconstructedForRepo: () => null,
+      },
       storedHistory: STORED,
       forecastData: null,
     });

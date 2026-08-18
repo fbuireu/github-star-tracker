@@ -524,6 +524,15 @@ describe('trackStars', () => {
       mockMeasurement({ results: resultsWithRepos, updatedHistory: twoSnapshots });
       vi.mocked(computeForecast).mockReturnValue(forecastData);
     });
+    it('fits the Forecast to each reconstruction, never to the Stored History', async () => {
+      await trackStars();
+
+      const params = vi.mocked(computeForecast).mock.calls[0]?.[0];
+
+      expect(params?.historyForRepo).toBeInstanceOf(Function);
+      expect(params?.historyForRepo?.('user/repo-a')).toBeNull();
+    });
+
     it('writes per-repo, comparison and forecast charts when they are generated', async () => {
       mockCharts({
         [ChartKind.PER_REPO]: '<svg>repo</svg>',

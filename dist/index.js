@@ -42694,21 +42694,22 @@ function resolveChartHistories({
     maxPoints: config.chartMaxPoints,
     now
   }) : { snapshots: [] };
+  const reconstructedForRepo = (repoFullName) => {
+    const repo = repos.find((candidate2) => candidate2.fullName === repoFullName);
+    if (!repo) return null;
+    const candidate = reconstruct({
+      subset: [repo],
+      stargazers: repoStargazers.filter((entry) => entry.repoFullName === repoFullName)
+    });
+    return candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : null;
+  };
   return {
     aggregate: resolveChartHistory({
       candidate: reconstruct({ subset: repos, stargazers: repoStargazers }),
       fallback: storedHistory
     }),
-    forRepo: (repoFullName) => {
-      const repo = repos.find((candidate) => candidate.fullName === repoFullName);
-      return resolveChartHistory({
-        candidate: repo ? reconstruct({
-          subset: [repo],
-          stargazers: repoStargazers.filter((entry) => entry.repoFullName === repoFullName)
-        }) : { snapshots: [] },
-        fallback: storedHistory
-      });
-    }
+    forRepo: (repoFullName) => reconstructedForRepo(repoFullName) ?? storedHistory,
+    reconstructedForRepo
   };
 }
 function buildChartFiles({
@@ -43747,7 +43748,7 @@ async function trackStars() {
         const forecastData = computeForecast({
           history: chartHistories.aggregate,
           topRepoNames,
-          historyForRepo: chartHistories.forRepo
+          historyForRepo: chartHistories.reconstructedForRepo
         });
         const rendered = renderRun({
           config,
