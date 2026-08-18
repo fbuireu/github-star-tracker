@@ -48,7 +48,8 @@ top_repos: 10
 smart_sampling: false
 smart_sampling_threshold: 1500
 smart_sampling_pages: 30
-chart_line_color: "#dfb317"   # quote the # or drop it (6b63ff) - a bare # starts a YAML comment
+chart_line_color: "#dfb317"   # always quote it here - a bare # starts a YAML comment, and an
+                              # unquoted all-digit value like 123456 loads as a number and is ignored
 chart_line_width: 2.5
 chart_max_points: 30          # granularity, capped at 365; 0 = weekly resolution
 chart_y_axis_side: left
@@ -77,6 +78,9 @@ Action Inputs  >  Config File (YAML)  >  Built-in Defaults
 ```
 
 Action inputs always win. Missing values fall through to the config file, then to defaults.
+
+One key sits outside this: [`send-on-no-changes`](#send-on-no-changes) is **input-only**. It is the single
+input with no config-file counterpart, so `send_on_no_changes` in `star-tracker.yml` is read by nothing.
 
 **Example:**
 
@@ -136,9 +140,11 @@ Which stored snapshot the current star counts are compared against. Config file 
 | Value | Behavior |
 |---|---|
 | `last-run` | The most recent stored snapshot |
-| `24h`, `7d`, `30d` | The most recent snapshot that is at least that old |
+| `24h`, `7d`, `30d` | The most recent snapshot that is at least that old, minus a 6-hour tolerance |
 
 This is the baseline for the `new-stars`, `lost-stars` and `stars-changed` outputs, for the total delta, and for the "Compared to snapshot from ..." line in the report. The time windows make a genuine daily/weekly/monthly digest possible even when the tracker itself runs more frequently.
+
+The window carries **6 hours of slack**: `7d` accepts a snapshot as young as 6 days and 18 hours. That exists so a scheduled run drifting a few minutes late does not fall just short of its own window and silently compare against something older than you asked for.
 
 If the stored history is shorter than the requested window, the oldest snapshot available is used instead. The reported period is then shorter than the one you asked for, and the report's "Compared to" date shows exactly how far back it really goes. On the very first run there is no history and therefore no baseline, exactly as with `last-run`.
 
@@ -818,7 +824,7 @@ How [`notification-threshold`](#notification-threshold) measures the accumulated
 | `net` | The absolute value of the change in total stars since the last notification. Gains and losses across repos cancel out, and a large **drop** also reaches the threshold |
 | `gains` | Only upward movement counts. The threshold is reached when the total has risen by at least N since the last notification; a drop never triggers a notification |
 
-Both modes measure against `starsAtLastNotification`, which is only updated when a notification actually fires, so the counter accumulates across runs instead of resetting on every run. `notification-threshold: '0'` still means "notify on every run that has changes", regardless of mode.
+Both modes measure against `starsAtLastNotification`, which is only updated when a notification is actually **delivered**, so the counter accumulates across runs instead of resetting on every run. A send that was due but failed leaves it alone, so nothing is lost. `notification-threshold: '0'` still means "notify on every run that has changes", regardless of mode.
 
 ```yaml
 with:
@@ -854,7 +860,7 @@ Star change threshold before sending a notification.
 | 201 – 500 | 10 stars |
 | 501+ | 20 stars |
 
-The threshold is **cumulative, not per-run**. It is measured against `starsAtLastNotification`, persisted in `stars-data.json` on the data branch and updated **only when a notification actually fires**. Runs that do not notify leave that baseline untouched, so the accumulated change keeps growing across runs until it trips the threshold. How that accumulated change is measured is controlled by [`notification-mode`](#notification-mode).
+The threshold is **cumulative, not per-run**. It is measured against `starsAtLastNotification`, persisted in `stars-data.json` on the data branch and updated **only when a notification is actually delivered** — a due notification whose SMTP send failed leaves it untouched, so the accumulated change is not lost. Runs that do not notify leave that baseline untouched, so the accumulated change keeps growing across runs until it trips the threshold. How that accumulated change is measured is controlled by [`notification-mode`](#notification-mode).
 
 > [!NOTE]
 > The baseline advances only when the notification was actually delivered. If an SMTP send fails the action logs a warning, leaves the baseline untouched and keeps accumulating, so the change is not lost. When no SMTP transport is configured the `should-notify` output is the notification, so the baseline advances as soon as the threshold trips.
@@ -951,7 +957,9 @@ The action validates inputs at startup:
 - `github-token` is provided
 - `visibility` is one of: `all`, `public`, `private`, `owned`
 - `locale` is one of: `en`, `es`, `ca`, `it` (falls back to `en` with a warning if invalid)
-- `visibility` and `data-branch` are the only inputs whose invalid values fail the run; a missing `github-token` fails it too. Every other invalid value logs a warning and falls back to its default, including non-positive `max-history`, `top-repos` and `smart-sampling-pages`, and negative `min-stars`, `smart-sampling-threshold` and `chart-max-points`
+- `visibility` and `data-branch` are the only inputs whose invalid values fail the run; a missing `github-token` fails it too. Every other invalid value falls back rather than failing, including non-positive `max-history`, `top-repos` and `smart-sampling-pages`, and negative `min-stars`, `smart-sampling-threshold` and `chart-max-points`
+- **An invalid value falls to the next layer, not straight to the default.** An unusable *action input* is discarded and the config file is consulted next, so `max-history: 'abc'` in the workflow with `max_history: 104` in the file yields 104, not 52
+- **Only the enum keys warn about a bad config-file value.** `visibility`, `locale`, `compare-against`, `notification-mode`, `chart-curve`, `chart-range`, `chart-theme`, `email-theme` and `chart-y-axis-side` are checked whichever layer they came from; every other key warns only about a bad *input*, so `min_stars: "abc"` in the YAML falls back silently. `send-on-no-changes` never warns at all
 
 ---
 

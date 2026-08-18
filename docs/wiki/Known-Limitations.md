@@ -19,7 +19,7 @@ The action requires the user to create a PAT and store it as a repository secret
 - Classic: `repo` (private + public) or `public_repo` (public only)
 - Fine-grained: `Repository access → All repositories` with `Metadata: Read-only`
 
-See **[Personal Access Token (PAT)](Personal-Access-Token-(PAT))** for a step-by-step setup guide.
+See **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)** for a step-by-step setup guide.
 
 ---
 
@@ -124,7 +124,7 @@ predicted(week) = lastValue + avgWeightedDelta * week
 
 Both methods clamp predictions to non-negative integers via `Math.max(0, Math.round(...))` to avoid nonsensical outputs (e.g., -3 stars).
 
-Forecasts require a minimum of **3 snapshots** (`MIN_SNAPSHOTS = 3`) and project **4 weeks ahead** (`FORECAST_WEEKS = 4`). These thresholds are intentionally conservative - with fewer data points, any extrapolation would be unreliable.
+Forecasts require a minimum of **3 points** in the series they are fitted to (`MIN_SNAPSHOTS_FOR_FORECAST = 3`) and project **4 weeks ahead** (`FORECAST_WEEKS = 4`). That series is the *reconstructed* history when charts are on, which already has ~30 points on the first run — so the three-snapshot floor only bites when `include-charts` is off and the stored per-run history is all there is. These thresholds are intentionally conservative - with fewer data points, any extrapolation would be unreliable.
 
 ### Interpretation guide
 
@@ -141,11 +141,11 @@ Forecasts require a minimum of **3 snapshots** (`MIN_SNAPSHOTS = 3`) and project
 
 ### Behavior
 
-SVG charts automatically adapt to the viewer's color scheme using `@media (prefers-color-scheme: dark)` inside the SVG `<style>` block. No configuration input is needed - it works out of the box on GitHub, browsers, and any SVG viewer that respects the media query.
+By default the SVG charts adapt to the viewer's color scheme using `@media (prefers-color-scheme: dark)` inside the SVG `<style>` block, and no configuration is needed for that. Forcing [`chart-theme`](Configuration#chart-theme) to `light` or `dark` drops the media query and bakes one palette in, which is what you want when the chart is embedded somewhere that does not follow the reader's system theme.
 
 ### What adapts
 
-Chrome elements - background, title, legend text, axis labels, grid lines, and axis strokes - switch between a light palette and a dark palette (GitHub dark theme values). Data colors (line strokes, point fills, comparison colors) remain unchanged because they are vibrant enough for both themes.
+Chrome elements - background, title, legend text, axis labels, grid lines, and axis strokes - switch between a light palette and a dark palette (GitHub dark theme values). The primary line keeps [`chart-line-color`](Configuration#chart-line-color) and the ten comparison colors are fixed, but the palette-derived series **do** change: the trend line (`#6a737d` -> `#8b949e`) and the two forecast series (`#28a745` -> `#3fb950`, `#d73a49` -> `#f85149`) are brightened for dark backgrounds.
 
 | Element | Light | Dark |
 |:--------|:------|:-----|
@@ -161,7 +161,7 @@ Chrome elements - background, title, legend text, axis labels, grid lines, and a
 |:--------|:------------------|
 | GitHub README / Markdown | Yes - GitHub respects `prefers-color-scheme` in inline SVGs |
 | Browser (direct SVG open) | Yes |
-| HTML email reports | No - Gmail strips `<style>` blocks; the HTML report uses an explicit light background instead |
+| HTML email reports | Not automatically - Gmail strips `<style>` blocks, so the media query cannot reach them. Set [`email-theme: dark`](Configuration#email-theme) to bake a dark palette into the body and the chart images instead |
 | QuickChart PNG fallbacks | No - PNGs are rasterized with a fixed white background |
 
 ### Badges
@@ -227,7 +227,7 @@ Email HTML rendering is notoriously inconsistent across clients. Outlook uses th
 ### Approach
 
 - **All styles are inline**: Every HTML element in the report carries its own `style` attribute. No external stylesheets, no `<style>` blocks, no CSS classes.
-- **Explicit light background**: The `<body>` has an explicit `background-color: #fff` to ensure consistent rendering regardless of the email client's own background. Dark mode is not supported in email reports.
+- **Explicit background**: The `<body>` carries an explicit `background-color` so it renders consistently whatever the client's own background is. It follows [`email-theme`](Configuration#email-theme), which defaults to `auto` (inherit `chart-theme`, resolving to light) — set it to `dark` for a dark digest, charts included. What email *cannot* do is follow the reader's system theme, because the media query is stripped and the chart images are PNGs with the background baked in.
 - **No `<details>` in HTML reports**: Collapsible sections (`<details>`/`<summary>`) are used in Markdown reports (for GitHub rendering) but excluded from HTML reports, since email clients do not support them. Per-repo stargazer lists and forecast tables are displayed flat in HTML.
 - **System fonts**: The font stack uses `-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif` - safe system fonts that render consistently everywhere.
 - **`max-width: 600px`**: The report container is capped at 600px, the standard width for email layouts.
@@ -260,7 +260,7 @@ The action is designed to run as a GitHub Actions workflow, which is triggered b
 
 ### Approach
 
-- **One snapshot per run**: The `trackStars` function reads the current state of all repos, compares against the last stored snapshot, and appends a new entry to the history.
+- **One snapshot per run**: `measureRun` reads the current state of all repos, compares against the snapshot [`compare-against`](Configuration#compare-against) selects — the most recent one by default, but not necessarily — and appends a new entry to the history.
 - **History rotation**: Old snapshots are pruned via `maxHistory` (default: 52, i.e., ~1 year of weekly runs). This prevents unbounded growth of `stars-data.json`.
 - **Timestamp precision**: Each snapshot is timestamped with `new Date().toISOString()`, providing millisecond precision for the moment the run occurred.
 
@@ -282,7 +282,7 @@ Keep in mind that more frequent runs consume more API calls and produce more sna
 
 ### Limitation
 
-When `track-stargazers` is enabled, **usernames and avatar URLs** of people who starred your repos are stored in `stargazers.json` on the data branch. This data is publicly visible if the repository is public.
+When `track-stargazers` is enabled, the **usernames** of people who starred your repos are stored in `stargazers.json` on the data branch. This data is publicly visible if the repository is public.
 
 ### Why
 

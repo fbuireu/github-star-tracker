@@ -74,7 +74,9 @@ After the first run:
 3. You should see:
    - `README.md` - Full Markdown report
    - `stars-data.json` - Historical data (JSON)
+   - `stars-data.csv` - The same run as a flat CSV
    - `stars-badge.svg` - Star count badge
+   - `charts/` - The SVG charts the report embeds
 
 > Charts and forecasts appear on the first run: when charts are enabled (the default), the action reconstructs the real star-history curve from your stargazers' starred dates.
 

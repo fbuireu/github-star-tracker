@@ -61,7 +61,7 @@ Complete reference for all inputs, outputs, and data formats.
 | `velocity-metrics` | `boolean` | `false` | Add a growth-velocity section (stars/day, % growth, days to next milestone) to the report |
 | `visibility` | `string` | `all` | Repo visibility filter: `public`, `private`, `all`, or `owned` |
 
-Both modes measure against `starsAtLastNotification` in `stars-data.json`, which is only updated when a notification actually fires. The counter therefore accumulates across runs that do not notify instead of resetting. On a data branch that has never sent a notification there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so the first run fires immediately and then settles. That is not the case if you were already running with the default `notification-threshold: 0`: every changed run has been notifying, so `starsAtLastNotification` already holds your current total and raising the threshold fires nothing immediately - the next email waits until the total actually moves by at least the threshold.
+Both modes measure against `starsAtLastNotification` in `stars-data.json`, which is only updated when a notification is actually delivered. The counter therefore accumulates across runs that do not notify instead of resetting. On a data branch that has never sent a notification there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so the first run fires immediately and then settles. That is not the case if you were already running with the default `notification-threshold: 0`: every changed run has been notifying, so `starsAtLastNotification` already holds your current total and raising the threshold fires nothing immediately - the next email waits until the total actually moves by at least the threshold.
 
 ---
 
@@ -83,7 +83,7 @@ All outputs are strings (GitHub Actions requirement). Available in subsequent wo
 | `stars-changed` | `string` | Per-run. Whether any counts changed against the `compare-against` baseline: `true` or `false` |
 | `total-stars` | `string` | Total star count across all tracked repos |
 
-`new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the comparison baseline. They are not cumulative and carry no memory of whether an email was sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: its counter only resets when a notification actually fires. `notification-sent` is the delivery counterpart — `should-notify` is the decision, `notification-sent` is whether mail left the building.
+`new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the comparison baseline. They are not cumulative and carry no memory of whether an email was sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: its counter only resets when a notification is actually delivered. `notification-sent` is the delivery counterpart — `should-notify` is the decision, `notification-sent` is whether mail left the building.
 
 ### Usage Example
 
