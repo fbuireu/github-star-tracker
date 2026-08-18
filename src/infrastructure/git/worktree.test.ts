@@ -95,12 +95,33 @@ describe('initializeDataBranch', () => {
       .mock.calls.map(([params]) => params.args)
       .filter((args) => args.includes('ls-remote') || args.includes('fetch'));
 
+    const credential = Buffer.from('x-access-token:secret-token').toString('base64');
+
     expect(remoteCalls).toHaveLength(2);
     for (const args of remoteCalls) {
-      expect(args[0]).toBe('-c');
-      expect(args[1]).toMatch(/^http\.extraheader=AUTHORIZATION: basic /);
+      expect(args.slice(0, 4)).toEqual([
+        '-c',
+        'http.extraheader=',
+        '-c',
+        `http.extraheader=AUTHORIZATION: basic ${credential}`,
+      ]);
     }
-    expect(core.setSecret).toHaveBeenCalled();
+    expect(core.setSecret).toHaveBeenCalledWith(credential);
+  });
+
+  it('clears any inherited header before adding its own, so git sends exactly one', () => {
+    remoteHasBranch();
+
+    initializeDataBranch({ dataBranch: BRANCH, token: 'secret-token' });
+
+    const probe = vi
+      .mocked(execute)
+      .mock.calls.map(([params]) => params.args)
+      .find((args) => args.includes('ls-remote'));
+    const headers = (probe ?? []).filter((arg) => arg.startsWith('http.extraheader='));
+
+    expect(headers[0]).toBe('http.extraheader=');
+    expect(headers.filter((header) => header !== 'http.extraheader=')).toHaveLength(1);
   });
 
   it('throws an actionable error when not inside a checked-out repository', () => {

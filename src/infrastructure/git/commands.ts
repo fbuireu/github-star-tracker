@@ -32,5 +32,11 @@ export function authenticatedArgs({ token, args }: AuthenticatedArgsParams): str
 
   core.setSecret(credential);
 
-  return ['-c', `http.extraheader=AUTHORIZATION: basic ${credential}`, ...args];
+  return [
+    '-c',
+    'http.extraheader=',
+    '-c',
+    `http.extraheader=AUTHORIZATION: basic ${credential}`,
+    ...args,
+  ];
 }

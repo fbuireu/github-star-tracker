@@ -108,12 +108,23 @@ lines.
   branch is not there" — the run then built an orphan, pushed it over the real branch, was rejected, and told
   the user another run had raced it and to add a `concurrency` group. That remediation could never work. A
   failing probe now propagates git's own text.
-- **Every remote command carries the token.** `ls-remote` and `fetch` used to run unauthenticated while only
-  the push was authenticated, relying on whatever `actions/checkout` had persisted. On a private repository
-  with `persist-credentials: false` — what OpenSSF, zizmor and this repo's own workflows recommend — the
-  probe failed on *every* run, which is the systematic version of the trap above. `authenticatedArgs`
-  (`git/commands.ts`) builds the header and calls `core.setSecret` in one place; that masking is not
-  optional, because `execute` puts the whole argv into its error message.
+- **Every remote command carries the token, and `authenticatedArgs` **resets the header list first**.**
+  `ls-remote` and `fetch` used to run unauthenticated while only the push was authenticated, relying on
+  whatever `actions/checkout` had persisted — so on a repository checked out with `persist-credentials:
+  false` the probe failed on every run.
+  **`http.extraheader` is multi-valued and `-c` appends to it, it does not override.** `actions/checkout`
+  persists its own credential under the URL-scoped `http.https://github.com/.extraheader`, and
+  `persist-credentials` defaults to **`true`** — so adding ours without clearing sends git *two*
+  `AUTHORIZATION` headers and GitHub answers **HTTP 400 `Duplicate header`** before it ever evaluates a
+  credential. Two perfectly valid tokens fail identically. The leading `-c http.extraheader=` is what git
+  documents as resetting the list, and it is load-bearing: without it this action fails on the very workflow
+  the README recommends. Switching to the URL-scoped key instead does **not** help — same key, same match,
+  still accumulates.
+  The consequence to accept: the reset discards `actions/checkout`'s credential, so `github-token` becomes
+  the only credential git has. That matches the documented contract (`Contents: Read and write`), but a run
+  that used to lean on checkout's `GITHUB_TOKEN`, or on anonymous access to a public repository, now depends
+  on the action's own token being valid.
+  `core.setSecret` is not optional here, because `execute` puts the whole argv into its error message.
 - **Branch missing + read-only → throw**, before any worktree exists. A read-only run may never bring the
   data branch into existence. Branch missing + writable → an *orphan* branch, so data history shares no
   ancestry with code history; it is local-only until the first push.

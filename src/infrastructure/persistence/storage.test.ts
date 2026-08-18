@@ -346,6 +346,8 @@ describe('commitAndPush', () => {
     expect(
       ranGit(
         '-c',
+        'http.extraheader=',
+        '-c',
         `http.extraheader=AUTHORIZATION: basic ${CREDENTIAL}`,
         'push',
         'origin',

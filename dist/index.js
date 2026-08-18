@@ -41283,7 +41283,13 @@ ${detail}`);
 function authenticatedArgs({ token, args }) {
   const credential = Buffer.from(`x-access-token:${token}`).toString("base64");
   setSecret(credential);
-  return ["-c", `http.extraheader=AUTHORIZATION: basic ${credential}`, ...args];
+  return [
+    "-c",
+    "http.extraheader=",
+    "-c",
+    `http.extraheader=AUTHORIZATION: basic ${credential}`,
+    ...args
+  ];
 }
 
 // src/infrastructure/git/worktree.ts
