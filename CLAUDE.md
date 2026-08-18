@@ -29,14 +29,13 @@ SMTP. There is exactly one use case: `trackStars()`.
 - pnpm **11.21.0** (`packageManager`) — always use pnpm, never npm/yarn
 
 Both are deliberate pins rather than dependency ranges, so bumping one means editing this section in the same
-commit. That is the point: this section had already drifted a patch release behind `packageManager` while it
-was documented as untested.
+commit.
 
 ## Commands
 
 ```bash
 pnpm build            # tsx esbuild.config.ts -> dist/index.js
-pnpm lint             # biome check (base command)
+pnpm lint             # biome check --no-errors-on-unmatched .
 pnpm format           # lint --write
 pnpm typecheck        # tsc --noEmit
 pnpm test             # vitest run
@@ -67,8 +66,9 @@ not a layer at all: `assets/`, the brand files the README embeds. `index.ts` imp
 | `presentation/` | `@presentation/*` | Pure rendering: data in, markdown/HTML/SVG/CSV string out |
 | `shared/` | `@shared/*` | Cross-cutting code owning no layer (today: test factories) |
 
-Tests are colocated next to the file they cover (`src/**/*.test.ts`). The one test covering no module is
-`docs/docs-consistency.test.ts` — the docs guard described below, colocated with the docs it checks.
+Tests are colocated next to the file they cover (`src/**/*.test.ts`). Two cover no module:
+`docs/docs-consistency.test.ts` — the docs guard described below, colocated with the docs it checks — and
+`src/config/action-inputs.test.ts`, which asserts against `action.yml` rather than a module.
 
 Aliases are declared **once**, in `tsconfig.json` `compilerOptions.paths`. `esbuild.config.ts` derives its
 `alias` map from that object at build time and `vitest.config.ts` sets `resolve.tsconfigPaths: true`, so a
@@ -86,7 +86,7 @@ alias (`"@i18n": ["./src/i18n/index.ts"]`), not a glob: `@i18n/types` does not r
 | [`src/domain/`](./src/domain/CLAUDE.md) | Comparison semantics, snapshots, forecast/velocity maths, star-history |
 | [`src/i18n/`](./src/i18n/CLAUDE.md) | Bundles, placeholder rules, adding a locale |
 | [`src/infrastructure/`](./src/infrastructure/CLAUDE.md) | The four adapters: octokit, git worktree, persistence, SMTP |
-| [`src/presentation/`](./src/presentation/CLAUDE.md) | Renderers, the chart trio, escaping rules |
+| [`src/presentation/`](./src/presentation/CLAUDE.md) | Renderers, the chart quartet, escaping rules |
 | [`src/shared/`](./src/shared/CLAUDE.md) | Fixture factories and why this folder stays almost empty |
 
 ## Conventions

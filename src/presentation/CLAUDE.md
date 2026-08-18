@@ -88,11 +88,11 @@ assembling the params for each.
 - **`topRepoNames` is not a parameter.** `renderRun` derives it from `model.topRepos`, so the per-repo SVGs
   `charts.ts` writes and the `./charts/<file>` links `markdown.ts` emits are the same set by construction.
   Passing it in left a caller able to chart one set and link another — broken images, silently.
-- **It takes `chartHistories` and `storedHistory`, not two `History` values.** That is the point: `history`
-  and `velocityHistory` used to be adjacent fields of the same type that were **not** interchangeable, and
-  swapping them silently turned Velocity into an average over a chart bucket. `renderRun` derives
-  `history` from `chartHistories.aggregate` itself, so there is no longer a call site that could pass the
-  wrong one.
+- **It takes `chartHistories` and `storedHistory`, not two `History` values.** `ReportParams` still carries
+  `history` and `velocityHistory` as adjacent, same-typed and **not** interchangeable fields — swapping them
+  turns Velocity into an average over a chart bucket — but `renderRun` is now the only thing that fills them,
+  deriving `history` from `chartHistories.aggregate`. The hazard is confined to this file rather than exposed
+  at every call site.
 - It renders; it decides nothing about **whether** to render. Charts still come back `[]` when charts are
   off, and the report renderers still read `config` for the options they honour.
 - The individual renderers stay exported and stay tested — they are internal seams within this layer, the

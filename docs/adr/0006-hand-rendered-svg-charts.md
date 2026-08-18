@@ -4,7 +4,10 @@ Date: 2026-07-26
 
 ## Status
 
-Accepted.
+Accepted. Its "the two renderers are independent" consequence was narrowed by
+[ADR 0014](./0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md): both now read one `ChartSpec`, so
+they can no longer drift on a Chart's *content* — only on its appearance, which is what this decision is
+about.
 
 ## Context
 

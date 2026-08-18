@@ -90,7 +90,7 @@ All step numbers refer to `src/application/tracker.ts`.
 | 12 | `topRepositories({ repos: results.repos, limit: config.topRepos })` | domain/comparison | The single definition of Top Repositories; `@presentation/report-model` calls the same function for the Report |
 | 13-14 | `resolveChartHistories({ config, storedHistory: updatedHistory, repos, repoStargazers })` | presentation/charts | Owns both altitudes and the instant: reconstructs via `@domain/star-history` (capped at 365 buckets) and resolves each result against the stored history — reconstruction wins at >= 2 snapshots. `.aggregate` is the Tracked Set's; `.forRepo(name)` is one Repository's |
 | 15 | `computeForecast({ history, topRepoNames })` | domain/forecast | `null` below 3 snapshots; always 2 methods x 4 weekly points |
-| 16 + 20 | `renderRun({ config, results, previousTimestamp, chartHistories, storedHistory, stargazerDiff, forecastData, topRepoNames })` | presentation | The layer's single entry point: markdown, HTML, CSV, badge and every chart file in one `RenderedRun`. It derives the chart history from `chartHistories` itself, so no caller can hand the reports the wrong `History` ([ADR 0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md)) |
+| 16 + 20 | `renderRun({ config, results, previousTimestamp, chartHistories, storedHistory, stargazerDiff, forecastData })` | presentation | The layer's single entry point: markdown, HTML, CSV, badge and every chart file in one `RenderedRun`. It builds the `ReportModel` once, derives the chart history from `chartHistories` and the Top Repositories from that model, so no caller can hand the reports the wrong `History` or chart a different set than it links ([ADR 0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md)) |
 | 17 | `notify` = `summary.changed && measurement.thresholdReached` | application | Gates the send only; the same figures are re-derived by step 19 |
 | 18 | `getEmailConfig(locale)` + `sendEmail({ emailConfig, subject, htmlBody })` | infrastructure/notification | Sent when `emailConfig && (notify \|\| sendOnNoChanges)`. The outcome becomes one `Delivery`: `SENT`, `FAILED` (a throw, or a `false` return) or `NOT_ATTEMPTED`. **Runs before persistence** — see [ADR 0011](./docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md) |
 | 19 | `settleNotification({ changed, thresholdReached, delivery, history, totalStars })` | domain/notification | Returns `shouldNotify`, `notificationSent` and `historyToPersist` as one outcome; calls `recordNotification` only when the baseline may advance |
@@ -183,21 +183,12 @@ Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain gl
 | [0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md) | The Report renderers read `Config` themselves |
 | [0017](./docs/adr/0017-velocity-and-forecast-read-unparseable-timestamps-differently.md) | Velocity and Forecast read unparseable timestamps differently |
 
-Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md) — `# N. Title`, a date, a
-status, then *Context*, *Decision*, *Consequences*. A new ADR starts by copying that file, not by writing
-one from scratch.
+Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md), and a new ADR starts by
+copying that file. The shape the docs test asserts is spelled out in
+[CLAUDE.md's maintenance contract](./CLAUDE.md#maintenance-contract).
 
-| Document | Covers |
-| --- | --- |
-| [CLAUDE.md](./CLAUDE.md) | Commands, alias wiring, conventions, the maintenance contract — loaded into every agent session |
-| [src/application/CLAUDE.md](src/application/CLAUDE.md) | `trackStars()` invariants, the output contract, failure policy |
-| [src/assets/CLAUDE.md](src/assets/CLAUDE.md) | The mark, why it needs no light/dark pair, and why the README heading stays |
-| [src/config/CLAUDE.md](src/config/CLAUDE.md) | Input + YAML precedence, what throws vs warns, parser vocabularies |
-| [src/domain/CLAUDE.md](src/domain/CLAUDE.md) | Comparison semantics, snapshots, forecast/velocity maths, star-history |
-| [src/i18n/CLAUDE.md](src/i18n/CLAUDE.md) | Bundles, placeholder rules, adding a locale |
-| [src/infrastructure/CLAUDE.md](src/infrastructure/CLAUDE.md) | All four adapters: octokit, git worktree, persistence, SMTP |
-| [src/presentation/CLAUDE.md](src/presentation/CLAUDE.md) | Renderers, the chart trio, escaping and injection rules |
-| [src/shared/CLAUDE.md](src/shared/CLAUDE.md) | Fixture factories and why this folder stays almost empty |
+**The per-layer guides and what each covers are the table in [CLAUDE.md](./CLAUDE.md#structure--aliases)** —
+that file is loaded into every agent session, so the list lives there and is not repeated here.
 
 One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/tests` are sections inside their parent's guide rather than files of their own, because a guide in a subdirectory only reaches the agent once it reads a file in that exact folder.
 
@@ -213,8 +204,7 @@ One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/
 
 ## 8. Known inconsistencies
 
-None outstanding. Every mismatch this document previously listed has been resolved in the source; the
-history of what they were and why each was fixed is in the `fix:` commits and in `docs/adr/`.
+None outstanding.
 
-When one is found again, record it here with the file:line that proves it, and delete the entry once the
-code changes — an entry that has quietly become false is worse than no list at all.
+When one is found, record it here with the evidence that proves it, and delete the entry in the commit that
+fixes it — an entry that has quietly become false is worse than no list at all.

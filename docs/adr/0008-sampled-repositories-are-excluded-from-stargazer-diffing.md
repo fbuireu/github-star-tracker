@@ -4,7 +4,10 @@ Date: 2026-07-26
 
 ## Status
 
-Accepted.
+Accepted. Amended by [ADR 0012](./0012-unreadable-stargazer-lists-keep-their-previous-logins.md): this ADR
+originally had a Sampled Repository contribute *nothing* to the remembered set, which meant its stored logins
+were dropped and every one of them resurfaced as new on the next unsampled Run. 0012 made an untrustworthy
+list keep its previous logins instead, and that is what the code does.
 
 ## Context
 
@@ -12,7 +15,7 @@ Smart Sampling reads a spread of a Repository's Stargazers rather than all of th
 
 ## Decision
 
-A Sampled Repository is skipped by New Stargazer detection entirely and contributes nothing to the remembered Stargazer set. It still gets a Reconstructed History and a Chart — the sample is adequate for a curve, just not for identity. What it loses is the New Stargazer list.
+A Sampled Repository is skipped by New Stargazer detection entirely, and its entry in the remembered Stargazer set is **carried forward unchanged** rather than rewritten from the sample. It still gets a Reconstructed History and a Chart — the sample is adequate for a curve, just not for identity. What it loses is the New Stargazer list.
 
 ## Consequences
 

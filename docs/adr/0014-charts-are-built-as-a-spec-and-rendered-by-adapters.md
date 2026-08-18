@@ -36,7 +36,8 @@ done, and it is precisely the part that did *not* drift; what drifted was everyt
 A `ChartRequest` names *which* Chart is wanted — a discriminated union over the four `ChartKind`s
 [CONTEXT.md](../../CONTEXT.md) already lists, each variant carrying only its own inputs. `buildChartSpec`
 maps one onto a `ChartSpec` — axis labels, an ordered list of series with a resolved colour, and the
-Milestone thresholds, or `null` when there is too little history to plot. `starHistorySpec`, `perRepoSpec`,
+Milestones to draw, each already filtered to the visible ones and carrying both its `value` and its rendered
+`label` — or `null` when there is too little history to plot. `starHistorySpec`, `perRepoSpec`,
 `comparisonSpec` and `forecastSpec` are the private cases behind it.
 
 `svg-chart.ts` and `chart.ts` are adapters over that seam, each with **one** entry point — `renderSvgChart`

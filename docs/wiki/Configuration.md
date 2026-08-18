@@ -220,7 +220,7 @@ Enable star trend chart generation.
 
 When enabled, generates animated SVG charts committed to the `charts/` directory on the data branch, and QuickChart.io URLs in HTML email reports.
 
-When enabled, the action fetches each repo's stargazers to read their `starred_at` dates and reconstruct the true cumulative star history; this happens whenever charts are on, independent of `track-stargazers`. For very large repos (GitHub caps stargazer listing at ~40,000/repo) the earliest part of the curve is approximated; pair with `smart-sampling`.
+When enabled, the action fetches each repo's stargazers to read their `starred_at` dates and reconstruct the true cumulative star history; this happens whenever charts are on, independent of `track-stargazers`. For very large repos (GitHub caps stargazer listing at ~40,000/repo, oldest first) the *recent* tail is unreachable and is bridged with a ramp — see [Known Limitations](Known-Limitations#-stargazer-listing-cap-40000). Pair those with `smart-sampling`.
 
 ```yaml
 with:

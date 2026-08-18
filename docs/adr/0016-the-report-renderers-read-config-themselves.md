@@ -54,12 +54,18 @@ export interface ReportParams {
 ```
 
 `locale`, `includeCharts`, `topRepos` and `velocityMetrics` are read off `config` inside `buildReportModel`.
-The email chart style is projected inside `html.ts` by `emailChartStyle(config)`, which is also where
-`emailTheme` is read — so the Notification picks its own theme rather than being handed one.
+The email chart style is projected by `emailChartStyle(config)` in `shared.ts`, which `html.ts` calls — and
+`html.ts` is also where `emailTheme` is read, so the Notification picks its own theme rather than being
+handed one.
 
-`GenerateHtmlReportParams` and the flattened `EmailChartStyle` fields are gone. **Both renderers now take the
-same type**, so `tracker.ts` passes one object to both with no spread, and the excess-property hole closes
-because there is nothing left to spread.
+`GenerateHtmlReportParams` and the flattened `EmailChartStyle` fields are gone. **Both renderers take one
+identical params object**, so nothing is spread onto one of them and the excess-property hole closes because
+there is nothing left to spread.
+
+> **Amended after this decision.** `renderRun` (`src/presentation/run.ts`) became the layer's single entry
+> point shortly afterwards, so `@application` no longer calls the renderers at all and they now take
+> `{ model, config }` — `ReportParams` is `buildReportModel`'s input. The rule this ADR records is unchanged:
+> the renderers read `Config` themselves and the shell relays no chart options.
 
 `@presentation` importing `@config/types` is not new — `shared.ts` already did, and
 [ADR 0004](./0004-layered-source-structure.md) permits it. What is new is that it imports `Config` whole

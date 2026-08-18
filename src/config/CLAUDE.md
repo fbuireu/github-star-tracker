@@ -129,4 +129,4 @@ differently from an absent one rather than as a changed default.
 - **Warning wording is asserted verbatim**, including the Oxford comma
   (`'Invalid locale "fr". Must be "en", "es", "ca", or "it". Falling back to "en"'`). The generic parser
   message deliberately does *not* name a fallback, because the config file may still supply one.
-- `loader.test.ts` (~1120 lines) is the real specification for this folder.
+- `loader.test.ts` is the real specification for this folder — it is by far the largest test in the tree.

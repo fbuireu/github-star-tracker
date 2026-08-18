@@ -242,9 +242,7 @@ Animated SVG files committed to the data branch:
 | `charts/forecast.svg` | Historical + projected trends |
 | `charts/{owner}-{repo}.svg` | Per-repo star history |
 
-```markdown
-![Star History](https://raw.githubusercontent.com/USER/REPO/star-tracker-data/charts/star-history.svg)
-```
+To embed any of these, see **[Viewing Reports](Viewing-Reports#method-2-badges)**.
 
 ---
 

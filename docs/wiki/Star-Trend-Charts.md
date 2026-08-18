@@ -187,31 +187,9 @@ with:
 
 ## Embedding Charts in Your README
 
-### Star History
-
-```markdown
-![Star History](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/charts/star-history.svg)
-```
-
-### Comparison
-
-```markdown
-![Comparison](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/charts/comparison.svg)
-```
-
-### Forecast
-
-```markdown
-![Forecast](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/charts/forecast.svg)
-```
-
-### Per-Repo
-
-```markdown
-![Per-Repo](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/charts/owner-repo.svg)
-```
-
-> Replace `owner-repo` with your actual repo's `{owner}-{repo}` (slash replaced with dash).
+Every chart is a raw file on the data branch, so a plain Markdown image tag is all you need. The snippets for
+all four charts and for the badge live in **[Viewing Reports](Viewing-Reports#method-2-badges)** — they are the same
+URLs whichever page you come from, so they are written once there.
 
 ---
 
@@ -230,25 +208,29 @@ Default is `10`.
 
 ## Chart customization
 
-The chart appearance is configurable via these inputs:
+Every `chart-*` input, with its default and full description, is in
+**[Configuration](Configuration#chart-line-color)** — it is the reference and this page does not restate it.
 
-| Input | Default | Description |
+What belongs here is which of the **two chart systems** honours each one. The SVG charts on the data branch
+are hand-rendered; the email charts are QuickChart images, and some options cannot survive that trip:
+
+| Input | SVG charts | Email charts |
 |---|---|---|
-| `chart-line-color` | `#dfb317` | Hex color for the primary chart line/fill/points (star-history, per-repo and forecast historical series; not the comparison palette or forecast trend lines). A bare `#` starts a YAML comment, so quote it (`"#6b63ff"`) or drop the `#` (`6b63ff`). Applies to email charts too. |
-| `chart-line-width` | `2.5` | Stroke width in px of data lines across all charts. Applies to email charts too. |
-| `chart-max-points` | `30` | Curve granularity: points sampled across the full span (capped at `365`); `0` reconstructs at weekly resolution. Resolution, not a time window (see `chart-range`). Email is always 30. |
-| `chart-y-axis-side` | `left` | Y-axis label side: `left` or `right`. SVG-only. |
-| `chart-smoothing` | `true` | `true` draws a smooth curve; `false` draws straight segments between points to reveal small spikes. Applies to email charts too. |
-| `chart-curve` | `monotone` | Curve used when smoothing is on: `monotone` (no overshoot, best for stars), `catmull-rom` (natural spline, can overshoot), `cubic-bezier` (eased S-curves), `rounded-step` (straight segments, rounded corners). Email approximates the non-monotone curves (see [Two Chart Systems](#two-chart-systems)). |
-| `chart-show-points` | `true` | `true` marks each data point with a dot; `false` hides them for a cleaner dense line. Applies to email charts too. |
-| `chart-animation` | `true` | `true` animates the SVG charts; `false` renders them static for email/static contexts. SVG-only. |
-| `chart-milestones` | `true` | `true` draws milestone reference lines on the main chart; `false` hides them. Applies to email charts too. |
-| `chart-begin-at-zero` | `false` | `false` zooms the Y-axis into the data range; `true` anchors it at zero. Applies to all charts. |
-| `chart-theme` | `auto` | `auto` follows `prefers-color-scheme` in SVG charts; `light`/`dark` force the palette. SVG-only — the email follows `email-theme`. |
-| `email-theme` | `auto` | Palette for the email charts and body. `auto` means "same as `chart-theme`". Email charts are images, so `prefers-color-scheme` never reaches them: a dark-mode reader sees a white chart background unless this resolves to `dark`. |
-| `chart-custom-milestones` | _(empty)_ | Comma-separated star counts (e.g. `250, 750, 2500`) that replace the built-in milestone thresholds. When empty, the defaults are used. Requires `chart-milestones`. Applies to email charts too. |
-| `chart-range` | `all` | Time window plotted (`30d`, `90d`, `1y`, `all`), measured back from the latest data point, before `chart-max-points`. |
-| `chart-trend-line` | `false` | Overlay a dashed 7-point moving-average trend line (neutral gray, `#6a737d`) on the star-history chart to highlight the underlying growth direction. The chart has no legend, so the gray dashed line is the trend and the solid gold line is the actual star count. Applies to email charts too. |
+| `chart-line-color` | Yes | Yes |
+| `chart-line-width` | Yes | Yes |
+| `chart-smoothing` | Yes | Yes |
+| `chart-curve` | Exact | Approximated — see [Two Chart Systems](#two-chart-systems) |
+| `chart-show-points` | Yes | Yes |
+| `chart-milestones` | Yes | Yes |
+| `chart-custom-milestones` | Yes | Yes |
+| `chart-begin-at-zero` | Yes | Yes |
+| `chart-range` | Yes | Yes |
+| `chart-trend-line` | Yes | Yes |
+| `chart-max-points` | Yes | **No** — email is always 30 points |
+| `chart-animation` | Yes | **No** — a PNG cannot animate |
+| `chart-y-axis-side` | Yes | **No** |
+| `chart-theme` | Yes | **No** — the email follows `email-theme` |
+| `email-theme` | — | Yes |
 
 ```yaml
 with:
@@ -263,7 +245,7 @@ with:
 
 ### Large repos
 
-GitHub caps the stargazers listing at roughly 40,000 per repo. For very large repos the earliest part of the curve is approximated (the cumulative total is scaled up to the true star count). Pair charts with `smart-sampling` to keep the request cost bounded on big repos.
+GitHub caps the stargazers listing at roughly 40,000 per repo, oldest first, so on very large repos the **recent** tail is the part that cannot be read and is bridged with a ramp. [Known Limitations](Known-Limitations#-stargazer-listing-cap-40000) has the full account. Pair charts with `smart-sampling` to keep the request cost bounded on big repos.
 
 ---
 

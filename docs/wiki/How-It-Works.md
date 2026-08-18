@@ -291,7 +291,7 @@ New stargazers appear in reports with avatar, profile link, and starred date.
 
 When charts are enabled, `buildStarHistory()` turns the fetched stargazers' `starred_at` dates into a cumulative-over-real-time `History` used by the charts (and the forecast). Each star is placed on the date it was actually given and the cumulative total is reconstructed from the repo's first star up to now, so a multi-point curve is available on the **first run**.
 
-GitHub caps stargazer listing at roughly **40,000 per repo**. For repos above that cap, the earliest part of the curve is approximated: `scaleToTrueTotal()` scales the fetched cumulative counts up to the repo's true current star total (the final point always equals the true count). Pair high-star repos with `smart-sampling` to keep within rate limits.
+GitHub caps stargazer listing at roughly **40,000 per repo**, oldest first — so above that cap it is the **recent** stars that are unreachable, not the early ones. `scaleCappedToTrueTotal()` draws the reachable history accurately and bridges the missing tail with a straight ramp to the true current total; the final point always equals the true count. The reasoning is [ADR 0007](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0007-bridge-unreachable-history-with-a-ramp.md) and the user-facing consequences are in [Known Limitations](Known-Limitations#-stargazer-listing-cap-40000). Pair high-star repos with `smart-sampling` to keep within rate limits.
 
 ---
 
