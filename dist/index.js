@@ -40702,7 +40702,9 @@ function computeForecast({
   const toSeries = ({ values, days }) => values.map((value, index) => ({ day: days[index], value }));
   const aggregateDays = calendarDays(history);
   const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
-  const aggregateForecasts = forecastFromSeries(toSeries({ values: totalValues, days: aggregateDays }));
+  const aggregateForecasts = forecastFromSeries(
+    toSeries({ values: totalValues, days: aggregateDays })
+  );
   const repos = topRepoNames.map((repoFullName) => {
     const candidate = historyForRepo?.(repoFullName);
     const source = candidate && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST ? candidate : history;

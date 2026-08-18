@@ -31,6 +31,15 @@ SMTP. There is exactly one use case: `trackStars()`.
 Both are deliberate pins rather than dependency ranges, so bumping one means editing this section in the same
 commit.
 
+**`engines.node` is the development pin; the shipped runtime is `node24`** (`action.yml` `runs.using`, and
+`esbuild.config.ts` `target`). Those are different numbers on purpose. The gap is a trap: `@types/node` tracks
+the *development* version, and esbuild's `target` lowers syntax without shimming runtime APIs, so a `node:*`
+API that landed after 24.x type-checks, bundles, passes `pnpm validate` and then throws
+`TypeError: … is not a function` on a GitHub runner — in a user's workflow, not in CI, because `dist/` is
+committed and nothing executes the bundle. Today the tree only reaches for `node:fs`, `node:path` and
+`node:child_process.execFileSync`, all long-standing. Check a new `node:` API against Node 24, not against
+`engines.node`.
+
 ## Commands
 
 ```bash
