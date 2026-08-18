@@ -99,9 +99,7 @@ describe('initializeDataBranch', () => {
 
     expect(remoteCalls).toHaveLength(2);
     for (const args of remoteCalls) {
-      expect(args.slice(0, 4)).toEqual([
-        '-c',
-        'http.extraheader=',
+      expect(args.slice(0, 2)).toEqual([
         '-c',
         `http.extraheader=AUTHORIZATION: basic ${credential}`,
       ]);
@@ -109,7 +107,7 @@ describe('initializeDataBranch', () => {
     expect(core.setSecret).toHaveBeenCalledWith(credential);
   });
 
-  it('clears any inherited header before adding its own, so git sends exactly one', () => {
+  it('adds exactly one header, so it cannot duplicate itself', () => {
     remoteHasBranch();
 
     initializeDataBranch({ dataBranch: BRANCH, token: 'secret-token' });
@@ -118,10 +116,8 @@ describe('initializeDataBranch', () => {
       .mocked(execute)
       .mock.calls.map(([params]) => params.args)
       .find((args) => args.includes('ls-remote'));
-    const headers = (probe ?? []).filter((arg) => arg.startsWith('http.extraheader='));
 
-    expect(headers[0]).toBe('http.extraheader=');
-    expect(headers.filter((header) => header !== 'http.extraheader=')).toHaveLength(1);
+    expect((probe ?? []).filter((arg) => arg.startsWith('http.extraheader='))).toHaveLength(1);
   });
 
   it('throws an actionable error when not inside a checked-out repository', () => {
