@@ -1,6 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":dependencyDashboard", "customManagers:biomeVersions", ":enableVulnerabilityAlerts"],
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    "customManagers:biomeVersions",
+    ":enableVulnerabilityAlerts"
+  ],
   "labels": ["dependencies", "renovate", "bot"],
   "schedule": ["on the 1st and 15th day of the month"],
   "minimumReleaseAge": "4 days",

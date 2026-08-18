@@ -1,8 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { Config } from '@config/types';
 import { DEFAULTS } from '@config/defaults';
 import { toActionInputName } from '@config/loader';
+import type { Config } from '@config/types';
 import * as yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 
@@ -66,8 +66,8 @@ function walk(dir: string, keep: (filename: string) => boolean): string[] {
 const isMarkdown = (filename: string): boolean => filename.endsWith('.md');
 
 const DOCS = [
-  ...['CLAUDE.md', 'ARCHITECTURE.md', 'CONTEXT.md', 'README.md', 'examples/README.md'].filter((doc) =>
-    fs.existsSync(doc),
+  ...['CLAUDE.md', 'ARCHITECTURE.md', 'CONTEXT.md', 'README.md', 'examples/README.md'].filter(
+    (doc) => fs.existsSync(doc),
   ),
   ...walk('docs', isMarkdown),
   ...walk('src', (filename) => filename === 'CLAUDE.md'),
@@ -256,7 +256,9 @@ describe('action.yml is documented', () => {
     const silent = Object.keys(DEFAULTS)
       .filter((key) => key !== 'sendOnNoChanges')
       .map(toActionInputName)
-      .filter((name) => !(manifest.inputs[name]?.description ?? '').includes('(overrides config file)'));
+      .filter(
+        (name) => !(manifest.inputs[name]?.description ?? '').includes('(overrides config file)'),
+      );
 
     expect(silent).toEqual([]);
   });
@@ -291,7 +293,11 @@ describe('action.yml is documented', () => {
 const PINNED_INPUT = 'github-token';
 const NAME_ROW_PATTERN = /^\| `([a-z][a-z\d-]*)`/gm;
 const OPTION_HEADING_PATTERN = /^### `([a-z][a-z\d-]*)`$/gm;
-const ORDERED_SURFACES = ['README.md', 'docs/wiki/API-Reference.md', 'docs/wiki/Viewing-Reports.md'];
+const ORDERED_SURFACES = [
+  'README.md',
+  'docs/wiki/API-Reference.md',
+  'docs/wiki/Viewing-Reports.md',
+];
 const OPTION_GUIDE = 'docs/wiki/Configuration.md';
 const GROUP_HEADING_PATTERN = /^## /m;
 
@@ -423,7 +429,8 @@ describe('the root guide matches the manifests', () => {
     expect([...new Set(layerRows.map(({ alias }) => alias))].sort()).toEqual(declared);
 
     const mismatched = layerRows.filter(({ layer, alias }) => {
-      const target = tsconfig.compilerOptions.paths[alias] ?? tsconfig.compilerOptions.paths[`${alias}/*`];
+      const target =
+        tsconfig.compilerOptions.paths[alias] ?? tsconfig.compilerOptions.paths[`${alias}/*`];
 
       return !target?.[0]?.startsWith(`./src/${layer}`);
     });
@@ -695,10 +702,7 @@ describe('citations name symbols, not line numbers', () => {
 
 describe('the i18n key table matches the bundles', () => {
   it('lists every section and every key of en.json, and invents none', () => {
-    const bundle = JSON.parse(read('src/i18n/en.json')) as Record<
-      string,
-      Record<string, unknown>
-    >;
+    const bundle = JSON.parse(read('src/i18n/en.json')) as Record<string, Record<string, unknown>>;
     const documented = new Map(
       [...read(I18N_PAGE).matchAll(I18N_SECTION_ROW_PATTERN)].map(([, section, keys]) => [
         section,
@@ -729,7 +733,9 @@ describe('the i18n key table matches the bundles', () => {
 
           return expected.join() === listed.join()
             ? []
-            : [`${section}: documented [${listed.join(', ')}] but en.json has [${expected.join(', ')}]`];
+            : [
+                `${section}: documented [${listed.join(', ')}] but en.json has [${expected.join(', ')}]`,
+              ];
         }),
     ];
 
@@ -745,7 +751,9 @@ describe('the documented data-branch format matches the writer', () => {
       [...read(surface).matchAll(DOCUMENTED_VERSION_PATTERN)]
         .map(([, documented]) => documented)
         .filter((documented) => documented !== stamped)
-        .map((documented) => `${surface} shows version ${documented}, storage.ts writes ${stamped}`),
+        .map(
+          (documented) => `${surface} shows version ${documented}, storage.ts writes ${stamped}`,
+        ),
     );
 
     expect(stamped).toBeDefined();
@@ -758,8 +766,7 @@ describe('the source follows the named-parameter convention', () => {
     const sources = walk('src', (filename) => filename.endsWith('.ts')).filter(
       (file) => !file.endsWith('.test.ts') && !toPosix(file).startsWith('src/shared/tests/'),
     );
-    const declaration =
-      /(?:function\s+\w+|=)\s*\(\s*\w+\s*:\s*[^,()]+,\s*\w+\s*:/g;
+    const declaration = /(?:function\s+\w+|=)\s*\(\s*\w+\s*:\s*[^,()]+,\s*\w+\s*:/g;
     const offenders = sources.flatMap((file) =>
       [...read(file).matchAll(declaration)].map(
         (match) => `${toPosix(file)} -> ${match[0].replace(/\s+/g, ' ').trim()}`,
