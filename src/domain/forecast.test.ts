@@ -143,4 +143,53 @@ describe('computeForecast', () => {
       }
     }
   });
+
+  it('fits a Top Repository to its own history, not to the aggregate lead-in', () => {
+    const day = (index: number): string => new Date(Date.UTC(2020, 0, 1 + index)).toISOString();
+    const young = 'user/young';
+    const aggregate: History = {
+      snapshots: Array.from({ length: 6 }, (_, index) => ({
+        timestamp: day(index * 400),
+        totalStars: index === 5 ? 300 : 0,
+        repos: [{ fullName: young, name: 'young', owner: 'user', stars: index === 5 ? 300 : 0 }],
+      })),
+    };
+    const own: History = {
+      snapshots: Array.from({ length: 6 }, (_, index) => ({
+        timestamp: day(2000 + index * 12),
+        totalStars: index * 60,
+        repos: [{ fullName: young, name: 'young', owner: 'user', stars: index * 60 }],
+      })),
+    };
+
+    const fromAggregate = expectForecast(
+      computeForecast({ history: aggregate, topRepoNames: [young] }),
+    );
+    const fromOwn = expectForecast(
+      computeForecast({ history: aggregate, topRepoNames: [young], historyForRepo: () => own }),
+    );
+
+    const weekFour = (data: ForecastData): number => data.repos[0].forecasts[0].points[3].predicted;
+
+    expect(weekFour(fromAggregate)).toBeLessThan(320);
+    expect(weekFour(fromOwn)).toBeGreaterThan(400);
+  });
+
+  it('falls back to the aggregate when a repository has too little history of its own', () => {
+    const history: History = {
+      snapshots: [
+        { timestamp: '2026-01-01', totalStars: 10, repos: [] },
+        { timestamp: '2026-01-08', totalStars: 20, repos: [] },
+        { timestamp: '2026-01-15', totalStars: 30, repos: [] },
+      ],
+    };
+    const thin: History = { snapshots: [history.snapshots[0], history.snapshots[1]] };
+
+    const withFallback = expectForecast(
+      computeForecast({ history, topRepoNames: ['user/a'], historyForRepo: () => thin }),
+    );
+    const withoutHook = expectForecast(computeForecast({ history, topRepoNames: ['user/a'] }));
+
+    expect(withFallback.repos[0]).toEqual(withoutHook.repos[0]);
+  });
 });

@@ -70,14 +70,10 @@ export function buildStargazerMap({
   repoStargazers,
   previousMap,
 }: BuildStargazerMapParams): StargazerMap {
-  const map: StargazerMap = {};
+  const map: StargazerMap = { ...previousMap };
 
   for (const repo of repoStargazers) {
-    if (repo.sampled || repo.incomplete) {
-      const previousLogins = previousMap[repo.repoFullName];
-      if (previousLogins) map[repo.repoFullName] = previousLogins;
-      continue;
-    }
+    if (repo.sampled || repo.incomplete) continue;
 
     map[repo.repoFullName] = repo.stargazers.map((stargazer) => stargazer.login);
   }

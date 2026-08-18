@@ -75,6 +75,11 @@ lines.
   account for). This folder fetches the pages it is handed and reports what came back. That is why the page
   spread, the rounding collisions and the ceiling clamp are asserted in `sampling.test.ts` against plain
   numbers instead of through a fake octokit.
+- **The one `coveredStars` this folder computes itself is not sampling arithmetic.** A *full* fetch that dies
+  part-way reports `stargazers.length` — the exact number it holds — rather than
+  `coveredStars({ lastFetchedPage, totalStars })`, which estimates from a page count and would understate a
+  partial page. The two formulas answer the same question for different situations and are meant to differ;
+  only the sampled path goes through `@domain`.
 - `sampled` is decided *before* the request, so it stays `true` on failure. The threshold comparison is
   strict: 1500 stars with threshold 1500 is not sampled. A sampled repo loses new-stargazer detection
   downstream ([ADR 0008](../../docs/adr/0008-sampled-repositories-are-excluded-from-stargazer-diffing.md)).

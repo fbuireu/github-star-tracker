@@ -142,7 +142,7 @@ inputs:
     default: ''
 
   locale:
-    description: 'Language for reports and emails: en, es, ca, it. Affects wording and date formatting; compact star counts (1.5K, 2.5M) stay English. (default en) (overrides config file)'
+    description: 'Language for reports and emails: en, es, ca, it. Affects wording, date formatting and compact star counts (1.5K / 1,2 mil). (default en) (overrides config file)'
     required: false
     default: ''
 

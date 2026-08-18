@@ -142,3 +142,19 @@ describe('buildAxisLabels', () => {
     expect(labels[0]).toContain('Mar');
   });
 });
+
+describe('unparseable timestamps', () => {
+  it('formatDate returns an empty string, so the caller can drop the label', () => {
+    expect(formatDate({ timestamp: 'not-a-date', locale: 'en' })).toBe('');
+  });
+
+  it('buildAxisLabels emits an empty label for a tick that must not render', () => {
+    const labels = buildAxisLabels({
+      timestamps: ['2026-01-01T00:00:00Z', 'not-a-date'],
+      locale: 'en',
+    });
+
+    expect(labels).toHaveLength(2);
+    expect(labels[1]).toBe('');
+  });
+});

@@ -137,4 +137,16 @@ describe('computeVelocity', () => {
 
     expect(result?.growthPercent).toBeNull();
   });
+
+  it('returns null when the newest snapshot is the unparseable one', () => {
+    const history: History = {
+      snapshots: [
+        { timestamp: '2026-01-01T00:00:00Z', totalStars: 100, repos: [] },
+        { timestamp: '2026-01-11T00:00:00Z', totalStars: 200, repos: [] },
+        { timestamp: 'not-a-date', totalStars: 300, repos: [] },
+      ],
+    };
+
+    expect(computeVelocity({ history })).toBeNull();
+  });
 });

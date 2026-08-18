@@ -185,4 +185,21 @@ describe('buildStargazerMap', () => {
 
     expect(map).toEqual({});
   });
+
+  it('keeps a repository that left the Tracked Set, so its return is not a fabricated spike', () => {
+    const repoStargazers = [
+      {
+        repoFullName: 'user/still-tracked',
+        stargazers: [{ login: 'octocat', starredAt: '2026-01-01' }],
+      },
+    ];
+    const previousMap = {
+      'user/still-tracked': ['octocat'],
+      'user/dropped-below-min-stars': ['defunkt'],
+    };
+
+    const map = buildStargazerMap({ repoStargazers, previousMap });
+
+    expect(map['user/dropped-below-min-stars']).toEqual(['defunkt']);
+  });
 });

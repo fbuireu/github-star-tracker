@@ -33,6 +33,7 @@ export interface ForecastData {
 interface ComputeForecastParams {
   history: History;
   topRepoNames: string[];
+  historyForRepo?: (repoFullName: string) => History;
 }
 
 function clampPrediction(value: number): number {
@@ -67,21 +68,26 @@ function forecastFromSeries(points: SeriesPoint[]): ForecastResult[] {
 export function computeForecast({
   history,
   topRepoNames,
+  historyForRepo,
 }: ComputeForecastParams): ForecastData | null {
   if (history.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) {
     return null;
   }
 
-  const days = calendarDays(history);
-  const toSeries = (values: number[]): SeriesPoint[] =>
+  const toSeries = (values: number[], days: number[]): SeriesPoint[] =>
     values.map((value, index) => ({ day: days[index], value }));
 
+  const aggregateDays = calendarDays(history);
   const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
-  const aggregateForecasts = forecastFromSeries(toSeries(totalValues));
+  const aggregateForecasts = forecastFromSeries(toSeries(totalValues, aggregateDays));
   const repos: RepoForecast[] = topRepoNames.map((repoFullName) => {
-    const values = repoStarSeries({ snapshots: history.snapshots, repoFullName });
+    const candidate = historyForRepo?.(repoFullName);
+    const source =
+      candidate && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST ? candidate : history;
+    const days = source === history ? aggregateDays : calendarDays(source);
+    const values = repoStarSeries({ snapshots: source.snapshots, repoFullName });
 
-    return { repoFullName, forecasts: forecastFromSeries(toSeries(values)) };
+    return { repoFullName, forecasts: forecastFromSeries(toSeries(values, days)) };
   });
 
   return { aggregate: { forecasts: aggregateForecasts }, repos };

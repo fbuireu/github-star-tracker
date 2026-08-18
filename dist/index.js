@@ -40693,18 +40693,22 @@ function forecastFromSeries(points) {
 }
 function computeForecast({
   history,
-  topRepoNames
+  topRepoNames,
+  historyForRepo
 }) {
   if (history.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) {
     return null;
   }
-  const days = calendarDays(history);
-  const toSeries = (values) => values.map((value, index) => ({ day: days[index], value }));
+  const toSeries = (values, days) => values.map((value, index) => ({ day: days[index], value }));
+  const aggregateDays = calendarDays(history);
   const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
-  const aggregateForecasts = forecastFromSeries(toSeries(totalValues));
+  const aggregateForecasts = forecastFromSeries(toSeries(totalValues, aggregateDays));
   const repos = topRepoNames.map((repoFullName) => {
-    const values = repoStarSeries({ snapshots: history.snapshots, repoFullName });
-    return { repoFullName, forecasts: forecastFromSeries(toSeries(values)) };
+    const candidate = historyForRepo?.(repoFullName);
+    const source = candidate && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST ? candidate : history;
+    const days = source === history ? aggregateDays : calendarDays(source);
+    const values = repoStarSeries({ snapshots: source.snapshots, repoFullName });
+    return { repoFullName, forecasts: forecastFromSeries(toSeries(values, days)) };
   });
   return { aggregate: { forecasts: aggregateForecasts }, repos };
 }
@@ -40872,13 +40876,9 @@ function buildStargazerMap({
   repoStargazers,
   previousMap
 }) {
-  const map = {};
+  const map = { ...previousMap };
   for (const repo of repoStargazers) {
-    if (repo.sampled || repo.incomplete) {
-      const previousLogins = previousMap[repo.repoFullName];
-      if (previousLogins) map[repo.repoFullName] = previousLogins;
-      continue;
-    }
+    if (repo.sampled || repo.incomplete) continue;
     map[repo.repoFullName] = repo.stargazers.map((stargazer) => stargazer.login);
   }
   return map;
@@ -43719,7 +43719,8 @@ async function trackStars() {
         });
         const forecastData = computeForecast({
           history: chartHistories.aggregate,
-          topRepoNames
+          topRepoNames,
+          historyForRepo: chartHistories.forRepo
         });
         const rendered = renderRun({
           config,
