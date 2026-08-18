@@ -43699,7 +43699,13 @@ async function trackStars() {
     const repos = await getRepos({ octokit, config });
     if (repos.length === 0) {
       warning("No repositories matched the configured filters");
-      setOutputs({ summary: EMPTY_SUMMARY, rendered: renderEmptyRun(config), newStargazers: 0 });
+      const empty = renderEmptyRun(config);
+      setOutputs({
+        summary: EMPTY_SUMMARY,
+        rendered: empty,
+        htmlReportPath: writeHtmlReport({ htmlReport: empty.html }),
+        newStargazers: 0
+      });
       return;
     }
     await withDataBranch({
@@ -43795,6 +43801,7 @@ async function trackStars() {
           history: updatedHistory,
           totalStars: summary2.totalStars
         });
+        const htmlReportPath = writeHtmlReport({ htmlReport: rendered.html });
         branch.publish({
           history: notification.historyToPersist,
           stargazerMap,
@@ -43807,6 +43814,7 @@ async function trackStars() {
         setOutputs({
           summary: summary2,
           rendered,
+          htmlReportPath,
           shouldNotify: notification.shouldNotify,
           notificationSent: notification.notificationSent,
           newStargazers: stargazerDiff?.totalNew ?? 0
@@ -43822,13 +43830,14 @@ async function trackStars() {
 function setOutputs({
   summary: summary2,
   rendered,
+  htmlReportPath,
   shouldNotify: shouldNotify2 = false,
   notificationSent = false,
   newStargazers
 }) {
   setOutput("report", rendered.markdown);
   setOutput("report-html", rendered.html);
-  setOutput("report-html-path", writeHtmlReport({ htmlReport: rendered.html }));
+  setOutput("report-html-path", htmlReportPath);
   setOutput("report-csv", rendered.csv);
   setOutput("total-stars", String(summary2.totalStars));
   setOutput("stars-changed", String(summary2.changed));

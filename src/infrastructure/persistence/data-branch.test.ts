@@ -106,9 +106,10 @@ describe('withDataBranch', () => {
     expect(cleanup).toHaveBeenCalledWith(DATA_DIR);
   });
 
-  it('does not open a worktree the caller never asked to publish into', async () => {
+  it('commits nothing when the run never publishes, though the worktree is always opened', async () => {
     await withDataBranch({ ...BASE, run: async () => undefined });
 
+    expect(initializeDataBranch).toHaveBeenCalled();
     expect(commitAndPush).not.toHaveBeenCalled();
   });
 });

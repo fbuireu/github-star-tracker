@@ -15,6 +15,7 @@ import { fetchAllStargazers } from '@infrastructure/github/stargazers';
 import { getEmailConfig, sendEmail } from '@infrastructure/notification/email';
 import type { DataBranch, PublishedArtefacts } from '@infrastructure/persistence/data-branch';
 import { withDataBranch } from '@infrastructure/persistence/data-branch';
+import { writeHtmlReport } from '@infrastructure/persistence/storage';
 import { retry } from '@octokit/plugin-retry';
 import { generateBadge } from '@presentation/badge';
 import type { ChartRequest } from '@presentation/chart-spec';
@@ -269,6 +270,22 @@ describe('trackStars', () => {
     });
   });
   describe('outputs', () => {
+    it('writes the HTML report before the push, so a failed write cannot follow a publish', async () => {
+      const order: string[] = [];
+
+      vi.mocked(writeHtmlReport).mockImplementation(() => {
+        order.push('write');
+        return '/tmp/star-tracker-report.html';
+      });
+      branch.publish.mockImplementation(() => {
+        order.push('publish');
+      });
+
+      await trackStars();
+
+      expect(order).toEqual(['write', 'publish']);
+    });
+
     it('emits exactly the outputs action.yml declares, and no others', async () => {
       const manifest = yaml.load(fs.readFileSync('action.yml', 'utf8')) as {
         outputs: Record<string, unknown>;

@@ -92,9 +92,12 @@ fetch is gated on `includeCharts || trackStargazers`.
 
 ## Gotchas
 
-- **`setOutputs` performs a filesystem write.** `writeHtmlReport` targets `RUNNER_TEMP || cwd`, i.e. *outside*
-  the worktree, so it happens on read-only runs and on the empty-repos path too, and the file survives
-  `cleanup`. Do not assume "setting outputs" is side-effect free.
+- **`setOutputs` sets outputs and nothing else; the caller writes the HTML report.** `writeHtmlReport`
+  targets `RUNNER_TEMP || cwd`, i.e. *outside* the worktree, so it happens on read-only runs and on the
+  empty-repos path too, and the file survives `cleanup`. It used to run *inside* `setOutputs`, which put a
+  filesystem write after `branch.publish` — a failing write then ended a run that had already committed,
+  pushed and emailed, with `setFailed` and most outputs unset, and a re-run would append a second Snapshot
+  for the same observation. It now runs **before** `publish`, and `tracker.test.ts` pins that order.
 - `getEmailConfig` reads the SMTP inputs itself, inside `@infrastructure/notification/email`; the tracker
   never reads them. A missing `smtp-host` returns `null` and silently skips email.
 - `withDataBranch` throws when the data branch is absent from the remote **and** the run is read-only. That

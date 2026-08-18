@@ -37,7 +37,14 @@ export async function trackStars(): Promise<void> {
     if (repos.length === 0) {
       core.warning('No repositories matched the configured filters');
 
-      setOutputs({ summary: EMPTY_SUMMARY, rendered: renderEmptyRun(config), newStargazers: 0 });
+      const empty = renderEmptyRun(config);
+
+      setOutputs({
+        summary: EMPTY_SUMMARY,
+        rendered: empty,
+        htmlReportPath: writeHtmlReport({ htmlReport: empty.html }),
+        newStargazers: 0,
+      });
       return;
     }
 
@@ -153,6 +160,8 @@ export async function trackStars(): Promise<void> {
           totalStars: summary.totalStars,
         });
 
+        const htmlReportPath = writeHtmlReport({ htmlReport: rendered.html });
+
         branch.publish({
           history: notification.historyToPersist,
           stargazerMap,
@@ -166,6 +175,7 @@ export async function trackStars(): Promise<void> {
         setOutputs({
           summary,
           rendered,
+          htmlReportPath,
           shouldNotify: notification.shouldNotify,
           notificationSent: notification.notificationSent,
           newStargazers: stargazerDiff?.totalNew ?? 0,
@@ -183,6 +193,7 @@ export async function trackStars(): Promise<void> {
 interface SetOutputsParams {
   summary: Summary;
   rendered: RenderedRun;
+  htmlReportPath: string;
   shouldNotify?: boolean;
   notificationSent?: boolean;
   newStargazers: number;
@@ -191,13 +202,14 @@ interface SetOutputsParams {
 function setOutputs({
   summary,
   rendered,
+  htmlReportPath,
   shouldNotify = false,
   notificationSent = false,
   newStargazers,
 }: SetOutputsParams): void {
   core.setOutput('report', rendered.markdown);
   core.setOutput('report-html', rendered.html);
-  core.setOutput('report-html-path', writeHtmlReport({ htmlReport: rendered.html }));
+  core.setOutput('report-html-path', htmlReportPath);
   core.setOutput('report-csv', rendered.csv);
   core.setOutput('total-stars', String(summary.totalStars));
   core.setOutput('stars-changed', String(summary.changed));
