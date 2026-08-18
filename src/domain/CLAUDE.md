@@ -104,6 +104,15 @@ snapshot everything else is diffed against.
 - Projections anchor on the **last observed value**, not the fitted one:
   `predicted = last.value + rate * weekOffset * 7`. Changing this changes every chart. Every prediction is
   clamped to a non-negative integer.
+- **Each Top Repository is fitted to its own History, and the rows need not share a time base.**
+  `historyForRepo` is the optional hook `@application` fills with `chartHistories.forRepo`; a repository
+  whose own History is shorter than `MIN_SNAPSHOTS_FOR_FORECAST` falls back to the aggregate. Because
+  `resolveChartHistory` itself falls back to the Stored History, one row can be fitted over a reconstructed
+  bucket cadence while its neighbour is fitted over the per-Run one. That is deliberate: `days` always comes
+  from the same History as `values`, so every row is internally coherent, and a row that is right for its own
+  repository beats a table that is uniformly wrong. Fitting them all to the aggregate gave a young repository
+  the long flat lead-in the aggregate's earliest edge creates, and reported it as static while the Chart
+  directly above it climbed.
 - **All rate arithmetic lives in `src/domain/growth.ts`**, and both consumers cross it: `calendarDays`
   converts a History to day offsets, `latestRateInterval` finds the newest usable pair, `weightedDailyRate`
   is the Forecast Method that weights recent movement, and `fitTrend` is the least-squares one. The
