@@ -156,6 +156,12 @@ Everything else here is behind it.
   Downstream domain code never null-checks it.
 - **Invalid JSON throws and does not fall back.** Silently resetting corrupt history would destroy a user's
   tracking record — keep it fatal. `readStargazers` does no normalization at all; missing file → `{}`.
+- **So does JSON that parses but is not an object.** That invariant used to cover only *unparseable* text.
+  A `stars-data.json` holding `null`, `[]`, `5` or a string destructured to `{}`, normalized to
+  `{ snapshots: [] }`, and the Run then treated a populated Data Branch as a first Run — appending one
+  Snapshot and **pushing**, discarding the record, while reporting success. `assertJsonObject` makes the
+  stated invariant true. A `snapshots` key that is not an array still normalizes to `[]`; that one is
+  deliberate and pinned, because the surrounding object is intact and `starsAtLastNotification` must survive.
 - **`stars-data.json` carries a `version` and this folder owns it end to end**
   ([ADR 0015](../../docs/adr/0015-the-stored-history-declares-its-format-version.md)). `writeHistory` stamps
   `DATA_FORMAT_VERSION` as the first key; `readHistory` validates it through `assertReadableFormat` and

@@ -59,11 +59,25 @@ function assertReadableFormat(version: unknown): void {
   );
 }
 
+function assertJsonObject(parsed: unknown): asserts parsed is Record<string, unknown> {
+  if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    return;
+  }
+
+  throw new Error(
+    `${DATA_FILES.history} on the data branch is valid JSON but not an object (found ${Array.isArray(parsed) ? 'an array' : JSON.stringify(parsed)}). Reading it as an empty history would discard your tracking record, so this run stops instead. Fix or delete the file on that branch and re-run.`,
+  );
+}
+
 export function readHistory(dataDir: string): History {
-  const { version, ...raw } = readJsonFile<Partial<History> & { version?: unknown }>({
+  const parsed = readJsonFile<unknown>({
     filePath: path.join(dataDir, DATA_FILES.history),
     fallback: {},
   });
+
+  assertJsonObject(parsed);
+
+  const { version, ...raw } = parsed as Partial<History> & { version?: unknown };
 
   assertReadableFormat(version);
 

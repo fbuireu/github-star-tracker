@@ -94,6 +94,19 @@ describe('readHistory', () => {
     expect(() => readHistory('/data')).toThrow(/stars-data\.json on the data branch/);
   });
 
+  it.each([
+    ['null', 'null'],
+    ['an array', '[]'],
+    ['an array of snapshots', '[{"timestamp":"2026-01-01","totalStars":1,"repos":[]}]'],
+    ['a number', '5'],
+    ['a string', '"snapshots"'],
+  ])('refuses %s rather than silently restarting the tracking record', (_label, contents) => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.readFileSync).mockReturnValue(contents);
+
+    expect(() => readHistory('/data')).toThrow(/valid JSON but not an object/);
+  });
+
   it('accepts a file written by this format version', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     vi.mocked(fs.readFileSync).mockReturnValue('{"version":1,"snapshots":[]}');

@@ -41388,11 +41388,21 @@ function assertReadableFormat(version) {
     `${DATA_FILES.history} on the data branch declares format version ${JSON.stringify(version)}, which this version of the action does not understand (it writes version ${DATA_FORMAT_VERSION}). Upgrade the action, or point data-branch at a branch this version wrote.`
   );
 }
+function assertJsonObject(parsed) {
+  if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+    return;
+  }
+  throw new Error(
+    `${DATA_FILES.history} on the data branch is valid JSON but not an object (found ${Array.isArray(parsed) ? "an array" : JSON.stringify(parsed)}). Reading it as an empty history would discard your tracking record, so this run stops instead. Fix or delete the file on that branch and re-run.`
+  );
+}
 function readHistory(dataDir) {
-  const { version, ...raw } = readJsonFile({
+  const parsed = readJsonFile({
     filePath: path3.join(dataDir, DATA_FILES.history),
     fallback: {}
   });
+  assertJsonObject(parsed);
+  const { version, ...raw } = parsed;
   assertReadableFormat(version);
   return { ...raw, snapshots: Array.isArray(raw.snapshots) ? raw.snapshots : [] };
 }
