@@ -42138,17 +42138,20 @@ function colorSchemeFor(theme) {
 function prepareReportData({
   results,
   previousTimestamp,
-  locale
+  locale,
+  now = /* @__PURE__ */ new Date()
 }) {
   const { repos } = results;
   const t = getTranslations(locale);
+  const generatedAt = now.toISOString();
   return {
     activeRepos: repos.filter((repo) => !repo.isRemoved),
     newRepos: repos.filter((repo) => repo.isNew),
     removedRepos: repos.filter((repo) => repo.isRemoved),
     sorted: rankByStars(repos),
-    now: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-    prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun
+    now: generatedAt.split("T")[0],
+    prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun,
+    generatedAt
   };
 }
 function perRepoChartFile(repoFullName) {
@@ -43075,14 +43078,23 @@ function buildReportModel(params) {
     previousTimestamp,
     history = null,
     velocityHistory = null,
-    forecastData = null
+    forecastData = null,
+    now
   } = params;
   const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config;
   const t = getTranslations(locale);
-  const { sorted, newRepos, removedRepos, now, prev } = prepareReportData({
+  const {
+    sorted,
+    newRepos,
+    removedRepos,
+    now: reportDate,
+    prev,
+    generatedAt
+  } = prepareReportData({
     results,
     previousTimestamp,
-    locale
+    locale,
+    now
   });
   const hasChartHistory = includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
   const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
@@ -43090,8 +43102,9 @@ function buildReportModel(params) {
   const chartHistory = hasChartHistory ? history : null;
   return {
     summary: results.summary,
-    now,
+    now: reportDate,
     prev,
+    generatedAt,
     isFirstRun: prev === t.report.firstRun,
     sorted,
     newRepos,
@@ -43331,7 +43344,7 @@ function generateHtmlReport({ model, config }) {
   ${velocitySection}
 
   <div style="margin-top:24px;padding-top:16px;border-top:1px solid ${palette.cellBorder};text-align:center;color:${palette.neutral};font-size:12px;">
-    ${interpolate({ template: t.footer.generated, params: { project: `<a href="https://github.com/fbuireu/github-star-tracker" style="color:${palette.link};">GitHub Star Tracker</a>`, date: (/* @__PURE__ */ new Date()).toISOString() } })}
+    ${interpolate({ template: t.footer.generated, params: { project: `<a href="https://github.com/fbuireu/github-star-tracker" style="color:${palette.link};">GitHub Star Tracker</a>`, date: model.generatedAt } })}
     <br>
     ${interpolate({ template: t.footer.madeBy, params: { author: `<a href="https://github.com/fbuireu" style="color:${palette.link};">Ferran Buireu</a>` } })}
   </div>
@@ -43538,7 +43551,7 @@ function generateMarkdownReport({ model, config }) {
   const velocitySection = !model.velocityIsNested && velocityLines.length > 0 ? [`## ${SECTION_ICON.velocity} ${t.velocity.sectionTitle}`, "", ...velocityLines, ""] : [];
   const footer = [
     "---",
-    `*${interpolate({ template: t.footer.generated, params: { project: "[GitHub Star Tracker](https://github.com/fbuireu/github-star-tracker)", date: (/* @__PURE__ */ new Date()).toISOString() } })}*`,
+    `*${interpolate({ template: t.footer.generated, params: { project: "[GitHub Star Tracker](https://github.com/fbuireu/github-star-tracker)", date: model.generatedAt } })}*`,
     `<div align="center">`,
     "",
     `*${interpolate({ template: t.footer.madeBy, params: { author: "[Ferran Buireu](https://github.com/fbuireu)" } })}*`,
@@ -43601,7 +43614,8 @@ function renderRun({
   chartHistories,
   storedHistory,
   stargazerDiff,
-  forecastData
+  forecastData,
+  now = /* @__PURE__ */ new Date()
 }) {
   const reportParams = {
     config,
@@ -43610,7 +43624,8 @@ function renderRun({
     history: chartHistories.aggregate,
     velocityHistory: storedHistory,
     stargazerDiff,
-    forecastData
+    forecastData,
+    now
   };
   const model = buildReportModel(reportParams);
   const rendering = { model, config };

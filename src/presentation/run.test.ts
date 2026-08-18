@@ -66,6 +66,34 @@ describe('renderRun', () => {
     expect(dateIn(rendered.markdown)).toBe(dateIn(rendered.html));
   });
 
+  it('stamps both footers from the same clock read', () => {
+    const rendered = render();
+    const stampIn = (report: string): string | undefined =>
+      report.match(/\d{4}-\d{2}-\d{2}T[\d:.]+Z/)?.[0];
+
+    expect(stampIn(rendered.markdown)).toBeDefined();
+    expect(stampIn(rendered.markdown)).toBe(stampIn(rendered.html));
+  });
+
+  it('dates the header and the footer from that one read, so they cannot straddle midnight', () => {
+    const now = new Date('2026-03-04T23:59:59.999Z');
+    const rendered = renderRun({
+      config: makeConfig({ includeCharts: true, topRepos: 2 }),
+      results: makeComparisonResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      chartHistories: chartHistories(),
+      storedHistory: STORED,
+      forecastData: null,
+      now,
+    });
+
+    for (const report of [rendered.markdown, rendered.html]) {
+      expect(report).toContain('2026-03-04T23:59:59.999Z');
+      expect(report).toContain('2026-03-04');
+      expect(report).not.toContain('2026-03-05');
+    }
+  });
+
   it('measures Velocity from the stored history, never from the chart history', () => {
     const config = makeConfig({ includeCharts: true, velocityMetrics: true });
     const fromStored = renderRun({

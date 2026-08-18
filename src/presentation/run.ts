@@ -63,6 +63,7 @@ interface RenderRunParams {
   storedHistory: History;
   stargazerDiff?: StargazerDiffResult | null;
   forecastData: ForecastData | null;
+  now?: Date;
 }
 
 export function renderRun({
@@ -73,6 +74,7 @@ export function renderRun({
   storedHistory,
   stargazerDiff,
   forecastData,
+  now = new Date(),
 }: RenderRunParams): RenderedRun {
   const reportParams: ReportParams = {
     config,
@@ -82,6 +84,7 @@ export function renderRun({
     velocityHistory: storedHistory,
     stargazerDiff,
     forecastData,
+    now,
   };
 
   const model = buildReportModel(reportParams);

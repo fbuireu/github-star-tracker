@@ -17,6 +17,7 @@ export interface ReportParams {
   velocityHistory?: History | null;
   stargazerDiff?: StargazerDiffResult | null;
   forecastData?: ForecastData | null;
+  now?: Date;
 }
 
 export interface RenderReportParams {
@@ -65,29 +66,34 @@ export interface ReportData {
   sorted: RepoResult[];
   now: string;
   prev: string;
+  generatedAt: string;
 }
 
 export interface PrepareReportDataParams {
   results: ComparisonResults;
   previousTimestamp: string | null;
   locale: Locale;
+  now?: Date;
 }
 
 export function prepareReportData({
   results,
   previousTimestamp,
   locale,
+  now = new Date(),
 }: PrepareReportDataParams): ReportData {
   const { repos } = results;
   const t = getTranslations(locale);
+  const generatedAt = now.toISOString();
 
   return {
     activeRepos: repos.filter((repo) => !repo.isRemoved),
     newRepos: repos.filter((repo) => repo.isNew),
     removedRepos: repos.filter((repo) => repo.isRemoved),
     sorted: rankByStars(repos),
-    now: new Date().toISOString().split('T')[0],
+    now: generatedAt.split('T')[0],
     prev: previousTimestamp ? previousTimestamp.split('T')[0] : t.report.firstRun,
+    generatedAt,
   };
 }
 

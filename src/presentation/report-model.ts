@@ -38,6 +38,7 @@ export interface ReportModel {
   summary: Summary;
   now: string;
   prev: string;
+  generatedAt: string;
   isFirstRun: boolean;
   sorted: RepoResult[];
   newRepos: RepoResult[];
@@ -99,14 +100,23 @@ export function buildReportModel(params: ReportParams): ReportModel {
     history = null,
     velocityHistory = null,
     forecastData = null,
+    now,
   } = params;
   const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config;
 
   const t = getTranslations(locale);
-  const { sorted, newRepos, removedRepos, now, prev } = prepareReportData({
+  const {
+    sorted,
+    newRepos,
+    removedRepos,
+    now: reportDate,
+    prev,
+    generatedAt,
+  } = prepareReportData({
     results,
     previousTimestamp,
     locale,
+    now,
   });
   const hasChartHistory =
     includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
@@ -120,8 +130,9 @@ export function buildReportModel(params: ReportParams): ReportModel {
 
   return {
     summary: results.summary,
-    now,
+    now: reportDate,
     prev,
+    generatedAt,
     isFirstRun: prev === t.report.firstRun,
     sorted,
     newRepos,

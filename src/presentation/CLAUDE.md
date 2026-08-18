@@ -95,8 +95,13 @@ type `Omit`s the field so the caller cannot believe otherwise. `maxPoints` is li
 assembling the params for each.
 
 - **It builds the `ReportModel` once and hands the same one to both dialects.** They used to build their
-  own, and `prepareReportData` reads `new Date()` — so a run crossing midnight could date the markdown
+  own, and `prepareReportData` read `new Date()` — so a run crossing midnight could date the markdown
   Report and the HTML Report differently. One model also means one Top Repositories list.
+- **`now` is injectable and there is exactly one clock read per render.** It defaults to `new Date()` here,
+  reaches `prepareReportData`, and yields both `model.now` (the `YYYY-MM-DD` the header shows) and
+  `model.generatedAt` (the ISO stamp both footers show). The two dialects used to call `new Date()` in their
+  own footers, which left the *same* midnight hazard the bullet above describes open one layer down — the
+  header agreed and the footers did not. Never read the clock in a renderer; take it off the model.
 - **`topRepoNames` is not a parameter.** `renderRun` derives it from `model.topRepos`, so the per-repo SVGs
   `charts.ts` writes and the `./charts/<file>` links `markdown.ts` emits are the same set by construction.
   Passing it in left a caller able to chart one set and link another — broken images, silently.
@@ -180,7 +185,8 @@ its spec — assert a section rule there, not through one dialect's markup.
 
 ## Invariants & rules
 
-- **Purity.** The only clock reads are `new Date().toISOString()` for the report date and footer. The one
+- **Purity.** The only clock read on the report path is `renderRun`'s injectable `now`, which both the
+  report date and the footer stamp derive from; `resolveChartHistories` takes its own. The one
   piece of date arithmetic is the range cutoff, which is **relative to the newest snapshot, not to
   `Date.now()`**. If that timestamp is unparseable the series is returned unfiltered.
 - **`< 2` snapshots = `null`.** Every generator returns `null` rather than an empty chart. Comparison charts
