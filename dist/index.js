@@ -40448,6 +40448,14 @@ function loadConfig() {
 }
 
 // src/domain/comparison.ts
+var EMPTY_SUMMARY = {
+  totalStars: 0,
+  totalPrevious: 0,
+  totalDelta: 0,
+  newStars: 0,
+  lostStars: 0,
+  changed: false
+};
 function compareStars({
   currentRepos,
   previousSnapshot
@@ -43574,14 +43582,6 @@ function emailSubject({ locale, summary: summary2 }) {
     }
   });
 }
-var EMPTY_SUMMARY = {
-  totalStars: 0,
-  totalPrevious: 0,
-  totalDelta: 0,
-  newStars: 0,
-  lostStars: 0,
-  changed: false
-};
 function renderEmptyRun(config) {
   const t = getTranslations(config.locale);
   const results = { repos: [], summary: EMPTY_SUMMARY };
@@ -43640,7 +43640,7 @@ async function trackStars() {
     const repos = await getRepos({ octokit, config });
     if (repos.length === 0) {
       warning("No repositories matched the configured filters");
-      setOutputs({ summary: EMPTY_SUMMARY2, rendered: renderEmptyRun(config), newStargazers: 0 });
+      setOutputs({ summary: EMPTY_SUMMARY, rendered: renderEmptyRun(config), newStargazers: 0 });
       return;
     }
     await withDataBranch({
@@ -43759,14 +43759,6 @@ async function trackStars() {
     if (err.stack) debug(err.stack);
   }
 }
-var EMPTY_SUMMARY2 = {
-  totalStars: 0,
-  totalPrevious: 0,
-  totalDelta: 0,
-  newStars: 0,
-  lostStars: 0,
-  changed: false
-};
 function setOutputs({
   summary: summary2,
   rendered,

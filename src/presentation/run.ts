@@ -1,4 +1,5 @@
 import type { Config } from '@config/types';
+import { EMPTY_SUMMARY } from '@domain/comparison';
 import type { ForecastData } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
 import type { StargazerDiffResult } from '@domain/stargazers';
@@ -39,15 +40,6 @@ function emailSubject({ locale, summary }: EmailSubjectParams): string {
     },
   });
 }
-
-const EMPTY_SUMMARY: Summary = {
-  totalStars: 0,
-  totalPrevious: 0,
-  totalDelta: 0,
-  newStars: 0,
-  lostStars: 0,
-  changed: false,
-};
 
 export function renderEmptyRun(config: Config): RenderedRun {
   const t = getTranslations(config.locale);

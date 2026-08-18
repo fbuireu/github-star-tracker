@@ -5,6 +5,15 @@ interface CompareStarsParams {
   previousSnapshot: Snapshot | null;
 }
 
+export const EMPTY_SUMMARY: Summary = {
+  totalStars: 0,
+  totalPrevious: 0,
+  totalDelta: 0,
+  newStars: 0,
+  lostStars: 0,
+  changed: false,
+};
+
 export function compareStars({
   currentRepos,
   previousSnapshot,

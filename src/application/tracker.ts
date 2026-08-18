@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { loadConfig } from '@config/loader';
-import { topRepositories } from '@domain/comparison';
+import { EMPTY_SUMMARY, topRepositories } from '@domain/comparison';
 import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
 import { measureRun } from '@domain/measurement';
@@ -178,15 +178,6 @@ export async function trackStars(): Promise<void> {
     if (err.stack) core.debug(err.stack);
   }
 }
-
-const EMPTY_SUMMARY: Summary = {
-  totalStars: 0,
-  totalPrevious: 0,
-  totalDelta: 0,
-  newStars: 0,
-  lostStars: 0,
-  changed: false,
-};
 
 interface SetOutputsParams {
   summary: Summary;
