@@ -7,7 +7,6 @@ import * as yaml from 'js-yaml';
 import { DEFAULTS } from './defaults';
 import {
   parseBool,
-  parseDecimal,
   parseFileBool,
   parseFileHexColor,
   parseHexColor,
@@ -15,6 +14,7 @@ import {
   parseNonNegativeNumber,
   parseNotificationThreshold,
   parseNumberList,
+  parsePositiveDecimal,
   parsePositiveNumber,
   toStringList,
 } from './parsers';
@@ -79,6 +79,10 @@ function toDelimited({ key, delimiter }: ToDelimitedParams): string {
   );
 }
 
+export function toActionInputName(key: string): string {
+  return toDelimited({ key, delimiter: '-' });
+}
+
 function formatChoices(choices: readonly string[]): string {
   const quoted = choices.map((choice) => `"${choice}"`);
 
@@ -129,26 +133,23 @@ type FieldResolver<T> = (context: FieldContext) => T | undefined;
 interface FieldSource<T> {
   fromInput: (value: string) => T | undefined;
   fromFile: (value: unknown) => T | undefined;
+  namesFallback?: boolean;
 }
 
-function scalarField<T>({ fromInput, fromFile }: FieldSource<T>): FieldResolver<T> {
-  return ({ input, inputName, fileValue }) => {
-    const parsed = fromInput(input);
-
-    if (input !== '' && parsed === undefined) {
-      core.warning(`Invalid ${inputName} "${input}". Ignoring it.`);
-    }
-
-    return parsed ?? fromFile(fileValue);
-  };
-}
-
-function namedFallbackField<T>({ fromInput, fromFile }: FieldSource<T>): FieldResolver<T> {
+function scalarField<T>({
+  fromInput,
+  fromFile,
+  namesFallback = false,
+}: FieldSource<T>): FieldResolver<T> {
   return ({ input, inputName, fileValue, fallback }) => {
     const parsed = fromInput(input);
 
     if (input !== '' && parsed === undefined) {
-      core.warning(`Invalid ${inputName} "${input}". Falling back to ${formatFallback(fallback)}`);
+      core.warning(
+        namesFallback
+          ? `Invalid ${inputName} "${input}". Falling back to ${formatFallback(fallback)}`
+          : `Invalid ${inputName} "${input}". Ignoring it.`,
+      );
     }
 
     return parsed ?? fromFile(fileValue);
@@ -216,13 +217,15 @@ const FIELD_SOURCES: { [K in TabledKey]: FieldResolver<Config[K]> } = {
   smartSampling: boolField,
   smartSamplingThreshold: nonNegativeField,
   smartSamplingPages: positiveField,
-  chartLineColor: namedFallbackField<string>({
+  chartLineColor: scalarField<string>({
     fromInput: parseHexColor,
     fromFile: parseFileHexColor,
+    namesFallback: true,
   }),
-  chartLineWidth: namedFallbackField<number>({
-    fromInput: parseDecimal,
-    fromFile: fromFileScalar(parseDecimal),
+  chartLineWidth: scalarField<number>({
+    fromInput: parsePositiveDecimal,
+    fromFile: fromFileScalar(parsePositiveDecimal),
+    namesFallback: true,
   }),
   chartMaxPoints: nonNegativeField,
   chartYAxisSide: enumField(Object.values(ChartAxisSide)),
@@ -243,7 +246,7 @@ const TABLED_KEYS = Object.keys(FIELD_SOURCES) as TabledKey[];
 
 function resolveTabledFields(fileConfig: FileConfig): Pick<Config, TabledKey> {
   const resolved = TABLED_KEYS.map((key) => {
-    const inputName = toDelimited({ key, delimiter: '-' });
+    const inputName = toActionInputName(key);
     const fallback = DEFAULTS[key];
     const value = FIELD_SOURCES[key]({
       input: core.getInput(inputName),

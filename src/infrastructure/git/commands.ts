@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import * as core from '@actions/core';
 
 interface ExecuteParams {
   args: string[];
@@ -19,4 +20,17 @@ export function execute({ args, options = {} }: ExecuteParams): string {
 
     throw new Error(`Git command failed: "git ${args.join(' ')}"\n${detail}`);
   }
+}
+
+interface AuthenticatedArgsParams {
+  token: string;
+  args: string[];
+}
+
+export function authenticatedArgs({ token, args }: AuthenticatedArgsParams): string[] {
+  const credential = Buffer.from(`x-access-token:${token}`).toString('base64');
+
+  core.setSecret(credential);
+
+  return ['-c', `http.extraheader=AUTHORIZATION: basic ${credential}`, ...args];
 }

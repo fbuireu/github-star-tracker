@@ -48,7 +48,8 @@ top_repos: 10
 smart_sampling: false
 smart_sampling_threshold: 1500
 smart_sampling_pages: 30
-chart_line_color: "#dfb317"   # quote the # or drop it (6b63ff) - a bare # starts a YAML comment
+chart_line_color: "#dfb317"   # always quote it here - a bare # starts a YAML comment, and an
+                              # unquoted all-digit value like 123456 loads as a number and is ignored
 chart_line_width: 2.5
 chart_max_points: 30          # granularity, capped at 365; 0 = weekly resolution
 chart_y_axis_side: left
@@ -77,6 +78,11 @@ Action Inputs  >  Config File (YAML)  >  Built-in Defaults
 ```
 
 Action inputs always win. Missing values fall through to the config file, then to defaults.
+
+One tracking option sits outside this: [`send-on-no-changes`](#send-on-no-changes) is **input-only**, so
+`send_on_no_changes` in `star-tracker.yml` is read by nothing. The credentials and plumbing inputs —
+`github-token`, `github-api-url`, `config-path`, every `smtp-*` input and `email-from` / `email-to` — are workflow-only too,
+by design: secrets do not belong in a committed file.
 
 **Example:**
 
@@ -136,9 +142,11 @@ Which stored snapshot the current star counts are compared against. Config file 
 | Value | Behavior |
 |---|---|
 | `last-run` | The most recent stored snapshot |
-| `24h`, `7d`, `30d` | The most recent snapshot that is at least that old |
+| `24h`, `7d`, `30d` | The most recent snapshot that is at least that old, minus a 6-hour tolerance |
 
 This is the baseline for the `new-stars`, `lost-stars` and `stars-changed` outputs, for the total delta, and for the "Compared to snapshot from ..." line in the report. The time windows make a genuine daily/weekly/monthly digest possible even when the tracker itself runs more frequently.
+
+The window carries **6 hours of slack**: `7d` accepts a snapshot as young as 6 days and 18 hours. That exists so a scheduled run drifting a few minutes late does not fall just short of its own window and silently compare against something older than you asked for.
 
 If the stored history is shorter than the requested window, the oldest snapshot available is used instead. The reported period is then shorter than the one you asked for, and the report's "Compared to" date shows exactly how far back it really goes. On the very first run there is no history and therefore no baseline, exactly as with `last-run`.
 
@@ -214,7 +222,7 @@ Enable star trend chart generation.
 
 When enabled, generates animated SVG charts committed to the `charts/` directory on the data branch, and QuickChart.io URLs in HTML email reports.
 
-When enabled, the action fetches each repo's stargazers to read their `starred_at` dates and reconstruct the true cumulative star history; this happens whenever charts are on, independent of `track-stargazers`. For very large repos (GitHub caps stargazer listing at ~40,000/repo) the earliest part of the curve is approximated; pair with `smart-sampling`.
+When enabled, the action fetches each repo's stargazers to read their `starred_at` dates and reconstruct the true cumulative star history; this happens whenever charts are on, independent of `track-stargazers`. For very large repos (GitHub caps stargazer listing at ~40,000/repo, oldest first) the *recent* tail is unreachable and is bridged with a ramp — see [Known Limitations](Known-Limitations#-stargazer-listing-cap-40000). Pair those with `smart-sampling`.
 
 ```yaml
 with:
@@ -640,7 +648,7 @@ Whether to add a growth-velocity section to the Markdown and HTML reports.
 | **Type** | `boolean` |
 | **Default** | `false` |
 
-When `true`, the report includes a "Growth Velocity" section measured period over period (the latest snapshot against the previous one): the stars gained per day, the percent growth, and a projection of how many days remain until the next star milestone at the current pace. Measuring against the previous snapshot keeps the figures tied to recent momentum rather than an arbitrary all-time baseline. The section is nested under the Growth Forecast section when forecasts are enabled. Needs at least two snapshots spanning some time.
+When `true`, the report includes a "Growth Velocity" section measured period over period (the latest snapshot against the newest earlier one at least a quarter of a day back): the stars gained per day, the percent growth, and a projection of how many days remain until the next star milestone at the current pace. Measuring over a recent interval keeps the figures tied to current momentum rather than an arbitrary all-time baseline, and skipping any pair closer than that minimum stops a manual re-run minutes after a scheduled one from inflating the rate. The section is nested under the Growth Forecast section when forecasts are enabled. Needs at least two snapshots spanning some time.
 
 ---
 
@@ -818,7 +826,7 @@ How [`notification-threshold`](#notification-threshold) measures the accumulated
 | `net` | The absolute value of the change in total stars since the last notification. Gains and losses across repos cancel out, and a large **drop** also reaches the threshold |
 | `gains` | Only upward movement counts. The threshold is reached when the total has risen by at least N since the last notification; a drop never triggers a notification |
 
-Both modes measure against `starsAtLastNotification`, which is only updated when a notification actually fires, so the counter accumulates across runs instead of resetting on every run. `notification-threshold: '0'` still means "notify on every run that has changes", regardless of mode.
+Both modes measure against `starsAtLastNotification`. [`notification-threshold`](#notification-threshold) explains the accumulation rule in full. `notification-threshold: '0'` still means "notify on every run that has changes", regardless of mode.
 
 ```yaml
 with:
@@ -854,7 +862,7 @@ Star change threshold before sending a notification.
 | 201 – 500 | 10 stars |
 | 501+ | 20 stars |
 
-The threshold is **cumulative, not per-run**. It is measured against `starsAtLastNotification`, persisted in `stars-data.json` on the data branch and updated **only when a notification actually fires**. Runs that do not notify leave that baseline untouched, so the accumulated change keeps growing across runs until it trips the threshold. How that accumulated change is measured is controlled by [`notification-mode`](#notification-mode).
+The threshold is **cumulative, not per-run**. It is measured against `starsAtLastNotification`, persisted in `stars-data.json` on the data branch. It **only resets when the threshold trips — and not even then if a configured email failed to send, which leaves the counter alone so the change is not lost**. With no SMTP transport configured the `should-notify` output is itself the notification, so the counter resets there too. Runs that do not notify leave that baseline untouched, so the accumulated change keeps growing across runs until it trips the threshold. How that accumulated change is measured is controlled by [`notification-mode`](#notification-mode).
 
 > [!NOTE]
 > The baseline advances only when the notification was actually delivered. If an SMTP send fails the action logs a warning, leaves the baseline untouched and keeps accumulating, so the change is not lost. When no SMTP transport is configured the `should-notify` output is the notification, so the baseline advances as soon as the threshold trips.
@@ -951,7 +959,9 @@ The action validates inputs at startup:
 - `github-token` is provided
 - `visibility` is one of: `all`, `public`, `private`, `owned`
 - `locale` is one of: `en`, `es`, `ca`, `it` (falls back to `en` with a warning if invalid)
-- `visibility` and `data-branch` are the only inputs whose invalid values fail the run; a missing `github-token` fails it too. Every other invalid value logs a warning and falls back to its default, including non-positive `max-history`, `top-repos` and `smart-sampling-pages`, and negative `min-stars`, `smart-sampling-threshold` and `chart-max-points`
+- `visibility` and `data-branch` are the only inputs whose invalid values fail the run; a missing `github-token` fails it too. Every other invalid value falls back rather than failing, including non-positive `max-history`, `top-repos` and `smart-sampling-pages`, and negative `min-stars`, `smart-sampling-threshold` and `chart-max-points`
+- **For most keys an invalid input falls to the *next layer*, not straight to the default.** `max-history: 'abc'` in the workflow with `max_history: 104` in the file yields 104, not 52. The enum keys behave differently: a non-empty but unrecognised value goes straight to the default and the config file is never consulted, and `chart-custom-milestones` is the same
+- **Only the enum keys warn about a bad config-file value.** `locale`, `compare-against`, `notification-mode`, `chart-curve`, `chart-range`, `chart-theme`, `email-theme` and `chart-y-axis-side` are checked whichever layer the value came from; every other key warns only about a bad *input*, so `min_stars: "abc"` in the YAML falls back silently. `send-on-no-changes` never warns at all. `visibility` does not warn either — it **throws**
 
 ---
 

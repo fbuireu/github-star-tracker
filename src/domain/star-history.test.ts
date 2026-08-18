@@ -1,12 +1,13 @@
 import { makeStargazer } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
-import { buildStarHistory, type RepoTotal } from './star-history';
+import { buildStarHistory } from './star-history';
 import type { RepoStargazers } from './stargazers';
+import type { SnapshotRepo } from './types';
 
 const NOW = new Date('2026-06-25T00:00:00Z');
 const MAX_REACHABLE_STARS = 40_000;
 
-function repoTotal(fullName: string, stars: number): RepoTotal {
+function repoTotal(fullName: string, stars: number): SnapshotRepo {
   const [owner, name] = fullName.split('/');
 
   return { fullName, name, owner, stars };
@@ -122,17 +123,21 @@ describe('buildStarHistory', () => {
 
     const stars = result.snapshots.map((snapshot) => snapshot.repos[0].stars);
 
+    const risesTowardTheTotalInsteadOfSittingFlatAtIt = (stars.at(-2) ?? 0) < 50000;
+    const climbsThroughTheRampAboveTheCap = stars.some(
+      (starCount) => starCount > MAX_REACHABLE_STARS && starCount < 50000,
+    );
+    const stillPeaksWithinTheReachablePortion = stars.some(
+      (starCount) => starCount > 0 && starCount <= MAX_REACHABLE_STARS,
+    );
+
     expect(stars.at(-1)).toBe(50000);
     for (let index = 1; index < stars.length; index++) {
       expect(stars[index]).toBeGreaterThanOrEqual(stars[index - 1]);
     }
-    // The recent tail rises toward the total rather than sitting flat at it.
-    expect(stars.at(-2)).toBeLessThan(50000);
-    expect(stars.some((starCount) => starCount > MAX_REACHABLE_STARS && starCount < 50000)).toBe(
-      true,
-    );
-    // The reachable portion still peaks around the 40k cap before ramping.
-    expect(stars.some((starCount) => starCount > 0 && starCount <= MAX_REACHABLE_STARS)).toBe(true);
+    expect(risesTowardTheTotalInsteadOfSittingFlatAtIt).toBe(true);
+    expect(climbsThroughTheRampAboveTheCap).toBe(true);
+    expect(stillPeaksWithinTheReachablePortion).toBe(true);
   });
 
   it('holds a repo with stars but no fetched dates flat at its true total', () => {

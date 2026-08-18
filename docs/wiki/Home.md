@@ -43,7 +43,7 @@ GitHub Star Tracker is a GitHub Action that monitors star counts across all your
 ### Tracking & Automation
 
 - Automated scheduling (daily, weekly, or on-demand)
-- Up to 52 weeks of historical star data (configurable)
+- Keeps the last 52 snapshots by default, configurable — one snapshot per run, so how far back that reaches follows your schedule
 - Smart filters: visibility, archived, forks, regex exclusions, min-stars, whitelist
 - Individual stargazer tracking (opt-in)
 - Growth forecasts using linear regression and weighted moving average

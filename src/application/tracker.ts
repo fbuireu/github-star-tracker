@@ -1,11 +1,11 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { loadConfig } from '@config/loader';
-import { topRepositories } from '@domain/comparison';
+import { EMPTY_SUMMARY, topRepositories } from '@domain/comparison';
 import { computeForecast } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
-import { measureRun, recordNotification } from '@domain/measurement';
-import { buildStarHistory } from '@domain/star-history';
+import { measureRun } from '@domain/measurement';
+import { Delivery, notificationIsDue, settleNotification } from '@domain/notification';
 import {
   buildStargazerMap,
   diffStargazers,
@@ -13,18 +13,15 @@ import {
   type StargazerMap,
 } from '@domain/stargazers';
 import type { Summary } from '@domain/types';
-import { getTranslations, interpolate } from '@i18n';
 import { getRepos } from '@infrastructure/github/filters';
 import { fetchAllStargazers } from '@infrastructure/github/stargazers';
 import { getEmailConfig, sendEmail } from '@infrastructure/notification/email';
 import { withDataBranch } from '@infrastructure/persistence/data-branch';
 import { writeHtmlReport } from '@infrastructure/persistence/storage';
 import { retry } from '@octokit/plugin-retry';
-import { generateBadge } from '@presentation/badge';
-import { buildChartFiles, resolveChartHistory } from '@presentation/charts';
-import { generateCsvReport } from '@presentation/csv';
-import { generateHtmlReport } from '@presentation/html';
-import { generateMarkdownReport } from '@presentation/markdown';
+import { resolveChartHistories } from '@presentation/charts';
+import type { RenderedRun } from '@presentation/run';
+import { renderEmptyRun, renderRun } from '@presentation/run';
 
 export async function trackStars(): Promise<void> {
   try {
@@ -32,7 +29,6 @@ export async function trackStars(): Promise<void> {
     const token = core.getInput('github-token', { required: true });
     const apiUrl = core.getInput('github-api-url') || process.env.GITHUB_API_URL || '';
     const octokit = github.getOctokit(token, apiUrl ? { baseUrl: apiUrl } : undefined, retry);
-    const t = getTranslations(config.locale);
 
     core.info('Fetching repositories...');
 
@@ -41,7 +37,14 @@ export async function trackStars(): Promise<void> {
     if (repos.length === 0) {
       core.warning('No repositories matched the configured filters');
 
-      setEmptyOutputs();
+      const empty = renderEmptyRun(config);
+
+      setOutputs({
+        summary: EMPTY_SUMMARY,
+        rendered: empty,
+        htmlReportPath: writeHtmlReport({ htmlReport: empty.html }),
+        newStargazers: 0,
+      });
       return;
     }
 
@@ -94,116 +97,87 @@ export async function trackStars(): Promise<void> {
 
         const topRepoNames = topRepositories({ repos: results.repos, limit: config.topRepos });
 
-        const chartNow = new Date();
-        const repoTotals = repos.map((repo) => ({
-          fullName: repo.fullName,
-          name: repo.name,
-          owner: repo.owner,
-          stars: repo.stars,
-        }));
-
-        const starHistory = config.includeCharts
-          ? buildStarHistory({
-              repoStargazers,
-              repos: repoTotals,
-              maxPoints: config.chartMaxPoints,
-              now: chartNow,
-            })
-          : { snapshots: [] };
-        const history = resolveChartHistory({
-          candidate: starHistory,
-          fallback: updatedHistory,
+        const chartHistories = resolveChartHistories({
+          config,
+          storedHistory: updatedHistory,
+          repos: repos.map(({ fullName, name, owner, stars }) => ({
+            fullName,
+            name,
+            owner,
+            stars,
+          })),
+          repoStargazers,
+        });
+        const forecastData = computeForecast({
+          history: chartHistories.aggregate,
+          topRepoNames,
+          historyForRepo: chartHistories.reconstructedForRepo,
         });
 
-        const forecastData = computeForecast({ history, topRepoNames });
-
-        const reportParams = {
+        const rendered = renderRun({
+          config,
           results,
           previousTimestamp,
-          locale: config.locale,
-          history,
-          velocityHistory: updatedHistory,
-          includeCharts: config.includeCharts,
+          chartHistories,
+          storedHistory: updatedHistory,
           stargazerDiff,
           forecastData,
-          topRepos: config.topRepos,
-          smoothing: config.chartSmoothing,
-          curve: config.chartCurve,
-          showPoints: config.chartShowPoints,
-          milestones: config.chartMilestones,
-          beginAtZero: config.chartBeginAtZero,
-          theme: config.chartTheme,
-          customMilestones: config.chartCustomMilestones,
-          range: config.chartRange,
-          trendLine: config.chartTrendLine,
-          velocityMetrics: config.velocityMetrics,
-          lineColor: config.chartLineColor,
-          lineWidth: config.chartLineWidth,
-        };
-        const markdownReport = generateMarkdownReport(reportParams);
-        const htmlReport = generateHtmlReport({ ...reportParams, theme: config.emailTheme });
-
-        const csvReport = generateCsvReport(results);
-        const badge = generateBadge({ totalStars: summary.totalStars, locale: config.locale });
-        const notify = summary.changed && measurement.thresholdReached;
+        });
+        const notify = notificationIsDue({
+          changed: summary.changed,
+          thresholdReached: measurement.thresholdReached,
+        });
 
         const emailConfig = getEmailConfig(config.locale);
-        let notificationDelivered = notify;
-        let mailDelivered = false;
+        let delivery: Delivery = Delivery.NOT_ATTEMPTED;
 
         if (emailConfig && (notify || config.sendOnNoChanges)) {
-          const subject = interpolate({
-            template: t.email.subjectLine,
-            params: {
-              subject: t.email.subject,
-              totalStars: summary.totalStars,
-              delta: deltaIndicator(summary.totalDelta),
-            },
-          });
-
           try {
-            const sent = await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
+            const sent = await sendEmail({
+              emailConfig,
+              subject: rendered.emailSubject,
+              htmlBody: rendered.html,
+            });
 
-            mailDelivered = sent;
-            notificationDelivered = notify && sent;
+            delivery = sent ? Delivery.SENT : Delivery.FAILED;
           } catch (error) {
             core.warning(`Failed to send email: ${(error as Error).message}`);
-            notificationDelivered = false;
+            delivery = Delivery.FAILED;
           }
         } else if (emailConfig) {
-          core.info('Notification threshold not reached, skipping email');
+          core.info(
+            summary.changed
+              ? 'Notification threshold not reached, skipping email'
+              : 'No stars changed since the baseline, skipping email',
+          );
         }
 
-        const historyToPersist = notificationDelivered
-          ? recordNotification({ history: updatedHistory, totalStars: summary.totalStars })
-          : updatedHistory;
+        const notification = settleNotification({
+          changed: summary.changed,
+          thresholdReached: measurement.thresholdReached,
+          delivery,
+          history: updatedHistory,
+          totalStars: summary.totalStars,
+        });
+
+        const htmlReportPath = writeHtmlReport({ htmlReport: rendered.html });
 
         branch.publish({
-          history: historyToPersist,
+          history: notification.historyToPersist,
           stargazerMap,
-          report: markdownReport,
-          badge,
-          csv: csvReport,
-          charts: buildChartFiles({
-            config,
-            history,
-            fallbackHistory: updatedHistory,
-            forecastData,
-            topRepoNames,
-            repoTotals,
-            repoStargazers,
-            now: chartNow,
-          }),
+          report: rendered.markdown,
+          badge: rendered.badge,
+          csv: rendered.csv,
+          charts: rendered.charts,
           commitMessage: `Update star data: ${summary.totalStars} total (${deltaIndicator(summary.totalDelta)})`,
         });
 
         setOutputs({
           summary,
-          markdownReport,
-          htmlReport,
-          csvReport,
-          shouldNotify: notify,
-          notificationSent: mailDelivered,
+          rendered,
+          htmlReportPath,
+          shouldNotify: notification.shouldNotify,
+          notificationSent: notification.notificationSent,
           newStargazers: stargazerDiff?.totalNew ?? 0,
         });
       },
@@ -216,48 +190,27 @@ export async function trackStars(): Promise<void> {
   }
 }
 
-function setEmptyOutputs(): void {
-  setOutputs({
-    summary: {
-      totalStars: 0,
-      totalPrevious: 0,
-      totalDelta: 0,
-      newStars: 0,
-      lostStars: 0,
-      changed: false,
-    },
-    markdownReport: 'No repositories matched the configured filters.',
-    htmlReport: '<p>No repositories matched the configured filters.</p>',
-    csvReport: '',
-    shouldNotify: false,
-    notificationSent: false,
-    newStargazers: 0,
-  });
-}
-
 interface SetOutputsParams {
   summary: Summary;
-  markdownReport: string;
-  htmlReport: string;
-  csvReport: string;
-  shouldNotify: boolean;
-  notificationSent: boolean;
+  rendered: RenderedRun;
+  htmlReportPath: string;
+  shouldNotify?: boolean;
+  notificationSent?: boolean;
   newStargazers: number;
 }
 
 function setOutputs({
   summary,
-  markdownReport,
-  htmlReport,
-  csvReport,
-  shouldNotify,
-  notificationSent,
+  rendered,
+  htmlReportPath,
+  shouldNotify = false,
+  notificationSent = false,
   newStargazers,
 }: SetOutputsParams): void {
-  core.setOutput('report', markdownReport);
-  core.setOutput('report-html', htmlReport);
-  core.setOutput('report-html-path', writeHtmlReport({ htmlReport }));
-  core.setOutput('report-csv', csvReport);
+  core.setOutput('report', rendered.markdown);
+  core.setOutput('report-html', rendered.html);
+  core.setOutput('report-html-path', htmlReportPath);
+  core.setOutput('report-csv', rendered.csv);
   core.setOutput('total-stars', String(summary.totalStars));
   core.setOutput('stars-changed', String(summary.changed));
   core.setOutput('new-stars', String(summary.newStars));

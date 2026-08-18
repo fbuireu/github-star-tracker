@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import * as core from '@actions/core';
 import type { StargazerMap } from '@domain/stargazers';
 import type { History } from '@domain/types';
-import { execute } from '../git/commands';
+import { authenticatedArgs, execute } from '../git/commands';
 
 const DATA_FORMAT_VERSION = 1;
 
@@ -59,11 +59,25 @@ function assertReadableFormat(version: unknown): void {
   );
 }
 
+function assertJsonObject(parsed: unknown): asserts parsed is Record<string, unknown> {
+  if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    return;
+  }
+
+  throw new Error(
+    `${DATA_FILES.history} on the data branch is valid JSON but not an object (found ${Array.isArray(parsed) ? 'an array' : JSON.stringify(parsed)}). Reading it as an empty history would discard your tracking record, so this run stops instead. Fix or delete the file on that branch and re-run.`,
+  );
+}
+
 export function readHistory(dataDir: string): History {
-  const { version, ...raw } = readJsonFile<Partial<History> & { version?: unknown }>({
+  const parsed = readJsonFile<unknown>({
     filePath: path.join(dataDir, DATA_FILES.history),
     fallback: {},
   });
+
+  assertJsonObject(parsed);
+
+  const { version, ...raw } = parsed as Partial<History> & { version?: unknown };
 
   assertReadableFormat(version);
 
@@ -82,26 +96,22 @@ export function writeHistory({ dataDir, history }: WriteHistoryParams): void {
   });
 }
 
-interface WriteReportParams {
+export const Artefact = {
+  REPORT: 'report',
+  BADGE: 'badge',
+  CSV: 'csv',
+} as const;
+
+export type Artefact = (typeof Artefact)[keyof typeof Artefact];
+
+interface WriteArtefactParams {
   dataDir: string;
-  markdown: string;
+  artefact: Artefact;
+  contents: string;
 }
 
-export function writeReport({ dataDir, markdown }: WriteReportParams): void {
-  const filePath = path.join(dataDir, DATA_FILES.report);
-
-  fs.writeFileSync(filePath, markdown);
-}
-
-interface WriteBadgeParams {
-  dataDir: string;
-  svg: string;
-}
-
-export function writeBadge({ dataDir, svg }: WriteBadgeParams): void {
-  const filePath = path.join(dataDir, DATA_FILES.badge);
-
-  fs.writeFileSync(filePath, svg);
+export function writeArtefact({ dataDir, artefact, contents }: WriteArtefactParams): void {
+  fs.writeFileSync(path.join(dataDir, DATA_FILES[artefact]), contents);
 }
 
 interface WriteChartParams {
@@ -176,17 +186,6 @@ export function writeHtmlReport({ htmlReport }: WriteHtmlReportParams): string {
   return filePath;
 }
 
-interface WriteCsvParams {
-  dataDir: string;
-  csv: string;
-}
-
-export function writeCsv({ dataDir, csv }: WriteCsvParams): void {
-  const filePath = path.join(dataDir, DATA_FILES.csv);
-
-  fs.writeFileSync(filePath, csv);
-}
-
 interface CommitAndPushParams {
   dataDir: string;
   dataBranch: string;
@@ -216,18 +215,9 @@ export function commitAndPush({
 
   execute({ args: ['commit', '-m', message], options: { cwd } });
 
-  const basicCredential = Buffer.from(`x-access-token:${token}`).toString('base64');
-  core.setSecret(basicCredential);
-
   try {
     execute({
-      args: [
-        '-c',
-        `http.extraheader=AUTHORIZATION: basic ${basicCredential}`,
-        'push',
-        'origin',
-        `HEAD:${dataBranch}`,
-      ],
+      args: authenticatedArgs({ token, args: ['push', 'origin', `HEAD:${dataBranch}`] }),
       options: { cwd },
     });
   } catch (error) {

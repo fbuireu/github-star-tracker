@@ -38,7 +38,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:changed": "vitest run --changed HEAD",
+    "test:changed": "vitest run --changed origin/main",
     "format": "pnpm run lint --write",
     "lint": "biome check --no-errors-on-unmatched .",
     "typecheck": "tsc --noEmit",

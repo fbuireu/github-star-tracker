@@ -17,9 +17,10 @@ The `GITHUB_TOKEN` is scoped to the **current repository only**. GitHub Star Tra
 The action requires the user to create a PAT and store it as a repository secret (`STAR_TRACKER_TOKEN`). Both classic tokens and fine-grained tokens are supported.
 
 - Classic: `repo` (private + public) or `public_repo` (public only)
-- Fine-grained: `Repository access → All repositories` with `Metadata: Read-only`
+- Fine-grained: `Repository access → All repositories` with `Metadata: Read-only` **and `Contents: Read and
+  write`** — the action pushes the data branch with this same token, so a metadata-only token fails at the push
 
-See **[Personal Access Token (PAT)](Personal-Access-Token-(PAT))** for a step-by-step setup guide.
+See **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)** for a step-by-step setup guide.
 
 ---
 
@@ -113,18 +114,23 @@ Two complementary methods are provided, each with different strengths:
 **Linear Regression** fits a straight line through all historical data points using least squares. It is resilient to noise and captures long-term trends, but it reacts slowly to recent changes.
 
 ```
-predicted(week) = slope * (n - 1 + week) + intercept
+predicted(week) = lastValue + slope * week * 7
 ```
+
+The fitted line supplies the *slope* only. Both methods anchor the projection on the **last observed
+value**, never on the fitted one, so the first predicted point continues from where the curve actually is.
 
 **Weighted Moving Average** computes deltas between consecutive snapshots and weights recent deltas higher. It is more responsive to recent acceleration or deceleration, but more sensitive to short-term noise.
 
 ```
-predicted(week) = lastValue + avgWeightedDelta * week
+predicted(week) = lastValue + weightedDailyRate * week * 7
 ```
+
+The weighted rate is **per day**, so the week offset is multiplied by seven like the regression slope.
 
 Both methods clamp predictions to non-negative integers via `Math.max(0, Math.round(...))` to avoid nonsensical outputs (e.g., -3 stars).
 
-Forecasts require a minimum of **3 snapshots** (`MIN_SNAPSHOTS = 3`) and project **4 weeks ahead** (`FORECAST_WEEKS = 4`). These thresholds are intentionally conservative - with fewer data points, any extrapolation would be unreliable.
+Forecasts require a minimum of **3 points** in the series they are fitted to (`MIN_SNAPSHOTS_FOR_FORECAST = 3`) and project **4 weeks ahead** (`FORECAST_WEEKS = 4`). That series is the *reconstructed* history when charts are on, which already has ~30 points on the first run — so the three-snapshot floor bites only when the reconstruction is unavailable — `include-charts` off, or no reachable `starred_at` dates — and the stored per-run history is all there is. These thresholds are intentionally conservative - with fewer data points, any extrapolation would be unreliable.
 
 ### Interpretation guide
 
@@ -141,11 +147,11 @@ Forecasts require a minimum of **3 snapshots** (`MIN_SNAPSHOTS = 3`) and project
 
 ### Behavior
 
-SVG charts automatically adapt to the viewer's color scheme using `@media (prefers-color-scheme: dark)` inside the SVG `<style>` block. No configuration input is needed - it works out of the box on GitHub, browsers, and any SVG viewer that respects the media query.
+By default the SVG charts adapt to the viewer's color scheme using `@media (prefers-color-scheme: dark)` inside the SVG `<style>` block, and no configuration is needed for that. Forcing [`chart-theme`](Configuration#chart-theme) to `light` or `dark` drops the media query and bakes one palette in, which is what you want when the chart is embedded somewhere that does not follow the reader's system theme.
 
 ### What adapts
 
-Chrome elements - background, title, legend text, axis labels, grid lines, and axis strokes - switch between a light palette and a dark palette (GitHub dark theme values). Data colors (line strokes, point fills, comparison colors) remain unchanged because they are vibrant enough for both themes.
+Chrome elements - background, title, legend text, axis labels, grid lines, and axis strokes - switch between a light palette and a dark palette (GitHub dark theme values). Data colors do **not** switch with the media query: series strokes are written as inline attributes resolved once, and `auto` resolves them from the light palette. Forcing [`chart-theme: dark`](Configuration#chart-theme) does change them — the trend line (`#6a737d` -> `#8b949e`) and the two forecast series (`#28a745` -> `#3fb950`, `#d73a49` -> `#f85149`) are brightened — but under the default `auto` a dark-mode reader gets dark chrome around light-palette data.
 
 | Element | Light | Dark |
 |:--------|:------|:-----|
@@ -161,8 +167,8 @@ Chrome elements - background, title, legend text, axis labels, grid lines, and a
 |:--------|:------------------|
 | GitHub README / Markdown | Yes - GitHub respects `prefers-color-scheme` in inline SVGs |
 | Browser (direct SVG open) | Yes |
-| HTML email reports | No - Gmail strips `<style>` blocks; the HTML report uses an explicit light background instead |
-| QuickChart PNG fallbacks | No - PNGs are rasterized with a fixed white background |
+| HTML email reports | Not automatically - Gmail strips `<style>` blocks, so the media query cannot reach them. Set [`email-theme: dark`](Configuration#email-theme) to bake a dark palette into the body and the chart images instead |
+| QuickChart PNG fallbacks | Not per-reader - the PNG is rasterized once, on the background [`email-theme`](Configuration#email-theme) resolves to. `dark` gives a dark chart; it just cannot follow each reader's own scheme |
 
 ### Badges
 
@@ -177,7 +183,7 @@ The Shields.io-style badge (`stars-badge.svg`) does **not** include dark mode st
 The action produces two types of charts:
 
 1. **Animated SVG charts** - generated locally, committed to the data branch. Support dark/light mode via CSS media queries. No external dependencies.
-2. **QuickChart PNG charts** - generated via [QuickChart.io](https://quickchart.io), used in HTML email reports. Static images, light-only, dependent on an external service.
+2. **QuickChart PNG charts** - generated via [QuickChart.io](https://quickchart.io), used in HTML email reports. Static images that follow [`email-theme`](Configuration#email-theme) rather than the reader's own colour scheme, and dependent on an external service.
 
 There is no interactive zooming, panning, tooltips, or click-to-drill-down in either format.
 
@@ -227,7 +233,7 @@ Email HTML rendering is notoriously inconsistent across clients. Outlook uses th
 ### Approach
 
 - **All styles are inline**: Every HTML element in the report carries its own `style` attribute. No external stylesheets, no `<style>` blocks, no CSS classes.
-- **Explicit light background**: The `<body>` has an explicit `background-color: #fff` to ensure consistent rendering regardless of the email client's own background. Dark mode is not supported in email reports.
+- **Explicit background**: The `<body>` carries an explicit `background-color` so it renders consistently whatever the client's own background is. It follows [`email-theme`](Configuration#email-theme), which defaults to `auto` (inherit `chart-theme`, resolving to light) — set it to `dark` for a dark digest, charts included. What email *cannot* do is follow the reader's system theme, because the media query is stripped and the chart images are PNGs with the background baked in.
 - **No `<details>` in HTML reports**: Collapsible sections (`<details>`/`<summary>`) are used in Markdown reports (for GitHub rendering) but excluded from HTML reports, since email clients do not support them. Per-repo stargazer lists and forecast tables are displayed flat in HTML.
 - **System fonts**: The font stack uses `-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif` - safe system fonts that render consistently everywhere.
 - **`max-width: 600px`**: The report container is capped at 600px, the standard width for email layouts.
@@ -260,7 +266,7 @@ The action is designed to run as a GitHub Actions workflow, which is triggered b
 
 ### Approach
 
-- **One snapshot per run**: The `trackStars` function reads the current state of all repos, compares against the last stored snapshot, and appends a new entry to the history.
+- **One snapshot per run**: `measureRun` reads the current state of all repos, compares against the snapshot [`compare-against`](Configuration#compare-against) selects — the most recent one by default, but not necessarily — and appends a new entry to the history.
 - **History rotation**: Old snapshots are pruned via `maxHistory` (default: 52, i.e., ~1 year of weekly runs). This prevents unbounded growth of `stars-data.json`.
 - **Timestamp precision**: Each snapshot is timestamped with `new Date().toISOString()`, providing millisecond precision for the moment the run occurred.
 
@@ -282,7 +288,7 @@ Keep in mind that more frequent runs consume more API calls and produce more sna
 
 ### Limitation
 
-When `track-stargazers` is enabled, **usernames and avatar URLs** of people who starred your repos are stored in `stargazers.json` on the data branch. This data is publicly visible if the repository is public.
+When `track-stargazers` is enabled, the **usernames** of people who starred your repos are stored in `stargazers.json` on the data branch. This data is publicly visible if the repository is public.
 
 ### Why
 
@@ -294,6 +300,11 @@ To compute the diff between runs (who is new since last time), the action needs 
 - **Data branch isolation**: Stargazer data is stored on a separate `star-tracker-data` branch, not on `main`. This keeps the main branch clean.
 - **Opt-in only**: `track-stargazers` defaults to `false`. Users must explicitly enable it.
 - **No new exposure for you**: the action stores the same information you can already see as the repository's admin. Note that since GitHub's [2026 API restrictions](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/), stargazer lists are no longer publicly accessible (only admins and collaborators can list them), so publishing `stargazers.json` on a public data branch does re-expose those login names. Keep the data branch in a private repository or leave `track-stargazers` disabled if that is a concern.
+- **Entries are never pruned**: once a repository has an entry, it keeps it even after the repository leaves
+  the tracked set — a `min-stars` boundary, an edited filter, a spell archived. That is deliberate: a
+  repository that drops out for one run and returns would otherwise have every existing stargazer reported as
+  new. It does mean untracking a repository does not withdraw its published logins; removing them is a manual
+  edit of `stargazers.json` on the data branch.
 
 ---
 

@@ -40,7 +40,7 @@ locale: es
 | **Markdown report** | Section titles, summary labels, trend indicators, footer |
 | **HTML email** | Same as Markdown, plus subject line |
 | **SVG badge** | Label text (`Total Stars` / `Estrellas Totales` / ...) |
-| **Charts** | Axis date labels (formatted via locale-aware `Date.toLocaleDateString`) |
+| **Charts** | Axis date labels (locale-aware `Date.toLocaleDateString`) and milestone labels, on the SVG charts and the email ones alike. The compact Y-axis counts are SVG-only: the email charts let Chart.js draw its own ticks |
 | **Forecast tables** | Method names, week labels, section titles |
 | **Stargazer section** | Section title, count text, "starred on" dates |
 | **Email subject** | Auto-generated localized subject line |
@@ -62,7 +62,7 @@ elsewhere.
 
 ## Translation Architecture
 
-Translations live in `src/i18n/` as flat JSON files:
+Translations live in `src/i18n/` as JSON files, one per locale:
 
 ```
 src/i18n/
@@ -81,7 +81,7 @@ Each JSON file implements the `Translations` interface with these sections:
 | Section | Keys | Description |
 |---|---|---|
 | `badge` | `totalStars` | Badge label text |
-| `report` | `title`, `total`, `change`, `comparedTo`, `firstRun`, `repositories`, `stars`, `starsCount`, `trend`, `newRepositories`, `removedRepositories`, `removedRepoText`, `summary`, `starsGained`, `starsLost`, `netChange`, `starTrend`, `starHistory`, `topRepositories`, `byRepository`, `individualRepoCharts`, `repoChartHeading`, `trendLine`, `badges.new` | Report sections and labels |
+| `report` | `title`, `total`, `change`, `comparedTo`, `firstRun`, `noRepositories`, `repositories`, `stars`, `starsCount`, `trend`, `newRepositories`, `removedRepositories`, `removedRepoText`, `summary`, `starsGained`, `starsLost`, `netChange`, `starTrend`, `starHistory`, `topRepositories`, `byRepository`, `individualRepoCharts`, `repoChartHeading`, `trendLine`, `badges.new` | Report sections and labels |
 | `email` | `subject`, `subjectLine`, `defaultFrom` | Email content |
 | `trends` | `up`, `down`, `stable` | Trend direction labels |
 | `velocity` | `sectionTitle`, `starsPerDay`, `growth`, `projection` | Growth velocity section |

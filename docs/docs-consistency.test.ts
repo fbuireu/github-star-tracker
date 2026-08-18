@@ -1,5 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { DEFAULTS } from '@config/defaults';
+import { toActionInputName } from '@config/loader';
+import type { Config } from '@config/types';
 import * as yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 
@@ -63,8 +66,8 @@ function walk(dir: string, keep: (filename: string) => boolean): string[] {
 const isMarkdown = (filename: string): boolean => filename.endsWith('.md');
 
 const DOCS = [
-  ...['CLAUDE.md', 'ARCHITECTURE.md', 'CONTEXT.md', 'README.md', 'examples/README.md'].filter((doc) =>
-    fs.existsSync(doc),
+  ...['CLAUDE.md', 'ARCHITECTURE.md', 'CONTEXT.md', 'README.md', 'examples/README.md'].filter(
+    (doc) => fs.existsSync(doc),
   ),
   ...walk('docs', isMarkdown),
   ...walk('src', (filename) => filename === 'CLAUDE.md'),
@@ -221,7 +224,45 @@ const declaredOutputs = [
   ...read('action.yml').split('\noutputs:')[1].matchAll(OUTPUT_KEY_PATTERN),
 ].map((match) => match[1]);
 
+const PROSE_DEFAULT_PATTERN = /\(default ([^)]+)\)/;
+
+function proseDefault(description: string): string | null {
+  return PROSE_DEFAULT_PATTERN.exec(description)?.[1] ?? null;
+}
+
+function describedAs(value: Config[keyof Config]): string {
+  if (Array.isArray(value)) return value.length === 0 ? 'empty' : value.join(', ');
+
+  return String(value);
+}
+
 describe('action.yml is documented', () => {
+  it('states a default in prose for every overridable input, and states the real one', () => {
+    const wrong = Object.entries(DEFAULTS)
+      .filter(([key]) => key !== 'sendOnNoChanges')
+      .map(([key, value]) => {
+        const name = toActionInputName(key);
+        const stated = proseDefault(manifest.inputs[name]?.description ?? '');
+        const actual = describedAs(value);
+
+        return stated === actual ? null : `${name}: says ${stated ?? '(nothing)'}, is ${actual}`;
+      })
+      .filter((mismatch) => mismatch !== null);
+
+    expect(wrong).toEqual([]);
+  });
+
+  it('tells the reader every overridable input can also come from the config file', () => {
+    const silent = Object.keys(DEFAULTS)
+      .filter((key) => key !== 'sendOnNoChanges')
+      .map(toActionInputName)
+      .filter(
+        (name) => !(manifest.inputs[name]?.description ?? '').includes('(overrides config file)'),
+      );
+
+    expect(silent).toEqual([]);
+  });
+
   it('declares outputs this test can read', () => {
     expect(declaredOutputs.length).toBeGreaterThan(0);
   });
@@ -252,7 +293,11 @@ describe('action.yml is documented', () => {
 const PINNED_INPUT = 'github-token';
 const NAME_ROW_PATTERN = /^\| `([a-z][a-z\d-]*)`/gm;
 const OPTION_HEADING_PATTERN = /^### `([a-z][a-z\d-]*)`$/gm;
-const ORDERED_SURFACES = ['README.md', 'docs/wiki/API-Reference.md', 'docs/wiki/Viewing-Reports.md'];
+const ORDERED_SURFACES = [
+  'README.md',
+  'docs/wiki/API-Reference.md',
+  'docs/wiki/Viewing-Reports.md',
+];
 const OPTION_GUIDE = 'docs/wiki/Configuration.md';
 const GROUP_HEADING_PATTERN = /^## /m;
 
@@ -384,7 +429,8 @@ describe('the root guide matches the manifests', () => {
     expect([...new Set(layerRows.map(({ alias }) => alias))].sort()).toEqual(declared);
 
     const mismatched = layerRows.filter(({ layer, alias }) => {
-      const target = tsconfig.compilerOptions.paths[alias] ?? tsconfig.compilerOptions.paths[`${alias}/*`];
+      const target =
+        tsconfig.compilerOptions.paths[alias] ?? tsconfig.compilerOptions.paths[`${alias}/*`];
 
       return !target?.[0]?.startsWith(`./src/${layer}`);
     });
@@ -500,8 +546,8 @@ const QUOTED_CONSTANTS = [
     mention: (count: number) => `fixed at ${count} points`,
   },
   {
-    name: 'STARGAZERS_PER_PAGE',
-    file: 'src/infrastructure/github/stargazers.ts',
+    name: 'STARGAZER_PAGE_SIZE',
+    file: 'src/domain/sampling.ts',
     doc: IO_GUIDE,
     mention: (size: number) => `shorter than ${size}`,
   },
@@ -524,6 +570,19 @@ describe('the guides quote the constants the code declares', () => {
     expect(prose(doc)).toContain(mention(value({ file, name })));
   });
 
+  it('pins the hand-maintained toolchain versions to package.json', () => {
+    const manifest = JSON.parse(read('package.json')) as {
+      engines: { node: string };
+      packageManager: string;
+    };
+    const guide = prose(GUIDE);
+
+    expect(guide).toContain(`Node **${manifest.engines.node}** (\`engines.node\`)`);
+    expect(guide).toContain(
+      `pnpm **${manifest.packageManager.replace('pnpm@', '')}** (\`packageManager\`)`,
+    );
+  });
+
   it('states the compare-window tolerance in hours', () => {
     const hours =
       value({ file: 'src/domain/snapshot.ts', name: 'COMPARE_WINDOW_TOLERANCE_MS' }) / MS_PER_HOUR;
@@ -542,10 +601,9 @@ describe('the guides quote the constants the code declares', () => {
   });
 
   it('derives the reachable page cap rather than restating it', () => {
-    const stargazers = 'src/infrastructure/github/stargazers.ts';
     const pages = Math.floor(
       value({ file: DOMAIN_CONSTANTS, name: 'MAX_REACHABLE_STARGAZERS' }) /
-        value({ file: stargazers, name: 'STARGAZERS_PER_PAGE' }),
+        value({ file: 'src/domain/sampling.ts', name: 'STARGAZER_PAGE_SIZE' }),
     );
 
     expect(prose(IO_GUIDE)).toContain(`is ${pages} because`);
@@ -644,10 +702,7 @@ describe('citations name symbols, not line numbers', () => {
 
 describe('the i18n key table matches the bundles', () => {
   it('lists every section and every key of en.json, and invents none', () => {
-    const bundle = JSON.parse(read('src/i18n/en.json')) as Record<
-      string,
-      Record<string, unknown>
-    >;
+    const bundle = JSON.parse(read('src/i18n/en.json')) as Record<string, Record<string, unknown>>;
     const documented = new Map(
       [...read(I18N_PAGE).matchAll(I18N_SECTION_ROW_PATTERN)].map(([, section, keys]) => [
         section,
@@ -678,7 +733,9 @@ describe('the i18n key table matches the bundles', () => {
 
           return expected.join() === listed.join()
             ? []
-            : [`${section}: documented [${listed.join(', ')}] but en.json has [${expected.join(', ')}]`];
+            : [
+                `${section}: documented [${listed.join(', ')}] but en.json has [${expected.join(', ')}]`,
+              ];
         }),
     ];
 
@@ -694,10 +751,28 @@ describe('the documented data-branch format matches the writer', () => {
       [...read(surface).matchAll(DOCUMENTED_VERSION_PATTERN)]
         .map(([, documented]) => documented)
         .filter((documented) => documented !== stamped)
-        .map((documented) => `${surface} shows version ${documented}, storage.ts writes ${stamped}`),
+        .map(
+          (documented) => `${surface} shows version ${documented}, storage.ts writes ${stamped}`,
+        ),
     );
 
     expect(stamped).toBeDefined();
     expect(stale).toEqual([]);
+  });
+});
+
+describe('the source follows the named-parameter convention', () => {
+  it('declares no function or arrow taking two or more positional parameters', () => {
+    const sources = walk('src', (filename) => filename.endsWith('.ts')).filter(
+      (file) => !file.endsWith('.test.ts') && !toPosix(file).startsWith('src/shared/tests/'),
+    );
+    const declaration = /(?:function\s+\w+|=)\s*\(\s*\w+\s*:\s*[^,()]+,\s*\w+\s*:/g;
+    const offenders = sources.flatMap((file) =>
+      [...read(file).matchAll(declaration)].map(
+        (match) => `${toPosix(file)} -> ${match[0].replace(/\s+/g, ' ').trim()}`,
+      ),
+    );
+
+    expect(offenders).toEqual([]);
   });
 });

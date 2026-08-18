@@ -1,4 +1,20 @@
+import { ChartCurve, ChartTheme } from '@config/types';
 import type { ColorPalette } from './types';
+
+export const CHART_CHROME = {
+  titleFontSize: 16,
+  milestoneFontSize: 10,
+  milestoneStrokeWidth: 1,
+  milestoneDash: [6, 6] as [number, number],
+} as const;
+
+export const CHART_DEFAULTS = {
+  smoothing: true,
+  curve: ChartCurve.MONOTONE,
+  showPoints: true,
+  beginAtZero: false,
+  theme: ChartTheme.AUTO,
+} as const;
 
 export const LIGHT_PALETTE: ColorPalette = {
   accent: '#dfb317',
@@ -89,12 +105,22 @@ export const SVG_CHART = {
   gridOpacity: 0.3,
   fillOpacity: 0.1,
   axisStrokeWidth: 1,
-  fontSize: { title: 16, label: 11, milestone: 10, legend: 10 },
+  fontSize: {
+    title: CHART_CHROME.titleFontSize,
+    label: 11,
+    milestone: CHART_CHROME.milestoneFontSize,
+    legend: 10,
+  },
   header: { titleOffset: 36, legendOffset: 14 },
   animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
   yAxis: { stepCount: 5, labelGap: 8, labelBaselineOffset: 4 },
   xAxis: { maxLabels: 10, labelOffset: 20 },
-  milestone: { strokeWidth: 1, dashArray: '6,6', labelXOffset: 4, labelYOffset: 4 },
+  milestone: {
+    strokeWidth: CHART_CHROME.milestoneStrokeWidth,
+    dashArray: CHART_CHROME.milestoneDash.join(','),
+    labelXOffset: 4,
+    labelYOffset: 4,
+  },
   dash: { line: '8,4', legend: '4,2' },
   legend: {
     itemWidth: 120,

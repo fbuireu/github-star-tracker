@@ -15,7 +15,12 @@ export interface VelocityMetrics {
   daysToNextMilestone: number | null;
 }
 
-function roundTo(value: number, decimals: number): number {
+interface RoundToParams {
+  value: number;
+  decimals: number;
+}
+
+function roundTo({ value, decimals }: RoundToParams): number {
   const factor = 10 ** decimals;
 
   return Math.round(value * factor) / factor;
@@ -44,10 +49,13 @@ export function computeVelocity({ history }: { history: History }): VelocityMetr
   if (interval === null) return null;
 
   const gained = interval.to.value - interval.from.value;
-  const starsPerDay = roundTo(gained / interval.days, STARS_PER_DAY_DECIMALS);
+  const starsPerDay = roundTo({ value: gained / interval.days, decimals: STARS_PER_DAY_DECIMALS });
   const growthPercent =
     interval.from.value > 0
-      ? roundTo((gained / interval.from.value) * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS)
+      ? roundTo({
+          value: (gained / interval.from.value) * PERCENT_MULTIPLIER,
+          decimals: GROWTH_PERCENT_DECIMALS,
+        })
       : null;
 
   const nextMilestone = nextMilestoneAbove(last.totalStars);

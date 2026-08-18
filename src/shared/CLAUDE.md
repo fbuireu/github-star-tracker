@@ -2,7 +2,7 @@
 
 The escape hatch for code every layer may reach for but that is not domain logic, configuration, rendering or
 I/O. It is deliberately almost empty — putting something here is a statement that no layer owns it, and that
-claim is usually wrong. Today it holds only `testing/`, a barrel of fixture factories.
+claim is usually wrong. Today it holds only `tests/`, a barrel of fixture factories.
 
 **Anything added here needs a reason why no existing layer owns it.** Formatting → `@domain/formatting`.
 Config parsing → `@config/parsers`. Rendering primitives → `@presentation/shared`. Git, fs or HTTP →
@@ -10,7 +10,7 @@ Config parsing → `@config/parsers`. Rendering primitives → `@presentation/sh
 a helper that reasons about stars, snapshots, deltas, forecasts or dates-as-business-data belongs in
 `@domain`.
 
-## testing/
+## tests/
 
 Pure factories that build `Config`, `RepoInfo`, `Stargazer`, `Snapshot`, `History`, `RepoResult` and
 `ComparisonResults` values with sensible defaults, so a test only spells out the fields it actually asserts

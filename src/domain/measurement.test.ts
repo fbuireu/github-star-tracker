@@ -1,6 +1,6 @@
 import { makeMultiRepoHistory, makeRepoInfo } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
-import { measureRun, recordNotification } from './measurement';
+import { measureRun } from './measurement';
 import type { History } from './types';
 import { CompareAgainst, NotificationMode } from './types';
 
@@ -109,6 +109,19 @@ describe('measureRun', () => {
     ).toBe(0);
   });
 
+  it('counts what the appended history actually lost, even when max-history keeps everything', () => {
+    const storedHistory = makeMultiRepoHistory([{ 'user/repo-a': 1 }, { 'user/repo-a': 2 }]);
+    const measurement = measureRun({
+      ...BASE,
+      maxHistory: 0,
+      trackedSet: [makeRepoInfo('repo-a', 3)],
+      storedHistory,
+    });
+
+    expect(measurement.updatedHistory.snapshots).toHaveLength(3);
+    expect(measurement.droppedSnapshots).toBe(0);
+  });
+
   it('trims the appended history to max-history', () => {
     const storedHistory = makeMultiRepoHistory([
       { 'user/repo-a': 1 },
@@ -182,25 +195,17 @@ describe('measureRun', () => {
         .thresholdReached,
     ).toBe(false);
   });
-});
 
-describe('recordNotification', () => {
-  it('advances the notification baseline to the delivered total', () => {
-    const history: History = {
-      ...makeMultiRepoHistory([{ 'user/repo-a': 100 }]),
-      starsAtLastNotification: 50,
-    };
+  it('stamps the appended Snapshot with the injected clock, not the wall clock', () => {
+    const now = new Date('2026-03-04T12:00:00.000Z');
 
-    expect(recordNotification({ history, totalStars: 100 }).starsAtLastNotification).toBe(100);
-  });
+    const measurement = measureRun({
+      ...BASE,
+      trackedSet: [makeRepoInfo('repo-a', 10)],
+      storedHistory: EMPTY_HISTORY,
+      now,
+    });
 
-  it('returns a new history so the undelivered one is still persistable', () => {
-    const history: History = makeMultiRepoHistory([{ 'user/repo-a': 100 }]);
-
-    const advanced = recordNotification({ history, totalStars: 100 });
-
-    expect(advanced).not.toBe(history);
-    expect(history.starsAtLastNotification).toBeUndefined();
-    expect(advanced.snapshots).toBe(history.snapshots);
+    expect(measurement.updatedHistory.snapshots.at(-1)?.timestamp).toBe(now.toISOString());
   });
 });

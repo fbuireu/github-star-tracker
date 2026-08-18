@@ -1,5 +1,7 @@
+import { makeMultiRepoHistory } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
-import { shouldNotify } from './notification';
+import { Delivery, recordNotification, settleNotification, shouldNotify } from './notification';
+import type { History } from './types';
 import { NotificationMode } from './types';
 
 describe("shouldNotify with an 'auto' threshold", () => {
@@ -173,5 +175,74 @@ describe('shouldNotify', () => {
         mode: NotificationMode.GAINS,
       }),
     ).toBe(true);
+  });
+});
+
+describe('recordNotification', () => {
+  it('advances the notification baseline to the delivered total', () => {
+    const history: History = {
+      ...makeMultiRepoHistory([{ 'user/repo-a': 100 }]),
+      starsAtLastNotification: 50,
+    };
+
+    expect(recordNotification({ history, totalStars: 100 }).starsAtLastNotification).toBe(100);
+  });
+
+  it('returns a new history so the undelivered one is still persistable', () => {
+    const history: History = makeMultiRepoHistory([{ 'user/repo-a': 100 }]);
+
+    const advanced = recordNotification({ history, totalStars: 100 });
+
+    expect(advanced).not.toBe(history);
+    expect(history.starsAtLastNotification).toBeUndefined();
+    expect(advanced.snapshots).toBe(history.snapshots);
+  });
+});
+
+describe('settleNotification', () => {
+  const history: History = makeMultiRepoHistory([{ 'user/repo-a': 100 }]);
+  const settle = (overrides: Partial<Parameters<typeof settleNotification>[0]> = {}) =>
+    settleNotification({
+      changed: true,
+      thresholdReached: true,
+      delivery: Delivery.NOT_ATTEMPTED,
+      history,
+      totalStars: 100,
+      ...overrides,
+    });
+
+  it('decides to notify only when something changed and the threshold was cleared', () => {
+    expect(settle().shouldNotify).toBe(true);
+    expect(settle({ changed: false }).shouldNotify).toBe(false);
+    expect(settle({ thresholdReached: false }).shouldNotify).toBe(false);
+  });
+
+  it('reports delivery as a fact, independent of the decision', () => {
+    expect(settle({ delivery: Delivery.SENT }).notificationSent).toBe(true);
+    expect(settle({ delivery: Delivery.NOT_ATTEMPTED }).notificationSent).toBe(false);
+    expect(settle({ delivery: Delivery.FAILED }).notificationSent).toBe(false);
+  });
+
+  it('advances the baseline when an unconfigured transport makes should-notify the notification', () => {
+    expect(settle().historyToPersist.starsAtLastNotification).toBe(100);
+  });
+
+  it('advances the baseline on a delivered notification', () => {
+    expect(settle({ delivery: Delivery.SENT }).historyToPersist.starsAtLastNotification).toBe(100);
+  });
+
+  it('leaves the baseline alone when a configured send failed, so the change still accrues', () => {
+    const outcome = settle({ delivery: Delivery.FAILED });
+
+    expect(outcome.historyToPersist).toBe(history);
+    expect(outcome.historyToPersist.starsAtLastNotification).toBeUndefined();
+  });
+
+  it('does not let a courtesy send consume the accumulated threshold', () => {
+    const outcome = settle({ changed: false, delivery: Delivery.SENT });
+
+    expect(outcome.notificationSent).toBe(true);
+    expect(outcome.shouldNotify).toBe(false);
+    expect(outcome.historyToPersist).toBe(history);
   });
 });

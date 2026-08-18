@@ -224,7 +224,7 @@ Email once per 500 stars gained, not once per day. `notification-threshold` accu
 Use `should-notify`, not `new-stars`. They answer different questions:
 
 - **`new-stars` / `lost-stars`** - per-run figures measured against the comparison baseline. They are not cumulative and carry no memory of whether an email was sent. On a daily cron with `compare-against: 'last-run'` they mean "gained in the last 24 hours".
-- **`should-notify`** - the cumulative one. Driven by `notification-threshold` plus `notification-mode` against `starsAtLastNotification`, which is only updated when a notification actually fires, so the counter keeps accumulating across runs until it trips. It also requires that something actually changed.
+- **`should-notify`** - the cumulative one. Driven by `notification-threshold` plus `notification-mode` against `starsAtLastNotification`, so the counter keeps accumulating across runs until it trips ([the full rule](Configuration#notification-threshold)). It also requires that something actually changed.
 
 `if: steps.tracker.outputs.new-stars >= 500` would demand 500 stars inside a single run and would almost never fire on a daily schedule.
 
@@ -526,7 +526,13 @@ compare_against: 7d
     github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 
 - name: Save CSV report
-  run: echo "${{ steps.tracker.outputs.report-csv }}" > star-data.csv
+  env:
+    CSV: ${{ steps.tracker.outputs.report-csv }}
+  run: printf '%s' "$CSV" > star-data.csv
+  # Via env, not inline: report content is repository names and never reaches the shell as code.
+  # It does not raise the size ceiling though - argv and the environment share one limit, so a
+  # very large report can still fail with "Argument list too long". Only report-html has a
+  # path output (report-html-path); CSV and markdown do not.
 
 - name: Upload CSV
   uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -545,7 +551,9 @@ compare_against: 7d
     github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 
 - name: Save report
-  run: echo "${{ steps.tracker.outputs.report }}" > star-report.md
+  env:
+    REPORT: ${{ steps.tracker.outputs.report }}
+  run: printf '%s' "$REPORT" > star-report.md
 
 - name: Upload artifact
   uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

@@ -100,7 +100,9 @@ export function parseFileHexColor(value: unknown): string | undefined {
   return undefined;
 }
 
-export function parseDecimal(value: string | number | null | undefined): number | undefined {
+export function parsePositiveDecimal(
+  value: string | number | null | undefined,
+): number | undefined {
   if (isBlank(value)) return undefined;
 
   const parsed = typeof value === 'number' ? value : Number.parseFloat(value);

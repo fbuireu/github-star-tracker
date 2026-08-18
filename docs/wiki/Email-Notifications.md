@@ -63,7 +63,7 @@ jobs:
           subject: '⭐ Star Update: ${{ steps.tracker.outputs.total-stars }} total (+${{ steps.tracker.outputs.new-stars }})'
           to: ${{ secrets.EMAIL_TO }}
           from: GitHub Star Tracker
-          html_body: ${{ steps.tracker.outputs.report-html }}
+          html_body_file: ${{ steps.tracker.outputs.report-html-path }}
 ```
 
 > [!IMPORTANT]
@@ -86,7 +86,7 @@ jobs:
 
 ### With Notification Threshold
 
-Only send email when accumulated changes reach a threshold. `should-notify` accumulates across runs and only resets when a notification actually fires - see **[Notification Threshold](#notification-threshold)** below for the details and for `notification-mode`:
+Only send email when accumulated changes reach a threshold. `should-notify` accumulates across runs — see **[Notification Threshold](#notification-threshold)** below for the details and for `notification-mode`:
 
 ```yaml
 - name: Track stars
@@ -107,7 +107,7 @@ Only send email when accumulated changes reach a threshold. `should-notify` accu
     subject: '⭐ Stars changed: ${{ steps.tracker.outputs.total-stars }} total'
     to: ${{ secrets.EMAIL_TO }}
     from: GitHub Star Tracker
-    html_body: ${{ steps.tracker.outputs.report-html }}
+    html_body_file: ${{ steps.tracker.outputs.report-html-path }}
 ```
 
 ---
@@ -203,7 +203,7 @@ Notes:
 - Whether raising the threshold fires an email straight away depends on whether a notification has ever fired on the data branch. If none has, `starsAtLastNotification` is absent and treated as `0`, so the first run fires once immediately and then settles into the threshold rhythm. If you have been running with the default `notification-threshold: '0'`, every changed run has already been notifying, so `starsAtLastNotification` is stored at your current total - raising the threshold does **not** fire immediately, and the next email waits for the full threshold to accumulate from that total.
 - In `net` mode a large **loss** of stars also reaches the threshold, because the absolute change is what is measured. Use `gains` if you only want to hear about growth.
 
-See **[Configuration > notification-threshold](Configuration)** for details on adaptive thresholds.
+See **[Configuration > notification-threshold](Configuration#notification-threshold)** for details on adaptive thresholds.
 
 ---
 
@@ -362,7 +362,7 @@ Set a `notification-threshold`, pick a `notification-mode` and gate the mailer o
 ```
 
 > [!WARNING]
-> Do **not** gate on `if: steps.tracker.outputs.new-stars >= 10`. `new-stars` and `lost-stars` are **per-run** figures measured against the comparison baseline - with a daily cron and `compare-against: 'last-run'` they mean "stars gained in the last 24 hours". They are not cumulative and carry no memory of whether an email was already sent, so a `>=` comparison either fires almost every day (low number) or never fires at all (high number, because that many stars rarely arrive within a single run). `should-notify` is the cumulative one: it accumulates across runs against `starsAtLastNotification` and only resets when a notification actually fires.
+> Do **not** gate on `if: steps.tracker.outputs.new-stars >= 10`. `new-stars` and `lost-stars` are **per-run** figures measured against the comparison baseline - with a daily cron and `compare-against: 'last-run'` they mean "stars gained in the last 24 hours". They are not cumulative and carry no memory of whether an email was already sent, so a `>=` comparison either fires almost every day (low number) or never fires at all (high number, because that many stars rarely arrive within a single run). `should-notify` is the cumulative one: it accumulates across runs against `starsAtLastNotification` and only resets when the threshold trips ([the full rule](Configuration#notification-threshold)).
 
 ### Always (Including No Changes)
 
@@ -433,7 +433,7 @@ The subject is always `<localized subject>: <total stars> (<delta>)` — for exa
 | Multiple emails | Check for duplicate workflows; add `if: stars-changed == 'true'` condition |
 | Email arrives almost every day | The mailer is probably gated on `new-stars`/`lost-stars`, which are per-run values, or `notification-threshold` is still `0` (the default). Set a `notification-threshold`, add `notification-mode: 'gains'` and gate the step on `should-notify == 'true'` |
 | Weekly digest workflow fights the daily one over the data branch | Add `read-only: true` to the digest workflow. It then reads the branch and reports from it without committing a snapshot of its own |
-| No email at all after raising `notification-threshold` | `should-notify` accumulates against `starsAtLastNotification` and only resets when a notification fires, so a high threshold simply takes longer. If you were previously on the default `notification-threshold: '0'`, that value is already stored at your current total, so the counter restarts from there rather than firing once immediately. Make sure the step is gated on `should-notify == 'true'` and not on `new-stars >= N`, which would need the whole threshold to arrive within a single run |
+| No email at all after raising `notification-threshold` | `should-notify` accumulates against `starsAtLastNotification` and only resets when the threshold trips (and not even then if a configured send failed), so a high threshold simply takes longer. If you were previously on the default `notification-threshold: '0'`, that value is already stored at your current total, so the counter restarts from there rather than firing once immediately. Make sure the step is gated on `should-notify == 'true'` and not on `new-stars >= N`, which would need the whole threshold to arrive within a single run |
 | `notification-threshold` ignored on a `read-only` run | A threshold other than `0` cannot work with `read-only: true` - its counter (`starsAtLastNotification`) lives on the data branch, which a read-only run never writes, so it either fires on every run or never fires. The action logs a warning when both are set. Keep `notification-threshold: '0'` there and gate the mailer on `stars-changed == 'true'` instead |
 | Email sent on no changes | Set `send-on-no-changes: false` or add conditional `if` step |
 

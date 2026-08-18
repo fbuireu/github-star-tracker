@@ -6,11 +6,13 @@ Technologies, design decisions, and architecture overview.
 
 The project implements **Domain-Driven Design<sub>(ish)</sub>** with a **Functional Core, Imperative Shell** pattern. Seven layers organize the codebase. They are layers, not DDD bounded contexts: they share a single ubiquitous language, recorded in `CONTEXT.md` at the repo root.
 
+This page is an overview. `ARCHITECTURE.md` in the repository is the normative statement of which layer may import which — if the two ever disagree, that file is right and this one is stale.
+
 The functional core is pure — no filesystem, no network, no clock beyond an injectable `now`:
 
 | Layer | Directory | Responsibility |
 |---|---|---|
-| **Domain** | `src/domain/` | Core types, comparison, snapshots, forecasts, notifications, stargazers |
+| **Domain** | `src/domain/` | Core types, the Tracked Set, comparison, snapshots, forecasts, velocity, notifications, stargazers and sampling |
 | **Presentation** | `src/presentation/` | Markdown, HTML, SVG charts, badges |
 | **i18n** | `src/i18n/` | Translation bundles, `getTranslations`, `interpolate` - the only true leaf |
 | **Shared** | `src/shared/` | Cross-cutting code owning no layer; today only test fixtures |

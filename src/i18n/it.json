@@ -8,6 +8,7 @@
     "change": "Variazione",
     "comparedTo": "Confrontato con snapshot del {date}",
     "firstRun": "prima esecuzione",
+    "noRepositories": "Nessun repository corrisponde ai filtri configurati",
     "repositories": "Repository",
     "stars": "Stelle",
     "starsCount": "{count} stelle",

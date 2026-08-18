@@ -46,7 +46,7 @@ Complete reference for all inputs, outputs, and data formats.
 | `notification-mode` | `string` | `net` | How `notification-threshold` measures that change: `net` (absolute change in total stars - gains and losses cancel out, and a large drop also reaches the threshold) or `gains` (only upward movement counts; a drop never notifies) |
 | `notification-threshold` | `number` or `"auto"` | `0` | Accumulated star change required to notify: `0` = every run that has changes, N = notify once the total has moved by at least N since the last notification, `auto` = adaptive threshold derived from the total star count (see [Configuration](Configuration#notification-threshold)) |
 | `only-orgs` | `string` | - | Comma-separated organization/owner names or regex patterns (e.g. `/^my-org$/`) to exclusively track |
-| `only-repos` | `string` | - | Comma-separated repo names to exclusively track (overrides other filters) |
+| `only-repos` | `string` | - | Comma-separated repo names to exclusively track. Narrows what `only-orgs` already selected — it cannot bring back a repo `only-orgs` excluded — but does skip the archived/fork/exclude/min-stars filters |
 | `read-only` | `boolean` | `false` | Run without writing to the data branch: still fetches, reports, sets outputs and emails, but never commits or pushes. Pair with `compare-against` for a digest workflow that shares a data branch with your tracking workflow. Incompatible with a non-zero `notification-threshold`, whose counter lives on that branch |
 | `send-on-no-changes` | `boolean` | `false` | Send email even with no star changes |
 | `smart-sampling` | `boolean` | `false` | Sample stargazer pages for high-star repos instead of fetching every page, to avoid API rate limits |
@@ -61,7 +61,7 @@ Complete reference for all inputs, outputs, and data formats.
 | `velocity-metrics` | `boolean` | `false` | Add a growth-velocity section (stars/day, % growth, days to next milestone) to the report |
 | `visibility` | `string` | `all` | Repo visibility filter: `public`, `private`, `all`, or `owned` |
 
-Both modes measure against `starsAtLastNotification` in `stars-data.json`, which is only updated when a notification actually fires. The counter therefore accumulates across runs that do not notify instead of resetting. On a data branch that has never sent a notification there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so the first run fires immediately and then settles. That is not the case if you were already running with the default `notification-threshold: 0`: every changed run has been notifying, so `starsAtLastNotification` already holds your current total and raising the threshold fires nothing immediately - the next email waits until the total actually moves by at least the threshold.
+Both modes measure against `starsAtLastNotification` in `stars-data.json`, which only resets when the threshold trips (and not even then if a configured send failed), so the counter accumulates across runs that do not notify. [`notification-threshold`](Configuration#notification-threshold) owns the full rule, including what happens on a fresh data branch and when you raise the value.
 
 ---
 
@@ -83,7 +83,7 @@ All outputs are strings (GitHub Actions requirement). Available in subsequent wo
 | `stars-changed` | `string` | Per-run. Whether any counts changed against the `compare-against` baseline: `true` or `false` |
 | `total-stars` | `string` | Total star count across all tracked repos |
 
-`new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the comparison baseline. They are not cumulative and carry no memory of whether an email was sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: its counter only resets when a notification actually fires. `notification-sent` is the delivery counterpart — `should-notify` is the decision, `notification-sent` is whether mail left the building.
+`new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the comparison baseline. They are not cumulative and carry no memory of whether an email was sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: its counter only resets when the threshold trips ([the full rule](Configuration#notification-threshold)). `notification-sent` is the delivery counterpart — `should-notify` is the decision, `notification-sent` is whether mail left the building.
 
 ### Usage Example
 
@@ -242,9 +242,7 @@ Animated SVG files committed to the data branch:
 | `charts/forecast.svg` | Historical + projected trends |
 | `charts/{owner}-{repo}.svg` | Per-repo star history |
 
-```markdown
-![Star History](https://raw.githubusercontent.com/USER/REPO/star-tracker-data/charts/star-history.svg)
-```
+To embed any of these, see **[Viewing Reports](Viewing-Reports#method-2-badges)**.
 
 ---
 

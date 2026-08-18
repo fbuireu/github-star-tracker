@@ -47,12 +47,19 @@ When using this GitHub Action:
 
 ### 1. Token Permissions
 
-Always use minimal token permissions:
+The action needs a **Personal Access Token**, not the injected `GITHUB_TOKEN` — that one is scoped to the
+triggering repository and cannot list your repositories at all
+([ADR 0002](docs/adr/0002-require-a-personal-access-token.md)). Give it the least it can work with:
+
+- **Classic:** `public_repo` if you only track public repositories, `repo` if you track private ones
+- **Fine-grained:** `Contents: Read and write` — the action pushes to the data branch with this token.
+  `Contents: Read-only` is enough for a [`read-only`](docs/wiki/Configuration.md) run
+
+The workflow's own `permissions:` block only governs `GITHUB_TOKEN`, which `actions/checkout` uses:
 
 ```yaml
 permissions:
-  contents: write # Only if using data-branch
-  issues: write # Only if creating issues
+  contents: write
 ```
 
 ### 2. Secrets Management
@@ -62,19 +69,29 @@ Never expose tokens in logs or outputs:
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
   with:
-    github-token: ${{ secrets.GITHUB_TOKEN }} # ✅ Good
-    # github-token: ghp_xxxxx  # ❌ Never hardcode
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }} # ✅ Your PAT, from a secret
+    # github-token: ${{ secrets.GITHUB_TOKEN }}     # ❌ Cannot enumerate your repositories
+    # github-token: ghp_xxxxx                       # ❌ Never hardcode
 ```
+
+`smtp-password` is passed to `core.setSecret` the moment it is read, so it stays masked in the Action log
+even if a workflow supplies it literally — but supply it from a secret anyway.
 
 ### 3. Configuration Files
 
-Avoid committing sensitive data in configuration files:
+`star-tracker.yml` is committed to your repository and carries **no credentials**: the SMTP inputs are read
+from the workflow only and have no config-file counterpart. Keep it to tracking options:
 
 ```yaml
-# star-tracker.yml
-reporting:
-  email:
-    smtp_password: ${{ secrets.SMTP_PASSWORD }} # ✅ Use secrets
+# star-tracker.yml — safe to commit
+visibility: public
+min_stars: 5
+```
+
+```yaml
+# the workflow — where the secrets live
+with:
+  smtp-password: ${{ secrets.SMTP_PASSWORD }}
 ```
 
 ### 4. Regular Updates
@@ -90,20 +107,25 @@ Keep the action updated to the latest version:
 
 ### GitHub Token Access
 
-This action requires a GitHub token with repository access. The token is used to:
+This action requires a Personal Access Token with repository access. The token is used to:
 
-- Read repository information
-- Read star counts
-- Write to data branch (optional)
-- Send emails (optional)
+- List the repositories the token's owner can see
+- Read star counts, and stargazer lists when `track-stargazers` or charts are on
+- Push the report, data, badge and charts to the data branch
+
+Email is sent over SMTP with the credentials you supply separately; the GitHub token has no part in it.
 
 ### Data Storage
 
-If using the data-branch feature:
+The action always keeps its data on a branch — that is how a stateless Action remembers anything
+([ADR 0001](docs/adr/0001-star-data-lives-on-a-dedicated-data-branch.md)), and there is no mode that skips
+it:
 
-- Historical data is stored in a Git branch
-- This data is accessible to anyone with repository access
-- Do not enable this feature if your repository is public and you want to keep star data private
+- Historical star data, the report, the badge and the charts live on that branch
+- Anyone who can read the repository can read them, and the raw URLs are what make the badge and charts
+  embeddable
+- On a private repository they inherit its access; on a public one they are public. If your star history
+  should not be public, point `data-branch` at a branch in a private repository
 
 ## Security Updates
 

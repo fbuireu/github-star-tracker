@@ -45,7 +45,10 @@ The rejected alternative is folding the Notification baseline advance into `meas
 the baseline advances only on delivery ([ADR 0011](./0011-the-notification-baseline-advances-only-on-delivery.md)),
 and delivery happens in `@application` after the email is sent. `measureRun` therefore reports
 `thresholdReached` and never writes `starsAtLastNotification`. `recordNotification` is the separate,
-explicit step that advances it, and it returns a new History rather than mutating the one it was given.
+explicit step that advances it, and it returns a new History rather than mutating the one it was given. It
+lives in `@domain/notification` alongside `settleNotification`, which is what decides *whether* to call it —
+`measureRun` cannot import it without a cycle, and that is the right shape: measuring and notifying are two
+acts, not one.
 
 ## Consequences
 

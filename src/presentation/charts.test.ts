@@ -1,10 +1,13 @@
+import type { Config } from '@config/types';
 import { ChartTheme } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
+import type { RepoStargazers } from '@domain/stargazers';
 import type { History, SnapshotRepo } from '@domain/types';
 import { makeConfig, makeMultiRepoHistory, makeStargazerSeries } from '@shared/tests';
 import { describe, expect, it } from 'vitest';
-import { buildChartFiles, resolveChartHistory } from './charts';
+import type { ChartHistories } from './charts';
+import { buildChartFiles, resolveChartHistories } from './charts';
 
 const NOW = new Date('2026-03-01T00:00:00Z');
 
@@ -32,17 +35,36 @@ const FORECAST: ForecastData = {
   repos: [],
 };
 
-function build(overrides: Partial<Parameters<typeof buildChartFiles>[0]> = {}) {
+interface HistoriesOf {
+  config?: Config;
+  storedHistory?: History;
+  repos?: SnapshotRepo[];
+  repoStargazers?: RepoStargazers[];
+}
+
+function histories({
+  config = makeConfig({ includeCharts: true, topRepos: 2 }),
+  storedHistory = HISTORY,
+  repos = REPO_TOTALS,
+  repoStargazers = [],
+}: HistoriesOf = {}): ChartHistories {
+  return resolveChartHistories({ config, storedHistory, repos, repoStargazers, now: NOW });
+}
+
+interface Build extends HistoriesOf {
+  forecastData?: ForecastData | null;
+  topRepoNames?: string[];
+  chartHistories?: ChartHistories;
+}
+
+function build({ forecastData = null, topRepoNames, chartHistories, ...rest }: Build = {}) {
+  const config = rest.config ?? makeConfig({ includeCharts: true, topRepos: 2 });
+
   return buildChartFiles({
-    config: makeConfig({ includeCharts: true, topRepos: 2 }),
-    history: HISTORY,
-    fallbackHistory: HISTORY,
-    forecastData: null,
-    topRepoNames: ['user/repo-a', 'user/repo-b'],
-    repoTotals: REPO_TOTALS,
-    repoStargazers: [],
-    now: NOW,
-    ...overrides,
+    config,
+    chartHistories: chartHistories ?? histories({ ...rest, config }),
+    forecastData,
+    topRepoNames: topRepoNames ?? ['user/repo-a', 'user/repo-b'],
   });
 }
 
@@ -58,7 +80,7 @@ describe('buildChartFiles', () => {
   it('renders nothing when the history is too short to plot', () => {
     const single = makeMultiRepoHistory([{ 'user/repo-a': 40 }]);
 
-    expect(build({ history: single })).toEqual([]);
+    expect(build({ storedHistory: single })).toEqual([]);
   });
 
   it('renders the star history chart', () => {
@@ -134,33 +156,85 @@ describe('buildChartFiles', () => {
   it('skips a top repository that is absent from the repo totals', () => {
     const files = build({
       topRepoNames: ['user/ghost'],
-      fallbackHistory: { snapshots: [] },
+      storedHistory: { snapshots: [] },
     });
 
     expect(filenames(files)).not.toContain('user-ghost.svg');
   });
 });
 
-describe('resolveChartHistory', () => {
-  const fallback: History = makeMultiRepoHistory([
+describe('resolveChartHistories', () => {
+  const stored: History = makeMultiRepoHistory([
     { 'user/repo-a': 1 },
     { 'user/repo-a': 2 },
     { 'user/repo-a': 3 },
   ]);
 
   it('prefers the reconstruction once it has enough snapshots to plot', () => {
-    const candidate = makeMultiRepoHistory([{ 'user/repo-a': 9 }, { 'user/repo-a': 10 }]);
+    const resolved = histories({
+      storedHistory: stored,
+      repoStargazers: [
+        {
+          repoFullName: 'user/repo-a',
+          stargazers: makeStargazerSeries({
+            count: 60,
+            startMs: Date.UTC(2026, 0, 1),
+            stepDays: 1,
+          }),
+        },
+      ],
+    });
 
-    expect(resolveChartHistory({ candidate, fallback })).toBe(candidate);
+    expect(resolved.aggregate).not.toBe(stored);
+    expect(resolved.aggregate.snapshots.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('falls back when the reconstruction has too few snapshots', () => {
-    const candidate = makeMultiRepoHistory([{ 'user/repo-a': 9 }]);
-
-    expect(resolveChartHistory({ candidate, fallback })).toBe(fallback);
+  it('falls back to the stored history when nothing could be reconstructed', () => {
+    expect(histories({ storedHistory: stored }).aggregate).toBe(stored);
   });
 
-  it('falls back when the reconstruction is empty', () => {
-    expect(resolveChartHistory({ candidate: { snapshots: [] }, fallback })).toBe(fallback);
+  it('reconstructs nothing at all when charts are off', () => {
+    const resolved = histories({
+      config: makeConfig({ includeCharts: false }),
+      storedHistory: stored,
+    });
+
+    expect(resolved.aggregate).toBe(stored);
+  });
+
+  it('falls back for a repository that is not in the tracked set', () => {
+    expect(histories({ storedHistory: stored }).forRepo('user/ghost')).toBe(stored);
+  });
+
+  it('reconstructs each repository from its own stargazers, on the same instant', () => {
+    const resolved = histories({
+      repoStargazers: [
+        {
+          repoFullName: 'user/repo-a',
+          stargazers: makeStargazerSeries({
+            count: 60,
+            startMs: Date.UTC(2026, 0, 1),
+            stepDays: 1,
+          }),
+        },
+      ],
+    });
+    const perRepo = resolved.forRepo('user/repo-a');
+
+    expect(perRepo.snapshots.at(-1)?.timestamp).toBe(NOW.toISOString());
+    expect(resolved.aggregate.snapshots.at(-1)?.timestamp).toBe(NOW.toISOString());
+  });
+});
+
+describe('reconstructedForRepo', () => {
+  it('returns null rather than the Stored History when a repo has no reachable dates', () => {
+    const resolved = histories({ repoStargazers: [] });
+
+    expect(resolved.reconstructedForRepo('user/repo-a')).toBeNull();
+    expect(resolved.forRepo('user/repo-a')).toBe(HISTORY);
+  });
+
+  it('returns null for a repo outside the Tracked Set', () => {
+    expect(histories().reconstructedForRepo('user/not-tracked')).toBeNull();
   });
 });

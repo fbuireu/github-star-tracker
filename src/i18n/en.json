@@ -8,6 +8,7 @@
     "change": "Change",
     "comparedTo": "Compared to snapshot from {date}",
     "firstRun": "first run",
+    "noRepositories": "No repositories matched the configured filters",
     "repositories": "Repositories",
     "stars": "Stars",
     "starsCount": "{count} stars",

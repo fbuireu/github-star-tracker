@@ -1,86 +1,9 @@
 import * as core from '@actions/core';
 import type { Config } from '@config/types';
+import { resolveTrackedSet } from '@domain/tracked-set';
 import type { RepoInfo } from '@domain/types';
 import { fetchRepos } from './client';
 import type { GitHubRepo, Octokit } from './types';
-
-const REGEX_PATTERN = /^\/(.+)\/([gimsuy]*)$/;
-
-interface MatchesPatternParams {
-  name: string;
-  patterns: string[];
-}
-
-function matchesPattern({ name, patterns }: MatchesPatternParams): boolean {
-  return patterns.some((pattern) => {
-    const match = REGEX_PATTERN.exec(pattern);
-    if (match) {
-      try {
-        return new RegExp(match[1], match[2]).test(name);
-      } catch (error) {
-        core.warning(
-          `Ignoring invalid pattern "${pattern}": ${(error as Error).message}. Filters expect either an exact name or /pattern/flags.`,
-        );
-
-        return false;
-      }
-    }
-    return name === pattern;
-  });
-}
-
-interface FilterReposParams {
-  repos: GitHubRepo[];
-  config: Config;
-}
-
-export function filterRepos({ repos, config }: FilterReposParams): GitHubRepo[] {
-  let candidates = repos;
-
-  if (config.onlyOrgs.length > 0) {
-    candidates = candidates.filter((repo) =>
-      matchesPattern({ name: repo.owner.login, patterns: config.onlyOrgs }),
-    );
-    core.info(`After only_orgs filter: ${candidates.length} repos`);
-  }
-
-  if (config.onlyRepos.length > 0) {
-    const filtered = candidates.filter((repo) =>
-      matchesPattern({ name: repo.name, patterns: config.onlyRepos }),
-    );
-    core.info(`After only_repos filter: ${filtered.length} repos`);
-    return filtered;
-  }
-
-  let filtered = candidates;
-
-  if (!config.includeArchived) {
-    filtered = filtered.filter((repo) => !repo.archived);
-  }
-
-  if (!config.includeForks) {
-    filtered = filtered.filter((repo) => !repo.fork);
-  }
-
-  if (config.excludeRepos.length > 0) {
-    filtered = filtered.filter(
-      (repo) => !matchesPattern({ name: repo.name, patterns: config.excludeRepos }),
-    );
-  }
-
-  if (config.excludeOrgs.length > 0) {
-    filtered = filtered.filter(
-      (repo) => !matchesPattern({ name: repo.owner.login, patterns: config.excludeOrgs }),
-    );
-  }
-
-  if (config.minStars > 0) {
-    filtered = filtered.filter((repo) => repo.stargazers_count >= config.minStars);
-  }
-
-  core.info(`After filtering: ${filtered.length} repos`);
-  return filtered;
-}
 
 export function mapRepos(repos: GitHubRepo[]): RepoInfo[] {
   return repos.map((repo) => ({
@@ -100,8 +23,26 @@ interface GetReposParams {
 }
 
 export async function getRepos({ octokit, config }: GetReposParams): Promise<RepoInfo[]> {
-  const allRepos = await fetchRepos({ octokit, config });
-  const filtered = filterRepos({ repos: allRepos, config });
+  const fetched = await fetchRepos({ octokit, config });
+  const trackedSet = resolveTrackedSet({ repos: mapRepos(fetched), filters: config });
 
-  return mapRepos(filtered);
+  for (const pattern of trackedSet.invalidPatterns) {
+    core.warning(
+      `Ignoring invalid pattern "${pattern}". Filters expect either an exact name or /pattern/flags.`,
+    );
+  }
+
+  if (trackedSet.afterOnlyOrgs !== null) {
+    core.info(`After only_orgs filter: ${trackedSet.afterOnlyOrgs} repos`);
+  }
+
+  if (trackedSet.afterOnlyRepos !== null) {
+    core.info(`After only_repos filter: ${trackedSet.afterOnlyRepos} repos`);
+
+    return trackedSet.repos;
+  }
+
+  core.info(`After filtering: ${trackedSet.repos.length} repos`);
+
+  return trackedSet.repos;
 }

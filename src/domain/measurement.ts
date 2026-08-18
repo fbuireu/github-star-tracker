@@ -45,14 +45,15 @@ export function measureRun({
   });
   const results = compareStars({ currentRepos: trackedSet, previousSnapshot: baseline });
   const { summary } = results;
-  const snapshot = createSnapshot({ currentRepos: trackedSet, summary });
+  const snapshot = createSnapshot({ currentRepos: trackedSet, summary, now });
+  const updatedHistory = addSnapshot({ history: storedHistory, snapshot, maxHistory });
 
   return {
     baselineTimestamp: baseline === null ? null : baseline.timestamp,
     results,
     summary,
-    updatedHistory: addSnapshot({ history: storedHistory, snapshot, maxHistory }),
-    droppedSnapshots: Math.max(0, storedHistory.snapshots.length + 1 - maxHistory),
+    updatedHistory,
+    droppedSnapshots: storedHistory.snapshots.length + 1 - updatedHistory.snapshots.length,
     thresholdReached: shouldNotify({
       totalStars: summary.totalStars,
       starsAtLastNotification: storedHistory.starsAtLastNotification,
@@ -60,13 +61,4 @@ export function measureRun({
       mode: notificationMode,
     }),
   };
-}
-
-interface RecordNotificationParams {
-  history: History;
-  totalStars: number;
-}
-
-export function recordNotification({ history, totalStars }: RecordNotificationParams): History {
-  return { ...history, starsAtLastNotification: totalStars };
 }

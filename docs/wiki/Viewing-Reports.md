@@ -12,6 +12,7 @@ All data is automatically saved to a dedicated branch (default: `star-tracker-da
 |---|---|
 | `README.md` | Full Markdown report with embedded SVG charts |
 | `stars-data.json` | Complete historical data (JSON) |
+| `stars-data.csv` | The same run as a flat CSV, one row per repository |
 | `stars-badge.svg` | Star count badge |
 | `charts/star-history.svg` | Animated total stars chart |
 | `charts/comparison.svg` | Top repos comparison chart |

@@ -4,7 +4,10 @@ Date: 2026-07-26
 
 ## Status
 
-Accepted.
+Accepted. Its "the two renderers are independent" consequence was narrowed by
+[ADR 0014](./0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md): the window, colours, labels, titles
+and Milestones are computed once and both adapters read them, so a change there changes both. The differences
+this ADR records survive — the 30-point cap and the curve-mode collapse are still email-only.
 
 ## Context
 

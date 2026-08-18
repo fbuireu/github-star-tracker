@@ -62,7 +62,7 @@ git push origin --delete star-tracker-data
 
 ### No Data After First Run
 
-**Expected behavior.** The first run creates the data branch and records initial star counts with `delta: 0`. Star-history charts are reconstructed from each stargazer's real `starred_at` date, so they appear on the first run (whenever `include-charts` is on). Growth forecasts still require 3+ snapshots/runs.
+**Expected behavior.** The first run creates the data branch and records initial star counts with `delta: 0`. Star-history charts are reconstructed from each stargazer's real `starred_at` date, so they appear on the first run (whenever `include-charts` is on). Growth forecasts appear on the first run too, for the same reason — they are fitted to that reconstructed series. Only with `include-charts: false` do they wait for 3 stored snapshots.
 
 ### Empty Report or Zero Stars
 
@@ -144,9 +144,9 @@ Since v1.22.3, a single failing page no longer discards the rest of a repo's his
 
 ### No Forecast Chart
 
-**Cause:** Forecasts require at least 3 snapshots.
+**Cause:** the forecast needs 3 points in the series it is fitted to. With `include-charts` on that series is the history reconstructed from `starred_at`, so it is normally there from the first run — an empty forecast then means no stargazer dates were reachable (see [No Charts Generated](#no-charts-generated)). With `include-charts: false` the series is the stored per-run history instead.
 
-**Fix:** Run the workflow 3+ times to accumulate enough data.
+**Fix:** check `include-charts` is on and the token can list stargazers. If charts are deliberately off, run the workflow 3+ times to accumulate stored snapshots.
 
 ### Charts Not Updating
 
@@ -213,7 +213,7 @@ Or use `notification-threshold` with the built-in email to control frequency.
 
 A daily schedule with a condition like `if: steps.tracker.outputs.new-stars >= 10` emails you on almost every run, because `new-stars` is a **per-run** figure measured against the comparison baseline - it does not accumulate, and it does not know whether an email was already sent. Raising that number does not help either: it then requires that many stars within a single run, so it almost never fires.
 
-**Fix:** gate on `should-notify`, which accumulates across runs and only resets when a notification actually fires:
+**Fix:** gate on `should-notify`, which accumulates across runs and only resets when the threshold trips (and not even then if a configured send failed):
 
 ```yaml
 - name: Track stars
@@ -313,7 +313,7 @@ Ensure the file exists at that path on the branch where the workflow runs.
 
 **Fix:** If you set an option in both the workflow and the config file, the workflow value wins. Remove the workflow input to let the config file value apply.
 
-See **[Configuration > Precedence](Configuration)**.
+See **[Configuration Precedence](Configuration#configuration-precedence)**.
 
 ### Invalid Locale Warning
 

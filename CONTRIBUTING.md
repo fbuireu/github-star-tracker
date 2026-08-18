@@ -57,7 +57,7 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
 
 2. **Install dependencies**
    ```bash
-   # Requires Node.js 24+ and pnpm
+   # Requires the Node and pnpm versions pinned in package.json (engines.node, packageManager)
    pnpm install
    ```
 
@@ -81,10 +81,11 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
    pnpm run validate
    
    # Or individually:
+   pnpm run lint          # Biome, check only
    pnpm run test          # Unit tests
    pnpm run test:coverage # Tests with coverage report
    pnpm run typecheck     # Type checking
-   pnpm run check         # Linting + type checking
+   pnpm run check         # Lint + typecheck + coverage (what CI runs)
    ```
 
 3. **Test your changes locally**
@@ -107,19 +108,21 @@ We use **Biome** for linting and formatting:
 
 ```bash
 # Check code style
-pnpm run check
+pnpm run lint
 
 # Auto-fix issues
 pnpm run format
 ```
 
+`pnpm run check` is the wider gate — it adds type-checking and the coverage run on top of `lint`.
+
 **Guidelines:**
-- TypeScript with strict mode
+- TypeScript — strict type-checking is on by default in the pinned version, so `tsconfig.json` does not declare it
 - Functional programming style preferred
 - No `any` types (use `unknown` if needed)
 - Functions with 2+ parameters should use destructured named parameters
 - Constants for magic numbers/strings
-- Comprehensive JSDoc for public APIs
+- No explanatory comments — the tree carries none by design; the `CLAUDE.md` guides carry the explanation
 
 ### Testing
 
@@ -141,7 +144,7 @@ describe('myFeature', () => {
 **Test requirements:**
 - ✅ Unit tests for all functions
 - ✅ Integration tests for complex flows
-- ✅ Minimum 80% code coverage
+- ✅ Minimum 85% code coverage, on lines, functions, branches and statements alike
 - ✅ Tests must pass before merging
 
 Run tests:
@@ -330,10 +333,13 @@ github-star-tracker/
 │   ├── index.ts            # Entry point: Action initialization
 │   ├── application/        # Orchestration layer: Main logic flow
 │   ├── config/             # Configuration: Input parsing, validation, and defaults
-│   ├── domain/             # Core Business Logic: Snapshotting, deltas, and forecasting
+│   ├── domain/             # Core Business Logic: Tracked Set, snapshotting, deltas, forecasting
 │   ├── infrastructure/     # External Services: GitHub API, Git CLI, Persistence, and SMTP
 │   ├── presentation/       # Output Generation: Markdown, HTML, SVG charts, and badges
-│   └── i18n/               # Internationalization: Locales and translation loaders
+│   ├── i18n/               # Internationalization: Locales and translation loaders
+│   ├── shared/             # Cross-cutting code owning no layer; today only test fixtures
+│   └── assets/             # Not a layer: the brand mark the README embeds
+├── dist/                   # Committed bundle - what action.yml actually runs (ADR 0003)
 ├── action.yml              # GitHub Action metadata
 ├── package.json            # Dependencies and scripts
 └── tsconfig.json           # TypeScript configuration with path aliases
@@ -344,8 +350,9 @@ github-star-tracker/
 
 ### Documentation that ships with the code
 
-Four artefacts, four jobs. They are maintained by hand, so a code change that does not update them leaves
-them lying:
+Four kinds of document, one job each — `CLAUDE.md` appears twice below because it is the same artefact at two
+scales, repo-wide and per layer. They are maintained by hand, so a code change that does not update them
+leaves them lying:
 
 | Document | Answers | Update it when |
 | --- | --- | --- |

@@ -6,9 +6,16 @@ repo's `star-tracker.yml`. It produces a fully-populated `Config` — every fiel
 inputs (`@infrastructure/notification` does), does **not** read `github-token` / `github-api-url`
 (`@application/tracker` does), and does **not** validate value *ranges*.
 
+**`loadConfig()` takes no arguments and reads the ambient inputs on purpose**, and
+[ADR 0018](../../docs/adr/0018-loadconfig-reads-the-ambient-action-inputs.md) records why: parameterising it
+deletes 49 test lines, 27 of them the same repeated mock, and forces the orchestrator to relearn every input
+name — the coupling [ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md) removed.
+Do not re-propose it.
+
 `types.ts` holds `Config` and the enums, `defaults.ts` holds `DEFAULTS`,
-`parsers.ts` holds pure coercions used only here, and `loader.ts` is the resolver. Every parser is reached
-through `loader.ts`'s field table, so none of them is exported purely for a test.
+`parsers.ts` holds pure coercions used only here, with its own colocated `parsers.test.ts`, and `loader.ts` is
+the resolver. Every parser is reached through `loader.ts`'s field table in production, so none is exported
+*only* for a test — but `parsers.test.ts` does exercise them directly, which is why they are exported at all.
 
 ## The field table
 
@@ -17,9 +24,10 @@ naming how to parse the action input and how to parse the config-file value; `re
 deriving the kebab-case input name from the key and falling back to `DEFAULTS`. Adding a `Config` field
 means adding a row, not four lines in four places.
 
-The row types are the vocabulary: `boolField`, `positiveField`, `nonNegativeField`, `listField`,
-`enumField(allowed)` and `namedFallbackField` — the last being the two keys whose warning names the fallback
-(`chart-line-color`, `chart-line-width`) rather than saying "Ignoring it."
+The row types are the vocabulary: `boolField`, `positiveField`, `nonNegativeField`, `listField` and
+`enumField(allowed)`. Two rows (`chart-line-color`, `chart-line-width`) pass `namesFallback: true` to
+`scalarField`, which is what makes their warning name the fallback rather than say "Ignoring it." That used
+to be a second combinator, byte-identical to `scalarField` but for the one template literal.
 
 **Four keys are deliberately outside the table**, and each is a documented exception: `visibility` throws
 instead of warning, `dataBranch` runs an extra validator, `sendOnNoChanges` never reads the config file and
@@ -78,10 +86,24 @@ table.
 
 ## action.yml cross-check
 
+`docs/docs-consistency.test.ts` reads the real `action.yml` too, and asserts the **prose**: every overridable
+input states its real `DEFAULTS` value as `(default X)` and carries `(overrides config file)`. Those two
+strings had drifted — sixteen `chart-*` and `velocity-metrics` inputs were file-readable while saying
+nothing about it, which reads as "input only".
+
 `action-inputs.test.ts` reads the real `action.yml` and asserts every `Config` key except `sendOnNoChanges`
 has a kebab-case input whose `default` is **empty**, and that only `config-path`, `send-on-no-changes` and
 `smtp-port` carry a non-empty default. **Never add a `default:` to an overridable input** — the test fails and
 the config file would stop working, because a non-empty default always beats it.
+
+It derives the input name with **`toActionInputName`, exported from `loader.ts`** — the same function the
+fold uses — so the test cannot disagree with the loader about what a key is called. It also pins the
+`outputs:` block: eleven keys, alphabetical, each described. That list is the only executable check on the
+output contract *from the manifest side*; `tracker.test.ts` closes the loop from the code side by comparing
+the names `setOutputs` actually emits against `action.yml`. Between them the contract is checked in both
+directions — the manifest list alone was a copy of `action.yml` compared with `action.yml`, and would not
+have noticed an output going missing from `setOutputs`. It is otherwise restated in `ARCHITECTURE.md` and
+[`src/application/CLAUDE.md`](../application/CLAUDE.md).
 
 Real defaults therefore live in `defaults.ts` and are only *described* in the `action.yml` prose. Every
 overridable input does state its default in that prose today, so check `defaults.ts` before trusting a
@@ -117,4 +139,4 @@ differently from an absent one rather than as a changed default.
 - **Warning wording is asserted verbatim**, including the Oxford comma
   (`'Invalid locale "fr". Must be "en", "es", "ca", or "it". Falling back to "en"'`). The generic parser
   message deliberately does *not* name a fallback, because the config file may still supply one.
-- `loader.test.ts` (~1120 lines) is the real specification for this folder.
+- `loader.test.ts` is the real specification for this folder — it is by far the largest test in the tree.

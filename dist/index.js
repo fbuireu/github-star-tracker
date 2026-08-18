@@ -34891,10 +34891,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -37186,7 +37186,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -37309,7 +37309,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -37500,6 +37500,7 @@ var ca_default = {
     change: "Canvi",
     comparedTo: "Comparat amb instant\xE0nia del {date}",
     firstRun: "primera execuci\xF3",
+    noRepositories: "Cap repositori coincideix amb els filtres configurats",
     repositories: "Repositoris",
     stars: "Estrelles",
     starsCount: "{count} estrelles",
@@ -37575,6 +37576,7 @@ var en_default = {
     change: "Change",
     comparedTo: "Compared to snapshot from {date}",
     firstRun: "first run",
+    noRepositories: "No repositories matched the configured filters",
     repositories: "Repositories",
     stars: "Stars",
     starsCount: "{count} stars",
@@ -37650,6 +37652,7 @@ var es_default = {
     change: "Cambio",
     comparedTo: "Comparado con instant\xE1nea del {date}",
     firstRun: "primera ejecuci\xF3n",
+    noRepositories: "Ning\xFAn repositorio coincide con los filtros configurados",
     repositories: "Repositorios",
     stars: "Estrellas",
     starsCount: "{count} estrellas",
@@ -37725,6 +37728,7 @@ var it_default = {
     change: "Variazione",
     comparedTo: "Confrontato con snapshot del {date}",
     firstRun: "prima esecuzione",
+    noRepositories: "Nessun repository corrisponde ai filtri configurati",
     repositories: "Repository",
     stars: "Stelle",
     starsCount: "{count} stelle",
@@ -40187,7 +40191,7 @@ function parseFileHexColor(value) {
   if (typeof value === "string") return parseHexColor(value);
   return void 0;
 }
-function parseDecimal(value) {
+function parsePositiveDecimal(value) {
   if (isBlank(value)) return void 0;
   const parsed = typeof value === "number" ? value : Number.parseFloat(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : void 0;
@@ -40228,6 +40232,9 @@ function toDelimited({ key, delimiter }) {
     (letter) => `${delimiter}${letter.toLowerCase()}`
   );
 }
+function toActionInputName(key) {
+  return toDelimited({ key, delimiter: "-" });
+}
 function formatChoices(choices) {
   const quoted = choices.map((choice) => `"${choice}"`);
   if (quoted.length <= 2) return quoted.join(" or ");
@@ -40250,20 +40257,17 @@ function resolveEnum({
   );
   return fallback;
 }
-function scalarField({ fromInput, fromFile }) {
-  return ({ input, inputName, fileValue }) => {
-    const parsed = fromInput(input);
-    if (input !== "" && parsed === void 0) {
-      warning(`Invalid ${inputName} "${input}". Ignoring it.`);
-    }
-    return parsed ?? fromFile(fileValue);
-  };
-}
-function namedFallbackField({ fromInput, fromFile }) {
+function scalarField({
+  fromInput,
+  fromFile,
+  namesFallback = false
+}) {
   return ({ input, inputName, fileValue, fallback }) => {
     const parsed = fromInput(input);
     if (input !== "" && parsed === void 0) {
-      warning(`Invalid ${inputName} "${input}". Falling back to ${formatFallback(fallback)}`);
+      warning(
+        namesFallback ? `Invalid ${inputName} "${input}". Falling back to ${formatFallback(fallback)}` : `Invalid ${inputName} "${input}". Ignoring it.`
+      );
     }
     return parsed ?? fromFile(fileValue);
   };
@@ -40312,13 +40316,15 @@ var FIELD_SOURCES = {
   smartSampling: boolField,
   smartSamplingThreshold: nonNegativeField,
   smartSamplingPages: positiveField,
-  chartLineColor: namedFallbackField({
+  chartLineColor: scalarField({
     fromInput: parseHexColor,
-    fromFile: parseFileHexColor
+    fromFile: parseFileHexColor,
+    namesFallback: true
   }),
-  chartLineWidth: namedFallbackField({
-    fromInput: parseDecimal,
-    fromFile: fromFileScalar(parseDecimal)
+  chartLineWidth: scalarField({
+    fromInput: parsePositiveDecimal,
+    fromFile: fromFileScalar(parsePositiveDecimal),
+    namesFallback: true
   }),
   chartMaxPoints: nonNegativeField,
   chartYAxisSide: enumField(Object.values(ChartAxisSide)),
@@ -40337,7 +40343,7 @@ var FIELD_SOURCES = {
 var TABLED_KEYS = Object.keys(FIELD_SOURCES);
 function resolveTabledFields(fileConfig) {
   const resolved = TABLED_KEYS.map((key) => {
-    const inputName = toDelimited({ key, delimiter: "-" });
+    const inputName = toActionInputName(key);
     const fallback = DEFAULTS2[key];
     const value = FIELD_SOURCES[key]({
       input: getInput(inputName),
@@ -40442,6 +40448,14 @@ function loadConfig() {
 }
 
 // src/domain/comparison.ts
+var EMPTY_SUMMARY = {
+  totalStars: 0,
+  totalPrevious: 0,
+  totalDelta: 0,
+  newStars: 0,
+  lostStars: 0,
+  changed: false
+};
 function compareStars({
   currentRepos,
   previousSnapshot
@@ -40502,9 +40516,13 @@ function rankByStars(repos) {
 function topRepositories({ repos, limit }) {
   return rankByStars(repos).slice(0, limit).map((repo) => repo.fullName);
 }
-function createSnapshot({ currentRepos, summary: summary2 }) {
+function createSnapshot({
+  currentRepos,
+  summary: summary2,
+  now = /* @__PURE__ */ new Date()
+}) {
   return {
-    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    timestamp: now.toISOString(),
     totalStars: summary2.totalStars,
     repos: currentRepos.map((repo) => ({
       fullName: repo.fullName,
@@ -40679,18 +40697,24 @@ function forecastFromSeries(points) {
 }
 function computeForecast({
   history,
-  topRepoNames
+  topRepoNames,
+  historyForRepo
 }) {
   if (history.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) {
     return null;
   }
-  const days = calendarDays(history);
-  const toSeries = (values) => values.map((value, index) => ({ day: days[index], value }));
+  const toSeries = ({ values, days }) => values.map((value, index) => ({ day: days[index], value }));
+  const aggregateDays = calendarDays(history);
   const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
-  const aggregateForecasts = forecastFromSeries(toSeries(totalValues));
+  const aggregateForecasts = forecastFromSeries(
+    toSeries({ values: totalValues, days: aggregateDays })
+  );
   const repos = topRepoNames.map((repoFullName) => {
-    const values = repoStarSeries({ snapshots: history.snapshots, repoFullName });
-    return { repoFullName, forecasts: forecastFromSeries(toSeries(values)) };
+    const candidate = historyForRepo?.(repoFullName);
+    const source = candidate && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST ? candidate : history;
+    const days = source === history ? aggregateDays : calendarDays(source);
+    const values = repoStarSeries({ snapshots: source.snapshots, repoFullName });
+    return { repoFullName, forecasts: forecastFromSeries(toSeries({ values, days })) };
   });
   return { aggregate: { forecasts: aggregateForecasts }, repos };
 }
@@ -40770,6 +40794,32 @@ function shouldNotify({
   const accumulatedDelta = mode === NotificationMode.GAINS ? delta : Math.abs(delta);
   return accumulatedDelta >= effectiveThreshold;
 }
+var Delivery = {
+  NOT_ATTEMPTED: "not-attempted",
+  SENT: "sent",
+  FAILED: "failed"
+};
+function recordNotification({ history, totalStars }) {
+  return { ...history, starsAtLastNotification: totalStars };
+}
+function notificationIsDue({ changed, thresholdReached }) {
+  return changed && thresholdReached;
+}
+function settleNotification({
+  changed,
+  thresholdReached,
+  delivery,
+  history,
+  totalStars
+}) {
+  const shouldNotify2 = notificationIsDue({ changed, thresholdReached });
+  const baselineAdvances = shouldNotify2 && delivery !== Delivery.FAILED;
+  return {
+    shouldNotify: shouldNotify2,
+    notificationSent: delivery === Delivery.SENT,
+    historyToPersist: baselineAdvances ? recordNotification({ history, totalStars }) : history
+  };
+}
 
 // src/domain/measurement.ts
 function measureRun({
@@ -40788,13 +40838,14 @@ function measureRun({
   });
   const results = compareStars({ currentRepos: trackedSet, previousSnapshot: baseline });
   const { summary: summary2 } = results;
-  const snapshot = createSnapshot({ currentRepos: trackedSet, summary: summary2 });
+  const snapshot = createSnapshot({ currentRepos: trackedSet, summary: summary2, now });
+  const updatedHistory = addSnapshot({ history: storedHistory, snapshot, maxHistory });
   return {
     baselineTimestamp: baseline === null ? null : baseline.timestamp,
     results,
     summary: summary2,
-    updatedHistory: addSnapshot({ history: storedHistory, snapshot, maxHistory }),
-    droppedSnapshots: Math.max(0, storedHistory.snapshots.length + 1 - maxHistory),
+    updatedHistory,
+    droppedSnapshots: storedHistory.snapshots.length + 1 - updatedHistory.snapshots.length,
     thresholdReached: shouldNotify({
       totalStars: summary2.totalStars,
       starsAtLastNotification: storedHistory.starsAtLastNotification,
@@ -40802,117 +40853,6 @@ function measureRun({
       mode: notificationMode
     })
   };
-}
-function recordNotification({ history, totalStars }) {
-  return { ...history, starsAtLastNotification: totalStars };
-}
-
-// src/domain/star-history.ts
-var MIN_HISTORY_BUCKETS = 2;
-var MAX_HISTORY_BUCKETS = 365;
-var FULL_HISTORY_CADENCE_MS = 7 * MS_PER_DAY;
-function cumulativeCounts(sortedTimes, edges) {
-  const counts = [];
-  let pointer = 0;
-  for (const edge of edges) {
-    while (pointer < sortedTimes.length && sortedTimes[pointer] <= edge) {
-      pointer++;
-    }
-    counts.push(pointer);
-  }
-  return counts;
-}
-function scaleToTrueTotal(fetchedCounts, trueTotal) {
-  const fetchedTotal = fetchedCounts.at(-1) ?? 0;
-  const scale = fetchedTotal > 0 ? trueTotal / fetchedTotal : 0;
-  const scaled = fetchedCounts.map(
-    (count) => fetchedTotal === trueTotal ? count : Math.round(count * scale)
-  );
-  for (let index = 0; index < scaled.length; index++) {
-    scaled[index] = Math.min(scaled[index], trueTotal);
-    if (index > 0) scaled[index] = Math.max(scaled[index], scaled[index - 1]);
-  }
-  if (scaled.length > 0) {
-    scaled[scaled.length - 1] = trueTotal;
-  }
-  return scaled;
-}
-function scaleCappedToTrueTotal(counts, trueTotal, reachable) {
-  const fetchedTotal = counts.at(-1) ?? 0;
-  const scale = fetchedTotal > 0 ? reachable / fetchedTotal : 0;
-  const scaled = counts.map((count) => Math.round(count * scale));
-  let tailStart = scaled.length - 1;
-  while (tailStart > 0 && counts[tailStart - 1] === fetchedTotal) {
-    tailStart--;
-  }
-  const last = scaled.length - 1;
-  const span = last - tailStart;
-  if (span > 0) {
-    const startValue = scaled[tailStart];
-    for (let index = tailStart; index <= last; index++) {
-      scaled[index] = Math.round(
-        startValue + (index - tailStart) / span * (trueTotal - startValue)
-      );
-    }
-  }
-  for (let index = 1; index < scaled.length; index++) {
-    if (scaled[index] < scaled[index - 1]) scaled[index] = scaled[index - 1];
-  }
-  if (scaled.length > 0) scaled[last] = trueTotal;
-  return scaled;
-}
-function buildStarHistory({
-  repoStargazers,
-  repos,
-  maxPoints,
-  now
-}) {
-  const stargazersByRepo = new Map(repoStargazers.map((entry) => [entry.repoFullName, entry]));
-  const eventsByRepo = /* @__PURE__ */ new Map();
-  let earliest = Number.POSITIVE_INFINITY;
-  for (const repo of repos) {
-    const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? []).map((stargazer) => toEpochMs(stargazer.starredAt)).filter((timeMs) => timeMs !== null).sort((earlier, later) => earlier - later);
-    eventsByRepo.set(repo.fullName, times);
-    if (times.length > 0 && times[0] < earliest) earliest = times[0];
-  }
-  if (!Number.isFinite(earliest)) {
-    return { snapshots: [] };
-  }
-  const end = (now ?? /* @__PURE__ */ new Date()).getTime();
-  const edges = earliest >= end ? [earliest - MS_PER_DAY, end] : (() => {
-    const requested = maxPoints > 0 ? Math.floor(maxPoints) : Math.ceil((end - earliest) / FULL_HISTORY_CADENCE_MS) + 1;
-    const buckets = Math.min(MAX_HISTORY_BUCKETS, Math.max(MIN_HISTORY_BUCKETS, requested));
-    const step = (end - earliest) / (buckets - 1);
-    return Array.from(
-      { length: buckets },
-      (_, bucketIndex) => bucketIndex === buckets - 1 ? end : earliest + bucketIndex * step
-    );
-  })();
-  const cumulativeByRepo = /* @__PURE__ */ new Map();
-  for (const repo of repos) {
-    const events = eventsByRepo.get(repo.fullName) ?? [];
-    const counts = cumulativeCounts(events, edges);
-    const reachable = Math.min(
-      stargazersByRepo.get(repo.fullName)?.coveredStars ?? MAX_REACHABLE_STARGAZERS,
-      repo.stars
-    );
-    const scaled = events.length === 0 ? edges.map(() => repo.stars) : reachable < repo.stars ? scaleCappedToTrueTotal(counts, repo.stars, reachable) : scaleToTrueTotal(counts, repo.stars);
-    cumulativeByRepo.set(repo.fullName, scaled);
-  }
-  const snapshots = edges.map((edge, edgeIndex) => {
-    const snapshotRepos = repos.map((repo) => ({
-      fullName: repo.fullName,
-      name: repo.name,
-      owner: repo.owner,
-      stars: cumulativeByRepo.get(repo.fullName)?.[edgeIndex] ?? 0
-    }));
-    return {
-      timestamp: new Date(edge).toISOString(),
-      totalStars: snapshotRepos.reduce((sum, repo) => sum + repo.stars, 0),
-      repos: snapshotRepos
-    };
-  });
-  return { snapshots };
 }
 
 // src/domain/stargazers.ts
@@ -40942,16 +40882,67 @@ function buildStargazerMap({
   repoStargazers,
   previousMap
 }) {
-  const map = {};
+  const map = { ...previousMap };
   for (const repo of repoStargazers) {
-    if (repo.sampled || repo.incomplete) {
-      const previousLogins = previousMap[repo.repoFullName];
-      if (previousLogins) map[repo.repoFullName] = previousLogins;
-      continue;
-    }
+    if (repo.sampled || repo.incomplete) continue;
     map[repo.repoFullName] = repo.stargazers.map((stargazer) => stargazer.login);
   }
   return map;
+}
+
+// src/domain/tracked-set.ts
+var REGEX_PATTERN = /^\/(.+)\/([gimsuy]*)$/;
+function matchesPattern({ name, patterns, invalidPatterns }) {
+  return patterns.some((pattern) => {
+    const match = REGEX_PATTERN.exec(pattern);
+    if (match === null) return name === pattern;
+    try {
+      return new RegExp(match[1], match[2]).test(name);
+    } catch {
+      if (!invalidPatterns.includes(pattern)) invalidPatterns.push(pattern);
+      return false;
+    }
+  });
+}
+function resolveTrackedSet({ repos, filters }) {
+  const invalidPatterns = [];
+  const matches = ({ name, patterns }) => matchesPattern({ name, patterns, invalidPatterns });
+  let candidates = repos;
+  let afterOnlyOrgs = null;
+  if (filters.onlyOrgs.length > 0) {
+    candidates = candidates.filter(
+      (repo) => matches({ name: repo.owner, patterns: filters.onlyOrgs })
+    );
+    afterOnlyOrgs = candidates.length;
+  }
+  if (filters.onlyRepos.length > 0) {
+    const onlyRepos = candidates.filter(
+      (repo) => matches({ name: repo.name, patterns: filters.onlyRepos })
+    );
+    return {
+      repos: onlyRepos,
+      afterOnlyOrgs,
+      afterOnlyRepos: onlyRepos.length,
+      invalidPatterns
+    };
+  }
+  let filtered = candidates;
+  if (!filters.includeArchived) filtered = filtered.filter((repo) => !repo.archived);
+  if (!filters.includeForks) filtered = filtered.filter((repo) => !repo.fork);
+  if (filters.excludeRepos.length > 0) {
+    filtered = filtered.filter(
+      (repo) => !matches({ name: repo.name, patterns: filters.excludeRepos })
+    );
+  }
+  if (filters.excludeOrgs.length > 0) {
+    filtered = filtered.filter(
+      (repo) => !matches({ name: repo.owner, patterns: filters.excludeOrgs })
+    );
+  }
+  if (filters.minStars > 0) {
+    filtered = filtered.filter((repo) => repo.stars >= filters.minStars);
+  }
+  return { repos: filtered, afterOnlyOrgs, afterOnlyRepos: null, invalidPatterns };
 }
 
 // src/infrastructure/github/errors.ts
@@ -41001,61 +40992,6 @@ async function fetchRepos({ octokit, config }) {
 }
 
 // src/infrastructure/github/filters.ts
-var REGEX_PATTERN = /^\/(.+)\/([gimsuy]*)$/;
-function matchesPattern({ name, patterns }) {
-  return patterns.some((pattern) => {
-    const match = REGEX_PATTERN.exec(pattern);
-    if (match) {
-      try {
-        return new RegExp(match[1], match[2]).test(name);
-      } catch (error2) {
-        warning(
-          `Ignoring invalid pattern "${pattern}": ${error2.message}. Filters expect either an exact name or /pattern/flags.`
-        );
-        return false;
-      }
-    }
-    return name === pattern;
-  });
-}
-function filterRepos({ repos, config }) {
-  let candidates = repos;
-  if (config.onlyOrgs.length > 0) {
-    candidates = candidates.filter(
-      (repo) => matchesPattern({ name: repo.owner.login, patterns: config.onlyOrgs })
-    );
-    info(`After only_orgs filter: ${candidates.length} repos`);
-  }
-  if (config.onlyRepos.length > 0) {
-    const filtered2 = candidates.filter(
-      (repo) => matchesPattern({ name: repo.name, patterns: config.onlyRepos })
-    );
-    info(`After only_repos filter: ${filtered2.length} repos`);
-    return filtered2;
-  }
-  let filtered = candidates;
-  if (!config.includeArchived) {
-    filtered = filtered.filter((repo) => !repo.archived);
-  }
-  if (!config.includeForks) {
-    filtered = filtered.filter((repo) => !repo.fork);
-  }
-  if (config.excludeRepos.length > 0) {
-    filtered = filtered.filter(
-      (repo) => !matchesPattern({ name: repo.name, patterns: config.excludeRepos })
-    );
-  }
-  if (config.excludeOrgs.length > 0) {
-    filtered = filtered.filter(
-      (repo) => !matchesPattern({ name: repo.owner.login, patterns: config.excludeOrgs })
-    );
-  }
-  if (config.minStars > 0) {
-    filtered = filtered.filter((repo) => repo.stargazers_count >= config.minStars);
-  }
-  info(`After filtering: ${filtered.length} repos`);
-  return filtered;
-}
 function mapRepos(repos) {
   return repos.map((repo) => ({
     owner: repo.owner.login,
@@ -41068,14 +41004,51 @@ function mapRepos(repos) {
   }));
 }
 async function getRepos({ octokit, config }) {
-  const allRepos = await fetchRepos({ octokit, config });
-  const filtered = filterRepos({ repos: allRepos, config });
-  return mapRepos(filtered);
+  const fetched = await fetchRepos({ octokit, config });
+  const trackedSet = resolveTrackedSet({ repos: mapRepos(fetched), filters: config });
+  for (const pattern of trackedSet.invalidPatterns) {
+    warning(
+      `Ignoring invalid pattern "${pattern}". Filters expect either an exact name or /pattern/flags.`
+    );
+  }
+  if (trackedSet.afterOnlyOrgs !== null) {
+    info(`After only_orgs filter: ${trackedSet.afterOnlyOrgs} repos`);
+  }
+  if (trackedSet.afterOnlyRepos !== null) {
+    info(`After only_repos filter: ${trackedSet.afterOnlyRepos} repos`);
+    return trackedSet.repos;
+  }
+  info(`After filtering: ${trackedSet.repos.length} repos`);
+  return trackedSet.repos;
+}
+
+// src/domain/sampling.ts
+var STARGAZER_PAGE_SIZE = 100;
+var MAX_REACHABLE_PAGE = Math.floor(MAX_REACHABLE_STARGAZERS / STARGAZER_PAGE_SIZE);
+function shouldSample({ stars, smartSampling, threshold }) {
+  return smartSampling && stars > threshold;
+}
+function reachablePages(totalStars) {
+  return Math.min(MAX_REACHABLE_PAGE, Math.max(1, Math.ceil(totalStars / STARGAZER_PAGE_SIZE)));
+}
+function sampledPages({ totalStars, maxPages }) {
+  const totalPages = reachablePages(totalStars);
+  const pages = Math.max(1, maxPages);
+  if (totalPages <= pages) {
+    return Array.from({ length: totalPages }, (_, pageIndex) => pageIndex + 1);
+  }
+  if (pages === 1) return [1];
+  const selected = /* @__PURE__ */ new Set();
+  for (let pageIndex = 0; pageIndex < pages; pageIndex++) {
+    selected.add(1 + Math.round(pageIndex * (totalPages - 1) / (pages - 1)));
+  }
+  return [...selected].sort((earlierPage, laterPage) => earlierPage - laterPage);
+}
+function coveredStars({ lastFetchedPage, totalStars }) {
+  return Math.min(lastFetchedPage * STARGAZER_PAGE_SIZE, totalStars);
 }
 
 // src/infrastructure/github/stargazers.ts
-var STARGAZERS_PER_PAGE = 100;
-var MAX_REACHABLE_PAGE = Math.floor(MAX_REACHABLE_STARGAZERS / STARGAZERS_PER_PAGE);
 async function fetchAllStargazers({
   octokit,
   repos,
@@ -41084,30 +41057,35 @@ async function fetchAllStargazers({
   const results = [];
   const sampled = [];
   for (const repo of repos) {
-    const shouldSample = config.smartSampling && repo.stars > config.smartSamplingThreshold;
+    const sampledRepo = shouldSample({
+      stars: repo.stars,
+      smartSampling: config.smartSampling,
+      threshold: config.smartSamplingThreshold
+    });
     try {
-      const { stargazers, coveredStars } = shouldSample ? await fetchSampledStargazers({
+      const { stargazers, coveredStars: covered } = sampledRepo ? await fetchSampledStargazers({
         octokit,
         owner: repo.owner,
         name: repo.name,
         totalStars: repo.stars,
         maxPages: config.smartSamplingPages
       }) : await fetchRepoStargazers({ octokit, owner: repo.owner, name: repo.name });
-      warnWhenHistoryIsUnreconstructable(repo, stargazers);
+      warnWhenHistoryIsUnreconstructable({ repo, stargazers });
+      const truncated = !sampledRepo && covered !== void 0;
       results.push({
         repoFullName: repo.fullName,
         stargazers,
-        sampled: shouldSample,
-        coveredStars,
-        incomplete: repo.stars > 0 && stargazers.length === 0
+        sampled: sampledRepo,
+        coveredStars: covered,
+        incomplete: truncated || repo.stars > 0 && stargazers.length === 0
       });
-      if (shouldSample) sampled.push(repo.fullName);
+      if (sampledRepo) sampled.push(repo.fullName);
     } catch (error2) {
       warning(`Failed to fetch stargazers for ${repo.fullName}: ${describeFetchError(error2)}`);
       results.push({
         repoFullName: repo.fullName,
         stargazers: [],
-        sampled: shouldSample,
+        sampled: sampledRepo,
         incomplete: true
       });
     }
@@ -41117,7 +41095,10 @@ async function fetchAllStargazers({
   }
   return results;
 }
-function warnWhenHistoryIsUnreconstructable(repo, stargazers) {
+function warnWhenHistoryIsUnreconstructable({
+  repo,
+  stargazers
+}) {
   if (repo.stars === 0) return;
   if (stargazers.length === 0) {
     warning(
@@ -41139,7 +41120,7 @@ async function fetchStargazerPage({
   const { data } = await octokit.request("GET /repos/{owner}/{repo}/stargazers", {
     owner,
     repo: name,
-    per_page: STARGAZERS_PER_PAGE,
+    per_page: STARGAZER_PAGE_SIZE,
     page,
     headers: {
       accept: "application/vnd.github.star+json"
@@ -41171,21 +41152,9 @@ async function fetchRepoStargazers({
       return { stargazers, coveredStars: stargazers.length };
     }
     stargazers.push(...items);
-    if (items.length < STARGAZERS_PER_PAGE) break;
+    if (items.length < STARGAZER_PAGE_SIZE) break;
   }
   return { stargazers };
-}
-function selectSampledPages({ totalPages, maxPages }) {
-  const pages = Math.max(1, maxPages);
-  if (totalPages <= pages) {
-    return Array.from({ length: totalPages }, (_, pageIndex) => pageIndex + 1);
-  }
-  if (pages === 1) return [1];
-  const selected = /* @__PURE__ */ new Set();
-  for (let pageIndex = 0; pageIndex < pages; pageIndex++) {
-    selected.add(1 + Math.round(pageIndex * (totalPages - 1) / (pages - 1)));
-  }
-  return [...selected].sort((earlierPage, laterPage) => earlierPage - laterPage);
 }
 async function fetchSampledStargazers({
   octokit,
@@ -41194,11 +41163,7 @@ async function fetchSampledStargazers({
   totalStars,
   maxPages
 }) {
-  const totalPages = Math.min(
-    MAX_REACHABLE_PAGE,
-    Math.max(1, Math.ceil(totalStars / STARGAZERS_PER_PAGE))
-  );
-  const pages = selectSampledPages({ totalPages, maxPages });
+  const pages = sampledPages({ totalStars, maxPages });
   const stargazers = [];
   const failedPages = [];
   let firstError;
@@ -41220,7 +41185,7 @@ async function fetchSampledStargazers({
   );
   return {
     stargazers,
-    coveredStars: Math.min(lastFetchedPage * STARGAZERS_PER_PAGE, totalStars)
+    coveredStars: coveredStars({ lastFetchedPage, totalStars })
   };
 }
 
@@ -41315,6 +41280,11 @@ function execute({ args, options = {} }) {
 ${detail}`);
   }
 }
+function authenticatedArgs({ token, args }) {
+  const credential = Buffer.from(`x-access-token:${token}`).toString("base64");
+  setSecret(credential);
+  return ["-c", `http.extraheader=AUTHORIZATION: basic ${credential}`, ...args];
+}
 
 // src/infrastructure/git/worktree.ts
 function ensureGitRepository() {
@@ -41328,17 +41298,16 @@ function ensureGitRepository() {
 }
 function initializeDataBranch({
   dataBranch,
-  readOnly = false
+  readOnly = false,
+  token
 }) {
   const dataDir = `.${dataBranch}`;
   ensureGitRepository();
   execute({ args: ["config", "user.name", "github-actions[bot]"] });
   execute({ args: ["config", "user.email", "github-actions[bot]@users.noreply.github.com"] });
-  let branchExists = false;
-  try {
-    execute({ args: ["ls-remote", "--exit-code", "--heads", "origin", dataBranch] });
-    branchExists = true;
-  } catch {
+  const remoteArgs = (args) => token === void 0 ? args : authenticatedArgs({ token, args });
+  const branchExists = execute({ args: remoteArgs(["ls-remote", "--heads", "origin", dataBranch]) }).length > 0;
+  if (!branchExists) {
     info(`Branch "${dataBranch}" does not exist on remote, will create it`);
   }
   if (fs4.existsSync(dataDir)) {
@@ -41369,7 +41338,7 @@ function initializeDataBranch({
     });
     return dataDir;
   }
-  execute({ args: ["fetch", "origin", dataBranch] });
+  execute({ args: remoteArgs(["fetch", "origin", dataBranch]) });
   execute({ args: ["worktree", "add", dataDir, `origin/${dataBranch}`] });
   return dataDir;
 }
@@ -41419,11 +41388,21 @@ function assertReadableFormat(version) {
     `${DATA_FILES.history} on the data branch declares format version ${JSON.stringify(version)}, which this version of the action does not understand (it writes version ${DATA_FORMAT_VERSION}). Upgrade the action, or point data-branch at a branch this version wrote.`
   );
 }
+function assertJsonObject(parsed) {
+  if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+    return;
+  }
+  throw new Error(
+    `${DATA_FILES.history} on the data branch is valid JSON but not an object (found ${Array.isArray(parsed) ? "an array" : JSON.stringify(parsed)}). Reading it as an empty history would discard your tracking record, so this run stops instead. Fix or delete the file on that branch and re-run.`
+  );
+}
 function readHistory(dataDir) {
-  const { version, ...raw } = readJsonFile({
+  const parsed = readJsonFile({
     filePath: path3.join(dataDir, DATA_FILES.history),
     fallback: {}
   });
+  assertJsonObject(parsed);
+  const { version, ...raw } = parsed;
   assertReadableFormat(version);
   return { ...raw, snapshots: Array.isArray(raw.snapshots) ? raw.snapshots : [] };
 }
@@ -41433,13 +41412,13 @@ function writeHistory({ dataDir, history }) {
     data: { version: DATA_FORMAT_VERSION, ...history }
   });
 }
-function writeReport({ dataDir, markdown }) {
-  const filePath = path3.join(dataDir, DATA_FILES.report);
-  fs5.writeFileSync(filePath, markdown);
-}
-function writeBadge({ dataDir, svg }) {
-  const filePath = path3.join(dataDir, DATA_FILES.badge);
-  fs5.writeFileSync(filePath, svg);
+var Artefact = {
+  REPORT: "report",
+  BADGE: "badge",
+  CSV: "csv"
+};
+function writeArtefact({ dataDir, artefact, contents }) {
+  fs5.writeFileSync(path3.join(dataDir, DATA_FILES[artefact]), contents);
 }
 function writeChart({ dataDir, filename, svg }) {
   const chartsDir = path3.join(dataDir, DATA_FILES.chartsDir);
@@ -41477,10 +41456,6 @@ function writeHtmlReport({ htmlReport }) {
   fs5.writeFileSync(filePath, htmlReport);
   return filePath;
 }
-function writeCsv({ dataDir, csv }) {
-  const filePath = path3.join(dataDir, DATA_FILES.csv);
-  fs5.writeFileSync(filePath, csv);
-}
 function commitAndPush({
   dataDir,
   dataBranch,
@@ -41497,17 +41472,9 @@ function commitAndPush({
     debug("Staged changes detected, proceeding with commit");
   }
   execute({ args: ["commit", "-m", message], options: { cwd } });
-  const basicCredential = Buffer.from(`x-access-token:${token}`).toString("base64");
-  setSecret(basicCredential);
   try {
     execute({
-      args: [
-        "-c",
-        `http.extraheader=AUTHORIZATION: basic ${basicCredential}`,
-        "push",
-        "origin",
-        `HEAD:${dataBranch}`
-      ],
+      args: authenticatedArgs({ token, args: ["push", "origin", `HEAD:${dataBranch}`] }),
       options: { cwd }
     });
   } catch (error2) {
@@ -41527,7 +41494,7 @@ async function withDataBranch({
   token,
   run
 }) {
-  const dataDir = initializeDataBranch({ dataBranch, readOnly });
+  const dataDir = initializeDataBranch({ dataBranch, readOnly, token });
   try {
     return await run({
       readHistory: () => readHistory(dataDir),
@@ -41540,9 +41507,9 @@ async function withDataBranch({
 }
 function publish({ dataDir, dataBranch, readOnly, token, artefacts }) {
   writeHistory({ dataDir, history: artefacts.history });
-  writeReport({ dataDir, markdown: artefacts.report });
-  writeBadge({ dataDir, svg: artefacts.badge });
-  writeCsv({ dataDir, csv: artefacts.csv });
+  writeArtefact({ dataDir, artefact: Artefact.REPORT, contents: artefacts.report });
+  writeArtefact({ dataDir, artefact: Artefact.BADGE, contents: artefacts.badge });
+  writeArtefact({ dataDir, artefact: Artefact.CSV, contents: artefacts.csv });
   if (artefacts.stargazerMap !== void 0) {
     writeStargazers({ dataDir, stargazerMap: artefacts.stargazerMap });
   }
@@ -41631,7 +41598,132 @@ function retry(octokit, octokitOptions) {
 }
 retry.VERSION = VERSION7;
 
+// src/domain/star-history.ts
+var MIN_HISTORY_BUCKETS = 2;
+var MAX_HISTORY_BUCKETS = 365;
+var FULL_HISTORY_CADENCE_MS = 7 * MS_PER_DAY;
+function cumulativeCounts({ sortedTimes, edges }) {
+  const counts = [];
+  let pointer = 0;
+  for (const edge of edges) {
+    while (pointer < sortedTimes.length && sortedTimes[pointer] <= edge) {
+      pointer++;
+    }
+    counts.push(pointer);
+  }
+  return counts;
+}
+function scaleToTrueTotal({ fetchedCounts, trueTotal }) {
+  const fetchedTotal = fetchedCounts.at(-1) ?? 0;
+  const scale = fetchedTotal > 0 ? trueTotal / fetchedTotal : 0;
+  const scaled = fetchedCounts.map(
+    (count) => fetchedTotal === trueTotal ? count : Math.round(count * scale)
+  );
+  for (let index = 0; index < scaled.length; index++) {
+    scaled[index] = Math.min(scaled[index], trueTotal);
+    if (index > 0) scaled[index] = Math.max(scaled[index], scaled[index - 1]);
+  }
+  if (scaled.length > 0) {
+    scaled[scaled.length - 1] = trueTotal;
+  }
+  return scaled;
+}
+function scaleCappedToTrueTotal({
+  counts,
+  trueTotal,
+  reachable
+}) {
+  const fetchedTotal = counts.at(-1) ?? 0;
+  const scale = fetchedTotal > 0 ? reachable / fetchedTotal : 0;
+  const scaled = counts.map((count) => Math.round(count * scale));
+  let tailStart = scaled.length - 1;
+  while (tailStart > 0 && counts[tailStart - 1] === fetchedTotal) {
+    tailStart--;
+  }
+  const last = scaled.length - 1;
+  const span = last - tailStart;
+  if (span > 0) {
+    const startValue = scaled[tailStart];
+    for (let index = tailStart; index <= last; index++) {
+      scaled[index] = Math.round(
+        startValue + (index - tailStart) / span * (trueTotal - startValue)
+      );
+    }
+  }
+  for (let index = 1; index < scaled.length; index++) {
+    if (scaled[index] < scaled[index - 1]) scaled[index] = scaled[index - 1];
+  }
+  if (scaled.length > 0) scaled[last] = trueTotal;
+  return scaled;
+}
+function buildStarHistory({
+  repoStargazers,
+  repos,
+  maxPoints,
+  now
+}) {
+  const stargazersByRepo = new Map(repoStargazers.map((entry) => [entry.repoFullName, entry]));
+  const eventsByRepo = /* @__PURE__ */ new Map();
+  let earliest = Number.POSITIVE_INFINITY;
+  for (const repo of repos) {
+    const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? []).map((stargazer) => toEpochMs(stargazer.starredAt)).filter((timeMs) => timeMs !== null).sort((earlier, later) => earlier - later);
+    eventsByRepo.set(repo.fullName, times);
+    if (times.length > 0 && times[0] < earliest) earliest = times[0];
+  }
+  if (!Number.isFinite(earliest)) {
+    return { snapshots: [] };
+  }
+  const end = (now ?? /* @__PURE__ */ new Date()).getTime();
+  const edges = earliest >= end ? [earliest - MS_PER_DAY, end] : (() => {
+    const requested = maxPoints > 0 ? Math.floor(maxPoints) : Math.ceil((end - earliest) / FULL_HISTORY_CADENCE_MS) + 1;
+    const buckets = Math.min(MAX_HISTORY_BUCKETS, Math.max(MIN_HISTORY_BUCKETS, requested));
+    const step = (end - earliest) / (buckets - 1);
+    return Array.from(
+      { length: buckets },
+      (_, bucketIndex) => bucketIndex === buckets - 1 ? end : earliest + bucketIndex * step
+    );
+  })();
+  const cumulativeByRepo = /* @__PURE__ */ new Map();
+  for (const repo of repos) {
+    const events = eventsByRepo.get(repo.fullName) ?? [];
+    const counts = cumulativeCounts({ sortedTimes: events, edges });
+    const reachable = Math.min(
+      stargazersByRepo.get(repo.fullName)?.coveredStars ?? MAX_REACHABLE_STARGAZERS,
+      repo.stars
+    );
+    const scaled = events.length === 0 ? edges.map(() => repo.stars) : reachable < repo.stars ? scaleCappedToTrueTotal({ counts, trueTotal: repo.stars, reachable }) : scaleToTrueTotal({ fetchedCounts: counts, trueTotal: repo.stars });
+    cumulativeByRepo.set(repo.fullName, scaled);
+  }
+  const snapshots = edges.map((edge, edgeIndex) => {
+    const snapshotRepos = repos.map((repo) => ({
+      fullName: repo.fullName,
+      name: repo.name,
+      owner: repo.owner,
+      stars: cumulativeByRepo.get(repo.fullName)?.[edgeIndex] ?? 0
+    }));
+    return {
+      timestamp: new Date(edge).toISOString(),
+      totalStars: snapshotRepos.reduce((sum, repo) => sum + repo.stars, 0),
+      repos: snapshotRepos
+    };
+  });
+  return { snapshots };
+}
+
 // src/presentation/constants.ts
+var CHART_CHROME = {
+  titleFontSize: 16,
+  milestoneFontSize: 10,
+  milestoneStrokeWidth: 1,
+  milestoneDash: [6, 6]
+};
+var CHART_DEFAULTS = {
+  smoothing: true,
+  curve: ChartCurve.MONOTONE,
+  showPoints: true,
+  beginAtZero: false,
+  theme: ChartTheme.AUTO
+};
 var LIGHT_PALETTE = {
   accent: "#dfb317",
   positive: "#28a745",
@@ -41712,12 +41804,22 @@ var SVG_CHART = {
   gridOpacity: 0.3,
   fillOpacity: 0.1,
   axisStrokeWidth: 1,
-  fontSize: { title: 16, label: 11, milestone: 10, legend: 10 },
+  fontSize: {
+    title: CHART_CHROME.titleFontSize,
+    label: 11,
+    milestone: CHART_CHROME.milestoneFontSize,
+    legend: 10
+  },
   header: { titleOffset: 36, legendOffset: 14 },
   animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
   yAxis: { stepCount: 5, labelGap: 8, labelBaselineOffset: 4 },
   xAxis: { maxLabels: 10, labelOffset: 20 },
-  milestone: { strokeWidth: 1, dashArray: "6,6", labelXOffset: 4, labelYOffset: 4 },
+  milestone: {
+    strokeWidth: CHART_CHROME.milestoneStrokeWidth,
+    dashArray: CHART_CHROME.milestoneDash.join(","),
+    labelXOffset: 4,
+    labelYOffset: 4
+  },
   dash: { line: "8,4", legend: "4,2" },
   legend: {
     itemWidth: 120,
@@ -41744,111 +41846,7 @@ var CHART_FILES = {
   forecast: "forecast.svg"
 };
 
-// src/presentation/escaping.ts
-var EscapeDialect = {
-  MARKUP: "markup",
-  XML: "xml",
-  MARKDOWN: "markdown",
-  CSV: "csv"
-};
-var MARKUP_ESCAPES = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;"
-};
-var XML_ESCAPES = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;"
-};
-var MARKDOWN_ESCAPES = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  "[": "\\[",
-  "]": "\\]",
-  "(": "\\(",
-  ")": "\\)",
-  "`": "\\`"
-};
-var CSV_DELIMITER = ",";
-var CSV_QUOTE = '"';
-var CSV_NEW_LINE = "\n";
-var CSV_FORMULA_TRIGGERS = ["=", "+", "-", "@"];
-var CSV_FORMULA_GUARD = "'";
-function replacerFor(escapes) {
-  const pattern = new RegExp(
-    `[${Object.keys(escapes).join("").replace(/[\]\\^-]/g, "\\$&")}]`,
-    "g"
-  );
-  return (text) => text.replaceAll(pattern, (char) => escapes[char]);
-}
-function escapeCsvField(field) {
-  const neutralized = CSV_FORMULA_TRIGGERS.some((trigger) => field.startsWith(trigger)) ? `${CSV_FORMULA_GUARD}${field}` : field;
-  if (neutralized.includes(CSV_DELIMITER) || neutralized.includes(CSV_QUOTE) || neutralized.includes(CSV_NEW_LINE) || neutralized !== field) {
-    return `${CSV_QUOTE}${neutralized.replaceAll(CSV_QUOTE, `${CSV_QUOTE}${CSV_QUOTE}`)}${CSV_QUOTE}`;
-  }
-  return neutralized;
-}
-var ESCAPERS = {
-  [EscapeDialect.MARKUP]: replacerFor(MARKUP_ESCAPES),
-  [EscapeDialect.XML]: replacerFor(XML_ESCAPES),
-  [EscapeDialect.MARKDOWN]: replacerFor(MARKDOWN_ESCAPES),
-  [EscapeDialect.CSV]: escapeCsvField
-};
-function escapeFor(dialect) {
-  return ESCAPERS[dialect];
-}
-
-// src/presentation/badge.ts
-var escapeXml = escapeFor(EscapeDialect.XML);
-function generateBadge({ totalStars, locale }) {
-  const t = getTranslations(locale);
-  const rawLabel = t.badge.totalStars;
-  const rawValue = `\u2605 ${formatCount({ count: totalStars, locale })}`;
-  const labelWidth = rawLabel.length * BADGE.labelCharWidth + BADGE.horizontalPadding;
-  const valueWidth = rawValue.length * BADGE.valueCharWidth + BADGE.horizontalPadding;
-  const totalWidth = labelWidth + valueWidth;
-  const label = escapeXml(rawLabel);
-  const value = escapeXml(rawValue);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${BADGE.height}" role="img" aria-label="${label}: ${value}">
-  <title>${label}: ${value}</title>
-  <linearGradient id="s" x2="0" y2="100%">
-    <stop offset="0" stop-color="${COLORS.gradientStart}" stop-opacity="${BADGE.gradientOpacity}"/>
-    <stop offset="1" stop-opacity="${BADGE.gradientOpacity}"/>
-  </linearGradient>
-  <clipPath id="r">
-    <rect width="${totalWidth}" height="${BADGE.height}" rx="${BADGE.borderRadius}" fill="${COLORS.white}"/>
-  </clipPath>
-  <g clip-path="url(#r)">
-    <rect width="${labelWidth}" height="${BADGE.height}" fill="${COLORS.muted}"/>
-    <rect x="${labelWidth}" width="${valueWidth}" height="${BADGE.height}" fill="${COLORS.accent}"/>
-    <rect width="${totalWidth}" height="${BADGE.height}" fill="url(#s)"/>
-  </g>
-  <g fill="${COLORS.white}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="${BADGE.fontSize}">
-    <text aria-hidden="true" x="${labelWidth / 2}" y="${BADGE.shadowBaseline}" fill="${COLORS.shadow}" fill-opacity="${BADGE.shadowOpacity}">${label}</text>
-    <text x="${labelWidth / 2}" y="${BADGE.textBaseline}">${label}</text>
-    <text aria-hidden="true" x="${labelWidth + valueWidth / 2}" y="${BADGE.shadowBaseline}" fill="${COLORS.shadow}" fill-opacity="${BADGE.shadowOpacity}">${value}</text>
-    <text x="${labelWidth + valueWidth / 2}" y="${BADGE.textBaseline}">${value}</text>
-  </g>
-</svg>`;
-}
-
-// src/presentation/shared.ts
-var THEME_CONFIG = {
-  [ChartTheme.AUTO]: { palette: LIGHT_PALETTE, colorScheme: "light dark" },
-  [ChartTheme.LIGHT]: { palette: LIGHT_PALETTE, colorScheme: ChartTheme.LIGHT },
-  [ChartTheme.DARK]: { palette: DARK_PALETTE, colorScheme: ChartTheme.DARK }
-};
-function resolvePalette(theme = ChartTheme.AUTO) {
-  return THEME_CONFIG[theme].palette;
-}
-function colorSchemeFor(theme) {
-  return THEME_CONFIG[theme].colorScheme;
-}
+// src/presentation/chart-spec.ts
 var CHART_RANGE_DAYS = {
   [ChartRange.D30]: 30,
   [ChartRange.D90]: 90,
@@ -41888,38 +41886,6 @@ function movingAverageSeries({ values, window: window2 }) {
     return Math.round(sum / slice.length);
   });
 }
-function prepareReportData({
-  results,
-  previousTimestamp,
-  locale
-}) {
-  const { repos } = results;
-  const t = getTranslations(locale);
-  return {
-    activeRepos: repos.filter((repo) => !repo.isRemoved),
-    newRepos: repos.filter((repo) => repo.isNew),
-    removedRepos: repos.filter((repo) => repo.isRemoved),
-    sorted: rankByStars(repos),
-    now: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-    prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun
-  };
-}
-function perRepoChartFile(repoFullName) {
-  return `${repoFullName.replace("/", "-")}.svg`;
-}
-function buildForecastWeekHeaders(t) {
-  return Array.from(
-    { length: FORECAST_WEEKS },
-    (_, index) => interpolate({ template: t.forecast.week, params: { n: index + 1 } })
-  );
-}
-var FORECAST_METHOD_LABELS = {
-  [ForecastMethod.LINEAR_REGRESSION]: "linearRegression",
-  [ForecastMethod.WEIGHTED_MOVING_AVERAGE]: "weightedMovingAverage"
-};
-function forecastMethodLabel({ method, t }) {
-  return t.forecast[FORECAST_METHOD_LABELS[method]];
-}
 function buildForecastChartSeries({
   historicalData,
   forecastData
@@ -41939,8 +41905,6 @@ function buildForecastChartSeries({
     weightedMovingAverage: projectFromLast(findPoints(ForecastMethod.WEIGHTED_MOVING_AVERAGE))
   };
 }
-
-// src/presentation/chart-spec.ts
 var AxisLabels = {
   THINNED: "thinned",
   DATES: "dates"
@@ -41967,14 +41931,18 @@ function selectWindow({ history, locale, range, maxPoints, axisLabels }) {
 function resolveMilestones(customMilestones) {
   return customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
 }
-function visibleMilestones({ series, thresholds }) {
+function visibleMilestones({
+  series,
+  thresholds,
+  locale
+}) {
   const values = series.flatMap(
     (entry) => entry.data.filter((value) => value !== null)
   );
   if (values.length === 0) return [];
   const min = Math.min(...values);
   const max = Math.max(...values);
-  return thresholds.filter((milestone) => milestone > min && milestone < max);
+  return thresholds.filter((milestone) => milestone > min && milestone < max).map((value) => ({ value, label: `${formatCount({ count: value, locale })} \u2605` }));
 }
 function starHistorySpec({
   title,
@@ -42014,7 +41982,11 @@ function starHistorySpec({
     series,
     title,
     showLegend: false,
-    milestones: milestones ? visibleMilestones({ series, thresholds: resolveMilestones(customMilestones) }) : []
+    milestones: milestones ? visibleMilestones({
+      series,
+      thresholds: resolveMilestones(customMilestones),
+      locale: window2.locale
+    }) : []
   };
 }
 function perRepoSpec({
@@ -42080,7 +42052,7 @@ function forecastSpec({
     axisLabels: AxisLabels.DATES
   });
   const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
-  const forecastLabels = forecastData.aggregate.forecasts[0].points.map(
+  const forecastLabels = (forecastData.aggregate.forecasts[0]?.points ?? []).map(
     (point) => interpolate({ template: t.forecast.week, params: { n: point.weekOffset } })
   );
   const series = buildForecastChartSeries({ historicalData, forecastData });
@@ -42169,8 +42141,125 @@ function buildChartSpec({
   }
 }
 
+// src/presentation/shared.ts
+function emailChartStyle(config) {
+  return {
+    smoothing: config.chartSmoothing,
+    curve: config.chartCurve,
+    showPoints: config.chartShowPoints,
+    beginAtZero: config.chartBeginAtZero,
+    range: config.chartRange,
+    lineWidth: config.chartLineWidth
+  };
+}
+var THEME_CONFIG = {
+  [ChartTheme.AUTO]: { palette: LIGHT_PALETTE, colorScheme: "light dark" },
+  [ChartTheme.LIGHT]: { palette: LIGHT_PALETTE, colorScheme: ChartTheme.LIGHT },
+  [ChartTheme.DARK]: { palette: DARK_PALETTE, colorScheme: ChartTheme.DARK }
+};
+function resolvePalette(theme = ChartTheme.AUTO) {
+  return THEME_CONFIG[theme].palette;
+}
+function colorSchemeFor(theme) {
+  return THEME_CONFIG[theme].colorScheme;
+}
+function prepareReportData({
+  results,
+  previousTimestamp,
+  locale,
+  now = /* @__PURE__ */ new Date()
+}) {
+  const { repos } = results;
+  const t = getTranslations(locale);
+  const generatedAt = now.toISOString();
+  return {
+    activeRepos: repos.filter((repo) => !repo.isRemoved),
+    newRepos: repos.filter((repo) => repo.isNew),
+    removedRepos: repos.filter((repo) => repo.isRemoved),
+    sorted: rankByStars(repos),
+    now: generatedAt.split("T")[0],
+    prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun,
+    generatedAt
+  };
+}
+function perRepoChartFile(repoFullName) {
+  return `${repoFullName.replace("/", "-")}.svg`;
+}
+function buildForecastWeekHeaders(t) {
+  return Array.from(
+    { length: FORECAST_WEEKS },
+    (_, index) => interpolate({ template: t.forecast.week, params: { n: index + 1 } })
+  );
+}
+var FORECAST_METHOD_LABELS = {
+  [ForecastMethod.LINEAR_REGRESSION]: "linearRegression",
+  [ForecastMethod.WEIGHTED_MOVING_AVERAGE]: "weightedMovingAverage"
+};
+function forecastMethodLabel({ method, t }) {
+  return t.forecast[FORECAST_METHOD_LABELS[method]];
+}
+
+// src/presentation/escaping.ts
+var EscapeDialect = {
+  MARKUP: "markup",
+  XML: "xml",
+  MARKDOWN: "markdown",
+  CSV: "csv"
+};
+var MARKUP_ESCAPES = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+};
+var XML_ESCAPES = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;"
+};
+var MARKDOWN_ESCAPES = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  "[": "\\[",
+  "]": "\\]",
+  "(": "\\(",
+  ")": "\\)",
+  "`": "\\`"
+};
+var CSV_DELIMITER = ",";
+var CSV_QUOTE = '"';
+var CSV_NEW_LINE = "\n";
+var CSV_FORMULA_TRIGGERS = ["=", "+", "-", "@"];
+var CSV_FORMULA_GUARD = "'";
+function replacerFor(escapes) {
+  const pattern = new RegExp(
+    `[${Object.keys(escapes).join("").replace(/[\]\\^-]/g, "\\$&")}]`,
+    "g"
+  );
+  return (text) => text.replaceAll(pattern, (char) => escapes[char]);
+}
+function escapeCsvField(field) {
+  const neutralized = CSV_FORMULA_TRIGGERS.some((trigger) => field.startsWith(trigger)) ? `${CSV_FORMULA_GUARD}${field}` : field;
+  if (neutralized.includes(CSV_DELIMITER) || neutralized.includes(CSV_QUOTE) || neutralized.includes(CSV_NEW_LINE) || neutralized !== field) {
+    return `${CSV_QUOTE}${neutralized.replaceAll(CSV_QUOTE, `${CSV_QUOTE}${CSV_QUOTE}`)}${CSV_QUOTE}`;
+  }
+  return neutralized;
+}
+var ESCAPERS = {
+  [EscapeDialect.MARKUP]: replacerFor(MARKUP_ESCAPES),
+  [EscapeDialect.XML]: replacerFor(XML_ESCAPES),
+  [EscapeDialect.MARKDOWN]: replacerFor(MARKDOWN_ESCAPES),
+  [EscapeDialect.CSV]: escapeCsvField
+};
+function escapeFor(dialect) {
+  return ESCAPERS[dialect];
+}
+
 // src/presentation/svg-chart.ts
-var escapeXml2 = escapeFor(EscapeDialect.XML);
+var escapeXml = escapeFor(EscapeDialect.XML);
 var BEZIER_CONTROL_DIVISOR = 3;
 var MONOTONE_TANGENT_LIMIT = 3;
 var TANGENT_AVERAGE_DIVISOR = 2;
@@ -42200,7 +42289,7 @@ function straightPath(points) {
   }
   return path4;
 }
-function catmullRomPath(points, { clampMinY, clampMaxY }) {
+function catmullRomPath({ points, clamp: { clampMinY, clampMaxY } }) {
   const tension = CHART_TENSION.smooth;
   let path4 = `M${points[0].x},${points[0].y}`;
   for (let index = 0; index < points.length - 1; index++) {
@@ -42280,7 +42369,7 @@ function cubicBezierPath(points) {
   }
   return path4;
 }
-function roundedStepPath(points, radius) {
+function roundedStepPath({ points, radius }) {
   if (points.length < MIN_POINTS_FOR_ROUNDED_CORNERS) return straightPath(points);
   let path4 = `M${points[0].x},${points[0].y}`;
   for (let index = 1; index < points.length - 1; index++) {
@@ -42306,10 +42395,10 @@ function roundedStepPath(points, radius) {
   return path4;
 }
 var CURVE_PATHS = {
-  [ChartCurve.CATMULL_ROM]: (points, clamp) => catmullRomPath(points, clamp),
+  [ChartCurve.CATMULL_ROM]: (points, clamp) => catmullRomPath({ points, clamp }),
   [ChartCurve.MONOTONE]: (points) => monotonePath(points),
   [ChartCurve.CUBIC_BEZIER]: (points) => cubicBezierPath(points),
-  [ChartCurve.ROUNDED_STEP]: (points) => roundedStepPath(points, ROUNDED_STEP_RADIUS)
+  [ChartCurve.ROUNDED_STEP]: (points) => roundedStepPath({ points, radius: ROUNDED_STEP_RADIUS })
 };
 function generateCurvePath({
   points,
@@ -42359,12 +42448,12 @@ function renderSvg({
   milestones,
   lineWidth: lineWidthParam,
   yAxisSide = ChartAxisSide.LEFT,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
+  smoothing = CHART_DEFAULTS.smoothing,
+  curve = CHART_DEFAULTS.curve,
+  showPoints = CHART_DEFAULTS.showPoints,
   animate = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO
+  beginAtZero = CHART_DEFAULTS.beginAtZero,
+  theme = CHART_DEFAULTS.theme
 }) {
   const {
     margin,
@@ -42408,10 +42497,10 @@ function renderSvg({
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-grid" stroke-opacity="${gridOpacity}" />
     <text x="${yLabelX}" y="${y + yAxis.labelBaselineOffset}" text-anchor="${yLabelAnchor}" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${formatCount({ count: value, locale })}</text>`;
   }).join("\n    ");
-  const milestoneLines = milestones.map((value) => {
+  const milestoneLines = milestones.map(({ value, label }) => {
     const y = scaleY({ value, minValue, maxValue, chartTop: margin.top, chartHeight });
     return `<line x1="${margin.left}" y1="${y}" x2="${CHART.width - margin.right}" y2="${y}" class="chart-axis" stroke-width="${milestoneStyle.strokeWidth}" stroke-dasharray="${milestoneStyle.dashArray}" />
-    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${formatCount({ count: value, locale })} \u2605</text>`;
+    <text x="${margin.left + milestoneStyle.labelXOffset}" y="${y - milestoneStyle.labelYOffset}" class="chart-muted" font-size="${fontSize.milestone}" font-family="${font}">${escapeXml(label)}</text>`;
   }).join("\n    ");
   const maxLabels = xAxis.maxLabels;
   const nonEmptyLabelIndices = labels.reduce((indices, label, labelIndex) => {
@@ -42422,7 +42511,7 @@ function renderSvg({
   const lastLabelIndex = nonEmptyLabelIndices.at(-1);
   const xLabels = nonEmptyLabelIndices.filter((labelIndex, position) => position % labelStep === 0 || labelIndex === lastLabelIndex).map((labelIndex) => {
     const x = margin.left + labelIndex / Math.max(1, labels.length - 1) * chartWidth;
-    return `<text x="${x}" y="${CHART.height - margin.bottom + xAxis.labelOffset}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml2(labels[labelIndex])}</text>`;
+    return `<text x="${x}" y="${CHART.height - margin.bottom + xAxis.labelOffset}" text-anchor="middle" class="chart-muted" font-size="${fontSize.label}" font-family="${font}">${escapeXml(labels[labelIndex])}</text>`;
   }).join("\n    ");
   const datasetSvg = datasets.map((dataset, datasetIndex) => {
     const validSegments = [];
@@ -42503,7 +42592,7 @@ function renderSvg({
       const rectAttr = dataset.dashed ? ` rx="${legendStyle.rectBorderRadius}"` : "";
       return `<rect x="${x}" y="${legendY - legendStyle.markerYOffset}" width="${legendStyle.markerWidth}" height="${legendStyle.markerHeight}" fill="${dataset.color}"${rectAttr} />
     <line x1="${x}" y1="${legendY - legendStyle.lineYOffset}" x2="${x + legendStyle.markerWidth}" y2="${legendY - legendStyle.lineYOffset}" stroke="${dataset.color}" stroke-width="${legendStyle.lineStrokeWidth}"${dashAttr} />
-    <text x="${x + legendStyle.labelGap}" y="${legendY}" class="chart-text" font-size="${fontSize.legend}" font-family="${font}">${escapeXml2(dataset.label)}</text>`;
+    <text x="${x + legendStyle.labelGap}" y="${legendY}" class="chart-text" font-size="${fontSize.legend}" font-family="${font}">${escapeXml(dataset.label)}</text>`;
     }).join("\n    ");
   })() : "";
   const titleY = margin.top - SVG_CHART.header.titleOffset;
@@ -42537,7 +42626,7 @@ function renderSvg({
     .chart-axis { stroke: ${basePalette.neutral}; }${darkModeStyles}
   </style>
   <rect width="${CHART.width}" height="${CHART.height}" class="chart-bg" />
-  <text x="${CHART.width / 2}" y="${titleY}" text-anchor="middle" class="chart-text" font-size="${fontSize.title}" font-weight="bold" font-family="${font}">${escapeXml2(title)}</text>
+  <text x="${CHART.width / 2}" y="${titleY}" text-anchor="middle" class="chart-text" font-size="${fontSize.title}" font-weight="bold" font-family="${font}">${escapeXml(title)}</text>
   ${legendSection ? `<g class="legend">
     ${legendSection}
   </g>` : ""}
@@ -42596,16 +42685,47 @@ function renderSvgChart({
 function resolveChartHistory({ candidate, fallback }) {
   return candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : fallback;
 }
+function resolveChartHistories({
+  config,
+  storedHistory,
+  repos,
+  repoStargazers,
+  now = /* @__PURE__ */ new Date()
+}) {
+  const reconstruct = ({
+    subset,
+    stargazers
+  }) => config.includeCharts ? buildStarHistory({
+    repoStargazers: stargazers,
+    repos: subset,
+    maxPoints: config.chartMaxPoints,
+    now
+  }) : { snapshots: [] };
+  const reconstructedForRepo = (repoFullName) => {
+    const repo = repos.find((candidate2) => candidate2.fullName === repoFullName);
+    if (!repo) return null;
+    const candidate = reconstruct({
+      subset: [repo],
+      stargazers: repoStargazers.filter((entry) => entry.repoFullName === repoFullName)
+    });
+    return candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : null;
+  };
+  return {
+    aggregate: resolveChartHistory({
+      candidate: reconstruct({ subset: repos, stargazers: repoStargazers }),
+      fallback: storedHistory
+    }),
+    forRepo: (repoFullName) => reconstructedForRepo(repoFullName) ?? storedHistory,
+    reconstructedForRepo
+  };
+}
 function buildChartFiles({
   config,
-  history,
-  fallbackHistory,
+  chartHistories,
   forecastData,
-  topRepoNames,
-  repoTotals,
-  repoStargazers,
-  now
+  topRepoNames
 }) {
+  const history = chartHistories.aggregate;
   if (!config.includeCharts || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return [];
   }
@@ -42636,18 +42756,9 @@ function buildChartFiles({
     files.push({ filename: CHART_FILES.starHistory, svg: starHistoryChart });
   }
   for (const repoFullName of topRepoNames) {
-    const repoTotal = repoTotals.find((repo) => repo.fullName === repoFullName);
-    const repoStarHistory = repoTotal ? buildStarHistory({
-      repoStargazers: repoStargazers.filter(
-        (stargazerEntry) => stargazerEntry.repoFullName === repoFullName
-      ),
-      repos: [repoTotal],
-      maxPoints: config.chartMaxPoints,
-      now
-    }) : { snapshots: [] };
     const repoChart = renderChart({
       kind: ChartKind.PER_REPO,
-      history: resolveChartHistory({ candidate: repoStarHistory, fallback: fallbackHistory }),
+      history: chartHistories.forRepo(repoFullName),
       repoFullName,
       lineColor: config.chartLineColor
     });
@@ -42677,6 +42788,40 @@ function buildChartFiles({
     }
   }
   return files;
+}
+
+// src/presentation/badge.ts
+var escapeXml2 = escapeFor(EscapeDialect.XML);
+function generateBadge({ totalStars, locale }) {
+  const t = getTranslations(locale);
+  const rawLabel = t.badge.totalStars;
+  const rawValue = `\u2605 ${formatCount({ count: totalStars, locale })}`;
+  const labelWidth = rawLabel.length * BADGE.labelCharWidth + BADGE.horizontalPadding;
+  const valueWidth = rawValue.length * BADGE.valueCharWidth + BADGE.horizontalPadding;
+  const totalWidth = labelWidth + valueWidth;
+  const label = escapeXml2(rawLabel);
+  const value = escapeXml2(rawValue);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${BADGE.height}" role="img" aria-label="${label}: ${value}">
+  <title>${label}: ${value}</title>
+  <linearGradient id="s" x2="0" y2="100%">
+    <stop offset="0" stop-color="${COLORS.gradientStart}" stop-opacity="${BADGE.gradientOpacity}"/>
+    <stop offset="1" stop-opacity="${BADGE.gradientOpacity}"/>
+  </linearGradient>
+  <clipPath id="r">
+    <rect width="${totalWidth}" height="${BADGE.height}" rx="${BADGE.borderRadius}" fill="${COLORS.white}"/>
+  </clipPath>
+  <g clip-path="url(#r)">
+    <rect width="${labelWidth}" height="${BADGE.height}" fill="${COLORS.muted}"/>
+    <rect x="${labelWidth}" width="${valueWidth}" height="${BADGE.height}" fill="${COLORS.accent}"/>
+    <rect width="${totalWidth}" height="${BADGE.height}" fill="url(#s)"/>
+  </g>
+  <g fill="${COLORS.white}" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="${BADGE.fontSize}">
+    <text aria-hidden="true" x="${labelWidth / 2}" y="${BADGE.shadowBaseline}" fill="${COLORS.shadow}" fill-opacity="${BADGE.shadowOpacity}">${label}</text>
+    <text x="${labelWidth / 2}" y="${BADGE.textBaseline}">${label}</text>
+    <text aria-hidden="true" x="${labelWidth + valueWidth / 2}" y="${BADGE.shadowBaseline}" fill="${COLORS.shadow}" fill-opacity="${BADGE.shadowOpacity}">${value}</text>
+    <text x="${labelWidth + valueWidth / 2}" y="${BADGE.textBaseline}">${value}</text>
+  </g>
+</svg>`;
 }
 
 // src/presentation/csv.ts
@@ -42711,12 +42856,12 @@ function generateCsvReport({ repos }) {
 // src/presentation/chart.ts
 var CHART_STYLE = {
   translucentAlpha: "33",
-  titleFontSize: 16,
+  titleFontSize: CHART_CHROME.titleFontSize,
   legendFontSize: 11,
   legendHiddenFontSize: 12,
-  milestoneBorderWidth: 1,
-  milestoneFontSize: 10,
-  milestoneDash: [6, 6],
+  milestoneBorderWidth: CHART_CHROME.milestoneStrokeWidth,
+  milestoneFontSize: CHART_CHROME.milestoneFontSize,
+  milestoneDash: CHART_CHROME.milestoneDash,
   trendDash: [6, 4],
   linearRegressionDash: [8, 4],
   weightedMovingAverageDash: [4, 4]
@@ -42746,16 +42891,16 @@ function buildMilestoneAnnotations({
   if (milestones.length === 0) return null;
   const annotations = {};
   for (const milestone of milestones) {
-    annotations[`milestone${milestone}`] = {
+    annotations[`milestone${milestone.value}`] = {
       type: "line",
-      yMin: milestone,
-      yMax: milestone,
+      yMin: milestone.value,
+      yMax: milestone.value,
       borderColor: palette.neutral,
       borderWidth: CHART_STYLE.milestoneBorderWidth,
       borderDash: CHART_STYLE.milestoneDash,
       label: {
         display: true,
-        content: `${milestone.toLocaleString("en-US")} \u2605`,
+        content: milestone.label,
         position: "start",
         backgroundColor: `${palette.neutral}${CHART_STYLE.translucentAlpha}`,
         color: palette.neutral,
@@ -42848,11 +42993,11 @@ function toDataset({ series, curveProps, showPoints, lineWidth }) {
 function chartImageUrl({
   request: request2,
   locale,
-  smoothing = true,
-  curve = ChartCurve.MONOTONE,
-  showPoints = true,
-  beginAtZero = false,
-  theme = ChartTheme.AUTO,
+  smoothing = CHART_DEFAULTS.smoothing,
+  curve = CHART_DEFAULTS.curve,
+  showPoints = CHART_DEFAULTS.showPoints,
+  beginAtZero = CHART_DEFAULTS.beginAtZero,
+  theme = CHART_DEFAULTS.theme,
   range = ChartRange.ALL,
   lineWidth
 }) {
@@ -42904,7 +43049,7 @@ var MIN_SNAPSHOTS_FOR_VELOCITY = 2;
 var PERCENT_MULTIPLIER = 100;
 var STARS_PER_DAY_DECIMALS = 2;
 var GROWTH_PERCENT_DECIMALS = 1;
-function roundTo(value, decimals) {
+function roundTo({ value, decimals }) {
   const factor = 10 ** decimals;
   return Math.round(value * factor) / factor;
 }
@@ -42924,8 +43069,11 @@ function computeVelocity({ history }) {
   const interval = latestRateInterval(points);
   if (interval === null) return null;
   const gained = interval.to.value - interval.from.value;
-  const starsPerDay = roundTo(gained / interval.days, STARS_PER_DAY_DECIMALS);
-  const growthPercent = interval.from.value > 0 ? roundTo(gained / interval.from.value * PERCENT_MULTIPLIER, GROWTH_PERCENT_DECIMALS) : null;
+  const starsPerDay = roundTo({ value: gained / interval.days, decimals: STARS_PER_DAY_DECIMALS });
+  const growthPercent = interval.from.value > 0 ? roundTo({
+    value: gained / interval.from.value * PERCENT_MULTIPLIER,
+    decimals: GROWTH_PERCENT_DECIMALS
+  }) : null;
   const nextMilestone = nextMilestoneAbove(last.totalStars);
   const daysToNextMilestone = nextMilestone !== null && starsPerDay > 0 ? Math.ceil((nextMilestone - last.totalStars) / starsPerDay) : null;
   return { starsPerDay, growthPercent, nextMilestone, daysToNextMilestone };
@@ -42960,35 +43108,49 @@ function toVelocitySection(metrics) {
 }
 function buildReportModel(params) {
   const {
+    config,
+    results,
+    previousTimestamp,
+    history = null,
+    velocityHistory = null,
+    forecastData = null,
+    now,
+    chartHistories = null,
+    hasChartFile = () => true
+  } = params;
+  const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config;
+  const t = getTranslations(locale);
+  const {
+    sorted,
+    newRepos,
+    removedRepos,
+    now: reportDate,
+    prev,
+    generatedAt
+  } = prepareReportData({
     results,
     previousTimestamp,
     locale,
-    history = null,
-    velocityHistory = null,
-    includeCharts = true,
-    forecastData = null,
-    topRepos: topReposCount = 10,
-    velocityMetrics = false
-  } = params;
-  const t = getTranslations(locale);
-  const { sorted, newRepos, removedRepos, now, prev } = prepareReportData({
-    results,
-    previousTimestamp,
-    locale
+    now
   });
   const hasChartHistory = includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
   const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
+  const topRepos = toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount });
+  const chartHistory = hasChartHistory ? history : null;
+  const perRepoCharts = chartHistory !== null && chartHistories !== null ? topRepos.filter((repo) => hasChartFile(repo.fullName)).map((repo) => ({ ...repo, history: chartHistories.forRepo(repo.fullName) })) : [];
   return {
     summary: results.summary,
-    now,
+    now: reportDate,
     prev,
+    generatedAt,
     isFirstRun: prev === t.report.firstRun,
     sorted,
     newRepos,
     removedRepos,
-    topRepos: toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount }),
-    hasChartHistory,
-    chartHistory: hasChartHistory ? history : null,
+    topRepos,
+    perRepoCharts,
+    chartHistory,
+    showComparisonChart: chartHistory !== null && topRepos.length > 0,
     stargazers: toStargazerSection(params),
     velocity: toVelocitySection(velocity),
     velocityIsNested: forecastData !== null,
@@ -43027,35 +43189,19 @@ function repoChartHeading({ repo, palette, t }) {
     }
   });
 }
-function generateHtmlReport(params) {
+function generateHtmlReport({ model, config }) {
   const {
     locale,
-    theme = ChartTheme.AUTO,
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    range,
-    lineWidth,
-    milestones,
-    customMilestones,
-    trendLine,
-    lineColor
-  } = params;
+    emailTheme: theme,
+    chartMilestones: milestones,
+    chartCustomMilestones: customMilestones,
+    chartTrendLine: trendLine,
+    chartLineColor: lineColor
+  } = config;
+  const style = emailChartStyle(config);
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
-  const chartUrl = (request2) => chartImageUrl({
-    request: request2,
-    locale,
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    theme,
-    range,
-    lineWidth
-  });
-  const model = buildReportModel(params);
+  const chartUrl = (request2) => chartImageUrl({ request: request2, locale, theme, ...style });
   const {
     summary: summary2,
     sorted,
@@ -43093,15 +43239,15 @@ function generateHtmlReport(params) {
         <ul>${removedRepos.map((repo) => `<li>${interpolate({ template: t.report.removedRepoText, params: { name: escapeHtml(repo.fullName), count: repo.previous ?? 0 } })}</li>`).join("")}</ul>
       </div>` : "";
   const topRepos = model.topRepos;
-  const comparisonChartUrl = history !== null && topRepos.length > 0 ? chartUrl({
+  const comparisonChartUrl = history !== null && model.showComparisonChart ? chartUrl({
     kind: ChartKind.COMPARISON,
     history,
     repoNames: topRepos.map((repo) => repo.fullName)
   }) : null;
-  const individualRepoChartsHtml = history !== null ? topRepos.map((repo) => {
+  const individualRepoChartsHtml = model.perRepoCharts.map((repo) => {
     const repoChartUrl = chartUrl({
       kind: ChartKind.PER_REPO,
-      history,
+      history: repo.history,
       repoFullName: repo.fullName,
       lineColor
     });
@@ -43111,7 +43257,7 @@ function generateHtmlReport(params) {
           <h4 style="font-size:14px;margin-bottom:8px;">${repoChartHeading({ repo, palette, t })}</h4>
           <img src="${repoChartUrl}" alt="${escapeHtml(repo.fullName)}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
-  }).filter(Boolean).join("") : "";
+  }).filter(Boolean).join("");
   const chartSection = history !== null ? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.starTrend} ${t.report.starTrend}</h2>
@@ -43237,7 +43383,7 @@ function generateHtmlReport(params) {
   ${velocitySection}
 
   <div style="margin-top:24px;padding-top:16px;border-top:1px solid ${palette.cellBorder};text-align:center;color:${palette.neutral};font-size:12px;">
-    ${interpolate({ template: t.footer.generated, params: { project: `<a href="https://github.com/fbuireu/github-star-tracker" style="color:${palette.link};">GitHub Star Tracker</a>`, date: (/* @__PURE__ */ new Date()).toISOString() } })}
+    ${interpolate({ template: t.footer.generated, params: { project: `<a href="https://github.com/fbuireu/github-star-tracker" style="color:${palette.link};">GitHub Star Tracker</a>`, date: model.generatedAt } })}
     <br>
     ${interpolate({ template: t.footer.madeBy, params: { author: `<a href="https://github.com/fbuireu" style="color:${palette.link};">Ferran Buireu</a>` } })}
   </div>
@@ -43285,9 +43431,8 @@ function repoChartHeading2({ repo, t }) {
     }
   });
 }
-function generateMarkdownReport(params) {
-  const t = getTranslations(params.locale);
-  const model = buildReportModel(params);
+function generateMarkdownReport({ model, config }) {
+  const t = getTranslations(config.locale);
   const {
     summary: summary2,
     sorted,
@@ -43295,7 +43440,7 @@ function generateMarkdownReport(params) {
     removedRepos,
     now,
     prev,
-    hasChartHistory,
+    chartHistory,
     forecast: forecastData
   } = model;
   const header = [
@@ -43305,15 +43450,14 @@ function generateMarkdownReport(params) {
     ""
   ];
   const comparison = model.isFirstRun ? [] : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ""];
-  const topRepos = model.topRepos;
-  const hasComparisonChart = hasChartHistory && topRepos.length > 0;
-  const individualRepoCharts = hasChartHistory ? topRepos.flatMap((repo) => [
+  const hasComparisonChart = model.showComparisonChart;
+  const individualRepoCharts = model.perRepoCharts.flatMap((repo) => [
     `#### ${repoChartHeading2({ repo, t })}`,
     "",
     `![${escapeMarkdown(repo.fullName)}](./charts/${perRepoChartFile(repo.fullName)})`,
     ""
-  ]) : [];
-  const chartSection = hasChartHistory ? [
+  ]);
+  const chartSection = chartHistory !== null ? [
     `## ${SECTION_ICON.starTrend} ${t.report.starTrend}`,
     "",
     `![Star History](./charts/${CHART_FILES.starHistory})`,
@@ -43423,7 +43567,7 @@ function generateMarkdownReport(params) {
       forecasts: forecastData.aggregate.forecasts,
       t
     }),
-    ...hasChartHistory ? ["", `![${t.forecast.sectionTitle}](./charts/${CHART_FILES.forecast})`, ""] : [],
+    ...chartHistory !== null ? ["", `![${t.forecast.sectionTitle}](./charts/${CHART_FILES.forecast})`, ""] : [],
     ...forecastData.repos.length > 0 ? [
       `### ${t.forecast.byRepository}`,
       "",
@@ -43445,7 +43589,7 @@ function generateMarkdownReport(params) {
   const velocitySection = !model.velocityIsNested && velocityLines.length > 0 ? [`## ${SECTION_ICON.velocity} ${t.velocity.sectionTitle}`, "", ...velocityLines, ""] : [];
   const footer = [
     "---",
-    `*${interpolate({ template: t.footer.generated, params: { project: "[GitHub Star Tracker](https://github.com/fbuireu/github-star-tracker)", date: (/* @__PURE__ */ new Date()).toISOString() } })}*`,
+    `*${interpolate({ template: t.footer.generated, params: { project: "[GitHub Star Tracker](https://github.com/fbuireu/github-star-tracker)", date: model.generatedAt } })}*`,
     `<div align="center">`,
     "",
     `*${interpolate({ template: t.footer.madeBy, params: { author: "[Ferran Buireu](https://github.com/fbuireu)" } })}*`,
@@ -43477,6 +43621,73 @@ function renderForecastTable({ title, forecasts, t }) {
   ].join("\n");
 }
 
+// src/presentation/run.ts
+function emailSubject({ locale, summary: summary2 }) {
+  const t = getTranslations(locale);
+  return interpolate({
+    template: t.email.subjectLine,
+    params: {
+      subject: t.email.subject,
+      totalStars: summary2.totalStars,
+      delta: deltaIndicator(summary2.totalDelta)
+    }
+  });
+}
+function renderEmptyRun(config) {
+  const t = getTranslations(config.locale);
+  const results = { repos: [], summary: EMPTY_SUMMARY };
+  return {
+    markdown: t.report.noRepositories,
+    html: `<p>${t.report.noRepositories}</p>`,
+    csv: generateCsvReport(results),
+    badge: generateBadge({ totalStars: 0, locale: config.locale }),
+    charts: [],
+    emailSubject: emailSubject({ locale: config.locale, summary: EMPTY_SUMMARY })
+  };
+}
+function renderRun({
+  config,
+  results,
+  previousTimestamp,
+  chartHistories,
+  storedHistory,
+  stargazerDiff,
+  forecastData,
+  now = /* @__PURE__ */ new Date()
+}) {
+  const reportParams = {
+    config,
+    results,
+    previousTimestamp,
+    history: chartHistories.aggregate,
+    velocityHistory: storedHistory,
+    stargazerDiff,
+    forecastData,
+    now
+  };
+  const charts = buildChartFiles({
+    config,
+    chartHistories,
+    forecastData,
+    topRepoNames: topRepositories({ repos: results.repos, limit: config.topRepos })
+  });
+  const drawn = new Set(charts.map((file) => file.filename));
+  const model = buildReportModel({
+    ...reportParams,
+    chartHistories,
+    hasChartFile: (repoFullName) => drawn.has(perRepoChartFile(repoFullName))
+  });
+  const rendering = { model, config };
+  return {
+    markdown: generateMarkdownReport(rendering),
+    html: generateHtmlReport(rendering),
+    csv: generateCsvReport(results),
+    badge: generateBadge({ totalStars: results.summary.totalStars, locale: config.locale }),
+    emailSubject: emailSubject({ locale: config.locale, summary: results.summary }),
+    charts
+  };
+}
+
 // src/application/tracker.ts
 async function trackStars() {
   try {
@@ -43484,12 +43695,17 @@ async function trackStars() {
     const token = getInput("github-token", { required: true });
     const apiUrl = getInput("github-api-url") || process.env.GITHUB_API_URL || "";
     const octokit = getOctokit(token, apiUrl ? { baseUrl: apiUrl } : void 0, retry);
-    const t = getTranslations(config.locale);
     info("Fetching repositories...");
     const repos = await getRepos({ octokit, config });
     if (repos.length === 0) {
       warning("No repositories matched the configured filters");
-      setEmptyOutputs();
+      const empty = renderEmptyRun(config);
+      setOutputs({
+        summary: EMPTY_SUMMARY,
+        rendered: empty,
+        htmlReportPath: writeHtmlReport({ htmlReport: empty.html }),
+        newStargazers: 0
+      });
       return;
     }
     await withDataBranch({
@@ -43530,101 +43746,77 @@ async function trackStars() {
           info(`Found ${stargazerDiff.totalNew} new stargazers`);
         }
         const topRepoNames = topRepositories({ repos: results.repos, limit: config.topRepos });
-        const chartNow = /* @__PURE__ */ new Date();
-        const repoTotals = repos.map((repo) => ({
-          fullName: repo.fullName,
-          name: repo.name,
-          owner: repo.owner,
-          stars: repo.stars
-        }));
-        const starHistory = config.includeCharts ? buildStarHistory({
-          repoStargazers,
-          repos: repoTotals,
-          maxPoints: config.chartMaxPoints,
-          now: chartNow
-        }) : { snapshots: [] };
-        const history = resolveChartHistory({
-          candidate: starHistory,
-          fallback: updatedHistory
+        const chartHistories = resolveChartHistories({
+          config,
+          storedHistory: updatedHistory,
+          repos: repos.map(({ fullName, name, owner, stars }) => ({
+            fullName,
+            name,
+            owner,
+            stars
+          })),
+          repoStargazers
         });
-        const forecastData = computeForecast({ history, topRepoNames });
-        const reportParams = {
+        const forecastData = computeForecast({
+          history: chartHistories.aggregate,
+          topRepoNames,
+          historyForRepo: chartHistories.reconstructedForRepo
+        });
+        const rendered = renderRun({
+          config,
           results,
           previousTimestamp,
-          locale: config.locale,
-          history,
-          velocityHistory: updatedHistory,
-          includeCharts: config.includeCharts,
+          chartHistories,
+          storedHistory: updatedHistory,
           stargazerDiff,
-          forecastData,
-          topRepos: config.topRepos,
-          smoothing: config.chartSmoothing,
-          curve: config.chartCurve,
-          showPoints: config.chartShowPoints,
-          milestones: config.chartMilestones,
-          beginAtZero: config.chartBeginAtZero,
-          theme: config.chartTheme,
-          customMilestones: config.chartCustomMilestones,
-          range: config.chartRange,
-          trendLine: config.chartTrendLine,
-          velocityMetrics: config.velocityMetrics,
-          lineColor: config.chartLineColor,
-          lineWidth: config.chartLineWidth
-        };
-        const markdownReport = generateMarkdownReport(reportParams);
-        const htmlReport = generateHtmlReport({ ...reportParams, theme: config.emailTheme });
-        const csvReport = generateCsvReport(results);
-        const badge = generateBadge({ totalStars: summary2.totalStars, locale: config.locale });
-        const notify = summary2.changed && measurement.thresholdReached;
+          forecastData
+        });
+        const notify = notificationIsDue({
+          changed: summary2.changed,
+          thresholdReached: measurement.thresholdReached
+        });
         const emailConfig = getEmailConfig(config.locale);
-        let notificationDelivered = notify;
-        let mailDelivered = false;
+        let delivery = Delivery.NOT_ATTEMPTED;
         if (emailConfig && (notify || config.sendOnNoChanges)) {
-          const subject = interpolate({
-            template: t.email.subjectLine,
-            params: {
-              subject: t.email.subject,
-              totalStars: summary2.totalStars,
-              delta: deltaIndicator(summary2.totalDelta)
-            }
-          });
           try {
-            const sent = await sendEmail({ emailConfig, subject, htmlBody: htmlReport });
-            mailDelivered = sent;
-            notificationDelivered = notify && sent;
+            const sent = await sendEmail({
+              emailConfig,
+              subject: rendered.emailSubject,
+              htmlBody: rendered.html
+            });
+            delivery = sent ? Delivery.SENT : Delivery.FAILED;
           } catch (error2) {
             warning(`Failed to send email: ${error2.message}`);
-            notificationDelivered = false;
+            delivery = Delivery.FAILED;
           }
         } else if (emailConfig) {
-          info("Notification threshold not reached, skipping email");
+          info(
+            summary2.changed ? "Notification threshold not reached, skipping email" : "No stars changed since the baseline, skipping email"
+          );
         }
-        const historyToPersist = notificationDelivered ? recordNotification({ history: updatedHistory, totalStars: summary2.totalStars }) : updatedHistory;
+        const notification = settleNotification({
+          changed: summary2.changed,
+          thresholdReached: measurement.thresholdReached,
+          delivery,
+          history: updatedHistory,
+          totalStars: summary2.totalStars
+        });
+        const htmlReportPath = writeHtmlReport({ htmlReport: rendered.html });
         branch.publish({
-          history: historyToPersist,
+          history: notification.historyToPersist,
           stargazerMap,
-          report: markdownReport,
-          badge,
-          csv: csvReport,
-          charts: buildChartFiles({
-            config,
-            history,
-            fallbackHistory: updatedHistory,
-            forecastData,
-            topRepoNames,
-            repoTotals,
-            repoStargazers,
-            now: chartNow
-          }),
+          report: rendered.markdown,
+          badge: rendered.badge,
+          csv: rendered.csv,
+          charts: rendered.charts,
           commitMessage: `Update star data: ${summary2.totalStars} total (${deltaIndicator(summary2.totalDelta)})`
         });
         setOutputs({
           summary: summary2,
-          markdownReport,
-          htmlReport,
-          csvReport,
-          shouldNotify: notify,
-          notificationSent: mailDelivered,
+          rendered,
+          htmlReportPath,
+          shouldNotify: notification.shouldNotify,
+          notificationSent: notification.notificationSent,
           newStargazers: stargazerDiff?.totalNew ?? 0
         });
       }
@@ -43635,37 +43827,18 @@ async function trackStars() {
     if (err.stack) debug(err.stack);
   }
 }
-function setEmptyOutputs() {
-  setOutputs({
-    summary: {
-      totalStars: 0,
-      totalPrevious: 0,
-      totalDelta: 0,
-      newStars: 0,
-      lostStars: 0,
-      changed: false
-    },
-    markdownReport: "No repositories matched the configured filters.",
-    htmlReport: "<p>No repositories matched the configured filters.</p>",
-    csvReport: "",
-    shouldNotify: false,
-    notificationSent: false,
-    newStargazers: 0
-  });
-}
 function setOutputs({
   summary: summary2,
-  markdownReport,
-  htmlReport,
-  csvReport,
-  shouldNotify: shouldNotify2,
-  notificationSent,
+  rendered,
+  htmlReportPath,
+  shouldNotify: shouldNotify2 = false,
+  notificationSent = false,
   newStargazers
 }) {
-  setOutput("report", markdownReport);
-  setOutput("report-html", htmlReport);
-  setOutput("report-html-path", writeHtmlReport({ htmlReport }));
-  setOutput("report-csv", csvReport);
+  setOutput("report", rendered.markdown);
+  setOutput("report-html", rendered.html);
+  setOutput("report-html-path", htmlReportPath);
+  setOutput("report-csv", rendered.csv);
   setOutput("total-stars", String(summary2.totalStars));
   setOutput("stars-changed", String(summary2.changed));
   setOutput("new-stars", String(summary2.newStars));

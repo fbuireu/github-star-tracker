@@ -62,7 +62,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -78,7 +78,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -103,7 +103,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
       if (url) {
         const decodedUrl = decodeURIComponent(url);
         const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
@@ -121,7 +121,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -141,7 +141,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -160,7 +160,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -193,7 +193,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -215,7 +215,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -261,7 +261,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -280,76 +280,13 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
         const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
 
         expect(config.options.plugins.legend.display).toBe(true);
-      }
-    });
-
-    it('uses short labels when all repos share the same owner', () => {
-      const url = chartImageUrl({
-        request: {
-          kind: ChartKind.COMPARISON,
-          history: mockHistory,
-          repoNames: ['user/repo-a', 'user/repo-b'],
-        },
-        locale: 'en',
-      });
-
-      expect(url).toBeDefined();
-
-      if (url) {
-        const decodedUrl = decodeURIComponent(url);
-        const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
-
-        expect(config.data.datasets[0].label).toBe('repo-a');
-        expect(config.data.datasets[1].label).toBe('repo-b');
-      }
-    });
-
-    it('uses full names when repos have different owners', () => {
-      const mixedHistory: History = {
-        snapshots: [
-          {
-            timestamp: '2025-01-01T00:00:00.000Z',
-            totalStars: 100,
-            repos: [
-              { fullName: 'alice/repo-a', name: 'repo-a', owner: 'alice', stars: 50 },
-              { fullName: 'bob/repo-b', name: 'repo-b', owner: 'bob', stars: 50 },
-            ],
-          },
-          {
-            timestamp: '2025-01-08T00:00:00.000Z',
-            totalStars: 120,
-            repos: [
-              { fullName: 'alice/repo-a', name: 'repo-a', owner: 'alice', stars: 70 },
-              { fullName: 'bob/repo-b', name: 'repo-b', owner: 'bob', stars: 50 },
-            ],
-          },
-        ],
-      };
-
-      const url = chartImageUrl({
-        request: {
-          kind: ChartKind.COMPARISON,
-          history: mixedHistory,
-          repoNames: ['alice/repo-a', 'bob/repo-b'],
-        },
-        locale: 'en',
-      });
-
-      expect(url).toBeDefined();
-
-      if (url) {
-        const decodedUrl = decodeURIComponent(url);
-        const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
-
-        expect(config.data.datasets[0].label).toBe('alice/repo-a');
-        expect(config.data.datasets[1].label).toBe('bob/repo-b');
       }
     });
   });
@@ -387,7 +324,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -406,7 +343,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -436,7 +373,7 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
@@ -469,80 +406,13 @@ describe('chart', () => {
         locale: 'en',
       });
 
-      expect(url).toBeDefined();
+      expect(url).not.toBeNull();
 
       if (url) {
         const decodedUrl = decodeURIComponent(url);
         const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
 
         expect(config.options.plugins.annotation).toBeDefined();
-        expect(config.options.plugins.annotation.annotations).toHaveProperty('milestone100');
-      }
-    });
-
-    it('does not include annotations when no milestones in range', () => {
-      const url = chartImageUrl({
-        request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
-        locale: 'en',
-      });
-
-      expect(url).toBeDefined();
-
-      if (url) {
-        const decodedUrl = decodeURIComponent(url);
-        const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
-
-        expect(config.options.plugins.annotation).toBeUndefined();
-      }
-    });
-
-    it('uses custom milestones in the aggregate chart when provided', () => {
-      const largeHistory: History = {
-        snapshots: [
-          { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 80, repos: [] },
-          { timestamp: '2025-01-08T00:00:00.000Z', totalStars: 120, repos: [] },
-        ],
-      };
-
-      const url = chartImageUrl({
-        request: {
-          kind: ChartKind.STAR_HISTORY,
-          history: largeHistory,
-          customMilestones: [90, 110],
-        },
-        locale: 'en',
-      });
-
-      expect(url).toBeDefined();
-
-      if (url) {
-        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
-        const { annotations } = config.options.plugins.annotation;
-
-        expect(annotations).toHaveProperty('milestone90');
-        expect(annotations).toHaveProperty('milestone110');
-        expect(annotations).not.toHaveProperty('milestone100');
-      }
-    });
-
-    it('falls back to default milestones when custom list is empty', () => {
-      const largeHistory: History = {
-        snapshots: [
-          { timestamp: '2025-01-01T00:00:00.000Z', totalStars: 80, repos: [] },
-          { timestamp: '2025-01-08T00:00:00.000Z', totalStars: 120, repos: [] },
-        ],
-      };
-
-      const url = chartImageUrl({
-        request: { kind: ChartKind.STAR_HISTORY, history: largeHistory, customMilestones: [] },
-        locale: 'en',
-      });
-
-      expect(url).toBeDefined();
-
-      if (url) {
-        const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
-
         expect(config.options.plugins.annotation.annotations).toHaveProperty('milestone100');
       }
     });

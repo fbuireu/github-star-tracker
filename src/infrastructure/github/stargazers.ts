@@ -1,13 +1,16 @@
 import * as core from '@actions/core';
 import type { Config } from '@config/types';
-import { MAX_REACHABLE_STARGAZERS } from '@domain/constants';
+import {
+  coveredStars,
+  MAX_REACHABLE_PAGE,
+  STARGAZER_PAGE_SIZE,
+  sampledPages,
+  shouldSample,
+} from '@domain/sampling';
 import type { RepoStargazers, Stargazer } from '@domain/stargazers';
 import type { RepoInfo } from '@domain/types';
 import { describeFetchError } from './errors';
 import type { GitHubStargazerRow, Octokit } from './types';
-
-const STARGAZERS_PER_PAGE = 100;
-const MAX_REACHABLE_PAGE = Math.floor(MAX_REACHABLE_STARGAZERS / STARGAZERS_PER_PAGE);
 
 interface FetchAllStargazersParams {
   octokit: Octokit;
@@ -24,10 +27,14 @@ export async function fetchAllStargazers({
   const sampled: string[] = [];
 
   for (const repo of repos) {
-    const shouldSample = config.smartSampling && repo.stars > config.smartSamplingThreshold;
+    const sampledRepo = shouldSample({
+      stars: repo.stars,
+      smartSampling: config.smartSampling,
+      threshold: config.smartSamplingThreshold,
+    });
 
     try {
-      const { stargazers, coveredStars } = shouldSample
+      const { stargazers, coveredStars: covered } = sampledRepo
         ? await fetchSampledStargazers({
             octokit,
             owner: repo.owner,
@@ -37,24 +44,26 @@ export async function fetchAllStargazers({
           })
         : await fetchRepoStargazers({ octokit, owner: repo.owner, name: repo.name });
 
-      warnWhenHistoryIsUnreconstructable(repo, stargazers);
+      warnWhenHistoryIsUnreconstructable({ repo, stargazers });
+
+      const truncated = !sampledRepo && covered !== undefined;
 
       results.push({
         repoFullName: repo.fullName,
         stargazers,
-        sampled: shouldSample,
-        coveredStars,
-        incomplete: repo.stars > 0 && stargazers.length === 0,
+        sampled: sampledRepo,
+        coveredStars: covered,
+        incomplete: truncated || (repo.stars > 0 && stargazers.length === 0),
       });
 
-      if (shouldSample) sampled.push(repo.fullName);
+      if (sampledRepo) sampled.push(repo.fullName);
     } catch (error) {
       core.warning(`Failed to fetch stargazers for ${repo.fullName}: ${describeFetchError(error)}`);
 
       results.push({
         repoFullName: repo.fullName,
         stargazers: [],
-        sampled: shouldSample,
+        sampled: sampledRepo,
         incomplete: true,
       });
     }
@@ -67,7 +76,15 @@ export async function fetchAllStargazers({
   return results;
 }
 
-function warnWhenHistoryIsUnreconstructable(repo: RepoInfo, stargazers: Stargazer[]): void {
+interface WarnWhenHistoryIsUnreconstructableParams {
+  repo: RepoInfo;
+  stargazers: Stargazer[];
+}
+
+function warnWhenHistoryIsUnreconstructable({
+  repo,
+  stargazers,
+}: WarnWhenHistoryIsUnreconstructableParams): void {
   if (repo.stars === 0) return;
 
   if (stargazers.length === 0) {
@@ -100,7 +117,7 @@ async function fetchStargazerPage({
   const { data } = await octokit.request('GET /repos/{owner}/{repo}/stargazers', {
     owner,
     repo: name,
-    per_page: STARGAZERS_PER_PAGE,
+    per_page: STARGAZER_PAGE_SIZE,
     page,
     headers: {
       accept: 'application/vnd.github.star+json',
@@ -149,7 +166,7 @@ async function fetchRepoStargazers({
     }
 
     stargazers.push(...items);
-    if (items.length < STARGAZERS_PER_PAGE) break;
+    if (items.length < STARGAZER_PAGE_SIZE) break;
   }
 
   return { stargazers };
@@ -163,26 +180,6 @@ interface FetchSampledStargazersParams {
   maxPages: number;
 }
 
-interface SelectSampledPagesParams {
-  totalPages: number;
-  maxPages: number;
-}
-
-function selectSampledPages({ totalPages, maxPages }: SelectSampledPagesParams): number[] {
-  const pages = Math.max(1, maxPages);
-  if (totalPages <= pages) {
-    return Array.from({ length: totalPages }, (_, pageIndex) => pageIndex + 1);
-  }
-  if (pages === 1) return [1];
-
-  const selected = new Set<number>();
-  for (let pageIndex = 0; pageIndex < pages; pageIndex++) {
-    selected.add(1 + Math.round((pageIndex * (totalPages - 1)) / (pages - 1)));
-  }
-
-  return [...selected].sort((earlierPage, laterPage) => earlierPage - laterPage);
-}
-
 async function fetchSampledStargazers({
   octokit,
   owner,
@@ -190,11 +187,7 @@ async function fetchSampledStargazers({
   totalStars,
   maxPages,
 }: FetchSampledStargazersParams): Promise<StargazerFetchResult> {
-  const totalPages = Math.min(
-    MAX_REACHABLE_PAGE,
-    Math.max(1, Math.ceil(totalStars / STARGAZERS_PER_PAGE)),
-  );
-  const pages = selectSampledPages({ totalPages, maxPages });
+  const pages = sampledPages({ totalStars, maxPages });
   const stargazers: Stargazer[] = [];
   const failedPages: number[] = [];
   let firstError: unknown;
@@ -220,6 +213,6 @@ async function fetchSampledStargazers({
 
   return {
     stargazers,
-    coveredStars: Math.min(lastFetchedPage * STARGAZERS_PER_PAGE, totalStars),
+    coveredStars: coveredStars({ lastFetchedPage, totalStars }),
   };
 }

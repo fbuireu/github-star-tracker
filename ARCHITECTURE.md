@@ -33,7 +33,7 @@ flowchart TD
     pres --> dom
     pres --> i18n
     infra --> cfg
-    infra -->|types + constants| dom
+    infra -->|types, constants,<br/>tracked set, sampling plan| dom
     infra --> i18n
     dom -->|"Locale, LOCALE_MAP<br/>(formatting.ts only)"| i18n
 
@@ -60,9 +60,9 @@ that performs I/O at all.
 | application | `@application/*` | Sequencing the single use case; composition root for Octokit | config, domain, i18n, infrastructure, presentation, `@actions/*`, `@octokit/plugin-retry` | nothing forbidden — it is the top |
 | assets | `@assets/*` | Not a layer: the star mark the README embeds, no code | nothing — it imports nothing and nothing imports it | — |
 | config | `@config/*` | Action inputs + `star-tracker.yml` -> a fully-populated `Config` | `@domain/types`, `@i18n`, `@actions/core`, `js-yaml`, `node:fs/path` | application, infrastructure, presentation |
-| domain | `@domain/*` | Pure business core: comparison, snapshots, forecast, velocity, stargazer diffing, star-history reconstruction, formatting | `@i18n` only | everything else, incl. `@actions/*`, octokit, `node:fs` |
+| domain | `@domain/*` | Pure business core: the Tracked Set, comparison, snapshots, forecast, velocity, stargazer diffing and sampling, star-history reconstruction, formatting | `@i18n` only | everything else, incl. `@actions/*`, octokit, `node:fs` |
 | i18n | `@i18n` | Translation bundles, `getTranslations`, `interpolate` | nothing (true leaf) | everything |
-| infrastructure | `@infrastructure/*` | All I/O: octokit REST, `git` CLI, `fs`, nodemailer | config, domain (types/constants), i18n, `node:*`, `@actions/*`, `nodemailer` | application, presentation |
+| infrastructure | `@infrastructure/*` | All I/O: octokit REST, `git` CLI, `fs`, nodemailer | config, domain (types, constants, and the pure deciders in `tracked-set` / `sampling`), i18n, `node:*`, `@actions/*`, `nodemailer` | application, presentation |
 | presentation | `@presentation/*` | Pure rendering: data in, string out (markdown/HTML/SVG/CSV/badge) | `@config/types`, domain, i18n | infrastructure, `@actions/*`, `node:fs`, any network |
 | shared | `@shared/*` | Cross-cutting non-layer code; today only `shared/tests` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only) | used from `*.test.ts` only |
 
@@ -79,8 +79,8 @@ All step numbers refer to `src/application/tracker.ts`.
 | 1 | `trackStars()` from `src/index.ts` | entry | Un-awaited; `trackStars` never rejects |
 | 2 | `loadConfig()` | config | Precedence: action input -> config file -> `DEFAULTS`. Only unknown `visibility` and an invalid `data-branch` throw |
 | 3 | `core.getInput('github-token' / 'github-api-url')`, `github.getOctokit(token, baseUrl?, retry)` | application | The only place an Octokit instance is built; `@octokit/plugin-retry` attached here |
-| 4 | `getRepos({ octokit, config })` | infrastructure/github | Paginates, filters, maps; result sorted by `full_name`. Fetch failure is fatal |
-| 5 | empty result -> `setEmptyOutputs()` and `return` | application | Returns **before** `withDataBranch`, so no worktree, no commit, no email |
+| 4 | `getRepos({ octokit, config })` | infrastructure/github | Paginates and maps, then narrows via `resolveTrackedSet` (`@domain/tracked-set`) and logs the counts it reports; result sorted by `full_name`. Fetch failure is fatal |
+| 5 | empty result -> `setOutputs()` over an empty Summary and `renderEmptyRun`, then `return` | application | Returns **before** `withDataBranch`, so no worktree, no commit, no email |
 | 6 | `withDataBranch({ dataBranch, readOnly, token, run })` | infrastructure/persistence | Opens the worktree via `initializeDataBranch`, hands the body a `DataBranch`, and runs `cleanup` in `finally`. `dataDir` never escapes the module |
 | 7 | `branch.readHistory()` | infrastructure/persistence | Normalizes to `{ ...raw, snapshots: Array.isArray(raw.snapshots) ? raw.snapshots : [] }` — a non-array `snapshots` becomes `[]`, everything else survives; invalid JSON throws rather than resetting |
 | 8 | `measureRun({ trackedSet, storedHistory, comparisonWindow, maxHistory, notificationThreshold, notificationMode })` | domain/measurement | The whole measurement in one call: resolves the Baseline, compares, snapshots, appends, and decides whether the threshold was reached. See [ADR 0013](./docs/adr/0013-a-run-is-measured-in-one-place.md) |
@@ -88,14 +88,12 @@ All step numbers refer to `src/application/tracker.ts`.
 | 10 | `fetchAllStargazers({ octokit, repos, config })` | infrastructure/github | Only when `includeCharts \|\| trackStargazers`. Per-repo failures degrade to `core.warning` |
 | 11 | `branch.readStargazers()` -> `diffStargazers` -> `buildStargazerMap(...)` | persistence + domain | Only when `trackStargazers`. The map is handed to `publish`, not written here |
 | 12 | `topRepositories({ repos: results.repos, limit: config.topRepos })` | domain/comparison | The single definition of Top Repositories; `@presentation/report-model` calls the same function for the Report |
-| 13 | `buildStarHistory({ repoStargazers, repos, maxPoints, now: chartNow })` | domain/star-history | Reconstructs a dense monotonic history from `starred_at`; capped at 365 buckets |
-| 14 | `resolveChartHistory({ candidate, fallback: updatedHistory })` | presentation/charts | Reconstruction wins when it has >= 2 snapshots, otherwise the stored history |
+| 13-14 | `resolveChartHistories({ config, storedHistory: updatedHistory, repos, repoStargazers })` | presentation/charts | Owns both altitudes and the instant: reconstructs via `@domain/star-history` (capped at 365 buckets) and resolves each result against the stored history — reconstruction wins at >= 2 snapshots. `.aggregate` is the Tracked Set's; `.forRepo(name)` is one Repository's |
 | 15 | `computeForecast({ history, topRepoNames })` | domain/forecast | `null` below 3 snapshots; always 2 methods x 4 weekly points |
-| 16 | `generateMarkdownReport(reportParams)` / `generateHtmlReport(reportParams)` / `generateCsvReport(results)` / `generateBadge({ totalStars, locale })` | presentation | Both reports build one `ReportModel` from the same params; only HTML also takes the chart style |
-| 17 | `notify` = `summary.changed && measurement.thresholdReached` | application | The decision, from the figure the measurement already produced |
-| 18 | `getEmailConfig(locale)` + `sendEmail({ emailConfig, subject, htmlBody })` | infrastructure/notification | Sent when `emailConfig && (notify \|\| sendOnNoChanges)`; failures downgrade to `core.warning` and clear `notificationDelivered`. **Runs before persistence** — see [ADR 0011](./docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md) |
-| 19 | `recordNotification({ history: updatedHistory, totalStars })` | domain/measurement | Only when `notificationDelivered`. Returns a **new** History; the undelivered one is persisted unchanged |
-| 20 | `buildChartFiles({ config, history, fallbackHistory, forecastData, topRepoNames, repoTotals, repoStargazers, now: chartNow })` | presentation | One `chartNow` `Date` is shared with step 13 |
+| 16 + 20 | `renderRun({ config, results, previousTimestamp, chartHistories, storedHistory, stargazerDiff, forecastData })` | presentation | The layer's single entry point: markdown, HTML, CSV, badge and every chart file in one `RenderedRun`. It builds the `ReportModel` once, derives the chart history from `chartHistories` and the Top Repositories from that model, so no caller can hand the reports the wrong `History` or chart a different set than it links ([ADR 0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md)) |
+| 17 | `notify` = `summary.changed && measurement.thresholdReached` | application | Gates the send only; the same figures are re-derived by step 19 |
+| 18 | `getEmailConfig(locale)` + `sendEmail({ emailConfig, subject, htmlBody })` | infrastructure/notification | Sent when `emailConfig && (notify \|\| sendOnNoChanges)`. The outcome becomes one `Delivery`: `SENT`, `FAILED` (a throw, or a `false` return) or `NOT_ATTEMPTED`. **Runs before persistence** — see [ADR 0011](./docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md) |
+| 19 | `settleNotification({ changed, thresholdReached, delivery, history, totalStars })` | domain/notification | Returns `shouldNotify`, `notificationSent` and `historyToPersist` as one outcome; calls `recordNotification` only when the baseline may advance |
 | 21 | `branch.publish({ history, stargazerMap, report, badge, csv, charts, commitMessage })` | infrastructure/persistence | Writes every data-branch artefact, prunes the `charts/*.svg` this run did not produce, then commits and pushes — unless `readOnly`, where the write happens and the push does not |
 | 22 | `setOutputs(...)` | application | Eleven outputs, exactly matching the `outputs:` block of `action.yml` |
 
@@ -127,12 +125,12 @@ State has to survive between runs of a stateless Action. Artifacts expire and ar
 
 | Artefact | Rendered by | Written / emitted by |
 | --- | --- | --- |
-| `README.md` (markdown report) | `@presentation/markdown` `generateMarkdownReport` | `writeReport` (persistence) |
+| `README.md` (markdown report) | `@presentation/markdown` `generateMarkdownReport` | `writeArtefact` (persistence) |
 | HTML report | `@presentation/html` `generateHtmlReport` | `writeHtmlReport` -> `$RUNNER_TEMP \|\| cwd`, **not** committed |
-| `stars-data.csv` | `@presentation/csv` `generateCsvReport` | `writeCsv` |
+| `stars-data.csv` | `@presentation/csv` `generateCsvReport` | `writeArtefact` |
 | `stars-data.json` | `@domain/snapshot` `addSnapshot` | `writeHistory` |
 | `stargazers.json` | `@domain/stargazers` `buildStargazerMap` | `writeStargazers` |
-| `stars-badge.svg` | `@presentation/badge` `generateBadge` | `writeBadge` |
+| `stars-badge.svg` | `@presentation/badge` `generateBadge` | `writeArtefact` |
 | `charts/*.svg` | `@presentation/charts` -> `@presentation/svg-chart` | `writeChart` |
 | Email chart images | `@presentation/chart` (quickchart.io URLs, no SVG) | embedded by `html.ts` |
 | Email | `@presentation/html` body | `@infrastructure/notification/email` `sendEmail` |
@@ -152,7 +150,7 @@ The eleven action outputs, alphabetically as `action.yml` declares them: `lost-s
 
 | Workflow | Purpose |
 | --- | --- |
-| `ci.yml` | On push/PR to `main`: install, `pnpm run check`, Codecov upload (also when `check` fails, so threshold failures still report), build |
+| `ci.yml` | On push/PR to `main`: install, `pnpm run check`, Codecov upload (also when `check` fails, so threshold failures still report), build, then a staleness check that fails a PR touching bundled sources without touching `dist/`. It compares *which files changed*, not bytes: `dist/index.js` is not reproducible across platforms, because esbuild embeds `node_modules/.pnpm/...` paths and pnpm hashes those names on Windows but not on Linux |
 | `release.yml` | On push to `main`: `pnpm run validate` then `semantic-release`, plus a major-version tag update |
 | `codeql.yml` | CodeQL analysis of `javascript-typescript` and `actions`, weekly + on push/PR |
 | `zizmor.yml` | zizmor static analysis of the workflow files themselves |
@@ -182,22 +180,19 @@ Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain gl
 | [0013](./docs/adr/0013-a-run-is-measured-in-one-place.md) | A Run is measured in one place |
 | [0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md) | Charts are built as a spec and rendered by adapters |
 | [0015](./docs/adr/0015-the-stored-history-declares-its-format-version.md) | The Stored History declares its format version |
+| [0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md) | The Report renderers read `Config` themselves |
+| [0017](./docs/adr/0017-velocity-and-forecast-read-unparseable-timestamps-differently.md) | Velocity and Forecast read unparseable timestamps differently |
+| [0018](./docs/adr/0018-loadconfig-reads-the-ambient-action-inputs.md) | `loadConfig` reads the ambient action inputs |
+| [0019](./docs/adr/0019-the-stargazer-map-retains-untracked-repositories.md) | The Stargazer map retains repositories that leave the Tracked Set |
 
-Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md) — `# N. Title`, a date, a
-status, then *Context*, *Decision*, *Consequences*. A new ADR starts by copying that file, not by writing
-one from scratch.
+Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md), and a new ADR starts by
+copying that file. The shape the docs test asserts is spelled out in
+[CLAUDE.md's maintenance contract](./CLAUDE.md#maintenance-contract).
 
-| Document | Covers |
-| --- | --- |
-| [CLAUDE.md](./CLAUDE.md) | Commands, alias wiring, conventions, the maintenance contract — loaded into every agent session |
-| [src/application/CLAUDE.md](src/application/CLAUDE.md) | `trackStars()` invariants, the output contract, failure policy |
-| [src/assets/CLAUDE.md](src/assets/CLAUDE.md) | The mark, why it needs no light/dark pair, and why the README heading stays |
-| [src/config/CLAUDE.md](src/config/CLAUDE.md) | Input + YAML precedence, what throws vs warns, parser vocabularies |
-| [src/domain/CLAUDE.md](src/domain/CLAUDE.md) | Comparison semantics, snapshots, forecast/velocity maths, star-history |
-| [src/i18n/CLAUDE.md](src/i18n/CLAUDE.md) | Bundles, placeholder rules, adding a locale |
-| [src/infrastructure/CLAUDE.md](src/infrastructure/CLAUDE.md) | All four adapters: octokit, git worktree, persistence, SMTP |
-| [src/presentation/CLAUDE.md](src/presentation/CLAUDE.md) | Renderers, the chart trio, escaping and injection rules |
-| [src/shared/CLAUDE.md](src/shared/CLAUDE.md) | Fixture factories and why this folder stays almost empty |
+**The per-layer guides and what each covers are the table in [CLAUDE.md](./CLAUDE.md#structure--aliases)** —
+that file is loaded into every agent session, so the list lives there and is not repeated here. Root
+[`CLAUDE.md`](./CLAUDE.md) itself is the ninth document: commands, alias wiring, conventions and the
+maintenance contract.
 
 One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/tests` are sections inside their parent's guide rather than files of their own, because a guide in a subdirectory only reaches the agent once it reads a file in that exact folder.
 
@@ -207,14 +202,13 @@ One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/
 | --- | --- |
 | **Add an action input** | `action.yml` (declare it, `default: ''` so the config file can win); `src/config/types.ts` (`Config` field); `src/config/defaults.ts` (`DEFAULTS` entry — this also makes the snake_case/kebab-case config-file key work automatically); `src/config/loader.ts` (**one row in `FIELD_SOURCES`**, naming the input parser and the file parser — the action input name is derived from the key); consume it in the relevant layer; update `src/config/action-inputs.test.ts` and `README.md`/`docs/wiki`. |
 | **Add a locale** | Add the JSON bundle under `src/i18n/`; register it in `LOCALES`, `LOCALE_MAP` and the `TRANSLATIONS: Record<Locale, Translations>` map (a missing key is a type error, an extra key is not); extend the `locale` description in `action.yml`. |
-| **Add a report format** | New pure renderer in `src/presentation/` (data in, string out, no I/O) reading `buildReportModel` rather than re-deriving sections + colocated test; a `write<Format>` helper and filename in `@infrastructure/persistence/storage`, plus a field on `PublishedArtefacts`; add an output to `action.yml` + `setOutputs`/`setEmptyOutputs` if it should be exposed. |
+| **Add a report format** | New pure renderer in `src/presentation/` (data in, string out, no I/O) reading `buildReportModel` rather than re-deriving sections + colocated test; one field on `RenderedRun` and one line in `renderRun` (`run.ts`); an `Artefact` entry and filename in `@infrastructure/persistence/storage`, plus a field on `PublishedArtefacts`; add an output to `action.yml` + `setOutputs` if it should be exposed. |
 | **Add a chart option** | Input plumbing as above; thread it through the `style` object in `src/presentation/charts.ts`. If it changes **what** is plotted it belongs on the matching `ChartRequest` variant or on `ChartSpec` in `src/presentation/chart-spec.ts` and both adapters read it; if it only changes **how**, implement it in `src/presentation/svg-chart.ts` (all SVG primitives live behind the private `renderSvg`) and mirror it in `src/presentation/chart.ts` if email charts should honour it ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)); add a sample SVG under `examples/`. |
 | **Add a chart kind** | One variant on `ChartRequest` and one `case` in `buildChartSpec` (`src/presentation/chart-spec.ts`), plus the spec builder itself. Neither adapter changes — `renderSvgChart` and `chartImageUrl` take any request. Then emit it from `buildChartFiles` (`charts.ts`) and/or `html.ts`, and add a filename to `CHART_FILES`. |
 
 ## 8. Known inconsistencies
 
-None outstanding. Every mismatch this document previously listed has been resolved in the source; the
-history of what they were and why each was fixed is in the `fix:` commits and in `docs/adr/`.
+None outstanding.
 
-When one is found again, record it here with the file:line that proves it, and delete the entry once the
-code changes — an entry that has quietly become false is worse than no list at all.
+When one is found, record it here with the evidence that proves it, and delete the entry in the commit that
+fixes it — an entry that has quietly become false is worse than no list at all.

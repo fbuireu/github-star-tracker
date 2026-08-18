@@ -27,8 +27,6 @@ jobs:
       - name: Sync docs/wiki to wiki repository
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
-          COMMIT_NAME: ${{ github.event.head_commit.author.name }}
-          COMMIT_EMAIL: ${{ github.event.head_commit.author.email }}
         run: |
           WIKI_DIR="$RUNNER_TEMP/wiki"
           git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" "$WIKI_DIR"

@@ -4,7 +4,9 @@ Date: 2026-08-14
 
 ## Status
 
-Accepted
+Accepted. Narrows the "the two renderers are independent" consequence of
+[ADR 0006](./0006-hand-rendered-svg-charts.md) and
+[ADR 0010](./0010-quickchart-renders-the-email-charts.md): a Chart's content is now decided once for both.
 
 ## Context
 
@@ -36,7 +38,8 @@ done, and it is precisely the part that did *not* drift; what drifted was everyt
 A `ChartRequest` names *which* Chart is wanted — a discriminated union over the four `ChartKind`s
 [CONTEXT.md](../../CONTEXT.md) already lists, each variant carrying only its own inputs. `buildChartSpec`
 maps one onto a `ChartSpec` — axis labels, an ordered list of series with a resolved colour, and the
-Milestone thresholds, or `null` when there is too little history to plot. `starHistorySpec`, `perRepoSpec`,
+Milestones to draw, each already filtered to the visible ones and carrying both its `value` and its rendered
+`label` — or `null` when there is too little history to plot. `starHistorySpec`, `perRepoSpec`,
 `comparisonSpec` and `forecastSpec` are the private cases behind it.
 
 `svg-chart.ts` and `chart.ts` are adapters over that seam, each with **one** entry point — `renderSvgChart`
@@ -62,6 +65,10 @@ a dash array or a point radius. Each adapter maps them through its own table.
 - **The spec must stay free of dialect vocabulary.** No SVG attributes, no Chart.js option names, no
   `borderDash` arrays. The moment one leaks in, the other adapter has to work around it and the seam stops
   paying for itself.
+- **Rendered text is content, not appearance.** A `ChartMilestone` carries both its `value` and its `label`,
+  because leaving the label to the adapters is what let `chart.ts` format with a hardcoded `en-US` while
+  `svg-chart.ts` used the run's Locale. Anything a reader reads is decided here; only how it is drawn is the
+  adapter's.
 - **A new chart kind is a `ChartRequest` variant plus a `case` in `buildChartSpec`**, not two parallel
   implementations — neither adapter is touched. A new *style* option is one field on `ChartSpec` and one line
   in each adapter; a new *content* option is one field on the request variant.

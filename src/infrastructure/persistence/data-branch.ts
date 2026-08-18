@@ -3,15 +3,14 @@ import type { StargazerMap } from '@domain/stargazers';
 import type { History } from '@domain/types';
 import { cleanup, initializeDataBranch } from '../git/worktree';
 import {
+  Artefact,
   commitAndPush,
   pruneCharts,
   readHistory,
   readStargazers,
-  writeBadge,
+  writeArtefact,
   writeChart,
-  writeCsv,
   writeHistory,
-  writeReport,
   writeStargazers,
 } from './storage';
 
@@ -49,7 +48,7 @@ export async function withDataBranch<T>({
   token,
   run,
 }: WithDataBranchParams<T>): Promise<T> {
-  const dataDir = initializeDataBranch({ dataBranch, readOnly });
+  const dataDir = initializeDataBranch({ dataBranch, readOnly, token });
 
   try {
     return await run({
@@ -72,9 +71,9 @@ interface PublishParams {
 
 function publish({ dataDir, dataBranch, readOnly, token, artefacts }: PublishParams): void {
   writeHistory({ dataDir, history: artefacts.history });
-  writeReport({ dataDir, markdown: artefacts.report });
-  writeBadge({ dataDir, svg: artefacts.badge });
-  writeCsv({ dataDir, csv: artefacts.csv });
+  writeArtefact({ dataDir, artefact: Artefact.REPORT, contents: artefacts.report });
+  writeArtefact({ dataDir, artefact: Artefact.BADGE, contents: artefacts.badge });
+  writeArtefact({ dataDir, artefact: Artefact.CSV, contents: artefacts.csv });
 
   if (artefacts.stargazerMap !== undefined) {
     writeStargazers({ dataDir, stargazerMap: artefacts.stargazerMap });

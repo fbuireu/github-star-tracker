@@ -20,7 +20,9 @@
 >
 > GitHub [announced](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/) that access to the stargazers API is being restricted to repository admins and collaborators. Tools that chart stars for repositories they don't own will start receiving empty responses or `403` errors.
 >
-> **GitHub Star Tracker is not affected.** It runs inside *your* workflow, with *your* token, against *your* repositories: exactly the access GitHub is keeping. Star history charts, stargazer tracking, forecasts and badges keep working as always.
+> **GitHub Star Tracker keeps working.** It runs inside *your* workflow, with *your* token, against *your* repositories: exactly the access GitHub is keeping. Star counts, reports, badges, CSV and notifications are unaffected in every case.
+>
+> The one thing that depends on your *role* rather than your token's scopes is the stargazer endpoint, and it is what star-history charts and stargazer tracking are reconstructed from. If you track a repository you do not administer — an organization repo where you are a read-only member, or any repo reached through a fine-grained token with no explicit grant on its organization — those two fall back to the stored per-run snapshots. [Known Limitations](docs/wiki/Known-Limitations.md) has the detail.
 
 ---
 
@@ -190,7 +192,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `velocity-metrics`       | `false`               | Add a growth-velocity section (stars/day, % growth, days to next milestone) to the report |
 | `visibility`             | `all`                 | `public`, `private`, `all`, or `owned`                        |
 
-The threshold counter is measured against the star total at the last notification and only resets when a notification actually fires, so it accumulates across runs until it trips. On a data branch that has never sent a notification there is no stored baseline (treated as `0`), so the first run fires immediately and then settles. If you were already running with the default `notification-threshold: 0`, notifications have been firing on every changed run, so the baseline already sits at your current total and raising the threshold fires nothing immediately - it waits until the total actually moves by that much.
+The threshold counter is cumulative: it is measured against the star total at the last notification and only resets when the threshold trips (and not even then if a configured send failed), so it accumulates across runs until it trips. See **[`notification-threshold`](https://github.com/fbuireu/github-star-tracker/wiki/Configuration#notification-threshold)** for what that means on a fresh data branch and when you raise the value.
 
 > [!IMPORTANT]
 > `notification-threshold` decides **when** you get an email. `compare-against` decides **what period the report body covers**. They are independent: the threshold accumulates against the star total at the last notification, while the report diffs against a stored snapshot. A threshold that trips after several runs still produces a report covering only the `compare-against` window, so set the two to match if you want the email body to span what the threshold accumulated. `notification-threshold` also does not work on a `read-only` run, because the counter it advances lives on the data branch.
@@ -251,15 +253,18 @@ flowchart TD
     charts["SVG charts"]
     commit["Git commit & push (data branch)"]
     setout["Export action outputs"]
-    email{"SMTP configured?"}
+    email{"SMTP set up, and due to send?"}
     send["Dispatch notification"]
 
     trigger --> config --> fetch --> filter
+    filter -->|no repositories matched| setout
     filter --> init --> read --> compare
     compare --> stargazers --> history --> forecast
     forecast --> md & json & csv & svg & html & charts
-    md & json & csv & svg & html & charts --> commit --> setout --> email
-    email -->|Yes| send
+    md & json & csv & svg & html & charts --> email
+    email -->|Yes| send --> commit
+    email -->|No| commit
+    commit --> setout
 
     style trigger fill:#e1f5ff,stroke:#01579b,stroke-width:2px
     style config fill:#fff3e0,stroke:#e65100,stroke-width:2px

@@ -1,15 +1,10 @@
 import type { ForecastResult } from '@domain/forecast';
 import { deltaIndicator, formatSignedPercent, trendIcon } from '@domain/formatting';
-import { getTranslations, interpolate } from '@i18n';
+import { getTranslations, interpolate, type Translations } from '@i18n';
 import { CHART_FILES, SECTION_ICON } from './constants';
 import { EscapeDialect, escapeFor } from './escaping';
-import {
-  buildForecastTable,
-  buildReportModel,
-  StargazerOutcome,
-  type TopRepo,
-} from './report-model';
-import type { ReportParams } from './shared';
+import { buildForecastTable, StargazerOutcome, type TopRepo } from './report-model';
+import type { RenderReportParams } from './shared';
 import { perRepoChartFile } from './shared';
 
 const escapeMarkdown = escapeFor(EscapeDialect.MARKDOWN);
@@ -17,7 +12,7 @@ const escapeMarkup = escapeFor(EscapeDialect.MARKUP);
 
 interface RepoChartHeadingParams {
   repo: TopRepo;
-  t: ReturnType<typeof getTranslations>;
+  t: Translations;
 }
 
 function repoChartHeading({ repo, t }: RepoChartHeadingParams): string {
@@ -31,9 +26,8 @@ function repoChartHeading({ repo, t }: RepoChartHeadingParams): string {
   });
 }
 
-export function generateMarkdownReport(params: ReportParams): string {
-  const t = getTranslations(params.locale);
-  const model = buildReportModel(params);
+export function generateMarkdownReport({ model, config }: RenderReportParams): string {
+  const t = getTranslations(config.locale);
   const {
     summary,
     sorted,
@@ -41,7 +35,7 @@ export function generateMarkdownReport(params: ReportParams): string {
     removedRepos,
     now,
     prev,
-    hasChartHistory,
+    chartHistory,
     forecast: forecastData,
   } = model;
 
@@ -56,44 +50,42 @@ export function generateMarkdownReport(params: ReportParams): string {
     ? []
     : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ''];
 
-  const topRepos = model.topRepos;
-  const hasComparisonChart = hasChartHistory && topRepos.length > 0;
+  const hasComparisonChart = model.showComparisonChart;
 
-  const individualRepoCharts = hasChartHistory
-    ? topRepos.flatMap((repo) => [
-        `#### ${repoChartHeading({ repo, t })}`,
-        '',
-        `![${escapeMarkdown(repo.fullName)}](./charts/${perRepoChartFile(repo.fullName)})`,
-        '',
-      ])
-    : [];
+  const individualRepoCharts = model.perRepoCharts.flatMap((repo) => [
+    `#### ${repoChartHeading({ repo, t })}`,
+    '',
+    `![${escapeMarkdown(repo.fullName)}](./charts/${perRepoChartFile(repo.fullName)})`,
+    '',
+  ]);
 
-  const chartSection = hasChartHistory
-    ? [
-        `## ${SECTION_ICON.starTrend} ${t.report.starTrend}`,
-        '',
-        `![Star History](./charts/${CHART_FILES.starHistory})`,
-        '',
-        ...(hasComparisonChart
-          ? [
-              `### ${t.report.byRepository}`,
-              '',
-              `![${t.report.topRepositories}](./charts/${CHART_FILES.comparison})`,
-              '',
-            ]
-          : []),
-        ...(individualRepoCharts.length > 0
-          ? [
-              '<details>',
-              `<summary>${t.report.individualRepoCharts}</summary>`,
-              '',
-              ...individualRepoCharts,
-              '</details>',
-              '',
-            ]
-          : []),
-      ]
-    : [];
+  const chartSection =
+    chartHistory !== null
+      ? [
+          `## ${SECTION_ICON.starTrend} ${t.report.starTrend}`,
+          '',
+          `![Star History](./charts/${CHART_FILES.starHistory})`,
+          '',
+          ...(hasComparisonChart
+            ? [
+                `### ${t.report.byRepository}`,
+                '',
+                `![${t.report.topRepositories}](./charts/${CHART_FILES.comparison})`,
+                '',
+              ]
+            : []),
+          ...(individualRepoCharts.length > 0
+            ? [
+                '<details>',
+                `<summary>${t.report.individualRepoCharts}</summary>`,
+                '',
+                ...individualRepoCharts,
+                '</details>',
+                '',
+              ]
+            : []),
+        ]
+      : [];
 
   const repoTable =
     sorted.length > 0
@@ -223,7 +215,7 @@ export function generateMarkdownReport(params: ReportParams): string {
           forecasts: forecastData.aggregate.forecasts,
           t,
         }),
-        ...(hasChartHistory
+        ...(chartHistory !== null
           ? ['', `![${t.forecast.sectionTitle}](./charts/${CHART_FILES.forecast})`, '']
           : []),
         ...(forecastData.repos.length > 0
@@ -255,7 +247,7 @@ export function generateMarkdownReport(params: ReportParams): string {
 
   const footer = [
     '---',
-    `*${interpolate({ template: t.footer.generated, params: { project: '[GitHub Star Tracker](https://github.com/fbuireu/github-star-tracker)', date: new Date().toISOString() } })}*`,
+    `*${interpolate({ template: t.footer.generated, params: { project: '[GitHub Star Tracker](https://github.com/fbuireu/github-star-tracker)', date: model.generatedAt } })}*`,
     `<div align="center">`,
     '',
     `*${interpolate({ template: t.footer.madeBy, params: { author: '[Ferran Buireu](https://github.com/fbuireu)' } })}*`,
@@ -281,7 +273,7 @@ export function generateMarkdownReport(params: ReportParams): string {
 interface RenderForecastTableParams {
   title: string;
   forecasts: ForecastResult[];
-  t: ReturnType<typeof getTranslations>;
+  t: Translations;
 }
 
 function renderForecastTable({ title, forecasts, t }: RenderForecastTableParams): string {

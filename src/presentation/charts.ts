@@ -8,8 +8,11 @@ import { ChartKind } from './chart-spec';
 import { CHART_FILES, MIN_SNAPSHOTS_FOR_CHART } from './constants';
 import { perRepoChartFile } from './shared';
 import { renderSvgChart } from './svg-chart';
+import type { ChartHistories } from './types';
 
-interface ChartFile {
+export type { ChartHistories };
+
+export interface ChartFile {
   filename: string;
   svg: string;
 }
@@ -19,31 +22,79 @@ interface ResolveChartHistoryParams {
   fallback: History;
 }
 
-export function resolveChartHistory({ candidate, fallback }: ResolveChartHistoryParams): History {
+function resolveChartHistory({ candidate, fallback }: ResolveChartHistoryParams): History {
   return candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : fallback;
+}
+
+interface ResolveChartHistoriesParams {
+  config: Config;
+  storedHistory: History;
+  repos: SnapshotRepo[];
+  repoStargazers: RepoStargazers[];
+  now?: Date;
+}
+
+export function resolveChartHistories({
+  config,
+  storedHistory,
+  repos,
+  repoStargazers,
+  now = new Date(),
+}: ResolveChartHistoriesParams): ChartHistories {
+  const reconstruct = ({
+    subset,
+    stargazers,
+  }: {
+    subset: SnapshotRepo[];
+    stargazers: RepoStargazers[];
+  }): History =>
+    config.includeCharts
+      ? buildStarHistory({
+          repoStargazers: stargazers,
+          repos: subset,
+          maxPoints: config.chartMaxPoints,
+          now,
+        })
+      : { snapshots: [] };
+
+  const reconstructedForRepo = (repoFullName: string): History | null => {
+    const repo = repos.find((candidate) => candidate.fullName === repoFullName);
+
+    if (!repo) return null;
+
+    const candidate = reconstruct({
+      subset: [repo],
+      stargazers: repoStargazers.filter((entry) => entry.repoFullName === repoFullName),
+    });
+
+    return candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : null;
+  };
+
+  return {
+    aggregate: resolveChartHistory({
+      candidate: reconstruct({ subset: repos, stargazers: repoStargazers }),
+      fallback: storedHistory,
+    }),
+    forRepo: (repoFullName) => reconstructedForRepo(repoFullName) ?? storedHistory,
+    reconstructedForRepo,
+  };
 }
 
 interface BuildChartFilesParams {
   config: Config;
-  history: History;
-  fallbackHistory: History;
+  chartHistories: ChartHistories;
   forecastData: ForecastData | null;
   topRepoNames: string[];
-  repoTotals: SnapshotRepo[];
-  repoStargazers: RepoStargazers[];
-  now: Date;
 }
 
 export function buildChartFiles({
   config,
-  history,
-  fallbackHistory,
+  chartHistories,
   forecastData,
   topRepoNames,
-  repoTotals,
-  repoStargazers,
-  now,
 }: BuildChartFilesParams): ChartFile[] {
+  const history = chartHistories.aggregate;
+
   if (!config.includeCharts || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
     return [];
   }
@@ -79,20 +130,9 @@ export function buildChartFiles({
   }
 
   for (const repoFullName of topRepoNames) {
-    const repoTotal = repoTotals.find((repo) => repo.fullName === repoFullName);
-    const repoStarHistory = repoTotal
-      ? buildStarHistory({
-          repoStargazers: repoStargazers.filter(
-            (stargazerEntry) => stargazerEntry.repoFullName === repoFullName,
-          ),
-          repos: [repoTotal],
-          maxPoints: config.chartMaxPoints,
-          now,
-        })
-      : { snapshots: [] };
     const repoChart = renderChart({
       kind: ChartKind.PER_REPO,
-      history: resolveChartHistory({ candidate: repoStarHistory, fallback: fallbackHistory }),
+      history: chartHistories.forRepo(repoFullName),
       repoFullName,
       lineColor: config.chartLineColor,
     });

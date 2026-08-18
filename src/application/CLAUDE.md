@@ -31,29 +31,30 @@ is not repeated here. What follows is what that table cannot express.
   alone so the accumulated change is not lost, while an unconfigured transport advances it because the
   `should-notify` output *is* the notification
   ([ADR 0011](../../docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md)).
-- **Two variables track the send, and conflating them is a bug that already happened.**
-  `notificationDelivered` is `notify && sent` and gates the baseline only: a courtesy send under
-  `send-on-no-changes` must not consume the accumulated threshold, so it stays `false` there on purpose.
-  `mailDelivered` is plain `sent` and feeds the `notification-sent` output, which is a factual claim about
-  delivery. Feeding the output from `notificationDelivered` made it report `false` after a successful
-  courtesy email; `tracker.test.ts` now pins both outputs for that case.
-- **The Notification baseline advances by returning a new History, not by mutation.** When
-  `notificationDelivered` is true the tracker persists `recordNotification({ history: updatedHistory,
-  totalStars })`; otherwise it persists `updatedHistory` untouched. `measureRun` already read the
-  **pre-append** `starsAtLastNotification`, which is what makes the threshold accumulate across runs, and it
-  never writes it back.
-- **The reports receive two histories and they are not interchangeable.** `history` is the *resolved* chart
-  history (stargazer-reconstructed when it has >= 2 snapshots, stored otherwise) and drives charts and the
-  forecast. `velocityHistory` is always the stored per-run series, so velocity measures real elapsed time
-  between runs instead of a chart bucket whose width follows `chart-max-points`. What gets persisted is
-  always the stored history.
-- **The two reports share one `reportParams` object except for `theme`.** `generateMarkdownReport` takes
-  `ReportParams` and ignores the chart style entirely; `generateHtmlReport` takes
-  `GenerateHtmlReportParams`, which adds it, and gets `config.emailTheme` spread over the shared object.
-  Passing `reportParams` unchanged to both is the regression to watch for: it silently gives the email the
-  SVG palette again, which is what left dark-mode readers with a white chart background.
-- **One `chartNow` `Date` is created and reused** for `buildStarHistory` and `buildChartFiles`, so the global
-  chart and every per-repo chart end on the same instant.
+- **The due-notification predicate has one owner.** `notificationIsDue({ changed, thresholdReached })` in
+  `@domain/notification` gates the send here and is what `settleNotification` computes internally, so the
+  rule cannot be changed in one place and left stale in the other.
+- **This layer reports what the transport did; it does not decide what that means.** It sets one
+  `Delivery` — `NOT_ATTEMPTED`, `SENT` or `FAILED` — and hands it to `settleNotification` in
+  `@domain/notification`, which returns `shouldNotify`, `notificationSent` and `historyToPersist` together.
+  The three booleans that used to be mutated across the `try/catch` are gone, and so is the bug they caused:
+  conflating "an email left the runner" with "the accumulated threshold was consumed" once made a successful
+  courtesy send report `notification-sent: false`. Both outputs come off the one outcome now.
+- **A `sendEmail` that resolves `false` is a `FAILED` delivery, not an unattempted one.** That is the empty
+  `email-to` case: the transport was configured and did not deliver, so the baseline must not advance.
+- **Rendering is one call.** `renderRun` in `@presentation/run` returns the markdown, HTML, CSV, badge and
+  chart files together, so this layer never calls a renderer directly and never assembles report params.
+  It passes `chartHistories` and the **stored** History under separate names, and `renderRun` derives the
+  chart history from the first — which is what retired the old hazard of handing the reports two
+  interchangeable-looking `History` values, where swapping them made Velocity an average over a chart bucket.
+  What gets persisted is always the stored History.
+- **This layer relays no chart options.** The renderers read `config` themselves
+  ([ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md)), so a new one costs
+  nothing here.
+- **Chart histories are resolved once, by one module.** `resolveChartHistories` returns `.aggregate` and
+  `.forRepo(name)`; this layer reads `.aggregate` for the Forecast and the Reports and hands the whole thing
+  to `buildChartFiles`. It creates the instant itself, so the global chart and every per-repo chart end on
+  the same moment by construction rather than by the shell remembering to share a `Date`.
 - **`topRepoNames` is not computed here.** It is `topRepositories({ repos: results.repos, limit:
   config.topRepos })` from `@domain/comparison`, the same call `@presentation/report-model` makes for the
   Report. It ranks a **copy**, so `results.repos` is never reordered in place, and Removed Repositories are
@@ -75,12 +76,15 @@ as-is; the rest are wrapped in `String()`.
 | `report` / `report-html` / `report-csv` | the rendered markdown / HTML / CSV report |
 | `report-html-path` | return value of `writeHtmlReport` — a filesystem path |
 | `total-stars` / `stars-changed` / `new-stars` / `lost-stars` | the matching `Summary` fields |
-| `should-notify` | `summary.changed && thresholdReached` — the *decision* |
-| `notification-sent` | `mailDelivered` — an email actually left the runner |
+| `should-notify` | `notification.shouldNotify` — the *decision* |
+| `notification-sent` | `notification.notificationSent` — an email actually left the runner |
 | `new-stargazers` | `stargazerDiff?.totalNew ?? 0` |
 
-`setEmptyOutputs()` emits the same eleven keys zeroed, with a "No repositories matched the configured
-filters" message as the markdown and HTML bodies and `''` as the CSV.
+**There is one `setOutputs`, not two.** The empty-repos path calls it with `renderEmptyRun(config)` and a
+zeroed `Summary`, so the eleven keys cannot drift between the two paths. That render also emits a real CSV
+header rather than `''` — a consumer parsing `report-csv` used to get a header on one path and an empty
+string on the other — and its message comes from `report.noRepositories` in the locale bundle like every
+other user-facing string.
 
 `new-stargazers` is `0` whenever `track-stargazers` is off, even though stargazers may still have been
 fetched for chart reconstruction: the diff and the write are gated on `trackStargazers` alone, while the
@@ -88,11 +92,12 @@ fetch is gated on `includeCharts || trackStargazers`.
 
 ## Gotchas
 
-- **`setOutputs` performs a filesystem write.** `writeHtmlReport` targets `RUNNER_TEMP || cwd`, i.e. *outside*
-  the worktree, so it happens on read-only runs and on the empty-repos path too, and the file survives
-  `cleanup`. Do not assume "setting outputs" is side-effect free.
-- `generateCsvReport(results)` is called positionally — it is a single-argument function that destructures
-  the results object itself, so it does not violate the named-params convention.
+- **`setOutputs` sets outputs and nothing else; the caller writes the HTML report.** `writeHtmlReport`
+  targets `RUNNER_TEMP || cwd`, i.e. *outside* the worktree, so it happens on read-only runs and on the
+  empty-repos path too, and the file survives `cleanup`. It used to run *inside* `setOutputs`, which put a
+  filesystem write after `branch.publish` — a failing write then ended a run that had already committed,
+  pushed and emailed, with `setFailed` and most outputs unset, and a re-run would append a second Snapshot
+  for the same observation. It now runs **before** `publish`, and `tracker.test.ts` pins that order.
 - `getEmailConfig` reads the SMTP inputs itself, inside `@infrastructure/notification/email`; the tracker
   never reads them. A missing `smtp-host` returns `null` and silently skips email.
 - `withDataBranch` throws when the data branch is absent from the remote **and** the run is read-only. That
@@ -100,13 +105,15 @@ fetch is gated on `includeCharts || trackStargazers`.
 - **`branch.publish` is called once, at the end, with everything.** The Stargazer map is handed to it rather
   than written when it is computed, because `add -A` is what stages the writes and it runs inside `publish`.
   Splitting the call would put a write after the commit.
-- The `else if (emailConfig)` branch logs `'Notification threshold not reached, skipping email'`, but it also
-  fires when `summary.changed` is false, since `notify` needs both. So the message names the threshold even
-  when nothing changed at all. It is pinned verbatim by `tracker.test.ts`, so fix the wording and the test
-  together or not at all.
-- `tracker.test.ts` mocks most of the tree but deliberately **not** `@presentation/charts` or
-  `@domain/star-history`, so `buildChartFiles` and `buildStarHistory` execute for real. Both now also have
-  colocated tests of their own, so this is belt-and-braces rather than their only coverage.
+- The `else if (emailConfig)` branch names the actual reason: `notify` needs both `summary.changed` and
+  `thresholdReached`, so it logs `'No stars changed since the baseline, skipping email'` when nothing moved
+  and `'Notification threshold not reached, skipping email'` otherwise. Both strings are pinned verbatim by
+  `tracker.test.ts` — change the wording and the test together or not at all.
+- `tracker.test.ts` mocks most of the tree but deliberately **not** `@presentation/run`,
+  `@presentation/charts` or `@domain/star-history`, so `renderRun`, `buildChartFiles` and `buildStarHistory`
+  execute for real and the four renderer mocks still apply underneath. Mocking `@presentation/run` instead
+  would cut four mocks and also stop `buildChartFiles` running, which is what the chart-request assertions
+  pinning #148 and the per-repo timelines depend on — so the mock count stays at 17 on purpose.
 - `tracker.test.ts` mocks `@presentation/svg-chart` down to its single `renderSvgChart`, so "which chart was
   drawn" is read off the `request.kind` of each call — the local `chartRequests(kind)` and `mockCharts({
   [kind]: svg })` helpers exist for exactly that. There is no per-kind mock to assert on any more.

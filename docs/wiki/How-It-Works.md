@@ -84,7 +84,7 @@ trackStars();
 
 **File:** `src/application/tracker.ts` > `trackStars()`
 
-Coordinates all layers in a single `try`/`finally` flow: PAT extraction, Octokit instantiation, configuration loading, i18n bootstrap, and the full data pipeline.
+Coordinates all layers inside one `try`/`catch` that ends in `core.setFailed`: PAT extraction, Octokit instantiation, configuration loading, i18n bootstrap, and the full data pipeline.
 
 ### Configuration Resolution
 
@@ -101,7 +101,10 @@ Action Inputs > Config File (YAML) > Built-in Defaults
 1. File discovery: reads YAML from `config-path` input (default: `star-tracker.yml`)
 2. YAML parsing via `js-yaml`. Empty, whitespace-only, or malformed config files no longer crash the action - an empty file yields defaults, and a parse error is logged as a warning before falling back to defaults.
 3. Action input extraction via `@actions/core`
-4. Type-safe conversion using parsers (`parseBool`, `parseNumber`, `parseList`, `parseNotificationThreshold`)
+4. Type-safe conversion using parsers (`parseBool`, `parseList`, `parseHexColor`,
+   `parseNotificationThreshold`, and the three number parsers `parsePositiveNumber`,
+   `parseNonNegativeNumber` and `parsePositiveDecimal`) — which number parser a key uses is deliberate,
+   not interchangeable
 5. Merge: inputs override file values; missing values fall through to defaults
 6. Validation of `visibility` enum and `locale`
 
@@ -113,10 +116,12 @@ visibility: public
 include_archived: false
 include_forks: false
 exclude_repos: [test-repo, /^demo-.*/]
+only_repos: []
 only_orgs: []
 exclude_orgs: []
 min_stars: 5
 data_branch: star-tracker-data
+read_only: false
 max_history: 52
 include_charts: true
 locale: en
@@ -139,6 +144,7 @@ chart_animation: true
 chart_milestones: true
 chart_begin_at_zero: false
 chart_theme: auto
+email_theme: auto # 'auto' inherits chart_theme
 chart_custom_milestones: [] # e.g. [250, 750, 2500] to override the default milestones
 chart_range: all
 chart_trend_line: false
@@ -162,27 +168,29 @@ Queries `GET /user/repos` with pagination (`100` per page). The `visibility` con
 | `all` | `visibility=all` |
 | `owned` | `visibility=all, affiliation=owner` |
 
+### Data Transformation
+
+**File:** `src/infrastructure/github/filters.ts` > `mapRepos()`
+
+Transforms GitHub API objects into the domain `RepoInfo` schema, flattening `owner.login`, normalizing `stargazers_count` to `stars`, etc. This happens **before** filtering, so every filter below is expressed over the domain shape rather than GitHub's.
+
 ### Repository Filtering
 
-**File:** `src/infrastructure/github/filters.ts` > `filterRepos()`
+**File:** `src/domain/tracked-set.ts` > `resolveTrackedSet()`
 
-Client-side filtering pipeline:
+Client-side filtering pipeline, in this order:
 
-1. **Whitelist** (`onlyRepos`) - short-circuits all other filters
-2. **Org whitelist** (`onlyOrgs`) - restricts to owners whose name matches a listed name or `/regex/`
+1. **Org whitelist** (`onlyOrgs`) - restricts to owners whose name matches a listed name or `/regex/`
+2. **Whitelist** (`onlyRepos`) - short-circuits everything below it, on the set step 1 already narrowed
 3. **Archived** - removes archived repos unless `includeArchived` is `true`
 4. **Forks** - removes forks unless `includeForks` is `true`
 5. **Blacklist** (`excludeRepos`) - removes by exact name or regex (e.g. `/^test-.*/`)
 6. **Org blacklist** (`excludeOrgs`) - removes repos whose owner matches a listed name or `/regex/`
 7. **Star threshold** (`minStars`) - removes repos below minimum
 
-The org filters (`only-orgs`/`exclude-orgs`) compose with the repo filters (`only-repos`/`exclude-repos`). Separately, `smart-sampling` (with `smart-sampling-threshold`/`smart-sampling-pages`) and the `chart-*` options also exist as inputs.
+The order matters in one direction: `only-repos` can never bring back a repository `only-orgs` excluded, because it runs on the already-narrowed set. Separately, `smart-sampling` (with `smart-sampling-threshold`/`smart-sampling-pages`) and the `chart-*` options also exist as inputs.
 
-### Data Transformation
-
-**File:** `src/infrastructure/github/filters.ts` > `mapRepos()`
-
-Transforms GitHub API objects into the domain `RepoInfo` schema, flattening `owner.login`, normalizing `stargazers_count` to `stars`, etc.
+What survives is the **Tracked Set**. The rules are pure and return counts rather than logging them; `getRepos` writes those counts to the Action log.
 
 ---
 
@@ -213,6 +221,12 @@ Runs in a `finally` block, removing the worktree with `--force` regardless of su
 ---
 
 ## Phase 4: State Comparison
+
+The run does not call the steps below one by one. `measureRun()`
+(`src/domain/measurement.ts`) composes baseline selection, diffing, snapshotting and the threshold check in
+the one order that is correct, and returns the whole measurement in a single value — see
+[ADR 0013](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0013-a-run-is-measured-in-one-place.md).
+The sections that follow describe what it does inside.
 
 ### Baseline Selection
 
@@ -251,7 +265,8 @@ Pure function computing the diff between current repos and the selected baseline
 
 **Edge cases:**
 
-- First run: all repos get `delta: 0`, `isNew: false`
+- First run: there is no baseline, so every repo is `isNew: true` with `previous: null` and `delta: 0` — new
+  repos never inflate `newStars`, but they do make `summary.changed` true
 - Repo renamed: appears as removed + new
 - Repo deleted: marked `isRemoved: true`, `current: 0`
 
@@ -259,7 +274,8 @@ Pure function computing the diff between current repos and the selected baseline
 
 **File:** `src/domain/snapshot.ts`
 
-- `getLastSnapshot(history)` - retrieves the most recent snapshot (the `compare-against: last-run` baseline)
+- The `compare-against: last-run` baseline is the most recent snapshot that parses, resolved inside
+  `getBaselineSnapshot` (the walk-back is module-private)
 - `addSnapshot({ history, snapshot, maxHistory })` - returns a new `History` with the snapshot appended and old entries pruned beyond `maxHistory`
 
 Both are pure functions returning new objects (no mutation). `addSnapshot()` runs on every execution regardless of `compare-against`, so the stored history is always the complete per-run series.
@@ -286,7 +302,7 @@ New stargazers appear in reports with avatar, profile link, and starred date.
 
 When charts are enabled, `buildStarHistory()` turns the fetched stargazers' `starred_at` dates into a cumulative-over-real-time `History` used by the charts (and the forecast). Each star is placed on the date it was actually given and the cumulative total is reconstructed from the repo's first star up to now, so a multi-point curve is available on the **first run**.
 
-GitHub caps stargazer listing at roughly **40,000 per repo**. For repos above that cap, the earliest part of the curve is approximated: `scaleToTrueTotal()` scales the fetched cumulative counts up to the repo's true current star total (the final point always equals the true count). Pair high-star repos with `smart-sampling` to keep within rate limits.
+GitHub caps stargazer listing at roughly **40,000 per repo**, oldest first — so above that cap it is the **recent** stars that are unreachable, not the early ones. `scaleCappedToTrueTotal()` draws the reachable history accurately and bridges the missing tail with a straight ramp to the true current total; the final point always equals the true count. The reasoning is [ADR 0007](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0007-bridge-unreachable-history-with-a-ramp.md) and the user-facing consequences are in [Known Limitations](Known-Limitations#-stargazer-listing-cap-40000). Pair high-star repos with `smart-sampling` to keep within rate limits.
 
 ---
 
@@ -316,11 +332,15 @@ Forecasts are computed for:
 
 ## Phase 7: Report Generation
 
+**File:** `src/presentation/run.ts` > `renderRun()`
+
+The presentation layer's single entry point. It builds one `ReportModel` and hands the same one to both report dialects, then returns the Markdown, HTML, CSV, badge and chart files together. One model means both reports carry the same date and the same Top Repositories.
+
 ### Shared Data Preparation
 
-**File:** `src/presentation/shared.ts` > `prepareReportData()`
+**File:** `src/presentation/report-model.ts` > `buildReportModel()`, over `shared.ts` > `prepareReportData()`
 
-Pre-processes data for both Markdown and HTML reports: filters active/new/removed repos, sorts by stars, formats dates.
+Decides which sections a report has and what is in them: filters active/new/removed repos, sorts by stars, formats dates, and resolves the chart history, Velocity figures and Stargazer outcome once.
 
 ### Markdown Report
 
@@ -370,7 +390,7 @@ Generates self-contained animated SVG charts committed to `charts/` on the data 
 | Comparison | `charts/comparison.svg` | Top N repos overlaid |
 | Forecast | `charts/forecast.svg` | Historical + projected trends (dashed lines) |
 
-Features: smooth Catmull-Rom curves, CSS draw-line animation, fade-in data points, nice Y-axis steps, locale-aware date labels, legend (for multi-series).
+Features: smooth curves (`monotone` by default, four shapes available), CSS draw-line animation, fade-in data points, nice Y-axis steps, locale-aware date labels, legend (for multi-series).
 
 When charts are enabled, the History passed to chart generation is the real reconstructed star history (cumulative over actual star dates), not the per-run snapshot list. Requires at least **2 points** (`MIN_SNAPSHOTS_FOR_CHART`) in that reconstructed history.
 
@@ -395,9 +415,9 @@ Creates a Shields.io-style SVG badge with the localized "Total Stars" label and 
 | Function | File Written |
 |---|---|
 | `writeHistory()` | `stars-data.json` |
-| `writeReport()` | `README.md` |
-| `writeBadge()` | `stars-badge.svg` |
-| `writeCsv()` | `stars-data.csv` |
+| `writeArtefact()` (`REPORT`) | `README.md` |
+| `writeArtefact()` (`BADGE`) | `stars-badge.svg` |
+| `writeArtefact()` (`CSV`) | `stars-data.csv` |
 | `writeChart()` | `charts/{filename}` |
 | `writeStargazers()` | `stargazers.json` |
 
@@ -407,7 +427,7 @@ Creates a Shields.io-style SVG badge with the localized "Total Stars" label and 
 
 1. `git add -A`
 2. `git diff --cached --quiet` (skip if no changes)
-3. `git commit -m "Update star data - 1,523 total (+15)"`
+3. `git commit -m "Update star data: 1523 total (+15)"`
 4. `git push origin HEAD:{dataBranch}`
 
 Idempotent: no empty commits if data hasn't changed.
@@ -424,15 +444,17 @@ Idempotent: no empty commits if data hasn't changed.
 |---|---|
 | `report` | Full Markdown report |
 | `report-html` | HTML report (for email) |
+| `report-html-path` | Filesystem path the HTML report was written to, outside the data branch |
 | `report-csv` | CSV report (for data pipelines) |
 | `total-stars` | Total star count |
 | `stars-changed` | Per-run: whether any counts changed against the baseline (`true`/`false`) |
 | `new-stars` | Per-run: stars gained since the comparison baseline |
 | `lost-stars` | Per-run: stars lost since the comparison baseline |
 | `should-notify` | Cumulative: whether the notification threshold was reached since the last notification fired |
+| `notification-sent` | Whether an email actually left the runner. Distinct from `should-notify`: a courtesy send under `send-on-no-changes` sets this without the threshold being reached, and a configured send that failed leaves it `false` |
 | `new-stargazers` | New stargazers detected by diffing against the stored `stargazers.json`, which every writing run rewrites - not affected by `compare-against` (0 if tracking disabled) |
 
-**Per-run vs cumulative.** `new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the baseline selected in Phase 4. They are not cumulative across runs and carry no memory of whether an email was ever sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: it is driven by `notification-threshold` plus `notification-mode` against `starsAtLastNotification`, and its counter only resets when a notification actually fires.
+**Per-run vs cumulative.** `new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the baseline selected in Phase 4. They are not cumulative across runs and carry no memory of whether an email was ever sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: it is driven by `notification-threshold` plus `notification-mode` against `starsAtLastNotification`, and its counter only resets when the threshold trips ([the full rule](Configuration#notification-threshold)).
 
 Because of that, "email me every 500 stars" is expressed as `notification-threshold: '500'` plus `notification-mode: 'gains'`, gated on `if: steps.tracker.outputs.should-notify == 'true'`. It is **not** `if: steps.tracker.outputs.new-stars >= 500`, which would require 500 stars inside a single run and would therefore almost never fire on a daily schedule.
 
@@ -459,7 +481,7 @@ The `notification-mode` input (config key `notification_mode`) decides how that 
 
 `notification-threshold: '0'` still means "notify on every run with changes", regardless of mode.
 
-On a data branch that has never sent a notification there is no stored baseline (`starsAtLastNotification` is absent and treated as `0`), so the first run fires immediately and then settles from there. That is not the case if you were already running with the default `notification-threshold: '0'`: every changed run has been notifying, so `starsAtLastNotification` already holds your current total and raising the threshold fires nothing immediately - the next notification waits until the total actually moves by at least the threshold.
+On a fresh data branch there is no stored baseline, so the first run fires immediately and then settles; raising the threshold on a branch that has been notifying fires nothing immediately. [`notification-threshold`](Configuration#notification-threshold) explains both cases.
 
 ### Email
 
@@ -481,17 +503,19 @@ src/
 ├── config/
 │   ├── types.ts                      # Config, Visibility, ChartCurve/Theme/Range types
 │   ├── defaults.ts                   # DEFAULTS
-│   ├── parsers.ts                    # parseBool, parseFileBool, parseNumber, parseList, toStringList
+│   ├── parsers.ts                    # bool, list, hex-colour and the three number parsers
 │   └── loader.ts                     # loadConfig(), loadConfigFile(), resolveEnum()
 ├── domain/
 │   ├── types.ts                      # RepoInfo, Snapshot, History, Summary, CompareAgainst, NotificationMode
 │   ├── constants.ts                  # MS_PER_DAY, STAR_MILESTONES, NOTIFICATION_THRESHOLDS
 │   ├── time.ts                       # toEpochMs() - the layer's only timestamp entry point
-│   ├── measurement.ts                # measureRun(), recordNotification() - the layer's front door
+│   ├── measurement.ts                # measureRun() - the layer's front door
 │   ├── comparison.ts                 # compareStars(), createSnapshot(), rankByStars(), topRepositories()
 │   ├── snapshot.ts                   # getBaselineSnapshot(), addSnapshot(), repoStarSeries()
 │   ├── formatting.ts                 # formatCount(), deltaIndicator(), trendIcon(), formatDate(), buildAxisLabels()
-│   ├── notification.ts               # shouldNotify()
+│   ├── notification.ts               # shouldNotify(), settleNotification(), recordNotification()
+│   ├── tracked-set.ts                # resolveTrackedSet() - which repositories a Run measures
+│   ├── sampling.ts                   # shouldSample(), sampledPages(), coveredStars()
 │   ├── growth.ts                     # calendarDays(), latestRateInterval(), weightedDailyRate(), fitTrend()
 │   ├── forecast.ts                   # computeForecast()
 │   ├── velocity.ts                   # computeVelocity()
@@ -508,25 +532,26 @@ src/
 │   ├── github/
 │   │   ├── types.ts                  # Octokit, GitHubRepo types
 │   │   ├── client.ts                 # fetchRepos()
-│   │   ├── filters.ts                # filterRepos(), mapRepos(), getRepos()
+│   │   ├── filters.ts                # mapRepos(), getRepos()
 │   │   └── stargazers.ts             # fetchAllStargazers()
 │   ├── notification/
 │   │   └── email.ts                  # getEmailConfig(), sendEmail()
 │   └── persistence/
 │       ├── data-branch.ts            # withDataBranch() - the folder's only external surface
-│       └── storage.ts                # read/write History, Report, Badge, CSV, Chart, Stargazers; commitAndPush()
+│       └── storage.ts                # readHistory(), writeArtefact(), writeChart(), commitAndPush()
 └── presentation/
     ├── constants.ts                  # COLORS, CHART, BADGE, SVG_CHART, CHART_FILES, SECTION_ICON
-    ├── shared.ts                     # prepareReportData(), selectChartSnapshots(), resolvePalette()
+    ├── run.ts                        # renderRun() - the layer's single entry point
+    ├── shared.ts                     # prepareReportData(), resolvePalette(), emailChartStyle()
     ├── report-model.ts               # buildReportModel() - which sections a report has
     ├── escaping.ts                   # escapeFor(dialect) - every escaper in the layer
     ├── markdown.ts                   # generateMarkdownReport()
     ├── html.ts                       # generateHtmlReport()
     ├── csv.ts                        # generateCsvReport()
-    ├── chart-spec.ts                 # ChartRequest, buildChartSpec() - what a chart contains
+    ├── chart-spec.ts                 # ChartRequest, buildChartSpec(), selectChartSnapshots() - what a chart contains
     ├── chart.ts                      # chartImageUrl() (QuickChart for HTML emails)
     ├── svg-chart.ts                  # renderSvgChart() (animated SVGs for data branch)
-    ├── charts.ts                     # buildChartFiles() - which charts a run produces
+    ├── charts.ts                     # resolveChartHistories(), buildChartFiles() - which charts a run produces
     └── badge.ts                      # generateBadge()
 ```
 

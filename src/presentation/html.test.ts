@@ -1,21 +1,47 @@
+import { DEFAULTS } from '@config/defaults';
+import type { Config } from '@config/types';
+import { ChartTheme } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { ForecastMethod } from '@domain/forecast';
 import { DOWN_ARROW, UP_ARROW } from '@domain/formatting';
 import type { StargazerDiffResult } from '@domain/stargazers';
-import { makeComparisonResults, makeHistory, makeMultiRepoHistory } from '@shared/tests';
+import type { History } from '@domain/types';
+import {
+  makeComparisonResults,
+  makeConfig,
+  makeHistory,
+  makeMultiRepoHistory,
+} from '@shared/tests';
 import { describe, expect, it } from 'vitest';
-import { COLORS } from './constants';
+import { COLORS, DARK_PALETTE, LIGHT_PALETTE } from './constants';
 import { generateHtmlReport } from './html';
-import type { GenerateHtmlReportParams } from './shared';
+import { buildReportModel } from './report-model';
+import type { ReportParams } from './shared';
 
 const QUICKCHART_CONFIG = /https:\/\/quickchart\.io\/chart\?[^"]*&c=([^"]+)/g;
 
-function renderHtml(overrides: Partial<GenerateHtmlReportParams> = {}): string {
+interface RenderHtml extends Partial<Omit<ReportParams, 'config'>> {
+  config?: Partial<Config>;
+}
+
+function renderHtml({ config, ...overrides }: RenderHtml = {}): string {
+  const resolved = makeConfig(config);
+
   return generateHtmlReport({
-    results: makeComparisonResults(),
-    previousTimestamp: '2026-01-01T00:00:00Z',
-    locale: 'en',
-    ...overrides,
+    config: resolved,
+    model: buildReportModel({
+      config: resolved,
+      results: makeComparisonResults(),
+      previousTimestamp: '2026-01-01T00:00:00Z',
+      chartHistories: overrides.history
+        ? {
+            aggregate: overrides.history,
+            forRepo: () => overrides.history as History,
+            reconstructedForRepo: () => overrides.history as History,
+          }
+        : null,
+      ...overrides,
+    }),
   });
 }
 
@@ -23,7 +49,7 @@ describe('generateHtmlReport', () => {
   const velocityHistory = makeHistory([100, 200], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
   it('renders the velocity section when velocity-metrics is enabled', () => {
-    const html = renderHtml({ velocityHistory, velocityMetrics: true });
+    const html = renderHtml({ velocityHistory, config: { velocityMetrics: true } });
 
     expect(html).toContain('Growth Velocity');
     expect(html).toContain('Stars per day');
@@ -38,7 +64,7 @@ describe('generateHtmlReport', () => {
   it('renders velocity with only the daily rate when growth and projection are unavailable', () => {
     const flatHistory = makeHistory([0, 0], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
-    const html = renderHtml({ velocityHistory: flatHistory, velocityMetrics: true });
+    const html = renderHtml({ velocityHistory: flatHistory, config: { velocityMetrics: true } });
 
     expect(html).toContain('Growth Velocity');
     expect(html).toContain('Stars per day');
@@ -51,7 +77,10 @@ describe('generateHtmlReport', () => {
       stepDays: 10,
     });
 
-    const html = renderHtml({ velocityHistory: decliningHistory, velocityMetrics: true });
+    const html = renderHtml({
+      velocityHistory: decliningHistory,
+      config: { velocityMetrics: true },
+    });
 
     expect(html).toContain('-25%');
     expect(html).not.toContain('+-25%');
@@ -77,8 +106,8 @@ describe('generateHtmlReport', () => {
 
     const html = renderHtml({
       velocityHistory,
-      velocityMetrics: true,
       forecastData,
+      config: { velocityMetrics: true },
     });
 
     expect(html).toContain('<h3 style="font-size:16px;margin-bottom:8px;">🚀 Growth Velocity</h3>');
@@ -87,6 +116,16 @@ describe('generateHtmlReport', () => {
     );
     expect(html.indexOf('Growth Forecast')).toBeLessThan(html.indexOf('Growth Velocity'));
     expect(html.indexOf('Growth Velocity')).toBeLessThan(html.indexOf('Aggregate Forecast'));
+  });
+
+  it('dresses the document from email-theme, never from chart-theme', () => {
+    const html = renderHtml({
+      config: { chartTheme: ChartTheme.LIGHT, emailTheme: ChartTheme.DARK },
+    });
+
+    expect(html).toContain('<meta name="color-scheme" content="dark">');
+    expect(html).toContain(DARK_PALETTE.white);
+    expect(html).not.toContain(LIGHT_PALETTE.white);
   });
 
   it('generates valid HTML structure', () => {
@@ -180,7 +219,7 @@ describe('generateHtmlReport', () => {
       stepDays: 1,
     });
 
-    const html = renderHtml({ history, includeCharts: true });
+    const html = renderHtml({ history, config: { includeCharts: true } });
 
     expect(html).toContain('Star Trend');
     expect(html).toContain('https://quickchart.io/chart');
@@ -195,7 +234,7 @@ describe('generateHtmlReport', () => {
       { stepDays: 1 },
     );
 
-    const html = renderHtml({ history, includeCharts: true });
+    const html = renderHtml({ history, config: { includeCharts: true } });
 
     expect(html).toContain('By Repository');
     expect(html).toContain('Top Repositories');
@@ -210,7 +249,7 @@ describe('generateHtmlReport', () => {
       { stepDays: 1 },
     );
 
-    const html = renderHtml({ history, includeCharts: true });
+    const html = renderHtml({ history, config: { includeCharts: true } });
 
     expect(html).toContain('Individual Repository Charts');
     expect(html).toContain('alt="user/repo-a"');
@@ -227,7 +266,7 @@ describe('generateHtmlReport', () => {
       { stepDays: 1 },
     );
 
-    const html = renderHtml({ history, includeCharts: true });
+    const html = renderHtml({ history, config: { includeCharts: true } });
 
     expect(html).toContain(`user/repo-a — 15 ★ (<span style="color:${COLORS.positive}`);
     expect(html).toContain('+5</span>)');
@@ -258,9 +297,8 @@ describe('generateHtmlReport', () => {
 
     const html = renderHtml({
       history,
-      includeCharts: true,
       forecastData,
-      lineColor: '#6b63ff',
+      config: { includeCharts: true, chartLineColor: '#6b63ff' },
     });
     const configs = [...html.matchAll(QUICKCHART_CONFIG)].map((match) =>
       decodeURIComponent(match[1]),
@@ -277,11 +315,15 @@ describe('generateHtmlReport', () => {
     const configsOf = (html: string): string[] =>
       [...html.matchAll(QUICKCHART_CONFIG)].map((match) => decodeURIComponent(match[1]));
 
-    const styled = configsOf(renderHtml({ history, includeCharts: true, lineWidth: 5 }));
-    const plain = configsOf(renderHtml({ history, includeCharts: true }));
+    const styled = configsOf(
+      renderHtml({ history, config: { includeCharts: true, chartLineWidth: 5 } }),
+    );
+    const plain = configsOf(renderHtml({ history, config: { includeCharts: true } }));
 
     expect(styled.every((config) => config.includes('"borderWidth":5'))).toBe(true);
-    expect(plain.some((config) => config.includes('borderWidth'))).toBe(false);
+    expect(
+      plain.every((config) => config.includes(`"borderWidth":${DEFAULTS.chartLineWidth}`)),
+    ).toBe(true);
   });
 
   it('does not include charts when includeCharts is false', () => {
@@ -289,7 +331,7 @@ describe('generateHtmlReport', () => {
       stepDays: 1,
     });
 
-    const html = renderHtml({ history, includeCharts: false });
+    const html = renderHtml({ history, config: { includeCharts: false } });
 
     expect(html).not.toContain('Star Trend');
     expect(html).not.toContain('quickchart.io');
@@ -298,7 +340,7 @@ describe('generateHtmlReport', () => {
   it('does not include charts when history has only one snapshot', () => {
     const history = makeMultiRepoHistory([{ 'user/repo-a': 20 }]);
 
-    const html = renderHtml({ history, includeCharts: true });
+    const html = renderHtml({ history, config: { includeCharts: true } });
 
     expect(html).not.toContain('Star Trend');
   });

@@ -1,3 +1,5 @@
+import type { History } from '@domain/types';
+
 export interface ColorPalette {
   accent: string;
   positive: string;
@@ -12,4 +14,20 @@ export interface ColorPalette {
   tableHeaderBorder: string;
   cellBorder: string;
   gradientStart: string;
+}
+
+export interface ChartHistories {
+  aggregate: History;
+  forRepo: (repoFullName: string) => History;
+  reconstructedForRepo: (repoFullName: string) => History | null;
+}
+
+export interface TopRepo {
+  fullName: string;
+  current: number;
+  delta: number;
+}
+
+export interface PerRepoChart extends TopRepo {
+  history: History;
 }

@@ -26,10 +26,10 @@ The working directory for the branch is derived from the name: a dot followed by
 | `stars-data.csv` | Flat per-repo export (`repository,owner,name,stars,previous,delta,status`) | Every run |
 | `stars-badge.svg` | Star count badge | Every run |
 | `stargazers.json` | Stargazer login map | Only with `track-stargazers: true` |
-| `charts/star-history.svg` | Total stars chart | Every run (charts on) |
-| `charts/comparison.svg` | Top repos comparison | Every run (charts on) |
-| `charts/forecast.svg` | Growth forecast | Every run (when enough history points exist) |
-| `charts/{owner}-{repo}.svg` | Per-repo charts | Every run (charts on) |
+| `charts/star-history.svg` | Total stars chart | Charts on, once the reconstructed history has at least 2 points |
+| `charts/comparison.svg` | Top repos comparison | Same condition as `star-history.svg` |
+| `charts/forecast.svg` | Growth forecast | Same, plus the 3 snapshots a forecast needs |
+| `charts/{owner}-{repo}.svg` | Per-repo charts | Same, one per top repository, and only where that repository's own history has 2 points |
 
 Charts this run did not produce are deleted from `charts/`, so a repository that drops out of `top-repos` does not leave its file behind. Nothing outside `charts/` is ever removed, and only `.svg` files are considered.
 
@@ -114,6 +114,10 @@ When `track-stargazers: true`, the action maintains a separate `stargazers.json`
 ```
 
 This stores only login names (not avatars or dates) for efficient diffing between runs. Full stargazer details (avatar, profile URL, starred date) are only shown in reports.
+
+Entries are added and overwritten, never removed. A repository that leaves the tracked set keeps its entry,
+so returning does not report its existing stargazers as new; the file therefore grows with the number of
+repositories ever tracked.
 
 A repository whose stargazers could not be read — a failed request, an empty response for a repo that has
 stars, or a repo covered by `smart-sampling` — **keeps its previous login list** rather than being written

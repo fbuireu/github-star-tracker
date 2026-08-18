@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { loadConfig } from '@config/loader';
@@ -5,14 +6,16 @@ import { ChartTheme } from '@config/types';
 import type { ForecastData } from '@domain/forecast';
 import { computeForecast, ForecastMethod } from '@domain/forecast';
 import { deltaIndicator } from '@domain/formatting';
-import { measureRun, recordNotification } from '@domain/measurement';
+import { measureRun } from '@domain/measurement';
 import { buildStargazerMap, diffStargazers } from '@domain/stargazers';
 import { CompareAgainst, NotificationMode } from '@domain/types';
+import { getTranslations } from '@i18n';
 import { getRepos } from '@infrastructure/github/filters';
 import { fetchAllStargazers } from '@infrastructure/github/stargazers';
 import { getEmailConfig, sendEmail } from '@infrastructure/notification/email';
 import type { DataBranch, PublishedArtefacts } from '@infrastructure/persistence/data-branch';
 import { withDataBranch } from '@infrastructure/persistence/data-branch';
+import { writeHtmlReport } from '@infrastructure/persistence/storage';
 import { retry } from '@octokit/plugin-retry';
 import { generateBadge } from '@presentation/badge';
 import type { ChartRequest } from '@presentation/chart-spec';
@@ -22,6 +25,7 @@ import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
 import { renderSvgChart } from '@presentation/svg-chart';
 import { makeConfig, makeRepoInfo, makeRepoResult, makeStargazerSeries } from '@shared/tests';
+import * as yaml from 'js-yaml';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { trackStars } from './tracker';
 
@@ -35,7 +39,7 @@ vi.mock('@actions/core', () => ({
 }));
 vi.mock('@actions/github', () => ({ getOctokit: vi.fn(() => ({})) }));
 vi.mock('@config/loader', () => ({ loadConfig: vi.fn() }));
-vi.mock('@domain/measurement', () => ({ measureRun: vi.fn(), recordNotification: vi.fn() }));
+vi.mock('@domain/measurement', () => ({ measureRun: vi.fn() }));
 vi.mock('@domain/forecast', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@domain/forecast')>()),
   computeForecast: vi.fn(),
@@ -119,10 +123,6 @@ function setupDefaults() {
   vi.mocked(withDataBranch).mockImplementation(({ run }) => run(branch as unknown as DataBranch));
   branch.readHistory.mockReturnValue(defaultHistory);
   mockMeasurement();
-  vi.mocked(recordNotification).mockImplementation(({ history, totalStars }) => ({
-    ...history,
-    starsAtLastNotification: totalStars,
-  }));
   vi.mocked(deltaIndicator).mockReturnValue('+10');
   vi.mocked(generateMarkdownReport).mockReturnValue('# MD Report');
   vi.mocked(generateHtmlReport).mockReturnValue('<p>HTML</p>');
@@ -212,7 +212,7 @@ describe('trackStars', () => {
       vi.mocked(getEmailConfig).mockReturnValue(emailConfig);
       await trackStars();
       expect(sendEmail).not.toHaveBeenCalled();
-      expect(core.info).toHaveBeenCalledWith('Notification threshold not reached, skipping email');
+      expect(core.info).toHaveBeenCalledWith('No stars changed since the baseline, skipping email');
     });
     it('skips email when threshold is not reached', async () => {
       vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, notificationThreshold: 10 });
@@ -221,6 +221,7 @@ describe('trackStars', () => {
       await trackStars();
       expect(sendEmail).not.toHaveBeenCalled();
       expect(core.setOutput).toHaveBeenCalledWith('should-notify', 'false');
+      expect(core.info).toHaveBeenCalledWith('Notification threshold not reached, skipping email');
     });
     it('sends email when threshold is reached', async () => {
       vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, notificationThreshold: 5 });
@@ -269,6 +270,34 @@ describe('trackStars', () => {
     });
   });
   describe('outputs', () => {
+    it('writes the HTML report before the push, so a failed write cannot follow a publish', async () => {
+      const order: string[] = [];
+
+      vi.mocked(writeHtmlReport).mockImplementation(() => {
+        order.push('write');
+        return '/tmp/star-tracker-report.html';
+      });
+      branch.publish.mockImplementation(() => {
+        order.push('publish');
+      });
+
+      await trackStars();
+
+      expect(order).toEqual(['write', 'publish']);
+    });
+
+    it('emits exactly the outputs action.yml declares, and no others', async () => {
+      const manifest = yaml.load(fs.readFileSync('action.yml', 'utf8')) as {
+        outputs: Record<string, unknown>;
+      };
+
+      await trackStars();
+
+      const emitted = vi.mocked(core.setOutput).mock.calls.map(([name]) => name);
+
+      expect([...emitted].sort()).toEqual(Object.keys(manifest.outputs).sort());
+    });
+
     it('sets all outputs correctly', async () => {
       await trackStars();
       expect(core.setOutput).toHaveBeenCalledWith('report', '# MD Report');
@@ -285,18 +314,30 @@ describe('trackStars', () => {
       expect(core.setOutput).toHaveBeenCalledWith('new-stargazers', '0');
     });
     it('sets default outputs for empty repos', async () => {
+      const t = getTranslations('en');
+
       vi.mocked(getRepos).mockResolvedValue([]);
       await trackStars();
-      expect(core.setOutput).toHaveBeenCalledWith(
-        'report',
-        'No repositories matched the configured filters.',
-      );
+
+      expect(core.setOutput).toHaveBeenCalledWith('report', t.report.noRepositories);
       expect(core.setOutput).toHaveBeenCalledWith(
         'report-html',
-        '<p>No repositories matched the configured filters.</p>',
+        `<p>${t.report.noRepositories}</p>`,
       );
       expect(core.setOutput).toHaveBeenCalledWith('should-notify', 'false');
       expect(core.setOutput).toHaveBeenCalledWith('new-stargazers', '0');
+      expect(core.setOutput).toHaveBeenCalledWith('total-stars', '0');
+    });
+
+    it('emits a CSV header on the empty path, like every other run', async () => {
+      vi.mocked(getRepos).mockResolvedValue([]);
+      await trackStars();
+
+      const csv = vi
+        .mocked(core.setOutput)
+        .mock.calls.find(([key]) => key === 'report-csv')?.[1] as string;
+
+      expect(csv).toContain('repository');
     });
   });
   describe('stargazer tracking', () => {
@@ -439,19 +480,20 @@ describe('trackStars', () => {
       expect(perRepo['u/restricted']).toBe(storedSnapshots);
       expect(perRepo['u/reachable']).not.toBe(storedSnapshots);
     });
-    it('renders the HTML report with emailTheme and the markdown report with chartTheme', async () => {
-      vi.mocked(loadConfig).mockReturnValue({
+    it('hands both report renderers the same params, config included', async () => {
+      const config = {
         ...defaultConfig,
         chartTheme: ChartTheme.LIGHT,
         emailTheme: ChartTheme.DARK,
-      });
+      };
+      vi.mocked(loadConfig).mockReturnValue(config);
       await trackStars();
-      expect(generateHtmlReport).toHaveBeenCalledWith(
-        expect.objectContaining({ theme: ChartTheme.DARK }),
-      );
-      expect(generateMarkdownReport).toHaveBeenCalledWith(
-        expect.objectContaining({ theme: ChartTheme.LIGHT }),
-      );
+
+      const markdownParams = vi.mocked(generateMarkdownReport).mock.calls[0][0];
+      const htmlParams = vi.mocked(generateHtmlReport).mock.calls[0][0];
+
+      expect(markdownParams.config).toBe(config);
+      expect(htmlParams).toBe(markdownParams);
     });
     it('skips SVG chart when includeCharts is false', async () => {
       vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, includeCharts: false });
@@ -513,6 +555,15 @@ describe('trackStars', () => {
       mockMeasurement({ results: resultsWithRepos, updatedHistory: twoSnapshots });
       vi.mocked(computeForecast).mockReturnValue(forecastData);
     });
+    it('fits the Forecast to each reconstruction, never to the Stored History', async () => {
+      await trackStars();
+
+      const params = vi.mocked(computeForecast).mock.calls[0]?.[0];
+
+      expect(params?.historyForRepo).toBeInstanceOf(Function);
+      expect(params?.historyForRepo?.('user/repo-a')).toBeNull();
+    });
+
     it('writes per-repo, comparison and forecast charts when they are generated', async () => {
       mockCharts({
         [ChartKind.PER_REPO]: '<svg>repo</svg>',
@@ -618,13 +669,11 @@ describe('trackStars', () => {
     it('updates starsAtLastNotification when notifying', async () => {
       mockMeasurement({ thresholdReached: true });
       await trackStars();
-      expect(recordNotification).toHaveBeenCalledWith(expect.objectContaining({ totalStars: 100 }));
       expect(published().history.starsAtLastNotification).toBe(100);
     });
     it('does not update starsAtLastNotification when threshold not reached', async () => {
       mockMeasurement({ thresholdReached: false, summary: { ...defaultSummary, changed: true } });
       await trackStars();
-      expect(recordNotification).not.toHaveBeenCalled();
       expect(published().history.starsAtLastNotification).toBeUndefined();
     });
     it('passes notificationThreshold to the measurement', async () => {
@@ -657,9 +706,11 @@ describe('trackStars', () => {
     it('derives previousTimestamp from the measured baseline when present', async () => {
       mockMeasurement({ baselineTimestamp: '2026-01-01T00:00:00Z' });
       await trackStars();
-      expect(generateMarkdownReport).toHaveBeenCalledWith(
-        expect.objectContaining({ previousTimestamp: '2026-01-01T00:00:00Z' }),
-      );
+
+      const { model } = vi.mocked(generateMarkdownReport).mock.calls[0][0];
+
+      expect(model.prev).toBe('2026-01-01');
+      expect(model.isFirstRun).toBe(false);
     });
     it('warns when max-history drops stored snapshots', async () => {
       mockMeasurement({ droppedSnapshots: 3 });
@@ -669,13 +720,6 @@ describe('trackStars', () => {
     it('does not warn about max-history when nothing is dropped', async () => {
       await trackStars();
       expect(core.warning).not.toHaveBeenCalledWith(expect.stringContaining('drops the oldest'));
-    });
-    it('passes the stored history as velocityHistory, not the resolved chart history', async () => {
-      const measurement = mockMeasurement();
-      await trackStars();
-      const params = vi.mocked(generateMarkdownReport).mock.calls[0][0];
-      expect(params.velocityHistory).toBeDefined();
-      expect(params.velocityHistory).toBe(measurement.updatedHistory);
     });
     it('does not advance the notification baseline when the email fails to send', async () => {
       vi.mocked(getEmailConfig).mockReturnValue({

@@ -23,16 +23,28 @@ SMTP. There is exactly one use case: `trackStars()`.
 - **esbuild** (`platform: node`, `target: node24`, `format: cjs`), **Vitest** (v8 coverage), **Biome**
   (lint + format), **semantic-release** + commitlint, **husky** + lint-staged.
 
-## Versions (pinned by hand — not enforced by the docs test, since routine dependency bumps would break CI on it)
+## Versions (pinned by hand, and asserted against `package.json` by the docs test)
 
 - Node **26.2.0** (`engines.node`)
-- pnpm **11.15.1** (`packageManager`) — always use pnpm, never npm/yarn
+- pnpm **11.21.0** (`packageManager`) — always use pnpm, never npm/yarn
+
+Both are deliberate pins rather than dependency ranges, so bumping one means editing this section in the same
+commit.
+
+**`engines.node` is the development pin; the shipped runtime is `node24`** (`action.yml` `runs.using`, and
+`esbuild.config.ts` `target`). Those are different numbers on purpose. The gap is a trap: `@types/node` tracks
+the *development* version, and esbuild's `target` lowers syntax without shimming runtime APIs, so a `node:*`
+API that landed after 24.x type-checks, bundles, passes `pnpm validate` and then throws
+`TypeError: … is not a function` on a GitHub runner — in a user's workflow, not in CI, because `dist/` is
+committed and nothing executes the bundle. Today the tree only reaches for `node:fs`, `node:path` and
+`node:child_process.execFileSync`, all long-standing. Check a new `node:` API against Node 24, not against
+`engines.node`.
 
 ## Commands
 
 ```bash
 pnpm build            # tsx esbuild.config.ts -> dist/index.js
-pnpm lint             # biome check (base command)
+pnpm lint             # biome check --no-errors-on-unmatched .
 pnpm format           # lint --write
 pnpm typecheck        # tsc --noEmit
 pnpm test             # vitest run
@@ -63,8 +75,9 @@ not a layer at all: `assets/`, the brand files the README embeds. `index.ts` imp
 | `presentation/` | `@presentation/*` | Pure rendering: data in, markdown/HTML/SVG/CSV string out |
 | `shared/` | `@shared/*` | Cross-cutting code owning no layer (today: test factories) |
 
-Tests are colocated next to the file they cover (`src/**/*.test.ts`). The one test covering no module is
-`docs/docs-consistency.test.ts` — the docs guard described below, colocated with the docs it checks.
+Tests are colocated next to the file they cover (`src/**/*.test.ts`). Two cover no module:
+`docs/docs-consistency.test.ts` — the docs guard described below, colocated with the docs it checks — and
+`src/config/action-inputs.test.ts`, which asserts against `action.yml` rather than a module.
 
 Aliases are declared **once**, in `tsconfig.json` `compilerOptions.paths`. `esbuild.config.ts` derives its
 `alias` map from that object at build time and `vitest.config.ts` sets `resolve.tsconfigPaths: true`, so a
@@ -82,7 +95,7 @@ alias (`"@i18n": ["./src/i18n/index.ts"]`), not a glob: `@i18n/types` does not r
 | [`src/domain/`](./src/domain/CLAUDE.md) | Comparison semantics, snapshots, forecast/velocity maths, star-history |
 | [`src/i18n/`](./src/i18n/CLAUDE.md) | Bundles, placeholder rules, adding a locale |
 | [`src/infrastructure/`](./src/infrastructure/CLAUDE.md) | The four adapters: octokit, git worktree, persistence, SMTP |
-| [`src/presentation/`](./src/presentation/CLAUDE.md) | Renderers, the chart trio, escaping rules |
+| [`src/presentation/`](./src/presentation/CLAUDE.md) | Renderers, the chart quartet, escaping and injection rules |
 | [`src/shared/`](./src/shared/CLAUDE.md) | Fixture factories and why this folder stays almost empty |
 
 ## Conventions
@@ -92,7 +105,9 @@ alias (`"@i18n": ["./src/i18n/index.ts"]`), not a glob: `@i18n/types` does not r
   sorting and duplicate it in the bundle. "Same layer" means all of `src/infrastructure`, not one adapter.
 - **Named params for 2+ arguments.** Any function taking two or more arguments takes one destructured
   object typed by an interface: `function foo({ a, b }: FooParams)`. Single-argument functions stay
-  positional. The fixture factories in `src/shared/tests` are the only sanctioned exception.
+  positional. The fixture factories in `src/shared/tests` are the only sanctioned exception, and
+  `docs/docs-consistency.test.ts` asserts the rule over the whole tree — it had drifted in nine places
+  before it was executable, three of them adjacent same-typed numbers a caller could silently swap.
 - **No explanatory comments in `.ts` files**, without exception — the tree contains none. These `CLAUDE.md`
   files carry the explanation instead. If something needs explaining it goes in the folder's *Invariants* or
   *Gotchas* section, not above the line.
@@ -116,6 +131,8 @@ or test file that does not exist, no sample chart in `examples/README.md` withou
 input and output named on the surfaces that list them **and listed alphabetically** there, the translation-key table in
 `docs/wiki/Internationalization-(i18n).md` matching `src/i18n/en.json` section for section and key for key,
 every documented `stars-data.json` example showing the `version` the writer actually stamps,
+the Node and pnpm pins above matching `package.json`, every overridable `action.yml` input stating its real
+default in prose and saying the config file can override it,
 and the ADR set held to its template (sequential
 numbering, `NNNN-kebab-title.md` filenames, the `# N. Title` / date / status / *Context* / *Decision* /
 *Consequences* shape, a row in the `ARCHITECTURE.md` index, and — the one that rots quietly — a link from
@@ -158,7 +175,9 @@ the moment anything above it moves — prefer naming the symbol.
   therefore produces no coverage signal, but many tests assert the resulting literals — expect failures far
   from the edit.
 - **One test file can cover two modules.** `src/infrastructure/github/filters.test.ts` is the spec for both
-  `filters.ts` and `client.ts`, and `src/config/action-inputs.test.ts` covers the manifest, not a module.
+  `filters.ts` and `client.ts` — the only sanctioned pair — and `src/config/action-inputs.test.ts` covers the
+  manifest, not a module. `client.ts` is the sole module with no colocated test; anything else missing one is
+  drift, not a convention.
 - **Biome allows no suppressions.** Fix the root cause instead of `biome-ignore`. 100-col, 2-space, LF,
   single quotes; `.gitattributes` pins `* text=auto eol=lf`.
 

@@ -3,15 +3,14 @@ import { cleanup, initializeDataBranch } from '../git/worktree';
 import type { PublishedArtefacts } from './data-branch';
 import { withDataBranch } from './data-branch';
 import {
+  Artefact,
   commitAndPush,
   pruneCharts,
   readHistory,
   readStargazers,
-  writeBadge,
+  writeArtefact,
   writeChart,
-  writeCsv,
   writeHistory,
-  writeReport,
   writeStargazers,
 } from './storage';
 
@@ -26,13 +25,12 @@ vi.mock('../git/worktree', () => ({
   cleanup: vi.fn(),
 }));
 
-vi.mock('./storage', () => ({
+vi.mock('./storage', async (importOriginal) => ({
+  Artefact: (await importOriginal<typeof import('./storage')>()).Artefact,
   readHistory: vi.fn(),
   readStargazers: vi.fn(),
   writeHistory: vi.fn(),
-  writeReport: vi.fn(),
-  writeBadge: vi.fn(),
-  writeCsv: vi.fn(),
+  writeArtefact: vi.fn(),
   writeChart: vi.fn(),
   writeStargazers: vi.fn(),
   pruneCharts: vi.fn().mockReturnValue([]),
@@ -77,6 +75,7 @@ describe('withDataBranch', () => {
     expect(initializeDataBranch).toHaveBeenCalledWith({
       dataBranch: 'star-data',
       readOnly: false,
+      token: 'tok',
     });
     expect(readHistory).toHaveBeenCalledWith(DATA_DIR);
     expect(readStargazers).toHaveBeenCalledWith(DATA_DIR);
@@ -107,9 +106,10 @@ describe('withDataBranch', () => {
     expect(cleanup).toHaveBeenCalledWith(DATA_DIR);
   });
 
-  it('does not open a worktree the caller never asked to publish into', async () => {
+  it('commits nothing when the run never publishes, though the worktree is always opened', async () => {
     await withDataBranch({ ...BASE, run: async () => undefined });
 
+    expect(initializeDataBranch).toHaveBeenCalled();
     expect(commitAndPush).not.toHaveBeenCalled();
   });
 });
@@ -129,9 +129,21 @@ describe('publish', () => {
     await publish(makeArtefacts({ history }));
 
     expect(writeHistory).toHaveBeenCalledWith({ dataDir: DATA_DIR, history });
-    expect(writeReport).toHaveBeenCalledWith({ dataDir: DATA_DIR, markdown: '# report' });
-    expect(writeBadge).toHaveBeenCalledWith({ dataDir: DATA_DIR, svg: '<svg>badge</svg>' });
-    expect(writeCsv).toHaveBeenCalledWith({ dataDir: DATA_DIR, csv: 'header' });
+    expect(writeArtefact).toHaveBeenCalledWith({
+      dataDir: DATA_DIR,
+      artefact: Artefact.REPORT,
+      contents: '# report',
+    });
+    expect(writeArtefact).toHaveBeenCalledWith({
+      dataDir: DATA_DIR,
+      artefact: Artefact.BADGE,
+      contents: '<svg>badge</svg>',
+    });
+    expect(writeArtefact).toHaveBeenCalledWith({
+      dataDir: DATA_DIR,
+      artefact: Artefact.CSV,
+      contents: 'header',
+    });
   });
 
   it('writes the stargazer map only when the run produced one', async () => {

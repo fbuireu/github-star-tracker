@@ -4,7 +4,7 @@ import { DEFAULT_SMTP_PORT } from '@infrastructure/notification/email';
 import * as yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 import { DEFAULTS } from './defaults';
-import { DEFAULT_CONFIG_PATH } from './loader';
+import { DEFAULT_CONFIG_PATH, toActionInputName } from './loader';
 
 interface ActionInput {
   description: string;
@@ -19,13 +19,21 @@ interface ActionManifest {
 
 const manifest = yaml.load(fs.readFileSync(path.resolve('action.yml'), 'utf8')) as ActionManifest;
 
-const UPPERCASE_LETTER_PATTERN = /[A-Z]/g;
-
 const OVERRIDABLE = Object.keys(DEFAULTS).filter((key) => key !== 'sendOnNoChanges');
 
-function toKebabCase(key: string): string {
-  return key.replaceAll(UPPERCASE_LETTER_PATTERN, (letter) => `-${letter.toLowerCase()}`);
-}
+const DECLARED_OUTPUTS = [
+  'lost-stars',
+  'new-stargazers',
+  'new-stars',
+  'notification-sent',
+  'report',
+  'report-csv',
+  'report-html',
+  'report-html-path',
+  'should-notify',
+  'stars-changed',
+  'total-stars',
+];
 
 describe('config-path default', () => {
   it('matches DEFAULT_CONFIG_PATH in @config/loader', () => {
@@ -47,20 +55,34 @@ describe('send-on-no-changes default', () => {
 
 describe('action.yml inputs', () => {
   it.each(OVERRIDABLE)('declares an input for the %s config key', (key) => {
-    expect(manifest.inputs).toHaveProperty(toKebabCase(key));
+    expect(manifest.inputs).toHaveProperty(toActionInputName(key));
   });
 
   it.each(OVERRIDABLE)('leaves the %s default empty so the config file can win', (key) => {
-    expect(manifest.inputs[toKebabCase(key)].default ?? '').toBe('');
+    expect(manifest.inputs[toActionInputName(key)].default ?? '').toBe('');
   });
 
   it('keeps a default only on inputs with no config file counterpart', () => {
-    const overridableInputs = new Set(OVERRIDABLE.map(toKebabCase));
+    const overridableInputs = new Set(OVERRIDABLE.map(toActionInputName));
     const withDefaults = Object.entries(manifest.inputs)
       .filter(([, input]) => (input.default ?? '') !== '')
       .map(([name]) => name);
 
     expect(withDefaults.filter((name) => overridableInputs.has(name))).toEqual([]);
     expect(withDefaults.sort()).toEqual(['config-path', 'send-on-no-changes', 'smtp-port']);
+  });
+});
+
+describe('action.yml outputs', () => {
+  it('declares exactly the eleven outputs setOutputs emits, alphabetically', () => {
+    expect(Object.keys(manifest.outputs)).toEqual(DECLARED_OUTPUTS);
+  });
+
+  it('describes every output', () => {
+    const undescribed = Object.entries(manifest.outputs)
+      .filter(([, output]) => (output.description ?? '').trim() === '')
+      .map(([name]) => name);
+
+    expect(undescribed).toEqual([]);
   });
 });

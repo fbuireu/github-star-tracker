@@ -12,72 +12,72 @@ inputs:
     required: true
 
   chart-animation:
-    description: 'Animate the SVG charts with a draw-on line and fading points (true) or render them static (false). Static is better for email and other contexts that do not play CSS animations. (default true)'
+    description: 'Animate the SVG charts with a draw-on line and fading points (true) or render them static (false). Static is better for email and other contexts that do not play CSS animations. (default true) (overrides config file)'
     required: false
     default: ''
 
   chart-begin-at-zero:
-    description: 'Start the chart Y-axis at zero (true) for absolute scale, or zoom into the data range (false) to emphasize recent changes. Applies to all charts. (default false)'
+    description: 'Start the chart Y-axis at zero (true) for absolute scale, or zoom into the data range (false) to emphasize recent changes. Applies to all charts. (default false) (overrides config file)'
     required: false
     default: ''
 
   chart-curve:
-    description: 'Curve used when chart-smoothing is true: "monotone" (smooth, never overshoots, best for star data), "catmull-rom" (natural spline, can overshoot on sharp steps), "cubic-bezier" (eased S-curves, flat at every point), or "rounded-step" (flat segments with rounded corners). Email charts render monotone and rounded-step as monotone, and catmull-rom and cubic-bezier as a smooth spline. (default monotone)'
+    description: 'Curve used when chart-smoothing is true: "monotone" (smooth, never overshoots, best for star data), "catmull-rom" (natural spline, can overshoot on sharp steps), "cubic-bezier" (eased S-curves, flat at every point), or "rounded-step" (flat segments with rounded corners). Email charts render monotone and rounded-step as monotone, and catmull-rom and cubic-bezier as a smooth spline. (default monotone) (overrides config file)'
     required: false
     default: ''
 
   chart-custom-milestones:
-    description: 'Comma-separated star counts to use as milestone reference lines instead of the built-in defaults (e.g. "250, 750, 2500"). Values are sorted and de-duplicated; non-positive or non-numeric entries are ignored, and an input with no valid numbers warns and falls back to the built-in milestones. Requires chart-milestones to be enabled. When empty, the built-in milestones are used. (default empty)'
+    description: 'Comma-separated star counts to use as milestone reference lines instead of the built-in defaults (e.g. "250, 750, 2500"). Values are sorted and de-duplicated; non-positive or non-numeric entries are ignored, and an input with no valid numbers warns and falls back to the built-in milestones. Requires chart-milestones to be enabled. When empty, the built-in milestones are used. (default empty) (overrides config file)'
     required: false
     default: ''
 
   chart-line-color:
-    description: 'Hex color for the primary chart line, fill and points (star-history, per-repo and forecast historical series); does not affect the comparison palette or forecast trend lines. Accepts 3/4/6/8-digit hex with or without a leading #. In YAML a bare # starts a comment, so either omit it (chart-line-color: 6b63ff) or quote it (chart-line-color: "#6b63ff"). (default #dfb317)'
+    description: 'Hex color for the primary chart line, fill and points (star-history, per-repo and forecast historical series); does not affect the comparison palette or forecast trend lines. Accepts 3/4/6/8-digit hex with or without a leading #. In YAML a bare # starts a comment, so either omit it (chart-line-color: 6b63ff) or quote it (chart-line-color: "#6b63ff"). (default #dfb317) (overrides config file)'
     required: false
     default: ''
 
   chart-line-width:
-    description: 'Stroke width in px (>0, decimals allowed) for data lines across all charts. (default 2.5)'
+    description: 'Stroke width in px (>0, decimals allowed) for data lines across all charts. (default 2.5) (overrides config file)'
     required: false
     default: ''
 
   chart-max-points:
-    description: 'How many points to plot across the full reconstructed history, i.e. the curve granularity (capped at 365). Higher means a more detailed curve over the same span; this is resolution, not the time window (use chart-range for that). Set to 0 to reconstruct the full history at weekly resolution. Email charts are always limited to 30 points. (default 30)'
+    description: 'How many points to plot across the full reconstructed history, i.e. the curve granularity (capped at 365). Higher means a more detailed curve over the same span; this is resolution, not the time window (use chart-range for that). Set to 0 to reconstruct the full history at weekly resolution. Email charts are always limited to 30 points. (default 30) (overrides config file)'
     required: false
     default: ''
 
   chart-milestones:
-    description: 'Draw milestone reference lines (10, 50, 100, 500, 1k, 5k, 10k, 50k, 100k, 500k, 1M stars) on the main star-history chart (true) or hide them (false). Only milestones that fall strictly between the lowest and highest plotted values are drawn. (default true)'
+    description: 'Draw milestone reference lines (10, 50, 100, 500, 1k, 5k, 10k, 50k, 100k, 500k, 1M stars) on the main star-history chart (true) or hide them (false). Only milestones that fall strictly between the lowest and highest plotted values are drawn. (default true) (overrides config file)'
     required: false
     default: ''
 
   chart-range:
-    description: 'Time window of history to plot: 30d, 90d, 1y or all. Filters snapshots to the most recent window (relative to the latest data point) before applying chart-max-points. (default all)'
+    description: 'Time window of history to plot: 30d, 90d, 1y or all. Filters snapshots to the most recent window (relative to the latest data point) before applying chart-max-points. (default all) (overrides config file)'
     required: false
     default: ''
 
   chart-show-points:
-    description: 'Draw a marker on each data point (true) or hide them for a cleaner line on dense charts (false). (default true)'
+    description: 'Draw a marker on each data point (true) or hide them for a cleaner line on dense charts (false). (default true) (overrides config file)'
     required: false
     default: ''
 
   chart-smoothing:
-    description: 'Smooth chart lines with a curve (true) or draw straight segments between points to reveal small spikes (false). (default true)'
+    description: 'Smooth chart lines with a curve (true) or draw straight segments between points to reveal small spikes (false). (default true) (overrides config file)'
     required: false
     default: ''
 
   chart-theme:
-    description: 'Color theme for the SVG charts, and the fallback for the email report when email-theme is auto: auto, light or dark. auto follows the readers prefers-color-scheme in the SVG charts; email clients that ignore it fall back to light. Force light or dark to override. (default auto)'
+    description: 'Color theme for the SVG charts, and the fallback for the email report when email-theme is auto: auto, light or dark. auto follows the readers prefers-color-scheme in the SVG charts; email clients that ignore it fall back to light. Force light or dark to override. (default auto) (overrides config file)'
     required: false
     default: ''
 
   chart-trend-line:
-    description: 'Overlay a dashed moving-average trend line on the main star-history chart to smooth out noise and show the underlying direction (true) or hide it (false). (default false)'
+    description: 'Overlay a dashed moving-average trend line on the main star-history chart to smooth out noise and show the underlying direction (true) or hide it (false). (default false) (overrides config file)'
     required: false
     default: ''
 
   chart-y-axis-side:
-    description: 'Which side to render the Y-axis value labels on: left or right. (default left)'
+    description: 'Which side to render the Y-axis value labels on: left or right. (default left) (overrides config file)'
     required: false
     default: ''
 
@@ -102,7 +102,7 @@ inputs:
     default: ''
 
   email-theme:
-    description: 'Color theme for the HTML email report and its charts: auto, light or dark. auto means "same as chart-theme", so set this only when the email should differ from the SVG charts. The email charts are PNG images with the background baked in, so a reader in dark mode sees a white chart background unless this resolves to dark - prefers-color-scheme cannot reach a raster image. (default auto)'
+    description: 'Color theme for the HTML email report and its charts: auto, light or dark. auto means "same as chart-theme", so set this only when the email should differ from the SVG charts. The email charts are PNG images with the background baked in, so a reader in dark mode sees a white chart background unless this resolves to dark - prefers-color-scheme cannot reach a raster image. (default auto) (overrides config file)'
     required: false
     default: ''
 
@@ -142,7 +142,7 @@ inputs:
     default: ''
 
   locale:
-    description: 'Language for reports and emails: en, es, ca, it. Affects wording and date formatting; compact star counts (1.5K, 2.5M) stay English. (default en) (overrides config file)'
+    description: 'Language for reports and emails: en, es, ca, it. Affects wording, date formatting and compact star counts (1.5K / 1,2 mil). (default en) (overrides config file)'
     required: false
     default: ''
 
@@ -232,7 +232,7 @@ inputs:
     default: ''
 
   velocity-metrics:
-    description: 'Add a growth-velocity section to the report (stars/day, percent growth, and projected days to the next star milestone), computed from the tracked history (true) or omit it (false). (default false)'
+    description: 'Add a growth-velocity section to the report (stars/day, percent growth, and projected days to the next star milestone), computed from the tracked history (true) or omit it (false). (default false) (overrides config file)'
     required: false
     default: ''
 

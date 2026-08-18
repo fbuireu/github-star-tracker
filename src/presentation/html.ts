@@ -1,20 +1,14 @@
-import { ChartTheme } from '@config/types';
 import type { ForecastResult } from '@domain/forecast';
 import { deltaIndicator, formatSignedPercent, trendIcon } from '@domain/formatting';
-import { getTranslations, interpolate } from '@i18n';
+import { getTranslations, interpolate, type Translations } from '@i18n';
 import { chartImageUrl } from './chart';
 import type { ChartRequest } from './chart-spec';
 import { ChartKind } from './chart-spec';
 import { SECTION_ICON } from './constants';
 import { EscapeDialect, escapeFor } from './escaping';
-import {
-  buildForecastTable,
-  buildReportModel,
-  StargazerOutcome,
-  type TopRepo,
-} from './report-model';
-import type { GenerateHtmlReportParams } from './shared';
-import { colorSchemeFor, resolvePalette } from './shared';
+import { buildForecastTable, StargazerOutcome, type TopRepo } from './report-model';
+import type { RenderReportParams } from './shared';
+import { colorSchemeFor, emailChartStyle, resolvePalette } from './shared';
 import type { ColorPalette } from './types';
 
 const escapeHtml = escapeFor(EscapeDialect.MARKUP);
@@ -33,7 +27,7 @@ function deltaColor({ delta, palette }: DeltaColorParams): string {
 interface RepoChartHeadingParams {
   repo: TopRepo;
   palette: ColorPalette;
-  t: ReturnType<typeof getTranslations>;
+  t: Translations;
 }
 
 function repoChartHeading({ repo, palette, t }: RepoChartHeadingParams): string {
@@ -47,37 +41,21 @@ function repoChartHeading({ repo, palette, t }: RepoChartHeadingParams): string 
   });
 }
 
-export function generateHtmlReport(params: GenerateHtmlReportParams): string {
+export function generateHtmlReport({ model, config }: RenderReportParams): string {
   const {
     locale,
-    theme = ChartTheme.AUTO,
-    smoothing,
-    curve,
-    showPoints,
-    beginAtZero,
-    range,
-    lineWidth,
-    milestones,
-    customMilestones,
-    trendLine,
-    lineColor,
-  } = params;
+    emailTheme: theme,
+    chartMilestones: milestones,
+    chartCustomMilestones: customMilestones,
+    chartTrendLine: trendLine,
+    chartLineColor: lineColor,
+  } = config;
+  const style = emailChartStyle(config);
 
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
   const chartUrl = (request: ChartRequest): string | null =>
-    chartImageUrl({
-      request,
-      locale,
-      smoothing,
-      curve,
-      showPoints,
-      beginAtZero,
-      theme,
-      range,
-      lineWidth,
-    });
-  const model = buildReportModel(params);
+    chartImageUrl({ request, locale, theme, ...style });
   const {
     summary,
     sorted,
@@ -133,7 +111,7 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
 
   const topRepos = model.topRepos;
   const comparisonChartUrl =
-    history !== null && topRepos.length > 0
+    history !== null && model.showComparisonChart
       ? chartUrl({
           kind: ChartKind.COMPARISON,
           history,
@@ -141,26 +119,23 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
         })
       : null;
 
-  const individualRepoChartsHtml =
-    history !== null
-      ? topRepos
-          .map((repo) => {
-            const repoChartUrl = chartUrl({
-              kind: ChartKind.PER_REPO,
-              history,
-              repoFullName: repo.fullName,
-              lineColor,
-            });
-            if (!repoChartUrl) return '';
-            return `
+  const individualRepoChartsHtml = model.perRepoCharts
+    .map((repo) => {
+      const repoChartUrl = chartUrl({
+        kind: ChartKind.PER_REPO,
+        history: repo.history,
+        repoFullName: repo.fullName,
+        lineColor,
+      });
+      if (!repoChartUrl) return '';
+      return `
         <div style="margin-top:16px;">
           <h4 style="font-size:14px;margin-bottom:8px;">${repoChartHeading({ repo, palette, t })}</h4>
           <img src="${repoChartUrl}" alt="${escapeHtml(repo.fullName)}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
-          })
-          .filter(Boolean)
-          .join('')
-      : '';
+    })
+    .filter(Boolean)
+    .join('');
 
   const chartSection =
     history !== null
@@ -345,7 +320,7 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
   ${velocitySection}
 
   <div style="margin-top:24px;padding-top:16px;border-top:1px solid ${palette.cellBorder};text-align:center;color:${palette.neutral};font-size:12px;">
-    ${interpolate({ template: t.footer.generated, params: { project: `<a href="https://github.com/fbuireu/github-star-tracker" style="color:${palette.link};">GitHub Star Tracker</a>`, date: new Date().toISOString() } })}
+    ${interpolate({ template: t.footer.generated, params: { project: `<a href="https://github.com/fbuireu/github-star-tracker" style="color:${palette.link};">GitHub Star Tracker</a>`, date: model.generatedAt } })}
     <br>
     ${interpolate({ template: t.footer.madeBy, params: { author: `<a href="https://github.com/fbuireu" style="color:${palette.link};">Ferran Buireu</a>` } })}
   </div>
@@ -356,7 +331,7 @@ export function generateHtmlReport(params: GenerateHtmlReportParams): string {
 interface BuildHtmlForecastTableParams {
   title: string;
   forecasts: ForecastResult[];
-  t: ReturnType<typeof getTranslations>;
+  t: Translations;
   palette: ColorPalette;
 }
 

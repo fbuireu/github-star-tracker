@@ -3,12 +3,13 @@ import type { ForecastData, ForecastResult } from '@domain/forecast';
 import type { StargazerDiffEntry } from '@domain/stargazers';
 import type { History, RepoResult, Summary } from '@domain/types';
 import { computeVelocity, type VelocityMetrics } from '@domain/velocity';
-import { getTranslations } from '@i18n';
+import { getTranslations, type Translations } from '@i18n';
 import { MIN_SNAPSHOTS_FOR_CHART } from './constants';
 import type { ReportParams } from './shared';
 import { buildForecastWeekHeaders, forecastMethodLabel, prepareReportData } from './shared';
+import type { PerRepoChart, TopRepo } from './types';
 
-type Translations = ReturnType<typeof getTranslations>;
+export type { PerRepoChart, TopRepo };
 
 export const StargazerOutcome = {
   NEW: 'new',
@@ -30,23 +31,19 @@ export interface VelocitySection {
   projection: { days: number; milestone: number } | null;
 }
 
-export interface TopRepo {
-  fullName: string;
-  current: number;
-  delta: number;
-}
-
 export interface ReportModel {
   summary: Summary;
   now: string;
   prev: string;
+  generatedAt: string;
   isFirstRun: boolean;
   sorted: RepoResult[];
   newRepos: RepoResult[];
   removedRepos: RepoResult[];
   topRepos: TopRepo[];
-  hasChartHistory: boolean;
+  perRepoCharts: PerRepoChart[];
   chartHistory: History | null;
+  showComparisonChart: boolean;
   stargazers: StargazerSection | null;
   velocity: VelocitySection | null;
   velocityIsNested: boolean;
@@ -95,22 +92,31 @@ function toVelocitySection(metrics: VelocityMetrics | null): VelocitySection | n
 
 export function buildReportModel(params: ReportParams): ReportModel {
   const {
+    config,
     results,
     previousTimestamp,
-    locale,
     history = null,
     velocityHistory = null,
-    includeCharts = true,
     forecastData = null,
-    topRepos: topReposCount = 10,
-    velocityMetrics = false,
+    now,
+    chartHistories = null,
+    hasChartFile = () => true,
   } = params;
+  const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config;
 
   const t = getTranslations(locale);
-  const { sorted, newRepos, removedRepos, now, prev } = prepareReportData({
+  const {
+    sorted,
+    newRepos,
+    removedRepos,
+    now: reportDate,
+    prev,
+    generatedAt,
+  } = prepareReportData({
     results,
     previousTimestamp,
     locale,
+    now,
   });
   const hasChartHistory =
     includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
@@ -119,17 +125,28 @@ export function buildReportModel(params: ReportParams): ReportModel {
       ? computeVelocity({ history: velocityHistory })
       : null;
 
+  const topRepos = toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount });
+  const chartHistory = hasChartHistory ? history : null;
+  const perRepoCharts: PerRepoChart[] =
+    chartHistory !== null && chartHistories !== null
+      ? topRepos
+          .filter((repo) => hasChartFile(repo.fullName))
+          .map((repo) => ({ ...repo, history: chartHistories.forRepo(repo.fullName) }))
+      : [];
+
   return {
     summary: results.summary,
-    now,
+    now: reportDate,
     prev,
+    generatedAt,
     isFirstRun: prev === t.report.firstRun,
     sorted,
     newRepos,
     removedRepos,
-    topRepos: toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount }),
-    hasChartHistory,
-    chartHistory: hasChartHistory ? history : null,
+    topRepos,
+    perRepoCharts,
+    chartHistory,
+    showComparisonChart: chartHistory !== null && topRepos.length > 0,
     stargazers: toStargazerSection(params),
     velocity: toVelocitySection(velocity),
     velocityIsNested: forecastData !== null,
