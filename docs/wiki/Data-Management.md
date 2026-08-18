@@ -27,9 +27,9 @@ The working directory for the branch is derived from the name: a dot followed by
 | `stars-badge.svg` | Star count badge | Every run |
 | `stargazers.json` | Stargazer login map | Only with `track-stargazers: true` |
 | `charts/star-history.svg` | Total stars chart | Every run (charts on) |
-| `charts/comparison.svg` | Top repos comparison | Every run (charts on) |
+| `charts/comparison.svg` | Top repos comparison | Charts on, and at least one tracked repository |
 | `charts/forecast.svg` | Growth forecast | Every run (when enough history points exist) |
-| `charts/{owner}-{repo}.svg` | Per-repo charts | Every run (charts on) |
+| `charts/{owner}-{repo}.svg` | Per-repo charts | Charts on, one per top repository with enough history to plot |
 
 Charts this run did not produce are deleted from `charts/`, so a repository that drops out of `top-repos` does not leave its file behind. Nothing outside `charts/` is ever removed, and only `.svg` files are considered.
 

@@ -221,6 +221,12 @@ Runs in a `finally` block, removing the worktree with `--force` regardless of su
 
 ## Phase 4: State Comparison
 
+The run does not call the steps below one by one. `measureRun()`
+(`src/domain/measurement.ts`) composes baseline selection, diffing, snapshotting and the threshold check in
+the one order that is correct, and returns the whole measurement in a single value — see
+[ADR 0013](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0013-a-run-is-measured-in-one-place.md).
+The sections that follow describe what it does inside.
+
 ### Baseline Selection
 
 **File:** `src/domain/snapshot.ts` > `getBaselineSnapshot()`

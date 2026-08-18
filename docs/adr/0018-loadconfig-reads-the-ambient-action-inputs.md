@@ -6,12 +6,10 @@ Date: 2026-08-18
 
 Accepted
 
-## Decision-shaped question this answers
+## Context
 
 Should `loadConfig()` take the action inputs and the config-file contents as parameters instead of reading
 `core.getInput` and `node:fs` itself?
-
-## Context
 
 `loadConfig()` takes no arguments. It reads `core.getInput` at five sites and `node:fs` at two, both inside
 `loadConfigFile`. Every one of the ~90 `loadConfig` cases in `loader.test.ts` therefore goes through
