@@ -150,7 +150,7 @@ The eleven action outputs, alphabetically as `action.yml` declares them: `lost-s
 
 | Workflow | Purpose |
 | --- | --- |
-| `ci.yml` | On push/PR to `main`: install, `pnpm run check`, Codecov upload (also when `check` fails, so threshold failures still report), build |
+| `ci.yml` | On push/PR to `main`: install, `pnpm run check`, Codecov upload (also when `check` fails, so threshold failures still report), build, then `git diff --exit-code -- dist/` so a source change that was not rebuilt cannot merge |
 | `release.yml` | On push to `main`: `pnpm run validate` then `semantic-release`, plus a major-version tag update |
 | `codeql.yml` | CodeQL analysis of `javascript-typescript` and `actions`, weekly + on push/PR |
 | `zizmor.yml` | zizmor static analysis of the workflow files themselves |

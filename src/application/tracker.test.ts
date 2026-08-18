@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import { loadConfig } from '@config/loader';
@@ -23,6 +24,7 @@ import { generateHtmlReport } from '@presentation/html';
 import { generateMarkdownReport } from '@presentation/markdown';
 import { renderSvgChart } from '@presentation/svg-chart';
 import { makeConfig, makeRepoInfo, makeRepoResult, makeStargazerSeries } from '@shared/tests';
+import * as yaml from 'js-yaml';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { trackStars } from './tracker';
 
@@ -267,6 +269,18 @@ describe('trackStars', () => {
     });
   });
   describe('outputs', () => {
+    it('emits exactly the outputs action.yml declares, and no others', async () => {
+      const manifest = yaml.load(fs.readFileSync('action.yml', 'utf8')) as {
+        outputs: Record<string, unknown>;
+      };
+
+      await trackStars();
+
+      const emitted = vi.mocked(core.setOutput).mock.calls.map(([name]) => name);
+
+      expect([...emitted].sort()).toEqual(Object.keys(manifest.outputs).sort());
+    });
+
     it('sets all outputs correctly', async () => {
       await trackStars();
       expect(core.setOutput).toHaveBeenCalledWith('report', '# MD Report');

@@ -99,7 +99,10 @@ the config file would stop working, because a non-empty default always beats it.
 It derives the input name with **`toActionInputName`, exported from `loader.ts`** — the same function the
 fold uses — so the test cannot disagree with the loader about what a key is called. It also pins the
 `outputs:` block: eleven keys, alphabetical, each described. That list is the only executable check on the
-output contract, which is otherwise restated in `setOutputs`, `ARCHITECTURE.md` and
+output contract *from the manifest side*; `tracker.test.ts` closes the loop from the code side by comparing
+the names `setOutputs` actually emits against `action.yml`. Between them the contract is checked in both
+directions — the manifest list alone was a copy of `action.yml` compared with `action.yml`, and would not
+have noticed an output going missing from `setOutputs`. It is otherwise restated in `ARCHITECTURE.md` and
 [`src/application/CLAUDE.md`](../application/CLAUDE.md).
 
 Real defaults therefore live in `defaults.ts` and are only *described* in the `action.yml` prose. Every

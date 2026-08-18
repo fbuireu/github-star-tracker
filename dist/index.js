@@ -43443,7 +43443,6 @@ function generateMarkdownReport({ model, config }) {
     ""
   ];
   const comparison = model.isFirstRun ? [] : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ""];
-  const topRepos = model.topRepos;
   const hasComparisonChart = model.showComparisonChart;
   const individualRepoCharts = model.perRepoCharts.flatMap((repo) => [
     `#### ${repoChartHeading2({ repo, t })}`,

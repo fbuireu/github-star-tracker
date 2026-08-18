@@ -1,4 +1,5 @@
 import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as core from '@actions/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { execute } from './commands';
@@ -110,13 +111,16 @@ describe('initializeDataBranch', () => {
 
     initializeDataBranch({ dataBranch: BRANCH });
 
-    const orphanCheckout = vi
+    const inWorktree = vi
       .mocked(execute)
-      .mock.calls.find(([params]) => params.args[0] === 'checkout');
+      .mock.calls.map(([params]) => params)
+      .filter((params) => params.options !== undefined);
 
-    expect(orphanCheckout?.[0].options).toEqual(
-      expect.objectContaining({ cwd: expect.any(String) }),
-    );
+    expect(inWorktree.map((params) => params.args[0])).toEqual(['checkout', 'rm', 'commit']);
+
+    for (const params of inWorktree) {
+      expect(params.options).toEqual({ cwd: path.resolve(DATA_DIR) });
+    }
   });
 
   it('carries on when the new orphan branch has nothing to clear', () => {

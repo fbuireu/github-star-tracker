@@ -50,7 +50,6 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
     ? []
     : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ''];
 
-  const topRepos = model.topRepos;
   const hasComparisonChart = model.showComparisonChart;
 
   const individualRepoCharts = model.perRepoCharts.flatMap((repo) => [

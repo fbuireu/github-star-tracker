@@ -37,3 +37,10 @@ jobs:
           fail_ci_if_error: false
       - name: Build
         run: pnpm run build
+
+      - name: Verify dist is in sync with src
+        run: |
+          if ! git diff --exit-code -- dist/; then
+            echo "::error::dist/ does not match src/. Run 'pnpm build' and commit the result — action.yml executes dist/index.js, so a source change is not shipped until it is rebuilt."
+            exit 1
+          fi
