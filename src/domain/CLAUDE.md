@@ -161,7 +161,14 @@ Charts are rebuilt from raw stargazer timestamps rather than from stored snapsho
 
 ## Stargazer diffing
 
-`buildStargazerMap` carries a sampled or `incomplete` repo's previous logins forward instead of dropping
+`incomplete` means **"this list is not the whole story"**, not "this list is empty". It covers a fetch that
+returned nothing *and* one that was cut short mid-pagination — the latter used to be flagged only by
+`coveredStars`, which neither guard consulted, so a repo whose fetch died on page 6 of 15 overwrote its
+stored entry with the 500 oldest logins and reported the other 1,000 as new on the next successful Run.
+`@infrastructure` sets it; nothing here recomputes it.
+
+`buildStargazerMap` seeds from the previous map, so a sampled or `incomplete` repo keeps its previous logins
+instead of dropping
 them, so a failed fetch cannot wipe an entry and fabricate a spike next run
 ([ADR 0012](../../docs/adr/0012-unreadable-stargazer-lists-keep-their-previous-logins.md)). The matching
 exclusion in `diffStargazers` — a sampled repo is never diffed, because absence from a sample is not

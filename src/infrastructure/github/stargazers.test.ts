@@ -122,6 +122,7 @@ describe('fetchAllStargazers', () => {
 
     expect(result[0].stargazers).toHaveLength(100);
     expect(result[0].coveredStars).toBe(100);
+    expect(result[0].incomplete).toBe(true);
     expect(core.warning).toHaveBeenCalledWith(
       expect.stringContaining('Stopped fetching stargazers for user/repo-a at page 2 (HTTP 403)'),
     );

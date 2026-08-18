@@ -41071,12 +41071,13 @@ async function fetchAllStargazers({
         maxPages: config.smartSamplingPages
       }) : await fetchRepoStargazers({ octokit, owner: repo.owner, name: repo.name });
       warnWhenHistoryIsUnreconstructable({ repo, stargazers });
+      const truncated = !sampledRepo && covered !== void 0;
       results.push({
         repoFullName: repo.fullName,
         stargazers,
         sampled: sampledRepo,
         coveredStars: covered,
-        incomplete: repo.stars > 0 && stargazers.length === 0
+        incomplete: truncated || repo.stars > 0 && stargazers.length === 0
       });
       if (sampledRepo) sampled.push(repo.fullName);
     } catch (error2) {

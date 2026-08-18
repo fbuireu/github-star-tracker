@@ -199,4 +199,20 @@ describe('buildStargazerMap', () => {
 
     expect(map['user/dropped-below-min-stars']).toEqual(['defunkt']);
   });
+
+  it('keeps the stored logins when a fetch was truncated, not the partial list', () => {
+    const repoStargazers: RepoStargazers[] = [
+      {
+        repoFullName: 'user/big',
+        stargazers: [makeStar('oldest-1'), makeStar('oldest-2')],
+        incomplete: true,
+        coveredStars: 2,
+      },
+    ];
+    const previousMap = { 'user/big': ['oldest-1', 'oldest-2', 'newer-3', 'newer-4'] };
+
+    const map = buildStargazerMap({ repoStargazers, previousMap });
+
+    expect(map['user/big']).toEqual(['oldest-1', 'oldest-2', 'newer-3', 'newer-4']);
+  });
 });
