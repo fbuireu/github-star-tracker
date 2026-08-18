@@ -124,7 +124,7 @@ predicted(week) = lastValue + avgWeightedDelta * week
 
 Both methods clamp predictions to non-negative integers via `Math.max(0, Math.round(...))` to avoid nonsensical outputs (e.g., -3 stars).
 
-Forecasts require a minimum of **3 points** in the series they are fitted to (`MIN_SNAPSHOTS_FOR_FORECAST = 3`) and project **4 weeks ahead** (`FORECAST_WEEKS = 4`). That series is the *reconstructed* history when charts are on, which already has ~30 points on the first run — so the three-snapshot floor only bites when `include-charts` is off and the stored per-run history is all there is. These thresholds are intentionally conservative - with fewer data points, any extrapolation would be unreliable.
+Forecasts require a minimum of **3 points** in the series they are fitted to (`MIN_SNAPSHOTS_FOR_FORECAST = 3`) and project **4 weeks ahead** (`FORECAST_WEEKS = 4`). That series is the *reconstructed* history when charts are on, which already has ~30 points on the first run — so the three-snapshot floor bites only when the reconstruction is unavailable — `include-charts` off, or no reachable `starred_at` dates — and the stored per-run history is all there is. These thresholds are intentionally conservative - with fewer data points, any extrapolation would be unreliable.
 
 ### Interpretation guide
 
@@ -145,7 +145,7 @@ By default the SVG charts adapt to the viewer's color scheme using `@media (pref
 
 ### What adapts
 
-Chrome elements - background, title, legend text, axis labels, grid lines, and axis strokes - switch between a light palette and a dark palette (GitHub dark theme values). The primary line keeps [`chart-line-color`](Configuration#chart-line-color) and the ten comparison colors are fixed, but the palette-derived series **do** change: the trend line (`#6a737d` -> `#8b949e`) and the two forecast series (`#28a745` -> `#3fb950`, `#d73a49` -> `#f85149`) are brightened for dark backgrounds.
+Chrome elements - background, title, legend text, axis labels, grid lines, and axis strokes - switch between a light palette and a dark palette (GitHub dark theme values). Data colors do **not** switch with the media query: series strokes are written as inline attributes resolved once, and `auto` resolves them from the light palette. Forcing [`chart-theme: dark`](Configuration#chart-theme) does change them — the trend line (`#6a737d` -> `#8b949e`) and the two forecast series (`#28a745` -> `#3fb950`, `#d73a49` -> `#f85149`) are brightened — but under the default `auto` a dark-mode reader gets dark chrome around light-palette data.
 
 | Element | Light | Dark |
 |:--------|:------|:-----|

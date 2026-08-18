@@ -4,7 +4,8 @@ Date: 2026-07-26
 
 ## Status
 
-Accepted.
+Accepted. Amends [ADR 0008](./0008-sampled-repositories-are-excluded-from-stargazer-diffing.md), which had a
+Sampled Repository contribute nothing to the remembered Stargazer set; it now keeps its previous logins..
 
 ## Context
 

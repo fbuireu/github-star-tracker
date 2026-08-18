@@ -50,8 +50,9 @@ The two policies stay different, and each stays inside the module whose figure d
 only. `computeVelocity` keeps building its own points, dropping unparseable Snapshots and returning `null`
 when the newest one fails.
 
-What `growth.ts` owns is the rate arithmetic, and only one piece of it is reached by both: Velocity imports
-`latestRateInterval`, which carries the Rate Interval minimum, and nothing else. `weightedDailyRate` and
+What `growth.ts` owns is the rate arithmetic, and only one function of it is reached by both: Velocity imports
+`latestRateInterval`, which applies the Rate Interval minimum, plus the `SeriesPoint` type it builds its own
+points with. `weightedDailyRate` and
 `fitTrend` are Forecast's alone, and `calendarDays` is the day-axis policy this ADR is about. What the module
 does **not** own is "how a History becomes a day axis", because that is not one question.
 

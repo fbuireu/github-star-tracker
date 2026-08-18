@@ -229,7 +229,7 @@ are hand-rendered; the email charts are QuickChart images, and some options cann
 | `chart-max-points` | Yes | **No** — email is always 30 points |
 | `chart-animation` | Yes | **No** — a PNG cannot animate |
 | `chart-y-axis-side` | Yes | **No** |
-| `chart-theme` | Yes | **No** — the email follows `email-theme` |
+| `chart-theme` | Yes | Indirectly — the email follows `email-theme`, which defaults to `auto`, meaning "same as `chart-theme`" |
 | `email-theme` | — | Yes |
 
 ```yaml

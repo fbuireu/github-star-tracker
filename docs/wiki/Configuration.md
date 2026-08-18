@@ -79,8 +79,10 @@ Action Inputs  >  Config File (YAML)  >  Built-in Defaults
 
 Action inputs always win. Missing values fall through to the config file, then to defaults.
 
-One key sits outside this: [`send-on-no-changes`](#send-on-no-changes) is **input-only**. It is the single
-input with no config-file counterpart, so `send_on_no_changes` in `star-tracker.yml` is read by nothing.
+One tracking option sits outside this: [`send-on-no-changes`](#send-on-no-changes) is **input-only**, so
+`send_on_no_changes` in `star-tracker.yml` is read by nothing. The credentials and plumbing inputs —
+`github-token`, `github-api-url`, `config-path` and every `smtp-*` / `email-*` input — are workflow-only too,
+by design: secrets do not belong in a committed file.
 
 **Example:**
 
@@ -824,7 +826,7 @@ How [`notification-threshold`](#notification-threshold) measures the accumulated
 | `net` | The absolute value of the change in total stars since the last notification. Gains and losses across repos cancel out, and a large **drop** also reaches the threshold |
 | `gains` | Only upward movement counts. The threshold is reached when the total has risen by at least N since the last notification; a drop never triggers a notification |
 
-Both modes measure against `starsAtLastNotification`, which is only updated when a notification is actually **delivered**, so the counter accumulates across runs instead of resetting on every run. A send that was due but failed leaves it alone, so nothing is lost. `notification-threshold: '0'` still means "notify on every run that has changes", regardless of mode.
+Both modes measure against `starsAtLastNotification`, which only resets when the threshold trips — and not even then if a configured email failed to send, which leaves the counter alone so the change is not lost. With no SMTP configured at all the `should-notify` output *is* the notification, so the counter still resets. The result is that it accumulates across runs instead of resetting on every run. `notification-threshold: '0'` still means "notify on every run that has changes", regardless of mode.
 
 ```yaml
 with:
@@ -860,7 +862,7 @@ Star change threshold before sending a notification.
 | 201 – 500 | 10 stars |
 | 501+ | 20 stars |
 
-The threshold is **cumulative, not per-run**. It is measured against `starsAtLastNotification`, persisted in `stars-data.json` on the data branch and updated **only when a notification is actually delivered** — a due notification whose SMTP send failed leaves it untouched, so the accumulated change is not lost. Runs that do not notify leave that baseline untouched, so the accumulated change keeps growing across runs until it trips the threshold. How that accumulated change is measured is controlled by [`notification-mode`](#notification-mode).
+The threshold is **cumulative, not per-run**. It is measured against `starsAtLastNotification`, persisted in `stars-data.json` on the data branch. It **only resets when the threshold trips — and not even then if a configured email failed to send, which leaves the counter alone so the change is not lost**. With no SMTP transport configured the `should-notify` output is itself the notification, so the counter resets there too. Runs that do not notify leave that baseline untouched, so the accumulated change keeps growing across runs until it trips the threshold. How that accumulated change is measured is controlled by [`notification-mode`](#notification-mode).
 
 > [!NOTE]
 > The baseline advances only when the notification was actually delivered. If an SMTP send fails the action logs a warning, leaves the baseline untouched and keeps accumulating, so the change is not lost. When no SMTP transport is configured the `should-notify` output is the notification, so the baseline advances as soon as the threshold trips.
@@ -958,8 +960,8 @@ The action validates inputs at startup:
 - `visibility` is one of: `all`, `public`, `private`, `owned`
 - `locale` is one of: `en`, `es`, `ca`, `it` (falls back to `en` with a warning if invalid)
 - `visibility` and `data-branch` are the only inputs whose invalid values fail the run; a missing `github-token` fails it too. Every other invalid value falls back rather than failing, including non-positive `max-history`, `top-repos` and `smart-sampling-pages`, and negative `min-stars`, `smart-sampling-threshold` and `chart-max-points`
-- **An invalid value falls to the next layer, not straight to the default.** An unusable *action input* is discarded and the config file is consulted next, so `max-history: 'abc'` in the workflow with `max_history: 104` in the file yields 104, not 52
-- **Only the enum keys warn about a bad config-file value.** `visibility`, `locale`, `compare-against`, `notification-mode`, `chart-curve`, `chart-range`, `chart-theme`, `email-theme` and `chart-y-axis-side` are checked whichever layer they came from; every other key warns only about a bad *input*, so `min_stars: "abc"` in the YAML falls back silently. `send-on-no-changes` never warns at all
+- **For most keys an invalid input falls to the *next layer*, not straight to the default.** `max-history: 'abc'` in the workflow with `max_history: 104` in the file yields 104, not 52. The enum keys behave differently: a non-empty but unrecognised value goes straight to the default and the config file is never consulted, and `chart-custom-milestones` is the same
+- **Only the enum keys warn about a bad config-file value.** `locale`, `compare-against`, `notification-mode`, `chart-curve`, `chart-range`, `chart-theme`, `email-theme` and `chart-y-axis-side` are checked whichever layer the value came from; every other key warns only about a bad *input*, so `min_stars: "abc"` in the YAML falls back silently. `send-on-no-changes` never warns at all. `visibility` does not warn either — it **throws**
 
 ---
 

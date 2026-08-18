@@ -213,7 +213,7 @@ Or use `notification-threshold` with the built-in email to control frequency.
 
 A daily schedule with a condition like `if: steps.tracker.outputs.new-stars >= 10` emails you on almost every run, because `new-stars` is a **per-run** figure measured against the comparison baseline - it does not accumulate, and it does not know whether an email was already sent. Raising that number does not help either: it then requires that many stars within a single run, so it almost never fires.
 
-**Fix:** gate on `should-notify`, which accumulates across runs and only resets when a notification is actually delivered:
+**Fix:** gate on `should-notify`, which accumulates across runs and only resets when the threshold trips — and not even then if a configured email failed to send, which leaves the counter alone so the change is not lost:
 
 ```yaml
 - name: Track stars

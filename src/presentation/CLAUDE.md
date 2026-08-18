@@ -118,8 +118,9 @@ its spec — assert a section rule there, not through one dialect's markup.
   `!== null`), `showComparisonChart`, `topRepos`, `isFirstRun`, the Velocity figures and the three-way
   Stargazer outcome. A dialect that recomputes any of these has reintroduced the drift this module exists to
   stop.
-- **There is no `hasChartHistory`.** It was `chartHistory !== null` by construction and both were public, so
-  the two dialects picked different ones and expressed the same rule two ways. Likewise
+- **`ReportModel` no longer exposes `hasChartHistory`.** It was `chartHistory !== null` by construction and
+  both were public, so the two dialects picked different ones and expressed the same rule two ways. The name
+  survives as a local in `report-model.ts` and `markdown.ts`; what went is the second *public* field. Likewise
   `showComparisonChart` is the model's answer to "is there a comparison Chart", which both dialects used to
   compute themselves from `chartHistory` and `topRepos.length`. In `html.ts` a `chartHistory !== null &&`
   still sits beside it — that is TypeScript narrowing, not the rule.

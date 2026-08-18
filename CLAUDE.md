@@ -86,7 +86,7 @@ alias (`"@i18n": ["./src/i18n/index.ts"]`), not a glob: `@i18n/types` does not r
 | [`src/domain/`](./src/domain/CLAUDE.md) | Comparison semantics, snapshots, forecast/velocity maths, star-history |
 | [`src/i18n/`](./src/i18n/CLAUDE.md) | Bundles, placeholder rules, adding a locale |
 | [`src/infrastructure/`](./src/infrastructure/CLAUDE.md) | The four adapters: octokit, git worktree, persistence, SMTP |
-| [`src/presentation/`](./src/presentation/CLAUDE.md) | Renderers, the chart quartet, escaping rules |
+| [`src/presentation/`](./src/presentation/CLAUDE.md) | Renderers, the chart quartet, escaping and injection rules |
 | [`src/shared/`](./src/shared/CLAUDE.md) | Fixture factories and why this folder stays almost empty |
 
 ## Conventions

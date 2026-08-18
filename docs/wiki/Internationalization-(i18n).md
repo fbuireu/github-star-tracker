@@ -40,7 +40,7 @@ locale: es
 | **Markdown report** | Section titles, summary labels, trend indicators, footer |
 | **HTML email** | Same as Markdown, plus subject line |
 | **SVG badge** | Label text (`Total Stars` / `Estrellas Totales` / ...) |
-| **Charts** | Axis date labels (formatted via locale-aware `Date.toLocaleDateString`), plus the compact star counts on the Y axis and on milestone lines — on the SVG charts and the email ones alike |
+| **Charts** | Axis date labels (locale-aware `Date.toLocaleDateString`) and milestone labels, on the SVG charts and the email ones alike. The compact Y-axis counts are SVG-only: the email charts let Chart.js draw its own ticks |
 | **Forecast tables** | Method names, week labels, section titles |
 | **Stargazer section** | Section title, count text, "starred on" dates |
 | **Email subject** | Auto-generated localized subject line |

@@ -6,8 +6,9 @@ Date: 2026-07-26
 
 Accepted. Its "the two renderers are independent" consequence was narrowed by
 [ADR 0014](./0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md): both now read one `ChartSpec`, so
-they can no longer drift on a Chart's *content* — only on its appearance, which is what this decision is
-about.
+neither can re-derive the window, colours, labels, titles or Milestones. They still differ where
+[ADR 0010](./0010-quickchart-renders-the-email-charts.md) says they must — the point cap and the curve modes —
+and on appearance, which is what this decision is about.
 
 ## Context
 

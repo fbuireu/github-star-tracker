@@ -188,7 +188,9 @@ copying that file. The shape the docs test asserts is spelled out in
 [CLAUDE.md's maintenance contract](./CLAUDE.md#maintenance-contract).
 
 **The per-layer guides and what each covers are the table in [CLAUDE.md](./CLAUDE.md#structure--aliases)** —
-that file is loaded into every agent session, so the list lives there and is not repeated here.
+that file is loaded into every agent session, so the list lives there and is not repeated here. Root
+[`CLAUDE.md`](./CLAUDE.md) itself is the ninth document: commands, alias wiring, conventions and the
+maintenance contract.
 
 One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/tests` are sections inside their parent's guide rather than files of their own, because a guide in a subdirectory only reaches the agent once it reads a file in that exact folder.
 

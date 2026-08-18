@@ -224,7 +224,7 @@ Email once per 500 stars gained, not once per day. `notification-threshold` accu
 Use `should-notify`, not `new-stars`. They answer different questions:
 
 - **`new-stars` / `lost-stars`** - per-run figures measured against the comparison baseline. They are not cumulative and carry no memory of whether an email was sent. On a daily cron with `compare-against: 'last-run'` they mean "gained in the last 24 hours".
-- **`should-notify`** - the cumulative one. Driven by `notification-threshold` plus `notification-mode` against `starsAtLastNotification`, which is only updated when a notification is actually delivered, so the counter keeps accumulating across runs until it trips. It also requires that something actually changed.
+- **`should-notify`** - the cumulative one. Driven by `notification-threshold` plus `notification-mode` against `starsAtLastNotification`, which only resets when the threshold trips — and not even then if a configured email failed to send, which leaves the counter alone so the change is not lost, so the counter keeps accumulating across runs until it trips. It also requires that something actually changed.
 
 `if: steps.tracker.outputs.new-stars >= 500` would demand 500 stars inside a single run and would almost never fire on a daily schedule.
 

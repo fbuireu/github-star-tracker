@@ -4,7 +4,9 @@ Date: 2026-08-14
 
 ## Status
 
-Accepted
+Accepted. Narrows the "the two renderers are independent" consequence of
+[ADR 0006](./0006-hand-rendered-svg-charts.md) and
+[ADR 0010](./0010-quickchart-renders-the-email-charts.md): a Chart's content is now decided once for both.
 
 ## Context
 
