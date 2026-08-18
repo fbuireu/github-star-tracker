@@ -300,6 +300,11 @@ To compute the diff between runs (who is new since last time), the action needs 
 - **Data branch isolation**: Stargazer data is stored on a separate `star-tracker-data` branch, not on `main`. This keeps the main branch clean.
 - **Opt-in only**: `track-stargazers` defaults to `false`. Users must explicitly enable it.
 - **No new exposure for you**: the action stores the same information you can already see as the repository's admin. Note that since GitHub's [2026 API restrictions](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/), stargazer lists are no longer publicly accessible (only admins and collaborators can list them), so publishing `stargazers.json` on a public data branch does re-expose those login names. Keep the data branch in a private repository or leave `track-stargazers` disabled if that is a concern.
+- **Entries are never pruned**: once a repository has an entry, it keeps it even after the repository leaves
+  the tracked set — a `min-stars` boundary, an edited filter, a spell archived. That is deliberate: a
+  repository that drops out for one run and returns would otherwise have every existing stargazer reported as
+  new. It does mean untracking a repository does not withdraw its published logins; removing them is a manual
+  edit of `stargazers.json` on the data branch.
 
 ---
 

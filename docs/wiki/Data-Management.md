@@ -115,6 +115,10 @@ When `track-stargazers: true`, the action maintains a separate `stargazers.json`
 
 This stores only login names (not avatars or dates) for efficient diffing between runs. Full stargazer details (avatar, profile URL, starred date) are only shown in reports.
 
+Entries are added and overwritten, never removed. A repository that leaves the tracked set keeps its entry,
+so returning does not report its existing stargazers as new; the file therefore grows with the number of
+repositories ever tracked.
+
 A repository whose stargazers could not be read — a failed request, an empty response for a repo that has
 stars, or a repo covered by `smart-sampling` — **keeps its previous login list** rather than being written
 as empty. Without that, one transient failure would wipe the entry and the next successful run would report

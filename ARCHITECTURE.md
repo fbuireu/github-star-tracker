@@ -183,6 +183,7 @@ Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain gl
 | [0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md) | The Report renderers read `Config` themselves |
 | [0017](./docs/adr/0017-velocity-and-forecast-read-unparseable-timestamps-differently.md) | Velocity and Forecast read unparseable timestamps differently |
 | [0018](./docs/adr/0018-loadconfig-reads-the-ambient-action-inputs.md) | `loadConfig` reads the ambient action inputs |
+| [0019](./docs/adr/0019-the-stargazer-map-retains-untracked-repositories.md) | The Stargazer map retains repositories that leave the Tracked Set |
 
 Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md), and a new ADR starts by
 copying that file. The shape the docs test asserts is spelled out in

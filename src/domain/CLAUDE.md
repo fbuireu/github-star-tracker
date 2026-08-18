@@ -167,8 +167,11 @@ returned nothing *and* one that was cut short mid-pagination — the latter used
 stored entry with the 500 oldest logins and reported the other 1,000 as new on the next successful Run.
 `@infrastructure` sets it; nothing here recomputes it.
 
-`buildStargazerMap` seeds from the previous map, so a sampled or `incomplete` repo keeps its previous logins
-instead of dropping
+`buildStargazerMap` seeds from the previous map, so a repository that was not observed at all — one that fell
+out of the Tracked Set — keeps its entry too, and nothing prunes the file.
+[ADR 0019](../../docs/adr/0019-the-stargazer-map-retains-untracked-repositories.md) records that trade-off and
+why a grace period is not available. The seed is also what makes a sampled or `incomplete` repo keep its
+previous logins instead of dropping
 them, so a failed fetch cannot wipe an entry and fabricate a spike next run
 ([ADR 0012](../../docs/adr/0012-unreadable-stargazer-lists-keep-their-previous-logins.md)). The matching
 exclusion in `diffStargazers` — a sampled repo is never diffed, because absence from a sample is not
