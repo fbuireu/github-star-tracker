@@ -59,7 +59,8 @@ More granular control, required expiration, better for team environments.
    - **Resource owner:** your account
    - **Repository access:** `All repositories`
    - **Permissions > Repository permissions:**
-     - `Metadata`: **Read-only** (minimum required)
+     - `Contents`: **Read and write** - required. The action commits the report, data, badge and charts to the data branch, and it pushes with *this* token, not with the workflow's `GITHUB_TOKEN`. A token without it fails at the push
+     - `Metadata`: **Read-only** - mandatory, GitHub selects it automatically alongside `Contents`
 4. Click **"Generate token"**
 5. **Copy the token immediately** - it starts with `github_pat_`
 
@@ -75,9 +76,12 @@ Same as Classic Token - see Step 2 above.
 |---|---|---|
 | `repo` | Classic | All repos (private + public) |
 | `public_repo` | Classic | Public repos only |
-| `Metadata: Read-only` | Fine-grained | Depends on repository access selection |
+| `Contents: Read and write` | Fine-grained | Read repositories and push to the data branch |
+| `Metadata: Read-only` | Fine-grained | Mandatory companion to any repository permission |
 
 > **Minimum scope:** if you only need to track public repositories, `public_repo` (classic) is sufficient.
+>
+> **A read-only run needs less.** With [`read-only: true`](Configuration#read-only) the action never pushes, so `Contents: Read-only` is enough for a fine-grained token.
 
 ---
 
@@ -98,6 +102,8 @@ Same as Classic Token - see Step 2 above.
 | `Bad credentials` | Token expired or revoked | Generate a new token and update the secret |
 | `Resource not accessible by integration` | Using `GITHUB_TOKEN` instead of PAT | Create a PAT with proper scope |
 | `Not Found` for private repos | Token has `public_repo` but not `repo` scope | Edit token to add `repo` scope |
+| Push rejected with `403` on a fine-grained token | Token lacks `Contents: Read and write` | Edit the token's repository permissions and re-run |
+| Charts and stargazer sections empty on a fine-grained token | The stargazer endpoint answers only to repository admins and collaborators, and a fine-grained token without an explicit grant on the owning organization is neither | Use a classic token, or grant the organization explicitly. Star counts, reports and badges are unaffected ([ADR 0002](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0002-require-a-personal-access-token.md)) |
 | `Bad credentials` after copy/paste | Extra whitespace in secret value | Re-copy the token carefully, trim whitespace |
 
 ---
