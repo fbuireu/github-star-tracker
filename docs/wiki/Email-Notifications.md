@@ -86,7 +86,7 @@ jobs:
 
 ### With Notification Threshold
 
-Only send email when accumulated changes reach a threshold. `should-notify` accumulates across runs — see **[Notification Threshold](#notification-threshold)** below for the details and for `notification-mode`:
+Only send email when accumulated changes reach a threshold. `should-notify` accumulates across runs; see **[Notification Threshold](#notification-threshold)** below for the details and for `notification-mode`:
 
 ```yaml
 - name: Track stars
@@ -133,10 +133,38 @@ Use the action's integrated email functionality by providing SMTP inputs.
 
 ### Behavior
 
+- `smtp-host` is the master switch. Leave it unset and no other SMTP input is even read
 - Email is sent when `stars-changed == true` AND the notification threshold is reached
 - If `send-on-no-changes: true`, email is sent even with no star changes
-- Email failures are **non-fatal** - the action logs a warning and completes successfully
+- Email failures are **non-fatal**: the action logs a warning and completes successfully
 - Subject line is auto-generated and localized
+- `smtp-port` decides the transport security on its own. Port `465` means implicit SSL, anything else means
+  STARTTLS. There is no `smtp-secure` input
+- Authentication is all-or-nothing: credentials are sent only when `smtp-username` **and** `smtp-password`
+  are both present
+
+### What the sender address ends up as
+
+`email-from` is not always the address the recipient sees. Resolution runs in this order:
+
+1. `email-from` contains an `@`, so it is used verbatim
+2. Otherwise, if `smtp-username` contains an `@`, the two are combined into `Display Name <user@host>`
+3. Otherwise the bare `email-from` is used as a display name with no address behind it
+
+Case 3 is the one that surprises people: with `email-from: 'Star Tracker'` and an `smtp-username` that is not
+an email address, the message goes out with no real sender address and the run log shows a `@localhost`
+message ID. Set `email-from` to a real address, or use one as `smtp-username`.
+
+### Log lines worth knowing
+
+| Line | Level | Means |
+|---|---|---|
+| `Invalid smtp-port "<value>". Falling back to 587.` | warning | The port was not an integer in `1..65535`. The run continues on 587, which is STARTTLS, so a `465` typo silently changes the transport |
+| `SMTP configured but no email-to address provided, skipping email` | warning | Nothing was sent, and this counts as a **failed** delivery, so the notification baseline is held back |
+| `Email rejected for: <addresses>` | warning | The server accepted the message but refused those recipients. The run still reports the send as successful, so this is the usual answer to "the log says sent but it never arrived" |
+| `Email sent to <address> (message ID: ...)` | info | Delivered. The address shown is `email-to`, not the message ID's domain |
+| `Notification threshold not reached, skipping email` | info | SMTP is configured and stars moved, but the accumulated change has not tripped the threshold yet |
+| `No stars changed since the baseline, skipping email` | info | SMTP is configured and nothing moved |
 
 ### Notification Threshold
 
@@ -149,9 +177,26 @@ with:
   # 'auto' - adaptive, based on total stars
 ```
 
-The threshold is measured against `starsAtLastNotification`, a value persisted in `stars-data.json` on the data branch that is **only** updated when a notification is actually delivered — a failed SMTP send, or an `smtp-host` set with an empty `email-to`, leaves it untouched so the accumulated change is not lost. When no SMTP transport is configured at all, the `should-notify` output *is* the notification, so the baseline advances as soon as the threshold trips. The `notification-sent` output reports which of those happened. Runs that do not notify leave it untouched, so the accumulated change keeps growing across runs until it trips the threshold. This is what makes `should-notify` the cumulative output, unlike `new-stars` and `lost-stars`, which are per-run figures measured against the comparison baseline.
+**What the counter is.** The threshold is measured against `starsAtLastNotification`, a single number
+persisted in `stars-data.json` on the data branch: the star total as of the last time the notification
+baseline advanced. The accumulated change is today's total minus that number, not the change since the last
+run.
 
-The ordering is deliberate — the send happens before the baseline is persisted, which trades a possible duplicate email for never losing accumulated change: [ADR 0011](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md).
+**When it advances.** A run that decides to notify moves it up to the current total, *unless* a configured
+send failed. A failed SMTP send, or an `smtp-host` set with an empty `email-to`, leaves it where it was so
+the accumulated change is not lost and the next run tries again with a larger figure.
+
+**When there is no SMTP at all.** With no transport configured the `should-notify` output *is* the
+notification, so the baseline advances as soon as the threshold trips. Otherwise a workflow gating an
+external mailer on `should-notify` would see it stay `true` forever. The `notification-sent` output is what
+tells the two situations apart: it is `true` only when an email actually left the runner.
+
+**Why `should-notify` is cumulative.** Runs that do not notify never touch the counter, so the accumulated
+change keeps growing until it trips. That is the difference from `new-stars` and `lost-stars`, which are
+per-run figures measured against the comparison baseline and reset every run by construction.
+
+The send happens **before** the baseline is persisted, deliberately: it trades a possible duplicate email
+for never losing accumulated change ([ADR 0011](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md)).
 
 #### Notification Mode
 
@@ -279,7 +324,7 @@ smtp-password: ${{ secrets.SENDGRID_API_KEY }}
 ### Weekly Digest
 
 > [!IMPORTANT]
-> A weekly cron alone does **not** make the report cover a week. With the default `compare-against: 'last-run'` the report compares the current counts against the previous stored snapshot, so a weekly workflow that shares a data branch with a daily one produces a Monday email covering only what changed since Sunday. Use `compare-against: '7d'` to pin the baseline to a snapshot at least seven days old, whatever the run cadence.
+> A weekly cron alone does **not** make the report cover a week. With the default `compare-against: 'last-run'` the report compares the current counts against the most recent stored snapshot, so a weekly workflow that shares a data branch with a daily one produces a Monday email covering only what changed since Sunday. Use `compare-against: '7d'` to pin the baseline to a snapshot at least seven days old, whatever the run cadence.
 >
 > Pair it with `read-only: true`. This workflow reads the same `star-tracker-data` branch that your tracking workflow maintains, and without `read-only` it would append its own snapshot to that branch and could race the run that writes it. A read-only run still builds the report, sets every output and sends the email - it just never commits or pushes.
 >
@@ -324,7 +369,11 @@ jobs:
           html_body_file: ${{ steps.tracker.outputs.report-html-path }}
 ```
 
-`compare-against` accepts `last-run` (default), `24h`, `7d` and `30d`. The time-based values pick the most recent stored snapshot that is at least that old, which is what makes a genuine daily, weekly or monthly digest possible even when the tracker runs more frequently. It sets the baseline for `new-stars`, `lost-stars` and `stars-changed`, for the total delta and for the "Compared to snapshot from ..." line in the report. If the stored history is shorter than the requested window, the oldest snapshot available is used instead, so the period covered is shorter than requested and the report's "Compared to" date shows how far back it really goes. On the very first run there is no history and therefore no baseline, exactly as before. Every run still appends its own snapshot, and the charts, forecast and velocity sections are unaffected.
+What `compare-against` does to the figures in that digest, including what happens when the stored history is
+shorter than the window you asked for, is in
+**[Configuration > compare-against](Configuration#compare-against)**. The part that matters for a mailer is
+that it moves the baseline behind `new-stars`, `lost-stars` and `stars-changed`, so a subject line built from
+those covers the window you chose rather than the last run.
 
 #### Fully Independent Weekly Digest
 
@@ -389,8 +438,8 @@ When `include-charts: true`, the HTML email includes chart images via QuickChart
 ### Limitations
 
 - Some email clients block external images by default (user must click "Show images")
-- Maximum 30 data points per chart (email charts ignore `chart-max-points` above 30)
-- QuickChart cannot draw every [`chart-curve`](Configuration#chart-curve) natively: `monotone` is exact, `rounded-step` falls back to `monotone`, and `catmull-rom` and `cubic-bezier` both render as a tensioned spline. The SVG charts on the data branch always use the exact curve.
+- Maximum 30 points per chart (email charts ignore `chart-max-points` above 30)
+- QuickChart cannot draw every [`chart-curve`](Configuration#chart-curve) natively, so some curves are approximated; **[Star Trend Charts](Star-Trend-Charts#curve-fidelity)** lists which
 - If QuickChart.io is unreachable, charts appear as broken images; report text is unaffected
 - A PNG carries its background as pixels, so the email charts cannot follow the reader's `prefers-color-scheme` the way the SVG charts do. Use [`email-theme`](Configuration#email-theme) to pick the palette baked into them
 
@@ -398,9 +447,9 @@ When `include-charts: true`, the HTML email includes chart images via QuickChart
 
 ## Dark Mode
 
-The HTML email and its charts are themed by [`email-theme`](Configuration#email-theme), which defaults to `auto` — meaning "whatever [`chart-theme`](Configuration#chart-theme) is". Under `auto` both resolve to the light palette, because the SVG trick that follows each viewer's system theme (a `prefers-color-scheme` media query inside the file) cannot work here: the email charts are PNG images with the background baked in, and mail clients do not recolour images.
+The HTML email and its charts are themed by [`email-theme`](Configuration#email-theme), which defaults to `auto`, meaning "whatever [`chart-theme`](Configuration#chart-theme) is". Under `auto` both resolve to the light palette, because the SVG trick that follows each viewer's system theme (a `prefers-color-scheme` media query inside the file) cannot work here: the email charts are PNG images with the background baked in, and mail clients do not recolour images.
 
-The visible symptom is a **white rectangle behind every chart** for a recipient reading in dark mode — the client darkened the surrounding HTML and left the images alone. Force the palette to fix it:
+The visible symptom is a **white rectangle behind every chart** for a recipient reading in dark mode: the client darkened the surrounding HTML and left the images alone. Force the palette to fix it:
 
 ```yaml
 with:
@@ -414,7 +463,7 @@ Because the images are rasterised once per run, this is one choice for the whole
 
 ## Localized Subject Lines
 
-The subject is always `<localized subject>: <total stars> (<delta>)` — for example
+The subject is always `<localized subject>: <total stars> (<delta>)`, for example
 `GitHub Star Tracker Report: 523 (+15)`. The per-locale wording is listed once, in
 [Internationalization (i18n)](Internationalization-(i18n)#localized-email-subjects).
 

@@ -4,14 +4,14 @@ Date: 2026-07-26
 
 ## Status
 
-Accepted.
+Accepted
 
 ## Context
 
-The Notification Threshold accumulates against a star total stored on the Data Branch, and that baseline used to move as soon as the threshold was crossed — before the email was handed to the SMTP server. A failed send was logged as a warning and the run continued, so the accumulated change had already been reset and was never retried: with a threshold of 500, one flaky SMTP night silently cost the user the next several weeks of accumulation. Two other orderings were on the table:
+The Notification Threshold accumulates against a star total stored on the Data Branch, and that baseline used to move as soon as the threshold was crossed, before the email was handed to the SMTP server. A failed send was logged as a warning and the run continued, so the accumulated change had already been reset and was never retried: with a threshold of 500, one flaky SMTP night silently cost the user the next several weeks of accumulation. Two other orderings were on the table:
 
-- **Keep persisting first and accept the loss** — the safest ordering for the historical record, and the reason it was written that way. Rejected because the loss is silent, unrecoverable and grows with the threshold: the users who lose the most are the ones who configured the feature most deliberately.
-- **Retry the send** — treats a symptom. The baseline would still be wrong if every retry failed.
+- **Keep persisting first and accept the loss**, the safest ordering for the historical record, and the reason it was written that way. Rejected because the loss is silent, unrecoverable and grows with the threshold: the users who lose the most are the ones who configured the feature most deliberately.
+- **Retry the send**, which treats a symptom. The baseline would still be wrong if every retry failed.
 
 ## Decision
 
@@ -19,8 +19,9 @@ The run sends the notification *before* persisting, and advances the baseline on
 
 ## Consequences
 
-- Notifications can now be **duplicated** rather than lost: if the send succeeds but the subsequent commit or push fails, the next run re-evaluates against the old baseline and notifies again. This is the deliberate trade — a duplicate email is visible and self-correcting, a lost one is neither.
+- Notifications can now be **duplicated** rather than lost: if the send succeeds but the subsequent commit or push fails, the next run re-evaluates against the old baseline and notifies again. This is the deliberate trade: a duplicate email is visible and self-correcting, a lost one is neither.
+- **A failed send warns and the Run continues.** `trackStars` wraps `sendEmail` in `try`/`catch`, logs `Failed to send email: …` through `core.warning`, and records the attempt as a failed Delivery. That policy is what makes this ordering safe: moving the send in front of the write only costs durability if a throw can skip the write, and it cannot. The Report, the Charts and the Snapshot are published either way; only the baseline is withheld.
 - The per-channel definition matters for `should-notify`: gating it on a send that never happened would leave the output stuck true forever after the first trip.
 - A withheld advance covers both an SMTP rejection and the quieter case of `smtp-host` set with an empty `email-to`, where `sendEmail` returns `false` without throwing. Treating a non-null `EmailConfig` as proof that mail went out is the trap this decision exists to avoid.
-- Moving the send before persistence costs nothing in durability: `sendEmail` was already wrapped in `try`/`catch`, so a throw does not skip the write. The only new exposure is a hung SMTP connection, which is bounded by the transport's own timeout.
+- The only new exposure is a hung SMTP connection. Nothing here configures a bound on it: `nodemailer.createTransport` in `src/infrastructure/notification/email.ts` sets `host`, `port`, `secure` and `auth` and no `connectionTimeout`, `greetingTimeout` or `socketTimeout`, so how long a Run can stall waiting on the transport is whatever nodemailer defaults to, plus the workflow's own job timeout above it.
 - **This rule is now executable rather than written down.** `settleNotification` in `@domain/notification` takes the run's `changed` and `thresholdReached` plus one `Delivery` and returns `shouldNotify`, `notificationSent` and `historyToPersist` together, so the baseline can only advance on a decision that held and a delivery that did not fail. `@application` reports what the transport did and reads the outcome; it no longer tracks three booleans across a `try`/`catch`, which is how the `notification-sent` output once came to report `false` after a successful courtesy send.

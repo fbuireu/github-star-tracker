@@ -4,15 +4,17 @@ Date: 2026-07-26
 
 ## Status
 
-Accepted.
+Accepted
 
 ## Context
 
-Stored History only begins on the day a user installs the action, so charts built from it opened as a flat line and stayed nearly empty for weeks — the least impressive possible first impression for a star tracker. The data that would fill them in exists, but only behind the stargazer listing endpoint, which is permission-sensitive, rate-limit-intensive and cannot enumerate past a fixed ceiling.
+Stored History only begins on the day a user installs the action, so charts built from it opened as a flat line and stayed nearly empty for weeks, the least impressive possible first impression for a star tracker. The data that would fill them in exists, but only behind the stargazer listing endpoint, which is permission-sensitive, rate-limit-intensive and cannot enumerate past a fixed ceiling.
 
 ## Decision
 
 Charts are built from a Reconstructed History derived from when each Stargazer actually starred, which yields the repository's full curve on the very first Run. When that source yields too little to work with, charts fall back to the Stored History.
+
+`buildStarHistory` in `src/domain/star-history.ts` does the reconstruction: it buckets every parseable `starredAt` into a fixed number of edges and accumulates. `resolveChartHistories` in `src/presentation/charts.ts` owns the fallback, and it is one rule applied twice: a reconstructed History with fewer than `MIN_SNAPSHOTS_FOR_CHART` snapshots is discarded in favour of the Stored History for the aggregate chart, and yields `null` for a per-repository one.
 
 ## Consequences
 

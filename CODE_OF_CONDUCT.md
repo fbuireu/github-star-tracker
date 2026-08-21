@@ -39,11 +39,11 @@ Examples of unacceptable behavior include:
 
 ## Scope
 
-This Code of Conduct applies within all community spaces of this project —
-[Issues](https://github.com/fbuireu/github-star-tracker/issues),
+This Code of Conduct applies within all community spaces of this project
+([Issues](https://github.com/fbuireu/github-star-tracker/issues),
 [Pull Requests](https://github.com/fbuireu/github-star-tracker/pulls),
 [Discussions](https://github.com/fbuireu/github-star-tracker/discussions),
-and the [Wiki](https://github.com/fbuireu/github-star-tracker/wiki) — and also
+and the [Wiki](https://github.com/fbuireu/github-star-tracker/wiki)), and also
 applies when an individual is officially representing the project in public
 spaces.
 
@@ -53,17 +53,23 @@ Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the maintainer at **fbuireu@gmail.com**. All complaints will be
 reviewed and investigated promptly and fairly.
 
+This is a single-maintainer project, so the person who receives a report is also
+the person who acts on it. If your report concerns the maintainer, or you would
+rather it were not read by him, use GitHub's own
+[abuse reporting](https://github.com/contact/report-abuse) instead; GitHub Staff
+can act on conduct in this repository without going through the maintainer.
+
 - **Acknowledgment**: reports will be acknowledged within 48 hours
 - **Privacy**: the reporter's identity and the details of the report will be
   kept confidential
 
 The maintainer is responsible for clarifying and enforcing these standards, and
 will take appropriate and fair corrective action in response to any behavior
-deemed inappropriate, threatening, offensive, or harmful — from a private
-warning, through temporary restrictions on interaction, up to a permanent ban
-from the project's community spaces for repeated or egregious violations.
+deemed inappropriate, threatening, offensive, or harmful: a private warning,
+temporary restrictions on interaction, or a permanent ban from the project's
+community spaces for repeated or egregious violations.
 
-Security vulnerabilities are not conduct reports — those follow the
+Security vulnerabilities are not conduct reports. Those follow the
 [Security Policy](./SECURITY.md) instead.
 
 ## Attribution
@@ -71,6 +77,12 @@ Security vulnerabilities are not conduct reports — those follow the
 This Code of Conduct is adapted from the [Contributor Covenant][homepage],
 version 2.1, available at
 [https://www.contributor-covenant.org/version/2/1/code_of_conduct.html][v2.1].
+
+The adaptation is not verbatim. Version 2.1 ships a four-tier *Enforcement
+Guidelines* ladder (correction, warning, temporary ban, permanent ban); this
+project condenses it into the single paragraph above, because one maintainer
+applying four documented tiers is ceremony rather than protection. Nothing else
+of substance was removed, and the standards and scope above are the 2.1 text.
 
 For answers to common questions about this code of conduct, see the FAQ at
 [https://www.contributor-covenant.org/faq][FAQ].

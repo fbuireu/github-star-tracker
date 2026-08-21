@@ -2,9 +2,13 @@ GitHub Star Tracker generates animated SVG charts to visualize star growth over 
 
 ---
 
-## Real Star History
+## Reconstructed History
 
-Charts plot the **real historical star curve**. Every star is placed on the date it was actually given (GitHub's `starred_at` timestamp via the `application/vnd.github.star+json` media type), and the cumulative count is reconstructed over real time. The timeline runs from a repo's very first star up to now, regardless of when you started running the action. Per-run snapshots on the data branch are still kept for the report's delta tables and notifications, but the charts no longer depend on them. Why the charts were moved off those snapshots, and what it costs in stargazer API calls, is [ADR 0005](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0005-charts-are-reconstructed-from-stargazer-timestamps.md).
+Charts plot a **Reconstructed History**. Every star is placed on the date it was actually given (GitHub's `starred_at` timestamp via the `application/vnd.github.star+json` media type), and the cumulative count is rebuilt over real time. The timeline runs from a repo's very first star up to now, regardless of when you started running the action. It is rebuilt from scratch on every run and never stored.
+
+The **Stored History** on the data branch is still kept, and still drives the report's delta tables, the notification threshold and the velocity section, but the charts no longer depend on it. Why the charts were moved off it, and what that costs in stargazer API calls, is [ADR 0005](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0005-charts-are-reconstructed-from-stargazer-timestamps.md).
+
+**The Stored History is still the fallback.** A repository whose stargazers cannot be read has no reconstruction, and its chart is drawn from the Stored History instead. That series spans the tracker's own runs rather than the repository's life, which is what a suspiciously short or flat chart usually means.
 
 ---
 
@@ -16,12 +20,12 @@ Charts plot the **real historical star curve**. Every star is placed on the date
 
 Shows the **total star count** across all tracked repositories over time.
 
-- Animated line with smooth monotone cubic curves (configurable via `chart-curve`), anchored to the baseline at the first point (starts from zero, not mid-air)
-- CSS draw-line animation + fade-in data points
+- Animated line with smooth monotone cubic curves (configurable via `chart-curve`), dropped to the chart floor at the first point so the shaded area closes cleanly rather than hanging mid-air. With the default `chart-begin-at-zero: false` that floor is the lowest plotted value, not zero; set `chart-begin-at-zero: true` to make it a true zero baseline
+- CSS draw-line animation + fade-in points
 - Milestone markers at 10, 50, 100, 500, 1K, 5K, 10K, 50K, 100K, 500K, 1M stars (when in range)
 - Compact Y-axis and milestone values (e.g. `50K`) that stay inside the chart bounds
 - X-axis date labels scaled to the time span: years for multi-year histories (e.g. `2023 2024 2025`), day-level labels for shorter ranges
-- Optional **trend line**: when `chart-trend-line` is enabled, a dashed neutral-gray line (`#6a737d`) is overlaid on top of the gold star line. It is a 7-point moving average that smooths week-to-week noise so the underlying growth direction is easier to read. This chart has no legend, so the gray dashed line is the trend line (the solid gold line is the actual star count).
+- Optional **trend line**: when `chart-trend-line` is enabled, a dashed line in the palette's neutral gray is overlaid on top of the star line. It is computed as a 7-point moving average, which smooths week-to-week noise so the underlying growth direction is easier to read; it describes the past only and is a different thing from the forecast. This chart has no legend, so the gray dashed line is the trend line and the solid line is the actual star count.
 
 ![Star History](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/examples/star-history.svg)
 
@@ -31,7 +35,9 @@ Shows the **total star count** across all tracked repositories over time.
 
 Individual star history for each of the top N repositories (configurable via `top-repos`).
 
-Each per-repo chart uses that repository's own timeline, starting at its first star (not the earliest star across all your tracked repos), so a newer repo's chart begins when it actually started getting stars instead of showing a flat line back to your oldest repo.
+Each per-repo chart uses that repository's **own** Reconstructed History, starting at its first star rather than at the earliest star across all your tracked repos, so a newer repo's chart begins when it actually started getting stars instead of showing a flat line back to your oldest repo.
+
+That holds whenever the repository's own reconstruction has at least 2 points. When it does not, because its stargazers could not be read, the chart falls back to the Stored History, which spans the tracker's runs rather than the repository's life. The chart is still drawn; it just no longer means what the paragraph above says.
 
 - Same style as the star history chart
 - One chart per top repo
@@ -56,9 +62,9 @@ Top N repositories overlaid on a single chart for comparison.
 
 **File:** `charts/forecast.svg`
 
-Historical data + projected growth for the next 4 weeks.
+Observed history plus projected growth for the next 4 weeks.
 
-- Solid line for historical data
+- Solid line for the observed history
 - Dashed green line for linear regression forecast
 - Dashed red line for weighted moving average forecast
 - Legend distinguishing methods
@@ -114,14 +120,19 @@ with:
 
 ## Data Requirements
 
-| Chart | Minimum Snapshots | Notes |
+| Chart | Minimum points in the series | Notes |
 |---|---|---|
-| Star History | 2 | Need at least 2 data points |
-| Per-Repo | 2 | Per top N repos |
-| Comparison | 2 | At least 1 repo in top N |
-| Forecast | 3 | Linear regression needs 3+ points |
+| Star History | 2 | |
+| Per-Repo | 2 | One chart per top N repo |
+| Comparison | 2 | Plus at least 1 repo in top N |
+| Forecast | 3 | Linear regression needs 3+ |
 
-Charts are produced on the first run, since the curve is reconstructed from historical star dates (you need at least ~2 stars total for a 2-point line).
+**Those minimums are about points in the series, not about how many stars you have.** The reconstruction is
+drawn as a fixed number of evenly spaced buckets across the span, `chart-max-points` of them (30 by default,
+never fewer than 2), so a **single** stargazer with a readable `starred_at` date already produces a 30-point
+curve on the very first run. What produces no curve at all is having no star event with a usable date
+anywhere in the tracked set: an empty stargazers list, or one the API would not return. In that case the
+chart falls back to the Stored History, which does need two runs before it has two points.
 
 ---
 
@@ -136,9 +147,9 @@ Charts are produced on the first run, since the curve is reconstructed from hist
 ### Colors
 
 **Star history / per-repo:**
-- Line: `#dfb317` (gold) - this is the **default** and can be changed with `chart-line-color` (see [Chart customization](#chart-customization)). It affects the star-history, per-repo and forecast historical series, but not the comparison palette or the forecast trend lines.
-- Fill: 10% opacity gold
-- Trend line (when `chart-trend-line` is enabled): `#6a737d` (neutral gray, dashed) - fixed color, not affected by `chart-line-color`.
+- Line: `#dfb317` (gold) by default, changed with `chart-line-color` (see [Chart customization](#chart-customization)). It sets the star-history series, the per-repo series and the forecast's historical series, and nothing else
+- Fill: the same colour at 10% opacity
+- Trend line (when `chart-trend-line` is enabled): the palette's neutral gray, dashed. `chart-line-color` does not reach it
 
 **Comparison chart palette (up to 10 repos):**
 
@@ -155,24 +166,68 @@ Charts are produced on the first run, since the curve is reconstructed from hist
 | 9 | `#795548` (brown) |
 | 10 | `#00bcd4` (cyan) |
 
+This palette is fixed in both senses: `chart-line-color` does not reach it, and it does not change with `chart-theme`.
+
 **Forecast chart:**
-- Historical: `#dfb317` (gold, solid) - the historical series uses the `chart-line-color` default and respects `chart-line-color`; the trend lines below do not.
-- Linear regression: `#28a745` (green, dashed)
-- Weighted moving average: `#d73a49` (red, dashed)
+- Historical: the `chart-line-color` series, solid
+- Linear regression: the palette's positive green, dashed
+- Weighted moving average: the palette's negative red, dashed
+
+**Three of those series are palette colours, so they move with `chart-theme`.** They are fixed with respect to `chart-line-color`, not with respect to the theme:
+
+| Series | `chart-theme: light` (and `auto`) | `chart-theme: dark` |
+|---|---|---|
+| Trend line (neutral) | `#6a737d` | `#8b949e` |
+| Linear regression (positive) | `#28a745` | `#3fb950` |
+| Weighted moving average (negative) | `#d73a49` | `#f85149` |
+
+### Dark / Light Mode
+
+By default (`chart-theme: auto`) the SVG charts adapt to the viewer's colour scheme through a
+`@media (prefers-color-scheme: dark)` block inside the SVG's own `<style>` element, and no configuration is
+needed. Forcing [`chart-theme`](Configuration#chart-theme) to `light` or `dark` drops the media query and
+bakes one palette in, which is what you want when the chart is embedded somewhere that does not follow the
+reader's system theme.
+
+**What that media query switches is the chrome, not the data.** Background, title, legend text, axis labels,
+grid lines and axis strokes swap; series strokes are written as inline attributes resolved once, and under
+`auto` they resolve from the light palette. So a dark-mode reader of an `auto` chart gets dark chrome around
+light-palette data. Setting `chart-theme: dark` explicitly does recolour the three series in the table above,
+because the palette is then chosen before rendering rather than by the reader's browser.
+
+| Element | Light | Dark |
+|---|---|---|
+| Background | `#fff` | `#0d1117` |
+| Text | `#24292e` | `#e6edf3` |
+| Muted text | `#6a737d` | `#8b949e` |
+| Grid lines | `#eee` | `#21262d` |
+| Axis lines | `#6a737d` | `#8b949e` |
+
+Where the media query reaches:
+
+| Context | Follows the reader's scheme |
+|---|---|
+| GitHub README / Markdown | Yes, GitHub respects `prefers-color-scheme` in inline SVGs |
+| Browser (opening the SVG directly) | Yes |
+| HTML email | No. Gmail strips `<style>` blocks, so set [`email-theme`](Configuration#email-theme) to pick the palette instead |
+| QuickChart PNGs in email | No. The image is rasterised once, on whatever background `email-theme` resolves to |
+
+The badge (`stars-badge.svg`) carries no dark-mode styles at all. It uses a fixed dark label with an
+accent-coloured value, legible on either background.
 
 ### Animations (SVG only)
 
 - **Line draw:** 2-second ease-out animation
-- **Data points:** fade-in with staggered delay
+- **Point markers:** fade in with a staggered delay
 - Animations play when the SVG is first loaded in the browser
 
-### Data Point Limits
+### Resolution Limits
 
-- `chart-max-points` sets the curve granularity: how many points are sampled across the **full** time span of the star history (first star to now). It is not a time window, so raising it does not show more history, only a finer line over the same span. Use `chart-range` to narrow the window.
+- `chart-max-points` sets the curve granularity: how many points are plotted across the **full** time span of the reconstruction (first star to now). It is not a time window, so raising it does not show more history, only a finer line over the same span. Use `chart-range` to narrow the window.
 - By default charts plot **30 points** (`chart-max-points`, default `30`). Higher values are allowed and capped at **365**.
 - Set `chart-max-points: 0` to reconstruct the full history at **weekly** resolution, so the point count scales with the repository's age.
 - Email charts are always limited to 30 points.
-- JSON data still contains all snapshots up to `max-history`
+- None of this touches `stars-data.json`, which still holds every snapshot up to `max-history`.
 
 ### Localization
 
@@ -188,14 +243,14 @@ with:
 ## Embedding Charts in Your README
 
 Every chart is a raw file on the data branch, so a plain Markdown image tag is all you need. The snippets for
-all four charts and for the badge live in **[Viewing Reports](Viewing-Reports#method-2-badges)** — they are the same
+all four charts and for the badge live in **[Viewing Reports](Viewing-Reports#method-2-badges)**. They are the same
 URLs whichever page you come from, so they are written once there.
 
 ---
 
 ## Controlling Top Repos
 
-The `top-repos` input controls how many repos get individual charts, appear in the comparison chart, and have per-repo forecasts:
+The `top-repos` input controls how many repos get individual charts and per-repo forecasts:
 
 ```yaml
 with:
@@ -204,12 +259,16 @@ with:
 
 Default is `10`.
 
+The comparison chart draws from the same ranking but caps itself at **10 series** whatever `top-repos` says,
+so `top-repos: 20` gives you twenty per-repo charts and twenty per-repo forecasts, and a comparison chart
+still showing the top ten. Beyond that the lines stop being distinguishable.
+
 ---
 
 ## Chart customization
 
 Every `chart-*` input, with its default and full description, is in
-**[Configuration](Configuration#chart-line-color)** — it is the reference and this page does not restate it.
+**[Configuration](Configuration#chart-line-color)**. That page is the reference; this one does not restate it.
 
 What belongs here is which of the **two chart systems** honours each one. The SVG charts on the data branch
 are hand-rendered; the email charts are QuickChart images, and some options cannot survive that trip:
@@ -219,18 +278,18 @@ are hand-rendered; the email charts are QuickChart images, and some options cann
 | `chart-line-color` | Yes | Yes |
 | `chart-line-width` | Yes | Yes |
 | `chart-smoothing` | Yes | Yes |
-| `chart-curve` | Exact | Approximated — see [Two Chart Systems](#two-chart-systems) |
+| `chart-curve` | Exact | Approximated, see [Two Chart Systems](#two-chart-systems) |
 | `chart-show-points` | Yes | Yes |
 | `chart-milestones` | Yes | Yes |
 | `chart-custom-milestones` | Yes | Yes |
 | `chart-begin-at-zero` | Yes | Yes |
 | `chart-range` | Yes | Yes |
 | `chart-trend-line` | Yes | Yes |
-| `chart-max-points` | Yes | **No** — email is always 30 points |
-| `chart-animation` | Yes | **No** — a PNG cannot animate |
+| `chart-max-points` | Yes | **No**, email is always 30 points |
+| `chart-animation` | Yes | **No**, a PNG cannot animate |
 | `chart-y-axis-side` | Yes | **No** |
-| `chart-theme` | Yes | Indirectly — the email follows `email-theme`, which defaults to `auto`, meaning "same as `chart-theme`" |
-| `email-theme` | — | Yes |
+| `chart-theme` | Yes | Indirectly: the email follows `email-theme`, which defaults to `auto`, meaning "same as `chart-theme`" |
+| `email-theme` | No | Yes |
 
 ```yaml
 with:
@@ -245,7 +304,7 @@ with:
 
 ### Large repos
 
-GitHub caps the stargazers listing at roughly 40,000 per repo, oldest first, so on very large repos the **recent** tail is the part that cannot be read and is bridged with a ramp. [Known Limitations](Known-Limitations#-stargazer-listing-cap-40000) has the full account. Pair charts with `smart-sampling` to keep the request cost bounded on big repos.
+On a repository above GitHub's stargazer listing cap the chart's recent tail is a bridged approximation rather than read data; [Known Limitations](Known-Limitations#-stargazer-listing-cap-40000) has the full account. Pair such repositories with `smart-sampling` to keep the request cost bounded.
 
 ---
 
@@ -264,26 +323,8 @@ All four curves keep the plateaus flat except `catmull-rom`, which overshoots at
 | `cubic-bezier` | no | pronounced, symmetric easing between points |
 | `rounded-step` | no | discrete data you want to read as soft steps |
 
-### On / off toggles
-
-| Option | Default | Alternative | Choose the alternative when |
-|---|---|---|---|
-| `chart-smoothing` | `true` (smooth curve) | `false` (straight segments) | you need to see exact week-to-week spikes |
-| `chart-show-points` | `true` (dot per point) | `false` (line only) | the chart is dense and dots add noise |
-| `chart-milestones` | `true` (threshold lines) | `false` (none) | you want a cleaner chart |
-| `chart-begin-at-zero` | `false` (zoom to data range) | `true` (anchor at zero) | you want an honest absolute scale |
-| `chart-animation` | `true` (draws in on load) | `false` (static render) | embedding in email or a static context |
-| `chart-trend-line` | `false` (raw line only) | `true` (+ moving-average overlay) | the data is noisy and you want the direction |
-
-### Value choices
-
-| Option | Options | Effect |
-|---|---|---|
-| `chart-theme` | `auto` / `light` / `dark` | `auto` follows the viewer's color scheme; the others force a palette |
-| `email-theme` | `auto` / `light` / `dark` | palette for the email only; `auto` inherits `chart-theme`, and a raster chart cannot follow the reader's scheme |
-| `chart-y-axis-side` | `left` / `right` | moves the axis labels, e.g. to avoid overlap with the start of the line |
-| `chart-range` | `30d` / `90d` / `1y` / `all` | narrows the time window, measured back from the latest point |
-| `chart-max-points` | `0` / `N` (capped at 365) | curve resolution across the span; `0` reconstructs at weekly cadence |
+Every other option's default and effect is in [Configuration](Configuration#chart-line-color), and the
+examples gallery above shows each one rendered.
 
 ---
 
@@ -291,11 +332,11 @@ All four curves keep the plateaus flat except `catmull-rom`, which overshoots at
 
 | Issue | Solution |
 |---|---|
-| No charts after first run | Need at least ~2 stars so the history has 2+ points |
-| No forecast chart | Need at least 3 points in the reconstructed history |
-| Charts not updating | Check workflow completed successfully |
-| Broken images in email | Email client may block external images |
-| Charts render as code | Make sure you're viewing the data branch, not raw SVG source |
+| No charts at all on the first run | No star in the tracked set had a readable `starred_at` date, so there was nothing to reconstruct. See [Troubleshooting](Troubleshooting#no-charts-generated) |
+| Charts render as source code | You are looking at the raw SVG file rather than the rendered data branch |
+
+Everything else, including flat lines, missing forecasts and charts that stop updating, is in
+**[Troubleshooting](Troubleshooting)**.
 
 ---
 

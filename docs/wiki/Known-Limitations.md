@@ -18,7 +18,7 @@ The action requires the user to create a PAT and store it as a repository secret
 
 - Classic: `repo` (private + public) or `public_repo` (public only)
 - Fine-grained: `Repository access → All repositories` with `Metadata: Read-only` **and `Contents: Read and
-  write`** — the action pushes the data branch with this same token, so a metadata-only token fails at the push
+  write`**. The action pushes the data branch with this same token, so a metadata-only token fails at the push
 
 See **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)** for a step-by-step setup guide.
 
@@ -38,7 +38,7 @@ Additionally, stargazers are fetched **sequentially per repo** (not in parallel)
 
 ### Approach
 
-- **Fetched by default for charts**: `track-stargazers` defaults to `false`, but stargazers are now also fetched whenever charts are enabled (`include-charts: true`, the default) in order to reconstruct the real star-history curve. So the stargazer API cost in this table applies to any run with charts on, not only when `track-stargazers` is enabled. To avoid this cost entirely, set `include-charts: false`. Use `smart-sampling` (with `smart-sampling-threshold` / `smart-sampling-pages`) to cap requests for high-star repos.
+- **Fetched by default for charts**: `track-stargazers` defaults to `false`, but stargazers are now also fetched whenever charts are enabled (`include-charts: true`, the default) in order to build the Reconstructed History. So the stargazer API cost in this table applies to any run with charts on, not only when `track-stargazers` is enabled. To avoid this cost entirely, set `include-charts: false`. Use `smart-sampling` (with `smart-sampling-threshold` / `smart-sampling-pages`) to cap requests for high-star repos.
 - **Per-repo error tolerance**: If fetching stargazers fails for one repository (e.g., due to rate limiting), the action logs a warning and continues with the remaining repos instead of aborting the entire run.
 - **Separate persistence**: Stargazer data is stored in `stargazers.json` (repo → login array), separate from `stars-data.json`. This keeps the diff lightweight - only login strings are compared, not full user objects.
 
@@ -59,11 +59,21 @@ Additionally, stargazers are fetched **sequentially per repo** (not in parallel)
 
 ## ⭐ Stargazer Listing Cap (~40,000)
 
-GitHub's stargazers API only lists up to ~40,000 stargazers per repository, oldest first. The real star-history curve is reconstructed from the listed stargazers' `starred_at` dates, so for repos above ~40,000 stars only the oldest ~40,000 stars are reachable and their dates stop well before today.
+### Limitation
 
-For those repos the reachable history is drawn accurately (scaled to the reachable count), and the unreachable recent tail is bridged with a straight ramp from there up to the repo's true current total at the final point - so the chart no longer flattens out at the cutoff date. The final point always equals the true star count. Repos within the 40,000 window are unaffected. Pair high-star repos with `smart-sampling` to keep within rate limits.
+GitHub's stargazers API only lists up to ~40,000 stargazers per repository, oldest first. The Reconstructed History behind every chart is built from those listed stargazers' `starred_at` dates, so for a repository above ~40,000 stars only its oldest ~40,000 stars are reachable and their dates stop well before today.
 
-That ramp is an admitted approximation whose shape carries no information — only its endpoints do — and it is drawn deliberately rather than left flat: [ADR 0007](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0007-bridge-unreachable-history-with-a-ramp.md). Enabling `smart-sampling` also costs those repositories their new-stargazer list, for a separate reason: [ADR 0008](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0008-sampled-repositories-are-excluded-from-stargazer-diffing.md).
+### Why
+
+The listing is paginated at 100 per page and GitHub stops answering past page 400. There is no way to page from the newest end, so the unreachable stretch is always the recent one.
+
+### Approach
+
+The reachable stretch is drawn accurately, scaled to the reachable count, and the unreachable recent tail is bridged with a straight ramp up to the repository's true current total. The final point always equals the true star count, so the chart no longer flattens out at the cutoff date. Repositories within the 40,000 window are unaffected.
+
+That ramp is an admitted approximation: its shape carries no information, only its endpoints do. It is drawn deliberately rather than left flat ([ADR 0007](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0007-bridge-unreachable-history-with-a-ramp.md)).
+
+Pair high-star repositories with `smart-sampling` to keep within rate limits. That costs those repositories their new-stargazer list, for a separate reason: [ADR 0008](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0008-sampled-repositories-are-excluded-from-stargazer-diffing.md).
 
 ---
 
@@ -73,15 +83,15 @@ That ramp is an admitted approximation whose shape carries no information — on
 
 GitHub [restricted](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/) the stargazers list endpoint (`GET /repos/{owner}/{repo}/stargazers`) to repository **admins and collaborators**. Anyone else receives empty responses or `403` errors, which is why third-party tools that chart stars for repositories they don't own (Star History, Starchart.cc, etc.) stop working.
 
-The restriction is evaluated on the **user's role on the repository, not on token scopes**: the endpoint accepts any scope (`x-accepted-oauth-scopes` is empty), so adding scopes to a classic token neither helps nor hurts. A classic PAT carries its owner's full role — including **implicit admin through organization ownership**, which has been verified to keep stargazers access. In practice the affected cases are:
+The restriction is evaluated on the **user's role on the repository, not on token scopes**: the endpoint accepts any scope (`x-accepted-oauth-scopes` is empty), so adding scopes to a classic token neither helps nor hurts. A classic PAT carries its owner's full role, including **implicit admin through organization ownership**, which has been verified to keep stargazers access. In practice the affected cases are:
 
 - **Organization repositories where you are a member with read access only** (neither admin nor direct collaborator).
 - **Fine-grained PATs without an explicit grant on the repository's organization.** Fine-grained tokens are granted per resource owner: a token that can *list* a public repository (and therefore track its star count) may still lack the `Metadata (read)` grant that the stargazers endpoint checks.
 
-For those repos the stargazers list comes back **`404`, `403` or empty (`200 []`)** — the empty case is silent at the API level, so since v1.22.2 the action logs a warning naming each starred repository whose list came back empty. Charts for affected repos fall back to the per-run snapshot history instead of the reconstructed curve, and stargazer tracking degrades there. Star counts and delta reports keep working everywhere, since `stargazers_count` is not part of the restriction.
+For those repos the stargazers list comes back **`404`, `403` or empty (`200 []`)**. The empty case is silent at the API level, so the action logs a warning naming each starred repository whose list came back empty. Charts for affected repos fall back to the Stored History instead of the Reconstructed History, and stargazer tracking degrades there. Star counts and delta reports keep working everywhere, since `stargazers_count` is not part of the restriction.
 
 > [!NOTE]
-> **Rollout instability (July 2026).** During the restriction's initial rollout (~July 5–13, 2026) GitHub's enforcement was observed over-restricting intermittently, returning `404` or empty lists **even to repository admins** — stargazers pages 404'd platform-wide for a period ([community report](https://github.com/orgs/community/discussions/201178)). Separately, the same window also produced intermittent `5xx` errors with an empty or plain-text body on deep pagination of very large (40,000+ star) repos - a plain transient server error, unrelated to the access restriction itself, but indistinguishable from it in versions before v1.22.3 because the run log dropped the HTTP status and printed a blank message (`Failed to fetch stargazers for <repo>: `). Since v1.22.3 the log always includes the status code and the action retries transient server errors automatically, so a real restriction (`403`/`404`, not retried) and a transient failure are easy to tell apart. Charts generated during that window degraded silently on pre-v1.22.2 versions. If yours did, simply re-run once access behaves again: charts are reconstructed from scratch on every run.
+> **Rollout instability (July 2026).** During the restriction's initial rollout the endpoint was observed over-restricting intermittently, returning `404` or empty lists **even to repository admins** ([community report](https://github.com/orgs/community/discussions/201178)). The same window also produced transient `5xx` errors on deep pagination of very large repos, which is a different fault with the same symptom. The run log now always carries the HTTP status and transient server errors are retried, so a real restriction (`403`/`404`) and a passing failure are easy to tell apart. If a chart degraded during an episode like that, re-run once access behaves: the history is reconstructed from scratch on every run.
 
 ### Why
 
@@ -105,13 +115,13 @@ Growth forecasts are **trend extrapolations**, not predictive models. They assum
 
 ### Why
 
-When charts are enabled (the default), forecasts extrapolate from the reconstructed real star-history curve (built from stargazers' starred_at dates); otherwise they use the per-run snapshot history. In either case the action has no external signals (social media mentions, download counts, contributor activity) that could improve predictions. Adding external data sources would introduce API dependencies and configuration complexity disproportionate to the value.
+When charts are enabled (the default), forecasts extrapolate from the Reconstructed History built from stargazers' `starred_at` dates; otherwise they use the Stored History. In either case the action has no external signals (social media mentions, download counts, contributor activity) that could improve predictions. Adding external data sources would introduce API dependencies and configuration complexity disproportionate to the value.
 
 ### Approach
 
 Two complementary methods are provided, each with different strengths:
 
-**Linear Regression** fits a straight line through all historical data points using least squares. It is resilient to noise and captures long-term trends, but it reacts slowly to recent changes.
+**Linear Regression** fits a straight line through the whole observed series using least squares. It is resilient to noise and captures long-term trends, but it reacts slowly to recent changes.
 
 ```
 predicted(week) = lastValue + slope * week * 7
@@ -130,7 +140,7 @@ The weighted rate is **per day**, so the week offset is multiplied by seven like
 
 Both methods clamp predictions to non-negative integers via `Math.max(0, Math.round(...))` to avoid nonsensical outputs (e.g., -3 stars).
 
-Forecasts require a minimum of **3 points** in the series they are fitted to (`MIN_SNAPSHOTS_FOR_FORECAST = 3`) and project **4 weeks ahead** (`FORECAST_WEEKS = 4`). That series is the *reconstructed* history when charts are on, which already has ~30 points on the first run — so the three-snapshot floor bites only when the reconstruction is unavailable — `include-charts` off, or no reachable `starred_at` dates — and the stored per-run history is all there is. These thresholds are intentionally conservative - with fewer data points, any extrapolation would be unreliable.
+Forecasts require a minimum of **3 points** in the series they are fitted to (`MIN_SNAPSHOTS_FOR_FORECAST = 3`) and project **4 weeks ahead** (`FORECAST_WEEKS = 4`). That series is the Reconstructed History when charts are on, and it already carries around 30 points on the very first run. The three-point floor therefore bites only when no reconstruction is available, meaning `include-charts` is off or no `starred_at` date was reachable, and the Stored History is all there is. The thresholds are intentionally conservative: below them any extrapolation would be unreliable.
 
 ### Interpretation guide
 
@@ -145,34 +155,22 @@ Forecasts require a minimum of **3 points** in the series they are fitted to (`M
 
 ## 🌗 Dark / Light Mode
 
-### Behavior
+### Limitation
 
-By default the SVG charts adapt to the viewer's color scheme using `@media (prefers-color-scheme: dark)` inside the SVG `<style>` block, and no configuration is needed for that. Forcing [`chart-theme`](Configuration#chart-theme) to `light` or `dark` drops the media query and bakes one palette in, which is what you want when the chart is embedded somewhere that does not follow the reader's system theme.
+Under the default `chart-theme: auto`, a chart's **chrome** follows the reader's colour scheme but its **data series do not**. A dark-mode reader gets dark chrome around light-palette lines.
 
-### What adapts
+### Why
 
-Chrome elements - background, title, legend text, axis labels, grid lines, and axis strokes - switch between a light palette and a dark palette (GitHub dark theme values). Data colors do **not** switch with the media query: series strokes are written as inline attributes resolved once, and `auto` resolves them from the light palette. Forcing [`chart-theme: dark`](Configuration#chart-theme) does change them — the trend line (`#6a737d` -> `#8b949e`) and the two forecast series (`#28a745` -> `#3fb950`, `#d73a49` -> `#f85149`) are brightened — but under the default `auto` a dark-mode reader gets dark chrome around light-palette data.
+The chrome is styled by CSS carried inside the SVG, which a `prefers-color-scheme` media query can override at view time. Series strokes are inline attributes resolved once at render time, when there is no reader and therefore no scheme to consult, so `auto` resolves them from the light palette.
 
-| Element | Light | Dark |
-|:--------|:------|:-----|
-| Background | `#fff` | `#0d1117` |
-| Text | `#24292e` | `#e6edf3` |
-| Muted text | `#6a737d` | `#8b949e` |
-| Grid lines | `#eee` | `#21262d` |
-| Axis lines | `#6a737d` | `#8b949e` |
+### Approach
 
-### Where it works
+Set [`chart-theme`](Configuration#chart-theme) to `light` or `dark` explicitly. That drops the media query, picks the palette before rendering and recolours the series along with the chrome. What is not available is a single file that recolours its data per reader.
 
-| Context | Dark mode support |
-|:--------|:------------------|
-| GitHub README / Markdown | Yes - GitHub respects `prefers-color-scheme` in inline SVGs |
-| Browser (direct SVG open) | Yes |
-| HTML email reports | Not automatically - Gmail strips `<style>` blocks, so the media query cannot reach them. Set [`email-theme: dark`](Configuration#email-theme) to bake a dark palette into the body and the chart images instead |
-| QuickChart PNG fallbacks | Not per-reader - the PNG is rasterized once, on the background [`email-theme`](Configuration#email-theme) resolves to. `dark` gives a dark chart; it just cannot follow each reader's own scheme |
+The badge (`stars-badge.svg`) has no theming at all, in either direction: it is always the light palette. Its fixed dark label with an accent-coloured value is legible on both backgrounds, which is why it was left alone.
 
-### Badges
-
-The Shields.io-style badge (`stars-badge.svg`) does **not** include dark mode styles. Shields badges have their own theming via URL parameters. The badge uses a fixed dark label / accent-colored value scheme that is legible on both light and dark backgrounds.
+How the two palettes differ, and where the media query reaches at all, is in
+**[Star Trend Charts](Star-Trend-Charts#dark--light-mode)**.
 
 ---
 
@@ -193,27 +191,11 @@ GitHub Markdown and HTML emails do not support JavaScript. This rules out client
 
 SVG charts are the primary output: they are self-contained, support CSS animations and dark mode, and require no external service. QuickChart PNGs are used as a fallback in HTML email reports because email clients strip `<style>` blocks, making SVG theming and animations non-functional.
 
-### Approach
-
-**SVG charts (primary)**
-- Generated entirely in-process using TypeScript string templates.
-- Committed as `.svg` files to the data branch (`charts/` directory).
-- Dimensions fixed at `800x400` pixels.
-- CSS animations for line drawing and point fade-in.
-- `@media (prefers-color-scheme: dark)` for automatic theme switching.
-- Data points follow `chart-max-points` (default 30, capped at 365; `0` = full history at weekly resolution). The **30** cap in `CHART.maxDataPoints` applies to the QuickChart email charts only.
-- Comparison charts limited to **10 repositories** (`CHART.maxComparison`).
-- Milestone annotations (10, 50, 100, 500, 1K, 5K, 10K, 50K, 100K, 500K, 1M stars) appear as horizontal dashed lines when within the visible range.
-
-**QuickChart PNGs (email fallback)**
-- Encoded as **URL query parameters** (`GET /chart?c={config}`), no POST requests or authentication needed.
-- Chart.js configuration format (well-documented, flexible).
-- URL length constrained by the 30-data-point cap to stay within browser and email client limits (~8KB URL).
-- Forecast charts use dashed lines (`borderDash: [8, 4]` for LR, `[4, 4]` for WMA).
-
 ### Implications
 
 - SVG charts have **no external dependency** - they render even offline.
+- An email chart is a URL carrying its whole configuration, so it is capped at 30 points and 10 comparison
+  series to stay inside browser and mail-client URL limits. Those caps are not configurable.
 - If QuickChart.io is down, email chart images appear broken. Report text content is unaffected.
 - Some corporate networks or email security filters may block external image URLs in emails.
 - QuickChart URLs are deterministic - the same data produces the same URL, enabling browser caching.
@@ -233,7 +215,7 @@ Email HTML rendering is notoriously inconsistent across clients. Outlook uses th
 ### Approach
 
 - **All styles are inline**: Every HTML element in the report carries its own `style` attribute. No external stylesheets, no `<style>` blocks, no CSS classes.
-- **Explicit background**: The `<body>` carries an explicit `background-color` so it renders consistently whatever the client's own background is. It follows [`email-theme`](Configuration#email-theme), which defaults to `auto` (inherit `chart-theme`, resolving to light) — set it to `dark` for a dark digest, charts included. What email *cannot* do is follow the reader's system theme, because the media query is stripped and the chart images are PNGs with the background baked in.
+- **Explicit background**: The `<body>` carries an explicit `background-color` so it renders consistently whatever the client's own background is. It follows [`email-theme`](Configuration#email-theme), which defaults to `auto` (inherit `chart-theme`, resolving to light); set it to `dark` for a dark digest, charts included. What email *cannot* do is follow the reader's system theme, because the media query is stripped and the chart images are PNGs with the background baked in.
 - **No `<details>` in HTML reports**: Collapsible sections (`<details>`/`<summary>`) are used in Markdown reports (for GitHub rendering) but excluded from HTML reports, since email clients do not support them. Per-repo stargazer lists and forecast tables are displayed flat in HTML.
 - **System fonts**: The font stack uses `-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif` - safe system fonts that render consistently everywhere.
 - **`max-width: 600px`**: The report container is capped at 600px, the standard width for email layouts.
@@ -255,24 +237,15 @@ Email HTML rendering is notoriously inconsistent across clients. Outlook uses th
 
 ### Limitation
 
-Star data is captured **once per workflow run**. If the action runs daily, there is one data point per day. Intra-day changes (e.g., a repo gaining and then losing 5 stars within the same day) are invisible.
-
-> [!NOTE]
-> This per-run granularity applies to the report delta tables and notification thresholds. Charts do not plot one point per run: when charts are enabled (the default), the action fetches each repo's stargazers and reconstructs the real historical star curve from their `starred_at` dates, so the chart timeline reflects true history regardless of how often the action runs.
+**Intra-day movement is invisible to the delta tables and the notification threshold.** A repository that gains five stars and loses them again between two runs looks unchanged, because the tracker only ever sees the totals at the moments it happens to run.
 
 ### Why
 
-The action is designed to run as a GitHub Actions workflow, which is triggered by a cron schedule (typically daily or weekly) or manually. Each run produces exactly one snapshot containing the current star count for every tracked repository. There is no continuous monitoring or webhook-based approach.
+There is no continuous monitoring and no webhook: the action is a scheduled workflow, and one run observes one instant.
 
 ### Approach
 
-- **One snapshot per run**: `measureRun` reads the current state of all repos, compares against the snapshot [`compare-against`](Configuration#compare-against) selects — the most recent one by default, but not necessarily — and appends a new entry to the history.
-- **History rotation**: Old snapshots are pruned via `maxHistory` (default: 52, i.e., ~1 year of weekly runs). This prevents unbounded growth of `stars-data.json`.
-- **Timestamp precision**: Each snapshot is timestamped with `new Date().toISOString()`, providing millisecond precision for the moment the run occurred.
-
-### Increasing granularity
-
-This applies only to the report delta tables and notification thresholds, not to charts - chart resolution comes from the reconstructed real star history, so running more often does not add chart points. If finer delta/notification granularity is needed, increase the workflow schedule frequency:
+Run more often if you need finer delta and notification granularity, and raise `max-history` to match so the extra snapshots are not immediately pruned:
 
 ```yaml
 on:
@@ -280,7 +253,7 @@ on:
     - cron: '0 */6 * * *'  # Every 6 hours
 ```
 
-Keep in mind that more frequent runs consume more API calls and produce more snapshots. Adjust `max-history` accordingly to avoid storing excessive data.
+This does not affect the **charts**, whose resolution comes from the Reconstructed History rather than from how often the tracker ran. Running more often adds no chart detail, only API calls. How a snapshot is taken, stored and rotated is in **[Data Management](Data-Management)**.
 
 ---
 
@@ -301,7 +274,7 @@ To compute the diff between runs (who is new since last time), the action needs 
 - **Opt-in only**: `track-stargazers` defaults to `false`. Users must explicitly enable it.
 - **No new exposure for you**: the action stores the same information you can already see as the repository's admin. Note that since GitHub's [2026 API restrictions](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/), stargazer lists are no longer publicly accessible (only admins and collaborators can list them), so publishing `stargazers.json` on a public data branch does re-expose those login names. Keep the data branch in a private repository or leave `track-stargazers` disabled if that is a concern.
 - **Entries are never pruned**: once a repository has an entry, it keeps it even after the repository leaves
-  the tracked set — a `min-stars` boundary, an edited filter, a spell archived. That is deliberate: a
+  the tracked set, whether through a `min-stars` boundary, an edited filter or a spell archived. That is deliberate: a
   repository that drops out for one run and returns would otherwise have every existing stargazer reported as
   new. It does mean untracking a repository does not withdraw its published logins; removing them is a manual
   edit of `stargazers.json` on the data branch.

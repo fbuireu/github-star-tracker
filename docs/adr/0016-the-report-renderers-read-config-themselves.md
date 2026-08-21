@@ -6,6 +6,11 @@ Date: 2026-08-17
 
 Accepted
 
+> **Amended after this decision.** `renderRun` (`src/presentation/run.ts`) became the layer's single entry
+> point shortly afterwards, so `@application` no longer calls the renderers at all and they now take
+> `{ model, config }`; `ReportParams` is `buildReportModel`'s input. The rule this ADR records is unchanged:
+> the renderers read `Config` themselves and the shell relays no chart options.
+
 ## Context
 
 `@application/tracker` built a 21-field object literal and handed it to both Report renderers:
@@ -20,11 +25,11 @@ Fifteen of those fields were `config.<something>` copied across by hand, eleven 
 orchestrator therefore had to know what a curve, a Milestone and a trend line were in order to relay them,
 and the git history shows the cost plainly: `chart-show-points`, `chart-animation`, `chart-milestones`,
 `chart-range`, `chart-trend-line`, `chart-curve` and `chart-line-color`/`chart-line-width` each arrived as a
-`feat:` commit that edited `tracker.ts` — a file with no stake in any of them. `tracker.ts` is the most
+`feat:` commit that edited `tracker.ts`, a file with no stake in any of them. `tracker.ts` is the most
 churned source file in the repository.
 
 Two defects came out of the same shape. `ReportParams` declared ten fields and `GenerateHtmlReportParams`
-twenty-one, so the split was real at the declaration — but `reportParams` was a *variable*, which switches
+twenty-one, so the split was real at the declaration, but `reportParams` was a *variable*, which switches
 off TypeScript's excess-property check, so the markdown renderer silently accepted and discarded eleven
 chart-style fields it does not read. The whole guarantee rested on one spread on one line, and
 `src/application/CLAUDE.md` had to carry a written warning naming it as the regression to watch for. It had
@@ -39,22 +44,19 @@ orchestrator in the business of relaying options it does not understand.
 
 ## Decision
 
-`ReportParams` carries the run's data plus the `Config` it was produced under:
+`ReportParams` in `src/presentation/shared.ts` carries the `Config` the run was produced under as its first
+field, alongside the run's own data: the comparison results and the previous timestamp, which are required,
+and then a set of optional, nullable extras the renderers use when they are available (the Stored History,
+a separate history for Velocity, the Stargazer diff, the Forecast data, the resolved chart histories, an
+injectable `now`, and a predicate saying whether a per-repository chart file was actually written). Not one
+of them is a flattened chart-style field.
 
-```ts
-export interface ReportParams {
-  config: Config;
-  results: ComparisonResults;
-  previousTimestamp: string | null;
-  history?: History | null;
-  velocityHistory?: History | null;
-  stargazerDiff?: StargazerDiffResult | null;
-  forecastData?: ForecastData | null;
-}
-```
+That shape is described here rather than quoted, deliberately: the field list has grown three times since
+this decision and a verbatim-looking code block that is no longer verbatim is worse than no block at all.
+Read `ReportParams` for the current list; read this ADR for why `config` is in it.
 
 `locale`, `includeCharts`, `topRepos` and `velocityMetrics` are read off `config` inside `buildReportModel`.
-The email chart style is projected by `emailChartStyle(config)` in `shared.ts`, which `html.ts` calls — and
+The email chart style is projected by `emailChartStyle(config)` in `shared.ts`, which `html.ts` calls, and
 `html.ts` is also where `emailTheme` is read, so the Notification picks its own theme rather than being
 handed one.
 
@@ -62,12 +64,7 @@ handed one.
 identical params object**, so nothing is spread onto one of them and the excess-property hole closes because
 there is nothing left to spread.
 
-> **Amended after this decision.** `renderRun` (`src/presentation/run.ts`) became the layer's single entry
-> point shortly afterwards, so `@application` no longer calls the renderers at all and they now take
-> `{ model, config }` — `ReportParams` is `buildReportModel`'s input. The rule this ADR records is unchanged:
-> the renderers read `Config` themselves and the shell relays no chart options.
-
-`@presentation` importing `@config/types` is not new — `shared.ts` already did, and
+`@presentation` importing `@config/types` is not new: `shared.ts` already did, and
 [ADR 0004](./0004-layered-source-structure.md) permits it. What is new is that it imports `Config` whole
 rather than the enums alone.
 
@@ -87,7 +84,7 @@ rather than the enums alone.
 - **Test helpers take `config: Partial<Config>`** and build it with `makeConfig` from `@shared/tests`, so a
   test that cares about one option names that option rather than a flattened alias for it.
 - `chartLineWidth` now always reaches `chartImageUrl`, so the email chart always emits `borderWidth`. That
-  was already true in production — the tracker always passed it — but `html.test.ts` had a case asserting
+  was already true in production, since the tracker always passed it, but `html.test.ts` had a case asserting
   its absence, which only an incomplete params object could produce.
 - Where this bites is recorded in [`src/presentation/CLAUDE.md`](../../src/presentation/CLAUDE.md) and
   [`src/application/CLAUDE.md`](../../src/application/CLAUDE.md).

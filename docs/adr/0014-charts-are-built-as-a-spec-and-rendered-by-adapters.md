@@ -19,31 +19,31 @@ What went wrong is that "rendered twice" had become "decided twice". Each render
 the window of Snapshots, derived the axis labels, capped the comparison set at ten repositories, applied the
 single-Owner short-label heuristic, assigned the comparison colours by index, built the Forecast series, and
 resolved which Milestones were visible. The `< 2 snapshots` guard was written eight times. `ChartCurve` was
-interpreted twice — into four hand-written path generators on one side and onto two Chart.js shapes on the
+interpreted twice: into four hand-written path generators on one side and onto two Chart.js shapes on the
 other, lossily.
 
-The consequence was drift with no test that could catch it: a fix to the comparison cap or the label
+The consequence was drift with no test that could catch it. A fix to the comparison cap or the label
 heuristic landed on whichever side the author was editing, and the README chart and the email chart quietly
 stopped agreeing. `charts.ts`, which projects `Config` onto the shared style, had no colocated test at all
 and was carried indirectly by the tracker's suite.
 
-Collapsing the two renderers into one was never an option — that is what ADR 0006 and ADR 0010 already
+Collapsing the two renderers into one was never an option; that is what ADR 0006 and ADR 0010 already
 rejected. Extracting only the small helpers (`selectChartSnapshots`, `movingAverageSeries`) had already been
-done, and it is precisely the part that did *not* drift; what drifted was everything built on top of them.
+done, and it is precisely the part that did *not* drift. What drifted was everything built on top of them.
 
 ## Decision
 
 `@presentation/chart-spec` decides **what** a Chart is; the two renderers decide **how** it looks.
 
-A `ChartRequest` names *which* Chart is wanted — a discriminated union over the four `ChartKind`s
+A `ChartRequest` names *which* Chart is wanted: a discriminated union over the four `ChartKind`s
 [CONTEXT.md](../../CONTEXT.md) already lists, each variant carrying only its own inputs. `buildChartSpec`
-maps one onto a `ChartSpec` — axis labels, an ordered list of series with a resolved colour, and the
+maps one onto a `ChartSpec` (axis labels, an ordered list of series with a resolved colour, and the
 Milestones to draw, each already filtered to the visible ones and carrying both its `value` and its rendered
-`label` — or `null` when there is too little history to plot. `starHistorySpec`, `perRepoSpec`,
+`label`), or onto `null` when there is too little history to plot. `starHistorySpec`, `perRepoSpec`,
 `comparisonSpec` and `forecastSpec` are the private cases behind it.
 
-`svg-chart.ts` and `chart.ts` are adapters over that seam, each with **one** entry point — `renderSvgChart`
-and `chartImageUrl` — taking a request plus its own style. Each maps a `ChartSpec` onto its own dialect and
+`svg-chart.ts` and `chart.ts` are adapters over that seam, each with **one** entry point, `renderSvgChart`
+and `chartImageUrl`, taking a request plus its own style. Each maps a `ChartSpec` onto its own dialect and
 owns nothing else about the Chart's content.
 
 The request is what stops the seam being re-described at every call: before it, each adapter exported four
@@ -53,7 +53,7 @@ now costs one union variant and one `case`.
 
 The dialect-specific facts stay in the adapters, because they are genuinely not shared: the SVG path
 geometry and animation, Chart.js option names, and the two defaults that differ. Where a difference is a
-*deliberate* one it is passed into the spec rather than hidden inside a renderer — `AxisLabels` picks
+*deliberate* one it is passed into the spec rather than hidden inside a renderer. `AxisLabels` picks
 year-thinned labels for the SVG and plain dates for the email, and `maxPoints` is passed only on the SVG
 side, which is what keeps email charts fixed at 30 points.
 
@@ -69,19 +69,26 @@ a dash array or a point radius. Each adapter maps them through its own table.
   because leaving the label to the adapters is what let `chart.ts` format with a hardcoded `en-US` while
   `svg-chart.ts` used the run's Locale. Anything a reader reads is decided here; only how it is drawn is the
   adapter's.
+- **That rule is not yet fully honoured, and the exceptions are in `chart-spec.ts` itself.** The `PER_REPO`
+  case of `buildChartSpec` falls back to an English title built inline from the repository's full name and
+  the words "Star History" rather than reading the Locale bundle, so a per-repository chart is titled in English whatever
+  `locale` is set to; the star-history and forecast kinds do read the bundle. Both `starHistorySpec` and
+  `perRepoSpec` also name their primary series `'Stars'` as a literal. Neither leaks to the adapters, so the
+  SVG and the email agree with each other, which is what this decision guarantees. They are simply agreed on
+  untranslated text, and a locale bug here is fixed in the spec, not in a renderer.
 - **A new chart kind is a `ChartRequest` variant plus a `case` in `buildChartSpec`**, not two parallel
-  implementations — neither adapter is touched. A new *style* option is one field on `ChartSpec` and one line
-  in each adapter; a new *content* option is one field on the request variant.
+  implementations, and neither adapter is touched. A new *style* option is one field on `ChartSpec` and one
+  line in each adapter; a new *content* option is one field on the request variant.
 - **Default titles moved into `buildChartSpec`**, so the SVG and the email chart of a kind are always named
   the same thing. The SVG star-history chart used to fall back to a hardcoded English `'Star History'` while
   the email one used the locale bundle.
 - **`AxisLabels` stopped being a per-call parameter.** It is now an adapter constant, and `forecastSpec`
-  `Omit`s it from its params rather than accepting a value it overrides — the shape now says what the code
+  `Omit`s it from its params rather than accepting a value it overrides. The shape now says what the code
   always did.
 - **`chart-spec.test.ts` is the seam's own test surface.** Content rules were previously asserted only
   through `svg-chart.test.ts` and `chart.test.ts`, in duplicate and through rendered strings; those two are
   now free to be about appearance.
-- **The two renderers can no longer drift on content** — window, cap, colours, labels and Milestone
+- **The two renderers can no longer drift on content.** Window, cap, colours, labels and Milestone
   visibility are computed once. They can still drift on appearance, which is the point.
 - **The cost is a layer of indirection and a vocabulary to learn** (`ChartSpec`, `AxisLabels`, `SeriesDash`,
   `SeriesWeight`) before either renderer makes sense. Reading `svg-chart.ts` alone no longer tells you where

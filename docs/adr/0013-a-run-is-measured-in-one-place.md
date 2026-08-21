@@ -22,7 +22,7 @@ Runs. And `addSnapshot` silently keeps the whole array when `maxHistory` is `0`,
 rejects a non-positive `max-history` a layer away.
 
 All six lived as prose in two `CLAUDE.md` files. `@application/tracker` was the only caller, so nothing ever
-diverged — but nothing prevented it either, and the failure mode is a wrong Star Count rather than a crash.
+diverged, but nothing prevented it either, and the failure mode is a wrong Star Count rather than a crash.
 Its test mocked all five functions, so it asserted the call sequence it was itself defining: a reordering
 would have changed the numbers and kept the suite green.
 
@@ -37,7 +37,7 @@ History, the Comparison Window, `maxHistory` and the Notification Threshold and 
 Baseline's timestamp, the comparison results, the Summary, the appended History, how many Snapshots the
 `max-history` trim dropped, and whether the threshold was reached.
 
-The five functions it composes stay exported from their own modules and keep their own tests — they are
+The five functions it composes stay exported from their own modules and keep their own tests. They are
 internal seams within `@domain`, not a surface `@application` crosses. What changed is that no caller can
 reach them in the wrong order, because no caller reaches them at all.
 
@@ -46,7 +46,7 @@ the baseline advances only on delivery ([ADR 0011](./0011-the-notification-basel
 and delivery happens in `@application` after the email is sent. `measureRun` therefore reports
 `thresholdReached` and never writes `starsAtLastNotification`. `recordNotification` is the separate,
 explicit step that advances it, and it returns a new History rather than mutating the one it was given. It
-lives in `@domain/notification` alongside `settleNotification`, which is what decides *whether* to call it —
+lives in `@domain/notification` alongside `settleNotification`, which is what decides *whether* to call it.
 `measureRun` cannot import it without a cycle, and that is the right shape: measuring and notifying are two
 acts, not one.
 
@@ -59,8 +59,11 @@ acts, not one.
 - **`droppedSnapshots` is reported, not logged.** The domain layer is pure and cannot warn; `@application`
   raises the `max-history` warning from that number.
 - **The ordering rules are now tested against the real implementation**, in `measurement.test.ts`, rather
-  than asserted as a call sequence against mocks. `tracker.test.ts` mocks one module where it used to mock
-  three, and its remaining assertions are about wiring rather than about arithmetic.
+  than asserted as a call sequence against mocks. `tracker.test.ts` now mocks `@domain/measurement` alone
+  where it used to mock `comparison`, `snapshot` and `notification`, and its remaining assertions are about
+  wiring rather than about arithmetic. It still carries seventeen `vi.mock` calls in total, because it also
+  substitutes `@actions/*`, `@config`, `@infrastructure` and the renderers; what this decision removed is the
+  mocking of the arithmetic, not the mocking of the shell.
 - **The cost is one more indirection** between `@application` and the comparison maths, and a
   `RunMeasurement` shape that has to grow whenever a Run needs to report something new. That is the trade:
   a wider return type in exchange for an order that cannot be got wrong.

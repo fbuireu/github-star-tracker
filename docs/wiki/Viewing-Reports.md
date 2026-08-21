@@ -8,17 +8,8 @@ All data is automatically saved to a dedicated branch (default: `star-tracker-da
 
 ### Contents
 
-| File | Description |
-|---|---|
-| `README.md` | Full Markdown report with embedded SVG charts |
-| `stars-data.json` | Complete historical data (JSON) |
-| `stars-data.csv` | The same run as a flat CSV, one row per repository |
-| `stars-badge.svg` | Star count badge |
-| `charts/star-history.svg` | Animated total stars chart |
-| `charts/comparison.svg` | Top repos comparison chart |
-| `charts/forecast.svg` | Growth forecast chart |
-| `charts/{owner}-{repo}.svg` | Per-repo charts |
-| `stargazers.json` | Stargazer login map (if `track-stargazers` enabled) |
+Every file the branch holds, and the condition under which each one appears, is tabulated in
+**[Data Management](Data-Management#generated-files)**.
 
 ### Viewing
 
@@ -29,6 +20,11 @@ https://github.com/YOUR_USER/YOUR_REPO/tree/star-tracker-data
 ```
 
 GitHub automatically renders `README.md` with all charts visible.
+
+> [!NOTE]
+> That `README.md` is the report, rewritten in full on every run. Editing it by hand is safe but pointless:
+> the next run overwrites the file wholesale rather than merging into it. Anything you want to keep belongs
+> on another branch, or in a file the action does not write.
 
 ---
 
@@ -84,7 +80,7 @@ Access data in subsequent workflow steps for custom integrations.
 | `report` | Full Markdown report |
 | `report-csv` | CSV report of the run |
 | `report-html` | HTML report (for email) |
-| `report-html-path` | File path to the HTML report (for large reports / custom mailers) |
+| `report-html-path` | File path to the HTML report (for large reports / custom mailers). Written on **every** run, including read-only ones and runs where no repository matched, and written outside the data branch so it never reaches a commit |
 | `should-notify` | Whether the notification threshold was reached (cumulative across runs) |
 | `stars-changed` | Whether stars changed against the comparison baseline (`true`/`false`) |
 | `total-stars` | Total star count |

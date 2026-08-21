@@ -3,27 +3,17 @@ This guide walks you through setting up GitHub Star Tracker from scratch.
 ## Prerequisites
 
 - A GitHub account with at least one repository
-- GitHub Actions enabled in your repository
+- GitHub Actions enabled in that repository
 
 ---
 
 ## Step 1: Create a Personal Access Token
 
-GitHub Star Tracker requires a **Personal Access Token (PAT)** because the default `GITHUB_TOKEN` cannot list repositories across your account.
+GitHub Star Tracker needs a **Personal Access Token (PAT)**, because the default `GITHUB_TOKEN` cannot list repositories across your account.
 
-1. Go to **[GitHub Settings > Tokens (classic)](https://github.com/settings/tokens)**
-2. Click **"Generate new token (classic)"**
-3. Configure:
-   - **Note:** `GitHub Star Tracker`
-   - **Expiration:** 90 days (recommended)
-   - **Scopes:** `repo` (private + public) or `public_repo` (public only)
-4. Click **"Generate token"** and **copy it immediately**
-5. In your repository, go to **Settings > Secrets and variables > Actions**
-6. Click **"New repository secret"**:
-   - **Name:** `STAR_TRACKER_TOKEN`
-   - **Value:** paste your PAT
+Create one (classic, with `repo` or `public_repo` scope) and store it in your repository under **Settings > Secrets and variables > Actions** as a secret named `STAR_TRACKER_TOKEN`.
 
-> For detailed instructions (including fine-grained tokens), see **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)**.
+> **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)** is the full walkthrough: classic tokens, fine-grained tokens, which permissions each one needs, and what breaks when they are missing.
 
 ---
 
@@ -39,9 +29,6 @@ on:
     - cron: '0 0 * * *' # Daily at midnight UTC
   workflow_dispatch: # Allow manual triggers
 
-permissions:
-  contents: write
-
 jobs:
   track:
     runs-on: ubuntu-latest
@@ -52,7 +39,10 @@ jobs:
           github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
 
-That's the minimal setup. The action will track all your repositories with default settings.
+That is the minimal setup: the action tracks every repository your token can see, with default settings.
+
+> [!NOTE]
+> The workflow needs no `permissions:` block. The action pushes to the data branch with `github-token` (your PAT), never with the workflow's `GITHUB_TOKEN`, so granting `contents: write` to the job changes nothing. The `actions/checkout` step only reads.
 
 ---
 
@@ -63,7 +53,8 @@ That's the minimal setup. The action will track all your repositories with defau
 1. Go to your repository's **Actions** tab
 2. Select **"Track Stars"** from the workflow list
 3. Click **"Run workflow"** > **"Run workflow"**
-4. Wait for completion (~10-30 seconds)
+
+Give the first run time. With `include-charts` on (the default) the action walks every page of stargazers for every tracked repo, so it can reconstruct the real star-history curve from their starred dates. A handful of small repos finish in well under a minute; an account with tens of thousands of stars can take several minutes. Later runs do the same work, so the duration tracks your total star count rather than settling down over time. Turn on [`smart-sampling`](Configuration#smart-sampling) if that becomes a problem.
 
 ### Verify It Worked
 
@@ -72,13 +63,17 @@ After the first run:
 1. Go to your repository's branch selector and look for `star-tracker-data`
 2. Navigate to `https://github.com/YOUR_USER/YOUR_REPO/tree/star-tracker-data`
 3. You should see:
-   - `README.md` - Full Markdown report
-   - `stars-data.json` - Historical data (JSON)
-   - `stars-data.csv` - The same run as a flat CSV
-   - `stars-badge.svg` - Star count badge
-   - `charts/` - The SVG charts the report embeds
+   - `README.md`, the full Markdown report
+   - `stars-data.json`, the historical data
+   - `stars-data.csv`, the same run as a flat CSV
+   - `stars-badge.svg`, the star count badge
+   - `charts/`, the SVG charts the report embeds
 
-> Charts and forecasts appear on the first run: when charts are enabled (the default), the action reconstructs the real star-history curve from your stargazers' starred dates.
+### If the Branch Never Appears
+
+If the run finishes green but no `star-tracker-data` branch exists, check the log for `No repositories matched the configured filters`. When nothing matches, the action reports an empty run: every output is set from an empty summary, the HTML report is still written, and the data branch is never touched, so none of the files above are created.
+
+The usual causes are a `visibility` filter with nothing behind it (`private` on an account with no private repos), a `min-stars` floor above every repo you own, or an `only-repos` / `only-orgs` list that matches nothing. Relax the filter and run again. See **[Configuration](Configuration#filtering-options)**.
 
 ---
 
@@ -106,18 +101,18 @@ Embed the star history chart:
 
 ## What Happens Next
 
-- The action runs on your configured schedule (daily by default)
+- The action runs on your configured schedule (daily, with the workflow above)
 - Each run compares current stars with the previous snapshot
 - Reports and charts are updated on the `star-tracker-data` branch
 - Animated SVG charts appear in the `charts/` directory from the first run, reconstructed from your stargazers' real starred dates
-- Growth forecasts are computed from the first run, once the reconstructed history has at least 3 points
+- Growth forecasts are computed from the first run too, once the reconstructed history has at least 3 points
 
 ---
 
 ## Next Steps
 
-- **[Configuration](Configuration)** - Customize filters, charts, locale, and more
-- **[Email Notifications](Email-Notifications)** - Get reports sent to your inbox
-- **[Star Trend Charts](Star-Trend-Charts)** - Understand the chart types
-- **[Examples](Examples)** - Advanced workflow configurations
-- **[Troubleshooting](Troubleshooting)** - If something doesn't work
+- **[Configuration](Configuration)**: customize filters, charts, locale, and more
+- **[Email Notifications](Email-Notifications)**: get reports sent to your inbox
+- **[Star Trend Charts](Star-Trend-Charts)**: understand the chart types
+- **[Examples](Examples)**: advanced workflow configurations
+- **[Troubleshooting](Troubleshooting)**: if something doesn't work

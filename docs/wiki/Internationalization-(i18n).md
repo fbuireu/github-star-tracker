@@ -40,7 +40,9 @@ locale: es
 | **Markdown report** | Section titles, summary labels, trend indicators, footer |
 | **HTML email** | Same as Markdown, plus subject line |
 | **SVG badge** | Label text (`Total Stars` / `Estrellas Totales` / ...) |
-| **Charts** | Axis date labels (locale-aware `Date.toLocaleDateString`) and milestone labels, on the SVG charts and the email ones alike. The compact Y-axis counts are SVG-only: the email charts let Chart.js draw its own ticks |
+| **Charts, both kinds** | Chart titles, axis date labels (locale-aware `Date.toLocaleDateString`) and milestone labels |
+| **Charts, SVG only** | The compact Y-axis counts (`1.2K`). The email charts let Chart.js draw its own ticks instead |
+| **Badge number** | The star count is compacted in the report locale, so `1,200` reads `1.2K` in `en` and `1,2 mil` in `es` |
 | **Forecast tables** | Method names, week labels, section titles |
 | **Stargazer section** | Section title, count text, "starred on" dates |
 | **Email subject** | Auto-generated localized subject line |
@@ -70,9 +72,12 @@ src/i18n/
 ├── es.json      # Spanish
 ├── ca.json      # Catalan
 ├── it.json      # Italian
-├── index.ts     # Loader, interpolation, validation
+├── index.ts     # Bundle map, getTranslations(), interpolate()
 └── types.ts     # Translations interface
 ```
+
+`index.ts` validates nothing. Checking that a configured `locale` is one of the four is the config loader's
+job (`src/config/loader.ts`), which warns before this folder is ever reached.
 
 ### Translation Keys
 
@@ -97,22 +102,34 @@ Templates use `{placeholder}` syntax:
 {
   "comparedTo": "Compared to snapshot from {date}",
   "starsCount": "{count} stars",
-  "repoChartHeading": "{name} — {count} ★ ({delta})",
+  "removedRepoText": "{name}: was {count} stars",
+  "projection": "~{days} days to {milestone} ★",
   "week": "Week {n}"
 }
 ```
 
-The `interpolate()` function replaces placeholders with provided values at render time. Unknown placeholders are left as-is.
+The `interpolate()` function replaces placeholders with provided values at render time. A placeholder is
+exactly one brace pair around letters, digits or underscores: `{first name}` and `{user.name}` are not
+placeholders and pass through untouched. So does any placeholder no value was supplied for, which is left
+verbatim rather than becoming `undefined` or an empty string.
 
 ---
 
 ## Fallback Behavior
 
-If an invalid locale is provided:
+There are **two** fallbacks to English, at different moments, and only the first one you ever see.
+
+**At config time**, an invalid `locale` input is caught by the config loader:
 
 1. The action logs a warning: `Invalid locale "xx". Must be "en", "es", "ca", or "it". Falling back to "en"`
 2. English translations are used for the entire run
 3. The workflow does **not** fail
+
+**At render time**, `getTranslations()` falls back to the English bundle for any locale it has no bundle
+for, silently and with no warning. Because `Locale` is a closed union and the loader has already validated
+the input, that second fallback is unreachable in a normal run: it is the safety net for a value that
+dodged the type system, and it is the reason a partly-registered new locale renders in English rather than
+crashing.
 
 ---
 
@@ -122,11 +139,22 @@ To contribute a new language:
 
 1. Copy `src/i18n/en.json` to `src/i18n/{code}.json`
 2. Translate all values (keys stay in English)
-3. Keep `{placeholder}` tokens untranslated
+3. Keep `{placeholder}` tokens untranslated, spelled exactly as in `en.json`
 4. Add the import in `src/i18n/index.ts`
-5. Add the locale and its Intl code to `LOCALE_MAP` in `src/i18n/index.ts` (`LOCALES` and the `Locale` type derive from it)
+5. Add the locale and its Intl code to `LOCALE_MAP` in `src/i18n/index.ts` (`LOCALES` and the `Locale` type derive from it, so there is no second list to maintain)
 6. Register the imported bundle in the `TRANSLATIONS` map in `src/i18n/index.ts`
 7. Run `pnpm run validate` to check everything passes
+
+`src/i18n/types.ts` needs **no** change. `resolveJsonModule` is on, so the new `.json` bundle is type-checked
+against the existing `Translations` interface at compile time: a missing or mistyped key is a build error.
+Note that *extra* keys are silently accepted, because an imported module is not a fresh object literal and
+gets no excess-property check, which is why `pnpm typecheck` is the check that matters here.
+
+Three documentation edits belong in the same commit, none of them derived from the code:
+
+- the `locale` input description in `action.yml`, which hard-codes the four locale names
+- the **Supported Locales** and **Localized Email Subjects** tables on this page
+- the `locale` section of [Configuration](Configuration#locale)
 
 See **[Contributing](https://github.com/fbuireu/github-star-tracker/blob/main/CONTRIBUTING.md)** for development setup.
 

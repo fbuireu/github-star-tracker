@@ -16,6 +16,7 @@ const SCRIPT_PATTERN = /^pnpm ([a-z][a-z0-9:._-]*)/gm;
 const LAYER_ROW_PATTERN = /^\| `([\w-]+)\/` \| `(@[a-z\d]+)(?:\/\*)?` \|/gm;
 
 const GUIDE = 'CLAUDE.md';
+const CONTRIBUTOR_GUIDE = 'CONTRIBUTING.md';
 
 const UNDOCUMENTED_SCRIPTS = new Set(['prepare', 'test:watch', 'test:changed']);
 
@@ -49,7 +50,7 @@ const I18N_PAGE = 'docs/wiki/Internationalization-(i18n).md';
 const I18N_SECTION_ROW_PATTERN = /^\| `(\w+)` \| ((?:`[\w.]+`(?:, )?)+) \|/gm;
 const I18N_KEY_PATTERN = /`([\w.]+)`/g;
 
-const LINE_CITATION_ALLOWLIST = new Set([GUIDE, ADR_TEMPLATE]);
+const LINE_CITATION_ALLOWLIST = new Set([GUIDE, CONTRIBUTOR_GUIDE, ADR_TEMPLATE]);
 
 function walk(dir: string, keep: (filename: string) => boolean): string[] {
   if (!fs.existsSync(dir)) return [];
@@ -66,9 +67,17 @@ function walk(dir: string, keep: (filename: string) => boolean): string[] {
 const isMarkdown = (filename: string): boolean => filename.endsWith('.md');
 
 const DOCS = [
-  ...['CLAUDE.md', 'ARCHITECTURE.md', 'CONTEXT.md', 'README.md', 'examples/README.md'].filter(
-    (doc) => fs.existsSync(doc),
-  ),
+  ...[
+    'CLAUDE.md',
+    'ARCHITECTURE.md',
+    'CODE_OF_CONDUCT.md',
+    'CONTEXT.md',
+    'CONTRIBUTING.md',
+    'README.md',
+    'SECURITY.md',
+    'examples/README.md',
+  ].filter((doc) => fs.existsSync(doc)),
+  ...walk('.github', isMarkdown),
   ...walk('docs', isMarkdown),
   ...walk('src', (filename) => filename === 'CLAUDE.md'),
 ];

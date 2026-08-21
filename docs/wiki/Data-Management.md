@@ -26,16 +26,20 @@ The working directory for the branch is derived from the name: a dot followed by
 | `stars-data.csv` | Flat per-repo export (`repository,owner,name,stars,previous,delta,status`) | Every run |
 | `stars-badge.svg` | Star count badge | Every run |
 | `stargazers.json` | Stargazer login map | Only with `track-stargazers: true` |
-| `charts/star-history.svg` | Total stars chart | Charts on, once the reconstructed history has at least 2 points |
-| `charts/comparison.svg` | Top repos comparison | Same condition as `star-history.svg` |
-| `charts/forecast.svg` | Growth forecast | Same, plus the 3 snapshots a forecast needs |
-| `charts/{owner}-{repo}.svg` | Per-repo charts | Same, one per top repository, and only where that repository's own history has 2 points |
+| `charts/star-history.svg` | Total stars chart | Charts on, once the charted series has at least 2 points |
+| `charts/comparison.svg` | Top repos comparison | Same condition, plus at least one top repository |
+| `charts/forecast.svg` | Growth forecast | Same, plus the 3 points a forecast needs |
+| `charts/{owner}-{repo}.svg` | Per-repo charts | Same condition, one per top repository |
+
+**"The charted series" is not always the reconstruction.** Charts prefer the **Reconstructed History**, built
+from each stargazer's `starred_at` date, which is why they render on the very first run. When that
+reconstruction has fewer than 2 points, for a repository whose stargazers could not be read at all, the chart
+falls back to the **Stored History** instead. It is still drawn; it just spans the tracker's own runs rather
+than the repository's life, so on a first run there may be too little of it and the file is skipped.
 
 Charts this run did not produce are deleted from `charts/`, so a repository that drops out of `top-repos` does not leave its file behind. Nothing outside `charts/` is ever removed, and only `.svg` files are considered.
 
-The HTML report is **not** on this branch. It is written to the runner's temp directory and exposed as the `report-html-path` output, so it never reaches a commit.
-
-> Charts are reconstructed from the real star history (each stargazer's `starred_at` date), not from accumulated per-run snapshots, so they render on the first run.
+The HTML report is **not** on this branch. It is written to the runner's temp directory and exposed as the `report-html-path` output, so it never reaches a commit. It is written on every run, including read-only ones and runs where no repository matched.
 
 ---
 
@@ -72,10 +76,41 @@ Each run creates a snapshot appended to the `snapshots` array in `stars-data.jso
 
 ### Fields
 
+- `version` - the on-disk format version, stamped by the writer as the first key. It is not part of a
+  snapshot and never appears in a report; it exists so a newer branch cannot be misread by an older action
 - `timestamp` - ISO 8601 datetime of when the run occurred
 - `totalStars` - sum of all tracked repos' stars
 - `repos[]` - per-repo data (fullName, name, owner, stars)
-- `starsAtLastNotification` - the star total captured when the last notification fired; used by the notification threshold system and updated only when a notification is actually sent, so the accumulated change keeps growing across runs that do not notify. How it is compared depends on [`notification-mode`](Configuration#notification-mode): `net` uses the absolute change, `gains` only counts upward movement
+- `starsAtLastNotification` - **optional.** The star total captured when the notification baseline last
+  advanced. It is absent until the first notification fires, and an absent value is read as `0`. How it is
+  compared depends on [`notification-mode`](Configuration#notification-mode): `net` uses the absolute change,
+  `gains` only counts upward movement
+
+**When the baseline advances** is not simply "when an email is sent". A run that decides to notify advances
+it both when the send succeeds *and* when no SMTP transport is configured at all, because in that case the
+`should-notify` output is itself the notification. Only a send that was configured and **failed** holds it
+back, so the accumulated change is not lost. A run that does not decide to notify never touches it, which is
+what makes the counter keep growing across quiet runs.
+
+### What the reader must not do to this file
+
+The three things that make a run stop rather than continue on a guess:
+
+| If `stars-data.json` | The run |
+|---|---|
+| is not valid JSON | fails, naming the parse error, and asks you to fix or delete the file on the data branch |
+| is valid JSON but not an object (`null`, an array, a number, a string) | fails rather than reading it as an empty history and pushing over your record |
+| declares a `version` higher than this action writes | fails and asks you to upgrade the action, or to point `data-branch` at a branch this version wrote |
+
+An **absent** `version` is fine and always will be: every data branch predating the field has none, so it is
+read as version 1. A `snapshots` key that is not an array is the one tolerated case; it normalizes to an
+empty list while `starsAtLastNotification` survives.
+
+Why all three stop the run rather than starting over, and the accepted cost that a broken file blocks every
+later run until a human fixes it, is
+[ADR 0021](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0021-an-unreadable-stored-history-fails-the-run.md).
+The `version` field itself is
+[ADR 0015](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0015-the-stored-history-declares-its-format-version.md).
 
 ---
 
@@ -93,6 +128,10 @@ The `max-history` setting (default: `52`) controls how many snapshots are retain
 with:
   max-history: '104'  # Keep more history
 ```
+
+**Lowering `max-history` throws snapshots away.** When more snapshots are stored than the new limit allows,
+the run logs a warning naming how many it is about to drop and telling you to raise `max-history` *before*
+this run if you want to keep them. Once that run pushes, they are gone; the data branch is the only copy.
 
 ### How Pruning Works
 
@@ -119,8 +158,8 @@ Entries are added and overwritten, never removed. A repository that leaves the t
 so returning does not report its existing stargazers as new; the file therefore grows with the number of
 repositories ever tracked.
 
-A repository whose stargazers could not be read — a failed request, an empty response for a repo that has
-stars, or a repo covered by `smart-sampling` — **keeps its previous login list** rather than being written
+A repository whose stargazers could not be read (a failed request, an empty response for a repo that has
+stars, or a repo covered by `smart-sampling`) **keeps its previous login list** rather than being written
 as empty. Without that, one transient failure would wipe the entry and the next successful run would report
 every existing stargazer as new. The trade-off is that such an entry can be stale, and if the repository is
 permanently unreadable it will never report a new stargazer again. Each affected repository is named in a
@@ -131,32 +170,37 @@ warning in the run log. The full reasoning is
 
 ## First Run Behavior
 
-On the first run:
+On the first **writing** run:
 
 1. The action creates the data branch as an orphan branch
 2. An initial empty commit is made
 3. All repos are recorded with `delta: 0` (no previous data to compare against)
-4. Stargazers are fetched (charts are on by default) and the real star-history curve is reconstructed from their starred_at dates - so charts are generated on the first run.
-5. Forecasts are generated on the first run as well, provided the reconstructed history has at least 3 points.
+4. Stargazers are fetched (charts are on by default) and the Reconstructed History is built from their
+   `starred_at` dates, so charts are generated on the first run
+5. Forecasts are generated on the first run too, provided that reconstruction has at least 3 points
+
+The data branch is a Git worktree checked out beside your main checkout at the dot-prefixed branch name
+(`.star-tracker-data/`), so the action never runs `git checkout` on the branch your workflow is using.
 
 ---
 
-## Idempotency
+## Read-Only Runs
 
-If no star counts change between runs, the action detects this via `git diff --cached --quiet` and **skips the commit**. No empty commits are created.
+With [`read-only: true`](Configuration#read-only) a run touches the data branch **only to read it**. It
+still opens the worktree, reads `stars-data.json` and `stargazers.json`, computes, renders and writes every
+artefact above into that worktree, sends the email and sets every output. It then logs
+`Read-only run: leaving <branch> untouched` and throws the worktree away without committing.
 
----
+Two things follow, and both surprise people:
 
-## Data Branch Isolation
+- **The branch must already exist.** A read-only run refuses to create one and fails outright, so the "First
+  Run Behavior" above does not apply to it. Point `data-branch` at the branch your tracking workflow
+  maintains, or drop `read-only` for one run so it can be created.
+- **Nothing is remembered.** No snapshot is appended and `starsAtLastNotification` never advances, so a
+  `notification-threshold` other than `0` cannot work on a read-only run. The action warns when both are set.
 
-The data branch uses Git worktrees for isolation:
-
-- **Primary worktree:** your main repo checkout (`GITHUB_WORKSPACE`)
-- **Secondary worktree:** created at the dot-prefixed branch name (e.g. `.star-tracker-data/`), pointing to the data branch
-- Same `.git` directory but independent working trees
-- Worktree is created at the start and removed in a `finally` block
-
-This means the action never runs `git checkout` on your main branch, avoiding disruption.
+This is what lets a second workflow, typically a weekly digest, share a data branch with the workflow that
+maintains it without the two racing to push.
 
 ---
 
@@ -170,20 +214,10 @@ Delete the data branch to start fresh:
 git push origin --delete star-tracker-data
 ```
 
-The next workflow run will recreate it.
+The next writing run will recreate it. A read-only run will not.
 
-### Cloning Data Locally
-
-```bash
-git clone -b star-tracker-data --single-branch \
-  https://github.com/YOUR_USER/YOUR_REPO.git star-data
-```
-
-### Viewing Raw JSON
-
-```bash
-curl -s https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/stars-data.json | jq .
-```
+Cloning the branch, downloading `stars-data.json` and querying it with `jq` are all in
+**[Viewing Reports](Viewing-Reports#accessing-raw-data)**, which is where the raw-data recipes live.
 
 ---
 

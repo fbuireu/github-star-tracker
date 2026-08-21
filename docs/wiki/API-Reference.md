@@ -1,4 +1,11 @@
-Complete reference for all inputs, outputs, and data formats.
+Complete reference for all inputs, outputs, and data formats. Every input links to its full description in **[Configuration](Configuration)**, which is the prose guide; this page is the index.
+
+- [Inputs](#inputs)
+- [Outputs](#outputs)
+- [Data Formats](#data-formats)
+- [Generated Files on Data Branch](#generated-files-on-data-branch)
+- [Configuration File Format](#configuration-file-format)
+- [Versioning](#versioning)
 
 ---
 
@@ -8,60 +15,61 @@ Complete reference for all inputs, outputs, and data formats.
 
 | Input | Type | Description |
 |---|---|---|
-| `github-token` | `string` (secret) | Personal Access Token with `repo` or `public_repo` scope |
+| `github-token` | `string` (secret) | Personal Access Token with `repo` or `public_repo` scope. [Details](Configuration#github-token) |
 
 ### Optional
 
 | Input | Type | Default | Description |
 |---|---|---|---|
-| `chart-animation` | `boolean` | `true` | Animate the SVG charts (`true`) or render them static (`false`) for email/static contexts |
-| `chart-begin-at-zero` | `boolean` | `false` | Start the Y-axis at zero (`true`) or zoom into the data range (`false`) |
-| `chart-curve` | `string` | `monotone` | Curve when smoothing is on: `monotone`, `catmull-rom`, `cubic-bezier`, `rounded-step`. Email approximates non-monotone curves |
-| `chart-custom-milestones` | `string` | _(empty)_ | Comma-separated star counts for the milestone reference lines, replacing the built-in defaults (e.g. `250, 750, 2500`). Requires `chart-milestones` |
-| `chart-line-color` | `string` | `#dfb317` | Hex color for the primary chart line/fill/points (not the comparison palette); accepts 3/4/6/8-digit hex with or without a leading `#` |
-| `chart-line-width` | `number` | `2.5` | Stroke width in px (>0) of data lines across all charts |
-| `chart-max-points` | `number` | `30` | Curve granularity: how many points are sampled across the full reconstructed history (capped at 365); `0` reconstructs at weekly resolution. Controls resolution, not the time window (see `chart-range`). Email charts are always limited to 30 |
-| `chart-milestones` | `boolean` | `true` | Show milestone reference lines on the main star-history chart (`true`) or hide them (`false`) |
-| `chart-range` | `string` | `all` | Time window plotted: `30d`, `90d`, `1y` or `all` |
-| `chart-show-points` | `boolean` | `true` | Draw a marker on each data point (`true`) or hide them for a cleaner dense line (`false`) |
-| `chart-smoothing` | `boolean` | `true` | Smooth curve (`true`) or straight segments between points to reveal small spikes (`false`) |
-| `chart-theme` | `string` | `auto` | Color theme for the SVG charts: `auto` (follows `prefers-color-scheme`), `light` or `dark` |
-| `chart-trend-line` | `boolean` | `false` | Overlay a dashed moving-average trend line on the main chart |
-| `chart-y-axis-side` | `string` | `left` | Y-axis label side: `left` or `right` |
-| `compare-against` | `string` | `last-run` | Which stored snapshot is used as the comparison baseline: `last-run`, `24h`, `7d`, `30d`. Windowed values pick the most recent snapshot at least that old; if history is shorter, the oldest available snapshot is used, so the period reported is shorter than requested and the report's "Compared to" date shows how far back it really goes. Affects `new-stars`, `lost-stars`, `stars-changed` and the total delta only - every run still appends its own snapshot, and charts, forecast and velocity are unaffected |
-| `config-path` | `string` | `star-tracker.yml` | Path to YAML config file (relative to repo root) |
-| `data-branch` | `string` | `star-tracker-data` | Branch name for storing tracking data |
-| `email-from` | `string` | localized | Sender name or address. When unset it falls back to a sender name localized from the `locale` input |
-| `email-theme` | `string` | `auto` | Color theme for the HTML email and its charts: `auto` (same as `chart-theme`), `light` or `dark`. The email charts are images with a baked-in background, so a dark-mode reader needs this to resolve to `dark` |
-| `email-to` | `string` | - | Recipient email address |
-| `exclude-orgs` | `string` | - | Comma-separated organization/owner names or regex patterns to exclude |
-| `exclude-repos` | `string` | - | Comma-separated names or regex patterns (e.g. `/^test-.*/`) to exclude |
-| `github-api-url` | `string` | - | GitHub API base URL for GHES (auto-detected on GHES runners) |
-| `include-archived` | `boolean` | `false` | Include archived repositories |
-| `include-charts` | `boolean` | `true` | Generate star trend charts |
-| `include-forks` | `boolean` | `false` | Include forked repositories |
-| `locale` | `string` | `en` | Report language: `en`, `es`, `ca`, `it` |
-| `max-history` | `number` | `52` | Maximum snapshots to keep in history |
-| `min-stars` | `number` | `0` | Only track repos with at least N stars |
-| `notification-mode` | `string` | `net` | How `notification-threshold` measures that change: `net` (absolute change in total stars - gains and losses cancel out, and a large drop also reaches the threshold) or `gains` (only upward movement counts; a drop never notifies) |
-| `notification-threshold` | `number` or `"auto"` | `0` | Accumulated star change required to notify: `0` = every run that has changes, N = notify once the total has moved by at least N since the last notification, `auto` = adaptive threshold derived from the total star count (see [Configuration](Configuration#notification-threshold)) |
-| `only-orgs` | `string` | - | Comma-separated organization/owner names or regex patterns (e.g. `/^my-org$/`) to exclusively track |
-| `only-repos` | `string` | - | Comma-separated repo names to exclusively track. Narrows what `only-orgs` already selected — it cannot bring back a repo `only-orgs` excluded — but does skip the archived/fork/exclude/min-stars filters |
-| `read-only` | `boolean` | `false` | Run without writing to the data branch: still fetches, reports, sets outputs and emails, but never commits or pushes. Pair with `compare-against` for a digest workflow that shares a data branch with your tracking workflow. Incompatible with a non-zero `notification-threshold`, whose counter lives on that branch |
-| `send-on-no-changes` | `boolean` | `false` | Send email even with no star changes |
-| `smart-sampling` | `boolean` | `false` | Sample stargazer pages for high-star repos instead of fetching every page, to avoid API rate limits |
-| `smart-sampling-pages` | `number` | `30` | Max evenly-spaced stargazer pages (100 stargazers each) to fetch per sampled repo |
-| `smart-sampling-threshold` | `number` | `1500` | Star count above which a repo is sampled instead of fully fetched (only when smart-sampling is enabled) |
-| `smtp-host` | `string` | - | SMTP hostname (enables email if provided) |
-| `smtp-password` | `string` (secret) | - | SMTP auth password |
-| `smtp-port` | `string` | `587` | SMTP port (`587` = STARTTLS, `465` = SSL) |
-| `smtp-username` | `string` | - | SMTP auth username |
-| `top-repos` | `number` | `10` | Number of top repos in charts and forecasts |
-| `track-stargazers` | `boolean` | `false` | Track individual stargazers per repo |
-| `velocity-metrics` | `boolean` | `false` | Add a growth-velocity section (stars/day, % growth, days to next milestone) to the report |
-| `visibility` | `string` | `all` | Repo visibility filter: `public`, `private`, `all`, or `owned` |
+| `chart-animation` | `boolean` | `true` | Animate the SVG charts (`true`) or render them static (`false`). [Details](Configuration#chart-animation) |
+| `chart-begin-at-zero` | `boolean` | `false` | Start the Y-axis at zero (`true`) or zoom into the data range (`false`). [Details](Configuration#chart-begin-at-zero) |
+| `chart-curve` | `string` | `monotone` | Curve used when smoothing is on: `monotone`, `catmull-rom`, `cubic-bezier` or `rounded-step`. [Details](Configuration#chart-curve) |
+| `chart-custom-milestones` | `string` | - | Comma-separated star counts that replace the built-in milestone lines (e.g. `250, 750, 2500`). [Details](Configuration#chart-custom-milestones) |
+| `chart-line-color` | `string` | `#dfb317` | Hex color for the primary chart line, fill and points. [Details](Configuration#chart-line-color) |
+| `chart-line-width` | `number` | `2.5` | Stroke width in px (>0) of data lines across all charts. [Details](Configuration#chart-line-width) |
+| `chart-max-points` | `number` | `30` | How many points are sampled across the full reconstructed history, capped at 365, with `0` meaning weekly resolution. [Details](Configuration#chart-max-points) |
+| `chart-milestones` | `boolean` | `true` | Draw milestone reference lines on the main star-history chart. [Details](Configuration#chart-milestones) |
+| `chart-range` | `string` | `all` | Time window plotted: `30d`, `90d`, `1y` or `all`. [Details](Configuration#chart-range) |
+| `chart-show-points` | `boolean` | `true` | Draw a marker on each data point. [Details](Configuration#chart-show-points) |
+| `chart-smoothing` | `boolean` | `true` | Draw a smooth curve between points rather than straight segments. [Details](Configuration#chart-smoothing) |
+| `chart-theme` | `string` | `auto` | Color theme for the SVG charts: `auto`, `light` or `dark`. [Details](Configuration#chart-theme) |
+| `chart-trend-line` | `boolean` | `false` | Overlay a dashed moving-average trend line on the main chart. [Details](Configuration#chart-trend-line) |
+| `chart-y-axis-side` | `string` | `left` | Y-axis label side: `left` or `right`. [Details](Configuration#chart-y-axis-side) |
+| `compare-against` | `string` | `last-run` | Which stored snapshot is used as the comparison baseline: `last-run`, `24h`, `7d` or `30d`. [Details](Configuration#compare-against) |
+| `config-path` | `string` | `star-tracker.yml` | Path to the YAML config file, relative to the repo root. [Details](Configuration#config-path) |
+| `data-branch` | `string` | `star-tracker-data` | Branch name for storing tracking data; an invalid git branch name fails the run. [Details](Configuration#data-branch) |
+| `email-from` | `string` | localized | Sender name or address, falling back to a sender name localized from `locale`. [Details](Configuration#email-from) |
+| `email-theme` | `string` | `auto` | Color theme for the HTML email and its chart images: `auto`, `light` or `dark`. [Details](Configuration#email-theme) |
+| `email-to` | `string` | - | Recipient email address. [Details](Configuration#email-to) |
+| `exclude-orgs` | `string` | - | Comma-separated owner names or `/regex/` patterns to exclude. [Details](Configuration#exclude-orgs) |
+| `exclude-repos` | `string` | - | Comma-separated repository names or `/regex/` patterns to exclude. [Details](Configuration#exclude-repos) |
+| `github-api-url` | `string` | - | GitHub API base URL for GHES, auto-detected on GHES runners. [Details](Configuration#github-api-url) |
+| `include-archived` | `boolean` | `false` | Include archived repositories. [Details](Configuration#include-archived) |
+| `include-charts` | `boolean` | `true` | Generate star trend charts. [Details](Configuration#include-charts) |
+| `include-forks` | `boolean` | `false` | Include forked repositories. [Details](Configuration#include-forks) |
+| `locale` | `string` | `en` | Report language: `en`, `es`, `ca` or `it`. [Details](Configuration#locale) |
+| `max-history` | `number` | `52` | Maximum snapshots to keep, one snapshot being stored per run. [Details](Configuration#max-history) |
+| `min-stars` | `number` | `0` | Only track repos with at least N stars. [Details](Configuration#min-stars) |
+| `notification-mode` | `string` | `net` | How `notification-threshold` measures change: `net` (gains and losses cancel out) or `gains` (only upward movement counts). [Details](Configuration#notification-mode) |
+| `notification-threshold` | `number` or `"auto"` | `0` | Accumulated star change required to notify: `0` for every changed run, N for once per N stars, or `auto` for a threshold derived from the total. [Details](Configuration#notification-threshold) |
+| `only-orgs` | `string` | - | Comma-separated owner names or `/regex/` patterns to track exclusively. [Details](Configuration#only-orgs) |
+| `only-repos` | `string` | - | Comma-separated repository names or `/regex/` patterns to track exclusively. [Details](Configuration#only-repos) |
+| `read-only` | `boolean` | `false` | Run without writing to the data branch: it still fetches, reports, sets outputs and emails, but never commits or pushes. [Details](Configuration#read-only) |
+| `send-on-no-changes` | `boolean` | `false` | Send email even with no star changes; this is the one tracking input the config file cannot set. [Details](Configuration#send-on-no-changes) |
+| `smart-sampling` | `boolean` | `false` | Sample stargazer pages for high-star repos instead of fetching every page, at the cost of exact new-stargazer lists for the sampled repos. [Details](Configuration#smart-sampling) |
+| `smart-sampling-pages` | `number` | `30` | Max evenly-spaced stargazer pages (100 stargazers each) to fetch per sampled repo. [Details](Configuration#smart-sampling-pages) |
+| `smart-sampling-threshold` | `number` | `1500` | Star count above which a repo is sampled instead of fully fetched. [Details](Configuration#smart-sampling-threshold) |
+| `smtp-host` | `string` | - | SMTP hostname, which is what enables the built-in email feature. [Details](Configuration#smtp-host) |
+| `smtp-password` | `string` (secret) | - | SMTP auth password. [Details](Configuration#smtp-password) |
+| `smtp-port` | `string` | `587` | SMTP port (`587` = STARTTLS, `465` = SSL). [Details](Configuration#smtp-port) |
+| `smtp-username` | `string` | - | SMTP auth username. [Details](Configuration#smtp-username) |
+| `top-repos` | `number` | `10` | Number of top repos featured in comparison charts and forecasts. [Details](Configuration#top-repos) |
+| `track-stargazers` | `boolean` | `false` | Track individual stargazers per repo. [Details](Configuration#track-stargazers) |
+| `velocity-metrics` | `boolean` | `false` | Add a growth-velocity section (stars/day, % growth, days to next milestone) to the report. [Details](Configuration#velocity-metrics) |
+| `visibility` | `string` | `all` | Repo visibility filter: `public`, `private`, `all` or `owned`, with an invalid value failing the run. [Details](Configuration#visibility) |
 
-Both modes measure against `starsAtLastNotification` in `stars-data.json`, which only resets when the threshold trips (and not even then if a configured send failed), so the counter accumulates across runs that do not notify. [`notification-threshold`](Configuration#notification-threshold) owns the full rule, including what happens on a fresh data branch and when you raise the value.
+> [!NOTE]
+> `smtp-port` is typed `string` where every other numeric-looking input is typed `number`. That is deliberate: it is the one input that never reaches the resolved config. The SMTP adapter reads it raw, parses it itself, warns and falls back to `587` if it is not a number, and derives the TLS mode from the result (`465` means implicit TLS, anything else STARTTLS). Quote it in your workflow: `smtp-port: '465'`.
 
 ---
 
@@ -72,18 +80,16 @@ All outputs are strings (GitHub Actions requirement). Available in subsequent wo
 | Output | Type | Description |
 |---|---|---|
 | `lost-stars` | `string` | Per-run. Stars lost against the `compare-against` baseline |
-| `new-stargazers` | `string` | Number of new stargazers detected by diffing against the stored `stargazers.json`, which every writing run rewrites - unlike its siblings it is not affected by `compare-against` (0 if tracking disabled) |
+| `new-stargazers` | `string` | Number of new stargazers found by diffing against the stored `stargazers.json`, which every writing run rewrites. Unlike its siblings it is not affected by `compare-against`, and it is `0` when stargazer tracking is off |
 | `new-stars` | `string` | Per-run. Stars gained against the `compare-against` baseline |
 | `notification-sent` | `string` | Whether an email was actually delivered this run: `true` or `false`. It is `false` when SMTP is unconfigured, `email-to` is empty, or the send failed. Unlike `should-notify` it reports delivery, so a `send-on-no-changes` email on an unchanged run sets it `true` while `should-notify` stays `false` |
 | `report` | `string` | Full Markdown report |
 | `report-csv` | `string` | CSV report (for data pipelines) |
 | `report-html` | `string` | HTML report (for email) |
-| `report-html-path` | `string` | Filesystem path to the HTML report. Use this instead of `report-html` when piping into a custom mailer step - large reports can exceed the shell environment variable size limit |
+| `report-html-path` | `string` | Filesystem path to the HTML report. The file is written to `RUNNER_TEMP` (or the working directory when that is unset) on **every** run, including read-only runs and runs where no repository matched the filters, so a later step can always count on it being there. Use it instead of `report-html` when piping into a custom mailer: a large report can exceed the environment variable size limit |
 | `should-notify` | `string` | Cumulative. Whether `notification-threshold` was reached under `notification-mode` since the last notification fired, and something changed: `true` or `false` |
 | `stars-changed` | `string` | Per-run. Whether any counts changed against the `compare-against` baseline: `true` or `false` |
 | `total-stars` | `string` | Total star count across all tracked repos |
-
-`new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the comparison baseline. They are not cumulative and carry no memory of whether an email was sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: its counter only resets when the threshold trips ([the full rule](Configuration#notification-threshold)). `notification-sent` is the delivery counterpart — `should-notify` is the decision, `notification-sent` is whether mail left the building.
 
 ### Usage Example
 
@@ -121,6 +127,9 @@ All outputs are strings (GitHub Actions requirement). Available in subsequent wo
   run: echo "Gained ${{ steps.tracker.outputs.new-stars }} stars in this run!"
 ```
 
+> [!NOTE]
+> The last example compares an unquoted number on purpose. Every output is a string, but the Actions expression language coerces both operands to numbers for the ordering operators (`>`, `>=`, `<`, `<=`), so `new-stars >= 10` works. Equality does no such coercion, which is why the `== 'true'` checks above keep their quotes.
+
 To act every N stars overall (e.g. every 500), use the cumulative output with `notification-threshold: '500'` and `notification-mode: 'gains'`:
 
 ```yaml
@@ -137,7 +146,7 @@ To act every N stars overall (e.g. every 500), use the cumulative output with `n
   run: echo "Another 500 stars!"
 ```
 
-Do not use `if: steps.tracker.outputs.new-stars >= 500` for this - that requires 500 stars within a single run, which on a daily schedule would almost never fire.
+Do not reach for `if: steps.tracker.outputs.new-stars >= 500` here. That requires 500 stars within a single run, which on a daily schedule would almost never fire.
 
 ---
 
@@ -221,8 +230,6 @@ user/new-project,user,new-project,3,,3,new
 user/archived,user,archived,50,55,-5,removed
 ```
 
----
-
 ### Badge (`stars-badge.svg`)
 
 Shields.io-style SVG badge. Dimensions computed from label/value text length.
@@ -239,7 +246,7 @@ Animated SVG files committed to the data branch:
 |---|---|
 | `charts/star-history.svg` | Total stars over real time, reconstructed from each stargazer's starred_at date (from the repo's first star to now), with milestone lines |
 | `charts/comparison.svg` | Top N repos overlaid |
-| `charts/forecast.svg` | Historical + projected trends |
+| `charts/forecast.svg` | Historical and projected trends |
 | `charts/{owner}-{repo}.svg` | Per-repo star history |
 
 To embed any of these, see **[Viewing Reports](Viewing-Reports#method-2-badges)**.
@@ -254,8 +261,8 @@ To embed any of these, see **[Viewing Reports](Viewing-Reports#method-2-badges)*
 | `stars-data.json` | Historical snapshots | Yes |
 | `stars-badge.svg` | Star count badge | Yes |
 | `stars-data.csv` | CSV report with current star data | Yes |
-| `charts/star-history.svg` | Total star trend chart | After first run (when the repo has stargazers / `include-charts` is on) |
-| `charts/comparison.svg` | Top repos comparison | After first run (if multiple repos / `include-charts` is on) |
+| `charts/star-history.svg` | Total star trend chart | After first run (when the repo has stargazers and `include-charts` is on) |
+| `charts/comparison.svg` | Top repos comparison | After first run (with multiple repos and `include-charts` on) |
 | `charts/forecast.svg` | Growth forecast | After enough history points exist |
 | `charts/{owner}-{repo}.svg` | Per-repo charts | After first run (for top N repos with stargazers) |
 | `stargazers.json` | Stargazer login map | Only with `track-stargazers: true` |
@@ -264,49 +271,53 @@ To embed any of these, see **[Viewing Reports](Viewing-Reports#method-2-badges)*
 
 ## Configuration File Format
 
-The YAML config file supports these keys (all optional):
+This is the complete set of keys the YAML config file can carry, all optional. Every tracking input can be set here. The credentials and plumbing inputs (`github-token`, `github-api-url`, `config-path`, the `smtp-*` inputs, `email-from` and `email-to`) and `send-on-no-changes` are workflow-only. Keys may use underscores or dashes interchangeably.
 
 ```yaml
 # star-tracker.yml
-visibility: public           # all | public | private | owned
-include_archived: false       # boolean
-include_forks: false          # boolean
-exclude_repos:                # string[]
+visibility: public              # all | public | private | owned
+include_archived: false         # boolean
+include_forks: false            # boolean
+exclude_repos:                  # string[] (names or /regex/)
   - repo-name
   - /^regex-pattern.*/
-only_repos:                   # string[]
+only_repos:                     # string[] (names or /regex/)
   - specific-repo
-only_orgs: []                 # string[]
-exclude_orgs: []              # string[]
-min_stars: 0                  # number
-data_branch: star-tracker-data # string
-max_history: 52               # number
-compare_against: last-run     # last-run | 24h | 7d | 30d
-read_only: false              # boolean
-include_charts: true          # boolean
-locale: en                    # en | es | ca | it
-notification_threshold: 0     # number | "auto"
-notification_mode: net        # net | gains
-track_stargazers: false       # boolean
-top_repos: 10                 # number
-smart_sampling: false         # boolean
-smart_sampling_threshold: 1500 # number
-smart_sampling_pages: 30      # number
-chart_line_color: "#dfb317"   # string (hex)
-chart_line_width: 2.5         # number
-chart_max_points: 30          # number (granularity, capped at 365; 0 = weekly resolution)
-chart_y_axis_side: left       # left | right
-chart_smoothing: true         # boolean
-chart_curve: monotone         # monotone | catmull-rom | cubic-bezier | rounded-step
-chart_show_points: true       # boolean
-chart_animation: true         # boolean
-chart_milestones: true        # boolean
-chart_begin_at_zero: false    # boolean
-chart_theme: auto             # auto | light | dark
-chart_range: all              # 30d | 90d | 1y | all
-chart_trend_line: false       # boolean
-velocity_metrics: false       # boolean
+only_orgs: []                   # string[]
+exclude_orgs: []                # string[]
+min_stars: 0                    # number
+data_branch: star-tracker-data  # string (valid git branch name)
+max_history: 52                 # number
+compare_against: last-run       # last-run | 24h | 7d | 30d
+read_only: false                # boolean
+include_charts: true            # boolean
+locale: en                      # en | es | ca | it
+notification_threshold: 0       # number | "auto"
+notification_mode: net          # net | gains
+track_stargazers: false         # boolean
+top_repos: 10                   # number
+smart_sampling: false           # boolean
+smart_sampling_threshold: 1500  # number
+smart_sampling_pages: 30        # number
+chart_line_color: "#dfb317"     # string (hex; quote it, a bare # starts a YAML comment)
+chart_line_width: 2.5           # number (the only decimal field)
+chart_max_points: 30            # number (granularity, capped at 365; 0 = weekly resolution)
+chart_y_axis_side: left         # left | right
+chart_smoothing: true           # boolean
+chart_curve: monotone           # monotone | catmull-rom | cubic-bezier | rounded-step
+chart_show_points: true         # boolean
+chart_animation: true           # boolean
+chart_milestones: true          # boolean
+chart_custom_milestones: []     # number[] or "250, 750, 2500"
+chart_begin_at_zero: false      # boolean
+chart_theme: auto               # auto | light | dark
+email_theme: auto               # auto | light | dark (auto = same as chart_theme)
+chart_range: all                # 30d | 90d | 1y | all
+chart_trend_line: false         # boolean
+velocity_metrics: false         # boolean
 ```
+
+Booleans here accept the full YAML vocabulary (`true`, `yes`, `on`, `y`, `1` and `false`, `no`, `off`, `n`, `0`), which the equivalent action inputs do not. See [Configuration](Configuration#how-values-are-parsed).
 
 ---
 
@@ -321,12 +332,12 @@ velocity_metrics: false       # boolean
 uses: fbuireu/github-star-tracker@v1
 ```
 
-See [Releases](https://github.com/fbuireu/github-star-tracker/releases) for changelog.
+See [Releases](https://github.com/fbuireu/github-star-tracker/releases) for the changelog.
 
 ---
 
 ## Next Steps
 
-- **[Configuration](Configuration)** - Detailed option descriptions
-- **[Examples](Examples)** - Real-world workflows
-- **[Troubleshooting](Troubleshooting)** - Common issues
+- **[Configuration](Configuration)**: detailed option descriptions
+- **[Examples](Examples)**: real-world workflows
+- **[Troubleshooting](Troubleshooting)**: common issues

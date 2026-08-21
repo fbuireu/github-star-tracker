@@ -4,7 +4,7 @@
 
 ## Type of Change
 
-<!-- Please check the one that applies to this PR using "x" -->
+<!-- Check exactly one box, with an "x" -->
 
 - [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
 - [ ] ✨ New feature (non-breaking change which adds functionality)
@@ -17,9 +17,8 @@
 
 ## Related Issue
 
-<!-- If this PR fixes an issue, please link it here -->
-
-Fixes #<!-- issue number -->
+<!-- If this PR closes an issue, uncomment the line below and fill in the number. Otherwise leave it as is. -->
+<!-- Fixes #123 -->
 
 ## Changes Made
 
@@ -37,20 +36,19 @@ Fixes #<!-- issue number -->
 - [ ] Added new tests for changes
 - [ ] Manually tested with sample workflow
 - [ ] Verified action builds successfully (`pnpm build`)
-
-## Screenshots (if applicable)
-
-<!-- Add screenshots to help explain your changes -->
+- [ ] Attached the rendered output (report, badge or chart) if this PR changes what gets rendered
 
 ## Checklist
 
-<!-- Please check all that apply using "x" -->
+<!-- Check all that apply, with an "x" -->
 
 - [ ] My code follows the style guidelines of this project (`pnpm check`)
 - [ ] I have performed a self-review of my own code
-- [ ] I updated the *Invariants & rules* or *Gotchas* sections of any `CLAUDE.md` my change affects
+- [ ] I rebuilt `dist/` with `pnpm build` and committed it, if I touched anything under `src/`
+- [ ] I updated the relevant section of any `CLAUDE.md` my change affects
 - [ ] Changed inputs, outputs or defaults are reflected in `action.yml`, the wiki and the README
 - [ ] New or redefined domain vocabulary is in `CONTEXT.md`; a hard-to-reverse decision has an ADR
+- [ ] `docs/docs-consistency.test.ts` passes, so the docs and the code still agree
 - [ ] My changes generate no new warnings or errors
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] New and existing unit tests pass locally with my changes
@@ -66,7 +64,7 @@ Fixes #<!-- issue number -->
 
 <div align="center">
 
-<!-- Add a funny or cute GIF here -->
+<!-- Add a funny or cute GIF here. Yes, really. -->
 
 _Thanks for contributing!_ ✨
 

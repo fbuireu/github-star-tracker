@@ -1,16 +1,16 @@
 # Architecture
 
 How the action is built, for contributors. What it does and how to configure it is the
-[README](./README.md) and the user guides in [docs/wiki/](./docs/wiki/) — in particular
+[README](./README.md) and the user guides in [docs/wiki/](./docs/wiki/), in particular
 [How It Works](./docs/wiki/How-It-Works.md) and [Technical Stack](./docs/wiki/Technical-Stack.md); this
 document does not restate them. Conventions and the maintenance contract are [CLAUDE.md](./CLAUDE.md), the
 domain vocabulary is [CONTEXT.md](./CONTEXT.md).
 
 ## 1. Layer map
 
-The shape is **Domain-Driven Design<sub>(ish)</sub>** with a **Functional Core, Imperative Shell** pattern —
-the project's own term, and the `(ish)` is load-bearing: these are *layers* sharing one vocabulary, not DDD
-bounded contexts with languages of their own. The domain vocabulary itself lives in [CONTEXT.md](./CONTEXT.md).
+The shape is Domain-Driven Design(ish) with a Functional Core, Imperative Shell pattern. The `(ish)` is
+load-bearing: these are *layers* sharing one vocabulary, not DDD bounded contexts with languages of their
+own. The domain vocabulary itself lives in [CONTEXT.md](./CONTEXT.md).
 
 ```mermaid
 ---
@@ -19,7 +19,7 @@ config:
   theme: neutral
 ---
 flowchart TD
-    idx["src/index.ts"] --> app["@application<br/>tracker.ts — the only use case"]
+    idx["src/index.ts"] --> app["@application<br/>tracker.ts, the only use case"]
 
     app --> cfg["@config"]
     app --> infra["@infrastructure"]
@@ -47,18 +47,19 @@ flowchart TD
 ```
 
 Every arrow is an import a layer is allowed to make; anything not drawn is forbidden. **Gold is the
-functional core** — no I/O, no network, no filesystem, and no clock beyond an injectable `now`. **Red is the
+functional core**: no I/O, no network, no filesystem, and no clock beyond an injectable `now`. **Red is the
 imperative shell**, and each red layer owns a different side effect: `@config` reads the action inputs and one
 YAML file, `@infrastructure` owns everything outbound (REST, `git`, the filesystem, SMTP), `@application`
 writes the Action log and the outputs, and `src/index.ts` starts the run. `@config` reading `node:fs` is the
-detail most easily missed — `@infrastructure` is the only layer that reaches the *network*, not the only one
-that performs I/O at all.
+detail most easily missed, and the rule it illustrates is stated once in
+[CLAUDE.md](./CLAUDE.md#conventions): `@infrastructure` is the only layer that reaches the network, not the
+only one that performs I/O.
 
 | Layer | Alias | Responsibility | May import | Must not import |
 | --- | --- | --- | --- | --- |
 | `src/` entry | - | `index.ts` calls `trackStars()` at module load, un-awaited | `@application` | anything else |
-| application | `@application/*` | Sequencing the single use case; composition root for Octokit | config, domain, i18n, infrastructure, presentation, `@actions/*`, `@octokit/plugin-retry` | nothing forbidden — it is the top |
-| assets | `@assets/*` | Not a layer: the star mark the README embeds, no code | nothing — it imports nothing and nothing imports it | — |
+| application | `@application/*` | Sequencing the single use case; composition root for Octokit | config, domain, i18n, infrastructure, presentation, `@actions/*`, `@octokit/plugin-retry` | nothing; it is the top |
+| assets | `@assets/*` | Not a layer: the star mark the README embeds, no code | nothing; it imports nothing and nothing imports it | - |
 | config | `@config/*` | Action inputs + `star-tracker.yml` -> a fully-populated `Config` | `@domain/types`, `@i18n`, `@actions/core`, `js-yaml`, `node:fs/path` | application, infrastructure, presentation |
 | domain | `@domain/*` | Pure business core: the Tracked Set, comparison, snapshots, forecast, velocity, stargazer diffing and sampling, star-history reconstruction, formatting | `@i18n` only | everything else, incl. `@actions/*`, octokit, `node:fs` |
 | i18n | `@i18n` | Translation bundles, `getTranslations`, `interpolate` | nothing (true leaf) | everything |
@@ -66,48 +67,52 @@ that performs I/O at all.
 | presentation | `@presentation/*` | Pure rendering: data in, string out (markdown/HTML/SVG/CSV/badge) | `@config/types`, domain, i18n | infrastructure, `@actions/*`, `node:fs`, any network |
 | shared | `@shared/*` | Cross-cutting non-layer code; today only `shared/tests` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only) | used from `*.test.ts` only |
 
-Two hard rules govern this diagram: **`domain`, `presentation` and `i18n` are pure** — no `node:*`, no `@actions/*`, no network — and **cross-layer imports always go through path aliases while same-layer imports stay relative**.
-
-The table above is the normative statement of the layer boundaries — the diagram is its picture, and anything the table forbids is forbidden however convenient. The codebase-wide conventions those boundaries sit inside (aliases, named params, no comments, purity) are stated once in [CLAUDE.md](./CLAUDE.md#conventions), and what each layer actually guarantees is that layer's own `CLAUDE.md`, linked in [§6](#6-where-things-live).
+This table is the **normative statement of the layer boundaries**. The diagram is its picture, and anything
+the table forbids is forbidden however convenient. The codebase-wide conventions those boundaries sit inside
+(aliases, named params, no comments, purity) are stated once in [CLAUDE.md](./CLAUDE.md#conventions), and
+what each layer actually guarantees is that layer's own `CLAUDE.md`, linked in [§6](#6-where-things-live).
+The decision to layer the tree this way is [ADR 0004](./docs/adr/0004-layered-source-structure.md).
 
 ## 2. A run, end to end
 
-All step numbers refer to `src/application/tracker.ts`.
+The numbers below are this table's own, in the order `trackStars` executes the calls. `src/application/tracker.ts`
+carries no comments, so there are no step markers in the source to match them against.
 
 | # | Call | Layer | Notes |
 | --- | --- | --- | --- |
 | 1 | `trackStars()` from `src/index.ts` | entry | Un-awaited; `trackStars` never rejects |
 | 2 | `loadConfig()` | config | Precedence: action input -> config file -> `DEFAULTS`. Only unknown `visibility` and an invalid `data-branch` throw |
-| 3 | `core.getInput('github-token' / 'github-api-url')`, `github.getOctokit(token, baseUrl?, retry)` | application | The only place an Octokit instance is built; `@octokit/plugin-retry` attached here |
+| 3 | `core.getInput('github-token' / 'github-api-url')`, `github.getOctokit(token, baseUrl?, retry)` | application | The only place an Octokit instance is built; `@octokit/plugin-retry` attached here. The input wins over the `GITHUB_API_URL` env var, which is how GHES runners are auto-detected; with both empty, `getOctokit` receives `undefined` rather than an empty `baseUrl` |
 | 4 | `getRepos({ octokit, config })` | infrastructure/github | Paginates and maps, then narrows via `resolveTrackedSet` (`@domain/tracked-set`) and logs the counts it reports; result sorted by `full_name`. Fetch failure is fatal |
-| 5 | empty result -> `setOutputs()` over an empty Summary and `renderEmptyRun`, then `return` | application | Returns **before** `withDataBranch`, so no worktree, no commit, no email |
+| 5 | empty result -> `renderEmptyRun`, `writeHtmlReport`, `setOutputs()` over an empty Summary, then `return` | application | Returns **before** `withDataBranch`, so no worktree, no commit, no email. The HTML report is still written, so a downstream step can rely on `report-html-path` on every run |
 | 6 | `withDataBranch({ dataBranch, readOnly, token, run })` | infrastructure/persistence | Opens the worktree via `initializeDataBranch`, hands the body a `DataBranch`, and runs `cleanup` in `finally`. `dataDir` never escapes the module |
-| 7 | `branch.readHistory()` | infrastructure/persistence | Normalizes to `{ ...raw, snapshots: Array.isArray(raw.snapshots) ? raw.snapshots : [] }` — a non-array `snapshots` becomes `[]`, everything else survives; invalid JSON throws rather than resetting |
+| 7 | `branch.readHistory()` | infrastructure/persistence | Normalizes a non-array `snapshots` to `[]` while everything else survives. Invalid JSON, JSON that is not an object, and an unreadable format version all throw rather than resetting ([ADR 0021](./docs/adr/0021-an-unreadable-stored-history-fails-the-run.md)) |
 | 8 | `measureRun({ trackedSet, storedHistory, comparisonWindow, maxHistory, notificationThreshold, notificationMode })` | domain/measurement | The whole measurement in one call: resolves the Baseline, compares, snapshots, appends, and decides whether the threshold was reached. See [ADR 0013](./docs/adr/0013-a-run-is-measured-in-one-place.md) |
 | 9 | `measurement.droppedSnapshots > 0` -> prune warning | application | The domain reports the count; only the shell can log it |
 | 10 | `fetchAllStargazers({ octokit, repos, config })` | infrastructure/github | Only when `includeCharts \|\| trackStargazers`. Per-repo failures degrade to `core.warning` |
 | 11 | `branch.readStargazers()` -> `diffStargazers` -> `buildStargazerMap(...)` | persistence + domain | Only when `trackStargazers`. The map is handed to `publish`, not written here |
 | 12 | `topRepositories({ repos: results.repos, limit: config.topRepos })` | domain/comparison | The single definition of Top Repositories; `@presentation/report-model` calls the same function for the Report |
-| 13-14 | `resolveChartHistories({ config, storedHistory: updatedHistory, repos, repoStargazers })` | presentation/charts | Owns both altitudes and the instant: reconstructs via `@domain/star-history` (capped at 365 buckets) and resolves each result against the stored history — reconstruction wins at >= 2 snapshots. `.aggregate` is the Tracked Set's; `.forRepo(name)` is one Repository's |
-| 15 | `computeForecast({ history, topRepoNames })` | domain/forecast | `null` below 3 snapshots; always 2 methods x 4 weekly points |
-| 16 + 20 | `renderRun({ config, results, previousTimestamp, chartHistories, storedHistory, stargazerDiff, forecastData })` | presentation | The layer's single entry point: markdown, HTML, CSV, badge and every chart file in one `RenderedRun`. It builds the `ReportModel` once, derives the chart history from `chartHistories` and the Top Repositories from that model, so no caller can hand the reports the wrong `History` or chart a different set than it links ([ADR 0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md)) |
-| 17 | `notify` = `summary.changed && measurement.thresholdReached` | application | Gates the send only; the same figures are re-derived by step 19 |
-| 18 | `getEmailConfig(locale)` + `sendEmail({ emailConfig, subject, htmlBody })` | infrastructure/notification | Sent when `emailConfig && (notify \|\| sendOnNoChanges)`. The outcome becomes one `Delivery`: `SENT`, `FAILED` (a throw, or a `false` return) or `NOT_ATTEMPTED`. **Runs before persistence** — see [ADR 0011](./docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md) |
-| 19 | `settleNotification({ changed, thresholdReached, delivery, history, totalStars })` | domain/notification | Returns `shouldNotify`, `notificationSent` and `historyToPersist` as one outcome; calls `recordNotification` only when the baseline may advance |
-| 21 | `branch.publish({ history, stargazerMap, report, badge, csv, charts, commitMessage })` | infrastructure/persistence | Writes every data-branch artefact, prunes the `charts/*.svg` this run did not produce, then commits and pushes — unless `readOnly`, where the write happens and the push does not |
-| 22 | `setOutputs(...)` | application | Eleven outputs, exactly matching the `outputs:` block of `action.yml` |
+| 13 | `resolveChartHistories({ config, storedHistory: updatedHistory, repos, repoStargazers })` | presentation/charts | Owns both altitudes and the instant: reconstructs via `@domain/star-history` (capped at 365 buckets) and resolves each result against the stored history, where reconstruction wins at >= 2 snapshots. It exposes three accessors: `.aggregate` for the Tracked Set, `.forRepo(name)` for one Repository *with* the stored-history fallback, and `.reconstructedForRepo(name)` for the reconstruction alone, returning `null` rather than falling back |
+| 14 | `computeForecast({ history, topRepoNames, historyForRepo })` | domain/forecast | `null` below 3 snapshots; always 2 methods x 4 weekly points. `historyForRepo` is `.reconstructedForRepo`, deliberately *not* `.forRepo`: a fabricated fallback ramp would be projected as if it were real growth |
+| 15 | `renderRun({ config, results, previousTimestamp, chartHistories, storedHistory, stargazerDiff, forecastData })` | presentation | The layer's single entry point: markdown, HTML, CSV, badge and every chart file in one `RenderedRun`. It builds the `ReportModel` once, derives the chart history from `chartHistories` and the Top Repositories from that model, so no caller can hand the reports the wrong `History` or chart a different set than it links ([ADR 0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md)) |
+| 16 | `notificationIsDue({ changed, thresholdReached })` | domain/notification | Gates the send. The same predicate is what `settleNotification` computes internally, so the rule cannot go stale in one place and not the other |
+| 17 | `getEmailConfig(locale)` + `sendEmail({ emailConfig, subject, htmlBody })` | infrastructure/notification | Sent when `emailConfig && (notify \|\| sendOnNoChanges)`. The outcome becomes one `Delivery`: `SENT`, `FAILED` (a throw, or a `false` return) or `NOT_ATTEMPTED`. **Runs before persistence**, see [ADR 0011](./docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md) |
+| 18 | `settleNotification({ changed, thresholdReached, delivery, history, totalStars })` | domain/notification | Returns `shouldNotify`, `notificationSent` and `historyToPersist` as one outcome; calls `recordNotification` only when the baseline may advance |
+| 19 | `writeHtmlReport({ htmlReport })` | infrastructure/persistence | Writes to `RUNNER_TEMP`, falling back to the working directory, so the file is off the Data Branch and outlives the run. Deliberately **before** `publish`: a failing write must not end a run that has already committed and pushed |
+| 20 | `branch.publish({ history, stargazerMap, report, badge, csv, charts, commitMessage })` | infrastructure/persistence | Writes every data-branch artefact, prunes the `charts/*.svg` this run did not produce, then commits and pushes, unless `readOnly`, where the write happens and the push does not |
+| 21 | `setOutputs(...)` | application | Eleven outputs, exactly matching the `outputs:` block of `action.yml` |
 
 Failure policy: everything is wrapped in one `try/catch` that ends in `core.setFailed('Star Tracker failed: <msg>')` plus `core.debug(stack)`. Email is the only inner failure that is deliberately non-fatal.
 
 ## 3. The data branch
 
-State has to survive between runs of a stateless Action. Artifacts expire and are not browsable; an external database would need credentials and hosting. A git branch in the same repository is free, versioned, diffable and directly linkable (raw URLs make the badge and charts embeddable in a README).
+State has to survive between runs of a stateless Action. Artifacts expire and are not browsable; an external database would need credentials and hosting. A git branch in the same repository is free, versioned, diffable and directly linkable (raw URLs make the badge and charts embeddable in a README). The decision is [ADR 0001](./docs/adr/0001-star-data-lives-on-a-dedicated-data-branch.md).
 
-`initializeDataBranch` (`@infrastructure/git/worktree`) sets the `github-actions[bot]` identity, probes the remote with `git ls-remote --exit-code --heads`, and then either:
+`initializeDataBranch` (`@infrastructure/git/worktree`) sets the `github-actions[bot]` identity, then probes the remote with `git ls-remote --heads origin <dataBranch>` and treats **empty output** as "branch absent". `--exit-code` is deliberately not passed: it would turn a network, DNS or auth failure into a false "branch absent", and the run would then build an orphan and try to push it over the real branch. From the probe:
 
-- **branch exists** — fetches and `git worktree add <dataDir> origin/<dataBranch>`, leaving a detached HEAD (which is why `commitAndPush` pushes `HEAD:<dataBranch>`);
-- **branch missing, writable** — creates an *orphan* branch (`worktree add --detach`, `checkout --orphan`, `rm -rf .`, `commit --allow-empty`) so the data history shares no ancestry with the code history;
-- **branch missing, read-only** — throws.
+- **branch exists**: fetches and `git worktree add <dataDir> origin/<dataBranch>`, leaving a detached HEAD (which is why `commitAndPush` pushes `HEAD:<dataBranch>`);
+- **branch missing, writable**: creates an *orphan* branch (`worktree add --detach`, `checkout --orphan`, `rm -rf .`, `commit --allow-empty`) so the data history shares no ancestry with the code history;
+- **branch missing, read-only**: throws.
 
 `dataDir` is always derived as `` `.${dataBranch}` ``, never hardcoded. On-disk layout (filenames owned by `@infrastructure/persistence/storage`):
 
@@ -119,7 +124,7 @@ State has to survive between runs of a stateless Action. Artifacts expire and ar
     star-history.svg  comparison.svg  forecast.svg  <owner>-<repo>.svg
 ```
 
-`read-only: true` runs everything — fetch, compare, render, all outputs, email — but skips `commitAndPush`, so a second workflow (e.g. a weekly digest using `compare-against`) can share a data branch without appending snapshots or racing the writer. There are **two guards, both inside `@infrastructure`**: `initializeDataBranch` refuses to bring an absent Data Branch into existence, and `publish` writes every artefact into the worktree and then returns before `commitAndPush`. `tracker.ts` passes `readOnly` into `withDataBranch` and never branches on it itself.
+`read-only: true` runs everything (fetch, compare, render, all outputs, email) but skips `commitAndPush`, so a second workflow such as a weekly digest using `compare-against` can share a data branch without appending snapshots or racing the writer. There are **two guards, both inside `@infrastructure`**: `initializeDataBranch` refuses to bring an absent Data Branch into existence, and `publish` writes every artefact into the worktree and then returns before `commitAndPush`. `tracker.ts` passes `readOnly` into `withDataBranch` and never branches on it itself.
 
 ## 4. Outputs
 
@@ -140,35 +145,36 @@ The eleven action outputs, alphabetically as `action.yml` declares them: `lost-s
 
 ## 5. Build & release
 
-- **Bundling.** `esbuild.config.ts` (run via `tsx`) bundles `src/index.ts` -> `dist/index.js`, `platform: node`, `target: node24`, `format: cjs`, `sourcemap: true`, with the alias map derived from `tsconfig.json`. `dist/` is **committed** because GitHub runs a JS action straight from the repository at the referenced ref — there is no install step, so the bundle must be in the tree.
-- **Scripts** (`package.json`): `lint` = `biome check --no-errors-on-unmatched .`; `format` = `lint --write`; `typecheck` = `tsc --noEmit`; `test` / `test:coverage` = Vitest (v8 coverage, 85% threshold on lines/functions/branches/statements); `check` = lint + typecheck + test:coverage; `validate` = check + build. `pnpm run validate` is what the release job runs; `ci.yml` runs the same work as separate `check` / `build` steps (coverage runs once, inside `check`).
-- **Biome** (`biome.json`) is linter and formatter: 100-col, 2-space, LF, single quotes, semicolons, trailing commas; recommended rule preset. `.gitattributes` pins `* text=auto eol=lf`.
-- **Git hooks.** Husky: `pre-commit` -> `lint-staged` (`biome check --write` on `*.{ts,json}`), `commit-msg` -> `commitlint` (`@commitlint/config-conventional`), `pre-push` -> `typecheck && test:changed && build`.
-- **Release.** `.releaserc.json`: semantic-release on `main` with commit-analyzer, release-notes-generator, changelog, npm (`npmPublish: false`), git (commits `package.json`, `pnpm-lock.yaml`, `CHANGELOG.md` and `dist/`) and github plugins.
+The scripts, Biome settings and git hooks are listed once in [CLAUDE.md](./CLAUDE.md#commands); this section covers what happens to the bundle and the release, which lives nowhere else.
+
+- **Bundling.** `esbuild.config.ts` (run via `tsx`) bundles `src/index.ts` into `dist/index.js`, `platform: node`, `target: node24`, `format: cjs`, `sourcemap: true`, with the alias map derived from `tsconfig.json`. `dist/` is **committed** because GitHub runs a JS action straight from the repository at the referenced ref: there is no install step, so the bundle must be in the tree ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)).
+- **Node version.** Three pins move together and only two of them are asserted: `engines.node` and `packageManager` in `package.json`, plus `.nvmrc`, which is what `ci.yml` and `release.yml` actually install through `node-version-file`. Nothing checks `.nvmrc`, so move it by hand.
+- **Release.** `.releaserc.json`: semantic-release on `main` with commit-analyzer, release-notes-generator, changelog, npm (`npmPublish: false`), git (commits `package.json`, `pnpm-lock.yaml`, `CHANGELOG.md` and `dist/`) and github plugins. `release.yml` gates it behind `pnpm run validate`.
 
 `.github/workflows/`:
 
 | Workflow | Purpose |
 | --- | --- |
-| `ci.yml` | On push/PR to `main`: install, `pnpm run check`, Codecov upload (also when `check` fails, so threshold failures still report), build, then a staleness check that fails a PR touching bundled sources without touching `dist/`. It compares *which files changed*, not bytes: `dist/index.js` is not reproducible across platforms, because esbuild embeds `node_modules/.pnpm/...` paths and pnpm hashes those names on Windows but not on Linux |
+| `ci.yml` | On push/PR to `main`: install, `pnpm run check`, Codecov upload (also when `check` fails, so threshold failures still report), build, then a staleness check that fails a PR touching bundled sources without touching `dist/`. It compares *which files changed*, not bytes, because `dist/index.js` is not reproducible across platforms: esbuild embeds `node_modules/.pnpm/...` paths and pnpm hashes those names on Windows but not on Linux |
 | `release.yml` | On push to `main`: `pnpm run validate` then `semantic-release`, plus a major-version tag update |
 | `codeql.yml` | CodeQL analysis of `javascript-typescript` and `actions`, weekly + on push/PR |
 | `zizmor.yml` | zizmor static analysis of the workflow files themselves |
 | `dependabot-auto-merge.yml` | Auto-approves and squash-merges Dependabot patch/minor/dev/indirect updates |
 | `renovate-auto-approve.yml` | Auto-approves Renovate PRs labelled patch/minor/pin/lock-maintenance |
-| `sync-wiki.yml` | Publishes `docs/wiki/` to the repository's GitHub Wiki |
+| `sync-wiki.yml` | Publishes `docs/wiki/` to the repository's GitHub Wiki with `rsync --delete`, so the wiki is generated and direct edits to it are overwritten |
 
 ## 6. Where things live
 
-Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain glossary — what the words
-**mean**. The `CLAUDE.md` files below — one at the root, one per layer — are **structure**. [docs/adr/](./docs/adr/) is **why**:
+Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain glossary: what the words
+**mean**. The `CLAUDE.md` files, one at the root and one per layer, are **structure**.
+[docs/adr/](./docs/adr/) is **why**:
 
 | ADR | Decision |
 | --- | --- |
 | [0001](./docs/adr/0001-star-data-lives-on-a-dedicated-data-branch.md) | Star data lives on a dedicated data branch |
 | [0002](./docs/adr/0002-require-a-personal-access-token.md) | A PAT is required rather than `GITHUB_TOKEN` |
 | [0003](./docs/adr/0003-commit-the-bundled-dist-directory.md) | The bundled `dist/` is committed |
-| [0004](./docs/adr/0004-layered-source-structure.md) | Domain-Driven Design(ish) layering with a pure core |
+| [0004](./docs/adr/0004-layered-source-structure.md) | Layered source structure with a pure core |
 | [0005](./docs/adr/0005-charts-are-reconstructed-from-stargazer-timestamps.md) | Charts are reconstructed from stargazer timestamps |
 | [0006](./docs/adr/0006-hand-rendered-svg-charts.md) | SVG charts are hand-rendered, not library-drawn |
 | [0007](./docs/adr/0007-bridge-unreachable-history-with-a-ramp.md) | Unreachable history is bridged with a ramp |
@@ -184,13 +190,15 @@ Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain gl
 | [0017](./docs/adr/0017-velocity-and-forecast-read-unparseable-timestamps-differently.md) | Velocity and Forecast read unparseable timestamps differently |
 | [0018](./docs/adr/0018-loadconfig-reads-the-ambient-action-inputs.md) | `loadConfig` reads the ambient action inputs |
 | [0019](./docs/adr/0019-the-stargazer-map-retains-untracked-repositories.md) | The Stargazer map retains repositories that leave the Tracked Set |
+| [0020](./docs/adr/0020-overridable-inputs-declare-an-empty-default.md) | Overridable inputs declare an empty default |
+| [0021](./docs/adr/0021-an-unreadable-stored-history-fails-the-run.md) | An unreadable Stored History fails the Run |
 
 Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md), and a new ADR starts by
 copying that file. The shape the docs test asserts is spelled out in
 [CLAUDE.md's maintenance contract](./CLAUDE.md#maintenance-contract).
 
-**The per-layer guides and what each covers are the table in [CLAUDE.md](./CLAUDE.md#structure--aliases)** —
-that file is loaded into every agent session, so the list lives there and is not repeated here. Root
+**The per-layer guides and what each covers are the table in [CLAUDE.md](./CLAUDE.md#structure--aliases).**
+That file is loaded into every agent session, so the list lives there and is not repeated here. Root
 [`CLAUDE.md`](./CLAUDE.md) itself is the ninth document: commands, alias wiring, conventions and the
 maintenance contract.
 
@@ -200,15 +208,15 @@ One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/
 
 | Task | Files to touch |
 | --- | --- |
-| **Add an action input** | `action.yml` (declare it, `default: ''` so the config file can win); `src/config/types.ts` (`Config` field); `src/config/defaults.ts` (`DEFAULTS` entry — this also makes the snake_case/kebab-case config-file key work automatically); `src/config/loader.ts` (**one row in `FIELD_SOURCES`**, naming the input parser and the file parser — the action input name is derived from the key); consume it in the relevant layer; update `src/config/action-inputs.test.ts` and `README.md`/`docs/wiki`. |
-| **Add a locale** | Add the JSON bundle under `src/i18n/`; register it in `LOCALES`, `LOCALE_MAP` and the `TRANSLATIONS: Record<Locale, Translations>` map (a missing key is a type error, an extra key is not); extend the `locale` description in `action.yml`. |
-| **Add a report format** | New pure renderer in `src/presentation/` (data in, string out, no I/O) reading `buildReportModel` rather than re-deriving sections + colocated test; one field on `RenderedRun` and one line in `renderRun` (`run.ts`); an `Artefact` entry and filename in `@infrastructure/persistence/storage`, plus a field on `PublishedArtefacts`; add an output to `action.yml` + `setOutputs` if it should be exposed. |
+| **Add an action input** | `action.yml` (declare it, `default: ''` so the config file can win, and state the real default in the description prose, see [ADR 0020](./docs/adr/0020-overridable-inputs-declare-an-empty-default.md)); `src/config/types.ts` (`Config` field); `src/config/defaults.ts` (`DEFAULTS` entry, which also makes the snake_case/kebab-case config-file key work automatically); `src/config/loader.ts` (**one row in `FIELD_SOURCES`**, naming the input parser and the file parser; the action input name is derived from the key); consume it in the relevant layer; update `src/config/action-inputs.test.ts` and `README.md`/`docs/wiki`. |
+| **Add a locale** | Add the JSON bundle under `src/i18n/`; add it to `LOCALE_MAP` and to the `TRANSLATIONS: Record<Locale, Translations>` map (a missing key is a type error, an extra key is not). `LOCALES` is derived from `LOCALE_MAP` with `Object.keys`, so it needs no edit. Extend the `locale` description in `action.yml` and the locale tables in the wiki. |
+| **Add a report format** | New pure renderer in `src/presentation/` (data in, string out, no I/O) reading `buildReportModel` rather than re-deriving sections, plus a colocated test; one field on `RenderedRun` and one line in `renderRun` (`run.ts`); an `Artefact` entry and filename in `@infrastructure/persistence/storage`, plus a field on `PublishedArtefacts`; add an output to `action.yml` and `setOutputs` if it should be exposed. |
 | **Add a chart option** | Input plumbing as above; thread it through the `style` object in `src/presentation/charts.ts`. If it changes **what** is plotted it belongs on the matching `ChartRequest` variant or on `ChartSpec` in `src/presentation/chart-spec.ts` and both adapters read it; if it only changes **how**, implement it in `src/presentation/svg-chart.ts` (all SVG primitives live behind the private `renderSvg`) and mirror it in `src/presentation/chart.ts` if email charts should honour it ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)); add a sample SVG under `examples/`. |
-| **Add a chart kind** | One variant on `ChartRequest` and one `case` in `buildChartSpec` (`src/presentation/chart-spec.ts`), plus the spec builder itself. Neither adapter changes — `renderSvgChart` and `chartImageUrl` take any request. Then emit it from `buildChartFiles` (`charts.ts`) and/or `html.ts`, and add a filename to `CHART_FILES`. |
+| **Add a chart kind** | One variant on `ChartRequest` and one `case` in `buildChartSpec` (`src/presentation/chart-spec.ts`), plus the spec builder itself. Neither adapter changes, because `renderSvgChart` and `chartImageUrl` take any request. Then emit it from `buildChartFiles` (`charts.ts`) and/or `html.ts`, and add a filename to `CHART_FILES`. |
 
 ## 8. Known inconsistencies
 
 None outstanding.
 
 When one is found, record it here with the evidence that proves it, and delete the entry in the commit that
-fixes it — an entry that has quietly become false is worse than no list at all.
+fixes it. An entry that has quietly become false is worse than no list at all.

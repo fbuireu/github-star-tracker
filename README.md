@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="src/assets/logo.svg" alt="" width="80" align="center"> 
+<img src="src/assets/logo.svg" alt="GitHub Star Tracker star mark" width="80" align="center"> 
 
 # GitHub Star Tracker
 
@@ -11,7 +11,7 @@
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue?style=flat-square)](https://www.gnu.org/licenses/agpl-3.0)
 [![Product Hunt](https://img.shields.io/badge/Product%20Hunt-featured-orange?style=flat-square&logo=producthunt&logoColor=white)](https://www.producthunt.com/products/github-star-tracker)
 
-**[Documentation](../../wiki)** · **[Getting Started](../../wiki/Getting-Started)** · **[Configuration](../../wiki/Configuration)** · **[Examples](../../wiki/Examples)** · **[Troubleshooting](../../wiki/Troubleshooting)**
+**[Documentation](docs/wiki/Home.md)** · **[Getting Started](docs/wiki/Getting-Started.md)** · **[Configuration](docs/wiki/Configuration.md)** · **[Examples](docs/wiki/Examples.md)** · **[Troubleshooting](docs/wiki/Troubleshooting.md)**
 
 </div>
 
@@ -22,7 +22,7 @@
 >
 > **GitHub Star Tracker keeps working.** It runs inside *your* workflow, with *your* token, against *your* repositories: exactly the access GitHub is keeping. Star counts, reports, badges, CSV and notifications are unaffected in every case.
 >
-> The one thing that depends on your *role* rather than your token's scopes is the stargazer endpoint, and it is what star-history charts and stargazer tracking are reconstructed from. If you track a repository you do not administer — an organization repo where you are a read-only member, or any repo reached through a fine-grained token with no explicit grant on its organization — those two fall back to the stored per-run snapshots. [Known Limitations](docs/wiki/Known-Limitations.md) has the detail.
+> The one thing that depends on your *role* rather than your token's scopes is the stargazer endpoint, and it is what star-history charts and stargazer tracking are reconstructed from. If you track a repository you do not administer (an organization repo where you are a read-only member, or any repo reached through a fine-grained token with no explicit grant on its organization), those two fall back to the stored per-run snapshots. [Known Limitations](docs/wiki/Known-Limitations.md) has the detail.
 
 ---
 
@@ -42,9 +42,11 @@
 
 ## What You Get
 
-Every run, Star Tracker commits these artifacts to a dedicated data branch:
+A writing run commits these artefacts to a dedicated data branch. Two runs commit nothing: a `read-only`
+run, which renders and reports in full but never pushes, and any run whose output is byte-for-byte what the
+branch already holds.
 
-- **Animated SVG charts:** star history, per-repo trends, top repos comparison, and growth forecasts - with automatic dark/light mode support:
+- **Animated SVG charts:** star history, per-repo trends, top repos comparison, and growth forecasts, with automatic dark/light mode support:
 
   <img src="examples/star-history.svg" alt="Star History" width="800">
   <img src="examples/comparison.svg" alt="Top Repositories" width="800">
@@ -54,26 +56,30 @@ Every run, Star Tracker commits these artifacts to a dedicated data branch:
 
   <img src="examples/stars-badge.svg" alt="Stars">
 
-- **Markdown & HTML reports:** summary tables, delta indicators, new/removed repos, stargazer details, and forecast tables.
+- **Markdown report:** summary tables, delta indicators, every New Repository and Removed Repository since the baseline, stargazer details, and forecast tables.
 
 - **CSV & JSON data:** machine-readable exports for dashboards, spreadsheets, or downstream pipelines.
+
+The HTML report is the one thing that is *not* committed. It is written outside the data branch worktree for
+the email body, and reaches you through the `report-html` and `report-html-path` outputs instead.
 
 ---
 
 ## Features
 
-- :chart_with_upwards_trend: **Animated SVG charts:** Star history, per-repo trends, comparisons, and growth forecasts
-- :crescent_moon: **Dark/light mode:** SVG charts auto-adapt to the viewer's color scheme via `prefers-color-scheme`
-- :camera: **Historical snapshots:** Configurable retention (default: 52 runs) with JSON persistence
-- :mag: **Smart filtering:** By visibility, ownership, min stars, regex exclusions, archived, forks
-- :busts_in_silhouette: **Stargazer tracking:** See who starred your repos with avatars and dates
-- :mailbox_with_mail: **Email notifications:** Built-in SMTP with fixed or adaptive thresholds
-- :office: **GitHub Enterprise:** GHES support, auto-detected or explicit API URL
-- :globe_with_meridians: **Multi-language:** English, Spanish, Catalan, Italian
-- :bar_chart: **CSV export:** Machine-readable output for data pipelines
-- :jigsaw: **Action outputs:** `total-stars`, `new-stars`, `lost-stars`, `should-notify`, `notification-sent`, `new-stargazers` (and much more) for workflow chaining
-- :shield: **Zero runtime deps:** Bundled TypeScript action, 98%+ test coverage, extensive unit test suite
-- :lock: **Future-proof:** Unaffected by GitHub's 2026 stargazers API restrictions, since it uses your own credentials on your own repositories
+- **Animated SVG charts:** star history, per-repo trends, comparisons, and growth forecasts, with an optional Trend Line over the observed curve
+- **Dark/light mode:** SVG charts auto-adapt to the viewer's color scheme via `prefers-color-scheme`
+- **Historical snapshots:** configurable retention (default: 52 runs) with JSON persistence
+- **Smart filtering:** by visibility, Owner, min stars, exact names or regex, archived, forks
+- **Stargazer tracking:** see who starred your repos, with avatars and dates
+- **Email notifications:** built-in SMTP, with a fixed or adaptive threshold and a Notification Mode that decides whether losses count
+- **GitHub Enterprise:** GHES support, auto-detected or explicit API URL
+- **Multi-language:** English, Spanish, Catalan, Italian
+- **CSV export:** machine-readable output for data pipelines
+- **Eleven action outputs** for workflow chaining: `lost-stars`, `new-stargazers`, `new-stars`, `notification-sent`, `report`, `report-csv`, `report-html`, `report-html-path`, `should-notify`, `stars-changed` and `total-stars`
+- **No install step:** its five runtime dependencies are bundled into the committed `dist/`, so the runner clones and executes, with no `npm install` in your workflow ([ADR 0003](docs/adr/0003-commit-the-bundled-dist-directory.md))
+- **Enforced coverage:** the build gate is 85% on lines, functions, branches and statements, over an extensive unit test suite
+- **Future-proof:** unaffected by GitHub's 2026 stargazers API restrictions, since it uses your own credentials on your own repositories
 
 ---
 
@@ -82,11 +88,11 @@ Every run, Star Tracker commits these artifacts to a dedicated data branch:
 ### 1. Create a Personal Access Token
 
 1. Go to **[GitHub Settings > Tokens](https://github.com/settings/tokens)**
-2. Generate a **classic token** with `repo` or `public_repo` scope
+2. Generate a **classic token** with `repo` or `public_repo` scope, or a **fine-grained token** with `Contents: Read and write` on the repositories you want tracked
 3. Add it as a **repository secret** named `STAR_TRACKER_TOKEN`
 
 > [!NOTE]
-> The default `GITHUB_TOKEN` is not sufficient. See the **[PAT guide](<../../wiki/Personal-Access-Token-(PAT)>)** for details.
+> The default `GITHUB_TOKEN` is not sufficient. See the **[PAT guide](<docs/wiki/Personal-Access-Token-(PAT).md>)** for details, including why a fine-grained token can leave the stargazer sections empty.
 
 ### 2. Add the Workflow
 
@@ -107,7 +113,7 @@ jobs:
   track:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: fbuireu/github-star-tracker@v1
         with:
           github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
@@ -122,7 +128,7 @@ jobs:
 
 ## Configuration
 
-Set options directly in the workflow or via a YAML config file. See the **[Configuration guide](../../wiki/Configuration)** for full details.
+Set options directly in the workflow or via a YAML config file. See the **[Configuration guide](docs/wiki/Configuration.md)** for full details.
 
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
@@ -148,7 +154,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `chart-animation`        | `true`                | Animate SVG charts (`true`) or render them static (`false`) for email/static contexts |
 | `chart-begin-at-zero`    | `false`               | Start the Y-axis at zero (`true`) or zoom into the data range (`false`) |
 | `chart-curve`            | `monotone`            | Curve when smoothing: `monotone` (no overshoot, best for stars), `catmull-rom`, `cubic-bezier`, `rounded-step`. Email approximates non-monotone curves |
-| `chart-custom-milestones` | _(empty)_            | Comma-separated star counts for the milestone reference lines, replacing the built-in defaults (e.g. `250, 750, 2500`). Requires `chart-milestones` |
+| `chart-custom-milestones` | -                   | Comma-separated star counts for the milestone reference lines, replacing the built-in defaults (e.g. `250, 750, 2500`). Requires `chart-milestones` |
 | `chart-line-color`       | `#dfb317`             | Hex color of primary chart line/fill/points (not comparison). Accepts hex with or without a leading `#`  |
 | `chart-line-width`       | `2.5`                 | Stroke width (px, >0) of data lines in all charts             |
 | `chart-max-points`       | `30`                  | Curve granularity: points across the full span (capped at 365); `0` reconstructs at weekly resolution. Not a time window (see `chart-range`) |
@@ -165,8 +171,8 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `email-from`             | localized             | Sender name or address; defaults to a localized sender name   |
 | `email-theme`            | `auto`                | Color theme for the HTML email and its charts: `auto` (same as `chart-theme`), `light` or `dark`. Email charts are images, so a dark-mode reader needs this to resolve to `dark` |
 | `email-to`               | -                     | Recipient address                                             |
-| `exclude-orgs`           | -                     | Orgs/owners to exclude (name or regex)                        |
-| `exclude-repos`          | -                     | Names or regex to exclude                                     |
+| `exclude-orgs`           | -                     | Owners to exclude (exact name or `/regex/`)                   |
+| `exclude-repos`          | -                     | Repos to exclude (exact name or `/regex/`)                    |
 | `github-api-url`         | -                     | GitHub API base URL (for GHES). Auto-detected on GHES runners |
 | `include-archived`       | `false`               | Include archived repos                                        |
 | `include-charts`         | `true`                | Generate star trend charts                                    |
@@ -176,9 +182,9 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `min-stars`              | `0`                   | Min stars to track                                            |
 | `notification-mode`      | `net`                 | How the threshold measures that change: `net` (absolute change, so a large drop also fires) or `gains` (upward movement only) |
 | `notification-threshold` | `0`                   | `0` (every run with changes), N (accumulated change since the last notification), or `auto` (adaptive) |
-| `only-orgs`              | -                     | Only track repos under these orgs/owners (name or regex)      |
-| `only-repos`             | -                     | Only track these repos                                        |
-| `read-only`              | `false`               | Run without writing to the data branch. Still fetches, reports, sets outputs and emails - it just never commits or pushes. Use it for a second workflow that shares a data branch with your tracking one |
+| `only-orgs`              | -                     | Only track repos under these Owners (exact name or `/regex/`) |
+| `only-repos`             | -                     | Only track these repos (exact name or `/regex/`)              |
+| `read-only`              | `false`               | Make this a Read-Only Run: it still fetches, reports, sets outputs and emails, it just never commits or pushes. Use it for a second workflow that shares a data branch with the workflow that writes it |
 | `send-on-no-changes`     | `false`               | Email even with no changes                                    |
 | `smart-sampling`         | `false`               | Sample stargazer pages for high-star repos (avoids rate limits) |
 | `smart-sampling-pages`   | `30`                  | Max evenly-spaced stargazer pages per sampled repo            |
@@ -192,12 +198,12 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `velocity-metrics`       | `false`               | Add a growth-velocity section (stars/day, % growth, days to next milestone) to the report |
 | `visibility`             | `all`                 | `public`, `private`, `all`, or `owned`                        |
 
-The threshold counter is cumulative: it is measured against the star total at the last notification and only resets when the threshold trips (and not even then if a configured send failed), so it accumulates across runs until it trips. See **[`notification-threshold`](https://github.com/fbuireu/github-star-tracker/wiki/Configuration#notification-threshold)** for what that means on a fresh data branch and when you raise the value.
-
 > [!IMPORTANT]
-> `notification-threshold` decides **when** you get an email. `compare-against` decides **what period the report body covers**. They are independent: the threshold accumulates against the star total at the last notification, while the report diffs against a stored snapshot. A threshold that trips after several runs still produces a report covering only the `compare-against` window, so set the two to match if you want the email body to span what the threshold accumulated. `notification-threshold` also does not work on a `read-only` run, because the counter it advances lives on the data branch.
+> `notification-threshold` decides **when** you get an email; `compare-against` decides **what period the report body covers**. The two are independent: the threshold accumulates from the Notification Baseline, while the report diffs against a stored snapshot. So a threshold that takes several runs to trip still produces a report covering only the `compare-against` window. Set them to match if you want the email body to span what the threshold accumulated.
 
-In the YAML config file, option keys may be written with either dashes or underscores - `include-charts` and `include_charts` are both accepted - so you can copy option names straight from this table without rewriting the separators.
+See **[`notification-threshold`](docs/wiki/Configuration.md#notification-threshold)** for how the counter behaves on a fresh data branch, when you raise the value, and on a `read-only` run.
+
+In the YAML config file, option keys may be written with either dashes or underscores (`include-charts` and `include_charts` are both accepted), so you can copy option names straight from this table without rewriting the separators.
 
 </details>
 
@@ -222,7 +228,7 @@ To email on every N stars, use `notification-threshold: 'N'` with `notification-
 
 </details>
 
-**[API Reference](../../wiki/API-Reference):** Complete inputs, outputs, and data formats
+**[API Reference](docs/wiki/API-Reference.md):** Complete inputs, outputs, and data formats
 
 ---
 
@@ -237,10 +243,10 @@ config:
 flowchart TD
     trigger(["Workflow Trigger"])
     config["Parse configuration"]
-    fetch["Query GitHub REST API(repositories endpoint)"]
+    fetch["Query GitHub REST API (repositories endpoint)"]
     filter["Apply filter criteria"]
     init["Initialize orphan branch"]
-    read["Deserialize previous  state snapshot"]
+    read["Deserialize previous state snapshot"]
     compare["Compute delta metrics"]
     stargazers["Fetch stargazers (starred_at)"]
     history["Build real star history"]
@@ -288,7 +294,7 @@ flowchart TD
     style send fill:#fce4ec,stroke:#880e4f,stroke-width:2px
 ```
 
-**[How It Works](../../wiki/How-It-Works):** Full architecture and execution pipeline
+**[How It Works](docs/wiki/How-It-Works.md):** Full architecture and execution pipeline
 
 ### How the charts read dates
 
@@ -296,7 +302,7 @@ The charts plot the **real historical curve**: every star is placed on the date 
 
 The per-run snapshots on the data branch are still kept for the report's delta tables and notifications ("how many stars changed against the comparison baseline", which `compare-against` selects), but the charts themselves no longer depend on them.
 
-One caveat: GitHub caps the stargazers listing at roughly **40,000 per repo** (oldest first), so for very large repos the most recent stars are unreachable. The reachable history is drawn accurately and the recent tail is bridged with a straight ramp up to the true current total, so the early curve stays accurate and the chart never goes flat at the end. Pair this with `smart-sampling` to keep the request cost bounded on big repos.
+One caveat: GitHub caps the stargazers listing at roughly **40,000 per repo** (oldest first), so on a very large repo the most recent stars fall outside the Reachable Stargazers and the Covered Stars behind the curve stop short of the true total. The reachable portion is drawn accurately and the recent tail is bridged with a straight ramp up to the current total, so the early curve stays honest and the chart never goes flat at the end. Pair this with `smart-sampling` to keep the request cost bounded on big repos.
 
 The line style is configurable via `chart-curve` (`monotone` by default, plus `catmull-rom`, `cubic-bezier` and `rounded-step`), along with theme, colors, milestones, point markers, the time window and more. See the **[examples gallery](examples/)** for a rendered comparison of every option.
 
@@ -317,9 +323,9 @@ The line style is configurable via `chart-curve` (`monotone` by default, plus `c
 ```
 
 > [!TIP]
-> SVG charts automatically adapt to dark and light mode. No extra configuration needed - they use `prefers-color-scheme` to match the viewer's theme.
+> SVG charts automatically adapt to dark and light mode. No extra configuration needed: they use `prefers-color-scheme` to match the viewer's theme.
 
-**[Viewing Reports](../../wiki/Viewing-Reports)**: All access methods (data branch, badges, outputs, email)
+**[Viewing Reports](docs/wiki/Viewing-Reports.md)**: All access methods (data branch, badges, outputs, email)
 
 ---
 
@@ -327,24 +333,27 @@ The line style is configurable via `chart-curve` (`monotone` by default, plus `c
 
 | Guide                                                                 | Description                               |
 | --------------------------------------------------------------------- | ----------------------------------------- |
-| **[Getting Started](../../wiki/Getting-Started)**                     | Setup from token to first run             |
-| **[How It Works](../../wiki/How-It-Works)**                           | Execution flow and architecture           |
-| **[Configuration](../../wiki/Configuration)**                         | All options and settings                  |
-| **[API Reference](../../wiki/API-Reference)**                         | Inputs, outputs, and data formats         |
-| **[Examples](../../wiki/Examples)**                                   | Real-world workflow configurations        |
-| **[Star Trend Charts](../../wiki/Star-Trend-Charts)**                 | Chart types, embedding, and customization |
-| **[Email Notifications](../../wiki/Email-Notifications)**             | Built-in SMTP and external action setup   |
-| **[Viewing Reports](../../wiki/Viewing-Reports)**                     | Data branch, badges, outputs, raw data    |
-| **[Data Management](../../wiki/Data-Management)**                     | Storage, rotation, and manual management  |
-| **[Internationalization](<../../wiki/Internationalization-(i18n)>)**  | Multi-language support                    |
-| **[Personal Access Token](<../../wiki/Personal-Access-Token-(PAT)>)** | Classic and fine-grained token setup      |
-| **[Technical Stack](../../wiki/Technical-Stack)**                     | Technologies and design decisions         |
-| **[Known Limitations](../../wiki/Known-Limitations)**                 | Constraints and workarounds               |
-| **[Troubleshooting](../../wiki/Troubleshooting)**                     | Common issues and solutions               |
+| **[Getting Started](docs/wiki/Getting-Started.md)**                          | Setup from token to first run             |
+| **[How It Works](docs/wiki/How-It-Works.md)**                                | Execution flow and architecture           |
+| **[Configuration](docs/wiki/Configuration.md)**                              | All options and settings                  |
+| **[API Reference](docs/wiki/API-Reference.md)**                              | Inputs, outputs, and data formats         |
+| **[Examples](docs/wiki/Examples.md)**                                        | Real-world workflow configurations        |
+| **[Star Trend Charts](docs/wiki/Star-Trend-Charts.md)**                      | Chart types, embedding, and customization |
+| **[Email Notifications](docs/wiki/Email-Notifications.md)**                  | Built-in SMTP and external action setup   |
+| **[Viewing Reports](docs/wiki/Viewing-Reports.md)**                          | Data branch, badges, outputs, raw data    |
+| **[Data Management](docs/wiki/Data-Management.md)**                          | Storage, rotation, and manual management  |
+| **[Internationalization](<docs/wiki/Internationalization-(i18n).md>)**       | Multi-language support                    |
+| **[Personal Access Token](<docs/wiki/Personal-Access-Token-(PAT).md>)**      | Classic and fine-grained token setup      |
+| **[Technical Stack](docs/wiki/Technical-Stack.md)**                          | Technologies and design decisions         |
+| **[Known Limitations](docs/wiki/Known-Limitations.md)**                      | Constraints and workarounds               |
+| **[Troubleshooting](docs/wiki/Troubleshooting.md)**                          | Common issues and solutions               |
 
-For *why* the action is built the way it is — one decision per file, including the
+For *why* the action is built the way it is, one decision per file, see the
+[architecture decision records](docs/adr/). They include the
 [AGPL-3.0-only licence](docs/adr/0009-agpl-3-0-only-licence.md) and what it asks of anyone redistributing
-or hosting a modified version — see the [architecture decision records](docs/adr/).
+or hosting a modified version.
+
+---
 
 ## Support & Contributing
 

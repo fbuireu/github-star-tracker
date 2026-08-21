@@ -2,7 +2,7 @@
 
 The only place user-facing text lives: four JSON bundles (`en`, `es`, `ca`, `it`), the `Locale` union, the
 map from those short codes to the BCP-47 codes `Intl` needs, and a `{placeholder}` interpolator. It is the
-tree's only true leaf — it imports nothing from any other layer, because every other layer (including
+tree's only true leaf: it imports nothing from any other layer, because every other layer (including
 `domain`) depends on it. It does no number or date formatting (`@domain/formatting`) and no escaping.
 
 `index.ts` is the public surface, `types.ts` holds `Translations` (nested, all leaves `string`, no optional
@@ -10,14 +10,14 @@ keys) and the bundles sit beside them as `.json`, typed by the `Record<Locale, T
 
 ## Invariants & rules
 
-- **Placeholder syntax is exactly `/\{(\w+)\}/g`** — one brace pair around `[A-Za-z0-9_]+`. No spaces, no
+- **Placeholder syntax is exactly `/\{(\w+)\}/g`**: one brace pair around `[A-Za-z0-9_]+`. No spaces, no
   dots, no nesting, no `{{ }}`. `{first name}` and `{user.name}` are not placeholders and pass through
   untouched.
 - **Unknown placeholders are left verbatim.** A miss returns the original `{key}` text, never `undefined` or
   an empty string. Values are coerced with `String(...)`, so `{count: 0}` renders `0`.
 - **`interpolate` escapes nothing, deliberately.** `@presentation/html` passes full `<a href=…>` markup as the
   footer params, so adding escaping here would double-escape every report.
-- **Never build a sentence by concatenation** — add a key with placeholders instead.
+- **Never build a sentence by concatenation**; add a key with placeholders instead.
 - **`getTranslations` returns the shared bundle object, not a copy.** Every caller gets the same object graph;
   never mutate `t`.
 - **The fallback is `en`.** Because `Locale` is a closed union this only fires for a value that dodged the
@@ -26,22 +26,26 @@ keys) and the bundles sit beside them as `.json`, typed by the `Record<Locale, T
   shown in the loader's "Must be …" warning, so reordering the map changes user-visible output.
 - **Every locale-map value must match `/^[a-z]{2}-[A-Z]{2}$/`** (pinned by a test), because it goes straight
   to both `Date#toLocaleDateString` and `Intl.NumberFormat` in `@domain/formatting`.
-- **`report.title` must be non-empty in every bundle** — a test iterates `LOCALES` and asserts truthiness.
+- **`report.title` must be non-empty in every bundle**: a test iterates `LOCALES` and asserts truthiness.
 - **Locale affects text, dates *and* compact numbers.** `formatCount` builds its `Intl.NumberFormat` from
   `LOCALE_MAP[locale]`, so 1,200 renders `1.2K` in `en`, `1,2 mil` in `es`, `1,2 k` in `ca` and `1,2K` in
-  `it`. `formatting.test.ts` pins this under the name *follows the report locale instead of always using
-  English*. It is load-bearing beyond wording: `@presentation/badge` derives its widths from the **rendered**
-  length, so `★ 1,2 mil` is three characters wider than `★ 1.2K`.
+  `it`. Only the `en` form is pinned: `formatting.test.ts` asserts the English string and that the Italian
+  one merely differs from it, under the name *follows the report locale instead of always using English*.
+  The other three come out of the ICU data Node ships, so a runtime bump can change them with no test
+  failing; re-check them rather than trusting this line. In `es` and `ca` the separator before the suffix is
+  a non-breaking space (U+00A0), not the ordinary space printed above. This is load-bearing beyond
+  wording, because `@presentation/badge` derives its widths from the **rendered** length: `★ 1,2 mil` is
+  three characters wider than `★ 1.2K`.
 
 ## Adding a locale
 
-1. Create `src/i18n/<code>.json` with **every** key of `Translations` — copy `en.json` and translate, keeping
+1. Create `src/i18n/<code>.json` with **every** key of `Translations`: copy `en.json` and translate, keeping
    the placeholder names identical.
 2. Import it in `index.ts`, add `xx: 'xx-XX'` to the locale map, and add `xx` to the `TRANSLATIONS` literal
    (shorthand, so the key must equal the import name).
 3. Update the `locale` input description in `action.yml` and the README's locale row.
 
-`LOCALES` and `Locale` derive themselves from the locale map — there is no second list to maintain. The type
+`LOCALES` and `Locale` derive themselves from the locale map; there is no second list to maintain. The type
 system enforces **completeness but not exactness**: a missing bundle or a missing/mistyped key is a compile
 error, while *extra* keys in a JSON file are silently accepted, because an imported module is not a fresh
 object literal and no excess-property check applies. So `pnpm typecheck` is the check that matters here.
@@ -53,7 +57,7 @@ object literal and no excess-property check applies. So `pnpm typecheck` is the 
   `@i18n/types` does not resolve; any new type consumers need must be re-exported the same way.
 - **The placeholder regex must keep its `g` flag.** `String.prototype.replaceAll` throws at runtime when
   handed a non-global regex. It is a module-level literal reused across calls, safe only because `replaceAll`
-  resets `lastIndex` — do not switch it to `.exec()`/`.test()` in a loop.
+  resets `lastIndex`; do not switch it to `.exec()`/`.test()` in a loop.
 - Which strings carry placeholders is not obvious from the key names; the report, email subject, velocity
   projection, footer, stargazer and forecast groups all have some. Check the bundle before assuming a string
   is literal.
