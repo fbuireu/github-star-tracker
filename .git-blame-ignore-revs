@@ -1,6 +1,0 @@
-# Bulk reformats. Ignore them in blame:
-#   git blame --ignore-revs-file .git-blame-ignore-revs <file>
-#   git config blame.ignoreRevsFile .git-blame-ignore-revs   (once, per clone)
-
-# style: adopt the shared Biome formatting profile
-442db201101326b07f917d086adc4de55ea7f290
