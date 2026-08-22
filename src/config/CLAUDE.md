@@ -123,7 +123,7 @@ not implement:
   resolve independently, so custom milestones combined with `chart-milestones: false` silently do nothing.
 
 Three literals are duplicated between the manifest and code, so changing `action.yml` alone has no effect:
-`smtp-port`'s `'587'` (`DEFAULT_SMTP_PORT` in `@infrastructure/notification/email`), `config-path`'s
+`smtp-port`'s `"587"` (`DEFAULT_SMTP_PORT` in `@infrastructure/notification/email`), `config-path`'s
 `'star-tracker.yml'` (`DEFAULT_CONFIG_PATH` in `loader.ts`) and `send-on-no-changes`'s `'false'`
 (`DEFAULTS.sendOnNoChanges`). All three pairs are pinned by `action-inputs.test.ts`. The third is the
 asymmetric one: because the manifest always supplies a non-empty `'false'`, `DEFAULTS.sendOnNoChanges` is

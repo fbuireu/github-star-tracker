@@ -1,5 +1,5 @@
 export function toEpochMs(timestamp: string): number | null {
-  const parsed = new Date(timestamp).getTime();
+	const parsed = new Date(timestamp).getTime();
 
-  return Number.isFinite(parsed) ? parsed : null;
+	return Number.isFinite(parsed) ? parsed : null;
 }

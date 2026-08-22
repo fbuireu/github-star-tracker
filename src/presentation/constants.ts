@@ -1,151 +1,151 @@
-import { ChartCurve, ChartTheme } from '@config/types';
-import type { ColorPalette } from './types';
+import { ChartCurve, ChartTheme } from "@config/types";
+import type { ColorPalette } from "./types";
 
 export const CHART_CHROME = {
-  titleFontSize: 16,
-  milestoneFontSize: 10,
-  milestoneStrokeWidth: 1,
-  milestoneDash: [6, 6] as [number, number],
+	titleFontSize: 16,
+	milestoneFontSize: 10,
+	milestoneStrokeWidth: 1,
+	milestoneDash: [6, 6] as [number, number],
 } as const;
 
 export const CHART_DEFAULTS = {
-  smoothing: true,
-  curve: ChartCurve.MONOTONE,
-  showPoints: true,
-  beginAtZero: false,
-  theme: ChartTheme.AUTO,
+	smoothing: true,
+	curve: ChartCurve.MONOTONE,
+	showPoints: true,
+	beginAtZero: false,
+	theme: ChartTheme.AUTO,
 } as const;
 
 export const LIGHT_PALETTE: ColorPalette = {
-  accent: '#dfb317',
-  positive: '#28a745',
-  negative: '#d73a49',
-  neutral: '#6a737d',
-  link: '#0366d6',
-  text: '#24292e',
-  white: '#fff',
-  shadow: '#010101',
-  muted: '#555',
-  tableHeaderBg: '#f6f8fa',
-  tableHeaderBorder: '#e1e4e8',
-  cellBorder: '#eee',
-  gradientStart: '#bbb',
+	accent: "#dfb317",
+	positive: "#28a745",
+	negative: "#d73a49",
+	neutral: "#6a737d",
+	link: "#0366d6",
+	text: "#24292e",
+	white: "#fff",
+	shadow: "#010101",
+	muted: "#555",
+	tableHeaderBg: "#f6f8fa",
+	tableHeaderBorder: "#e1e4e8",
+	cellBorder: "#eee",
+	gradientStart: "#bbb",
 } as const;
 
 export const DARK_PALETTE: ColorPalette = {
-  accent: '#dfb317',
-  positive: '#3fb950',
-  negative: '#f85149',
-  neutral: '#8b949e',
-  link: '#58a6ff',
-  text: '#e6edf3',
-  white: '#0d1117',
-  shadow: '#010101',
-  muted: '#8b949e',
-  tableHeaderBg: '#161b22',
-  tableHeaderBorder: '#30363d',
-  cellBorder: '#21262d',
-  gradientStart: '#484f58',
+	accent: "#dfb317",
+	positive: "#3fb950",
+	negative: "#f85149",
+	neutral: "#8b949e",
+	link: "#58a6ff",
+	text: "#e6edf3",
+	white: "#0d1117",
+	shadow: "#010101",
+	muted: "#8b949e",
+	tableHeaderBg: "#161b22",
+	tableHeaderBorder: "#30363d",
+	cellBorder: "#21262d",
+	gradientStart: "#484f58",
 } as const;
 
 export const COLORS = LIGHT_PALETTE;
 
 export const CHART_COMPARISON_COLORS = [
-  '#dfb317',
-  '#28a745',
-  '#e74c3c',
-  '#3498db',
-  '#9b59b6',
-  '#e67e22',
-  '#1abc9c',
-  '#e84393',
-  '#795548',
-  '#00bcd4',
+	"#dfb317",
+	"#28a745",
+	"#e74c3c",
+	"#3498db",
+	"#9b59b6",
+	"#e67e22",
+	"#1abc9c",
+	"#e84393",
+	"#795548",
+	"#00bcd4",
 ] as const;
 
 export const CHART = {
-  width: 800,
-  height: 400,
-  maxDataPoints: 30,
-  maxComparison: 10,
+	width: 800,
+	height: 400,
+	maxDataPoints: 30,
+	maxComparison: 10,
 } as const;
 
 export const CHART_TENSION = {
-  smooth: 0.6,
-  straight: 0,
+	smooth: 0.6,
+	straight: 0,
 } as const;
 
 export const TREND_WINDOW = 7;
 
 export const CHART_POINT = {
-  hidden: 0,
-  primaryRadius: 3,
-  secondaryRadius: 2,
-  primaryHoverRadius: 6,
-  secondaryHoverRadius: 5,
+	hidden: 0,
+	primaryRadius: 3,
+	secondaryRadius: 2,
+	primaryHoverRadius: 6,
+	secondaryHoverRadius: 5,
 } as const;
 
 export const BADGE = {
-  labelCharWidth: 6.5,
-  valueCharWidth: 7,
-  horizontalPadding: 12,
-  height: 20,
-  borderRadius: 3,
-  fontSize: 11,
-  textBaseline: 14,
-  shadowBaseline: 15,
-  shadowOpacity: '.3',
-  gradientOpacity: '.1',
+	labelCharWidth: 6.5,
+	valueCharWidth: 7,
+	horizontalPadding: 12,
+	height: 20,
+	borderRadius: 3,
+	fontSize: 11,
+	textBaseline: 14,
+	shadowBaseline: 15,
+	shadowOpacity: ".3",
+	gradientOpacity: ".1",
 } as const;
 
 export const SVG_CHART = {
-  margin: { top: 50, right: 30, bottom: 50, left: 60 },
-  pointRadius: 4,
-  lineWidth: 2.5,
-  gridOpacity: 0.3,
-  fillOpacity: 0.1,
-  axisStrokeWidth: 1,
-  fontSize: {
-    title: CHART_CHROME.titleFontSize,
-    label: 11,
-    milestone: CHART_CHROME.milestoneFontSize,
-    legend: 10,
-  },
-  header: { titleOffset: 36, legendOffset: 14 },
-  animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
-  yAxis: { stepCount: 5, labelGap: 8, labelBaselineOffset: 4 },
-  xAxis: { maxLabels: 10, labelOffset: 20 },
-  milestone: {
-    strokeWidth: CHART_CHROME.milestoneStrokeWidth,
-    dashArray: CHART_CHROME.milestoneDash.join(','),
-    labelXOffset: 4,
-    labelYOffset: 4,
-  },
-  dash: { line: '8,4', legend: '4,2' },
-  legend: {
-    itemWidth: 120,
-    markerWidth: 12,
-    markerHeight: 3,
-    markerYOffset: 5,
-    lineYOffset: 3.5,
-    lineStrokeWidth: 2,
-    rectBorderRadius: 1,
-    labelGap: 16,
-  },
-  font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+	margin: { top: 50, right: 30, bottom: 50, left: 60 },
+	pointRadius: 4,
+	lineWidth: 2.5,
+	gridOpacity: 0.3,
+	fillOpacity: 0.1,
+	axisStrokeWidth: 1,
+	fontSize: {
+		title: CHART_CHROME.titleFontSize,
+		label: 11,
+		milestone: CHART_CHROME.milestoneFontSize,
+		legend: 10,
+	},
+	header: { titleOffset: 36, legendOffset: 14 },
+	animation: { lineDuration: 2, pointDuration: 0.5, pointStagger: 0.05, pointDelay: 1.5 },
+	yAxis: { stepCount: 5, labelGap: 8, labelBaselineOffset: 4 },
+	xAxis: { maxLabels: 10, labelOffset: 20 },
+	milestone: {
+		strokeWidth: CHART_CHROME.milestoneStrokeWidth,
+		dashArray: CHART_CHROME.milestoneDash.join(","),
+		labelXOffset: 4,
+		labelYOffset: 4,
+	},
+	dash: { line: "8,4", legend: "4,2" },
+	legend: {
+		itemWidth: 120,
+		markerWidth: 12,
+		markerHeight: 3,
+		markerYOffset: 5,
+		lineYOffset: 3.5,
+		lineStrokeWidth: 2,
+		rectBorderRadius: 1,
+		labelGap: 16,
+	},
+	font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
 } as const;
 
 export const MIN_SNAPSHOTS_FOR_CHART = 2;
 
 export const SECTION_ICON = {
-  starTrend: '📈',
-  forecast: '🔮',
-  velocity: '🚀',
-  stargazers: '👤',
+	starTrend: "📈",
+	forecast: "🔮",
+	velocity: "🚀",
+	stargazers: "👤",
 } as const;
 
 export const CHART_FILES = {
-  starHistory: 'star-history.svg',
-  comparison: 'comparison.svg',
-  forecast: 'forecast.svg',
+	starHistory: "star-history.svg",
+	comparison: "comparison.svg",
+	forecast: "forecast.svg",
 } as const;

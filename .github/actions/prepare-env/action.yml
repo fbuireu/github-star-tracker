@@ -8,7 +8,7 @@ runs:
       shell: bash
       run: |
         if [ ! -f .nvmrc ]; then
-          echo '::error::.nvmrc is missing — it is what every job installs Node from'
+          echo '::error::.nvmrc is missing: it is what every job installs Node from'
           exit 1
         fi
     - name: Setup pnpm

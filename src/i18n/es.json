@@ -1,74 +1,74 @@
 {
-  "badge": {
-    "totalStars": "Estrellas Totales"
-  },
-  "report": {
-    "title": "Informe de Seguimiento de Estrellas",
-    "total": "Total",
-    "change": "Cambio",
-    "comparedTo": "Comparado con instantánea del {date}",
-    "firstRun": "primera ejecución",
-    "noRepositories": "Ningún repositorio coincide con los filtros configurados",
-    "repositories": "Repositorios",
-    "stars": "Estrellas",
-    "starsCount": "{count} estrellas",
-    "trend": "Tendencia",
-    "newRepositories": "Nuevos Repositorios",
-    "removedRepositories": "Repositorios Eliminados",
-    "removedRepoText": "{name}: tenía {count} estrellas",
-    "summary": "Resumen",
-    "starsGained": "Estrellas ganadas",
-    "starsLost": "Estrellas perdidas",
-    "netChange": "Cambio neto",
-    "starTrend": "Tendencia de Estrellas",
-    "starHistory": "Historial de Estrellas",
-    "topRepositories": "Repositorios Principales",
-    "byRepository": "Por Repositorio",
-    "individualRepoCharts": "Gráficos por Repositorio",
-    "repoChartHeading": "{name} — {count} ★ ({delta})",
-    "trendLine": "Tendencia",
-    "badges": {
-      "new": "NUEVO"
-    }
-  },
-  "email": {
-    "subject": "Informe de Seguimiento de Estrellas en GitHub",
-    "subjectLine": "{subject}: {totalStars} ({delta})",
-    "defaultFrom": "Seguimiento de Estrellas GitHub"
-  },
-  "trends": {
-    "up": "subiendo",
-    "down": "bajando",
-    "stable": "estable"
-  },
-  "velocity": {
-    "sectionTitle": "Velocidad de crecimiento",
-    "starsPerDay": "Estrellas por día",
-    "growth": "Crecimiento",
-    "projection": "~{days} días para {milestone} ★"
-  },
-  "footer": {
-    "generated": "Generado por {project} el {date}",
-    "madeBy": "Hecho con 🤘 por {author}"
-  },
-  "stargazers": {
-    "sectionTitle": "Nuevos Stargazers",
-    "newStargazers": "{count} nuevos stargazers desde la última ejecución",
-    "starredOn": "marcó estrella el {date}",
-    "noNewStargazers": "Sin nuevos stargazers desde la última ejecución",
-    "stargazerCount": "{count} nuevos",
-    "sampledNote": "Las listas exactas de nuevos stargazers no están disponibles para los repositorios muestreados: {repos}"
-  },
-  "forecast": {
-    "sectionTitle": "Previsión de Crecimiento",
-    "predictedStars": "Estrellas Previstas",
-    "week": "Semana {n}",
-    "linearRegression": "Regresión Lineal",
-    "weightedMovingAverage": "Media Móvil Ponderada",
-    "aggregate": "Previsión Agregada",
-    "byRepository": "Por Repositorio",
-    "insufficientData": "Datos insuficientes para la previsión (se necesitan al menos 3 snapshots)",
-    "method": "Método",
-    "predicted": "Previsto"
-  }
+	"badge": {
+		"totalStars": "Estrellas Totales"
+	},
+	"report": {
+		"title": "Informe de Seguimiento de Estrellas",
+		"total": "Total",
+		"change": "Cambio",
+		"comparedTo": "Comparado con instantánea del {date}",
+		"firstRun": "primera ejecución",
+		"noRepositories": "Ningún repositorio coincide con los filtros configurados",
+		"repositories": "Repositorios",
+		"stars": "Estrellas",
+		"starsCount": "{count} estrellas",
+		"trend": "Tendencia",
+		"newRepositories": "Nuevos Repositorios",
+		"removedRepositories": "Repositorios Eliminados",
+		"removedRepoText": "{name}: tenía {count} estrellas",
+		"summary": "Resumen",
+		"starsGained": "Estrellas ganadas",
+		"starsLost": "Estrellas perdidas",
+		"netChange": "Cambio neto",
+		"starTrend": "Tendencia de Estrellas",
+		"starHistory": "Historial de Estrellas",
+		"topRepositories": "Repositorios Principales",
+		"byRepository": "Por Repositorio",
+		"individualRepoCharts": "Gráficos por Repositorio",
+		"repoChartHeading": "{name} — {count} ★ ({delta})",
+		"trendLine": "Tendencia",
+		"badges": {
+			"new": "NUEVO"
+		}
+	},
+	"email": {
+		"subject": "Informe de Seguimiento de Estrellas en GitHub",
+		"subjectLine": "{subject}: {totalStars} ({delta})",
+		"defaultFrom": "Seguimiento de Estrellas GitHub"
+	},
+	"trends": {
+		"up": "subiendo",
+		"down": "bajando",
+		"stable": "estable"
+	},
+	"velocity": {
+		"sectionTitle": "Velocidad de crecimiento",
+		"starsPerDay": "Estrellas por día",
+		"growth": "Crecimiento",
+		"projection": "~{days} días para {milestone} ★"
+	},
+	"footer": {
+		"generated": "Generado por {project} el {date}",
+		"madeBy": "Hecho con 🤘 por {author}"
+	},
+	"stargazers": {
+		"sectionTitle": "Nuevos Stargazers",
+		"newStargazers": "{count} nuevos stargazers desde la última ejecución",
+		"starredOn": "marcó estrella el {date}",
+		"noNewStargazers": "Sin nuevos stargazers desde la última ejecución",
+		"stargazerCount": "{count} nuevos",
+		"sampledNote": "Las listas exactas de nuevos stargazers no están disponibles para los repositorios muestreados: {repos}"
+	},
+	"forecast": {
+		"sectionTitle": "Previsión de Crecimiento",
+		"predictedStars": "Estrellas Previstas",
+		"week": "Semana {n}",
+		"linearRegression": "Regresión Lineal",
+		"weightedMovingAverage": "Media Móvil Ponderada",
+		"aggregate": "Previsión Agregada",
+		"byRepository": "Por Repositorio",
+		"insufficientData": "Datos insuficientes para la previsión (se necesitan al menos 3 snapshots)",
+		"method": "Método",
+		"predicted": "Previsto"
+	}
 }

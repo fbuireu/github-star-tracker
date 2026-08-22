@@ -1,3 +1,3 @@
-import { trackStars } from '@application/tracker';
+import { trackStars } from "@application/tracker";
 
 trackStars();

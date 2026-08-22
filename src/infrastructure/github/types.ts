@@ -1,18 +1,18 @@
-import type { GitHub } from '@actions/github/lib/utils';
+import type { GitHub } from "@actions/github/lib/utils";
 
 export type Octokit = InstanceType<typeof GitHub>;
 
 export interface GitHubRepo {
-  name: string;
-  full_name: string;
-  owner: { login: string };
-  private: boolean;
-  archived: boolean;
-  fork: boolean;
-  stargazers_count: number;
+	name: string;
+	full_name: string;
+	owner: { login: string };
+	private: boolean;
+	archived: boolean;
+	fork: boolean;
+	stargazers_count: number;
 }
 
 export interface GitHubStargazerRow {
-  user: { login: string; avatar_url: string; html_url: string };
-  starred_at: string;
+	user: { login: string; avatar_url: string; html_url: string };
+	starred_at: string;
 }

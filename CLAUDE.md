@@ -187,8 +187,10 @@ the moment anything above it moves, so prefer naming the symbol.
   [`src/infrastructure/`](./src/infrastructure/CLAUDE.md) names it; `src/config/action-inputs.test.ts` covers
   the manifest rather than a module. `client.ts` is the sole module with no colocated test, so anything else
   missing one is drift, not a convention.
-- **Biome allows no suppressions.** Fix the root cause instead of `biome-ignore`. 100-col, 2-space, LF,
-  single quotes; `.gitattributes` pins `* text=auto eol=lf`.
+- **Biome allows no suppressions.** Fix the root cause instead of `biome-ignore`. 120-col, tabs, LF,
+  double quotes — Biome's defaults bar the line width, and the same config every sibling repo runs;
+  `.gitattributes` pins `* text=auto eol=lf`. `noConsole` is an error with no allowlist: no `console`
+  at any level, report through `@actions/core`.
 
 ## Build & release
 

@@ -1,130 +1,115 @@
-import type { ComparisonResults, RepoInfo, RepoResult, Snapshot, Summary } from './types';
+import type { ComparisonResults, RepoInfo, RepoResult, Snapshot, Summary } from "./types";
 
 interface CompareStarsParams {
-  currentRepos: RepoInfo[];
-  previousSnapshot: Snapshot | null;
+	currentRepos: RepoInfo[];
+	previousSnapshot: Snapshot | null;
 }
 
 export const EMPTY_SUMMARY: Summary = {
-  totalStars: 0,
-  totalPrevious: 0,
-  totalDelta: 0,
-  newStars: 0,
-  lostStars: 0,
-  changed: false,
+	totalStars: 0,
+	totalPrevious: 0,
+	totalDelta: 0,
+	newStars: 0,
+	lostStars: 0,
+	changed: false,
 };
 
-export function compareStars({
-  currentRepos,
-  previousSnapshot,
-}: CompareStarsParams): ComparisonResults {
-  const previousStars = new Map<string, number>();
-  for (const repo of previousSnapshot?.repos ?? []) {
-    previousStars.set(repo.fullName, repo.stars);
-  }
+export function compareStars({ currentRepos, previousSnapshot }: CompareStarsParams): ComparisonResults {
+	const previousStars = new Map<string, number>();
+	for (const repo of previousSnapshot?.repos ?? []) {
+		previousStars.set(repo.fullName, repo.stars);
+	}
 
-  const currentNames = new Set(currentRepos.map((repo) => repo.fullName));
+	const currentNames = new Set(currentRepos.map((repo) => repo.fullName));
 
-  const repoResults: RepoResult[] = [];
+	const repoResults: RepoResult[] = [];
 
-  for (const repo of currentRepos) {
-    const previous = previousStars.get(repo.fullName) ?? null;
-    const current = repo.stars;
-    const delta = previous === null ? 0 : current - previous;
+	for (const repo of currentRepos) {
+		const previous = previousStars.get(repo.fullName) ?? null;
+		const current = repo.stars;
+		const delta = previous === null ? 0 : current - previous;
 
-    repoResults.push({
-      name: repo.name,
-      fullName: repo.fullName,
-      owner: repo.owner,
-      current,
-      previous,
-      delta,
-      isNew: previous === null,
-      isRemoved: false,
-    });
-  }
+		repoResults.push({
+			name: repo.name,
+			fullName: repo.fullName,
+			owner: repo.owner,
+			current,
+			previous,
+			delta,
+			isNew: previous === null,
+			isRemoved: false,
+		});
+	}
 
-  for (const repo of previousSnapshot?.repos ?? []) {
-    if (currentNames.has(repo.fullName)) continue;
+	for (const repo of previousSnapshot?.repos ?? []) {
+		if (currentNames.has(repo.fullName)) continue;
 
-    const [owner, name] = repo.fullName.split('/');
+		const [owner, name] = repo.fullName.split("/");
 
-    repoResults.push({
-      name: repo.name || name,
-      fullName: repo.fullName,
-      owner: repo.owner || owner,
-      current: 0,
-      previous: repo.stars,
-      delta: -repo.stars,
-      isNew: false,
-      isRemoved: true,
-    });
-  }
+		repoResults.push({
+			name: repo.name || name,
+			fullName: repo.fullName,
+			owner: repo.owner || owner,
+			current: 0,
+			previous: repo.stars,
+			delta: -repo.stars,
+			isNew: false,
+			isRemoved: true,
+		});
+	}
 
-  const totalStars = repoResults
-    .filter((repo) => !repo.isRemoved)
-    .reduce((sum, repo) => sum + repo.current, 0);
+	const totalStars = repoResults.filter((repo) => !repo.isRemoved).reduce((sum, repo) => sum + repo.current, 0);
 
-  const totalPrevious = previousSnapshot?.totalStars ?? 0;
+	const totalPrevious = previousSnapshot?.totalStars ?? 0;
 
-  const gained = repoResults
-    .filter((repo) => repo.delta > 0)
-    .reduce((sum, repo) => sum + repo.delta, 0);
+	const gained = repoResults.filter((repo) => repo.delta > 0).reduce((sum, repo) => sum + repo.delta, 0);
 
-  const lost = repoResults
-    .filter((repo) => repo.delta < 0)
-    .reduce((sum, repo) => sum + Math.abs(repo.delta), 0);
+	const lost = repoResults.filter((repo) => repo.delta < 0).reduce((sum, repo) => sum + Math.abs(repo.delta), 0);
 
-  const changed = repoResults.some((repo) => repo.delta !== 0 || repo.isNew || repo.isRemoved);
+	const changed = repoResults.some((repo) => repo.delta !== 0 || repo.isNew || repo.isRemoved);
 
-  const summary: Summary = {
-    totalStars,
-    totalPrevious,
-    totalDelta: totalStars - totalPrevious,
-    newStars: gained,
-    lostStars: lost,
-    changed,
-  };
+	const summary: Summary = {
+		totalStars,
+		totalPrevious,
+		totalDelta: totalStars - totalPrevious,
+		newStars: gained,
+		lostStars: lost,
+		changed,
+	};
 
-  return { repos: repoResults, summary };
+	return { repos: repoResults, summary };
 }
 
 export function rankByStars(repos: RepoResult[]): RepoResult[] {
-  return repos
-    .filter((repo) => !repo.isRemoved)
-    .sort((repoA, repoB) => repoB.current - repoA.current);
+	return repos.filter((repo) => !repo.isRemoved).sort((repoA, repoB) => repoB.current - repoA.current);
 }
 
 interface TopRepositoriesParams {
-  repos: RepoResult[];
-  limit: number;
+	repos: RepoResult[];
+	limit: number;
 }
 
 export function topRepositories({ repos, limit }: TopRepositoriesParams): string[] {
-  return rankByStars(repos)
-    .slice(0, limit)
-    .map((repo) => repo.fullName);
+	return rankByStars(repos)
+		.slice(0, limit)
+		.map((repo) => repo.fullName);
 }
 
 interface CreateSnapshotParams {
-  currentRepos: RepoInfo[];
-  summary: Summary;
-  now?: Date;
+	currentRepos: RepoInfo[];
+	summary: Summary;
+	now?: Date;
 }
 
-export function createSnapshot({
-  currentRepos,
-  summary,
-  now = new Date(),
-}: CreateSnapshotParams): Snapshot {
-  return {
-    timestamp: now.toISOString(),
-    totalStars: summary.totalStars,
-    repos: currentRepos.map((repo) => ({
-      fullName: repo.fullName,
-      name: repo.name,
-      owner: repo.owner,
-      stars: repo.stars,
-    })),
-  };
+export function createSnapshot({ currentRepos, summary, now = new Date() }: CreateSnapshotParams): Snapshot {
+	return {
+		timestamp: now.toISOString(),
+		totalStars: summary.totalStars,
+		repos: currentRepos.map((repo) => ({
+			fullName: repo.fullName,
+			name: repo.name,
+			owner: repo.owner,
+			stars: repo.stars,
+		})),
+	};
 }

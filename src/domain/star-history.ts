@@ -1,173 +1,158 @@
-import { MAX_REACHABLE_STARGAZERS, MS_PER_DAY } from './constants';
-import type { RepoStargazers } from './stargazers';
-import { toEpochMs } from './time';
-import type { History, Snapshot, SnapshotRepo } from './types';
+import { MAX_REACHABLE_STARGAZERS, MS_PER_DAY } from "./constants";
+import type { RepoStargazers } from "./stargazers";
+import { toEpochMs } from "./time";
+import type { History, Snapshot, SnapshotRepo } from "./types";
 
 const MIN_HISTORY_BUCKETS = 2;
 const MAX_HISTORY_BUCKETS = 365;
 const FULL_HISTORY_CADENCE_MS = 7 * MS_PER_DAY;
 
 interface BuildStarHistoryParams {
-  repoStargazers: RepoStargazers[];
-  repos: SnapshotRepo[];
-  maxPoints: number;
-  now?: Date;
+	repoStargazers: RepoStargazers[];
+	repos: SnapshotRepo[];
+	maxPoints: number;
+	now?: Date;
 }
 
 interface CumulativeCountsParams {
-  sortedTimes: number[];
-  edges: number[];
+	sortedTimes: number[];
+	edges: number[];
 }
 
 function cumulativeCounts({ sortedTimes, edges }: CumulativeCountsParams): number[] {
-  const counts: number[] = [];
-  let pointer = 0;
+	const counts: number[] = [];
+	let pointer = 0;
 
-  for (const edge of edges) {
-    while (pointer < sortedTimes.length && sortedTimes[pointer] <= edge) {
-      pointer++;
-    }
-    counts.push(pointer);
-  }
+	for (const edge of edges) {
+		while (pointer < sortedTimes.length && sortedTimes[pointer] <= edge) {
+			pointer++;
+		}
+		counts.push(pointer);
+	}
 
-  return counts;
+	return counts;
 }
 
 interface ScaleToTrueTotalParams {
-  fetchedCounts: number[];
-  trueTotal: number;
+	fetchedCounts: number[];
+	trueTotal: number;
 }
 
 function scaleToTrueTotal({ fetchedCounts, trueTotal }: ScaleToTrueTotalParams): number[] {
-  const fetchedTotal = fetchedCounts.at(-1) ?? 0;
-  const scale = fetchedTotal > 0 ? trueTotal / fetchedTotal : 0;
-  const scaled = fetchedCounts.map((count) =>
-    fetchedTotal === trueTotal ? count : Math.round(count * scale),
-  );
+	const fetchedTotal = fetchedCounts.at(-1) ?? 0;
+	const scale = fetchedTotal > 0 ? trueTotal / fetchedTotal : 0;
+	const scaled = fetchedCounts.map((count) => (fetchedTotal === trueTotal ? count : Math.round(count * scale)));
 
-  for (let index = 0; index < scaled.length; index++) {
-    scaled[index] = Math.min(scaled[index], trueTotal);
-    if (index > 0) scaled[index] = Math.max(scaled[index], scaled[index - 1]);
-  }
+	for (let index = 0; index < scaled.length; index++) {
+		scaled[index] = Math.min(scaled[index], trueTotal);
+		if (index > 0) scaled[index] = Math.max(scaled[index], scaled[index - 1]);
+	}
 
-  if (scaled.length > 0) {
-    scaled[scaled.length - 1] = trueTotal;
-  }
+	if (scaled.length > 0) {
+		scaled[scaled.length - 1] = trueTotal;
+	}
 
-  return scaled;
+	return scaled;
 }
 
 interface ScaleCappedToTrueTotalParams {
-  counts: number[];
-  trueTotal: number;
-  reachable: number;
+	counts: number[];
+	trueTotal: number;
+	reachable: number;
 }
 
-function scaleCappedToTrueTotal({
-  counts,
-  trueTotal,
-  reachable,
-}: ScaleCappedToTrueTotalParams): number[] {
-  const fetchedTotal = counts.at(-1) ?? 0;
-  const scale = fetchedTotal > 0 ? reachable / fetchedTotal : 0;
-  const scaled = counts.map((count) => Math.round(count * scale));
+function scaleCappedToTrueTotal({ counts, trueTotal, reachable }: ScaleCappedToTrueTotalParams): number[] {
+	const fetchedTotal = counts.at(-1) ?? 0;
+	const scale = fetchedTotal > 0 ? reachable / fetchedTotal : 0;
+	const scaled = counts.map((count) => Math.round(count * scale));
 
-  let tailStart = scaled.length - 1;
-  while (tailStart > 0 && counts[tailStart - 1] === fetchedTotal) {
-    tailStart--;
-  }
+	let tailStart = scaled.length - 1;
+	while (tailStart > 0 && counts[tailStart - 1] === fetchedTotal) {
+		tailStart--;
+	}
 
-  const last = scaled.length - 1;
-  const span = last - tailStart;
-  if (span > 0) {
-    const startValue = scaled[tailStart];
-    for (let index = tailStart; index <= last; index++) {
-      scaled[index] = Math.round(
-        startValue + ((index - tailStart) / span) * (trueTotal - startValue),
-      );
-    }
-  }
+	const last = scaled.length - 1;
+	const span = last - tailStart;
+	if (span > 0) {
+		const startValue = scaled[tailStart];
+		for (let index = tailStart; index <= last; index++) {
+			scaled[index] = Math.round(startValue + ((index - tailStart) / span) * (trueTotal - startValue));
+		}
+	}
 
-  for (let index = 1; index < scaled.length; index++) {
-    if (scaled[index] < scaled[index - 1]) scaled[index] = scaled[index - 1];
-  }
-  if (scaled.length > 0) scaled[last] = trueTotal;
+	for (let index = 1; index < scaled.length; index++) {
+		if (scaled[index] < scaled[index - 1]) scaled[index] = scaled[index - 1];
+	}
+	if (scaled.length > 0) scaled[last] = trueTotal;
 
-  return scaled;
+	return scaled;
 }
 
-export function buildStarHistory({
-  repoStargazers,
-  repos,
-  maxPoints,
-  now,
-}: BuildStarHistoryParams): History {
-  const stargazersByRepo = new Map(repoStargazers.map((entry) => [entry.repoFullName, entry]));
-  const eventsByRepo = new Map<string, number[]>();
-  let earliest = Number.POSITIVE_INFINITY;
+export function buildStarHistory({ repoStargazers, repos, maxPoints, now }: BuildStarHistoryParams): History {
+	const stargazersByRepo = new Map(repoStargazers.map((entry) => [entry.repoFullName, entry]));
+	const eventsByRepo = new Map<string, number[]>();
+	let earliest = Number.POSITIVE_INFINITY;
 
-  for (const repo of repos) {
-    const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? [])
-      .map((stargazer) => toEpochMs(stargazer.starredAt))
-      .filter((timeMs): timeMs is number => timeMs !== null)
-      .sort((earlier, later) => earlier - later);
+	for (const repo of repos) {
+		const times = (stargazersByRepo.get(repo.fullName)?.stargazers ?? [])
+			.map((stargazer) => toEpochMs(stargazer.starredAt))
+			.filter((timeMs): timeMs is number => timeMs !== null)
+			.sort((earlier, later) => earlier - later);
 
-    eventsByRepo.set(repo.fullName, times);
-    if (times.length > 0 && times[0] < earliest) earliest = times[0];
-  }
+		eventsByRepo.set(repo.fullName, times);
+		if (times.length > 0 && times[0] < earliest) earliest = times[0];
+	}
 
-  if (!Number.isFinite(earliest)) {
-    return { snapshots: [] };
-  }
+	if (!Number.isFinite(earliest)) {
+		return { snapshots: [] };
+	}
 
-  const end = (now ?? new Date()).getTime();
-  const edges =
-    earliest >= end
-      ? [earliest - MS_PER_DAY, end]
-      : (() => {
-          const requested =
-            maxPoints > 0
-              ? Math.floor(maxPoints)
-              : Math.ceil((end - earliest) / FULL_HISTORY_CADENCE_MS) + 1;
-          const buckets = Math.min(MAX_HISTORY_BUCKETS, Math.max(MIN_HISTORY_BUCKETS, requested));
-          const step = (end - earliest) / (buckets - 1);
+	const end = (now ?? new Date()).getTime();
+	const edges =
+		earliest >= end
+			? [earliest - MS_PER_DAY, end]
+			: (() => {
+					const requested =
+						maxPoints > 0 ? Math.floor(maxPoints) : Math.ceil((end - earliest) / FULL_HISTORY_CADENCE_MS) + 1;
+					const buckets = Math.min(MAX_HISTORY_BUCKETS, Math.max(MIN_HISTORY_BUCKETS, requested));
+					const step = (end - earliest) / (buckets - 1);
 
-          return Array.from({ length: buckets }, (_, bucketIndex) =>
-            bucketIndex === buckets - 1 ? end : earliest + bucketIndex * step,
-          );
-        })();
+					return Array.from({ length: buckets }, (_, bucketIndex) =>
+						bucketIndex === buckets - 1 ? end : earliest + bucketIndex * step,
+					);
+				})();
 
-  const cumulativeByRepo = new Map<string, number[]>();
-  for (const repo of repos) {
-    const events = eventsByRepo.get(repo.fullName) ?? [];
-    const counts = cumulativeCounts({ sortedTimes: events, edges });
-    const reachable = Math.min(
-      stargazersByRepo.get(repo.fullName)?.coveredStars ?? MAX_REACHABLE_STARGAZERS,
-      repo.stars,
-    );
-    const scaled =
-      events.length === 0
-        ? edges.map(() => repo.stars)
-        : reachable < repo.stars
-          ? scaleCappedToTrueTotal({ counts, trueTotal: repo.stars, reachable })
-          : scaleToTrueTotal({ fetchedCounts: counts, trueTotal: repo.stars });
-    cumulativeByRepo.set(repo.fullName, scaled);
-  }
+	const cumulativeByRepo = new Map<string, number[]>();
+	for (const repo of repos) {
+		const events = eventsByRepo.get(repo.fullName) ?? [];
+		const counts = cumulativeCounts({ sortedTimes: events, edges });
+		const reachable = Math.min(
+			stargazersByRepo.get(repo.fullName)?.coveredStars ?? MAX_REACHABLE_STARGAZERS,
+			repo.stars,
+		);
+		const scaled =
+			events.length === 0
+				? edges.map(() => repo.stars)
+				: reachable < repo.stars
+					? scaleCappedToTrueTotal({ counts, trueTotal: repo.stars, reachable })
+					: scaleToTrueTotal({ fetchedCounts: counts, trueTotal: repo.stars });
+		cumulativeByRepo.set(repo.fullName, scaled);
+	}
 
-  const snapshots: Snapshot[] = edges.map((edge, edgeIndex) => {
-    const snapshotRepos = repos.map((repo) => ({
-      fullName: repo.fullName,
-      name: repo.name,
-      owner: repo.owner,
-      stars: cumulativeByRepo.get(repo.fullName)?.[edgeIndex] ?? 0,
-    }));
+	const snapshots: Snapshot[] = edges.map((edge, edgeIndex) => {
+		const snapshotRepos = repos.map((repo) => ({
+			fullName: repo.fullName,
+			name: repo.name,
+			owner: repo.owner,
+			stars: cumulativeByRepo.get(repo.fullName)?.[edgeIndex] ?? 0,
+		}));
 
-    return {
-      timestamp: new Date(edge).toISOString(),
-      totalStars: snapshotRepos.reduce((sum, repo) => sum + repo.stars, 0),
-      repos: snapshotRepos,
-    };
-  });
+		return {
+			timestamp: new Date(edge).toISOString(),
+			totalStars: snapshotRepos.reduce((sum, repo) => sum + repo.stars, 0),
+			repos: snapshotRepos,
+		};
+	});
 
-  return { snapshots };
+	return { snapshots };
 }
