@@ -143,7 +143,7 @@ To contribute a new language:
 4. Add the import in `src/i18n/index.ts`
 5. Add the locale and its Intl code to `LOCALE_MAP` in `src/i18n/index.ts` (`LOCALES` and the `Locale` type derive from it, so there is no second list to maintain)
 6. Register the imported bundle in the `TRANSLATIONS` map in `src/i18n/index.ts`
-7. Run `pnpm run validate` to check everything passes
+7. Run `pnpm verify` to check everything passes
 
 `src/i18n/types.ts` needs **no** change. `resolveJsonModule` is on, so the new `.json` bundle is type-checked
 against the existing `Translations` interface at compile time: a missing or mistyped key is a build error.

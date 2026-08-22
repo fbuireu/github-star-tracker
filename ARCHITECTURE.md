@@ -149,16 +149,17 @@ The scripts, Biome settings and git hooks are listed once in [CLAUDE.md](./CLAUD
 
 - **Bundling.** `esbuild.config.ts` (run via `tsx`) bundles `src/index.ts` into `dist/index.js`, `platform: node`, `target: node24`, `format: cjs`, `sourcemap: true`, with the alias map derived from `tsconfig.json`. `dist/` is **committed** because GitHub runs a JS action straight from the repository at the referenced ref: there is no install step, so the bundle must be in the tree ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)).
 - **Node version.** Three pins move together and only two of them are asserted: `engines.node` and `packageManager` in `package.json`, plus `.nvmrc`, which is what `ci.yml` and `release.yml` actually install through `node-version-file`. Nothing checks `.nvmrc`, so move it by hand.
-- **Release.** `.releaserc.json`: semantic-release on `main` with commit-analyzer, release-notes-generator, changelog, npm (`npmPublish: false`), git (commits `package.json`, `pnpm-lock.yaml`, `CHANGELOG.md` and `dist/`) and github plugins. `release.yml` gates it behind `pnpm run validate`.
+- **Release.** `.releaserc.json`: semantic-release on `main` with commit-analyzer, release-notes-generator, changelog, npm (`npmPublish: false`), git (commits `package.json`, `pnpm-lock.yaml`, `CHANGELOG.md` and `dist/`) and github plugins. `release.yml` gates it behind `pnpm verify`.
 
 `.github/workflows/`:
 
 | Workflow | Purpose |
 | --- | --- |
-| `ci.yml` | On push/PR to `main`: install, `pnpm run check`, Codecov upload (also when `check` fails, so threshold failures still report), build, then a staleness check that fails a PR touching bundled sources without touching `dist/`. It compares *which files changed*, not bytes, because `dist/index.js` is not reproducible across platforms: esbuild embeds `node_modules/.pnpm/...` paths and pnpm hashes those names on Windows but not on Linux |
-| `release.yml` | On push to `main`: `pnpm run validate` then `semantic-release`, plus a major-version tag update |
-| `codeql.yml` | CodeQL analysis of `javascript-typescript` and `actions`, weekly + on push/PR |
+| `ci.yml` | On push/PR to `main`: install, `pnpm verify`, Codecov upload (also when `check` fails, so threshold failures still report), build, then a staleness check that fails a PR touching bundled sources without touching `dist/`. It compares *which files changed*, not bytes, because `dist/index.js` is not reproducible across platforms: esbuild embeds `node_modules/.pnpm/...` paths and pnpm hashes those names on Windows but not on Linux |
+| `release.yml` | On push to `main`: `pnpm verify` then `semantic-release`, plus a major-version tag update |
 | `zizmor.yml` | zizmor static analysis of the workflow files themselves |
+| `dependency-review.yml` | Fails a PR that introduces a dependency with a known vulnerability |
+| `commit-message.yml` | Runs commitlint on the **pull request title**. `main` takes squash merges and the repository is set to `PR_TITLE`, so that title — not the branch's commits — is the message that lands and the one semantic-release reads. The `commit-msg` hook validates commits the squash then discards, so this is the only guard on the string that ships |
 | `dependabot-auto-merge.yml` | Auto-approves and squash-merges Dependabot patch/minor/dev/indirect updates |
 | `renovate-auto-approve.yml` | Auto-approves Renovate PRs labelled patch/minor/pin/lock-maintenance |
 | `sync-wiki.yml` | Publishes `docs/wiki/` to the repository's GitHub Wiki with `rsync --delete`, so the wiki is generated and direct edits to it are overwritten |
