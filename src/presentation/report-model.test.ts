@@ -56,10 +56,10 @@ describe("buildReportModel", () => {
 	describe("Top Repositories", () => {
 		const results = makeComparisonResults({
 			repos: [
-				makeRepoResult("small", { current: 5, delta: 1 }),
-				makeRepoResult("large", { current: 90, delta: -4 }),
-				makeRepoResult("gone", { current: 0, isRemoved: true }),
-				makeRepoResult("middling", { current: 40, delta: 0 }),
+				makeRepoResult({ name: "small", overrides: { current: 5, delta: 1 } }),
+				makeRepoResult({ name: "large", overrides: { current: 90, delta: -4 } }),
+				makeRepoResult({ name: "gone", overrides: { current: 0, isRemoved: true } }),
+				makeRepoResult({ name: "middling", overrides: { current: 40, delta: 0 } }),
 			],
 		});
 

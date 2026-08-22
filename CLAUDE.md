@@ -114,9 +114,10 @@ re-export from `src/i18n/index.ts` instead.
   sorting and duplicate it in the bundle. "Same layer" means all of `src/infrastructure`, not one adapter.
 - **Named params for 2+ arguments.** Any function taking two or more arguments takes one destructured
   object typed by an interface: `function foo({ a, b }: FooParams)`. Single-argument functions stay
-  positional. Some of the fixture factories in `src/shared/tests` are the sanctioned exception, and
-  `docs/docs-consistency.test.ts` asserts the rule over the whole tree. It had drifted in nine places before
-  it was executable, three of them adjacent same-typed numbers a caller could silently swap.
+  positional. `docs/docs-consistency.test.ts` asserts the rule over the whole of `src`, with no exemption:
+  the fixture factories in `src/shared/tests` and the co-located test helpers used to be excused, which is
+  exactly where the rule had drifted — `makeRepoInfo(name, stars, overrides)` and `repoStargazers(fullName,
+  dates, sampled)` are the shapes a caller swaps by accident, and they are the ones a reader copies.
 - **No explanatory comments in `.ts` files**, without exception; the tree contains none. These `CLAUDE.md`
   files carry the explanation instead. If something needs explaining it goes in the folder's *Invariants* or
   *Gotchas* section, not above the line.

@@ -5,7 +5,7 @@ import type { Snapshot } from "./types";
 
 describe("compareStars", () => {
 	it("handles first run with no previous snapshot", () => {
-		const repos = [makeRepoInfo("repo-a", 10), makeRepoInfo("repo-b", 20)];
+		const repos = [makeRepoInfo({ name: "repo-a", stars: 10 }), makeRepoInfo({ name: "repo-b", stars: 20 })];
 		const result = compareStars({ currentRepos: repos, previousSnapshot: null });
 
 		expect(result.summary.totalStars).toBe(30);
@@ -27,7 +27,7 @@ describe("compareStars", () => {
 		};
 
 		const result = compareStars({
-			currentRepos: [makeRepoInfo("repo-a", 50)],
+			currentRepos: [makeRepoInfo({ name: "repo-a", stars: 50 })],
 			previousSnapshot: previous,
 		});
 
@@ -37,7 +37,7 @@ describe("compareStars", () => {
 	});
 
 	it("computes deltas against previous snapshot", () => {
-		const repos = [makeRepoInfo("repo-a", 15), makeRepoInfo("repo-b", 18)];
+		const repos = [makeRepoInfo({ name: "repo-a", stars: 15 }), makeRepoInfo({ name: "repo-b", stars: 18 })];
 		const previous: Snapshot = {
 			timestamp: "2026-01-01T00:00:00Z",
 			totalStars: 30,
@@ -64,7 +64,7 @@ describe("compareStars", () => {
 	});
 
 	it("detects removed repositories", () => {
-		const repos = [makeRepoInfo("repo-a", 10)];
+		const repos = [makeRepoInfo({ name: "repo-a", stars: 10 })];
 		const previous: Snapshot = {
 			timestamp: "2026-01-01T00:00:00Z",
 			totalStars: 30,
@@ -84,7 +84,7 @@ describe("compareStars", () => {
 	});
 
 	it("detects newly added repositories", () => {
-		const repos = [makeRepoInfo("repo-a", 10), makeRepoInfo("new-repo", 5)];
+		const repos = [makeRepoInfo({ name: "repo-a", stars: 10 }), makeRepoInfo({ name: "new-repo", stars: 5 })];
 		const previous: Snapshot = {
 			timestamp: "2026-01-01T00:00:00Z",
 			totalStars: 10,
@@ -100,7 +100,7 @@ describe("compareStars", () => {
 	});
 
 	it("reports no changes when stars are identical", () => {
-		const repos = [makeRepoInfo("repo-a", 10)];
+		const repos = [makeRepoInfo({ name: "repo-a", stars: 10 })];
 		const previous: Snapshot = {
 			timestamp: "2026-01-01T00:00:00Z",
 			totalStars: 10,
@@ -115,7 +115,7 @@ describe("compareStars", () => {
 
 describe("createSnapshot", () => {
 	it("creates a snapshot with timestamp and repo data", () => {
-		const repos = [makeRepoInfo("repo-a", 10)];
+		const repos = [makeRepoInfo({ name: "repo-a", stars: 10 })];
 		const summary = {
 			totalStars: 10,
 			totalPrevious: 0,
@@ -141,10 +141,10 @@ describe("createSnapshot", () => {
 
 describe("topRepositories", () => {
 	const repos = [
-		makeRepoResult("small", { current: 5 }),
-		makeRepoResult("large", { current: 90 }),
-		makeRepoResult("gone", { current: 0, isRemoved: true }),
-		makeRepoResult("middling", { current: 40 }),
+		makeRepoResult({ name: "small", overrides: { current: 5 } }),
+		makeRepoResult({ name: "large", overrides: { current: 90 } }),
+		makeRepoResult({ name: "gone", overrides: { current: 0, isRemoved: true } }),
+		makeRepoResult({ name: "middling", overrides: { current: 40 } }),
 	];
 
 	it("ranks by Star Count, descending", () => {

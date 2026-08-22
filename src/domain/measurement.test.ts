@@ -17,7 +17,7 @@ describe("measureRun", () => {
 	it("measures a first run against no baseline", () => {
 		const measurement = measureRun({
 			...BASE,
-			trackedSet: [makeRepoInfo("repo-a", 10), makeRepoInfo("repo-b", 5)],
+			trackedSet: [makeRepoInfo({ name: "repo-a", stars: 10 }), makeRepoInfo({ name: "repo-b", stars: 5 })],
 			storedHistory: EMPTY_HISTORY,
 		});
 
@@ -33,14 +33,14 @@ describe("measureRun", () => {
 		const lastRun = measureRun({
 			...BASE,
 			comparisonWindow: CompareAgainst.LAST_RUN,
-			trackedSet: [makeRepoInfo("repo-a", 100)],
+			trackedSet: [makeRepoInfo({ name: "repo-a", stars: 100 })],
 			storedHistory,
 			now: new Date(storedHistory.snapshots[2].timestamp),
 		});
 		const monthly = measureRun({
 			...BASE,
 			comparisonWindow: CompareAgainst.D30,
-			trackedSet: [makeRepoInfo("repo-a", 100)],
+			trackedSet: [makeRepoInfo({ name: "repo-a", stars: 100 })],
 			storedHistory,
 			now: new Date(storedHistory.snapshots[2].timestamp),
 		});
@@ -56,7 +56,7 @@ describe("measureRun", () => {
 
 		const measurement = measureRun({
 			...BASE,
-			trackedSet: [makeRepoInfo("repo-a", 20)],
+			trackedSet: [makeRepoInfo({ name: "repo-a", stars: 20 })],
 			storedHistory,
 		});
 
@@ -66,7 +66,7 @@ describe("measureRun", () => {
 	});
 
 	it("snapshots the same repositories it compared, so the totals cannot diverge", () => {
-		const trackedSet = [makeRepoInfo("repo-a", 7), makeRepoInfo("repo-b", 3)];
+		const trackedSet = [makeRepoInfo({ name: "repo-a", stars: 7 }), makeRepoInfo({ name: "repo-b", stars: 3 })];
 
 		const measurement = measureRun({ ...BASE, trackedSet, storedHistory: EMPTY_HISTORY });
 		const appended = measurement.updatedHistory.snapshots.at(-1);
@@ -82,7 +82,7 @@ describe("measureRun", () => {
 			measureRun({
 				...BASE,
 				maxHistory: 2,
-				trackedSet: [makeRepoInfo("repo-a", 4)],
+				trackedSet: [makeRepoInfo({ name: "repo-a", stars: 4 })],
 				storedHistory,
 			}).droppedSnapshots,
 		).toBe(2);
@@ -93,7 +93,7 @@ describe("measureRun", () => {
 			measureRun({
 				...BASE,
 				maxHistory: 30,
-				trackedSet: [makeRepoInfo("repo-a", 4)],
+				trackedSet: [makeRepoInfo({ name: "repo-a", stars: 4 })],
 				storedHistory: EMPTY_HISTORY,
 			}).droppedSnapshots,
 		).toBe(0);
@@ -104,7 +104,7 @@ describe("measureRun", () => {
 		const measurement = measureRun({
 			...BASE,
 			maxHistory: 0,
-			trackedSet: [makeRepoInfo("repo-a", 3)],
+			trackedSet: [makeRepoInfo({ name: "repo-a", stars: 3 })],
 			storedHistory,
 		});
 
@@ -118,7 +118,7 @@ describe("measureRun", () => {
 		const measurement = measureRun({
 			...BASE,
 			maxHistory: 2,
-			trackedSet: [makeRepoInfo("repo-a", 4)],
+			trackedSet: [makeRepoInfo({ name: "repo-a", stars: 4 })],
 			storedHistory,
 		});
 
@@ -134,13 +134,13 @@ describe("measureRun", () => {
 		const belowThreshold = measureRun({
 			...BASE,
 			notificationThreshold: 20,
-			trackedSet: [makeRepoInfo("repo-a", 110)],
+			trackedSet: [makeRepoInfo({ name: "repo-a", stars: 110 })],
 			storedHistory,
 		});
 		const aboveThreshold = measureRun({
 			...BASE,
 			notificationThreshold: 20,
-			trackedSet: [makeRepoInfo("repo-a", 125)],
+			trackedSet: [makeRepoInfo({ name: "repo-a", stars: 125 })],
 			storedHistory,
 		});
 
@@ -157,7 +157,7 @@ describe("measureRun", () => {
 		const measurement = measureRun({
 			...BASE,
 			notificationThreshold: 5,
-			trackedSet: [makeRepoInfo("repo-a", 130)],
+			trackedSet: [makeRepoInfo({ name: "repo-a", stars: 130 })],
 			storedHistory,
 		});
 
@@ -170,7 +170,7 @@ describe("measureRun", () => {
 			...makeMultiRepoHistory([{ "user/repo-a": 100 }]),
 			starsAtLastNotification: 100,
 		};
-		const lost = { ...BASE, notificationThreshold: 20, trackedSet: [makeRepoInfo("repo-a", 70)] };
+		const lost = { ...BASE, notificationThreshold: 20, trackedSet: [makeRepoInfo({ name: "repo-a", stars: 70 })] };
 
 		expect(measureRun({ ...lost, storedHistory, notificationMode: NotificationMode.NET }).thresholdReached).toBe(true);
 		expect(measureRun({ ...lost, storedHistory, notificationMode: NotificationMode.GAINS }).thresholdReached).toBe(
@@ -183,7 +183,7 @@ describe("measureRun", () => {
 
 		const measurement = measureRun({
 			...BASE,
-			trackedSet: [makeRepoInfo("repo-a", 10)],
+			trackedSet: [makeRepoInfo({ name: "repo-a", stars: 10 })],
 			storedHistory: EMPTY_HISTORY,
 			now,
 		});

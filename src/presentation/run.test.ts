@@ -211,9 +211,9 @@ describe("the two Report dialects stay in step", () => {
 	};
 	const withRemoved = makeComparisonResults({
 		repos: [
-			makeRepoResult("kept", { current: 60, delta: 10 }),
-			makeRepoResult("fresh", { current: 7, previous: null, isNew: true }),
-			makeRepoResult("gone", { current: 0, previous: 3, delta: -3, isRemoved: true }),
+			makeRepoResult({ name: "kept", overrides: { current: 60, delta: 10 } }),
+			makeRepoResult({ name: "fresh", overrides: { current: 7, previous: null, isNew: true } }),
+			makeRepoResult({ name: "gone", overrides: { current: 0, previous: 3, delta: -3, isRemoved: true } }),
 		],
 	});
 

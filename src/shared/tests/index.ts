@@ -11,7 +11,13 @@ export function makeConfig(overrides: Partial<Config> = {}): Config {
 	return { ...DEFAULTS, ...overrides };
 }
 
-export function makeRepoInfo(name: string, stars = 10, overrides: Partial<RepoInfo> = {}): RepoInfo {
+export type MakeRepoInfoParams = {
+	name: string;
+	stars?: number;
+	overrides?: Partial<RepoInfo>;
+};
+
+export function makeRepoInfo({ name, stars = 10, overrides = {} }: MakeRepoInfoParams): RepoInfo {
 	return {
 		owner: "user",
 		name,
@@ -56,7 +62,13 @@ export function makeStargazerSeries({
 	);
 }
 
-export function makeSnapshot(timestamp: string, totalStars: number, repos: SnapshotRepo[] = []): Snapshot {
+export type MakeSnapshotParams = {
+	timestamp: string;
+	totalStars: number;
+	repos?: SnapshotRepo[];
+};
+
+export function makeSnapshot({ timestamp, totalStars, repos = [] }: MakeSnapshotParams): Snapshot {
 	return { timestamp, totalStars, repos };
 }
 
@@ -71,12 +83,17 @@ export function makeHistory(
 ): History {
 	return {
 		snapshots: starCounts.map((totalStars, index) =>
-			makeSnapshot(new Date(startMs + index * stepDays * MS_PER_DAY).toISOString(), totalStars),
+			makeSnapshot({ timestamp: new Date(startMs + index * stepDays * MS_PER_DAY).toISOString(), totalStars }),
 		),
 	};
 }
 
-export function makeMultiRepoSnapshot(timestamp: string, repoStars: Record<string, number>): Snapshot {
+export type MakeMultiRepoSnapshotParams = {
+	timestamp: string;
+	repoStars: Record<string, number>;
+};
+
+export function makeMultiRepoSnapshot({ timestamp, repoStars }: MakeMultiRepoSnapshotParams): Snapshot {
 	const repos = Object.entries(repoStars).map(([fullName, stars]) => ({
 		fullName,
 		name: fullName.split("/")[1],
@@ -97,12 +114,17 @@ export function makeMultiRepoHistory(
 ): History {
 	return {
 		snapshots: snapshots.map((repoStars, index) =>
-			makeMultiRepoSnapshot(new Date(startMs + index * stepDays * MS_PER_DAY).toISOString(), repoStars),
+			makeMultiRepoSnapshot({ timestamp: new Date(startMs + index * stepDays * MS_PER_DAY).toISOString(), repoStars }),
 		),
 	};
 }
 
-export function makeRepoResult(name: string, overrides: Partial<RepoResult> = {}): RepoResult {
+export type MakeRepoResultParams = {
+	name: string;
+	overrides?: Partial<RepoResult>;
+};
+
+export function makeRepoResult({ name, overrides = {} }: MakeRepoResultParams): RepoResult {
 	return {
 		name,
 		fullName: `user/${name}`,
@@ -119,8 +141,8 @@ export function makeRepoResult(name: string, overrides: Partial<RepoResult> = {}
 export function makeComparisonResults(overrides: Partial<ComparisonResults> = {}): ComparisonResults {
 	return {
 		repos: [
-			makeRepoResult("repo-a", { current: 15, previous: 10, delta: 5 }),
-			makeRepoResult("repo-b", { current: 8, previous: 10, delta: -2 }),
+			makeRepoResult({ name: "repo-a", overrides: { current: 15, previous: 10, delta: 5 } }),
+			makeRepoResult({ name: "repo-b", overrides: { current: 8, previous: 10, delta: -2 } }),
 		],
 		summary: {
 			totalStars: 23,

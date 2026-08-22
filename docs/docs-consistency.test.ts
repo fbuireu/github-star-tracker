@@ -52,13 +52,18 @@ const I18N_KEY_PATTERN = /`([\w.]+)`/g;
 
 const LINE_CITATION_ALLOWLIST = new Set([GUIDE, CONTRIBUTOR_GUIDE, ADR_TEMPLATE]);
 
-function walk(dir: string, keep: (filename: string) => boolean): string[] {
+type WalkParams = {
+	dir: string;
+	keep: (filename: string) => boolean;
+};
+
+function walk({ dir, keep }: WalkParams): string[] {
 	if (!fs.existsSync(dir)) return [];
 
 	return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
 		const full = path.join(dir, entry.name);
 
-		if (entry.isDirectory()) return walk(full, keep);
+		if (entry.isDirectory()) return walk({ dir: full, keep });
 
 		return keep(entry.name) ? [full] : [];
 	});
@@ -77,20 +82,22 @@ const DOCS = [
 		"SECURITY.md",
 		"examples/README.md",
 	].filter((doc) => fs.existsSync(doc)),
-	...walk(".github", isMarkdown),
-	...walk("docs", isMarkdown),
-	...walk("src", (filename) => filename === "CLAUDE.md"),
+	...walk({ dir: ".github", keep: isMarkdown }),
+	...walk({ dir: "docs", keep: isMarkdown }),
+	...walk({ dir: "src", keep: (filename) => filename === "CLAUDE.md" }),
 ];
 
 const isTestFile = (filename: string): boolean => filename.endsWith(".test.ts");
 
 const TEST_FILENAMES = new Set(
-	[...walk("src", isTestFile), ...walk("tests", isTestFile)].map((file) => path.basename(file)),
+	[...walk({ dir: "src", keep: isTestFile }), ...walk({ dir: "tests", keep: isTestFile })].map((file) =>
+		path.basename(file),
+	),
 );
 
 const toPosix = (file: string): string => file.split(path.sep).join("/");
 
-const ADR_FILES = walk(ADR_DIRECTORY, isMarkdown).map(toPosix).sort();
+const ADR_FILES = walk({ dir: ADR_DIRECTORY, keep: isMarkdown }).map(toPosix).sort();
 
 const adrNumber = (file: string): string => path.basename(file).slice(0, 4);
 
@@ -735,9 +742,7 @@ describe("the documented data-branch format matches the writer", () => {
 
 describe("the source follows the named-parameter convention", () => {
 	it("declares no function or arrow taking two or more positional parameters", () => {
-		const sources = walk("src", (filename) => filename.endsWith(".ts")).filter(
-			(file) => !file.endsWith(".test.ts") && !toPosix(file).startsWith("src/shared/tests/"),
-		);
+		const sources = walk({ dir: "src", keep: (filename) => filename.endsWith(".ts") });
 		const declaration = /(?:function\s+\w+|=)\s*\(\s*\w+\s*:\s*[^,()]+,\s*\w+\s*:/g;
 		const offenders = sources.flatMap((file) =>
 			[...read(file).matchAll(declaration)].map(
