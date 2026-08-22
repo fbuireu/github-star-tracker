@@ -18,10 +18,10 @@ jobs:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
       - name: Check if should auto-merge
         id: auto-merge-check
+        env:
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+          DEP_TYPE: ${{ steps.metadata.outputs.dependency-type }}
         run: |
-          UPDATE_TYPE="${STEPS_METADATA_OUTPUTS_UPDATE_TYPE}"
-          DEP_TYPE="${STEPS_METADATA_OUTPUTS_DEPENDENCY_TYPE}"
-          
           if [[ "$UPDATE_TYPE" == "version-update:semver-patch" ]] || \
              [[ "$UPDATE_TYPE" == "version-update:semver-minor" ]] || \
              [[ "$DEP_TYPE" == "indirect" ]] || \
@@ -30,9 +30,6 @@ jobs:
           else
             echo "should-merge=false" >> $GITHUB_OUTPUT
           fi
-        env:
-          STEPS_METADATA_OUTPUTS_UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
-          STEPS_METADATA_OUTPUTS_DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
       - name: Approve and auto-merge
         if: steps.auto-merge-check.outputs.should-merge == 'true'
         run: |
@@ -40,18 +37,22 @@ jobs:
           gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.PAT }} 
+          GH_TOKEN: ${{ secrets.PAT }}
       - name: Comment on major updates
         if: steps.metadata.outputs['update-type'] == 'version-update:semver-major'
-        run: |
-          gh pr comment "$PR_URL" --body "🚨 **Major update detected** - Manual review required for ${STEPS_METADATA_OUTPUTS_DEPENDENCY_NAMES}"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STEPS_METADATA_OUTPUTS_DEPENDENCY_NAMES: ${{ steps.metadata.outputs.dependency-names }}
-      - name: Label PRs by update type
+          DEPENDENCY_NAMES: ${{ steps.metadata.outputs.dependency-names }}
         run: |
-          case "${STEPS_METADATA_OUTPUTS_UPDATE_TYPE}" in
+          gh pr comment "$PR_URL" --body "Major update detected - Manual review required for ${DEPENDENCY_NAMES}"
+      - name: Label PRs by update type
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPDATE_TYPE: ${{ steps.metadata.outputs['update-type'] }}
+        run: |
+          case "${UPDATE_TYPE}" in
             version-update:semver-patch)
               gh pr edit "$PR_URL" --add-label "patch-update,auto-merge"
               ;;
@@ -62,7 +63,3 @@ jobs:
               gh pr edit "$PR_URL" --add-label "major-update,review-required"
               ;;
           esac
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          STEPS_METADATA_OUTPUTS_UPDATE_TYPE: ${{ steps.metadata.outputs['update-type'] }}
