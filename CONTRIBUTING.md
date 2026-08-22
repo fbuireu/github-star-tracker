@@ -87,14 +87,14 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
 2. **Run tests**
    ```bash
    # Run all checks
-   pnpm run validate
+   pnpm run verify
 
    # Or individually:
    pnpm run lint          # Biome, check only
-   pnpm run test          # Unit tests
-   pnpm run test:coverage # Tests with coverage report
+   pnpm run test:ut       # Unit tests
+   pnpm run test:ut:coverage # Tests with coverage report
    pnpm run typecheck     # Type checking
-   pnpm run check         # Lint + typecheck + coverage (what CI runs)
+   pnpm run verify        # Format check + typecheck + coverage + build (what CI runs)
    ```
 
 3. **Rebuild the bundle**
@@ -125,7 +125,7 @@ not:
 | --- | --- | --- |
 | `.husky/pre-commit` | `pnpm lint-staged` | Staged files are linted and formatted before the commit lands |
 | `.husky/commit-msg` | `pnpm exec commitlint --edit` | A commit message that breaks the conventions below is rejected here, not in review |
-| `.husky/pre-push` | `pnpm run typecheck && pnpm run test:changed && pnpm run build` | A push runs a type-check, the tests affected since `origin/main`, and a full rebuild, so expect it to take a while |
+| `.husky/pre-push` | `pnpm verify` | A push runs a type-check, the tests affected since `origin/main`, and a full rebuild, so expect it to take a while |
 
 Because `pre-push` rebuilds, a push can leave `dist/` dirty. Commit that result rather than discarding it.
 
@@ -141,7 +141,7 @@ pnpm run lint
 pnpm run format
 ```
 
-`pnpm run check` is the wider gate: it adds type-checking and the coverage run on top of `lint`.
+`pnpm run verify` is the wider gate: it adds type-checking, the coverage run and the bundle on top of `lint`.
 
 **Guidelines:**
 - TypeScript: strict type-checking is on by default in the pinned version, so `tsconfig.json` does not
@@ -181,9 +181,9 @@ Biome sorts named imports alphabetically, so `{ describe, expect, it }` is the o
 
 Run tests:
 ```bash
-pnpm run test                               # Run once
-pnpm run test:watch                         # Watch mode
-pnpm run test:coverage                      # With coverage report
+pnpm run test:ut                            # Run once
+pnpm run test:ut:watch                      # Watch mode
+pnpm run test:ut:coverage                   # With coverage report
 pnpm vitest run src/domain                  # One layer
 pnpm vitest run src/domain/forecast.test.ts # One file
 ```
@@ -265,7 +265,7 @@ WIP                             # Not descriptive at all
 
 ### Automated Releases
 
-`.github/workflows/release.yml` runs on every push to `main`. It runs `pnpm run validate` first, so a
+`.github/workflows/release.yml` runs on every push to `main`. It runs `pnpm run verify` first, so a
 release only happens if lint, type-check, coverage and the build all pass. semantic-release then:
 
 1. Analyzes the commits since the last release
@@ -285,7 +285,7 @@ reference. No manual versioning is needed.
 
 ### Before Submitting
 
-- [ ] **All checks pass**: `pnpm run validate` succeeds
+- [ ] **All checks pass**: `pnpm run verify` succeeds
 - [ ] **`dist/` is rebuilt and committed** if you touched any non-test file under `src/`
 - [ ] **Code is formatted**: run `pnpm run format`
 - [ ] **Types are correct**: no TypeScript errors

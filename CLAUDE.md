@@ -36,7 +36,7 @@ same commit. Only `engines.node` and `packageManager` are asserted against `pack
 **`engines.node` is the development pin; the shipped runtime is `node24`** (`action.yml` `runs.using`, and
 `esbuild.config.ts` `target`). Those are different numbers on purpose. The gap is a trap: `@types/node` tracks
 the *development* version, and esbuild's `target` lowers syntax without shimming runtime APIs, so a `node:*`
-API that landed after 24.x type-checks, bundles, passes `pnpm validate` and then throws
+API that landed after 24.x type-checks, bundles, passes `pnpm verify` and then throws
 `TypeError: … is not a function` on a GitHub runner. It fails in a user's workflow rather than in CI, because
 `dist/` is committed and nothing executes the bundle. Today the tree only reaches for `node:fs`, `node:path`
 and `node:child_process.execFileSync`, all long-standing. Check a new `node:` API against Node 24, not
@@ -46,13 +46,19 @@ against `engines.node`.
 
 ```bash
 pnpm build            # tsx esbuild.config.ts -> dist/index.js
-pnpm lint             # biome check --no-errors-on-unmatched .
-pnpm format           # lint --write
+pnpm lint             # biome lint, the root command the variants pass paths to
+pnpm lint:all         # lint .
+pnpm lint:all:fix     # lint:all --fix
+pnpm format           # biome check --write, the root command lint-staged appends files to
+pnpm format:all       # format .
+pnpm format:check     # biome check, no writes — what verify runs
 pnpm typecheck        # tsc --noEmit
-pnpm test             # vitest run
-pnpm test:coverage    # vitest run --coverage (85% threshold, all four metrics)
-pnpm check            # lint && typecheck && test:coverage
-pnpm validate         # check && build, what the release job runs
+pnpm test:ut          # vitest run
+pnpm test:ut:watch    # vitest, watch mode
+pnpm test:ut:coverage # test:ut --coverage (85% threshold, all four metrics)
+pnpm test:ut:changed  # test:ut --changed origin/main
+pnpm test:docs        # the docs contract alone
+pnpm verify           # format:check && typecheck && test:ut:coverage && build
 ```
 
 Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run src/domain/forecast.test.ts`.
@@ -140,7 +146,7 @@ and the ADR set held to its template (sequential
 numbering, `NNNN-kebab-title.md` filenames, the `# N. Title` / date / status / *Context* / *Decision* /
 *Consequences* shape, a row in the `ARCHITECTURE.md` index, and, the one that rots quietly, a link from
 some document **other** than that index, since an ADR only the index points at will not be read). It runs
-with `pnpm test`, so in CI on every PR. A failure means the docs and the code disagree; fix whichever is
+with `pnpm test:ut`, so in CI on every PR. A failure means the docs and the code disagree; fix whichever is
 wrong. It cannot check prose or rationale; that part is still on you. Keep its assertions **aggregated**
 (one failing list per rule) rather than `it.each` per document.
 

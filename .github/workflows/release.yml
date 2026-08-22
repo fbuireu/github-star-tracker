@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Validate
-        run: pnpm run validate
+        run: pnpm run verify
       - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}

@@ -35,15 +35,19 @@
   "scripts": {
     "prepare": "husky",
     "build": "tsx esbuild.config.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "test:changed": "vitest run --changed origin/main",
-    "format": "pnpm run lint --write",
-    "lint": "biome check --no-errors-on-unmatched .",
+    "lint": "biome lint --no-errors-on-unmatched",
+    "lint:all": "pnpm lint .",
+    "lint:all:fix": "pnpm lint:all --fix",
+    "format": "biome check --write --no-errors-on-unmatched",
+    "format:all": "pnpm format .",
+    "format:check": "biome check --no-errors-on-unmatched .",
     "typecheck": "tsc --noEmit",
-    "check": "pnpm run lint && pnpm run typecheck && pnpm run test:coverage ",
-    "validate": "pnpm run check && pnpm run build"
+    "test:ut": "vitest run --logHeapUsage",
+    "test:ut:watch": "vitest",
+    "test:ut:coverage": "pnpm test:ut --coverage",
+    "test:ut:changed": "pnpm test:ut --changed origin/main",
+    "test:docs": "pnpm test:ut docs/docs-consistency.test.ts",
+    "verify": "pnpm format:check && pnpm typecheck && pnpm test:ut:coverage && pnpm build"
   },
   "dependencies": {
     "@actions/core": "3.0.1",
