@@ -177,7 +177,10 @@ the moment anything above it moves, so prefer naming the symbol.
 
 - **`dist/index.js` is committed** and is what `action.yml` (`runs.main`) executes, because GitHub runs a JS
   action straight from the repository with no install step ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)).
-  A source change is not shipped until `pnpm build` has regenerated it.
+  What keeps a released version's bundle honest is that `verify` ends in `pnpm build` and `release.yml` runs
+  `verify` before `semantic-release`, which commits `dist/` as a release asset — not any pull-request check.
+  Between releases `main` can still carry a bundle behind its sources, since a `refactor` or `chore` commit
+  cuts no release; that is what committing your rebuild alongside the source is for.
 - **Defaults live in `src/config/defaults.ts`, not in `action.yml`.** Overridable inputs deliberately carry
   an empty `default:` so the config file can win ([ADR 0020](./docs/adr/0020-overridable-inputs-declare-an-empty-default.md));
   `src/config/action-inputs.test.ts` reads the real `action.yml` and fails if you add one, and

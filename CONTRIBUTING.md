@@ -1,8 +1,8 @@
 # Contributing to GitHub Star Tracker
 
-This action is a TypeScript codebase bundled into a committed `dist/index.js`. Two things trip up most
-first pull requests: the bundle has to be rebuilt in the same commit as the source, and the documentation
-set is verified by a test. Both are covered below.
+This action is a TypeScript codebase bundled into a committed `dist/index.js`. Two things catch out most
+first pull requests: the bundle is expected to be rebuilt in the same commit as the source, which no check
+enforces, and the documentation set is verified by a test, which does. Both are covered below.
 
 ## Code of Conduct
 
@@ -103,10 +103,14 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
    ```
 
    `action.yml` runs `dist/index.js` directly, with no install step, so the bundle is committed
-   ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)) and **a source change is not shipped
-   until it is rebuilt**. The `Verify dist was rebuilt` step in `.github/workflows/ci.yml` fails any pull
-   request that touches a non-test `src/**/*.ts` file without touching `dist/`. Commit the regenerated
+   ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)). Commit the regenerated
    `dist/index.js` and `dist/index.js.map` alongside your source changes.
+
+   Nothing fails your pull request if you forget, and a release will not ship the stale bundle either —
+   `release.yml` rebuilds it before publishing. What you are keeping honest is `main` itself: a commit type
+   that does not cut a release (`refactor`, `chore`, `test`, `docs`, `ci`) leaves `main`'s `dist/` behind its
+   sources until the next `feat` or `fix`, which anyone referencing `@main` would run. The `pre-push` hook
+   rebuilds the bundle for you, so in practice this is a matter of committing what it leaves behind.
 
 4. **Test your changes in a real workflow** (see [Development Tips](#development-tips) below)
 

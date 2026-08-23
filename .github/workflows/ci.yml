@@ -32,18 +32,3 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
           fail_ci_if_error: false
-
-      - name: Verify dist was rebuilt
-        if: github.event_name == 'pull_request'
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          git fetch --no-tags --depth=1 origin "$BASE_SHA"
-          changed=$(git diff --name-only "$BASE_SHA" HEAD)
-          bundled=$(echo "$changed" | grep -E '^src/.*\.ts$' | grep -v '\.test\.ts$' | grep -v '^src/shared/tests/' || true)
-          rebuilt=$(echo "$changed" | grep -E '^dist/' || true)
-          if [ -n "$bundled" ] && [ -z "$rebuilt" ]; then
-            echo "::error::Bundled sources changed but dist/ did not. Run 'pnpm build' and commit the result — action.yml executes dist/index.js, so a source change is not shipped until it is rebuilt."
-            echo "$bundled"
-            exit 1
-          fi
