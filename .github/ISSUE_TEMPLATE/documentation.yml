@@ -2,6 +2,7 @@ name: Documentation Request
 description: Suggest improvements or additions to the documentation
 title: '[Docs]: '
 labels: ['documentation', 'triage']
+assignees: ['fbuireu']
 body:
   - type: markdown
     attributes:

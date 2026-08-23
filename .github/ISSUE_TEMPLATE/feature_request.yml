@@ -2,6 +2,7 @@ name: Feature Request
 description: Suggest an idea or enhancement for this project
 title: '[Feature]: '
 labels: ['enhancement', 'triage']
+assignees: ['fbuireu']
 body:
   - type: markdown
     attributes:
