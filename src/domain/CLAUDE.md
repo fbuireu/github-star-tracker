@@ -7,9 +7,9 @@ reports (`@presentation/*`) and does not sequence anything (`@application/tracke
 
 One module per concept, each with a colocated `*.test.ts`: `measurement`, `comparison`, `snapshot`,
 `forecast`, `velocity`, `growth`, `stargazers`, `star-history`, `tracked-set`, `sampling`, `formatting`,
-`notification`, `time`, plus `types.ts` and `constants.ts`.
+`notification`, `time`, plus [`types.ts`](./types.ts) and [`constants.ts`](./constants.ts).
 
-`tracked-set.ts` and `sampling.ts` are the two modules `@infrastructure` calls rather than `@application`.
+[`tracked-set.ts`](./tracked-set.ts) and [`sampling.ts`](./sampling.ts) are the two modules `@infrastructure` calls rather than `@application`.
 Both decide something the network layer would otherwise decide for itself, and both return plain data the
 shell turns into log lines; this layer still cannot log.
 
@@ -18,12 +18,12 @@ archived/fork/min-stars rules and the `onlyRepos` short-circuit over `RepoInfo`,
 `afterOnlyOrgs`, `afterOnlyRepos` and the patterns it could not compile. `sampling.ts` plans a Stargazer
 fetch without performing one. `shouldSample` applies the strict threshold, `reachablePages` clamps to
 GitHub's paging ceiling, `sampledPages` picks the evenly-spread pages Smart Sampling reads, and
-`coveredStars` says how many Stars those pages account for, the figure `star-history.ts` reads to decide
+`coveredStars` says how many Stars those pages account for, the figure [`star-history.ts`](./star-history.ts) reads to decide
 whether to draw a Ramped Tail. All four are arithmetic, so they belong here and not behind an HTTP client.
 
 ## The Run Measurement is the layer's front door
 
-`measureRun` (`src/domain/measurement.ts`) is the only entry point `@application` uses to turn one
+`measureRun` ([`src/domain/measurement.ts`](./measurement.ts)) is the only entry point `@application` uses to turn one
 observation into a Run Measurement, and [ADR 0013](../../docs/adr/0013-a-run-is-measured-in-one-place.md)
 records why. It composes `getBaselineSnapshot`, `compareStars`, `createSnapshot`, `addSnapshot` and
 `shouldNotify` in the one order that is correct, and returns `baselineTimestamp`, `results`, `summary`,
@@ -33,7 +33,7 @@ records why. It composes `getBaselineSnapshot`, `compareStars`, `createSnapshot`
   surface another layer crosses. Do not call them from outside `@domain`: the ordering rules they carry are
   what `measureRun` exists to make unreachable.
 - **`measureRun` never advances the Notification baseline.** It reports `thresholdReached` and stops there.
-  `settleNotification` in `notification.ts` is what turns that plus a `Delivery` into the History to persist,
+  `settleNotification` in [`notification.ts`](./notification.ts) is what turns that plus a `Delivery` into the History to persist,
   and it calls `recordNotification`, which returns a **new** History rather than mutating the one it was
   handed. That split is [ADR 0011](../../docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md).
 - **`settleNotification` is the only place the delivery rules live.** `shouldNotify` is `changed &&
@@ -55,7 +55,7 @@ records why. It composes `getBaselineSnapshot`, `compareStars`, `createSnapshot`
 
 - Every wall-clock read in this layer is the *default* of an injectable `now`: `createSnapshot`,
   `getBaselineSnapshot` and `buildStarHistory`. Never add one that is not.
-- **`toEpochMs` (`src/domain/time.ts`) is the single timestamp entry point** for the whole layer, and it
+- **`toEpochMs` ([`src/domain/time.ts`](./time.ts)) is the single timestamp entry point** for the whole layer, and it
   guarantees a finite number or `null`, never `NaN`. Never reintroduce a raw `Date.parse` here.
 - Internal arithmetic is in **milliseconds**; anything user-facing converts to **days** (`MS_PER_DAY`).
   `MS_PER_YEAR` is a flat `365 * MS_PER_DAY`, with no leap-year correction.
@@ -117,7 +117,7 @@ snapshot everything else is diffed against.
   `0 → total` ramp: 500 Stars became a 4,700 projection. Fitting every repository to the aggregate has the
   opposite failure, reporting a young repository as static while the Chart above it climbed, and that is what
   the hook fixes.
-- **All rate arithmetic lives in `src/domain/growth.ts`**, and both consumers cross it: `calendarDays`
+- **All rate arithmetic lives in [`src/domain/growth.ts`](./growth.ts)**, and both consumers cross it: `calendarDays`
   converts a History to day offsets, `latestRateInterval` finds the newest usable pair, `weightedDailyRate`
   is the Forecast Method that weights recent movement, and `fitTrend` is the least-squares one. The
   **Rate Interval** rule (skip any pair closer than `MIN_RATE_INTERVAL_DAYS`) is written once there, so
@@ -191,10 +191,10 @@ every value is a same-format ISO string.
 - `buildStarHistory` handles a `starred_at` in the future relative to `now` by emitting just two edges,
   silently collapsing the chart to two points.
 - `compareStars` keys the previous snapshot by `fullName` in a `Map`; duplicate entries resolve last-wins
-  without warning. `comparison.test.ts` pins that, so it is behaviour rather than an accident.
+  without warning. [`comparison.test.ts`](./comparison.test.ts) pins that, so it is behaviour rather than an accident.
 - **Nothing here is exported only so a test can reach it.** `getAdaptiveThreshold`, `getLastSnapshot`,
   `linearRegression` and `weightedMovingAverage` used to be, and their cases now run through `shouldNotify`,
   `getBaselineSnapshot` and `growth.ts`'s own interface instead. Adding an export purely to test an internal
   is the smell that says the module is the wrong shape.
-- `STAR_MILESTONES` lives in `src/domain/constants.ts` and is consumed by `velocity.ts` **and**
+- `STAR_MILESTONES` lives in `src/domain/constants.ts` and is consumed by [`velocity.ts`](./velocity.ts) **and**
   `@presentation/*`. `constants.ts` and `types.ts` are coverage-excluded.

@@ -10,12 +10,12 @@ Accepted
 
 Every tracking option can be set two ways: as an action input in the workflow, or as a key in
 `star-tracker.yml` on the code branch. The intended precedence is input first, then config file, then a
-built-in default, and `resolveTabledFields` in `src/config/loader.ts` implements exactly that: it reads
+built-in default, and `resolveTabledFields` in [`src/config/loader.ts`](../../src/config/loader.ts) implements exactly that: it reads
 `core.getInput(name)`, falls back to `fileConfig[key]`, and falls back again to `DEFAULTS[key]`.
 
 That chain rests on one property GitHub Actions does not provide. **`core.getInput` cannot distinguish "the
 user did not set this input" from "the user left it at the default the manifest declares".** Both arrive as
-the same string. So the moment `action.yml` declares a real `default:` for an option, `core.getInput` returns
+the same string. So the moment [`action.yml`](../../action.yml) declares a real `default:` for an option, `core.getInput` returns
 that value on every run, the first link in the chain always matches, and the config file can never win. The
 config file would still parse, still validate, still warn about bad values, and still be silently ignored.
 
@@ -26,7 +26,7 @@ just an option that does not take effect.
 ## Decision
 
 **An input that the config file may override declares `default: ''` in `action.yml`.** The real default
-lives in `DEFAULTS` in `src/config/defaults.ts`, which is the last link of the resolution chain and the only
+lives in `DEFAULTS` in [`src/config/defaults.ts`](../../src/config/defaults.ts), which is the last link of the resolution chain and the only
 place any of these values is written down as a value.
 
 Only the three inputs with **no** config-file counterpart carry a non-empty default, because for them there
@@ -47,10 +47,10 @@ invisible precedence bug with a visible magic value in every user's workflow fil
   for 43 of its 47 inputs; the other four are the three above and `github-token`, which declares no default
   at all because it is required. Anyone reading the manifest for a real value must read the description prose
   or `src/config/defaults.ts`. Two tests are what keep that prose honest:
-  - `src/config/action-inputs.test.ts` asserts that every key of `DEFAULTS` except `sendOnNoChanges` has an
+  - [`src/config/action-inputs.test.ts`](../../src/config/action-inputs.test.ts) asserts that every key of `DEFAULTS` except `sendOnNoChanges` has an
     input whose default is empty, and that the complete set of inputs carrying a non-empty default is exactly
     `config-path`, `send-on-no-changes` and `smtp-port`. Adding a default to an overridable input fails it.
-  - `docs/docs-consistency.test.ts` parses `(default X)` out of each description and compares it against the
+  - [`docs/docs-consistency.test.ts`](../docs-consistency.test.ts) parses `(default X)` out of each description and compares it against the
     matching `DEFAULTS` value, and separately requires every overridable input to say `(overrides config
     file)`. Changing a default in `defaults.ts` without changing the prose fails it.
 - **This is hard to reverse in the direction that matters.** Giving the manifest real defaults is a one-line

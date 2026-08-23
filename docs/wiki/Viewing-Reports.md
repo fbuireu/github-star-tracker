@@ -19,7 +19,7 @@ Navigate to:
 https://github.com/YOUR_USER/YOUR_REPO/tree/star-tracker-data
 ```
 
-GitHub automatically renders `README.md` with all charts visible.
+GitHub automatically renders [`README.md`](https://github.com/fbuireu/github-star-tracker/blob/main/README.md) with all charts visible.
 
 > [!NOTE]
 > That `README.md` is the report, rewritten in full on every run. Editing it by hand is safe but pointless:

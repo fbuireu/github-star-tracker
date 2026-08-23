@@ -1,6 +1,6 @@
 # Contributing to GitHub Star Tracker
 
-This action is a TypeScript codebase bundled into a committed `dist/index.js`. Two things catch out most
+This action is a TypeScript codebase bundled into a committed [`dist/index.js`](./dist/index.js). Two things catch out most
 first pull requests: the bundle is expected to be rebuilt in the same commit as the source, which no check
 enforces, and the documentation set is verified by a test, which does. Both are covered below.
 
@@ -40,7 +40,7 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
 
 - README updates
 - Wiki pages: edit the `docs/wiki/*.md` files **in this repository**. The GitHub Wiki is generated from
-  that folder by `.github/workflows/sync-wiki.yml`, which runs `rsync -a --delete` on every push touching
+  that folder by [`.github/workflows/sync-wiki.yml`](./.github/workflows/sync-wiki.yml), which runs `rsync -a --delete` on every push touching
   `docs/wiki/**`, so an edit made in the wiki UI is overwritten on the next docs commit
 - Per-folder `CLAUDE.md` notes
 - Examples and tutorials
@@ -64,13 +64,13 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
    ```
 
    The Node version lives in three places that must agree: [`.nvmrc`](./.nvmrc), which both CI workflows
-   read through `node-version-file`; `engines.node` in `package.json`; and the *Versions* section of the
-   root [`CLAUDE.md`](./CLAUDE.md), where `docs/docs-consistency.test.ts` asserts it against
+   read through `node-version-file`; `engines.node` in [`package.json`](./package.json); and the *Versions* section of the
+   root [`CLAUDE.md`](./CLAUDE.md), where [`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts) asserts it against
    `package.json`. Bumping Node means editing all three in one commit. The pnpm version lives in
    `packageManager` and in that same `CLAUDE.md` section.
 
    Note that `engines.node` is the *development* pin. The shipped runtime is `node24`, set by
-   `runs.using` in `action.yml` and by the esbuild `target`, so a `node:*` API newer than Node 24 will
+   `runs.using` in [`action.yml`](./action.yml) and by the esbuild `target`, so a `node:*` API newer than Node 24 will
    type-check and bundle here and then fail on a runner.
 
 3. **Create a branch**
@@ -107,7 +107,7 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
    `dist/index.js` and `dist/index.js.map` alongside your source changes.
 
    Nothing fails your pull request if you forget, and a release will not ship the stale bundle either;
-   `release.yml` rebuilds it before publishing. What you are keeping honest is `main` itself: a commit type
+   [`release.yml`](./.github/workflows/release.yml) rebuilds it before publishing. What you are keeping honest is `main` itself: a commit type
    that does not cut a release (`refactor`, `chore`, `test`, `docs`, `ci`) leaves `main`'s `dist/` behind its
    sources until the next `feat` or `fix`, which anyone referencing `@main` would run. The `pre-push` hook
    rebuilds the bundle for you, so in practice this is a matter of committing what it leaves behind.
@@ -148,7 +148,7 @@ pnpm run format
 `pnpm run verify` is the wider gate: it adds type-checking, the coverage run and the bundle on top of `lint`.
 
 **Guidelines:**
-- TypeScript: strict type-checking is on by default in the pinned version, so `tsconfig.json` does not
+- TypeScript: strict type-checking is on by default in the pinned version, so [`tsconfig.json`](./tsconfig.json) does not
   declare it
 - Functional programming style preferred
 - No `any` types (use `unknown` if needed)
@@ -229,7 +229,7 @@ locally before a message can land.
 | `build` | Build system changes | None | `build: update esbuild config` |
 | `revert` | Revert previous commit | Patch | `revert: feat: add feature X` |
 
-A scope in parentheses is optional and unconstrained: `commitlint.config.ts` extends
+A scope in parentheses is optional and unconstrained: [`commitlint.config.ts`](./commitlint.config.ts) extends
 `@commitlint/config-conventional` and declares no `scope-enum`.
 
 ### Breaking Changes
@@ -278,9 +278,9 @@ release only happens if lint, type-check, coverage and the build all pass. seman
 1. Analyzes the commits since the last release
 2. Determines the version bump from the commit types
 3. Updates `package.json`
-4. Generates `CHANGELOG.md` from the commits
+4. Generates [`CHANGELOG.md`](./CHANGELOG.md) from the commits
 5. Creates the git tag and the GitHub release
-6. Commits `package.json`, `pnpm-lock.yaml`, `CHANGELOG.md` and `dist/` back to `main` as
+6. Commits `package.json`, [`pnpm-lock.yaml`](./pnpm-lock.yaml), `CHANGELOG.md` and `dist/` back to `main` as
    `chore(release): <version> [skip ci]`
 
 A final workflow step force-updates the floating `v1` tag to the new release, which is the tag consumers
@@ -368,7 +368,7 @@ github-star-tracker/
 `src/domain/` is the largest layer and holds one module per concept: run measurement, comparison,
 snapshots, forecasting, velocity, growth, stargazer diffing, star-history reconstruction, tracked-set
 resolution, sampling, notification settlement, formatting and time parsing, plus `types.ts` and
-`constants.ts`. [`src/domain/CLAUDE.md`](./src/domain/CLAUDE.md) is the guide.
+[`constants.ts`](./src/domain/constants.ts). [`src/domain/CLAUDE.md`](./src/domain/CLAUDE.md) is the guide.
 
 > [!TIP]
 > **Path aliases:** cross-layer imports use `@application/*`, `@assets/*`, `@config/*`, `@domain/*`,
@@ -386,9 +386,9 @@ them leaves them lying:
 | Document | Answers | Update it when |
 | --- | --- | --- |
 | `CLAUDE.md` (root) | *How do I work in this repo?* Commands, aliases, conventions, the maintenance contract | You change a script, an alias, a convention, or a repo-wide invariant |
-| `CONTEXT.md` (root) | *What does this word mean?* A domain glossary, and nothing else: no file names, no libraries, no implementation detail | A domain term changes meaning, or a new one appears |
+| [`CONTEXT.md`](./CONTEXT.md) (root) | *What does this word mean?* A domain glossary, and nothing else: no file names, no libraries, no implementation detail | A domain term changes meaning, or a new one appears |
 | `src/<layer>/CLAUDE.md` | *What does this layer guarantee?* Invariants and gotchas, one guide per layer | You change an invariant, or a rule the guide states |
-| `ARCHITECTURE.md` | *How does it fit together?* Layer map, end-to-end run, data branch, build and release | You change the run order, the layering, or the pipeline |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | *How does it fit together?* Layer map, end-to-end run, data branch, build and release | You change the run order, the layering, or the pipeline |
 | `docs/adr/` | *Why is it like this?* One decision per file | You make a decision that is hard to reverse, surprising without context, **and** the result of a real trade-off |
 
 The root [`CLAUDE.md`](./CLAUDE.md) has the full table of what to update for a given change.
@@ -403,19 +403,19 @@ whole documentation set and fails on, among other things:
 - A `file.ts:123` citation anywhere; name the symbol instead, because line numbers rot silently
 - An `action.yml` input or output missing from a surface that lists them, or listed out of alphabetical
   order
-- An overridable input whose documented default is not the one `src/config/defaults.ts` declares, or whose
+- An overridable input whose documented default is not the one [`src/config/defaults.ts`](./src/config/defaults.ts) declares, or whose
   documentation does not say the config file can override it
 - A `pnpm` script named in the root `CLAUDE.md` that `package.json` does not declare
 - An ADR that breaks the template shape, is numbered out of sequence, is missing from the
   `ARCHITECTURE.md` index, or has no contextual link from any document other than that index
 - A translation-key table in `docs/wiki/Internationalization-(i18n).md` that does not match
-  `src/i18n/en.json` section for section and key for key
+  [`src/i18n/en.json`](./src/i18n/en.json) section for section and key for key
 - A documented `stars-data.json` example whose `version` is not the one the writer stamps
 - A function or arrow taking two or more positional parameters
-- A sample chart in `examples/README.md` with no corresponding SVG
+- A sample chart in [`examples/README.md`](./examples/README.md) with no corresponding SVG
 
 "The whole documentation set" is meant literally: the root guides, everything under `docs/` and `.github/`,
-every layer `CLAUDE.md`, `examples/README.md`, and this file along with `SECURITY.md` and
+every layer `CLAUDE.md`, `examples/README.md`, and this file along with [`SECURITY.md`](./SECURITY.md) and
 `CODE_OF_CONDUCT.md`. If you edit any of them, the test reads what you wrote.
 
 A failure means the docs and the code disagree, so fix whichever is wrong. The test cannot check prose or

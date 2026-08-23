@@ -167,7 +167,7 @@ The chrome is styled by CSS carried inside the SVG, which a `prefers-color-schem
 
 Set [`chart-theme`](Configuration#chart-theme) to `light` or `dark` explicitly. That drops the media query, picks the palette before rendering and recolours the series along with the chrome. What is not available is a single file that recolours its data per reader.
 
-The badge (`stars-badge.svg`) has no theming at all, in either direction: it is always the light palette. Its fixed dark label with an accent-coloured value is legible on both backgrounds, which is why it was left alone.
+The badge ([`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/examples/stars-badge.svg)) has no theming at all, in either direction: it is always the light palette. Its fixed dark label with an accent-coloured value is legible on both backgrounds, which is why it was left alone.
 
 How the two palettes differ, and where the media query reaches at all, is in
 **[Star Trend Charts](Star-Trend-Charts#dark--light-mode)**.

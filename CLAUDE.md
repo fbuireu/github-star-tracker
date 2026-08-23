@@ -7,8 +7,8 @@ the big picture: layer map, end-to-end run, the data branch, build and release.
 
 ## What this is
 
-A JavaScript action (TypeScript sources bundled by esbuild into `dist/index.js`, `runs.using: node24` per
-`action.yml`). On each run it lists the token owner's repositories, compares their star counts against a
+A JavaScript action (TypeScript sources bundled by esbuild into [`dist/index.js`](./dist/index.js), `runs.using: node24` per
+[`action.yml`](./action.yml)). On each run it lists the token owner's repositories, compares their star counts against a
 snapshot stored on a dedicated data branch, and commits a markdown report, JSON/CSV data, a badge and
 animated SVG charts back to that branch. It exposes eleven action outputs and can send an HTML digest over
 SMTP. There is exactly one use case: `trackStars()`.
@@ -26,15 +26,15 @@ SMTP. There is exactly one use case: `trackStars()`.
 ## Versions (pinned by hand, and asserted against `package.json` by the docs test)
 
 - Node **26.2.0** (`engines.node`)
-- Node **26.2.0** again in `.nvmrc`, which `ci.yml` and `release.yml` install from via `node-version-file`
+- Node **26.2.0** again in `.nvmrc`, which [`ci.yml`](./.github/workflows/ci.yml) and [`release.yml`](./.github/workflows/release.yml) install from via `node-version-file`
 - pnpm **11.21.0** (`packageManager`): always use pnpm, never npm/yarn
 
 All three are deliberate pins rather than dependency ranges, so bumping one means editing this section in the
-same commit. Only `engines.node` and `packageManager` are asserted against `package.json`; nothing compares
+same commit. Only `engines.node` and `packageManager` are asserted against [`package.json`](./package.json); nothing compares
 `.nvmrc` with either, so move it by hand in the same edit.
 
 **`engines.node` is the development pin; the shipped runtime is `node24`** (`action.yml` `runs.using`, and
-`esbuild.config.ts` `target`). Those are different numbers on purpose. The gap is a trap: `@types/node` tracks
+[`esbuild.config.ts`](./esbuild.config.ts) `target`). Those are different numbers on purpose. The gap is a trap: `@types/node` tracks
 the *development* version, and esbuild's `target` lowers syntax without shimming runtime APIs, so a `node:*`
 API that landed after 24.x type-checks, bundles, passes `pnpm verify` and then throws
 `TypeError: … is not a function` on a GitHub runner. It fails in a user's workflow rather than in CI, because
@@ -84,15 +84,15 @@ not a layer at all, `assets/`, holding the brand files the README embeds. `index
 | `shared/` | `@shared/*` | Cross-cutting code owning no layer (today: test factories) |
 
 Tests are colocated next to the file they cover, as `src/**/*.test.ts`. Two test files cover no module:
-`src/config/action-inputs.test.ts`, which asserts against `action.yml` rather than against a module, and
-`docs/docs-consistency.test.ts`, the docs guard described below, which lives with the documents it checks
+[`src/config/action-inputs.test.ts`](./src/config/action-inputs.test.ts), which asserts against `action.yml` rather than against a module, and
+[`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts), the docs guard described below, which lives with the documents it checks
 instead of under `src/`.
 
-Aliases are declared **once**, in `tsconfig.json` `compilerOptions.paths`. `esbuild.config.ts` derives its
-`alias` map from that object at build time and `vitest.config.ts` sets `resolve.tsconfigPaths: true`, so a
+Aliases are declared **once**, in [`tsconfig.json`](./tsconfig.json) `compilerOptions.paths`. `esbuild.config.ts` derives its
+`alias` map from that object at build time and [`vitest.config.ts`](./vitest.config.ts) sets `resolve.tsconfigPaths: true`, so a
 new alias needs exactly one edit, in `tsconfig.json` rather than in the build or test config. `@i18n` is a
 **file** alias (`"@i18n": ["./src/i18n/index.ts"]`), not a glob: `@i18n/types` does not resolve, so
-re-export from `src/i18n/index.ts` instead.
+re-export from [`src/i18n/index.ts`](./src/i18n/index.ts) instead.
 
 **Nested guides.** Read the one for the layer you are touching; they carry the detail this file omits.
 
@@ -139,15 +139,15 @@ promise, not a fix.
 
 `docs/docs-consistency.test.ts` makes the mechanical half of that contract executable. It reads every
 document and asserts the checkable claims against the repo: no dead markdown links, no citation of a source
-or test file that does not exist, no sample chart in `examples/README.md` without its SVG, every `action.yml`
+or test file that does not exist, no sample chart in [`examples/README.md`](./examples/README.md) without its SVG, every `action.yml`
 input and output named on the surfaces that list them **and listed alphabetically** there, the translation-key table in
-`docs/wiki/Internationalization-(i18n).md` matching `src/i18n/en.json` section for section and key for key,
+`docs/wiki/Internationalization-(i18n).md` matching [`src/i18n/en.json`](./src/i18n/en.json) section for section and key for key,
 every documented `stars-data.json` example showing the `version` the writer actually stamps,
 the Node and pnpm pins above matching `package.json`, every overridable `action.yml` input stating its real
 default in prose and saying the config file can override it,
 and the ADR set held to its template (sequential
 numbering, `NNNN-kebab-title.md` filenames, the `# N. Title` / date / status / *Context* / *Decision* /
-*Consequences* shape, a row in the `ARCHITECTURE.md` index, and, the one that rots quietly, a link from
+*Consequences* shape, a row in the [`ARCHITECTURE.md`](./ARCHITECTURE.md) index, and, the one that rots quietly, a link from
 some document **other** than that index, since an ADR only the index points at will not be read). It runs
 with `pnpm test:ut`, so in CI on every PR. A failure means the docs and the code disagree; fix whichever is
 wrong. It cannot check prose or rationale; that part is still on you. Keep its assertions **aggregated**
@@ -158,7 +158,7 @@ wrong. It cannot check prose or rationale; that part is still on you. Keep its a
 | What a domain word means, or introduce a new one | [`CONTEXT.md`](./CONTEXT.md), the glossary: vocabulary only |
 | A behaviour a doc states as an invariant or a gotcha | that bullet, or delete it if it stopped being true |
 | A layer's rules, or the files a concept is made of | that layer's nested `CLAUDE.md` (table above) |
-| A default, an input name, or an output | `action.yml`, `docs/wiki/Configuration.md`, `docs/wiki/API-Reference.md`, the README table, `docs/wiki/Viewing-Reports.md`, and the *Outputs* section of `src/application/CLAUDE.md`, always **alphabetically** and never appended at the end (`github-token` stays pinned first) |
+| A default, an input name, or an output | `action.yml`, [`docs/wiki/Configuration.md`](./docs/wiki/Configuration.md), [`docs/wiki/API-Reference.md`](./docs/wiki/API-Reference.md), the README table, [`docs/wiki/Viewing-Reports.md`](./docs/wiki/Viewing-Reports.md), and the *Outputs* section of [`src/application/CLAUDE.md`](./src/application/CLAUDE.md), always **alphabetically** and never appended at the end (`github-token` stays pinned first) |
 | A package script, a path alias, or a layer boundary | the *Commands* / *Structure & aliases* sections here |
 | The run order, the layer map, or the build pipeline | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
 | A decision an ADR records | that ADR: amend it, or supersede it with a new one and say so in both `## Status` blocks |
@@ -181,17 +181,17 @@ the moment anything above it moves, so prefer naming the symbol.
   `verify` before `semantic-release`, which commits `dist/` as a release asset, not any pull-request check.
   Between releases `main` can still carry a bundle behind its sources, since a `refactor` or `chore` commit
   cuts no release; that is what committing your rebuild alongside the source is for.
-- **Defaults live in `src/config/defaults.ts`, not in `action.yml`.** Overridable inputs deliberately carry
+- **Defaults live in [`src/config/defaults.ts`](./src/config/defaults.ts), not in `action.yml`.** Overridable inputs deliberately carry
   an empty `default:` so the config file can win ([ADR 0020](./docs/adr/0020-overridable-inputs-declare-an-empty-default.md));
   `src/config/action-inputs.test.ts` reads the real `action.yml` and fails if you add one, and
   [`src/config/`](./src/config/CLAUDE.md) names the handful of inputs that do carry a default, and why.
-- **Coverage is global at 85%** for lines/functions/branches/statements. Excluded: `src/index.ts`,
+- **Coverage is global at 85%** for lines/functions/branches/statements. Excluded: [`src/index.ts`](./src/index.ts),
   `src/**/{types,defaults,constants}.ts`, `src/**/*.test.ts`, `src/shared/tests/**`. Changing a constant
   therefore produces no coverage signal, but many tests assert the resulting literals, so expect failures far
   from the edit.
 - **One test file can cover two modules.** Exactly one such pair is sanctioned and
   [`src/infrastructure/`](./src/infrastructure/CLAUDE.md) names it; `src/config/action-inputs.test.ts` covers
-  the manifest rather than a module. `client.ts` is the sole module with no colocated test, so anything else
+  the manifest rather than a module. [`client.ts`](./src/infrastructure/github/client.ts) is the sole module with no colocated test, so anything else
   missing one is drift, not a convention.
 - **Biome allows no suppressions.** Fix the root cause instead of `biome-ignore`. 120-col, tabs, LF,
   double quotes: Biome's defaults bar the line width, and the same config every sibling repo runs;

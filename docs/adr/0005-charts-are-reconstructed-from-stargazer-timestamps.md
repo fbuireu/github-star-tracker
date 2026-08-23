@@ -14,7 +14,7 @@ Stored History only begins on the day a user installs the action, so charts buil
 
 Charts are built from a Reconstructed History derived from when each Stargazer actually starred, which yields the repository's full curve on the very first Run. When that source yields too little to work with, charts fall back to the Stored History.
 
-`buildStarHistory` in `src/domain/star-history.ts` does the reconstruction: it buckets every parseable `starredAt` into a fixed number of edges and accumulates. `resolveChartHistories` in `src/presentation/charts.ts` owns the fallback, and it is one rule applied twice: a reconstructed History with fewer than `MIN_SNAPSHOTS_FOR_CHART` snapshots is discarded in favour of the Stored History for the aggregate chart, and yields `null` for a per-repository one.
+`buildStarHistory` in [`src/domain/star-history.ts`](../../src/domain/star-history.ts) does the reconstruction: it buckets every parseable `starredAt` into a fixed number of edges and accumulates. `resolveChartHistories` in [`src/presentation/charts.ts`](../../src/presentation/charts.ts) owns the fallback, and it is one rule applied twice: a reconstructed History with fewer than `MIN_SNAPSHOTS_FOR_CHART` snapshots is discarded in favour of the Stored History for the aggregate chart, and yields `null` for a per-repository one.
 
 ## Consequences
 

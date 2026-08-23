@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-The tracker enumerates every Repository the token can see, which by default includes ones it does not own: `DEFAULTS.visibility` is `all`, and `VISIBILITY_PARAMS.all` in `src/infrastructure/github/client.ts` sends `visibility: 'all'` with no `affiliation`, so GitHub returns repositories the account collaborates on and organization repositories alongside its own. Only `visibility: owned` narrows that to `affiliation: 'owner'`.
+The tracker enumerates every Repository the token can see, which by default includes ones it does not own: `DEFAULTS.visibility` is `all`, and `VISIBILITY_PARAMS.all` in [`src/infrastructure/github/client.ts`](../../src/infrastructure/github/client.ts) sends `visibility: 'all'` with no `affiliation`, so GitHub returns repositories the account collaborates on and organization repositories alongside its own. Only `visibility: owned` narrows that to `affiliation: 'owner'`.
 
 The `GITHUB_TOKEN` that GitHub Actions injects automatically is scoped to the triggering repository alone and cannot list anything beyond it. There is no token GitHub issues automatically that can do the job, so the setup friction is not something a better default could remove; the only way around it would be to silently track the triggering repository and call that the product.
 

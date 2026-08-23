@@ -21,7 +21,7 @@ Smart Sampling produced the identical defect by a different route. A sample is n
 **A Repository whose current Stargazer list cannot be trusted keeps whatever logins were last stored for it, and is skipped by the diff rather than compared against a list known to be incomplete.**
 
 "Cannot be trusted" is carried on a `RepoStargazers` as two flags, and `diffStargazers` and
-`buildStargazerMap` in `src/domain/stargazers.ts` both skip a Repository carrying either. `sampled` marks a
+`buildStargazerMap` in [`src/domain/stargazers.ts`](../../src/domain/stargazers.ts) both skip a Repository carrying either. `sampled` marks a
 Repository read by Smart Sampling ([ADR 0008](./0008-sampled-repositories-are-excluded-from-stargazer-diffing.md)).
 `incomplete` marks the three ways a full read can fail to be one: the fetch threw, the fetch was truncated at
 the reachable ceiling, or it returned no Stargazers for a Repository that has Stars. One rule, not four:

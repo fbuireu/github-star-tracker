@@ -37,7 +37,7 @@ The two readings are not arbitrary, because the two figures need different thing
   timestamp is unreadable would report a stars-per-day figure derived from a week that never happened. There
   is no honest number to return, so it returns none.
 
-The alternative considered was giving `growth.ts` one policy and a parameter to select it. That moves the
+The alternative considered was giving [`growth.ts`](../../src/domain/growth.ts) one policy and a parameter to select it. That moves the
 choice into a signature but does not remove it, and it invites a caller to pass the wrong one, which is the
 same class of mistake [ADR 0013](./0013-a-run-is-measured-in-one-place.md) removed by making the wrong order
 unreachable rather than documented.
@@ -66,7 +66,7 @@ does **not** own is "how a History becomes a day axis", because that is not one 
 - **Do not make `calendarDays` drop points instead.** A Forecast fit over a series whose spacing silently
   changed is worse than one over a stated approximation, and the `< 3 snapshots` guard is the only thing
   standing between the fit and a degenerate one.
-- `growth.test.ts` and `velocity.test.ts` both exercise the `MIN_RATE_INTERVAL_DAYS` skip, which is
+- [`growth.test.ts`](../../src/domain/growth.test.ts) and [`velocity.test.ts`](../../src/domain/velocity.test.ts) both exercise the `MIN_RATE_INTERVAL_DAYS` skip, which is
   redundant but harmless: one asserts the shared rule, the other asserts that Velocity crosses it.
 - The rule was previously prose in [`src/domain/CLAUDE.md`](../../src/domain/CLAUDE.md) marked "deliberately
   different" with no reason attached. The prose stays; this ADR is the reason it pointed at nothing.
