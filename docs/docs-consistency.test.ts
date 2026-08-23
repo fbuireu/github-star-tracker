@@ -741,6 +741,10 @@ describe("the documented data-branch format matches the writer", () => {
 });
 
 describe("the source follows the named-parameter convention", () => {
+	it("is the rule the root guide states", () => {
+		expect(read("CLAUDE.md")).toContain("One argument is positional; two or more are one object");
+	});
+
 	it("declares no function or arrow taking two or more positional parameters", () => {
 		const sources = walk({ dir: "src", keep: (filename) => filename.endsWith(".ts") });
 		const declaration = /(?:function\s+\w+|=)\s*\(\s*\w+\s*:\s*[^,()]+,\s*\w+\s*:/g;
