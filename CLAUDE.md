@@ -51,7 +51,7 @@ pnpm lint:all         # lint .
 pnpm lint:all:fix     # lint:all --fix
 pnpm format           # biome check --write, the root command lint-staged appends files to
 pnpm format:all       # format .
-pnpm format:check     # biome check, no writes — what verify runs
+pnpm format:check     # biome check, no writes; what verify runs
 pnpm typecheck        # tsc --noEmit
 pnpm test:ut          # vitest run
 pnpm test:ut:watch    # vitest, watch mode
@@ -116,7 +116,7 @@ re-export from [`src/i18n/index.ts`](./src/i18n/index.ts) instead.
   `coveredStars(totalStars)`, `describeFetchError(error)`; `makeRepoInfo({ name, stars }): MakeRepoInfoParams`,
   `repoStargazers({ fullName, dates, sampled }): RepoStargazersParams`. The interface is named after the
   function, not after the concept, so a reader landing on the type knows what takes it. A comparator handed
-  to `sort` is the exception — it is called back positionally, so `alphabetically` keeps its two arguments.
+  to `sort` is the exception: it is called back positionally, so `alphabetically` keeps its two arguments.
   `docs/docs-consistency.test.ts` asserts the rule over the whole of `src`, with no exemption: the fixture
   factories in `src/shared/tests` and the co-located test helpers used to be excused, which is exactly where
   the rule had drifted, and a fixture is the code a reader copies from.
@@ -178,7 +178,7 @@ the moment anything above it moves, so prefer naming the symbol.
 - **`dist/index.js` is committed** and is what `action.yml` (`runs.main`) executes, because GitHub runs a JS
   action straight from the repository with no install step ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)).
   What keeps a released version's bundle honest is that `verify` ends in `pnpm build` and `release.yml` runs
-  `verify` before `semantic-release`, which commits `dist/` as a release asset — not any pull-request check.
+  `verify` before `semantic-release`, which commits `dist/` as a release asset, not any pull-request check.
   Between releases `main` can still carry a bundle behind its sources, since a `refactor` or `chore` commit
   cuts no release; that is what committing your rebuild alongside the source is for.
 - **Defaults live in [`src/config/defaults.ts`](./src/config/defaults.ts), not in `action.yml`.** Overridable inputs deliberately carry
@@ -194,7 +194,7 @@ the moment anything above it moves, so prefer naming the symbol.
   the manifest rather than a module. [`client.ts`](./src/infrastructure/github/client.ts) is the sole module with no colocated test, so anything else
   missing one is drift, not a convention.
 - **Biome allows no suppressions.** Fix the root cause instead of `biome-ignore`. 120-col, tabs, LF,
-  double quotes — Biome's defaults bar the line width, and the same config every sibling repo runs;
+  double quotes: Biome's defaults bar the line width, and the same config every sibling repo runs;
   `.gitattributes` pins `* text=auto eol=lf`. `noConsole` is an error with no allowlist: no `console`
   at any level, report through `@actions/core`.
 

@@ -50,7 +50,7 @@ Every arrow is an import a layer is allowed to make; anything not drawn is forbi
 functional core**: no I/O, no network, no filesystem, and no clock beyond an injectable `now`. **Red is the
 imperative shell**, and each red layer owns a different side effect: `@config` reads the action inputs and one
 YAML file, `@infrastructure` owns everything outbound (REST, `git`, the filesystem, SMTP), `@application`
-writes the Action log and the outputs, and [`src/index.ts`](./src/index.ts) starts the run. `@config` reading `node:fs` is the
+writes the Action log and the outputs, and `src/index.ts` starts the run. `@config` reading `node:fs` is the
 detail most easily missed, and the rule it illustrates is stated once in
 [CLAUDE.md](./CLAUDE.md#conventions): `@infrastructure` is the only layer that reaches the network, not the
 only one that performs I/O.
@@ -75,7 +75,7 @@ The decision to layer the tree this way is [ADR 0004](./docs/adr/0004-layered-so
 
 ## 2. A run, end to end
 
-The numbers below are this table's own, in the order `trackStars` executes the calls. [`src/application/tracker.ts`](./src/application/tracker.ts)
+The numbers below are this table's own, in the order `trackStars` executes the calls. `src/application/tracker.ts`
 carries no comments, so there are no step markers in the source to match them against.
 
 | # | Call | Layer | Notes |
@@ -100,7 +100,7 @@ carries no comments, so there are no step markers in the source to match them ag
 | 18 | `settleNotification({ changed, thresholdReached, delivery, history, totalStars })` | domain/notification | Returns `shouldNotify`, `notificationSent` and `historyToPersist` as one outcome; calls `recordNotification` only when the baseline may advance |
 | 19 | `writeHtmlReport({ htmlReport })` | infrastructure/persistence | Writes to `RUNNER_TEMP`, falling back to the working directory, so the file is off the Data Branch and outlives the run. Deliberately **before** `publish`: a failing write must not end a run that has already committed and pushed |
 | 20 | `branch.publish({ history, stargazerMap, report, badge, csv, charts, commitMessage })` | infrastructure/persistence | Writes every data-branch artefact, prunes the `charts/*.svg` this run did not produce, then commits and pushes, unless `readOnly`, where the write happens and the push does not |
-| 21 | `setOutputs(...)` | application | Eleven outputs, exactly matching the `outputs:` block of [`action.yml`](./action.yml) |
+| 21 | `setOutputs(...)` | application | Eleven outputs, exactly matching the `outputs:` block of `action.yml` |
 
 Failure policy: everything is wrapped in one `try/catch` that ends in `core.setFailed('Star Tracker failed: <msg>')` plus `core.debug(stack)`. Email is the only inner failure that is deliberately non-fatal.
 
@@ -130,14 +130,14 @@ State has to survive between runs of a stateless Action. Artifacts expire and ar
 
 | Artefact | Rendered by | Written / emitted by |
 | --- | --- | --- |
-| [`README.md`](./README.md) (markdown report) | `@presentation/markdown` `generateMarkdownReport` | `writeArtefact` (persistence) |
+| `README.md` (markdown report) | `@presentation/markdown` `generateMarkdownReport` | `writeArtefact` (persistence) |
 | HTML report | `@presentation/html` `generateHtmlReport` | `writeHtmlReport` -> `$RUNNER_TEMP \|\| cwd`, **not** committed |
 | `stars-data.csv` | `@presentation/csv` `generateCsvReport` | `writeArtefact` |
 | `stars-data.json` | `@domain/snapshot` `addSnapshot` | `writeHistory` |
 | `stargazers.json` | `@domain/stargazers` `buildStargazerMap` | `writeStargazers` |
-| [`stars-badge.svg`](./examples/stars-badge.svg) | `@presentation/badge` `generateBadge` | `writeArtefact` |
+| `stars-badge.svg` | `@presentation/badge` `generateBadge` | `writeArtefact` |
 | `charts/*.svg` | `@presentation/charts` -> `@presentation/svg-chart` | `writeChart` |
-| Email chart images | `@presentation/chart` (quickchart.io URLs, no SVG) | embedded by [`html.ts`](./src/presentation/html.ts) |
+| Email chart images | `@presentation/chart` (quickchart.io URLs, no SVG) | embedded by `html.ts` |
 | Email | `@presentation/html` body | `@infrastructure/notification/email` `sendEmail` |
 | Action outputs (11) | - | `setOutputs` in `tracker.ts` |
 
@@ -147,27 +147,27 @@ The eleven action outputs, alphabetically as `action.yml` declares them: `lost-s
 
 The scripts, Biome settings and git hooks are listed once in [CLAUDE.md](./CLAUDE.md#commands); this section covers what happens to the bundle and the release, which lives nowhere else.
 
-- **Bundling.** [`esbuild.config.ts`](./esbuild.config.ts) (run via `tsx`) bundles `src/index.ts` into [`dist/index.js`](./dist/index.js), `platform: node`, `target: node24`, `format: cjs`, `sourcemap: true`, with the alias map derived from [`tsconfig.json`](./tsconfig.json). `dist/` is **committed** because GitHub runs a JS action straight from the repository at the referenced ref: there is no install step, so the bundle must be in the tree ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)).
-- **Node version.** Three pins move together and only two of them are asserted: `engines.node` and `packageManager` in [`package.json`](./package.json), plus `.nvmrc`, which is what [`ci.yml`](./.github/workflows/ci.yml) and [`release.yml`](./.github/workflows/release.yml) actually install through `node-version-file`. Nothing checks `.nvmrc`, so move it by hand.
-- **Release.** [`.releaserc.json`](./.releaserc.json): semantic-release on `main` with commit-analyzer, release-notes-generator, changelog, npm (`npmPublish: false`), git (commits `package.json`, [`pnpm-lock.yaml`](./pnpm-lock.yaml), [`CHANGELOG.md`](./CHANGELOG.md) and `dist/`) and github plugins. `release.yml` gates it behind `pnpm verify`.
+- **Bundling.** `esbuild.config.ts` (run via `tsx`) bundles `src/index.ts` into `dist/index.js`, `platform: node`, `target: node24`, `format: cjs`, `sourcemap: true`, with the alias map derived from `tsconfig.json`. `dist/` is **committed** because GitHub runs a JS action straight from the repository at the referenced ref: there is no install step, so the bundle must be in the tree ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)).
+- **Node version.** Three pins move together and only two of them are asserted: `engines.node` and `packageManager` in `package.json`, plus `.nvmrc`, which is what `ci.yml` and `release.yml` actually install through `node-version-file`. Nothing checks `.nvmrc`, so move it by hand.
+- **Release.** `.releaserc.json`: semantic-release on `main` with commit-analyzer, release-notes-generator, changelog, npm (`npmPublish: false`), git (commits `package.json`, `pnpm-lock.yaml`, `CHANGELOG.md` and `dist/`) and github plugins. `release.yml` gates it behind `pnpm verify`.
 
 `.github/workflows/`:
 
 | Workflow | Purpose |
 | --- | --- |
-| `ci.yml` | On push/PR to `main`: install, `pnpm verify`, Codecov upload (also when `check` fails, so threshold failures still report), build, then a staleness check that fails a PR touching bundled sources without touching `dist/`. `src/shared/tests/` is excluded alongside `*.test.ts`: nothing there is reachable from `src/index.ts`, so editing a fixture cannot change the bundle and must not demand a rebuild. It compares *which files changed*, not bytes, because `dist/index.js` is not reproducible across platforms: esbuild embeds `node_modules/.pnpm/...` paths and pnpm hashes those names on Windows but not on Linux |
+| `ci.yml` | On push/PR to `main`: install, `pnpm verify` (which ends in `pnpm build`), then the Codecov upload, which runs even when `check` fails so threshold failures still report. It used to close with a staleness check that failed any pull request touching bundled sources without touching `dist/`. That check is gone: `release.yml` runs `verify` and so rebuilds the bundle immediately before `semantic-release` commits it, meaning a published version can never carry a bundle built from other sources and the check never stood between a stale `dist/` and a user ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)) |
 | `release.yml` | On push to `main`: `pnpm verify` then `semantic-release`, plus a major-version tag update |
-| [`zizmor.yml`](./.github/workflows/zizmor.yml) | zizmor static analysis of the workflow files themselves |
-| [`dependency-review.yml`](./.github/workflows/dependency-review.yml) | Fails a PR that introduces a dependency with a known vulnerability |
-| [`commit-message.yml`](./.github/workflows/commit-message.yml) | Runs commitlint on the **pull request title**. `main` takes squash merges and the repository is set to `PR_TITLE`, so that title — not the branch's commits — is the message that lands and the one semantic-release reads. The `commit-msg` hook validates commits the squash then discards, so this is the only guard on the string that ships |
-| [`dependabot-auto-merge.yml`](./.github/workflows/dependabot-auto-merge.yml) | Auto-approves and squash-merges Dependabot patch/minor/dev/indirect updates |
-| [`renovate-auto-approve.yml`](./.github/workflows/renovate-auto-approve.yml) | Auto-approves Renovate PRs labelled patch/minor/pin/lock-maintenance |
-| [`sync-wiki.yml`](./.github/workflows/sync-wiki.yml) | Publishes `docs/wiki/` to the repository's GitHub Wiki with `rsync --delete`, so the wiki is generated and direct edits to it are overwritten |
+| `zizmor.yml` | zizmor static analysis of the workflow files themselves |
+| `dependency-review.yml` | Fails a PR that introduces a dependency with a known vulnerability |
+| `commit-message.yml` | Runs commitlint on the **pull request title**. `main` takes squash merges and the repository is set to `PR_TITLE`, so that title, not the branch's commits, is the message that lands and the one semantic-release reads. The `commit-msg` hook validates commits the squash then discards, so this is the only guard on the string that ships |
+| `dependabot-auto-merge.yml` | Auto-approves and squash-merges Dependabot patch/minor/dev/indirect updates |
+| `renovate-auto-approve.yml` | Auto-approves Renovate PRs labelled patch/minor/pin/lock-maintenance |
+| `sync-wiki.yml` | Publishes `docs/wiki/` to the repository's GitHub Wiki with `rsync --delete`, so the wiki is generated and direct edits to it are overwritten |
 
 ## 6. Where things live
 
 Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain glossary: what the words
-**mean**. The [`CLAUDE.md`](./CLAUDE.md) files, one at the root and one per layer, are **structure**.
+**mean**. The `CLAUDE.md` files, one at the root and one per layer, are **structure**.
 [docs/adr/](./docs/adr/) is **why**:
 
 | ADR | Decision |
@@ -209,10 +209,10 @@ One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/
 
 | Task | Files to touch |
 | --- | --- |
-| **Add an action input** | `action.yml` (declare it, `default: ''` so the config file can win, and state the real default in the description prose, see [ADR 0020](./docs/adr/0020-overridable-inputs-declare-an-empty-default.md)); [`src/config/types.ts`](./src/config/types.ts) (`Config` field); [`src/config/defaults.ts`](./src/config/defaults.ts) (`DEFAULTS` entry, which also makes the snake_case/kebab-case config-file key work automatically); [`src/config/loader.ts`](./src/config/loader.ts) (**one row in `FIELD_SOURCES`**, naming the input parser and the file parser; the action input name is derived from the key); consume it in the relevant layer; update [`src/config/action-inputs.test.ts`](./src/config/action-inputs.test.ts) and `README.md`/`docs/wiki`. |
+| **Add an action input** | `action.yml` (declare it, `default: ''` so the config file can win, and state the real default in the description prose, see [ADR 0020](./docs/adr/0020-overridable-inputs-declare-an-empty-default.md)); `src/config/types.ts` (`Config` field); `src/config/defaults.ts` (`DEFAULTS` entry, which also makes the snake_case/kebab-case config-file key work automatically); `src/config/loader.ts` (**one row in `FIELD_SOURCES`**, naming the input parser and the file parser; the action input name is derived from the key); consume it in the relevant layer; update `src/config/action-inputs.test.ts` and `README.md`/`docs/wiki`. |
 | **Add a locale** | Add the JSON bundle under `src/i18n/`; add it to `LOCALE_MAP` and to the `TRANSLATIONS: Record<Locale, Translations>` map (a missing key is a type error, an extra key is not). `LOCALES` is derived from `LOCALE_MAP` with `Object.keys`, so it needs no edit. Extend the `locale` description in `action.yml` and the locale tables in the wiki. |
-| **Add a report format** | New pure renderer in `src/presentation/` (data in, string out, no I/O) reading `buildReportModel` rather than re-deriving sections, plus a colocated test; one field on `RenderedRun` and one line in `renderRun` ([`run.ts`](./src/presentation/run.ts)); an `Artefact` entry and filename in `@infrastructure/persistence/storage`, plus a field on `PublishedArtefacts`; add an output to `action.yml` and `setOutputs` if it should be exposed. |
-| **Add a chart option** | Input plumbing as above; thread it through the `style` object in [`src/presentation/charts.ts`](./src/presentation/charts.ts). If it changes **what** is plotted it belongs on the matching `ChartRequest` variant or on `ChartSpec` in [`src/presentation/chart-spec.ts`](./src/presentation/chart-spec.ts) and both adapters read it; if it only changes **how**, implement it in [`src/presentation/svg-chart.ts`](./src/presentation/svg-chart.ts) (all SVG primitives live behind the private `renderSvg`) and mirror it in [`src/presentation/chart.ts`](./src/presentation/chart.ts) if email charts should honour it ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)); add a sample SVG under `examples/`. |
+| **Add a report format** | New pure renderer in `src/presentation/` (data in, string out, no I/O) reading `buildReportModel` rather than re-deriving sections, plus a colocated test; one field on `RenderedRun` and one line in `renderRun` (`run.ts`); an `Artefact` entry and filename in `@infrastructure/persistence/storage`, plus a field on `PublishedArtefacts`; add an output to `action.yml` and `setOutputs` if it should be exposed. |
+| **Add a chart option** | Input plumbing as above; thread it through the `style` object in `src/presentation/charts.ts`. If it changes **what** is plotted it belongs on the matching `ChartRequest` variant or on `ChartSpec` in `src/presentation/chart-spec.ts` and both adapters read it; if it only changes **how**, implement it in `src/presentation/svg-chart.ts` (all SVG primitives live behind the private `renderSvg`) and mirror it in `src/presentation/chart.ts` if email charts should honour it ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)); add a sample SVG under `examples/`. |
 | **Add a chart kind** | One variant on `ChartRequest` and one `case` in `buildChartSpec` (`src/presentation/chart-spec.ts`), plus the spec builder itself. Neither adapter changes, because `renderSvgChart` and `chartImageUrl` take any request. Then emit it from `buildChartFiles` (`charts.ts`) and/or `html.ts`, and add a filename to `CHART_FILES`. |
 
 ## 8. Known inconsistencies
