@@ -63,9 +63,11 @@ If you discover a security vulnerability, please report it privately:
 2. Click "Report a vulnerability"
 3. Fill in the details about the vulnerability
 
-### Alternative: Email
+### If private reporting is unavailable
 
-Send an email to **fbuireu@gmail.com** with:
+Private reporting is open to any GitHub account and is the channel this project uses. If it is not available
+to you, open an issue asking me to get in touch and **say nothing about the finding in it**: a public issue is
+not the place for the details. Whichever way it reaches me, include:
 
 - Type of issue (for example token exposure or code injection)
 - Full paths of source file(s) related to the manifestation of the issue
