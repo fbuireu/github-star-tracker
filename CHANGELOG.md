@@ -1,3 +1,10 @@
+## [1.26.1](https://github.com/fbuireu/github-star-tracker/compare/v1.26.0...v1.26.1) (2026-08-23)
+
+
+### Bug Fixes
+
+* **issues:** drop the public template for vulnerabilities ([5e94871](https://github.com/fbuireu/github-star-tracker/commit/5e9487163b551f9ad269b2652d12b610b3f703d7))
+
 # [1.26.0](https://github.com/fbuireu/github-star-tracker/compare/v1.25.1...v1.26.0) (2026-08-15)
 
 
