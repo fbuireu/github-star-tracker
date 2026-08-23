@@ -77,7 +77,7 @@ src/i18n/
 ```
 
 `index.ts` validates nothing. Checking that a configured `locale` is one of the four is the config loader's
-job (`src/config/loader.ts`), which warns before this folder is ever reached.
+job ([`src/config/loader.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/config/loader.ts)), which warns before this folder is ever reached.
 
 ### Translation Keys
 
@@ -137,22 +137,22 @@ crashing.
 
 To contribute a new language:
 
-1. Copy `src/i18n/en.json` to `src/i18n/{code}.json`
+1. Copy [`src/i18n/en.json`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/en.json) to `src/i18n/{code}.json`
 2. Translate all values (keys stay in English)
 3. Keep `{placeholder}` tokens untranslated, spelled exactly as in `en.json`
-4. Add the import in `src/i18n/index.ts`
+4. Add the import in [`src/i18n/index.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/index.ts)
 5. Add the locale and its Intl code to `LOCALE_MAP` in `src/i18n/index.ts` (`LOCALES` and the `Locale` type derive from it, so there is no second list to maintain)
 6. Register the imported bundle in the `TRANSLATIONS` map in `src/i18n/index.ts`
 7. Run `pnpm verify` to check everything passes
 
-`src/i18n/types.ts` needs **no** change. `resolveJsonModule` is on, so the new `.json` bundle is type-checked
+[`src/i18n/types.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/types.ts) needs **no** change. `resolveJsonModule` is on, so the new `.json` bundle is type-checked
 against the existing `Translations` interface at compile time: a missing or mistyped key is a build error.
 Note that *extra* keys are silently accepted, because an imported module is not a fresh object literal and
 gets no excess-property check, which is why `pnpm typecheck` is the check that matters here.
 
 Three documentation edits belong in the same commit, none of them derived from the code:
 
-- the `locale` input description in `action.yml`, which hard-codes the four locale names
+- the `locale` input description in [`action.yml`](https://github.com/fbuireu/github-star-tracker/blob/main/action.yml), which hard-codes the four locale names
 - the **Supported Locales** and **Localized Email Subjects** tables on this page
 - the `locale` section of [Configuration](Configuration#locale)
 

@@ -13,8 +13,8 @@ stays self-contained and theme-aware ([ADR 0006](../../docs/adr/0006-hand-render
 email path goes through QuickChart because mail clients will not display inline SVG
 ([ADR 0010](../../docs/adr/0010-quickchart-renders-the-email-charts.md)).
 
-- **`chart-spec.ts` decides what a Chart is**, and names which one is wanted. A `ChartRequest` is a
-  discriminated union over the four `ChartKind`s CONTEXT.md lists (star history, per repo, comparison,
+- **[`chart-spec.ts`](./chart-spec.ts) decides what a Chart is**, and names which one is wanted. A `ChartRequest` is a
+  discriminated union over the four `ChartKind`s [CONTEXT.md](../../CONTEXT.md) lists (star history, per repo, comparison,
   forecast), carrying only that kind's own inputs (`repoFullName`, `repoNames`, `forecastData`, the
   star-history Milestone and trend flags) plus an optional `title`. `buildChartSpec({ request, locale,
   palette, axisLabels, range, maxPoints })` maps one onto a `ChartSpec`: labels, an ordered list of series
@@ -32,7 +32,7 @@ email path goes through QuickChart because mail clients will not display inline 
   number. While they formatted independently the same Milestone read `1,000 ★` in the Notification and
   `1K ★` on the Data Branch, which is the content drift
   [ADR 0014](../../docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md) exists to prevent.
-- **`charts.ts` orchestrates.** `buildChartFiles` reads `Config`, builds the shared style object once, binds
+- **[`charts.ts`](./charts.ts) orchestrates.** `buildChartFiles` reads `Config`, builds the shared style object once, binds
   it into a local `renderChart(request)`, and returns `{ filename, svg }[]`. It renders nothing itself and
   returns `[]` when charts are off or the history has fewer than 2 snapshots.
 - **`resolveChartHistories` owns the Reconstructed History at both altitudes, and owns the instant.** It
@@ -42,18 +42,18 @@ email path goes through QuickChart because mail clients will not display inline 
   `Date` it creates, so every chart in a run ends on the same moment without the caller threading one.
   `resolveChartHistory` is private, which is what stops the two altitudes drifting back into two layers
   sharing a `Date` by convention.
-- **`svg-chart.ts` draws.** `renderSvgChart({ request, locale, ...style })` is its only export: it builds the
+- **[`svg-chart.ts`](./svg-chart.ts) draws.** `renderSvgChart({ request, locale, ...style })` is its only export: it builds the
   spec with year-thinned axis labels and maps the series onto `SvgDataset`s. One private `renderSvg` does all
   the drawing.
-- **`chart.ts` is the email path.** `chartImageUrl({ request, locale, ...style })` is its only chart export,
-  producing `quickchart.io` URLs consumed by `html.ts`. It is a parallel, lower-fidelity rendering of the
+- **[`chart.ts`](./chart.ts) is the email path.** `chartImageUrl({ request, locale, ...style })` is its only chart export,
+  producing `quickchart.io` URLs consumed by [`html.ts`](./html.ts). It is a parallel, lower-fidelity rendering of the
   *same* spec, never an input to the SVG files.
 
 **Default titles live in `buildChartSpec`, not in the adapters**, so the SVG and the email chart of the same
 kind are always named the same thing and both are localized. Only the per-repo default is composed rather
 than translated (`` `${repoFullName} Star History` ``).
 
-**The chrome both adapters draw identically lives in `CHART_CHROME`** (`constants.ts`): the title and
+**The chrome both adapters draw identically lives in `CHART_CHROME`** ([`constants.ts`](./constants.ts)): the title and
 milestone font sizes, the milestone stroke width and its dash pattern. Both charts are the same 800x400
 canvas, so those are one visual decision rather than two. `SVG_CHART` and `chart.ts`'s `CHART_STYLE` both
 read them, and the SVG side turns the dash array into its `'6,6'` string. The **series** dash patterns stay
@@ -67,13 +67,13 @@ only: a PNG has no axis side to choose and cannot animate. `range` is **not** em
 it too, and both adapters window on it.
 
 **Six options are projected from `Config` twice.** `charts.ts` builds the SVG bag inline, `emailChartStyle`
-in `shared.ts` builds the email one, and `smoothing`, `curve`, `showPoints`, `beginAtZero`, `range` and
+in [`shared.ts`](./shared.ts) builds the email one, and `smoothing`, `curve`, `showPoints`, `beginAtZero`, `range` and
 `lineWidth` appear in both; twice already an option has shipped honoured by the SVG alone and needed a later
 `fix:` to reach the email. **Do not merge the two projections into one shared type.** It would save one line
 per new option and assert a parity that is false: `chart.ts` collapses `rounded-step` onto Chart.js
 `monotone` and both `catmull-rom` and `cubic-bezier` onto a plain tension spline, and `theme` diverges
 deliberately (`chartTheme` for the SVG, `emailTheme` for the email). What guards the drift instead is
-`run.test.ts`, which renders a run twice per shared option and asserts the change reaches **both** systems,
+[`run.test.ts`](./run.test.ts), which renders a run twice per shared option and asserts the change reaches **both** systems,
 pinning the `rounded-step` collapse as the one deliberate exception.
 
 `SeriesDash` and `SeriesWeight` are emphasis, not pixels: each adapter maps them through its own table
@@ -87,7 +87,7 @@ type `Omit`s the field so the caller cannot believe otherwise. `maxPoints` is li
 
 ## The layer's front door
 
-`renderRun` (`src/presentation/run.ts`) is what `@application` calls: one function in, one `RenderedRun` out,
+`renderRun` ([`src/presentation/run.ts`](./run.ts)) is what `@application` calls: one function in, one `RenderedRun` out,
 carrying markdown, html, csv, badge and the chart files. Every other layer already had a single entry point
 (`measureRun` for `@domain`, `withDataBranch` for `@infrastructure`); this one had five, and the shell was
 assembling the params for each.
@@ -102,7 +102,7 @@ assembling the params for each.
   from `topRepositories`, draws the charts first, then builds the model with a `hasChartFile` predicate
   closed over the filenames it actually got back. `model.perRepoCharts` is therefore the repositories that
   have a chart, and both dialects iterate it. Ranking alone was not enough: `renderSvgChart` also returns
-  `null` for a top repository whose own Reconstructed History is too short, which left `markdown.ts` linking
+  `null` for a top repository whose own Reconstructed History is too short, which left [`markdown.ts`](./markdown.ts) linking
   an image no run had written.
 - **`ChartHistories` exposes two per-repo accessors, `forRepo` and `reconstructedForRepo`, and they are not
   interchangeable.** A Chart takes the first, a Forecast must take the second;
@@ -128,9 +128,9 @@ assembling the params for each.
   from the stored History, the charted set matching the linked set, and **dialect parity**, a table-driven
   case asserting every section the model can switch on appears in *both* Reports.
 
-The report modules are one per format: `markdown.ts`, `html.ts`, `csv.ts`, `badge.ts`, over a shared
-`report-model.ts`; with `escaping.ts` for every dialect's escaper, `shared.ts` for the report params, the
-theme projection and `prepareReportData`, and `constants.ts` / `types.ts` for palettes, geometry and the
+The report modules are one per format: `markdown.ts`, `html.ts`, [`csv.ts`](./csv.ts), [`badge.ts`](./badge.ts), over a shared
+[`report-model.ts`](./report-model.ts); with [`escaping.ts`](./escaping.ts) for every dialect's escaper, `shared.ts` for the report params, the
+theme projection and `prepareReportData`, and `constants.ts` / [`types.ts`](./types.ts) for palettes, geometry and the
 `ColorPalette` contract. Chart windowing and series maths (`selectChartSnapshots`, `movingAverageSeries`,
 `buildForecastChartSeries`) live in `chart-spec.ts`, their only consumer; they were in `shared.ts` when
 "shared" meant "imported by more than one file" rather than a concept.
@@ -138,7 +138,7 @@ theme projection and `prepareReportData`, and `constants.ts` / `types.ts` for pa
 ## The report model
 
 `buildReportModel` (`src/presentation/report-model.ts`) decides **which sections a Report has and what is in
-them**, once. `markdown.ts` and `html.ts` are dialects over it and own only markup. `report-model.test.ts` is
+them**, once. `markdown.ts` and `html.ts` are dialects over it and own only markup. [`report-model.test.ts`](./report-model.test.ts) is
 its spec: assert a section rule there, not through one dialect's markup.
 
 - The model resolves `chartHistory` (the history *only* when it is plottable, so the dialects narrow on
@@ -230,7 +230,7 @@ its spec: assert a section rule there, not through one dialect's markup.
   summary, stargazers, forecast, velocity, footer. Velocity nests as an `h3` inside the forecast section when
   a forecast exists, otherwise it is a top-level `h2`; both levels are asserted.
 - **The HTML report must contain no `<details>`**, which email clients do not support. Pinned by
-  `html.test.ts`.
+  [`html.test.ts`](./html.test.ts).
 - **Markdown chart links are relative** (`./charts/<file>`), matching the directory
   `@infrastructure/persistence` writes into.
 
@@ -276,14 +276,14 @@ uses that everywhere. Do not write a second escape map.
 - `perRepoChartFile` replaces only the **first** `/`, so a nested-looking name would keep later slashes and
   produce an invalid filename.
 - `repoStarSeries` returns `0`, not `null`, for a repo missing from a snapshot, so a per-repo chart for an
-  unknown repo renders a flat zero line rather than returning `null`. The `chart.test.ts` case named
+  unknown repo renders a flat zero line rather than returning `null`. The [`chart.test.ts`](./chart.test.ts) case named
   "renders a flat zero series for a repository absent from every snapshot" asserts exactly that.
-- `charts.ts` has a colocated `charts.test.ts` covering the `Config`-to-style projection, the per-repo
-  reconstruction fallback and which files a run produces. `tracker.test.ts` still runs it unmocked, so a
+- `charts.ts` has a colocated [`charts.test.ts`](./charts.test.ts) covering the `Config`-to-style projection, the per-repo
+  reconstruction fallback and which files a run produces. [`tracker.test.ts`](../application/tracker.test.ts) still runs it unmocked, so a
   break there shows up twice.
-- **`chart-spec.test.ts` is where a Chart's *content* is asserted**: the `< 2` guard, default titles, the
+- **[`chart-spec.test.ts`](./chart-spec.test.ts) is where a Chart's *content* is asserted**: the `< 2` guard, default titles, the
   comparison cap and short-label heuristic, Milestone resolution, the Forecast series layout, windowing.
-  `svg-chart.test.ts` and `chart.test.ts` are for *appearance*; adding a content assertion there means the
+  [`svg-chart.test.ts`](./svg-chart.test.ts) and `chart.test.ts` are for *appearance*; adding a content assertion there means the
   rule is now pinned twice, in the dialect that happened to be open.
 - **`escapeXml`'s pattern is built from the dialect's map** in `escaping.ts` and used with `replaceAll`,
   which resets `lastIndex`. Safe as written; do not switch it to `.exec`/`.test`.

@@ -5,7 +5,7 @@ map from those short codes to the BCP-47 codes `Intl` needs, and a `{placeholder
 tree's only true leaf: it imports nothing from any other layer, because every other layer (including
 `domain`) depends on it. It does no number or date formatting (`@domain/formatting`) and no escaping.
 
-`index.ts` is the public surface, `types.ts` holds `Translations` (nested, all leaves `string`, no optional
+[`index.ts`](./index.ts) is the public surface, [`types.ts`](./types.ts) holds `Translations` (nested, all leaves `string`, no optional
 keys) and the bundles sit beside them as `.json`, typed by the `Record<Locale, Translations>` annotation.
 
 ## Invariants & rules
@@ -29,7 +29,7 @@ keys) and the bundles sit beside them as `.json`, typed by the `Record<Locale, T
 - **`report.title` must be non-empty in every bundle**: a test iterates `LOCALES` and asserts truthiness.
 - **Locale affects text, dates *and* compact numbers.** `formatCount` builds its `Intl.NumberFormat` from
   `LOCALE_MAP[locale]`, so 1,200 renders `1.2K` in `en`, `1,2 mil` in `es`, `1,2 k` in `ca` and `1,2K` in
-  `it`. Only the `en` form is pinned: `formatting.test.ts` asserts the English string and that the Italian
+  `it`. Only the `en` form is pinned: [`formatting.test.ts`](../domain/formatting.test.ts) asserts the English string and that the Italian
   one merely differs from it, under the name *follows the report locale instead of always using English*.
   The other three come out of the ICU data Node ships, so a runtime bump can change them with no test
   failing; re-check them rather than trusting this line. In `es` and `ca` the separator before the suffix is
@@ -39,17 +39,17 @@ keys) and the bundles sit beside them as `.json`, typed by the `Record<Locale, T
 
 ## Adding a locale
 
-1. Create `src/i18n/<code>.json` with **every** key of `Translations`: copy `en.json` and translate, keeping
+1. Create `src/i18n/<code>.json` with **every** key of `Translations`: copy [`en.json`](./en.json) and translate, keeping
    the placeholder names identical.
 2. Import it in `index.ts`, add `xx: 'xx-XX'` to the locale map, and add `xx` to the `TRANSLATIONS` literal
    (shorthand, so the key must equal the import name).
-3. Update the `locale` input description in `action.yml` and the README's locale row.
+3. Update the `locale` input description in [`action.yml`](../../action.yml) and the README's locale row.
 
 `LOCALES` and `Locale` derive themselves from the locale map; there is no second list to maintain. The type
 system enforces **completeness but not exactness**: a missing bundle or a missing/mistyped key is a compile
 error, while *extra* keys in a JSON file are silently accepted, because an imported module is not a fresh
 object literal and no excess-property check applies. So `pnpm typecheck` is the check that matters here.
-`index.test.ts` starts covering the new locale automatically, since it iterates `LOCALES`.
+[`index.test.ts`](./index.test.ts) starts covering the new locale automatically, since it iterates `LOCALES`.
 
 ## Gotchas
 

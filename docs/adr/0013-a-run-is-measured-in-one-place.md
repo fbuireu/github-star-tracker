@@ -58,8 +58,8 @@ acts, not one.
   accumulated threshold on a courtesy send.
 - **`droppedSnapshots` is reported, not logged.** The domain layer is pure and cannot warn; `@application`
   raises the `max-history` warning from that number.
-- **The ordering rules are now tested against the real implementation**, in `measurement.test.ts`, rather
-  than asserted as a call sequence against mocks. `tracker.test.ts` now mocks `@domain/measurement` alone
+- **The ordering rules are now tested against the real implementation**, in [`measurement.test.ts`](../../src/domain/measurement.test.ts), rather
+  than asserted as a call sequence against mocks. [`tracker.test.ts`](../../src/application/tracker.test.ts) now mocks `@domain/measurement` alone
   where it used to mock `comparison`, `snapshot` and `notification`, and its remaining assertions are about
   wiring rather than about arithmetic. It still carries seventeen `vi.mock` calls in total, because it also
   substitutes `@actions/*`, `@config`, `@infrastructure` and the renderers; what this decision removed is the

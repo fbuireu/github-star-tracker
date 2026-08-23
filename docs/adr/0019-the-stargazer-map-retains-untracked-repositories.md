@@ -42,7 +42,7 @@ overwritten, never removed by a Run.
   can accumulate real weight, and `writeStargazers` rewrites the whole file every Run, so each Run commits a
   fresh blob of it to the Data Branch.
 - **Untracking a Repository no longer withdraws its published logins.** The remedies
-  `docs/wiki/Known-Limitations.md` offers for the privacy exposure, keeping the Data Branch in a private
+  [`docs/wiki/Known-Limitations.md`](../wiki/Known-Limitations.md) offers for the privacy exposure, keeping the Data Branch in a private
   repository or leaving `track-stargazers` off, are unaffected and remain the supported ones. Removing an
   entry is now a manual edit of `stargazers.json` on the Data Branch.
 - **A run that publishes nothing still cannot lose data**, because the seed means a partial or failed

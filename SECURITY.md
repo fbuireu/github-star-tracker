@@ -44,7 +44,7 @@ config file, and writes rendered files to a branch. That shapes what is interest
 
 Two defences are worth knowing about before you write a report, because they already hold:
 
-- Git is invoked through `execFileSync` with an argument array (`src/infrastructure/git/commands.ts`), so
+- Git is invoked through `execFileSync` with an argument array ([`src/infrastructure/git/commands.ts`](./src/infrastructure/git/commands.ts)), so
   no config value reaches a shell. There is no `git` string to break out of.
 - The git credential header is a base64 blob registered with `core.setSecret` the moment it is built, so
   it is masked in the log even when git echoes the command.

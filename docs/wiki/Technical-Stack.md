@@ -1,12 +1,12 @@
 Why GitHub Star Tracker is built out of these tools and these five dependencies, and what each one buys.
 
-For the shape of the code itself (which layer may import which, how a run flows end to end), read `ARCHITECTURE.md` in the repository and **[How It Works](How-It-Works)**. This page does not restate them.
+For the shape of the code itself (which layer may import which, how a run flows end to end), read [`ARCHITECTURE.md`](https://github.com/fbuireu/github-star-tracker/blob/main/ARCHITECTURE.md) in the repository and **[How It Works](How-It-Works)**. This page does not restate them.
 
 ---
 
 ## Architecture in Three Sentences
 
-The codebase is a Functional Core, Imperative Shell split across seven layers: `domain`, `presentation` and `i18n` are pure, `config`, `infrastructure` and `application` own the side effects, and `shared` holds cross-cutting test fixtures. Dependencies flow inward only, cross-layer imports go through a TypeScript path alias declared once in `tsconfig.json`, and every function taking two or more arguments takes a single destructured object instead.
+The codebase is a Functional Core, Imperative Shell split across seven layers: `domain`, `presentation` and `i18n` are pure, `config`, `infrastructure` and `application` own the side effects, and `shared` holds cross-cutting test fixtures. Dependencies flow inward only, cross-layer imports go through a TypeScript path alias declared once in [`tsconfig.json`](https://github.com/fbuireu/github-star-tracker/blob/main/tsconfig.json), and every function taking two or more arguments takes a single destructured object instead.
 
 The normative version of all of that is `ARCHITECTURE.md` and the per-layer `CLAUDE.md` files in the repository.
 
@@ -14,14 +14,14 @@ The normative version of all of that is `ARCHITECTURE.md` and the per-layer `CLA
 
 ## Language & Runtime
 
-**TypeScript 7**, bundled by esbuild into a single committed `dist/index.js`.
+**TypeScript 7**, bundled by esbuild into a single committed [`dist/index.js`](https://github.com/fbuireu/github-star-tracker/blob/main/dist/index.js).
 
 There are two Node versions in play, deliberately, and they are different numbers:
 
 | Number | Where it is pinned | What it governs |
 |---|---|---|
-| **Node 24** | `runs.using: 'node24'` in `action.yml`, and `target: 'node24'` in `esbuild.config.ts` | The runtime that actually executes the action on a GitHub runner. This is the version a `node:` API has to exist in |
-| **Node 26.2.0** | `engines.node` in `package.json` | The development pin: what contributors install, and what `@types/node` describes |
+| **Node 24** | `runs.using: 'node24'` in [`action.yml`](https://github.com/fbuireu/github-star-tracker/blob/main/action.yml), and `target: 'node24'` in [`esbuild.config.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/esbuild.config.ts) | The runtime that actually executes the action on a GitHub runner. This is the version a `node:` API has to exist in |
+| **Node 26.2.0** | `engines.node` in [`package.json`](https://github.com/fbuireu/github-star-tracker/blob/main/package.json) | The development pin: what contributors install, and what `@types/node` describes |
 
 The gap is a trap worth knowing about before you contribute. esbuild's `target` lowers syntax but does not shim runtime APIs, so a `node:` API added after 24.x will type-check, bundle and pass the full local check, then throw on a runner. Check new `node:` usage against Node 24, not against `engines.node`.
 
@@ -73,7 +73,7 @@ The action creates a temporary working directory for the data branch with `git w
 
 ### A custom i18n engine, not a library
 
-`src/i18n/index.ts` is roughly 30 lines: a bundle lookup plus a `{placeholder}` interpolation function. That covers the whole requirement (four languages, flat key substitution, no plurals or dates), and it means one fewer dependency inside a bundle that ships to every consumer.
+[`src/i18n/index.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/index.ts) is roughly 30 lines: a bundle lookup plus a `{placeholder}` interpolation function. That covers the whole requirement (four languages, flat key substitution, no plurals or dates), and it means one fewer dependency inside a bundle that ships to every consumer.
 
 ### Nodemailer, with `secure` inferred from the port
 
@@ -83,8 +83,8 @@ Nodemailer talks to any SMTP provider, so nobody is locked into a transactional-
 
 ## Testing
 
-- Coverage floor of 85% for lines, functions, branches and statements, enforced by the threshold in `vitest.config.ts`. The build fails below it
-- Coverage excludes `src/index.ts`, type/constant/default files, test files, and the shared test helpers in `src/shared/tests/`
+- Coverage floor of 85% for lines, functions, branches and statements, enforced by the threshold in [`vitest.config.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/vitest.config.ts). The build fails below it
+- Coverage excludes [`src/index.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/index.ts), type/constant/default files, test files, and the shared test helpers in `src/shared/tests/`
 - Tests are colocated next to the module they cover, as `src/**/*.test.ts`
 - Philosophy: mock at the boundary, not in the middle. Real code paths are exercised, and only external dependencies (the GitHub API, the filesystem, Git, SMTP) are replaced
 

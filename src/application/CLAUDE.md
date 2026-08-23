@@ -1,7 +1,7 @@
 # src/application
 
-The single use case: `trackStars()` in `src/application/tracker.ts`, the only export and the only thing
-`src/index.ts` imports. It wires config, GitHub I/O, domain computation, rendering and persistence into one
+The single use case: `trackStars()` in [`src/application/tracker.ts`](./tracker.ts), the only export and the only thing
+[`src/index.ts`](../index.ts) imports. It wires config, GitHub I/O, domain computation, rendering and persistence into one
 ordered run and owns sequencing, the worktree lifecycle, the output contract and top-level error handling.
 No business logic (`@domain/*`), no rendering (`@presentation/*`), no direct fs or git calls
 (`@infrastructure/*`). The only action *inputs* it reads first-hand are `github-token` and `github-api-url`,
@@ -14,7 +14,7 @@ is not repeated here. What follows is what that table cannot express.
 ## Invariants & rules
 
 - **`trackStars` never rejects.** Every failure becomes `core.setFailed`, prefixed literally
-  `Star Tracker failed: ` (asserted verbatim in `tracker.test.ts`), plus `core.debug(stack)` when there is one.
+  `Star Tracker failed: ` (asserted verbatim in [`tracker.test.ts`](./tracker.test.ts)), plus `core.debug(stack)` when there is one.
 - **The worktree lifecycle is not this layer's job any more.** `withDataBranch` owns it: it opens the
   worktree, hands the body a `DataBranch` and removes the worktree in a `finally`, so a throw inside the body
   still reaches the outer catch with the worktree gone. `dataDir` is never visible here.
@@ -68,7 +68,7 @@ is not repeated here. What follows is what that table cannot express.
 
 ## Outputs
 
-Eleven keys, matching the `outputs:` block of `action.yml` exactly, listed here alphabetically as every
+Eleven keys, matching the `outputs:` block of [`action.yml`](../../action.yml) exactly, listed here alphabetically as every
 surface that lists them must be. The four report values pass through as-is; the rest are wrapped in
 `String()`.
 
@@ -125,4 +125,4 @@ fetch is gated on `includeCharts || trackStargazers`.
   [kind]: svg })` helpers exist for exactly that. There is no per-kind mock to assert on any more.
 - `tracker.test.ts` fakes the `DataBranch` rather than the filesystem: assertions about what was persisted
   read `branch.publish.mock.calls[0][0]`, not `writeHistory`. Anything about *how* the worktree is written
-  belongs in `data-branch.test.ts`.
+  belongs in [`data-branch.test.ts`](../infrastructure/persistence/data-branch.test.ts).

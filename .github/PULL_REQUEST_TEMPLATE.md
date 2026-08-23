@@ -46,9 +46,9 @@
 - [ ] I have performed a self-review of my own code
 - [ ] I rebuilt `dist/` with `pnpm build` and committed it, if I touched anything under `src/`
 - [ ] I updated the relevant section of any `CLAUDE.md` my change affects
-- [ ] Changed inputs, outputs or defaults are reflected in `action.yml`, the wiki and the README
-- [ ] New or redefined domain vocabulary is in `CONTEXT.md`; a hard-to-reverse decision has an ADR
-- [ ] `docs/docs-consistency.test.ts` passes, so the docs and the code still agree
+- [ ] Changed inputs, outputs or defaults are reflected in [`action.yml`](../action.yml), the wiki and the README
+- [ ] New or redefined domain vocabulary is in [`CONTEXT.md`](../CONTEXT.md); a hard-to-reverse decision has an ADR
+- [ ] [`docs/docs-consistency.test.ts`](../docs/docs-consistency.test.ts) passes, so the docs and the code still agree
 - [ ] My changes generate no new warnings or errors
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] New and existing unit tests pass locally with my changes

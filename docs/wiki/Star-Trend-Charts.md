@@ -79,7 +79,7 @@ GitHub Star Tracker uses two complementary chart systems:
 
 | System | Format | Used In | Features |
 |---|---|---|---|
-| **SVG Charts** | Animated SVG | Data branch `README.md` | CSS animations, self-contained, no external deps |
+| **SVG Charts** | Animated SVG | Data branch [`README.md`](https://github.com/fbuireu/github-star-tracker/blob/main/README.md) | CSS animations, self-contained, no external deps |
 | **QuickChart URLs** | PNG via URL | HTML email reports | Compatible with email clients |
 
 ### Why Two Systems?
@@ -212,7 +212,7 @@ Where the media query reaches:
 | HTML email | No. Gmail strips `<style>` blocks, so set [`email-theme`](Configuration#email-theme) to pick the palette instead |
 | QuickChart PNGs in email | No. The image is rasterised once, on whatever background `email-theme` resolves to |
 
-The badge (`stars-badge.svg`) carries no dark-mode styles at all. It uses a fixed dark label with an
+The badge ([`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/examples/stars-badge.svg)) carries no dark-mode styles at all. It uses a fixed dark label with an
 accent-coloured value, legible on either background.
 
 ### Animations (SVG only)

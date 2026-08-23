@@ -18,10 +18,10 @@ be made a third time, and because the reasoning against it is not obvious from r
 Should `loadConfig()` take the action inputs and the config-file contents as parameters instead of reading
 `core.getInput` and `node:fs` itself?
 
-`loadConfig()` takes no arguments. It reads `core.getInput` at six sites in `src/config/loader.ts`: one
+`loadConfig()` takes no arguments. It reads `core.getInput` at six sites in [`src/config/loader.ts`](../../src/config/loader.ts): one
 inside `resolveTabledFields`, which runs it once per tabled key, and five standalone reads for `visibility`,
 `data-branch`, `chart-custom-milestones`, `config-path` and `send-on-no-changes`. It reads `node:fs` at two,
-both inside `loadConfigFile`. Every one of the ninety-four `loadConfig()` call sites in `loader.test.ts`
+both inside `loadConfigFile`. Every one of the ninety-four `loadConfig()` call sites in [`loader.test.ts`](../../src/config/loader.test.ts)
 therefore goes through `vi.mock('@actions/core')` and `vi.mock('node:fs')` plus a local `mockInputs` helper.
 
 That reads like the textbook case for accepting dependencies rather than creating them, and two separate
@@ -68,7 +68,7 @@ inputs" reading them ambiently is the truthful shape, not an accident.
 that `@config` was the sole exception in an otherwise dependency-injected tree, was simply wrong about the
 code:
 
-- **`getEmailConfig` in `src/infrastructure/notification/email.ts` reads six ambient inputs**: `smtp-host`,
+- **`getEmailConfig` in [`src/infrastructure/notification/email.ts`](../../src/infrastructure/notification/email.ts) reads six ambient inputs**: `smtp-host`,
   `smtp-port`, `smtp-username`, `smtp-password`, `email-to` and `email-from`. It takes only a `Locale`, for
   the default `from` name. It owns the SMTP input group the way `loadConfig` owns the tracking one, and it
   calls `core.setSecret` on the password, which is a reason to keep the read where the value is produced
@@ -84,7 +84,7 @@ between reading an input group and consuming one, not between `@config` and the 
 
 - **`loader.test.ts` keeps two `vi.mock` prologues and its `mockInputs` helper.** That is the accepted cost,
   and it is smaller than it was recorded as being: at 933 lines the file is the *second* largest test file in
-  the tree, behind `svg-chart.test.ts` at 1153. The earlier claim that it was the largest was the headline
+  the tree, behind [`svg-chart.test.ts`](../../src/presentation/svg-chart.test.ts) at 1153. The earlier claim that it was the largest was the headline
   cost of this decision and it was false, which weakens the argument by exactly that much: the cost is real
   but ordinary, and it is worth re-checking rather than assuming if this is ever reconsidered.
 - **The seam that does exist stays unused.** `loadConfigFile` is exported and separately tested, but
@@ -93,6 +93,6 @@ between reading an input group and consuming one, not between `@config` and the 
 - **Adding an input group means adding another ambient reader, not another parameter.** `getEmailConfig` is
   the precedent to copy: one function, one group, read at the point of use, with the caller told nothing
   about input names.
-- The parser half of the old `loader.test.ts` now lives in `parsers.test.ts`, colocated with the module it
+- The parser half of the old `loader.test.ts` now lives in [`parsers.test.ts`](../../src/config/parsers.test.ts), colocated with the module it
   covers. Those 246 lines never needed a mock at all, and their presence in the loader's test overstated how
   much of that file the ambient reads were responsible for.

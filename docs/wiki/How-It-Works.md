@@ -89,7 +89,7 @@ Two edges in that diagram are easy to miss, and both matter:
 
 ### Entry Point
 
-**File:** `src/index.ts`
+**File:** [`src/index.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/index.ts)
 
 A two-line bootstrap delegating to the application orchestrator:
 
@@ -100,13 +100,13 @@ trackStars();
 
 ### Orchestrator
 
-**File:** `src/application/tracker.ts` > `trackStars()`
+**File:** [`src/application/tracker.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/application/tracker.ts) > `trackStars()`
 
 Coordinates all layers inside one `try`/`catch` that ends in `core.setFailed`: PAT extraction, Octokit instantiation, configuration loading, i18n bootstrap, and the full data pipeline.
 
 ### Configuration Resolution
 
-**File:** `src/config/loader.ts` > `loadConfig()`
+**File:** [`src/config/loader.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/config/loader.ts) > `loadConfig()`
 
 Configuration follows a **layered precedence model**:
 
@@ -176,7 +176,7 @@ velocity_metrics: false
 
 ### Repository Enumeration
 
-**File:** `src/infrastructure/github/client.ts` > `fetchRepos()`
+**File:** [`src/infrastructure/github/client.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/infrastructure/github/client.ts) > `fetchRepos()`
 
 Queries `GET /user/repos` with pagination (`100` per page). The `visibility` config maps to API params:
 
@@ -189,13 +189,13 @@ Queries `GET /user/repos` with pagination (`100` per page). The `visibility` con
 
 ### Data Transformation
 
-**File:** `src/infrastructure/github/filters.ts` > `mapRepos()`
+**File:** [`src/infrastructure/github/filters.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/infrastructure/github/filters.ts) > `mapRepos()`
 
 Transforms GitHub API objects into the domain `RepoInfo` schema, flattening `owner.login`, normalizing `stargazers_count` to `stars`, etc. This happens **before** filtering, so every filter below is expressed over the domain shape rather than GitHub's.
 
 ### Repository Filtering
 
-**File:** `src/domain/tracked-set.ts` > `resolveTrackedSet()`
+**File:** [`src/domain/tracked-set.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/tracked-set.ts) > `resolveTrackedSet()`
 
 Client-side filtering pipeline, in this order:
 
@@ -217,7 +217,7 @@ What survives is the **Tracked Set**. The rules are pure and return counts rathe
 
 ### Data Branch Initialization
 
-**File:** `src/infrastructure/git/worktree.ts` > `initializeDataBranch()`
+**File:** [`src/infrastructure/git/worktree.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/infrastructure/git/worktree.ts) > `initializeDataBranch()`
 
 Creates or accesses a Git worktree for the data branch, isolating persistence from the source code checkout.
 
@@ -253,14 +253,14 @@ Runs in a `finally` block, removing the worktree with `--force` regardless of su
 ## Phase 4: State Comparison
 
 The run does not call the steps below one by one. `measureRun()`
-(`src/domain/measurement.ts`) composes baseline selection, diffing, snapshotting and the threshold check in
+([`src/domain/measurement.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/measurement.ts)) composes baseline selection, diffing, snapshotting and the threshold check in
 the one order that is correct, and returns the whole measurement in a single value. The reasoning is
 [ADR 0013](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0013-a-run-is-measured-in-one-place.md).
 The sections that follow describe what it does inside.
 
 ### Baseline Selection
 
-**File:** `src/domain/snapshot.ts` > `getBaselineSnapshot()`
+**File:** [`src/domain/snapshot.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/snapshot.ts) > `getBaselineSnapshot()`
 
 Before any diffing happens, the Stored History is deserialized from `stars-data.json` and one snapshot is picked as the **baseline snapshot**. The `compare-against` input (config key `compare_against`) decides which one:
 
@@ -296,7 +296,7 @@ it an average over a chart bucket whose width follows `chart-max-points`.
 
 ### Delta Computation
 
-**File:** `src/domain/comparison.ts` > `compareStars()`
+**File:** [`src/domain/comparison.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/comparison.ts) > `compareStars()`
 
 Pure function computing the diff between current repos and the selected baseline snapshot:
 
@@ -330,7 +330,7 @@ limit, the run logs a warning naming how many it is about to drop and inviting y
 
 ## Phase 5: Stargazer Tracking
 
-**Files:** `src/infrastructure/github/stargazers.ts`, `src/domain/stargazers.ts`
+**Files:** [`src/infrastructure/github/stargazers.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/infrastructure/github/stargazers.ts), [`src/domain/stargazers.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/stargazers.ts)
 
 Stargazers are fetched whenever charts are enabled (`include-charts: true`, the default) **OR** `track-stargazers: true`, because the Reconstructed History behind the charts needs each star's `starred_at` date.
 
@@ -349,7 +349,7 @@ repository whose list came back `incomplete` is skipped **silently**. Either way
 
 ## Phase 5b: Reconstructed History
 
-**File:** `src/domain/star-history.ts` > `buildStarHistory()`
+**File:** [`src/domain/star-history.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/star-history.ts) > `buildStarHistory()`
 
 When charts are enabled, `buildStarHistory()` turns the fetched stargazers' `starred_at` dates into a **Reconstructed History**: a cumulative `History` over real time, used by the charts and by the forecast. Each star is placed on the date it was actually given and the cumulative total is rebuilt from the repo's first star up to now, so a multi-point curve is available on the **first run**. It is rebuilt from scratch every run and never stored.
 
@@ -363,7 +363,7 @@ Pair high-star repos with `smart-sampling` to keep within rate limits.
 
 ## Phase 6: Growth Forecast
 
-**File:** `src/domain/forecast.ts` > `computeForecast()`
+**File:** [`src/domain/forecast.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/forecast.ts) > `computeForecast()`
 
 Requires at least **3 points** (`MIN_SNAPSHOTS_FOR_FORECAST`). Projects **4 calendar weeks ahead** (`FORECAST_WEEKS`): "Week 1" means 7 real days after the latest point, "Week 4" means 28 days after it. When charts are enabled, the History passed to forecast generation is the aggregate **Reconstructed History**, not the Stored History, so the 3-point minimum refers to points in that reconstruction.
 
@@ -387,7 +387,7 @@ Forecasts are computed for:
 
 ## Phase 6b: Growth Velocity
 
-**File:** `src/domain/velocity.ts` > `computeVelocity()`
+**File:** [`src/domain/velocity.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/velocity.ts) > `computeVelocity()`
 
 Opt-in via `velocity-metrics` (config key `velocity_metrics`), off by default. Where the forecast looks
 forward, velocity describes how fast the tracked set is moving **right now**, and it is the one section
@@ -415,19 +415,19 @@ forecast heading, without one it is a top-level section of its own.
 
 ## Phase 7: Report Generation
 
-**File:** `src/presentation/run.ts` > `renderRun()`
+**File:** [`src/presentation/run.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/run.ts) > `renderRun()`
 
 The presentation layer's single entry point. It builds one `ReportModel` and hands the same one to both report dialects, then returns the Markdown, HTML, CSV, badge and chart files together. One model means both reports carry the same date and the same Top Repositories.
 
 ### Shared Data Preparation
 
-**File:** `src/presentation/report-model.ts` > `buildReportModel()`, over `shared.ts` > `prepareReportData()`
+**File:** [`src/presentation/report-model.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/report-model.ts) > `buildReportModel()`, over [`shared.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/shared.ts) > `prepareReportData()`
 
 Decides which sections a report has and what is in them: filters active/new/removed repos, sorts by stars, formats dates, and resolves the chart history, Velocity figures and Stargazer outcome once.
 
 ### Markdown Report
 
-**File:** `src/presentation/markdown.ts` > `generateMarkdownReport()`
+**File:** [`src/presentation/markdown.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/markdown.ts) > `generateMarkdownReport()`
 
 Produces GitHub Flavored Markdown with:
 
@@ -441,17 +441,17 @@ Produces GitHub Flavored Markdown with:
 8. Forecast section (growth velocity first, then aggregate table and collapsible per-repo tables)
 9. Footer
 
-**Output:** committed as `README.md` on the data branch.
+**Output:** committed as [`README.md`](https://github.com/fbuireu/github-star-tracker/blob/main/README.md) on the data branch.
 
 ### HTML Report
 
-**File:** `src/presentation/html.ts` > `generateHtmlReport()`
+**File:** [`src/presentation/html.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/html.ts) > `generateHtmlReport()`
 
 Self-contained HTML with inline CSS for email compatibility. Uses QuickChart.io URLs for chart images (since SVGs with CSS animations aren't supported in email clients). No `<details>` elements (not supported in email).
 
 ### CSV Report
 
-**File:** `src/presentation/csv.ts` > `generateCsvReport()`
+**File:** [`src/presentation/csv.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/csv.ts) > `generateCsvReport()`
 
 Machine-readable CSV with one row per tracked repository. Columns: `repository`, `owner`, `name`, `stars`, `previous`, `delta`, `status`. Fields containing commas or double quotes are escaped per RFC 4180.
 
@@ -462,7 +462,7 @@ Available as both a file on the data branch (`stars-data.csv`) and an action out
 
 ### SVG Charts
 
-**File:** `src/presentation/svg-chart.ts`
+**File:** [`src/presentation/svg-chart.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/svg-chart.ts)
 
 Generates self-contained animated SVG charts committed to `charts/` on the data branch:
 
@@ -479,21 +479,21 @@ When charts are enabled, the History passed to chart generation is the **Reconst
 
 ### QuickChart URLs (HTML reports)
 
-**File:** `src/presentation/chart.ts`
+**File:** [`src/presentation/chart.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/chart.ts)
 
 Generates Chart.js configuration encoded as QuickChart.io URLs for embedding in HTML emails. Same chart types but rendered as static PNG images.
 
 ### SVG Badge
 
-**File:** `src/presentation/badge.ts` > `generateBadge()`
+**File:** [`src/presentation/badge.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/badge.ts) > `generateBadge()`
 
-Creates a Shields.io-style SVG badge with the localized "Total Stars" label and a compact-formatted count (e.g. `1.5K`). Committed as `stars-badge.svg`.
+Creates a Shields.io-style SVG badge with the localized "Total Stars" label and a compact-formatted count (e.g. `1.5K`). Committed as [`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/examples/stars-badge.svg).
 
 ---
 
 ## Phase 8: Persistence & Commit
 
-**File:** `src/infrastructure/persistence/storage.ts`
+**File:** [`src/infrastructure/persistence/storage.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/infrastructure/persistence/storage.ts)
 
 | Function | File Written |
 |---|---|
@@ -596,7 +596,7 @@ Because of that, "email me every 500 stars" is expressed as `notification-thresh
 
 ### Notification Threshold
 
-**File:** `src/domain/notification.ts` > `shouldNotify()`
+**File:** [`src/domain/notification.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/notification.ts) > `shouldNotify()`
 
 Controls when notifications fire. A notification always requires that something actually changed:
 
@@ -634,7 +634,7 @@ On a fresh data branch there is no stored baseline, so the first run fires immed
 
 ### Email
 
-**File:** `src/infrastructure/notification/email.ts`
+**File:** [`src/infrastructure/notification/email.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/infrastructure/notification/email.ts)
 
 - `getEmailConfig()` reads SMTP inputs; returns `null` if `smtp-host` is not set
 - `sendEmail()` uses `nodemailer` with auto-detected `secure` mode (port 465 = SSL, else STARTTLS)

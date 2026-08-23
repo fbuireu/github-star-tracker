@@ -24,7 +24,7 @@ other, lossily.
 
 The consequence was drift with no test that could catch it. A fix to the comparison cap or the label
 heuristic landed on whichever side the author was editing, and the README chart and the email chart quietly
-stopped agreeing. `charts.ts`, which projects `Config` onto the shared style, had no colocated test at all
+stopped agreeing. [`charts.ts`](../../src/presentation/charts.ts), which projects `Config` onto the shared style, had no colocated test at all
 and was carried indirectly by the tracker's suite.
 
 Collapsing the two renderers into one was never an option; that is what ADR 0006 and ADR 0010 already
@@ -42,7 +42,7 @@ Milestones to draw, each already filtered to the visible ones and carrying both 
 `label`), or onto `null` when there is too little history to plot. `starHistorySpec`, `perRepoSpec`,
 `comparisonSpec` and `forecastSpec` are the private cases behind it.
 
-`svg-chart.ts` and `chart.ts` are adapters over that seam, each with **one** entry point, `renderSvgChart`
+[`svg-chart.ts`](../../src/presentation/svg-chart.ts) and [`chart.ts`](../../src/presentation/chart.ts) are adapters over that seam, each with **one** entry point, `renderSvgChart`
 and `chartImageUrl`, taking a request plus its own style. Each maps a `ChartSpec` onto its own dialect and
 owns nothing else about the Chart's content.
 
@@ -69,7 +69,7 @@ a dash array or a point radius. Each adapter maps them through its own table.
   because leaving the label to the adapters is what let `chart.ts` format with a hardcoded `en-US` while
   `svg-chart.ts` used the run's Locale. Anything a reader reads is decided here; only how it is drawn is the
   adapter's.
-- **That rule is not yet fully honoured, and the exceptions are in `chart-spec.ts` itself.** The `PER_REPO`
+- **That rule is not yet fully honoured, and the exceptions are in [`chart-spec.ts`](../../src/presentation/chart-spec.ts) itself.** The `PER_REPO`
   case of `buildChartSpec` falls back to an English title built inline from the repository's full name and
   the words "Star History" rather than reading the Locale bundle, so a per-repository chart is titled in English whatever
   `locale` is set to; the star-history and forecast kinds do read the bundle. Both `starHistorySpec` and
@@ -85,14 +85,14 @@ a dash array or a point radius. Each adapter maps them through its own table.
 - **`AxisLabels` stopped being a per-call parameter.** It is now an adapter constant, and `forecastSpec`
   `Omit`s it from its params rather than accepting a value it overrides. The shape now says what the code
   always did.
-- **`chart-spec.test.ts` is the seam's own test surface.** Content rules were previously asserted only
-  through `svg-chart.test.ts` and `chart.test.ts`, in duplicate and through rendered strings; those two are
+- **[`chart-spec.test.ts`](../../src/presentation/chart-spec.test.ts) is the seam's own test surface.** Content rules were previously asserted only
+  through [`svg-chart.test.ts`](../../src/presentation/svg-chart.test.ts) and [`chart.test.ts`](../../src/presentation/chart.test.ts), in duplicate and through rendered strings; those two are
   now free to be about appearance.
 - **The two renderers can no longer drift on content.** Window, cap, colours, labels and Milestone
   visibility are computed once. They can still drift on appearance, which is the point.
 - **The cost is a layer of indirection and a vocabulary to learn** (`ChartSpec`, `AxisLabels`, `SeriesDash`,
   `SeriesWeight`) before either renderer makes sense. Reading `svg-chart.ts` alone no longer tells you where
   its data came from.
-- `charts.ts` now has a colocated `charts.test.ts`, so the `Config`-to-style projection and the
+- `charts.ts` now has a colocated [`charts.test.ts`](../../src/presentation/charts.test.ts), so the `Config`-to-style projection and the
   per-repo history fallback are asserted directly rather than through the tracker.
 - Where this bites is recorded in [`src/presentation/CLAUDE.md`](../../src/presentation/CLAUDE.md).

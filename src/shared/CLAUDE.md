@@ -12,7 +12,7 @@ belongs in `@domain`.
 
 ## tests/
 
-Ten pure factories, all exported from `src/shared/tests/index.ts`: `makeConfig`, `makeRepoInfo`,
+Ten pure factories, all exported from [`src/shared/tests/index.ts`](./tests/index.ts): `makeConfig`, `makeRepoInfo`,
 `makeStargazer`, `makeStargazerSeries`, `makeSnapshot`, `makeHistory`, `makeMultiRepoSnapshot`,
 `makeMultiRepoHistory`, `makeRepoResult` and `makeComparisonResults`. Each builds a value with sensible
 defaults so a test only spells out the fields it actually asserts on. No assertions, no mocks, no `vi.*`
@@ -33,7 +33,7 @@ helpers, no setup; mocking stays in the test files that need it. Nothing outside
 - **`makeConfig` shares `DEFAULTS`' array instances.** The spread is shallow, so the list fields are the
   *same arrays* on every config the factory ever returns. Pass a fresh array in the overrides; never `push`
   into one. It does track `Config` automatically, so a new key needs no edit here, only in `@config/defaults`
-  and `action.yml`.
+  and [`action.yml`](../../action.yml).
 - **No factory sets `History.starsAtLastNotification`.** Notification-threshold tests must set it explicitly.
 - The default stargazer `login` is derived from `starredAt`, so two stargazers built for the same date collide
   unless you pass distinct logins.
@@ -44,7 +44,7 @@ helpers, no setup; mocking stays in the test files that need it. Nothing outside
   some factories take up to three positional arguments, while the rest already take a destructured params or
   options object. Follow the shape of the factory you are extending; do not "fix" the positional ones.
 - **Two test files define their own local factories** with the same names but different signatures:
-  `velocity.test.ts` has its own `makeHistory` and `svg-chart.test.ts` its own `makeSnapshot` /
+  [`velocity.test.ts`](../domain/velocity.test.ts) has its own `makeHistory` and [`svg-chart.test.ts`](../presentation/svg-chart.test.ts) its own `makeSnapshot` /
   `makeMultiRepoSnapshot`. Neither imports `@shared/tests`, so do not assume the name means the shared
   factory.
 - `src/shared/tests/**` is excluded from coverage, so a broken or unused factory shows up as failing

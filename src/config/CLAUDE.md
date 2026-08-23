@@ -12,8 +12,8 @@ deletes 49 test lines, 27 of them the same repeated mock, and forces the orchest
 name, which is exactly the coupling
 [ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md) removed. Do not re-propose it.
 
-`types.ts` holds `Config` and the enums, `defaults.ts` holds `DEFAULTS`,
-`parsers.ts` holds pure coercions used only here, with its own colocated `parsers.test.ts`, and `loader.ts` is
+[`types.ts`](./types.ts) holds `Config` and the enums, [`defaults.ts`](./defaults.ts) holds `DEFAULTS`,
+[`parsers.ts`](./parsers.ts) holds pure coercions used only here, with its own colocated [`parsers.test.ts`](./parsers.test.ts), and [`loader.ts`](./loader.ts) is
 the resolver. Every parser is reached through `loader.ts`'s field table in production, so none is exported
 *only* for a test; `parsers.test.ts` does exercise them directly, which is why they are exported at all.
 
@@ -90,12 +90,12 @@ table.
 
 ## action.yml cross-check
 
-`docs/docs-consistency.test.ts` reads the real `action.yml` too, and asserts the **prose**: every overridable
+[`docs/docs-consistency.test.ts`](../../docs/docs-consistency.test.ts) reads the real [`action.yml`](../../action.yml) too, and asserts the **prose**: every overridable
 input states its real `DEFAULTS` value as `(default X)` and carries `(overrides config file)`. Those two
 strings had drifted: sixteen `chart-*` and `velocity-metrics` inputs were file-readable while saying
 nothing about it, which reads as "input only".
 
-`action-inputs.test.ts` reads the real `action.yml` and asserts every `Config` key except `sendOnNoChanges`
+[`action-inputs.test.ts`](./action-inputs.test.ts) reads the real `action.yml` and asserts every `Config` key except `sendOnNoChanges`
 has a kebab-case input whose `default` is **empty**, and that only `config-path`, `send-on-no-changes` and
 `smtp-port` carry a non-empty default. **Never add a `default:` to an overridable input**: the test fails and
 the config file stops working, because a non-empty default always beats it.
@@ -105,7 +105,7 @@ precedence trap rather than a lint rule, and why those three inputs are safe exc
 It derives the input name with **`toActionInputName`, exported from `loader.ts`**, the same function the fold
 uses, so the test cannot disagree with the loader about what a key is called. It also pins the `outputs:`
 block: eleven keys, alphabetical, each described. That list is the only executable check on the output
-contract *from the manifest side*; `tracker.test.ts` closes the loop from the code side by comparing the
+contract *from the manifest side*; [`tracker.test.ts`](../application/tracker.test.ts) closes the loop from the code side by comparing the
 names `setOutputs` actually emits against `action.yml`. Between them the contract is checked in both
 directions, where the manifest list alone was a copy of `action.yml` compared with `action.yml` and would not
 have noticed an output going missing from `setOutputs`. What each output *means* is
@@ -146,4 +146,4 @@ differently from an absent one rather than as a changed default.
 - **Warning wording is asserted verbatim**, including the Oxford comma
   (`'Invalid locale "fr". Must be "en", "es", "ca", or "it". Falling back to "en"'`). The generic parser
   message deliberately does *not* name a fallback, because the config file may still supply one.
-- `loader.test.ts` is the real specification for this folder; it is by far the largest test in the tree.
+- [`loader.test.ts`](./loader.test.ts) is the real specification for this folder; it is by far the largest test in the tree.

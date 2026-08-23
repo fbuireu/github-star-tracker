@@ -13,7 +13,7 @@ the Badge and the CSV are all derived from a single observation and regenerated 
 accumulates one Snapshot per Run and exists nowhere else.
 
 The reflexive way to read a file like that is `catch { return { snapshots: [] } }`, and the shape of
-`src/infrastructure/persistence/storage.ts` invites it: `readJsonFile` takes a `fallback`, and both readers
+[`src/infrastructure/persistence/storage.ts`](../../src/infrastructure/persistence/storage.ts) invites it: `readJsonFile` takes a `fallback`, and both readers
 pass one. For `readStargazers` the fallback is the whole answer, because an empty `StargazerMap` is exactly
 what "no file yet" means and rebuilding it costs one Run. For `readHistory` the fallback is deliberately
 scoped to *absence only*: it covers the first Run, when the file does not exist, and it is never reached by a

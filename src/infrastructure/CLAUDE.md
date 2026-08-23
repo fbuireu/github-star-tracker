@@ -14,15 +14,15 @@ write plain log lines.
 | `persistence/` | The Data Branch lifecycle, filenames, reads/writes, commit & push | fs, `git` (via `../git/*`) |
 | `notification/` | SMTP config from action inputs, sending the digest | `@actions/core` inputs, SMTP |
 
-"Same layer" means all of `src/infrastructure`, not one adapter: `persistence/storage.ts` imports
-`../git/commands` and `persistence/data-branch.ts` imports `../git/worktree`, exactly like
-`github/filters.ts` imports `./client`. Persistence depending on git is the **only** cross-adapter direction
+"Same layer" means all of `src/infrastructure`, not one adapter: [`persistence/storage.ts`](./persistence/storage.ts) imports
+`../git/commands` and [`persistence/data-branch.ts`](./persistence/data-branch.ts) imports `../git/worktree`, exactly like
+[`github/filters.ts`](./github/filters.ts) imports `./client`. Persistence depending on git is the **only** cross-adapter direction
 allowed, and it does not run the other way.
 
 **Failure policy.** Repository fetching and worktree setup are **fatal**: they throw wrapped errors with
 remediation text and fail the action. Per-repo stargazer failures are **degradable**, swallowed here and
 downgraded to `core.warning` so the run continues with partial data. `sendEmail` rejects on SMTP failure, but
-the caller catches and warns. `describeFetchError` in `github/errors.ts` is the single formatter behind every
+the caller catches and warns. `describeFetchError` in [`github/errors.ts`](./github/errors.ts) is the single formatter behind every
 one of those wrapped messages: it renders `HTTP <status> <message>`, falling back to `String(error)` when the
 error carries neither. Change the shape of a fetch failure's text there, not at each call site.
 
@@ -34,7 +34,7 @@ Fetch, then map, then narrow. `getRepos` maps GitHub's rows onto `RepoInfo` **fi
 
 **The narrowing rules are not in this folder.** They are pure and they read domain vocabulary
 (`repo.owner`, `repo.name`, `repo.stars`), not GitHub's `owner.login` / `stargazers_count`, so
-`tracked-set.test.ts` asserts them without a fake octokit or a mocked logger. This folder does the two things
+[`tracked-set.test.ts`](../domain/tracked-set.test.ts) asserts them without a fake octokit or a mocked logger. This folder does the two things
 the domain cannot: it fetches, and it logs. `resolveTrackedSet` returns `afterOnlyOrgs`, `afterOnlyRepos` and
 `invalidPatterns` as **numbers and strings**; `getRepos` turns them into `core.info` and `core.warning`
 lines.
@@ -56,14 +56,14 @@ lines.
   fatal, and each distinct pattern is reported once.
 - `fetchRepos` requests `sort: 'full_name'`, so downstream ordering is GitHub's ascending full-name order.
   Anything relying on stable report ordering depends on it. Its loop stops on the first page that is not
-  full, sized by `REPOS_PER_PAGE` in `client.ts`, so a full page always triggers one more request.
+  full, sized by `REPOS_PER_PAGE` in [`client.ts`](./github/client.ts), so a full page always triggers one more request.
 - **`client.ts` owns the whole `listForAuthenticatedUser` request**, including the `visibility`-to-query-param
   translation in `VISIBILITY_PARAMS`. GitHub's REST vocabulary has no `owned`: it is expressed as
   `visibility: 'all'` plus `affiliation: 'owner'`, which is why the map is not the identity. It is keyed by
   bare string literals and typed `Record<Config['visibility'], …>`, so a new `Visibility` is still a type
   error here while `@infrastructure` takes no *value* import from `@config` at all. The map used to live in
   `@config/defaults`, which put octokit's dialect in the one layer that must not know octokit exists, and
-  its spec was in `filters.test.ts` here the whole time.
+  its spec was in [`filters.test.ts`](./github/filters.test.ts) here the whole time.
 - **A full stargazer fetch pages until it reads a page shorter than 100**, the stargazer page size owned by
   `@domain/sampling`, so an exactly full page always costs one more request. A sampled fetch does not page at
   all; it reads the specific pages it was handed.
@@ -79,7 +79,7 @@ lines.
 - **This folder decides no Smart Sampling arithmetic.** `@domain/sampling` owns all of it: `shouldSample`,
   `reachablePages`, `sampledPages` (which pages to read) and `coveredStars` (how many Stars those pages
   account for). This folder fetches the pages it is handed and reports what came back. That is why the page
-  spread, the rounding collisions and the ceiling clamp are asserted in `sampling.test.ts` against plain
+  spread, the rounding collisions and the ceiling clamp are asserted in [`sampling.test.ts`](../domain/sampling.test.ts) against plain
   numbers instead of through a fake octokit.
 - **The one `coveredStars` this folder computes itself is not sampling arithmetic.** A *full* fetch that dies
   part-way reports `stargazers.length`, the exact number it holds, rather than
@@ -118,7 +118,7 @@ lines.
   to run unauthenticated while only the push was authenticated, relying on whatever `actions/checkout` had
   persisted. On a repository checked out with `persist-credentials: false`, which is what OpenSSF and zizmor
   recommend and what this repo's own five checkout steps use, there is nothing to rely on, so the probe
-  failed on every run. `authenticatedArgs` (`git/commands.ts`) fixes that case.
+  failed on every run. `authenticatedArgs` ([`git/commands.ts`](./git/commands.ts)) fixes that case.
 - **It does not win against `actions/checkout`, and it is not meant to.** Verified with `GIT_TRACE_CURL`
   against the real remote, because two reviews reasoned about this from the config file and both got it wrong:
   `actions/checkout` persists its credential under the **URL-scoped** `http.https://github.com/.extraheader`,
@@ -139,7 +139,7 @@ lines.
   `commitAndPush` pushes the refspec `HEAD:<dataBranch>` and not a branch name. Do not "fix" either half
   in isolation.
 - `execute` uses `execFileSync` with an **argv array, never a shell**. Arguments containing `;`, quotes, `$`
-  or newlines pass verbatim to git (pinned by `commands.test.ts`). Commit messages and branch names are
+  or newlines pass verbatim to git (pinned by [`commands.test.ts`](./git/commands.test.ts)). Commit messages and branch names are
   user-controlled, so never reintroduce string interpolation here.
 - `stdio` is all `pipe`, so git never writes to the Action log. Anything a user must see goes through
   `@actions/core` explicitly. `cleanup` is best-effort and idempotent: it never rethrows, so it is safe in a
@@ -160,7 +160,7 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
 - **`publish` is one call and its order is load-bearing**: history, report, badge, CSV, the Stargazer map
   when there is one, then every chart, then `pruneCharts`, then the commit. `add -A` inside `commitAndPush`
   is what stages all of it, so any new write must go **before** the commit, which is exactly what putting
-  them in one function enforces. `data-branch.test.ts` pins that ordering.
+  them in one function enforces. [`data-branch.test.ts`](./persistence/data-branch.test.ts) pins that ordering.
 - **The read-only guard lives here**, not in the tracker: `publish` writes everything into the worktree and
   then returns without committing when `readOnly` is set. `commitAndPush` itself still has no read-only
   awareness and must not gain any.
@@ -215,8 +215,8 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
   a push failure from leaking the token. Any new call passing a secret in argv must do the same.
 - `commitAndPush` has **no read-only awareness**; calling it on a read-only run would push. The guard lives in
   `data-branch.ts`, which is also what guarantees every `write*` has completed before it.
-- Filenames are module-private but referenced by users' workflows and READMEs. Renaming `stars-badge.svg`,
-  `stars-data.json`, `stars-data.csv`, `stargazers.json` or the report `README.md` is a breaking change to
+- Filenames are module-private but referenced by users' workflows and READMEs. Renaming [`stars-badge.svg`](../../examples/stars-badge.svg),
+  `stars-data.json`, `stars-data.csv`, `stargazers.json` or the report [`README.md`](../../README.md) is a breaking change to
   consumers outside this repo.
 
 ## notification/
@@ -240,18 +240,18 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
   rather than receiving a parsed `Config`. Only `locale` is passed in, to resolve the default sender name, so
   changing `locale` changes the visible sender.
 - **`smtp-password` is passed to `core.setSecret`** as soon as it is read, so it is masked in the Action log
-  even when a workflow hardcodes it instead of supplying it through `secrets.*`. `email.test.ts` pins that.
+  even when a workflow hardcodes it instead of supplying it through `secrets.*`. [`email.test.ts`](./notification/email.test.ts) pins that.
 - A non-null `EmailConfig` does **not** mean email will be sent; `to` is only checked at send time.
 
 ## Gotchas
 
-- **`worktree.test.ts` and the `commitAndPush` tests mock `../git/commands`, not `node:child_process`.**
+- **[`worktree.test.ts`](./git/worktree.test.ts) and the `commitAndPush` tests mock `../git/commands`, not `node:child_process`.**
   `execute` is the seam, so a test scripts failures by *which git command ran* (`args.includes('ls-remote')`,
   matching on membership rather than `args[0]`, since an authenticated command begins with `-c`)
   and asserts on argv through a local `ranGit(...)` helper. They used to drive `execFileSync` with positional
   `mockReturnValueOnce` chains up to seven deep, where adding or reordering one git call shifted every later
   mock and broke tests that looked unrelated. Do not mock a level deeper than the seam again.
-- `storage.test.ts` mocks `@actions/core` with a factory exposing only `info`, `debug` and `setSecret`.
+- [`storage.test.ts`](./persistence/storage.test.ts) mocks `@actions/core` with a factory exposing only `info`, `debug` and `setSecret`.
   Adding a `core.warning(...)` to `storage.ts` fails the suite with "not a function", not a useful assertion.
 - **`filters.test.ts` is the spec for `client.ts` too**, so a change to `client.ts` can fail here. It is the
   one sanctioned case of a test file covering two modules, and `client.ts` is the only module in the tree

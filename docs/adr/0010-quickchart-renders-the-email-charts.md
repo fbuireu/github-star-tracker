@@ -25,7 +25,7 @@ The HTML Report embeds `quickchart.io` image URLs built from a Chart.js config, 
 ## Consequences
 
 - Charts have **two independent renderers** with different capabilities, and a change to one does not change the other. The QuickChart path is a deliberate lower-fidelity approximation, and this is the whole list of what it drops:
-  1. It is fixed at 30 points regardless of `chart-max-points`, spread across the selected range rather than taken from the end, because `chartImageUrl` in `src/presentation/chart.ts` never passes `maxPoints` and `buildChartSpec` falls back to `CHART.maxDataPoints`.
+  1. It is fixed at 30 points regardless of `chart-max-points`, spread across the selected range rather than taken from the end, because `chartImageUrl` in [`src/presentation/chart.ts`](../../src/presentation/chart.ts) never passes `maxPoints` and `buildChartSpec` falls back to `CHART.maxDataPoints`.
   2. It collapses the four `ChartCurve` types onto two Chart.js shapes: `CURVE_PROPS` maps `monotone` and `rounded-step` onto a monotone cubic interpolation and `catmull-rom` and `cubic-bezier` onto a plain smooth tension.
   3. It ignores `chart-animation`, because a PNG cannot animate. `chartImageUrl` has no `animate` parameter at all.
   4. It ignores `chart-y-axis-side`. `chartImageUrl` has no `yAxisSide` parameter, so the email chart's Y axis is always where Chart.js puts it.

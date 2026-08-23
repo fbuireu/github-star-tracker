@@ -257,9 +257,9 @@ To embed any of these, see **[Viewing Reports](Viewing-Reports#method-2-badges)*
 
 | File | Description | Always Present |
 |---|---|---|
-| `README.md` | Markdown report with charts | Yes |
+| [`README.md`](https://github.com/fbuireu/github-star-tracker/blob/main/README.md) | Markdown report with charts | Yes |
 | `stars-data.json` | Historical snapshots | Yes |
-| `stars-badge.svg` | Star count badge | Yes |
+| [`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/examples/stars-badge.svg) | Star count badge | Yes |
 | `stars-data.csv` | CSV report with current star data | Yes |
 | `charts/star-history.svg` | Total star trend chart | After first run (when the repo has stargazers and `include-charts` is on) |
 | `charts/comparison.svg` | Top repos comparison | After first run (with multiple repos and `include-charts` on) |
