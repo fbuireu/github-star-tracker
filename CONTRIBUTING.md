@@ -367,8 +367,8 @@ github-star-tracker/
 
 `src/domain/` is the largest layer and holds one module per concept: run measurement, comparison,
 snapshots, forecasting, velocity, growth, stargazer diffing, star-history reconstruction, tracked-set
-resolution, sampling, notification settlement, formatting and time parsing, plus `types.ts` and
-`constants.ts`. [`src/domain/CLAUDE.md`](./src/domain/CLAUDE.md) is the guide.
+resolution, sampling, notification settlement, formatting and time parsing, plus [`types.ts`](./src/domain/types.ts) and
+[`constants.ts`](./src/domain/constants.ts). [`src/domain/CLAUDE.md`](./src/domain/CLAUDE.md) is the guide.
 
 > [!TIP]
 > **Path aliases:** cross-layer imports use `@application/*`, `@assets/*`, `@config/*`, `@domain/*`,
