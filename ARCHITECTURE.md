@@ -155,7 +155,7 @@ The scripts, Biome settings and git hooks are listed once in [CLAUDE.md](./CLAUD
 
 | Workflow | Purpose |
 | --- | --- |
-| `ci.yml` | On push/PR to `main`: install, `pnpm verify`, Codecov upload (also when `check` fails, so threshold failures still report), build, then a staleness check that fails a PR touching bundled sources without touching `dist/`. `src/shared/tests/` is excluded alongside `*.test.ts`: nothing there is reachable from `src/index.ts`, so editing a fixture cannot change the bundle and must not demand a rebuild. It compares *which files changed*, not bytes, because `dist/index.js` is not reproducible across platforms: esbuild embeds `node_modules/.pnpm/...` paths and pnpm hashes those names on Windows but not on Linux |
+| `ci.yml` | On push/PR to `main`: install, `pnpm verify` (which ends in `pnpm build`), then the Codecov upload, which runs even when `check` fails so threshold failures still report. It used to close with a staleness check that failed any pull request touching bundled sources without touching `dist/`. That check is gone: `release.yml` runs `verify` and so rebuilds the bundle immediately before `semantic-release` commits it, meaning a published version can never carry a bundle built from other sources and the check never stood between a stale `dist/` and a user ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)) |
 | `release.yml` | On push to `main`: `pnpm verify` then `semantic-release`, plus a major-version tag update |
 | `zizmor.yml` | zizmor static analysis of the workflow files themselves |
 | `dependency-review.yml` | Fails a PR that introduces a dependency with a known vulnerability |
