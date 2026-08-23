@@ -22,10 +22,10 @@ const THOUSANDS_AXIS_LABEL = />\d+(\.\d+)?K<\/text>/;
 const FEBRUARY_AXIS_LABEL = />Feb \d/;
 const CONSECUTIVE_XML_ATTRIBUTES = /="[^"]*"="[^"]*"/;
 
-type MakeSnapshotParams = {
+interface MakeSnapshotParams {
 	timestamp: string;
 	totalStars: number;
-};
+}
 
 function makeSnapshot({ timestamp, totalStars }: MakeSnapshotParams): Snapshot {
 	return {
@@ -44,10 +44,10 @@ function makeHistory(starCounts: number[]): History {
 	};
 }
 
-type MakeMultiRepoSnapshotParams = {
+interface MakeMultiRepoSnapshotParams {
 	timestamp: string;
 	repoStars: Record<string, number>;
-};
+}
 
 function makeMultiRepoSnapshot({ timestamp, repoStars }: MakeMultiRepoSnapshotParams): Snapshot {
 	const repos = Object.entries(repoStars).map(([fullName, stars]) => {

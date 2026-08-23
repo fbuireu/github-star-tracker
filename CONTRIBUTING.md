@@ -148,7 +148,11 @@ pnpm run format
   declare it
 - Functional programming style preferred
 - No `any` types (use `unknown` if needed)
-- Functions with 2+ parameters should use destructured named parameters
+- Functions with 2+ parameters take one destructured object typed by an **interface** named
+  `<FunctionName>Params` — `function makeRepoInfo({ name, stars }: MakeRepoInfoParams)`. A single parameter
+  stays positional. The exception is a function a runtime calls back, such as a `sort` comparator like
+  `alphabetically`, which is handed its arguments one at a time and must stay positional.
+  `docs/docs-consistency.test.ts` asserts this over the whole of `src`, fixtures included
 - Constants for magic numbers and strings
 - No explanatory comments. The tree carries none by design; the `CLAUDE.md` guides carry the explanation
   instead
@@ -286,7 +290,8 @@ reference. No manual versioning is needed.
 ### Before Submitting
 
 - [ ] **All checks pass**: `pnpm run verify` succeeds
-- [ ] **`dist/` is rebuilt and committed** if you touched any non-test file under `src/`
+- [ ] **`dist/` is rebuilt and committed** if you touched any bundled file under `src/` — that is,
+      anything except `*.test.ts` and the fixtures in `src/shared/tests/`, neither of which the bundle reaches
 - [ ] **Code is formatted**: run `pnpm run format`
 - [ ] **Types are correct**: no TypeScript errors
 - [ ] **Documentation updated**: see the maintenance contract in the root [`CLAUDE.md`](./CLAUDE.md)

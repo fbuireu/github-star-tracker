@@ -52,10 +52,10 @@ const I18N_KEY_PATTERN = /`([\w.]+)`/g;
 
 const LINE_CITATION_ALLOWLIST = new Set([GUIDE, CONTRIBUTOR_GUIDE, ADR_TEMPLATE]);
 
-type WalkParams = {
+interface WalkParams {
 	dir: string;
 	keep: (filename: string) => boolean;
-};
+}
 
 function walk({ dir, keep }: WalkParams): string[] {
 	if (!fs.existsSync(dir)) return [];

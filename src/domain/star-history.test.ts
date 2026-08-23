@@ -7,10 +7,10 @@ import type { SnapshotRepo } from "./types";
 const NOW = new Date("2026-06-25T00:00:00Z");
 const MAX_REACHABLE_STARS = 40_000;
 
-type RepoTotalParams = {
+interface RepoTotalParams {
 	fullName: string;
 	stars: number;
-};
+}
 
 function repoTotal({ fullName, stars }: RepoTotalParams): SnapshotRepo {
 	const [owner, name] = fullName.split("/");
@@ -18,11 +18,11 @@ function repoTotal({ fullName, stars }: RepoTotalParams): SnapshotRepo {
 	return { fullName, name, owner, stars };
 }
 
-type RepoStargazersParams = {
+interface RepoStargazersParams {
 	fullName: string;
 	dates: string[];
 	sampled?: boolean;
-};
+}
 
 function repoStargazers({ fullName, dates, sampled = false }: RepoStargazersParams): RepoStargazers {
 	return {

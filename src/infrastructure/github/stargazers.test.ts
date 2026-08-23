@@ -15,10 +15,10 @@ const samplingOff = makeConfig({
 	smartSamplingPages: 30,
 });
 
-type MakeStargazerResponseParams = {
+interface MakeStargazerResponseParams {
 	login: string;
 	date?: string;
-};
+}
 
 function makeStargazerResponse({ login, date = "2026-01-15T00:00:00Z" }: MakeStargazerResponseParams) {
 	return {

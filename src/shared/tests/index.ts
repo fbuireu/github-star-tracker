@@ -11,11 +11,11 @@ export function makeConfig(overrides: Partial<Config> = {}): Config {
 	return { ...DEFAULTS, ...overrides };
 }
 
-export type MakeRepoInfoParams = {
+export interface MakeRepoInfoParams {
 	name: string;
 	stars?: number;
 	overrides?: Partial<RepoInfo>;
-};
+}
 
 export function makeRepoInfo({ name, stars = 10, overrides = {} }: MakeRepoInfoParams): RepoInfo {
 	return {
@@ -62,11 +62,11 @@ export function makeStargazerSeries({
 	);
 }
 
-export type MakeSnapshotParams = {
+export interface MakeSnapshotParams {
 	timestamp: string;
 	totalStars: number;
 	repos?: SnapshotRepo[];
-};
+}
 
 export function makeSnapshot({ timestamp, totalStars, repos = [] }: MakeSnapshotParams): Snapshot {
 	return { timestamp, totalStars, repos };
@@ -88,10 +88,10 @@ export function makeHistory(
 	};
 }
 
-export type MakeMultiRepoSnapshotParams = {
+export interface MakeMultiRepoSnapshotParams {
 	timestamp: string;
 	repoStars: Record<string, number>;
-};
+}
 
 export function makeMultiRepoSnapshot({ timestamp, repoStars }: MakeMultiRepoSnapshotParams): Snapshot {
 	const repos = Object.entries(repoStars).map(([fullName, stars]) => ({
@@ -119,10 +119,10 @@ export function makeMultiRepoHistory(
 	};
 }
 
-export type MakeRepoResultParams = {
+export interface MakeRepoResultParams {
 	name: string;
 	overrides?: Partial<RepoResult>;
-};
+}
 
 export function makeRepoResult({ name, overrides = {} }: MakeRepoResultParams): RepoResult {
 	return {

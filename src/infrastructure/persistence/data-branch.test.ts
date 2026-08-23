@@ -115,10 +115,10 @@ describe("withDataBranch", () => {
 });
 
 describe("publish", () => {
-	type PublishParams = {
+	interface PublishParams {
 		artefacts: PublishedArtefacts;
 		readOnly?: boolean;
-	};
+	}
 
 	async function publish({ artefacts, readOnly = false }: PublishParams): Promise<void> {
 		await withDataBranch({

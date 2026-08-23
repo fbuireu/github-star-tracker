@@ -23,10 +23,10 @@ function ranGit(...args: string[]): boolean {
 	return vi.mocked(execute).mock.calls.some(([params]) => JSON.stringify(params.args) === JSON.stringify(args));
 }
 
-type FailGitWhenParams = {
+interface FailGitWhenParams {
 	matches: (args: string[]) => boolean;
 	error?: Error;
-};
+}
 
 function failGitWhen({ matches, error = new Error("git failed") }: FailGitWhenParams): void {
 	vi.mocked(execute).mockImplementation(({ args }) => {

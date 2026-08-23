@@ -40,7 +40,7 @@ jobs:
         run: |
           git fetch --no-tags --depth=1 origin "$BASE_SHA"
           changed=$(git diff --name-only "$BASE_SHA" HEAD)
-          bundled=$(echo "$changed" | grep -E '^src/.*\.ts$' | grep -v '\.test\.ts$' || true)
+          bundled=$(echo "$changed" | grep -E '^src/.*\.ts$' | grep -v '\.test\.ts$' | grep -v '^src/shared/tests/' || true)
           rebuilt=$(echo "$changed" | grep -E '^dist/' || true)
           if [ -n "$bundled" ] && [ -z "$rebuilt" ]; then
             echo "::error::Bundled sources changed but dist/ did not. Run 'pnpm build' and commit the result — action.yml executes dist/index.js, so a source change is not shipped until it is rebuilt."

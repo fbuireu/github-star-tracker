@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { calendarDays, fitTrend, latestRateInterval, type SeriesPoint, weightedDailyRate } from "./growth";
 import type { History } from "./types";
 
-type SeriesParams = {
+interface SeriesParams {
 	values: number[];
 	step?: number;
-};
+}
 
 function series({ values, step = 1 }: SeriesParams): SeriesPoint[] {
 	return values.map((value, index) => ({ day: index * step, value }));

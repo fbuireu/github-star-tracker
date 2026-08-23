@@ -113,7 +113,9 @@ re-export from `src/i18n/index.ts` instead.
   `presentation`, `./snapshot` from inside `domain`. Mixed forms of the same module break Biome's import
   sorting and duplicate it in the bundle. "Same layer" means all of `src/infrastructure`, not one adapter.
 - **Named params for 2+ arguments.** Any function taking two or more arguments takes one destructured
-  object typed by an interface: `function foo({ a, b }: FooParams)`. Single-argument functions stay
+  object typed by an interface named `<FunctionName>Params`: `function foo({ a, b }: FooParams)`. A
+  comparator handed to `sort` is the exception — it is called back positionally, so `alphabetically`
+  keeps its two arguments. Single-argument functions stay
   positional. `docs/docs-consistency.test.ts` asserts the rule over the whole of `src`, with no exemption:
   the fixture factories in `src/shared/tests` and the co-located test helpers used to be excused, which is
   exactly where the rule had drifted — `makeRepoInfo(name, stars, overrides)` and `repoStargazers(fullName,

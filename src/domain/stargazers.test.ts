@@ -2,10 +2,10 @@ import { makeStargazer } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import type { RepoStargazers, Stargazer, StargazerMap } from "./stargazers";
 
-type MakeStarParams = {
+interface MakeStarParams {
 	login: string;
 	starredAt?: string;
-};
+}
 
 const makeStar = ({ login, starredAt = "2026-01-15" }: MakeStarParams): Stargazer =>
 	makeStargazer({ login, starredAt });
