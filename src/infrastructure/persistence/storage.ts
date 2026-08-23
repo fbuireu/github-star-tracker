@@ -217,7 +217,7 @@ export function commitAndPush({ dataDir, dataBranch, message, token }: CommitAnd
 		if (!PUSH_REJECTED_PATTERN.test((error as Error).message)) throw error;
 
 		throw new Error(
-			`Another run pushed to "${dataBranch}" while this one was working, so this run's snapshot was not recorded — its report and any email have already gone out. Re-run to record it. To stop runs overlapping, give the workflow a "concurrency" group, or set read-only on whichever workflow should not be the writer.`,
+			`Another run pushed to "${dataBranch}" while this one was working, so this run's snapshot was not recorded; its report and any email have already gone out. Re-run to record it. To stop runs overlapping, give the workflow a "concurrency" group, or set read-only on whichever workflow should not be the writer.`,
 		);
 	}
 

@@ -261,9 +261,9 @@ describe("generateHtmlReport", () => {
 
 		const html = renderHtml({ history, config: { includeCharts: true } });
 
-		expect(html).toContain(`user/repo-a — 15 ★ (<span style="color:${COLORS.positive}`);
+		expect(html).toContain(`user/repo-a: 15 ★ (<span style="color:${COLORS.positive}`);
 		expect(html).toContain("+5</span>)");
-		expect(html).toContain(`user/repo-b — 8 ★ (<span style="color:${COLORS.negative}`);
+		expect(html).toContain(`user/repo-b: 8 ★ (<span style="color:${COLORS.negative}`);
 		expect(html).toContain("-2</span>)");
 	});
 

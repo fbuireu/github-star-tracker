@@ -25,7 +25,7 @@
 		"topRepositories": "Top Repositories",
 		"byRepository": "By Repository",
 		"individualRepoCharts": "Individual Repository Charts",
-		"repoChartHeading": "{name} — {count} ★ ({delta})",
+		"repoChartHeading": "{name}: {count} ★ ({delta})",
 		"trendLine": "Trend",
 		"badges": {
 			"new": "NEW"

@@ -37517,7 +37517,7 @@ var ca_default = {
     topRepositories: "Repositoris Principals",
     byRepository: "Per Repositori",
     individualRepoCharts: "Gr\xE0fics per Repositori",
-    repoChartHeading: "{name} \u2014 {count} \u2605 ({delta})",
+    repoChartHeading: "{name}: {count} \u2605 ({delta})",
     trendLine: "Tend\xE8ncia",
     badges: {
       new: "NOU"
@@ -37593,7 +37593,7 @@ var en_default = {
     topRepositories: "Top Repositories",
     byRepository: "By Repository",
     individualRepoCharts: "Individual Repository Charts",
-    repoChartHeading: "{name} \u2014 {count} \u2605 ({delta})",
+    repoChartHeading: "{name}: {count} \u2605 ({delta})",
     trendLine: "Trend",
     badges: {
       new: "NEW"
@@ -37669,7 +37669,7 @@ var es_default = {
     topRepositories: "Repositorios Principales",
     byRepository: "Por Repositorio",
     individualRepoCharts: "Gr\xE1ficos por Repositorio",
-    repoChartHeading: "{name} \u2014 {count} \u2605 ({delta})",
+    repoChartHeading: "{name}: {count} \u2605 ({delta})",
     trendLine: "Tendencia",
     badges: {
       new: "NUEVO"
@@ -37745,7 +37745,7 @@ var it_default = {
     topRepositories: "Repository Principali",
     byRepository: "Per Repository",
     individualRepoCharts: "Grafici per Repository",
-    repoChartHeading: "{name} \u2014 {count} \u2605 ({delta})",
+    repoChartHeading: "{name}: {count} \u2605 ({delta})",
     trendLine: "Tendenza",
     badges: {
       new: "NUOVO"
@@ -41499,7 +41499,7 @@ function commitAndPush({ dataDir, dataBranch, message, token }) {
   } catch (error2) {
     if (!PUSH_REJECTED_PATTERN.test(error2.message)) throw error2;
     throw new Error(
-      `Another run pushed to "${dataBranch}" while this one was working, so this run's snapshot was not recorded \u2014 its report and any email have already gone out. Re-run to record it. To stop runs overlapping, give the workflow a "concurrency" group, or set read-only on whichever workflow should not be the writer.`
+      `Another run pushed to "${dataBranch}" while this one was working, so this run's snapshot was not recorded; its report and any email have already gone out. Re-run to record it. To stop runs overlapping, give the workflow a "concurrency" group, or set read-only on whichever workflow should not be the writer.`
     );
   }
   info(`Data committed and pushed to ${dataBranch}`);

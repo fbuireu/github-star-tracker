@@ -246,8 +246,8 @@ describe("generateMarkdownReport", () => {
 
 		const report = renderMarkdown({ history, config: { includeCharts: true } });
 
-		expect(report).toContain("#### user/repo-a — 15 ★ (+5)");
-		expect(report).toContain("#### user/repo-b — 8 ★ (-2)");
+		expect(report).toContain("#### user/repo-a: 15 ★ (+5)");
+		expect(report).toContain("#### user/repo-b: 8 ★ (-2)");
 	});
 
 	it("includes stargazer section with new stargazers", () => {

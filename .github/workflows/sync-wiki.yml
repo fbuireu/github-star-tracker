@@ -39,7 +39,7 @@ jobs:
           git add -A
 
           if git diff --staged --quiet; then
-            echo "Wiki already up to date — nothing to publish."
+            echo "Wiki already up to date: nothing to publish."
             exit 0
           fi
 

@@ -25,7 +25,7 @@
 		"topRepositories": "Repositoris Principals",
 		"byRepository": "Per Repositori",
 		"individualRepoCharts": "Gràfics per Repositori",
-		"repoChartHeading": "{name} — {count} ★ ({delta})",
+		"repoChartHeading": "{name}: {count} ★ ({delta})",
 		"trendLine": "Tendència",
 		"badges": {
 			"new": "NOU"
