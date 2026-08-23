@@ -159,7 +159,7 @@ The scripts, Biome settings and git hooks are listed once in [CLAUDE.md](./CLAUD
 | `release.yml` | On push to `main`: `pnpm verify` then `semantic-release`, plus a major-version tag update |
 | `zizmor.yml` | zizmor static analysis of the workflow files themselves |
 | `dependency-review.yml` | Fails a PR that introduces a dependency with a known vulnerability |
-| `commit-message.yml` | Runs commitlint on the **pull request title**. `main` takes squash merges and the repository is set to `PR_TITLE`, so that title — not the branch's commits — is the message that lands and the one semantic-release reads. The `commit-msg` hook validates commits the squash then discards, so this is the only guard on the string that ships |
+| `commit-message.yml` | Runs commitlint on the **pull request title**. `main` takes squash merges and the repository is set to `PR_TITLE`, so that title, not the branch's commits, is the message that lands and the one semantic-release reads. The `commit-msg` hook validates commits the squash then discards, so this is the only guard on the string that ships |
 | `dependabot-auto-merge.yml` | Auto-approves and squash-merges Dependabot patch/minor/dev/indirect updates |
 | `renovate-auto-approve.yml` | Auto-approves Renovate PRs labelled patch/minor/pin/lock-maintenance |
 | `sync-wiki.yml` | Publishes `docs/wiki/` to the repository's GitHub Wiki with `rsync --delete`, so the wiki is generated and direct edits to it are overwritten |

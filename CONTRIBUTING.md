@@ -106,7 +106,7 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
    ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)). Commit the regenerated
    `dist/index.js` and `dist/index.js.map` alongside your source changes.
 
-   Nothing fails your pull request if you forget, and a release will not ship the stale bundle either —
+   Nothing fails your pull request if you forget, and a release will not ship the stale bundle either;
    `release.yml` rebuilds it before publishing. What you are keeping honest is `main` itself: a commit type
    that does not cut a release (`refactor`, `chore`, `test`, `docs`, `ci`) leaves `main`'s `dist/` behind its
    sources until the next `feat` or `fix`, which anyone referencing `@main` would run. The `pre-push` hook
@@ -152,7 +152,7 @@ pnpm run format
   declare it
 - Functional programming style preferred
 - No `any` types (use `unknown` if needed)
-- One argument is positional and two or more are a single object typed `<FunctionName>Params` —
+- One argument is positional and two or more are a single object typed `<FunctionName>Params`:
   `makeRepoInfo({ name, stars }: MakeRepoInfoParams)`. The exception is a function a runtime calls back,
   such as the `sort` comparator `alphabetically`. `docs/docs-consistency.test.ts` asserts this over the
   whole of `src`, fixtures included
@@ -293,8 +293,8 @@ reference. No manual versioning is needed.
 ### Before Submitting
 
 - [ ] **All checks pass**: `pnpm run verify` succeeds
-- [ ] **`dist/` is rebuilt and committed** if you touched any bundled file under `src/` — that is,
-      anything except `*.test.ts` and the fixtures in `src/shared/tests/`, neither of which the bundle reaches
+- [ ] **`dist/` is rebuilt and committed** if you touched any bundled file under `src/` (that is,
+      anything except `*.test.ts` and the fixtures in `src/shared/tests/`, neither of which the bundle reaches)
 - [ ] **Code is formatted**: run `pnpm run format`
 - [ ] **Types are correct**: no TypeScript errors
 - [ ] **Documentation updated**: see the maintenance contract in the root [`CLAUDE.md`](./CLAUDE.md)
