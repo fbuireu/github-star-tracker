@@ -115,7 +115,12 @@ describe("withDataBranch", () => {
 });
 
 describe("publish", () => {
-	async function publish(artefacts: PublishedArtefacts, readOnly = false): Promise<void> {
+	interface PublishParams {
+		artefacts: PublishedArtefacts;
+		readOnly?: boolean;
+	}
+
+	async function publish({ artefacts, readOnly = false }: PublishParams): Promise<void> {
 		await withDataBranch({
 			...BASE,
 			readOnly,
@@ -126,7 +131,7 @@ describe("publish", () => {
 	it("writes every data-branch artefact into the worktree", async () => {
 		const history = { snapshots: [] };
 
-		await publish(makeArtefacts({ history }));
+		await publish({ artefacts: makeArtefacts({ history }) });
 
 		expect(writeHistory).toHaveBeenCalledWith({ dataDir: DATA_DIR, history });
 		expect(writeArtefact).toHaveBeenCalledWith({
@@ -147,11 +152,11 @@ describe("publish", () => {
 	});
 
 	it("writes the stargazer map only when the run produced one", async () => {
-		await publish(makeArtefacts());
+		await publish({ artefacts: makeArtefacts() });
 
 		expect(writeStargazers).not.toHaveBeenCalled();
 
-		await publish(makeArtefacts({ stargazerMap: { "user/repo": ["a"] } }));
+		await publish({ artefacts: makeArtefacts({ stargazerMap: { "user/repo": ["a"] } }) });
 
 		expect(writeStargazers).toHaveBeenCalledWith({
 			dataDir: DATA_DIR,
@@ -160,14 +165,14 @@ describe("publish", () => {
 	});
 
 	it("writes each chart and prunes the ones this run did not produce", async () => {
-		await publish(
-			makeArtefacts({
+		await publish({
+			artefacts: makeArtefacts({
 				charts: [
 					{ filename: "star-history.svg", svg: "<svg>a</svg>" },
 					{ filename: "comparison.svg", svg: "<svg>b</svg>" },
 				],
 			}),
-		);
+		});
 
 		expect(writeChart).toHaveBeenCalledWith({
 			dataDir: DATA_DIR,
@@ -181,7 +186,7 @@ describe("publish", () => {
 	});
 
 	it("commits and pushes with the run message", async () => {
-		await publish(makeArtefacts({ commitMessage: "Update star data: 100 total (+10)" }));
+		await publish({ artefacts: makeArtefacts({ commitMessage: "Update star data: 100 total (+10)" }) });
 
 		expect(commitAndPush).toHaveBeenCalledWith({
 			dataDir: DATA_DIR,
@@ -192,7 +197,7 @@ describe("publish", () => {
 	});
 
 	it("writes everything but never pushes on a read-only run", async () => {
-		await publish(makeArtefacts({ charts: [{ filename: "a.svg", svg: "<svg/>" }] }), true);
+		await publish({ artefacts: makeArtefacts({ charts: [{ filename: "a.svg", svg: "<svg/>" }] }), readOnly: true });
 
 		expect(writeHistory).toHaveBeenCalled();
 		expect(writeChart).toHaveBeenCalled();
@@ -213,7 +218,7 @@ describe("publish", () => {
 			return true;
 		});
 
-		await publish(makeArtefacts({ charts: [{ filename: "a.svg", svg: "<svg/>" }] }));
+		await publish({ artefacts: makeArtefacts({ charts: [{ filename: "a.svg", svg: "<svg/>" }] }) });
 
 		expect(order).toEqual(["write", "chart", "push"]);
 	});

@@ -15,7 +15,12 @@ const samplingOff = makeConfig({
 	smartSamplingPages: 30,
 });
 
-function makeStargazerResponse(login: string, date = "2026-01-15T00:00:00Z") {
+interface MakeStargazerResponseParams {
+	login: string;
+	date?: string;
+}
+
+function makeStargazerResponse({ login, date = "2026-01-15T00:00:00Z" }: MakeStargazerResponseParams) {
 	return {
 		user: {
 			login,
@@ -34,12 +39,12 @@ describe("fetchAllStargazers", () => {
 	it("fetches stargazers for a single repo", async () => {
 		const octokit = {
 			request: vi.fn().mockResolvedValue({
-				data: [makeStargazerResponse("alice"), makeStargazerResponse("bob")],
+				data: [makeStargazerResponse({ login: "alice" }), makeStargazerResponse({ login: "bob" })],
 			}),
 		};
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("repo-a")],
+			repos: [makeRepoInfo({ name: "repo-a" })],
 			config: samplingOff,
 		});
 
@@ -51,14 +56,14 @@ describe("fetchAllStargazers", () => {
 	});
 
 	it("handles pagination", async () => {
-		const page1 = Array.from({ length: 100 }, (_, index) => makeStargazerResponse(`user-${index}`));
-		const page2 = [makeStargazerResponse("last-user")];
+		const page1 = Array.from({ length: 100 }, (_, index) => makeStargazerResponse({ login: `user-${index}` }));
+		const page2 = [makeStargazerResponse({ login: "last-user" })];
 		const octokit = {
 			request: vi.fn().mockResolvedValueOnce({ data: page1 }).mockResolvedValueOnce({ data: page2 }),
 		};
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("repo-a")],
+			repos: [makeRepoInfo({ name: "repo-a" })],
 			config: samplingOff,
 		});
 
@@ -71,12 +76,12 @@ describe("fetchAllStargazers", () => {
 			request: vi
 				.fn()
 				.mockRejectedValueOnce(new Error("rate limited"))
-				.mockResolvedValueOnce({ data: [makeStargazerResponse("alice")] }),
+				.mockResolvedValueOnce({ data: [makeStargazerResponse({ login: "alice" })] }),
 		};
 
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("repo-a"), makeRepoInfo("repo-b")],
+			repos: [makeRepoInfo({ name: "repo-a" }), makeRepoInfo({ name: "repo-b" })],
 			config: samplingOff,
 		});
 
@@ -93,7 +98,7 @@ describe("fetchAllStargazers", () => {
 
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("repo-a")],
+			repos: [makeRepoInfo({ name: "repo-a" })],
 			config: samplingOff,
 		});
 
@@ -101,7 +106,7 @@ describe("fetchAllStargazers", () => {
 	});
 
 	it("keeps already-fetched pages when a later page fails mid-pagination", async () => {
-		const page1 = Array.from({ length: 100 }, (_, index) => makeStargazerResponse(`user-${index}`));
+		const page1 = Array.from({ length: 100 }, (_, index) => makeStargazerResponse({ login: `user-${index}` }));
 		const octokit = {
 			request: vi
 				.fn()
@@ -111,7 +116,7 @@ describe("fetchAllStargazers", () => {
 
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("repo-a", 150)],
+			repos: [makeRepoInfo({ name: "repo-a", stars: 150 })],
 			config: samplingOff,
 		});
 
@@ -125,12 +130,12 @@ describe("fetchAllStargazers", () => {
 
 	it("reports no coverage limit when the fetch completes", async () => {
 		const octokit = {
-			request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse("alice")] }),
+			request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse({ login: "alice" })] }),
 		};
 
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("repo-a")],
+			repos: [makeRepoInfo({ name: "repo-a" })],
 			config: samplingOff,
 		});
 
@@ -141,14 +146,14 @@ describe("fetchAllStargazers", () => {
 		const octokit = {
 			request: vi
 				.fn()
-				.mockResolvedValueOnce({ data: [makeStargazerResponse("alice")] })
-				.mockResolvedValueOnce({ data: [makeStargazerResponse("bob")] })
+				.mockResolvedValueOnce({ data: [makeStargazerResponse({ login: "alice" })] })
+				.mockResolvedValueOnce({ data: [makeStargazerResponse({ login: "bob" })] })
 				.mockRejectedValue(Object.assign(new Error(""), { status: 403 })),
 		};
 
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("huge", 5000)],
+			repos: [makeRepoInfo({ name: "huge", stars: 5000 })],
 			config: makeConfig({
 				smartSampling: true,
 				smartSamplingThreshold: 1500,
@@ -164,14 +169,14 @@ describe("fetchAllStargazers", () => {
 		const octokit = {
 			request: vi
 				.fn()
-				.mockResolvedValueOnce({ data: [makeStargazerResponse("alice")] })
+				.mockResolvedValueOnce({ data: [makeStargazerResponse({ login: "alice" })] })
 				.mockRejectedValueOnce(Object.assign(new Error(""), { status: 403 }))
-				.mockResolvedValue({ data: [makeStargazerResponse("bob")] }),
+				.mockResolvedValue({ data: [makeStargazerResponse({ login: "bob" })] }),
 		};
 
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("huge", 5000)],
+			repos: [makeRepoInfo({ name: "huge", stars: 5000 })],
 			config: makeConfig({
 				smartSampling: true,
 				smartSamplingThreshold: 1500,
@@ -193,7 +198,7 @@ describe("fetchAllStargazers", () => {
 
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("huge", 5000)],
+			repos: [makeRepoInfo({ name: "huge", stars: 5000 })],
 			config: makeConfig({
 				smartSampling: true,
 				smartSamplingThreshold: 1500,
@@ -214,7 +219,7 @@ describe("fetchAllStargazers", () => {
 
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("repo-a")],
+			repos: [makeRepoInfo({ name: "repo-a" })],
 			config: samplingOff,
 		});
 
@@ -223,7 +228,7 @@ describe("fetchAllStargazers", () => {
 	});
 
 	it("warns when stargazers come back without usable starred_at dates", async () => {
-		const rows = [makeStargazerResponse("alice"), makeStargazerResponse("bob")].map((row) => ({
+		const rows = [makeStargazerResponse({ login: "alice" }), makeStargazerResponse({ login: "bob" })].map((row) => ({
 			...row,
 			starred_at: undefined,
 		}));
@@ -233,7 +238,7 @@ describe("fetchAllStargazers", () => {
 
 		await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("repo-a", 2)],
+			repos: [makeRepoInfo({ name: "repo-a", stars: 2 })],
 			config: samplingOff,
 		});
 
@@ -249,7 +254,7 @@ describe("fetchAllStargazers", () => {
 
 		await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("restricted", 54000)],
+			repos: [makeRepoInfo({ name: "restricted", stars: 54000 })],
 			config: samplingOff,
 		});
 
@@ -265,7 +270,7 @@ describe("fetchAllStargazers", () => {
 
 		await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("empty", 0)],
+			repos: [makeRepoInfo({ name: "empty", stars: 0 })],
 			config: samplingOff,
 		});
 
@@ -274,12 +279,12 @@ describe("fetchAllStargazers", () => {
 
 	it("samples evenly-spaced pages when stars exceed the threshold", async () => {
 		const octokit = {
-			request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse("alice")] }),
+			request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse({ login: "alice" })] }),
 		};
 
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("huge", 5000)],
+			repos: [makeRepoInfo({ name: "huge", stars: 5000 })],
 			config: makeConfig({
 				smartSampling: true,
 				smartSamplingThreshold: 1500,
@@ -297,12 +302,12 @@ describe("fetchAllStargazers", () => {
 
 	it("fetches all pages normally when stars are at or below the threshold", async () => {
 		const octokit = {
-			request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse("alice")] }),
+			request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse({ login: "alice" })] }),
 		};
 
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("mid", 1000)],
+			repos: [makeRepoInfo({ name: "mid", stars: 1000 })],
 			config: makeConfig({
 				smartSampling: true,
 				smartSamplingThreshold: 1500,
@@ -321,7 +326,7 @@ describe("fetchAllStargazers", () => {
 
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("huge", 50000)],
+			repos: [makeRepoInfo({ name: "huge", stars: 50000 })],
 			config: samplingOff,
 		});
 
@@ -330,12 +335,12 @@ describe("fetchAllStargazers", () => {
 
 	it("falls back to fetching all pages when total pages do not exceed maxPages", async () => {
 		const octokit = {
-			request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse("alice")] }),
+			request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse({ login: "alice" })] }),
 		};
 
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("huge", 2000)],
+			repos: [makeRepoInfo({ name: "huge", stars: 2000 })],
 			config: makeConfig({
 				smartSampling: true,
 				smartSamplingThreshold: 100,
@@ -349,12 +354,12 @@ describe("fetchAllStargazers", () => {
 
 	it("never samples a page beyond the 40,000-star reachable window", async () => {
 		const octokit = {
-			request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse("alice")] }),
+			request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse({ login: "alice" })] }),
 		};
 
 		await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("massive", 50000)],
+			repos: [makeRepoInfo({ name: "massive", stars: 50000 })],
 			config: makeConfig({
 				smartSampling: true,
 				smartSamplingThreshold: 1500,
@@ -369,13 +374,13 @@ describe("fetchAllStargazers", () => {
 	it("stops the full fetch at the reachable page cap for repos above 40,000 stars", async () => {
 		const octokit = {
 			request: vi.fn().mockResolvedValue({
-				data: Array.from({ length: 100 }, (_, index) => makeStargazerResponse(`user-${index}`)),
+				data: Array.from({ length: 100 }, (_, index) => makeStargazerResponse({ login: `user-${index}` })),
 			}),
 		};
 
 		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("massive", 50000)],
+			repos: [makeRepoInfo({ name: "massive", stars: 50000 })],
 			config: samplingOff,
 		});
 
@@ -388,12 +393,12 @@ describe("fetchAllStargazers", () => {
 
 	it("fetches only the first page when maxPages is 1", async () => {
 		const octokit = {
-			request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse("alice")] }),
+			request: vi.fn().mockResolvedValue({ data: [makeStargazerResponse({ login: "alice" })] }),
 		};
 
 		await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo("huge", 5000)],
+			repos: [makeRepoInfo({ name: "huge", stars: 5000 })],
 			config: makeConfig({
 				smartSampling: true,
 				smartSamplingThreshold: 1500,

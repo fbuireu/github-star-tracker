@@ -112,11 +112,14 @@ re-export from `src/i18n/index.ts` instead.
 - **Cross-layer imports use the alias; same-layer imports stay relative.** `@domain/snapshot` from
   `presentation`, `./snapshot` from inside `domain`. Mixed forms of the same module break Biome's import
   sorting and duplicate it in the bundle. "Same layer" means all of `src/infrastructure`, not one adapter.
-- **Named params for 2+ arguments.** Any function taking two or more arguments takes one destructured
-  object typed by an interface: `function foo({ a, b }: FooParams)`. Single-argument functions stay
-  positional. Some of the fixture factories in `src/shared/tests` are the sanctioned exception, and
-  `docs/docs-consistency.test.ts` asserts the rule over the whole tree. It had drifted in nine places before
-  it was executable, three of them adjacent same-typed numbers a caller could silently swap.
+- **One argument is positional; two or more are one object, typed `<FunctionName>Params`.**
+  `coveredStars(totalStars)`, `describeFetchError(error)`; `makeRepoInfo({ name, stars }): MakeRepoInfoParams`,
+  `repoStargazers({ fullName, dates, sampled }): RepoStargazersParams`. The interface is named after the
+  function, not after the concept, so a reader landing on the type knows what takes it. A comparator handed
+  to `sort` is the exception — it is called back positionally, so `alphabetically` keeps its two arguments.
+  `docs/docs-consistency.test.ts` asserts the rule over the whole of `src`, with no exemption: the fixture
+  factories in `src/shared/tests` and the co-located test helpers used to be excused, which is exactly where
+  the rule had drifted, and a fixture is the code a reader copies from.
 - **No explanatory comments in `.ts` files**, without exception; the tree contains none. These `CLAUDE.md`
   files carry the explanation instead. If something needs explaining it goes in the folder's *Invariants* or
   *Gotchas* section, not above the line.

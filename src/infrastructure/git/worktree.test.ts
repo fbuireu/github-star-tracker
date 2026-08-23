@@ -23,7 +23,12 @@ function ranGit(...args: string[]): boolean {
 	return vi.mocked(execute).mock.calls.some(([params]) => JSON.stringify(params.args) === JSON.stringify(args));
 }
 
-function failGitWhen(matches: (args: string[]) => boolean, error = new Error("git failed")): void {
+interface FailGitWhenParams {
+	matches: (args: string[]) => boolean;
+	error?: Error;
+}
+
+function failGitWhen({ matches, error = new Error("git failed") }: FailGitWhenParams): void {
 	vi.mocked(execute).mockImplementation(({ args }) => {
 		if (matches(args)) throw error;
 
@@ -72,7 +77,7 @@ describe("initializeDataBranch", () => {
 	});
 
 	it("lets a failing remote probe through instead of reading it as an absent branch", () => {
-		failGitWhen(isRemoteProbe, new Error("fatal: could not read Username for https://github.com"));
+		failGitWhen({ matches: isRemoteProbe, error: new Error("fatal: could not read Username for https://github.com") });
 
 		expect(() => initializeDataBranch({ dataBranch: BRANCH })).toThrow(/could not read Username/);
 		expect(ranGit("checkout", "--orphan", BRANCH)).toBe(false);
@@ -111,7 +116,7 @@ describe("initializeDataBranch", () => {
 	});
 
 	it("throws an actionable error when not inside a checked-out repository", () => {
-		failGitWhen((args) => args[0] === "rev-parse");
+		failGitWhen({ matches: (args) => args[0] === "rev-parse" });
 
 		expect(() => initializeDataBranch({ dataBranch: BRANCH })).toThrow(
 			'This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.',
@@ -128,7 +133,7 @@ describe("initializeDataBranch", () => {
 
 	it("carries on when the stale worktree cannot be removed", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
-		failGitWhen(isWorktreeRemove);
+		failGitWhen({ matches: isWorktreeRemove });
 
 		expect(() => initializeDataBranch({ dataBranch: BRANCH })).not.toThrow();
 		expect(core.debug).toHaveBeenCalledWith(`Could not remove existing worktree at ${DATA_DIR}, proceeding anyway`);
@@ -160,7 +165,7 @@ describe("initializeDataBranch", () => {
 	});
 
 	it("carries on when the new orphan branch has nothing to clear", () => {
-		failGitWhen((args) => args[0] === "rm");
+		failGitWhen({ matches: (args) => args[0] === "rm" });
 
 		expect(() => initializeDataBranch({ dataBranch: BRANCH })).not.toThrow();
 		expect(core.debug).toHaveBeenCalledWith("Nothing to remove on the new orphan branch, proceeding anyway");
@@ -191,7 +196,7 @@ describe("cleanup", () => {
 	});
 
 	it("never rethrows, so it is safe in a finally", () => {
-		failGitWhen(isWorktreeRemove, new Error("Worktree not found"));
+		failGitWhen({ matches: isWorktreeRemove, error: new Error("Worktree not found") });
 
 		expect(() => cleanup("/data")).not.toThrow();
 		expect(core.debug).toHaveBeenCalledWith('Worktree cleanup for "/data" failed, it may have already been removed');

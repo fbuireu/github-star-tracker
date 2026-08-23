@@ -22,7 +22,12 @@ const THOUSANDS_AXIS_LABEL = />\d+(\.\d+)?K<\/text>/;
 const FEBRUARY_AXIS_LABEL = />Feb \d/;
 const CONSECUTIVE_XML_ATTRIBUTES = /="[^"]*"="[^"]*"/;
 
-function makeSnapshot(timestamp: string, totalStars: number): Snapshot {
+interface MakeSnapshotParams {
+	timestamp: string;
+	totalStars: number;
+}
+
+function makeSnapshot({ timestamp, totalStars }: MakeSnapshotParams): Snapshot {
 	return {
 		timestamp,
 		totalStars,
@@ -34,12 +39,17 @@ function makeHistory(starCounts: number[]): History {
 	return {
 		snapshots: starCounts.map((stars, index) => {
 			const date = new Date(2026, 0, index + 1).toISOString();
-			return makeSnapshot(date, stars);
+			return makeSnapshot({ timestamp: date, totalStars: stars });
 		}),
 	};
 }
 
-function makeMultiRepoSnapshot(timestamp: string, repoStars: Record<string, number>): Snapshot {
+interface MakeMultiRepoSnapshotParams {
+	timestamp: string;
+	repoStars: Record<string, number>;
+}
+
+function makeMultiRepoSnapshot({ timestamp, repoStars }: MakeMultiRepoSnapshotParams): Snapshot {
 	const repos = Object.entries(repoStars).map(([fullName, stars]) => {
 		const [owner, name] = fullName.split("/");
 		return { name, owner, fullName, stars };
@@ -53,7 +63,7 @@ function makeMultiRepoHistory(snapshots: { repoStars: Record<string, number> }[]
 	return {
 		snapshots: snapshots.map((snapshot, index) => {
 			const date = new Date(2026, 0, index + 1).toISOString();
-			return makeMultiRepoSnapshot(date, snapshot.repoStars);
+			return makeMultiRepoSnapshot({ timestamp: date, repoStars: snapshot.repoStars });
 		}),
 	};
 }
@@ -92,10 +102,10 @@ describe("renderSvgChart: star history", () => {
 	it("labels the x-axis by year for multi-year histories", () => {
 		const history: History = {
 			snapshots: [
-				makeSnapshot("2023-02-01T12:00:00Z", 10),
-				makeSnapshot("2023-09-01T12:00:00Z", 40),
-				makeSnapshot("2024-04-01T12:00:00Z", 90),
-				makeSnapshot("2025-01-01T12:00:00Z", 150),
+				makeSnapshot({ timestamp: "2023-02-01T12:00:00Z", totalStars: 10 }),
+				makeSnapshot({ timestamp: "2023-09-01T12:00:00Z", totalStars: 40 }),
+				makeSnapshot({ timestamp: "2024-04-01T12:00:00Z", totalStars: 90 }),
+				makeSnapshot({ timestamp: "2025-01-01T12:00:00Z", totalStars: 150 }),
 			],
 		};
 
@@ -267,7 +277,10 @@ describe("renderSvgChart: star history", () => {
 
 	it("respects locale for date labels", () => {
 		const history: History = {
-			snapshots: [makeSnapshot("2026-03-15T00:00:00Z", 10), makeSnapshot("2026-06-20T00:00:00Z", 20)],
+			snapshots: [
+				makeSnapshot({ timestamp: "2026-03-15T00:00:00Z", totalStars: 10 }),
+				makeSnapshot({ timestamp: "2026-06-20T00:00:00Z", totalStars: 20 }),
+			],
 		};
 		const enResult = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
 		const esResult = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "es" }));
@@ -1038,7 +1051,10 @@ describe("renderSvgChart: forecast", () => {
 
 	it("respects locale", () => {
 		const history: History = {
-			snapshots: [makeSnapshot("2026-03-15T00:00:00Z", 10), makeSnapshot("2026-06-20T00:00:00Z", 20)],
+			snapshots: [
+				makeSnapshot({ timestamp: "2026-03-15T00:00:00Z", totalStars: 10 }),
+				makeSnapshot({ timestamp: "2026-06-20T00:00:00Z", totalStars: 20 }),
+			],
 		};
 
 		const enResult = expectSvg(

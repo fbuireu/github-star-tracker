@@ -7,10 +7,10 @@ import { colorSchemeFor, prepareReportData } from "./shared";
 function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResults {
 	return makeComparisonResults({
 		repos: [
-			makeRepoResult("repo-a", { current: 15, previous: 10, delta: 5 }),
-			makeRepoResult("repo-b", { current: 8, previous: 10, delta: -2 }),
-			makeRepoResult("repo-c", { current: 0, previous: 3, delta: -3, isRemoved: true }),
-			makeRepoResult("repo-d", { current: 5, previous: null, delta: 5, isNew: true }),
+			makeRepoResult({ name: "repo-a", overrides: { current: 15, previous: 10, delta: 5 } }),
+			makeRepoResult({ name: "repo-b", overrides: { current: 8, previous: 10, delta: -2 } }),
+			makeRepoResult({ name: "repo-c", overrides: { current: 0, previous: 3, delta: -3, isRemoved: true } }),
+			makeRepoResult({ name: "repo-d", overrides: { current: 5, previous: null, delta: 5, isNew: true } }),
 		],
 		summary: {
 			totalStars: 28,

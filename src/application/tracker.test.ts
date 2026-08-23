@@ -83,7 +83,7 @@ const defaultSummary = {
 	lostStars: 2,
 	changed: true,
 };
-const defaultRepos = [makeRepoInfo("repo-a", 60), makeRepoInfo("repo-b", 40)];
+const defaultRepos = [makeRepoInfo({ name: "repo-a", stars: 60 }), makeRepoInfo({ name: "repo-b", stars: 40 })];
 const defaultHistory = { snapshots: [] };
 const defaultSnapshot = { timestamp: "2026-01-01T00:00:00Z", totalStars: 100, repos: [] };
 const defaultUpdatedHistory = { snapshots: [defaultSnapshot] };
@@ -385,14 +385,14 @@ describe("trackStars", () => {
 		});
 		it("draws each per-repo chart on its own timeline, not the shared global one", async () => {
 			vi.mocked(getRepos).mockResolvedValue([
-				makeRepoInfo("old", 100, { owner: "u", fullName: "u/old" }),
-				makeRepoInfo("new", 30, { owner: "u", fullName: "u/new" }),
+				makeRepoInfo({ name: "old", stars: 100, overrides: { owner: "u", fullName: "u/old" } }),
+				makeRepoInfo({ name: "new", stars: 30, overrides: { owner: "u", fullName: "u/new" } }),
 			]);
 			mockMeasurement({
 				results: {
 					repos: [
-						makeRepoResult("old", { fullName: "u/old", owner: "u", current: 100 }),
-						makeRepoResult("new", { fullName: "u/new", owner: "u", current: 30 }),
+						makeRepoResult({ name: "old", overrides: { fullName: "u/old", owner: "u", current: 100 } }),
+						makeRepoResult({ name: "new", overrides: { fullName: "u/new", owner: "u", current: 30 } }),
 					],
 					summary: defaultSummary,
 				},
@@ -424,13 +424,13 @@ describe("trackStars", () => {
 		});
 		it("falls back to stored snapshots for a repo whose stargazers were unreachable (#148)", async () => {
 			vi.mocked(getRepos).mockResolvedValue([
-				makeRepoInfo("reachable", 100, { owner: "u", fullName: "u/reachable" }),
-				makeRepoInfo("restricted", 54_000, { owner: "u", fullName: "u/restricted" }),
+				makeRepoInfo({ name: "reachable", stars: 100, overrides: { owner: "u", fullName: "u/reachable" } }),
+				makeRepoInfo({ name: "restricted", stars: 54_000, overrides: { owner: "u", fullName: "u/restricted" } }),
 			]);
 			const unreachableResults = {
 				repos: [
-					makeRepoResult("reachable", { fullName: "u/reachable", owner: "u", current: 100 }),
-					makeRepoResult("restricted", { fullName: "u/restricted", owner: "u", current: 54_000 }),
+					makeRepoResult({ name: "reachable", overrides: { fullName: "u/reachable", owner: "u", current: 100 } }),
+					makeRepoResult({ name: "restricted", overrides: { fullName: "u/restricted", owner: "u", current: 54_000 } }),
 				],
 				summary: defaultSummary,
 			};
@@ -526,9 +526,9 @@ describe("trackStars", () => {
 		};
 		const resultsWithRepos = {
 			repos: [
-				makeRepoResult("repo-a", { current: 60 }),
-				makeRepoResult("repo-b", { current: 40 }),
-				makeRepoResult("repo-c", { current: 10, isRemoved: true }),
+				makeRepoResult({ name: "repo-a", overrides: { current: 60 } }),
+				makeRepoResult({ name: "repo-b", overrides: { current: 40 } }),
+				makeRepoResult({ name: "repo-c", overrides: { current: 10, isRemoved: true } }),
 			],
 			summary: defaultSummary,
 		};
