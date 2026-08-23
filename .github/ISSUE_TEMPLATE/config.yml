@@ -6,6 +6,3 @@ contact_links:
   - name: Documentation
     url: https://github.com/fbuireu/github-star-tracker#readme
     about: Check out the documentation for usage guides and examples
-  - name: Security Policy
-    url: https://github.com/fbuireu/github-star-tracker/security/policy
-    about: Review our security policy and report vulnerabilities privately
