@@ -484,7 +484,7 @@ steps:
 **Fix:**
 - Push a commit or manually trigger the workflow to re-enable it
 - Validate cron syntax at [crontab.guru](https://crontab.guru)
-- Ensure the workflow file is in `.github/workflows/` on your default branch
+- Ensure the workflow file is in [`.github/workflows/`](https://github.com/fbuireu/github-star-tracker/blob/main/.github/workflows) on your default branch
 
 ### Workflow Runs but Nothing Happens
 

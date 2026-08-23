@@ -84,7 +84,7 @@ Nodemailer talks to any SMTP provider, so nobody is locked into a transactional-
 ## Testing
 
 - Coverage floor of 85% for lines, functions, branches and statements, enforced by the threshold in [`vitest.config.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/vitest.config.ts). The build fails below it
-- Coverage excludes [`src/index.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/index.ts), type/constant/default files, test files, and the shared test helpers in `src/shared/tests/`
+- Coverage excludes [`src/index.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/index.ts), type/constant/default files, test files, and the shared test helpers in [`src/shared/tests/`](https://github.com/fbuireu/github-star-tracker/blob/main/src/shared/tests)
 - Tests are colocated next to the module they cover, as `src/**/*.test.ts`
 - Philosophy: mock at the boundary, not in the middle. Real code paths are exercised, and only external dependencies (the GitHub API, the filesystem, Git, SMTP) are replaced
 

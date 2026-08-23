@@ -64,7 +64,7 @@ elsewhere.
 
 ## Translation Architecture
 
-Translations live in `src/i18n/` as JSON files, one per locale:
+Translations live in [`src/i18n/`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n) as JSON files, one per locale:
 
 ```
 src/i18n/

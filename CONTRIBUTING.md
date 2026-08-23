@@ -294,7 +294,7 @@ reference. No manual versioning is needed.
 
 - [ ] **All checks pass**: `pnpm run verify` succeeds
 - [ ] **`dist/` is rebuilt and committed** if you touched any bundled file under `src/` (that is,
-      anything except `*.test.ts` and the fixtures in `src/shared/tests/`, neither of which the bundle reaches)
+      anything except `*.test.ts` and the fixtures in [`src/shared/tests/`](./src/shared/tests), neither of which the bundle reaches)
 - [ ] **Code is formatted**: run `pnpm run format`
 - [ ] **Types are correct**: no TypeScript errors
 - [ ] **Documentation updated**: see the maintenance contract in the root [`CLAUDE.md`](./CLAUDE.md)
@@ -365,7 +365,7 @@ github-star-tracker/
 └── tsconfig.json           # TypeScript configuration with path aliases
 ```
 
-`src/domain/` is the largest layer and holds one module per concept: run measurement, comparison,
+[`src/domain/`](./src/domain) is the largest layer and holds one module per concept: run measurement, comparison,
 snapshots, forecasting, velocity, growth, stargazer diffing, star-history reconstruction, tracked-set
 resolution, sampling, notification settlement, formatting and time parsing, plus `types.ts` and
 [`constants.ts`](./src/domain/constants.ts). [`src/domain/CLAUDE.md`](./src/domain/CLAUDE.md) is the guide.
@@ -389,7 +389,7 @@ them leaves them lying:
 | [`CONTEXT.md`](./CONTEXT.md) (root) | *What does this word mean?* A domain glossary, and nothing else: no file names, no libraries, no implementation detail | A domain term changes meaning, or a new one appears |
 | `src/<layer>/CLAUDE.md` | *What does this layer guarantee?* Invariants and gotchas, one guide per layer | You change an invariant, or a rule the guide states |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | *How does it fit together?* Layer map, end-to-end run, data branch, build and release | You change the run order, the layering, or the pipeline |
-| `docs/adr/` | *Why is it like this?* One decision per file | You make a decision that is hard to reverse, surprising without context, **and** the result of a real trade-off |
+| [`docs/adr/`](./docs/adr) | *Why is it like this?* One decision per file | You make a decision that is hard to reverse, surprising without context, **and** the result of a real trade-off |
 
 The root [`CLAUDE.md`](./CLAUDE.md) has the full table of what to update for a given change.
 

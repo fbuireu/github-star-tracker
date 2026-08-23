@@ -26,7 +26,7 @@ SMTP. There is exactly one use case: `trackStars()`.
 ## Versions (pinned by hand, and asserted against `package.json` by the docs test)
 
 - Node **26.2.0** (`engines.node`)
-- Node **26.2.0** again in `.nvmrc`, which [`ci.yml`](./.github/workflows/ci.yml) and [`release.yml`](./.github/workflows/release.yml) install from via `node-version-file`
+- Node **26.2.0** again in [`.nvmrc`](./.nvmrc), which [`ci.yml`](./.github/workflows/ci.yml) and [`release.yml`](./.github/workflows/release.yml) install from via `node-version-file`
 - pnpm **11.21.0** (`packageManager`): always use pnpm, never npm/yarn
 
 All three are deliberate pins rather than dependency ranges, so bumping one means editing this section in the
@@ -111,14 +111,14 @@ re-export from [`src/i18n/index.ts`](./src/i18n/index.ts) instead.
 
 - **Cross-layer imports use the alias; same-layer imports stay relative.** `@domain/snapshot` from
   `presentation`, `./snapshot` from inside `domain`. Mixed forms of the same module break Biome's import
-  sorting and duplicate it in the bundle. "Same layer" means all of `src/infrastructure`, not one adapter.
+  sorting and duplicate it in the bundle. "Same layer" means all of [`src/infrastructure`](./src/infrastructure), not one adapter.
 - **One argument is positional; two or more are one object, typed `<FunctionName>Params`.**
   `coveredStars(totalStars)`, `describeFetchError(error)`; `makeRepoInfo({ name, stars }): MakeRepoInfoParams`,
   `repoStargazers({ fullName, dates, sampled }): RepoStargazersParams`. The interface is named after the
   function, not after the concept, so a reader landing on the type knows what takes it. A comparator handed
   to `sort` is the exception: it is called back positionally, so `alphabetically` keeps its two arguments.
   `docs/docs-consistency.test.ts` asserts the rule over the whole of `src`, with no exemption: the fixture
-  factories in `src/shared/tests` and the co-located test helpers used to be excused, which is exactly where
+  factories in [`src/shared/tests`](./src/shared/tests) and the co-located test helpers used to be excused, which is exactly where
   the rule had drifted, and a fixture is the code a reader copies from.
 - **No explanatory comments in `.ts` files**, without exception; the tree contains none. These `CLAUDE.md`
   files carry the explanation instead. If something needs explaining it goes in the folder's *Invariants* or
@@ -195,7 +195,7 @@ the moment anything above it moves, so prefer naming the symbol.
   missing one is drift, not a convention.
 - **Biome allows no suppressions.** Fix the root cause instead of `biome-ignore`. 120-col, tabs, LF,
   double quotes: Biome's defaults bar the line width, and the same config every sibling repo runs;
-  `.gitattributes` pins `* text=auto eol=lf`. `noConsole` is an error with no allowlist: no `console`
+  [`.gitattributes`](./.gitattributes) pins `* text=auto eol=lf`. `noConsole` is an error with no allowlist: no `console`
   at any level, report through `@actions/core`.
 
 ## Build & release
