@@ -14,10 +14,10 @@ accumulates one Snapshot per Run and exists nowhere else.
 
 The reflexive way to read a file like that is `catch { return { snapshots: [] } }`, and the shape of
 [`src/infrastructure/persistence/storage.ts`](../../src/infrastructure/persistence/storage.ts) invites it: `readJsonFile` takes a `fallback`, and both readers
-pass one. For `readStargazers` the fallback is the whole answer, because an empty `StargazerMap` is exactly
-what "no file yet" means and rebuilding it costs one Run. For `readHistory` the fallback is deliberately
-scoped to *absence only*: it covers the first Run, when the file does not exist, and it is never reached by a
-file that exists and cannot be read.
+pass one. For `readStargazers` that fallback answers the question the file asks, because an empty
+`StargazerMap` is exactly what "no file yet" means and rebuilding it costs one Run. For `readHistory` the
+fallback is deliberately scoped to *absence only*: it covers the first Run, when the file does not exist, and
+it is never reached by a file that exists and cannot be read.
 
 The difference matters because the two failures are indistinguishable from inside the Run and the outcomes
 are not. A Run that treats a corrupt history as an empty one carries on cheerfully: it publishes a Report
@@ -66,10 +66,19 @@ nothing is pushed, so the unreadable file is left exactly as it was.
   Notification baseline that is perfectly good in order to complain about a sibling key. The rule is that the
   guards protect the *container*, and a single malformed key inside an otherwise sound container is repaired
   rather than fatal.
-- **`readStargazers` deliberately does not get the same treatment.** It keeps a plain fallback because
+- **`readStargazers` deliberately does not get the same treatment.** It keeps an absence fallback because
   `stargazers.json` is rebuilt from the API on the next Run, so a silent reset there costs one Run's New
   Stargazer list rather than the whole record. Do not "make the two readers consistent"; the asymmetry is the
-  decision.
+  decision. It is an asymmetry about `assertJsonObject` and `assertReadableFormat`, not about the parse
+  catch: that one lives in the shared `readJsonFile`, so bytes that are not JSON fail the Run whichever file
+  they are in.
+- **The container rule applies to both readers, and `readStargazers` had to be taught it.** The bullet above
+  about a malformed `snapshots` key states the general rule, that the guards protect the container while a
+  bad key inside a sound one is repaired. `readStargazers` performed no repair at all: it returned
+  `JSON.parse`'s output under the `StargazerMap` type, so an entry holding a number reached `diffStargazers`
+  and failed the Run on `new Set(5)`. Crashing on a file this ADR calls disposable is neither of the two
+  behaviours it weighs. A non-object now gives `{}` and an entry that is not an array of strings is dropped
+  while its siblings survive.
 - Where this bites is recorded in the persistence section of
   [`src/infrastructure/CLAUDE.md`](../../src/infrastructure/CLAUDE.md), and the recovery steps a user needs
   are in [`docs/wiki/Data-Management.md`](../wiki/Data-Management.md).

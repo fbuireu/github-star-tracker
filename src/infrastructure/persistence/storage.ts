@@ -155,11 +155,23 @@ export function pruneCharts({ dataDir, keep }: PruneChartsParams): string[] {
 	return removed;
 }
 
+function isLoginList(value: unknown): value is string[] {
+	return Array.isArray(value) && value.every((login) => typeof login === "string");
+}
+
+function toStargazerMap(parsed: unknown): StargazerMap {
+	if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+
+	return Object.fromEntries(Object.entries(parsed).filter(([, logins]) => isLoginList(logins))) as StargazerMap;
+}
+
 export function readStargazers(dataDir: string): StargazerMap {
-	return readJsonFile<StargazerMap>({
-		filePath: path.join(dataDir, DATA_FILES.stargazers),
-		fallback: {},
-	});
+	return toStargazerMap(
+		readJsonFile<unknown>({
+			filePath: path.join(dataDir, DATA_FILES.stargazers),
+			fallback: {},
+		}),
+	);
 }
 
 interface WriteStargazersParams {

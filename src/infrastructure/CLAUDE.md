@@ -188,7 +188,15 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
   tracking record, so keep it fatal
   ([ADR 0021](../../docs/adr/0021-an-unreadable-stored-history-fails-the-run.md), which covers all three
   guards here and why the accepted cost is that a broken file blocks every later run until a human fixes
-  it). `readStargazers` does no normalization at all; a missing file gives `{}`.
+  it). The parse catch lives in the shared `readJsonFile`, so unparseable **bytes** are fatal for
+  `stargazers.json` too; what `readStargazers` does not get is `assertJsonObject` or `assertReadableFormat`.
+- **`readStargazers` repairs its container's contents rather than trusting them.** A missing file gives `{}`,
+  a parsed value that is not a plain object gives `{}`, and an entry whose value is not an array of strings
+  is dropped while its siblings survive. That is ADR 0021's container rule, the one that lets a malformed
+  `snapshots` key normalize instead of throwing, applied to the reader that had never had it. `StargazerMap`
+  is `Record<string, string[]>` and the reader used to hand back whatever `JSON.parse` produced under that
+  type, so a hand-edited `{"user/repo": 5}` reached `diffStargazers`, hit `new Set(5)` and failed the whole
+  Run with `TypeError: number 5 is not iterable` over a file ADR 0021 calls disposable.
 - **So does JSON that parses but is not an object.** That invariant used to cover only *unparseable* text.
   A `stars-data.json` holding `null`, `[]`, `5` or a string destructured to `{}`, normalized to
   `{ snapshots: [] }`, and the Run then treated a populated Data Branch as a first Run, appending one

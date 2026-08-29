@@ -278,6 +278,22 @@ describe("readStargazers", () => {
 		expect(result).toEqual(stargazerMap);
 		expect(fs.readFileSync).toHaveBeenCalledWith(path.join("/data", "stargazers.json"), "utf8");
 	});
+
+	it("drops entries whose value is not a list of logins", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue(
+			JSON.stringify({ "user/sound": ["alice"], "user/number": 5, "user/text": "alice", "user/mixed": ["bob", 7] }),
+		);
+
+		expect(readStargazers("/data")).toEqual({ "user/sound": ["alice"] });
+	});
+
+	it("returns an empty map for a file that is valid JSON but not an object", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify([["alice"]]));
+
+		expect(readStargazers("/data")).toEqual({});
+	});
 });
 
 describe("writeStargazers", () => {

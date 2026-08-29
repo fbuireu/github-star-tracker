@@ -41471,11 +41471,20 @@ function pruneCharts({ dataDir, keep }) {
   }
   return removed;
 }
+function isLoginList(value) {
+  return Array.isArray(value) && value.every((login) => typeof login === "string");
+}
+function toStargazerMap(parsed) {
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+  return Object.fromEntries(Object.entries(parsed).filter(([, logins]) => isLoginList(logins)));
+}
 function readStargazers(dataDir) {
-  return readJsonFile({
-    filePath: path3.join(dataDir, DATA_FILES.stargazers),
-    fallback: {}
-  });
+  return toStargazerMap(
+    readJsonFile({
+      filePath: path3.join(dataDir, DATA_FILES.stargazers),
+      fallback: {}
+    })
+  );
 }
 function writeStargazers({ dataDir, stargazerMap }) {
   writeJsonFile({ filePath: path3.join(dataDir, DATA_FILES.stargazers), data: stargazerMap });
