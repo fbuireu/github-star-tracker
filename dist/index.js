@@ -34891,10 +34891,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -37186,7 +37186,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -37309,7 +37309,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -41172,6 +41172,7 @@ async function fetchStargazerPage({ octokit, owner, name, page }) {
 }
 async function fetchRepoStargazers({ octokit, owner, name }) {
   const stargazers = [];
+  let reachedCeiling = false;
   for (let page = 1; page <= MAX_REACHABLE_PAGE; page++) {
     let items;
     try {
@@ -41185,8 +41186,13 @@ async function fetchRepoStargazers({ octokit, owner, name }) {
     }
     stargazers.push(...items);
     if (items.length < STARGAZER_PAGE_SIZE) break;
+    reachedCeiling = page === MAX_REACHABLE_PAGE;
   }
-  return { stargazers };
+  if (!reachedCeiling) return { stargazers };
+  warning(
+    `Stargazers for ${owner}/${name} hit GitHub's pagination ceiling, so only its oldest ${stargazers.length} stargazers are reachable. Its history is reconstructed from those and it is left out of new-stargazer detection.`
+  );
+  return { stargazers, coveredStars: stargazers.length };
 }
 async function fetchSampledStargazers({
   octokit,

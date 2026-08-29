@@ -65,13 +65,23 @@ lines.
   `@config/defaults`, which put octokit's dialect in the one layer that must not know octokit exists, and
   its spec was in [`filters.test.ts`](./github/filters.test.ts) here the whole time.
 - **A full stargazer fetch pages until it reads a page shorter than 100**, the stargazer page size owned by
-  `@domain/sampling`, so an exactly full page always costs one more request. A sampled fetch does not page at
-  all; it reads the specific pages it was handed.
+  `@domain/sampling`, so an exactly full page always costs one more request, **or until it exhausts
+  `MAX_REACHABLE_PAGE`**, which is the other way the loop can end. A sampled fetch does not page at all; it
+  reads the specific pages it was handed.
 - **`fetchAllStargazers` returns exactly one entry per input repo, in input order**, even when the fetch
   failed. Downstream code may assume 1:1 alignment.
-- `coveredStars` is `undefined` on a clean fetch and only set when coverage was cut short. It is the signal
-  `@domain/star-history` uses to decide the tail must be ramped. A page that succeeds but returns nothing does
-  not advance it.
+- `coveredStars` is `undefined` only when the fetch actually reached the end of the list, and set whenever
+  coverage was cut short. It is the signal `@domain/star-history` uses to decide the tail must be ramped. A
+  page that succeeds but returns nothing does not advance it.
+- **The page ceiling is a short fetch, not a clean one.** A full fetch that runs all 400 pages with a full
+  last page has no idea whether more exist, so it reports `coveredStars` and warns, exactly as a fetch that
+  died mid-pagination does. `fetchAllStargazers` therefore marks it `incomplete`, which keeps a repository
+  above the ceiling out of new-stargazer diffing and out of the Stargazer map. It used to return
+  `{ stargazers }` with no coverage figure, so such a repository was diffed as if fully enumerated: the
+  reachable window is the **oldest** 40,000 logins and never moves, so it reported zero new stargazers on
+  every Run, forever, with nothing in the log. Charts were always right, because `@domain/star-history`
+  defaults a missing `coveredStars` to `MAX_REACHABLE_STARGAZERS` and so ramped the tail either way, which is
+  why the bug had no visible symptom on the side anyone looks at.
 - Partial-failure semantics differ between the two paths: a **full** fetch rethrows if page 1 fails but keeps
   what it has if a later page fails; a **sampled** fetch attempts every selected page regardless, then
   rethrows only if nothing at all was collected. Sampled pages have no early break, so gaps in the page

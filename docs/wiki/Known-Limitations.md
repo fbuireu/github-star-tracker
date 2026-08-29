@@ -73,7 +73,9 @@ The reachable stretch is drawn accurately, scaled to the reachable count, and th
 
 That ramp is an admitted approximation: its shape carries no information, only its endpoints do. It is drawn deliberately rather than left flat ([ADR 0007](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0007-bridge-unreachable-history-with-a-ramp.md)).
 
-Pair high-star repositories with `smart-sampling` to keep within rate limits. That costs those repositories their new-stargazer list, for a separate reason: [ADR 0008](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0008-sampled-repositories-are-excluded-from-stargazer-diffing.md).
+A repository above the cap is also left out of **new-stargazer detection**, and the run log says so. The reachable window is the oldest 40,000 stargazers, so it never moves as new stars arrive: diffing it against the previous run would report zero new stargazers every time and would be reporting an artefact of the cap rather than a fact about the repository. Its stored entry is kept rather than overwritten, on the same reasoning as [ADR 0012](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0012-unreadable-stargazer-lists-keep-their-previous-logins.md). Charts are unaffected: the ramp above still runs.
+
+Pair high-star repositories with `smart-sampling` to keep within rate limits. That costs those repositories their new-stargazer list too, for a separate reason: [ADR 0008](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0008-sampled-repositories-are-excluded-from-stargazer-diffing.md).
 
 ---
 

@@ -163,7 +163,8 @@ Charts are rebuilt from raw stargazer timestamps rather than from stored snapsho
 ## Stargazer diffing
 
 `incomplete` means **"this list is not the whole story"**, not "this list is empty". It covers a fetch that
-returned nothing *and* one that was cut short mid-pagination. The second case used to be flagged only by
+returned nothing, one that was cut short mid-pagination, *and* one that ran out of pages at GitHub's
+40,000-stargazer ceiling. The second case used to be flagged only by
 `coveredStars`, which neither guard consulted, so a repo whose fetch died on page 6 of 15 overwrote its
 stored entry with the 500 oldest logins and reported the other 1,000 as new on the next successful Run.
 `@infrastructure` sets it; nothing here recomputes it.

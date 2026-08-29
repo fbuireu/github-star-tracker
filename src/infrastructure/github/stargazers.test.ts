@@ -1,4 +1,6 @@
 import * as core from "@actions/core";
+import { MAX_REACHABLE_STARGAZERS } from "@domain/constants";
+import { MAX_REACHABLE_PAGE, STARGAZER_PAGE_SIZE } from "@domain/sampling";
 import { makeConfig, makeRepoInfo } from "@shared/tests";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchAllStargazers } from "./stargazers";
@@ -374,7 +376,9 @@ describe("fetchAllStargazers", () => {
 	it("stops the full fetch at the reachable page cap for repos above 40,000 stars", async () => {
 		const octokit = {
 			request: vi.fn().mockResolvedValue({
-				data: Array.from({ length: 100 }, (_, index) => makeStargazerResponse({ login: `user-${index}` })),
+				data: Array.from({ length: STARGAZER_PAGE_SIZE }, (_, index) =>
+					makeStargazerResponse({ login: `user-${index}` }),
+				),
 			}),
 		};
 
@@ -384,11 +388,55 @@ describe("fetchAllStargazers", () => {
 			config: samplingOff,
 		});
 
-		expect(octokit.request).toHaveBeenCalledTimes(400);
+		expect(octokit.request).toHaveBeenCalledTimes(MAX_REACHABLE_PAGE);
 		const pages = octokit.request.mock.calls.map((call) => call[1].page);
-		expect(Math.max(...pages)).toBe(400);
+		expect(Math.max(...pages)).toBe(MAX_REACHABLE_PAGE);
 		expect(result[0].sampled).toBe(false);
-		expect(core.warning).not.toHaveBeenCalled();
+		expect(core.warning).not.toHaveBeenCalledWith(expect.stringContaining("Failed to fetch stargazers"));
+	});
+
+	it("reports a fetch capped at the reachable page cap as incomplete", async () => {
+		const octokit = {
+			request: vi.fn().mockResolvedValue({
+				data: Array.from({ length: STARGAZER_PAGE_SIZE }, (_, index) =>
+					makeStargazerResponse({ login: `user-${index}` }),
+				),
+			}),
+		};
+
+		const result = await fetchAllStargazers({
+			octokit: octokit as unknown as Octokit,
+			repos: [makeRepoInfo({ name: "massive", stars: 50000 })],
+			config: samplingOff,
+		});
+
+		expect(result[0].stargazers).toHaveLength(MAX_REACHABLE_STARGAZERS);
+		expect(result[0].coveredStars).toBe(MAX_REACHABLE_STARGAZERS);
+		expect(result[0].incomplete).toBe(true);
+		expect(core.warning).toHaveBeenCalledWith(
+			expect.stringContaining("hit GitHub's pagination ceiling, so only its oldest 40000 stargazers are reachable"),
+		);
+	});
+
+	it("leaves a fetch that ends on a short page complete", async () => {
+		const fullPage = Array.from({ length: STARGAZER_PAGE_SIZE }, (_, index) =>
+			makeStargazerResponse({ login: `user-${index}` }),
+		);
+		const octokit = {
+			request: vi
+				.fn()
+				.mockResolvedValueOnce({ data: fullPage })
+				.mockResolvedValueOnce({ data: [makeStargazerResponse({ login: "last" })] }),
+		};
+
+		const result = await fetchAllStargazers({
+			octokit: octokit as unknown as Octokit,
+			repos: [makeRepoInfo({ name: "modest", stars: 101 })],
+			config: samplingOff,
+		});
+
+		expect(result[0].coveredStars).toBeUndefined();
+		expect(result[0].incomplete).toBe(false);
 	});
 
 	it("fetches only the first page when maxPages is 1", async () => {

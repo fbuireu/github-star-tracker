@@ -132,6 +132,7 @@ interface StargazerFetchResult {
 
 async function fetchRepoStargazers({ octokit, owner, name }: FetchRepoStargazersParams): Promise<StargazerFetchResult> {
 	const stargazers: Stargazer[] = [];
+	let reachedCeiling = false;
 
 	for (let page = 1; page <= MAX_REACHABLE_PAGE; page++) {
 		let items: Stargazer[];
@@ -149,9 +150,16 @@ async function fetchRepoStargazers({ octokit, owner, name }: FetchRepoStargazers
 
 		stargazers.push(...items);
 		if (items.length < STARGAZER_PAGE_SIZE) break;
+		reachedCeiling = page === MAX_REACHABLE_PAGE;
 	}
 
-	return { stargazers };
+	if (!reachedCeiling) return { stargazers };
+
+	core.warning(
+		`Stargazers for ${owner}/${name} hit GitHub's pagination ceiling, so only its oldest ${stargazers.length} stargazers are reachable. Its history is reconstructed from those and it is left out of new-stargazer detection.`,
+	);
+
+	return { stargazers, coveredStars: stargazers.length };
 }
 
 interface FetchSampledStargazersParams {
