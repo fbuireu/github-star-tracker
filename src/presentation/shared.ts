@@ -68,6 +68,7 @@ export interface ReportData {
 	sorted: RepoResult[];
 	now: string;
 	prev: string;
+	isFirstRun: boolean;
 	generatedAt: string;
 }
 
@@ -95,6 +96,7 @@ export function prepareReportData({
 		sorted: rankByStars(repos),
 		now: generatedAt.split("T")[0],
 		prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun,
+		isFirstRun: previousTimestamp === null,
 		generatedAt,
 	};
 }

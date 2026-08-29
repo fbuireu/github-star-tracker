@@ -42177,6 +42177,7 @@ function prepareReportData({
     sorted: rankByStars(repos),
     now: generatedAt.split("T")[0],
     prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun,
+    isFirstRun: previousTimestamp === null,
     generatedAt
   };
 }
@@ -43092,13 +43093,13 @@ function buildReportModel(params) {
     hasChartFile = () => true
   } = params;
   const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config;
-  const t = getTranslations(locale);
   const {
     sorted,
     newRepos,
     removedRepos,
     now: reportDate,
     prev,
+    isFirstRun,
     generatedAt
   } = prepareReportData({
     results,
@@ -43116,7 +43117,7 @@ function buildReportModel(params) {
     now: reportDate,
     prev,
     generatedAt,
-    isFirstRun: prev === t.report.firstRun,
+    isFirstRun,
     sorted,
     newRepos,
     removedRepos,

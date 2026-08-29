@@ -145,6 +145,12 @@ its spec: assert a section rule there, not through one dialect's markup.
   `!== null`), `showComparisonChart`, `topRepos`, `isFirstRun`, the Velocity figures and the three-way
   Stargazer outcome. A dialect that recomputes any of these has reintroduced the drift this module exists to
   stop.
+- **`isFirstRun` comes from `prepareReportData` alongside `prev`, not from comparing `prev` to a
+  translation.** `prev` is the *rendered* baseline date, and it is the locale bundle's `report.firstRun`
+  string when there is no baseline, so `buildReportModel` used to recover the fact by asking whether the
+  rendered string equalled that label. Both halves are decided in `prepareReportData` from the same
+  `previousTimestamp`, so the round trip through a localized string bought nothing and put a boolean the
+  header depends on at the mercy of a wording change in any of the four bundles.
 - **`ReportModel` exposes `chartHistory` and no `hasChartHistory` field.** The flag was
   `chartHistory !== null` by construction, and while both were public the dialects picked different ones and
   spelled the same rule two ways. `hasChartHistory` survives only as a local in `report-model.ts`; it is

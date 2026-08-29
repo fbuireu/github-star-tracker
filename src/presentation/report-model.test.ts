@@ -51,6 +51,12 @@ describe("buildReportModel", () => {
 			expect(model.isFirstRun).toBe(true);
 			expect(model.prev).toBe(getTranslations("en").report.firstRun);
 		});
+
+		it("reads the first run off the baseline, not off the rendered date", () => {
+			const model = modelOf({ previousTimestamp: getTranslations("en").report.firstRun });
+
+			expect(model.isFirstRun).toBe(false);
+		});
 	});
 
 	describe("Top Repositories", () => {

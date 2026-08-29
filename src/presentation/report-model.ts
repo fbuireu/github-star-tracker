@@ -3,7 +3,7 @@ import type { ForecastData, ForecastResult } from "@domain/forecast";
 import type { StargazerDiffEntry } from "@domain/stargazers";
 import type { History, RepoResult, Summary } from "@domain/types";
 import { computeVelocity, type VelocityMetrics } from "@domain/velocity";
-import { getTranslations, type Translations } from "@i18n";
+import type { Translations } from "@i18n";
 import { MIN_SNAPSHOTS_FOR_CHART } from "./constants";
 import type { ReportParams } from "./shared";
 import { buildForecastWeekHeaders, forecastMethodLabel, prepareReportData } from "./shared";
@@ -104,13 +104,13 @@ export function buildReportModel(params: ReportParams): ReportModel {
 	} = params;
 	const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config;
 
-	const t = getTranslations(locale);
 	const {
 		sorted,
 		newRepos,
 		removedRepos,
 		now: reportDate,
 		prev,
+		isFirstRun,
 		generatedAt,
 	} = prepareReportData({
 		results,
@@ -135,7 +135,7 @@ export function buildReportModel(params: ReportParams): ReportModel {
 		now: reportDate,
 		prev,
 		generatedAt,
-		isFirstRun: prev === t.report.firstRun,
+		isFirstRun,
 		sorted,
 		newRepos,
 		removedRepos,
