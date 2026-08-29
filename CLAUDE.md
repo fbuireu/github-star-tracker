@@ -136,6 +136,13 @@ re-export from [`src/i18n/index.ts`](./src/i18n/index.ts) instead.
   impure layers each own a different side effect: `config` reads the action inputs and the YAML file
   (`node:fs`), `infrastructure` owns everything outbound, and `application` writes the Action log and the
   outputs. `infrastructure` is the only layer that reaches the network, not the only one that does I/O.
+- **A primitive earns a type only when it crosses a boundary.** Ask, in order: is the illegal state
+  reachable, does anything read it, does it leave the layer. Three noes mean writing the rule down instead,
+  in the folder's guide, in `CONTEXT.md` or in `docs/docs-consistency.test.ts`, and a named divergence is
+  finished work rather than a debt. [ADR 0022](./docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md)
+  carries the criterion and seven worked cases from this tree, including the ones it decided **not** to
+  model. Say in the commit message which answer applied, because "this is a guard" tells the next reader the
+  test constructs an unreachable state on purpose.
 - **Conventional commits** (commitlint + husky). semantic-release owns versioning. Do NOT add a
   Co-Authored-By / Claude trailer to commits or PRs.
 

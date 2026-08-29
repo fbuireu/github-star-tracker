@@ -94,9 +94,11 @@ const DOCS = [
 const isTestFile = (filename: string): boolean => filename.endsWith(".test.ts");
 
 const TEST_FILENAMES = new Set(
-	[...walk({ dir: "src", keep: isTestFile }), ...walk({ dir: "tests", keep: isTestFile })].map((file) =>
-		path.basename(file),
-	),
+	[
+		...walk({ dir: "src", keep: isTestFile }),
+		...walk({ dir: "tests", keep: isTestFile }),
+		...walk({ dir: "docs", keep: isTestFile }),
+	].map((file) => path.basename(file)),
 );
 
 const toPosix = (file: string): string => file.split(path.sep).join("/");
@@ -221,7 +223,7 @@ describe("documentation consistency", () => {
 			pattern: MARKDOWN_LINK_PATTERN,
 			isBroken: (target, doc) =>
 				!target.startsWith("http") &&
-				target.includes(".md") &&
+				(target.includes(".md") || target.includes(".ts")) &&
 				!fs.existsSync(path.resolve(path.dirname(doc), target.split("#")[0])),
 		});
 
