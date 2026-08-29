@@ -579,6 +579,12 @@ describe("the guides quote the constants the code declares", () => {
 		expect(guide).toContain(`pnpm **${manifest.packageManager.replace("pnpm@", "")}** (\`packageManager\`)`);
 	});
 
+	it("keeps .nvmrc on the version engines.node declares", () => {
+		const manifest = JSON.parse(read("package.json")) as { engines: { node: string } };
+
+		expect(read(".nvmrc").trim()).toBe(manifest.engines.node);
+	});
+
 	it("states the compare-window tolerance in hours", () => {
 		const hours = value({ file: "src/domain/snapshot.ts", name: "COMPARE_WINDOW_TOLERANCE_MS" }) / MS_PER_HOUR;
 		const guide = prose(DOMAIN_GUIDE);

@@ -23,15 +23,23 @@ SMTP. There is exactly one use case: `trackStars()`.
 - **esbuild** (`platform: node`, `target: node24`, `format: cjs`), **Vitest** (v8 coverage), **Biome**
   (lint + format), **semantic-release** + commitlint, **husky** + lint-staged.
 
-## Versions (pinned by hand, and asserted against `package.json` by the docs test)
+## Versions (pinned, asserted against the manifests, and bumped by Renovate)
 
 - Node **26.2.0** (`engines.node`)
 - Node **26.2.0** again in [`.nvmrc`](./.nvmrc), which [`ci.yml`](./.github/workflows/ci.yml) and [`release.yml`](./.github/workflows/release.yml) install from via `node-version-file`
 - pnpm **11.21.0** (`packageManager`): always use pnpm, never npm/yarn
 
-All three are deliberate pins rather than dependency ranges, so bumping one means editing this section in the
-same commit. Only `engines.node` and `packageManager` are asserted against [`package.json`](./package.json); nothing compares
-`.nvmrc` with either, so move it by hand in the same edit.
+All three are deliberate pins rather than dependency ranges. The docs test asserts all three against
+[`package.json`](./package.json): the two numbers this section states, and `.nvmrc` against `engines.node`. Nothing compared
+`.nvmrc` with either until that rule existed, so the two places this repository declares Node could drift in
+silence, and the guide said so rather than fixing it.
+
+**Renovate edits this section itself, and that is what keeps the assertion from blocking its own pull
+requests.** Two `customManagers` in [`renovate.json`](./.github/renovate.json) read the Node and pnpm numbers out of the two lines above,
+so a bump rewrites the manifest and the prose together. Both are grouped by `depName`, which is the
+load-bearing half: `engines.node`, `.nvmrc` and this section are three managers seeing one dependency, and
+without the group they would arrive as separate pull requests, each red against the other two. Add a pin
+here and it needs its own manager and its own group, or the next bump stops on a docs assertion.
 
 **`engines.node` is the development pin; the shipped runtime is `node24`** (`action.yml` `runs.using`, and
 [`esbuild.config.ts`](./esbuild.config.ts) `target`). Those are different numbers on purpose. The gap is a trap: `@types/node` tracks
@@ -143,7 +151,7 @@ or test file that does not exist, no sample chart in [`examples/README.md`](./ex
 input and output named on the surfaces that list them **and listed alphabetically** there, the translation-key table in
 `docs/wiki/Internationalization-(i18n).md` matching [`src/i18n/en.json`](./src/i18n/en.json) section for section and key for key,
 every documented `stars-data.json` example showing the `version` the writer actually stamps,
-the Node and pnpm pins above matching `package.json`, every overridable `action.yml` input stating its real
+the Node and pnpm pins above matching `package.json` and `.nvmrc`, every overridable `action.yml` input stating its real
 default in prose and saying the config file can override it,
 and the ADR set held to its template (sequential
 numbering, `NNNN-kebab-title.md` filenames, the `# N. Title` / date / status / *Context* / *Decision* /

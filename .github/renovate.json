@@ -51,7 +51,31 @@
 		},
 		{
 			"matchDepNames": ["node"],
-			"allowedVersions": "/^[0-9]*[02468]\\./"
+			"allowedVersions": "/^[0-9]*[02468]\\./",
+			"groupName": "node"
+		},
+		{
+			"matchDepNames": ["pnpm"],
+			"groupName": "pnpm"
+		}
+	],
+	"customManagers": [
+		{
+			"customType": "regex",
+			"description": "Keep the Node pin the guide states in step with the manifests",
+			"managerFilePatterns": ["/^CLAUDE\\.md$/"],
+			"matchStrings": ["Node \\*\\*(?<currentValue>[\\d.]+)\\*\\*"],
+			"depNameTemplate": "node",
+			"datasourceTemplate": "node-version",
+			"versioningTemplate": "node"
+		},
+		{
+			"customType": "regex",
+			"description": "Keep the pnpm pin the guide states in step with packageManager",
+			"managerFilePatterns": ["/^CLAUDE\\.md$/"],
+			"matchStrings": ["pnpm \\*\\*(?<currentValue>[\\d.]+)\\*\\*"],
+			"depNameTemplate": "pnpm",
+			"datasourceTemplate": "npm"
 		}
 	]
 }
