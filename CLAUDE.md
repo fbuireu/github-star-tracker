@@ -151,6 +151,9 @@ or test file that does not exist, no sample chart in [`examples/README.md`](./ex
 input and output named on the surfaces that list them **and listed alphabetically** there, the translation-key table in
 `docs/wiki/Internationalization-(i18n).md` matching [`src/i18n/en.json`](./src/i18n/en.json) section for section and key for key,
 every documented `stars-data.json` example showing the `version` the writer actually stamps,
+every cross-layer import in `src` allowed by the *May import* column of the layer table in `ARCHITECTURE.md`
+(with same-layer imports relative, the pure layers free of `node:*` / `@actions/*` / `@octokit/*` /
+`nodemailer` / `js-yaml`, and every test file that reaches past its own layer named rather than exempted),
 the Node and pnpm pins above matching `package.json` and `.nvmrc`, every overridable `action.yml` input stating its real
 default in prose and saying the config file can override it,
 and the ADR set held to its template (sequential

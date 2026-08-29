@@ -4,7 +4,11 @@ import { DEFAULTS } from "@config/defaults";
 import { toActionInputName } from "@config/loader";
 import type { Config } from "@config/types";
 import * as yaml from "js-yaml";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+const DOCS_TEST_TIMEOUT_MS = 30_000;
+
+vi.setConfig({ testTimeout: DOCS_TEST_TIMEOUT_MS });
 
 const MARKDOWN_LINK_PATTERN = /\[[^\]]*\]\(([^)]+)\)/g;
 const SOURCE_PATH_PATTERN = /`(src\/[\w./-]+\.ts)`/g;
@@ -102,7 +106,89 @@ const ADR_FILES = walk({ dir: ADR_DIRECTORY, keep: isMarkdown }).map(toPosix).so
 const adrNumber = (file: string): string => path.basename(file).slice(0, 4);
 
 function read(file: string): string {
-	return fs.readFileSync(file, "utf8");
+	return fs.readFileSync(file, "utf8").replaceAll("\r\n", "\n");
+}
+
+const ENTRY_LAYER = "entry";
+const LAYER_TABLE_DOC = "ARCHITECTURE.md";
+const LAYER_TABLE_HEADER = "| Layer | Alias | Responsibility | May import | Must not import |";
+const ENTRY_ROW_LABEL = "`src/` entry";
+const MODULE_SPECIFIER_PATTERN = /(?:vi\.mock|(?<![.\w])(?:from|import|require))\s*\(?\s*"([^"]+)"/g;
+const TEST_LAYER_EXEMPT_TARGETS = new Set(["shared"]);
+const PURE_LAYERS = new Set(["domain", "presentation", "i18n"]);
+const IMPURE_PREFIXES = ["node:", "@actions/", "@octokit/", "nodemailer", "js-yaml"];
+const TEST_LAYER_CROSSINGS = new Set([
+	'src/config/action-inputs.test.ts -> infrastructure ("@infrastructure/notification/email")',
+]);
+
+interface LayerRow {
+	layer: string;
+	mayImport: Set<string>;
+}
+
+function readLayerTable(): LayerRow[] {
+	const lines = read(LAYER_TABLE_DOC).split("\n");
+	const start = lines.indexOf(LAYER_TABLE_HEADER);
+
+	expect(start, `${LAYER_TABLE_DOC} no longer holds the layer table`).toBeGreaterThan(-1);
+
+	const cells: string[][] = [];
+
+	for (const line of lines.slice(start + 2)) {
+		if (!line.startsWith("|")) break;
+
+		cells.push(line.split("|").map((cell) => cell.trim()));
+	}
+
+	const names = cells.map((row) => (row[1] === ENTRY_ROW_LABEL ? ENTRY_LAYER : row[1]));
+
+	return cells.map((row, index) => ({
+		layer: names[index],
+		mayImport: new Set(names.filter((name) => new RegExp(`\\b${name}\\b`).test(row[4]))),
+	}));
+}
+
+interface LayerEdge {
+	file: string;
+	from: string;
+	to: string;
+	specifier: string;
+}
+
+function layerOf(file: string): string {
+	const parts = toPosix(file).split("/");
+
+	return parts.length > 2 ? parts[1] : ENTRY_LAYER;
+}
+
+interface ResolveTargetLayerParams {
+	specifier: string;
+	file: string;
+}
+
+function resolveTargetLayer({ specifier, file }: ResolveTargetLayerParams): string | null {
+	if (specifier.startsWith(".")) {
+		const resolved = toPosix(path.normalize(path.join(path.dirname(toPosix(file)), specifier)));
+
+		return resolved.startsWith("src/") ? layerOf(resolved) : null;
+	}
+
+	const alias = /^@([a-z\d]+)/.exec(specifier);
+
+	return alias === null ? null : alias[1];
+}
+
+function specifiersIn(file: string): string[] {
+	return [...read(file).matchAll(MODULE_SPECIFIER_PATTERN)].map(([, specifier]) => specifier);
+}
+
+function layerEdgesIn(file: string): LayerEdge[] {
+	const from = layerOf(file);
+
+	return specifiersIn(file)
+		.map((specifier) => ({ specifier, to: resolveTargetLayer({ specifier, file }) }))
+		.filter((edge): edge is { specifier: string; to: string } => edge.to !== null)
+		.map(({ specifier, to }) => ({ file: toPosix(file), from, to, specifier }));
 }
 
 function adrReferencesIn(doc: string): string[] {
@@ -761,5 +847,70 @@ describe("the source follows the named-parameter convention", () => {
 		);
 
 		expect(offenders).toEqual([]);
+	});
+});
+
+describe("the layer table is the import contract", () => {
+	const layerTable = readLayerTable();
+	const layers = new Set(layerTable.map(({ layer }) => layer));
+	const allowed = new Map(layerTable.map(({ layer, mayImport }) => [layer, mayImport]));
+	const sources = walk({ dir: "src", keep: (filename) => filename.endsWith(".ts") });
+	const isTest = (file: string): boolean => file.endsWith(".test.ts");
+	const crossLayerEdges = (file: string): LayerEdge[] =>
+		layerEdgesIn(file).filter(({ from, to }) => from !== to && layers.has(to));
+
+	it("tabulates every layer the tree has, plus the entry point", () => {
+		const onDisk = fs
+			.readdirSync("src", { withFileTypes: true })
+			.filter((entry) => entry.isDirectory())
+			.map((entry) => entry.name);
+
+		expect([...layers].sort()).toEqual([...onDisk, ENTRY_LAYER].sort());
+	});
+
+	it("lets every source file import only the layers its row allows", () => {
+		const forbidden = sources
+			.filter((file) => !isTest(file))
+			.flatMap(crossLayerEdges)
+			.filter(({ from, to }) => !allowed.get(from)?.has(to))
+			.map(({ file, from, to, specifier }) => `${file}: ${from} -> ${to} ("${specifier}")`);
+
+		expect([...new Set(forbidden)].sort()).toEqual([]);
+	});
+
+	it("lets no source file reach another layer by a relative path", () => {
+		const relative = sources
+			.filter((file) => !isTest(file))
+			.flatMap(crossLayerEdges)
+			.filter(({ specifier }) => specifier.startsWith("."))
+			.map(({ file, to, specifier }) => `${file} -> ${to} ("${specifier}")`);
+
+		expect(relative.sort()).toEqual([]);
+	});
+
+	it("keeps the pure layers free of the shell's dependencies", () => {
+		const impure = sources
+			.filter((file) => !isTest(file) && PURE_LAYERS.has(layerOf(file)))
+			.flatMap((file) =>
+				specifiersIn(file)
+					.filter((specifier) => IMPURE_PREFIXES.some((prefix) => specifier.startsWith(prefix)))
+					.map((specifier) => `${toPosix(file)} -> "${specifier}"`),
+			);
+
+		expect(impure.sort()).toEqual([]);
+	});
+
+	it("is the purity rule the root guide states", () => {
+		expect(read(GUIDE)).toContain("`domain`, `presentation` and `i18n` must stay pure");
+	});
+
+	it("lets a test file import what its own layer may, and names every test that does not", () => {
+		const crossings = sources
+			.filter(isTest)
+			.flatMap(crossLayerEdges)
+			.filter(({ from, to }) => !TEST_LAYER_EXEMPT_TARGETS.has(to) && !allowed.get(from)?.has(to))
+			.map(({ file, to, specifier }) => `${file} -> ${to} ("${specifier}")`);
+
+		expect([...new Set(crossings)].sort()).toEqual([...TEST_LAYER_CROSSINGS].sort());
 	});
 });

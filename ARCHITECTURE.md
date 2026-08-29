@@ -67,8 +67,22 @@ only one that performs I/O.
 | presentation | `@presentation/*` | Pure rendering: data in, string out (markdown/HTML/SVG/CSV/badge) | `@config/types`, domain, i18n | infrastructure, `@actions/*`, `node:fs`, any network |
 | shared | `@shared/*` | Cross-cutting non-layer code; today only `shared/tests` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only) | used from `*.test.ts` only |
 
-This table is the **normative statement of the layer boundaries**. The diagram is its picture, and anything
-the table forbids is forbidden however convenient. The codebase-wide conventions those boundaries sit inside
+This table is the **normative statement of the layer boundaries**, and `docs/docs-consistency.test.ts` reads
+it as data: the *May import* column of each row is parsed for the layer names it mentions, and every
+cross-layer import in `src/**/*.ts` must appear there. A layer may always import itself, and it must do so
+relatively, so a cross-layer relative path is its own failure. The pure layers carry a second rule the table
+states in prose and the test states as a list: no `node:*`, no `@actions/*`, no `@octokit/*`, no `nodemailer`
+and no `js-yaml` under `domain/`, `presentation/` or `i18n/`. The diagram is the table's picture, and anything
+the table forbids is forbidden however convenient.
+
+**A colocated test may import whatever its own layer may**, plus `@shared/tests`, which is that folder's only
+consumer. It may not reach further, and the one place that does is named in the test rather than waved
+through: [`src/config/action-inputs.test.ts`](./src/config/action-inputs.test.ts) reads `DEFAULT_SMTP_PORT`
+from `@infrastructure/notification/email` to assert `action.yml`'s `smtp-port` description against the
+constant that actually implements it. It asserts against the manifest rather than against a module, the two
+values it compares genuinely live in two layers, and duplicating the constant into `config` to satisfy the
+arrow would put the same number in two places, which is the thing the assertion exists to prevent. Adding a
+second such crossing means adding a line to `TEST_LAYER_CROSSINGS` and a paragraph here saying why. The codebase-wide conventions those boundaries sit inside
 (aliases, named params, no comments, purity) are stated once in [CLAUDE.md](./CLAUDE.md#conventions), and
 what each layer actually guarantees is that layer's own `CLAUDE.md`, linked in [§6](#6-where-things-live).
 The decision to layer the tree this way is [ADR 0004](./docs/adr/0004-layered-source-structure.md).
