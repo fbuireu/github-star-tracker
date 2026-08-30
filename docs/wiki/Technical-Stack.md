@@ -1,6 +1,6 @@
 Why GitHub Star Tracker is built out of these tools and these five dependencies, and what each one buys.
 
-For the shape of the code itself (which layer may import which, how a run flows end to end), read [`ARCHITECTURE.md`](https://github.com/fbuireu/github-star-tracker/blob/main/ARCHITECTURE.md) in the repository and **[How It Works](How-It-Works)**. This page does not restate them.
+For the shape of the code itself, read **[Architecture](Architecture)** for the layering and **[How It Works](How-It-Works)** for a run end to end, with [`ARCHITECTURE.md`](https://github.com/fbuireu/github-star-tracker/blob/main/ARCHITECTURE.md) in the repository as the normative version of both. This page does not restate them.
 
 ---
 
@@ -8,7 +8,7 @@ For the shape of the code itself (which layer may import which, how a run flows 
 
 The codebase is a Functional Core, Imperative Shell split across seven layers: `domain`, `presentation` and `i18n` are pure, `config`, `infrastructure` and `application` own the side effects, and `shared` holds cross-cutting test fixtures. Dependencies flow inward only, cross-layer imports go through a TypeScript path alias declared once in [`tsconfig.json`](https://github.com/fbuireu/github-star-tracker/blob/main/tsconfig.json), and every function taking two or more arguments takes a single destructured object instead.
 
-The normative version of all of that is `ARCHITECTURE.md` and the per-layer `CLAUDE.md` files in the repository.
+That shape is **Domain-Driven Design<sub>(ish)</sub>**, and the parenthesis is load-bearing: what is adopted is the ubiquitous language and the layer boundaries, not the tactical pattern catalogue. **[Architecture](Architecture)** says which patterns were dropped and why. The normative version of all of it is `ARCHITECTURE.md` and the per-layer `CLAUDE.md` files in the repository.
 
 ---
 

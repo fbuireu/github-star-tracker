@@ -61,7 +61,9 @@ records why. It composes `getBaselineSnapshot`, `compareStars`, `createSnapshot`
   `MS_PER_YEAR` is a flat `365 * MS_PER_DAY`, with no leap-year correction.
 - `history.snapshots` is assumed **chronologically ascending**; nothing here sorts it. `getBaselineSnapshot`,
   `computeVelocity`, `calendarDays` and `buildAxisLabels` all break silently on unsorted input.
-- Nothing mutates its arguments.
+- **Nothing mutates a caller's arguments.** The one parameter that is written to is private to the layer:
+  `resolveTrackedSet` creates the `invalidPatterns` accumulator and threads it into `matchesPattern`, which
+  pushes onto it, so the array a caller sees is only ever the finished one on `TrackedSet`.
 
 ## Comparison semantics
 

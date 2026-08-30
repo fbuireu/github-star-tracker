@@ -75,7 +75,12 @@ Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run 
 
 `src/` is a mini-DDD tree: one entry point plus seven layers, each with an alias and an explicit set of
 things it may depend on ([ADR 0004](./docs/adr/0004-layered-source-structure.md)), and one folder that is
-not a layer at all, `assets/`, holding the brand files the README embeds. `index.ts` imports
+not a layer at all, `assets/`, holding the brand files the README embeds. The `(ish)` means **DDD applied
+where it pays, not by the book**: what carries the design is the ubiquitous language of
+[`CONTEXT.md`](./CONTEXT.md) and the layer boundaries, and the tactical catalogue is taken where it fits.
+ADR 0004 weighs aggregates, the Repository pattern, domain events and a service layer one at a time, and
+[ADR 0022](./docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md) decides value objects per
+concept. `index.ts` imports
 `trackStars` from `@application/tracker` and calls it at module load; nothing else may import
 `@application/*`. The full dependency graph, with the arrows that are forbidden, is the layer map in
 [ARCHITECTURE.md](./ARCHITECTURE.md).

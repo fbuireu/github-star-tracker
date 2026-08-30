@@ -10,7 +10,10 @@ domain vocabulary is [CONTEXT.md](./CONTEXT.md).
 
 The shape is Domain-Driven Design(ish) with a Functional Core, Imperative Shell pattern. The `(ish)` is
 load-bearing: these are *layers* sharing one vocabulary, not DDD bounded contexts with languages of their
-own. The domain vocabulary itself lives in [CONTEXT.md](./CONTEXT.md).
+own. How much of the method is taken, and where it deliberately stops, is
+[ADR 0004](./docs/adr/0004-layered-source-structure.md); the one question that cannot be answered once for
+the whole tree, when a primitive earns a type of its own, is
+[ADR 0022](./docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md). The domain vocabulary itself lives in [CONTEXT.md](./CONTEXT.md).
 
 ```mermaid
 ---

@@ -8,9 +8,16 @@ Accepted
 
 ## Context
 
-This tree is layered, it names its vocabulary in [CONTEXT.md](../../CONTEXT.md), and it has a documentation
-contract that turns the mechanical half of its claims into a test. All three make the same question keep
-coming up during a review: this value is a bare `string` or a bare `number`, should it be a type?
+DDD splits cleanly in two here, and only one half is negotiable. The **strategic** half, one ubiquitous
+language and a domain that owes nothing to its host, is load-bearing and settled in
+[ADR 0004](./0004-layered-source-structure.md). The **tactical** half, the catalogue of value objects,
+aggregates, repositories and events, is where the method asks for an abstraction *before the code has earned
+it*. Taken on faith it produces boilerplate that ends up hiding the rules it was supposed to protect: a
+wrapper per primitive, a parse and an unwrap at every reader, and a rule that is now spread across a type, a
+guard and a test instead of stated once where someone will read it.
+
+So the tactical half needs a test of its own, and the question it has to answer keeps coming up during
+review: this value is a bare `string` or a bare `number`, should it be a type?
 
 Answering "yes" by reflex is expensive here in a way it is not in a larger codebase. Every layer boundary a
 new type crosses is an import the layer table has to allow, a field on the persisted `stars-data.json` or
@@ -23,6 +30,10 @@ purely so a test could reach them, and their only reader was that test.
 Answering "no" by reflex is what left `fetchRepoStargazers` reporting a list truncated at GitHub's page
 ceiling as a complete enumeration, and `readStargazers` handing back whatever `JSON.parse` produced under the
 `StargazerMap` type until an entry holding a number failed a whole Run inside `diffStargazers`.
+
+[ADR 0004](./0004-layered-source-structure.md) settles the shape at the level of layers, and drops the DDD
+tactical patterns one by one with a reason for each. It leaves exactly one of them undecided, because it
+cannot be decided once for the whole tree: value objects. This file is that decision, taken per concept.
 
 What was missing was not an opinion. It was a written order of questions, so that two reviews of the same
 finding reach the same answer, and so that a finding which was deliberately *not* modelled leaves a trace

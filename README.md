@@ -294,7 +294,7 @@ flowchart TD
     style send fill:#fce4ec,stroke:#880e4f,stroke-width:2px
 ```
 
-**[How It Works](docs/wiki/How-It-Works.md):** Full architecture and execution pipeline
+**[How It Works](docs/wiki/How-It-Works.md):** The full execution pipeline, phase by phase. **[Architecture](docs/wiki/Architecture.md):** the DDD<sub>(ish)</sub> layering, one ubiquitous language and a pure core, and how much of the tactical catalogue is taken
 
 ### How the charts read dates
 
@@ -334,7 +334,8 @@ The line style is configurable via `chart-curve` (`monotone` by default, plus `c
 | Guide                                                                 | Description                               |
 | --------------------------------------------------------------------- | ----------------------------------------- |
 | **[Getting Started](docs/wiki/Getting-Started.md)**                          | Setup from token to first run             |
-| **[How It Works](docs/wiki/How-It-Works.md)**                                | Execution flow and architecture           |
+| **[How It Works](docs/wiki/How-It-Works.md)**                                | Execution flow, phase by phase            |
+| **[Architecture](docs/wiki/Architecture.md)**                                | DDD(ish) layers, and where the DDD stops |
 | **[Configuration](docs/wiki/Configuration.md)**                              | All options and settings                  |
 | **[API Reference](docs/wiki/API-Reference.md)**                              | Inputs, outputs, and data formats         |
 | **[Examples](docs/wiki/Examples.md)**                                        | Real-world workflow configurations        |

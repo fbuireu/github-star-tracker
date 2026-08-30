@@ -20,7 +20,8 @@ GitHub Star Tracker is a GitHub Action that monitors star counts across all your
 | Page | Description |
 |------|-------------|
 | **[Getting Started](Getting-Started)** | Token setup, first workflow, first run |
-| **[How It Works](How-It-Works)** | Execution flow, architecture, data pipeline |
+| **[How It Works](How-It-Works)** | Execution flow, data pipeline, phase by phase |
+| **[Architecture](Architecture)** | DDD(ish) layers, how much DDD and where it stops |
 | **[Technical Stack](Technical-Stack)** | Why these tools and these dependencies |
 | **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)** | Classic & fine-grained token creation |
 | **[Configuration](Configuration)** | All available options, file-based config, precedence |

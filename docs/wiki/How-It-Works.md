@@ -1,4 +1,4 @@
-A deep dive into the execution pipeline, architecture, and data flow of GitHub Star Tracker.
+A deep dive into the execution pipeline and data flow of GitHub Star Tracker, phase by phase. For the layering the phases run inside, and what the DDD<sub>(ish)</sub> in it does and does not mean, read **[Architecture](Architecture)**.
 
 ---
 
