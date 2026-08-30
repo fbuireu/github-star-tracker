@@ -18,12 +18,9 @@ const OUTPUT_KEY_PATTERN = /^ {2}([a-z][a-z-]*):$/gm;
 const LINE_CITATION_PATTERN = /`[\w/.-]+\.ts:\d+/g;
 const SCRIPT_PATTERN = /^pnpm ([a-z][a-z0-9:._-]*)/gm;
 const LAYER_ROW_PATTERN = /^\| `([\w-]+)\/` \| `(@[a-z\d]+)(?:\/\*)?` \|/gm;
-
 const GUIDE = "CLAUDE.md";
 const CONTRIBUTOR_GUIDE = "CONTRIBUTING.md";
-
 const UNDOCUMENTED_SCRIPTS = new Set(["prepare", "test:watch", "test:changed"]);
-
 const OUTPUT_SURFACES = [
 	"README.md",
 	"ARCHITECTURE.md",
@@ -31,9 +28,7 @@ const OUTPUT_SURFACES = [
 	"docs/wiki/Viewing-Reports.md",
 	"src/application/CLAUDE.md",
 ];
-
 const MIN_EXPECTED_DOCS = 20;
-
 const ADR_DIRECTORY = "docs/adr";
 const ADR_TEMPLATE = "docs/adr/0000-adr-template.md";
 const ADR_INDEX = "ARCHITECTURE.md";
@@ -44,12 +39,10 @@ const ADR_STATUS_PATTERN = /\n## Status\n\n(\w+)/;
 const ADR_DATE_PATTERN = /\nDate: \d{4}-\d{2}-\d{2}\n/;
 const ADR_REFERENCE_PATTERNS = [/ADR (\d{4})/g, /docs\/adr\/(\d{4})-/g];
 const adrHeadingPattern = (number: number): RegExp => new RegExp(`^# ${number}\\. \\S`);
-
 const STORAGE_MODULE = "src/infrastructure/persistence/storage.ts";
 const DATA_FORMAT_VERSION_PATTERN = /const DATA_FORMAT_VERSION = (\d+);/;
 const DOCUMENTED_VERSION_PATTERN = /"version": (\d+)/g;
 const HISTORY_FILE_SURFACES = ["docs/wiki/API-Reference.md", "docs/wiki/Data-Management.md"];
-
 const I18N_PAGE = "docs/wiki/Internationalization-(i18n).md";
 const I18N_SECTION_ROW_PATTERN = /^\| `(\w+)` \| ((?:`[\w.]+`(?:, )?)+) \|/gm;
 const I18N_KEY_PATTERN = /`([\w.]+)`/g;
