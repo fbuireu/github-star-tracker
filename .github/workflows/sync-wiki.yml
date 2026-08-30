@@ -28,6 +28,8 @@ jobs:
       - name: Sync docs/wiki to wiki repository
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
+          COMMIT_NAME: ${{ github.event.head_commit.author.name }}
+          COMMIT_EMAIL: ${{ github.event.head_commit.author.email }}
         run: |
           WIKI_DIR="$RUNNER_TEMP/wiki"
           git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" "$WIKI_DIR"
@@ -35,12 +37,12 @@ jobs:
           rsync -a --delete --exclude='.git' docs/wiki/ "$WIKI_DIR/"
 
           cd "$WIKI_DIR"
-          git config user.name "Ferran Buireu"
-          git config user.email "fbuireu@gmail.com"
+          git config user.name "$COMMIT_NAME"
+          git config user.email "$COMMIT_EMAIL"
           git add -A
 
           if git diff --staged --quiet; then
-            echo "Wiki already up to date: nothing to publish."
+            echo "Wiki already up to date, nothing to publish."
             exit 0
           fi
 
