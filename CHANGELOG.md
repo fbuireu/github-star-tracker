@@ -1,3 +1,11 @@
+## [1.26.2](https://github.com/fbuireu/github-star-tracker/compare/v1.26.1...v1.26.2) (2026-08-30)
+
+
+### Bug Fixes
+
+* **persistence:** repair a stargazers.json entry instead of crashing on it ([8b9d05b](https://github.com/fbuireu/github-star-tracker/commit/8b9d05b076eea605c5cec9eb5055620c28fdd51b))
+* **stargazers:** treat a fetch stopped by the page ceiling as incomplete ([db91748](https://github.com/fbuireu/github-star-tracker/commit/db917489de7ea4b248b3b1246c9b7f73e3dc08a3))
+
 ## [1.26.1](https://github.com/fbuireu/github-star-tracker/compare/v1.26.0...v1.26.1) (2026-08-23)
 
 
