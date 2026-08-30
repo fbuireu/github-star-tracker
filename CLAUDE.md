@@ -27,7 +27,7 @@ SMTP. There is exactly one use case: `trackStars()`.
 
 - Node **26.2.0** (`engines.node`)
 - Node **26.2.0** again in [`.nvmrc`](./.nvmrc), which [`ci.yml`](./.github/workflows/ci.yml) and [`release.yml`](./.github/workflows/release.yml) install from via `node-version-file`
-- pnpm **11.21.0** (`packageManager`): always use pnpm, never npm/yarn
+- pnpm **12.0.0** (`packageManager`): always use pnpm, never npm/yarn
 
 All three are deliberate pins rather than dependency ranges. The docs test asserts all three against
 [`package.json`](./package.json): the two numbers this section states, and `.nvmrc` against `engines.node`. Nothing compared
