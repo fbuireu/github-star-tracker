@@ -19,6 +19,8 @@ const LINE_CITATION_PATTERN = /`[\w/.-]+\.ts:\d+/g;
 const SCRIPT_PATTERN = /^pnpm ([a-z][a-z0-9:._-]*)/gm;
 const LAYER_ROW_PATTERN = /^\| `([\w-]+)\/` \| `(@[a-z\d]+)(?:\/\*)?` \|/gm;
 const GUIDE = "CLAUDE.md";
+const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
+const REPINNED_RUNTIME = /^\s*(?:node-version|version):\s*["']?\d/m;
 const CONTRIBUTOR_GUIDE = "CONTRIBUTING.md";
 const UNDOCUMENTED_SCRIPTS = new Set(["prepare", "test:watch", "test:changed"]);
 const OUTPUT_SURFACES = [
@@ -664,6 +666,28 @@ describe("the guides quote the constants the code declares", () => {
 		const manifest = JSON.parse(read("package.json")) as { engines: { node: string } };
 
 		expect(read(".nvmrc").trim()).toBe(manifest.engines.node);
+	});
+
+	// The two rules above only hold while the pin is a single exact number in a single place. A range would
+	// make "the version engines.node declares" ambiguous, and a workflow that set node-version by hand would
+	// be a fourth declaration that no rule compares, which is exactly how .nvmrc and engines.node drifted
+	// before anything compared them. Both are cheap to assert and neither reads a digit out of prose, so a
+	// Renovate bump moves through them untouched.
+	it("pins every runtime to an exact version, never a range", () => {
+		const manifest = JSON.parse(read("package.json")) as { engines: { node: string }; packageManager: string };
+		const [name, version] = manifest.packageManager.split("@");
+
+		expect(name).toBe("pnpm");
+		expect(manifest.engines.node).toMatch(EXACT_VERSION);
+		expect(version).toMatch(EXACT_VERSION);
+	});
+
+	it("lets no workflow or composite action pin a runtime the manifest already pins", () => {
+		const candidates = walk({ dir: ".github", keep: (filename) => filename.endsWith(".yml") });
+		const repinned = candidates.filter((file) => REPINNED_RUNTIME.test(read(file)));
+
+		expect(candidates.length).toBeGreaterThan(0);
+		expect(repinned).toEqual([]);
 	});
 
 	it("states the compare-window tolerance in hours", () => {

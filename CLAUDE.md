@@ -34,6 +34,13 @@ All three are deliberate pins rather than dependency ranges. The docs test asser
 `.nvmrc` with either until that rule existed, so the two places this repository declares Node could drift in
 silence, and the guide said so rather than fixing it.
 
+Two further rules hold the shape those depend on, and neither reads a digit out of prose, so a Renovate bump
+passes them untouched: every pin is an exact version rather than a range, and no workflow or composite action
+sets `node-version` by hand. A workflow that did would be a fourth declaration of Node that nothing compares,
+which is the drift above with a new hiding place. The sibling repositories carry the same two rules; where
+they differ is the section above, which they write without digits because they have no `customManagers` to
+keep one current.
+
 **Renovate edits this section itself, and that is what keeps the assertion from blocking its own pull
 requests.** Two `customManagers` in [`renovate.json`](./.github/renovate.json) read the Node and pnpm numbers out of the two lines above,
 so a bump rewrites the manifest and the prose together. Both are grouped by `depName`, which is the
