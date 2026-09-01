@@ -6,9 +6,6 @@ importers:
   .:
     configDependencies: {}
     packageManagerDependencies:
-      '@pnpm/exe':
-        specifier: 12.0.0
-        version: 12.0.0
       pnpm:
         specifier: 12.0.0
         version: 12.0.0
@@ -59,11 +56,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@pnpm/exe@12.0.0':
-    resolution: {integrity: sha512-405vw2qYPPghNxoPRt2cvkGtGNU5gnInDcIe5TztQxe73yUZLqFJN/jCJFGs1xbVaIWDXEVuQ71P8npFZeatZQ==}
-    engines: {node: '>=18.*'}
-    hasBin: true
-
   pnpm@12.0.0:
     resolution: {integrity: sha512-ni49w5EZlYaNyUuBdcIXwn6VQI+gO0oidJd48rNPdzt3zdOznt6BcbIvzVO+ajU0Lp+smUimjvWN9kiM6Jp+Zw==}
     engines: {node: '>=18.*'}
@@ -94,17 +86,6 @@ snapshots:
 
   '@pnpm/exe.win32-x64@12.0.0':
     optional: true
-
-  '@pnpm/exe@12.0.0':
-    optionalDependencies:
-      '@pnpm/exe.darwin-arm64': 12.0.0
-      '@pnpm/exe.darwin-x64': 12.0.0
-      '@pnpm/exe.linux-arm64': 12.0.0
-      '@pnpm/exe.linux-arm64-musl': 12.0.0
-      '@pnpm/exe.linux-x64': 12.0.0
-      '@pnpm/exe.linux-x64-musl': 12.0.0
-      '@pnpm/exe.win32-arm64': 12.0.0
-      '@pnpm/exe.win32-x64': 12.0.0
 
   pnpm@12.0.0:
     optionalDependencies:
@@ -141,8 +122,8 @@ importers:
         specifier: 5.4.1
         version: 5.4.1
       nodemailer:
-        specifier: 9.0.5
-        version: 9.0.5
+        specifier: 9.0.6
+        version: 9.0.6
     devDependencies:
       '@biomejs/biome':
         specifier: 2.5.10
@@ -1716,8 +1697,8 @@ packages:
     resolution: {integrity: sha512-Z3lTE9pLaJF47NyMhd4ww1yFTAP8YhYI8SleJiHzM46Fgpm5cnNzSl9XfzFNqbaz+VlJrIj3fXQ4DeN1Rjm6cw==}
     engines: {node: '>=18'}
 
-  nodemailer@9.0.5:
-    resolution: {integrity: sha512-wvjiKvjczmsN7U/8006JOdXubgBk2XFAbioDMbT+sM7cPs0QrhJTa6KBRX7P5REGGkDcLUz/EarWidb8G8C1jQ==}
+  nodemailer@9.0.6:
+    resolution: {integrity: sha512-IQUGFdhdGwI9+AWX+FpUt4DLmvFaOjTMEoneTIWX/RXxuy1TdenPwWrvFMSfLkPKl+HQEXWuSAxEMMbPYXtBmg==}
     engines: {node: '>=6.0.0'}
 
   normalize-package-data@6.0.2:
@@ -3784,7 +3765,7 @@ snapshots:
       emojilib: 2.4.0
       skin-tone: 2.0.0
 
-  nodemailer@9.0.5: {}
+  nodemailer@9.0.6: {}
 
   normalize-package-data@6.0.2:
     dependencies:
@@ -4270,7 +4251,7 @@ snapshots:
   vite@8.2.1(@types/node@26.4.0)(esbuild@0.28.2)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0):
     dependencies:
       lightningcss: 1.33.0
-      picomatch: 4.0.5
+      picomatch: 4.0.7
       postcss: 8.5.26
       rolldown: 1.2.4
       tinyglobby: 0.2.17
