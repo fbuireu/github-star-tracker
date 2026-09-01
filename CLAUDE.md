@@ -23,30 +23,27 @@ SMTP. There is exactly one use case: `trackStars()`.
 - **esbuild** (`platform: node`, `target: node24`, `format: cjs`), **Vitest** (v8 coverage), **Biome**
   (lint + format), **semantic-release** + commitlint, **husky** + lint-staged.
 
-## Versions (pinned, asserted against the manifests, and bumped by Renovate)
+## Versions
 
-- Node **26.2.0** (`engines.node`)
-- Node **26.2.0** again in [`.nvmrc`](./.nvmrc), which [`ci.yml`](./.github/workflows/ci.yml) and [`release.yml`](./.github/workflows/release.yml) install from via `node-version-file`
-- pnpm **12.0.0** (`packageManager`): always use pnpm, never npm/yarn
+**This section names where each runtime is pinned and never what the pin says.** A digit written here is a
+claim a bot invalidates on its own, and the two ways of defending one both cost more than they return.
+Asserting it against the manifest fails every dependency pull request on a line the bot cannot edit, which is
+what contribKit did until it stopped. Quoting it without asserting it rots, which is what two sibling guides
+did. This repository took a third way and kept both, with `customManagers` rewriting the prose in the same
+pull request as the manifest; that worked, and it was still two regexes over prose, a grouping rule holding
+them together and a documented trap for whoever added the next pin. Read the file instead.
 
-All three are deliberate pins rather than dependency ranges. The docs test asserts all three against
-[`package.json`](./package.json): the two numbers this section states, and `.nvmrc` against `engines.node`. Nothing compared
-`.nvmrc` with either until that rule existed, so the two places this repository declares Node could drift in
-silence, and the guide said so rather than fixing it.
+- Node (`engines.node`, and [`.nvmrc`](./.nvmrc), which [`ci.yml`](./.github/workflows/ci.yml) and [`release.yml`](./.github/workflows/release.yml) install from via `node-version-file`)
+- pnpm (`packageManager`): always use pnpm, never npm/yarn
 
-Two further rules hold the shape those depend on, and neither reads a digit out of prose, so a Renovate bump
-passes them untouched: every pin is an exact version rather than a range, and no workflow or composite action
-sets `node-version` by hand. A workflow that did would be a fourth declaration of Node that nothing compares,
-which is the drift above with a new hiding place. The sibling repositories carry the same two rules; where
-they differ is the section above, which they write without digits because they have no `customManagers` to
-keep one current.
-
-**Renovate edits this section itself, and that is what keeps the assertion from blocking its own pull
-requests.** Two `customManagers` in [`renovate.json`](./.github/renovate.json) read the Node and pnpm numbers out of the two lines above,
-so a bump rewrites the manifest and the prose together. Both are grouped by `depName`, which is the
-load-bearing half: `engines.node`, `.nvmrc` and this section are three managers seeing one dependency, and
-without the group they would arrive as separate pull requests, each red against the other two. Add a pin
-here and it needs its own manager and its own group, or the next bump stops on a docs assertion.
+Both are deliberate pins rather than dependency ranges, and five rules in
+[`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts) assert the shape a bump cannot change: both
+runtimes are named here and neither is quoted, `.nvmrc` and `engines.node` agree, `packageManager` is the sole
+declaration of the package manager, each pin is exact rather than a range, and no workflow or composite action
+sets `node-version` by hand.
+Nothing compared `.nvmrc` with `engines.node` until that rule existed, so the two places this repository
+declares Node could drift in silence; a workflow that pinned it by hand would be a third declaration with a
+new hiding place. Every sibling repository carries the same five.
 
 **`engines.node` is the development pin; the shipped runtime is `node24`** (`action.yml` `runs.using`, and
 [`esbuild.config.ts`](./esbuild.config.ts) `target`). Those are different numbers on purpose. The gap is a trap: `@types/node` tracks

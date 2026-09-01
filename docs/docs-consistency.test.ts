@@ -20,6 +20,8 @@ const SCRIPT_PATTERN = /^pnpm ([a-z][a-z0-9:._-]*)/gm;
 const LAYER_ROW_PATTERN = /^\| `([\w-]+)\/` \| `(@[a-z\d]+)(?:\/\*)?` \|/gm;
 const GUIDE = "CLAUDE.md";
 const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
+const VERSIONS_SECTION = /^## Versions$([\s\S]*?)^## /m;
+const QUOTED_VERSION = /\d+\.\d+/;
 const REPINNED_RUNTIME = /^\s*(?:node-version|version):\s*["']?\d/m;
 const CONTRIBUTOR_GUIDE = "CONTRIBUTING.md";
 const UNDOCUMENTED_SCRIPTS = new Set(["prepare", "test:watch", "test:changed"]);
@@ -659,19 +661,16 @@ describe("the guides quote the constants the code declares", () => {
 		expect(unnamed).toEqual([]);
 	});
 
-	// The sibling repositories assert the inverse of this, that their Versions section quotes no digit at
-	// all, because they have nothing that would keep one current. Here two Renovate customManagers rewrite
-	// these two lines in the same pull request as the manifest, so the digit is maintained and asserting it
-	// is what proves the managers are still wired up. Delete a manager and this rule is what notices.
-	it("quotes a version for every runtime, which the Renovate customManagers keep current", () => {
-		const manifest = JSON.parse(read("package.json")) as {
-			engines: { node: string };
-			packageManager: string;
-		};
-		const guide = prose(GUIDE);
+	// The rules around this one hold the pins to each other and none of them reads the section that names
+	// them, so a bullet could quote a version again and everything would still pass. Only the line that opens
+	// a bullet is checked: the prose beneath narrates the arrangement this section used to carry, and that
+	// history is the reason the decision exists.
+	it("quotes a version for none of them, since nothing here would keep one current", () => {
+		const section = read(GUIDE).match(VERSIONS_SECTION)?.[1] ?? "";
+		const quoting = section.split("\n").filter((line) => line.startsWith("- ") && QUOTED_VERSION.test(line));
 
-		expect(guide).toContain(`Node **${manifest.engines.node}** (\`engines.node\`)`);
-		expect(guide).toContain(`pnpm **${manifest.packageManager.replace("pnpm@", "")}** (\`packageManager\`)`);
+		expect(section).not.toBe("");
+		expect(quoting).toEqual([]);
 	});
 
 	it("pins Node once: .nvmrc and engines.node are one fact, so they say the same thing", () => {
