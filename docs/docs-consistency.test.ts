@@ -651,7 +651,19 @@ describe("the guides quote the constants the code declares", () => {
 		expect(prose(doc)).toContain(mention(value({ file, name })));
 	});
 
-	it("pins the hand-maintained toolchain versions to package.json", () => {
+	it("names every runtime it pins", () => {
+		const unnamed = ["Node", "pnpm"].flatMap((runtime) =>
+			["CLAUDE.md", "CONTRIBUTING.md"].filter((doc) => !read(doc).includes(runtime)).map((doc) => `${doc}: ${runtime}`),
+		);
+
+		expect(unnamed).toEqual([]);
+	});
+
+	// The sibling repositories assert the inverse of this, that their Versions section quotes no digit at
+	// all, because they have nothing that would keep one current. Here two Renovate customManagers rewrite
+	// these two lines in the same pull request as the manifest, so the digit is maintained and asserting it
+	// is what proves the managers are still wired up. Delete a manager and this rule is what notices.
+	it("quotes a version for every runtime, which the Renovate customManagers keep current", () => {
 		const manifest = JSON.parse(read("package.json")) as {
 			engines: { node: string };
 			packageManager: string;
@@ -662,7 +674,7 @@ describe("the guides quote the constants the code declares", () => {
 		expect(guide).toContain(`pnpm **${manifest.packageManager.replace("pnpm@", "")}** (\`packageManager\`)`);
 	});
 
-	it("keeps .nvmrc on the version engines.node declares", () => {
+	it("pins Node once: .nvmrc and engines.node are one fact, so they say the same thing", () => {
 		const manifest = JSON.parse(read("package.json")) as { engines: { node: string } };
 
 		expect(read(".nvmrc").trim()).toBe(manifest.engines.node);
@@ -673,13 +685,17 @@ describe("the guides quote the constants the code declares", () => {
 	// be a fourth declaration that no rule compares, which is exactly how .nvmrc and engines.node drifted
 	// before anything compared them. Both are cheap to assert and neither reads a digit out of prose, so a
 	// Renovate bump moves through them untouched.
+	it("pins pnpm once, through packageManager", () => {
+		const manifest = JSON.parse(read("package.json")) as { packageManager: string };
+
+		expect(manifest.packageManager.split("@")[0]).toBe("pnpm");
+	});
+
 	it("pins every runtime to an exact version, never a range", () => {
 		const manifest = JSON.parse(read("package.json")) as { engines: { node: string }; packageManager: string };
-		const [name, version] = manifest.packageManager.split("@");
 
-		expect(name).toBe("pnpm");
 		expect(manifest.engines.node).toMatch(EXACT_VERSION);
-		expect(version).toMatch(EXACT_VERSION);
+		expect(manifest.packageManager.split("@")[1]).toMatch(EXACT_VERSION);
 	});
 
 	it("lets no workflow or composite action pin a runtime the manifest already pins", () => {
