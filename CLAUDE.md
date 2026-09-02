@@ -15,7 +15,7 @@ SMTP. There is exactly one use case: `trackStars()`.
 
 ## Stack
 
-- **TypeScript 7** with `verbatimModuleSyntax` and `isolatedModules`: type-only imports must be written
+- **TypeScript** with `verbatimModuleSyntax` and `isolatedModules`: type-only imports must be written
   `import type { … }` or `import { type X }`, or the build breaks. `resolveJsonModule` is on, which is how
   `src/i18n/*.json` is imported and type-checked.
 - Runtime deps, all bundled: `@actions/core`, `@actions/github`, `@octokit/plugin-retry`, `js-yaml`,
@@ -36,14 +36,16 @@ them together and a documented trap for whoever added the next pin. Read the fil
 - Node (`engines.node`, and [`.nvmrc`](./.nvmrc), which every job in [`ci.yml`](./.github/workflows/ci.yml) installs from via `node-version-file`)
 - pnpm (`packageManager`): always use pnpm, never npm/yarn
 
-Both are deliberate pins rather than dependency ranges, and five rules in
+Both are deliberate pins rather than dependency ranges, and seven rules in
 [`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts) assert the shape a bump cannot change: both
 runtimes are named here and neither is quoted, `.nvmrc` and `engines.node` agree, `packageManager` is the sole
-declaration of the package manager, each pin is exact rather than a range, and no workflow or composite action
-sets `node-version` by hand.
+declaration of the package manager, each pin is exact rather than a range, no workflow or composite action
+sets `node-version` by hand, no document outside the ADRs names a runtime or a framework beside a version, and
+the one number the guides do state, the shipped runtime below, is read out of `action.yml` rather than
+written down twice.
 Nothing compared `.nvmrc` with `engines.node` until that rule existed, so the two places this repository
 declares Node could drift in silence; a workflow that pinned it by hand would be a third declaration with a
-new hiding place. Every sibling repository carries the same five.
+new hiding place. Every sibling repository carries the same set.
 
 **`engines.node` is the development pin; the shipped runtime is `node24`** (`action.yml` `runs.using`, and
 [`esbuild.config.ts`](./esbuild.config.ts) `target`). Those are different numbers on purpose. The gap is a trap: `@types/node` tracks

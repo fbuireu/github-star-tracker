@@ -22,7 +22,7 @@ const GUIDE = "CLAUDE.md";
 const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
 const VERSIONS_SECTION = /^## Versions$([\s\S]*?)^## /m;
 const QUOTED_VERSION = /\d+\.\d+/;
-const REPINNED_RUNTIME = /^\s*(?:node-version|version):\s*["']?\d/m;
+const REPINNED_RUNTIME = /^\s*(?:node-version|version|ruby-version|wranglerVersion):\s*["']?\d/m;
 const CONTRIBUTOR_GUIDE = "CONTRIBUTING.md";
 const UNDOCUMENTED_SCRIPTS = new Set(["prepare", "test:watch", "test:changed"]);
 const OUTPUT_SURFACES = [
@@ -946,5 +946,48 @@ describe("the layer table is the import contract", () => {
 			.map(({ file, to, specifier }) => `${file} -> ${to} ("${specifier}")`);
 
 		expect([...new Set(crossings)].sort()).toEqual([...TEST_LAYER_CROSSINGS].sort());
+	});
+});
+
+// A version written into prose is a claim a bot invalidates on its own, and the rule above reads one section
+// of one guide. This one reads every document: a tool named beside a version states what its manifest already
+// states, and the manifest is the only copy Renovate keeps current. ADRs are exempt because a decision is
+// dated and quotes the versions it decided on; the entries below are the sentences that narrate a past bump
+// or a past mistake by its number, which is history rather than a claim about the tree.
+// The one number a document may state is the shipped runtime, because it is not a dependency: `runs.using` in
+// `action.yml` is a human decision Renovate never touches, and the guides exist to warn that it differs from
+// `engines.node`. It is read from the manifest here rather than written down twice.
+const STATED_VERSION =
+	/\b(?:Node(?:\.js)?|pnpm|TypeScript|Astro|Next(?:\.js)?|React|Effect|Flutter|Dart|[Ww]rangler|Ruby|Starlight)\s+(?:v|@)?\d+(?:\.\d+)*\b/g;
+const SHIPPED_RUNTIME = read("action.yml").match(/^\s*using:\s*['"]?(node\d+)/m)?.[1] ?? "";
+const SHIPPED_MAJOR = `Node ${SHIPPED_RUNTIME.replace("node", "")}`;
+const SKIPPED_DOCUMENT_DIRECTORIES = new Set(["node_modules", "dist", ".git", "adr"]);
+
+const markdownDocuments = (dir: string): string[] =>
+	fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+		const full = path.join(dir, entry.name);
+		if (entry.isDirectory()) return SKIPPED_DOCUMENT_DIRECTORIES.has(entry.name) ? [] : markdownDocuments(full);
+		return entry.name.endsWith(".md") && entry.name !== "CHANGELOG.md" ? [full] : [];
+	});
+
+describe("stated versions", () => {
+	it("reads the shipped runtime from action.yml and finds it quoted where the gap is explained", () => {
+		expect(SHIPPED_RUNTIME).toMatch(/^node\d+$/);
+		expect(read("esbuild.config.ts")).toContain(`"${SHIPPED_RUNTIME}"`);
+		expect(read(GUIDE)).toContain(`\`${SHIPPED_RUNTIME}\``);
+		expect(read(CONTRIBUTOR_GUIDE)).toContain(SHIPPED_MAJOR);
+	});
+
+	it("states the current version of nothing a bot moves, outside the ADRs", () => {
+		const documents = markdownDocuments(".");
+		const stated = documents.flatMap((file) =>
+			[...read(file).matchAll(STATED_VERSION)]
+				.map(([match]) => match)
+				.filter((match) => match !== SHIPPED_MAJOR)
+				.map((match) => `${file}: ${match}`),
+		);
+
+		expect(documents.length).toBeGreaterThan(0);
+		expect(stated).toEqual([]);
 	});
 });

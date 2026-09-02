@@ -14,14 +14,14 @@ That shape is **Domain-Driven Design<sub>(ish)</sub>**, and the parenthesis is l
 
 ## Language & Runtime
 
-**TypeScript 7**, bundled by esbuild into a single committed [`dist/index.js`](https://github.com/fbuireu/github-star-tracker/blob/main/dist/index.js).
+**TypeScript**, bundled by esbuild into a single committed [`dist/index.js`](https://github.com/fbuireu/github-star-tracker/blob/main/dist/index.js).
 
 There are two Node versions in play, deliberately, and they are different numbers:
 
 | Number | Where it is pinned | What it governs |
 |---|---|---|
 | **Node 24** | `runs.using: 'node24'` in [`action.yml`](https://github.com/fbuireu/github-star-tracker/blob/main/action.yml), and `target: 'node24'` in [`esbuild.config.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/esbuild.config.ts) | The runtime that actually executes the action on a GitHub runner. This is the version a `node:` API has to exist in |
-| **Node 26.2.0** | `engines.node` in [`package.json`](https://github.com/fbuireu/github-star-tracker/blob/main/package.json) | The development pin: what contributors install, and what `@types/node` describes |
+| **The `engines.node` pin** | `engines.node` in [`package.json`](https://github.com/fbuireu/github-star-tracker/blob/main/package.json), mirrored in [`.nvmrc`](https://github.com/fbuireu/github-star-tracker/blob/main/.nvmrc) | The development pin: what contributors install, and what `@types/node` describes |
 
 The gap is a trap worth knowing about before you contribute. esbuild's `target` lowers syntax but does not shim runtime APIs, so a `node:` API added after 24.x will type-check, bundle and pass the full local check, then throw on a runner. Check new `node:` usage against Node 24, not against `engines.node`.
 
