@@ -33,7 +33,7 @@ did. This repository took a third way and kept both, with `customManagers` rewri
 pull request as the manifest; that worked, and it was still two regexes over prose, a grouping rule holding
 them together and a documented trap for whoever added the next pin. Read the file instead.
 
-- Node (`engines.node`, and [`.nvmrc`](./.nvmrc), which [`ci.yml`](./.github/workflows/ci.yml) and [`release.yml`](./.github/workflows/release.yml) install from via `node-version-file`)
+- Node (`engines.node`, and [`.nvmrc`](./.nvmrc), which every job in [`ci.yml`](./.github/workflows/ci.yml) installs from via `node-version-file`)
 - pnpm (`packageManager`): always use pnpm, never npm/yarn
 
 Both are deliberate pins rather than dependency ranges, and five rules in
@@ -204,8 +204,8 @@ the moment anything above it moves, so prefer naming the symbol.
 
 - **`dist/index.js` is committed** and is what `action.yml` (`runs.main`) executes, because GitHub runs a JS
   action straight from the repository with no install step ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)).
-  What keeps a released version's bundle honest is that `verify` ends in `pnpm build` and `release.yml` runs
-  `verify` before `semantic-release`, which commits `dist/` as a release asset, not any pull-request check.
+  What keeps a released version's bundle honest is that the `release` job in `ci.yml` runs `pnpm build` in its
+  own checkout immediately before `semantic-release`, which commits `dist/` as a release asset, not any pull-request check.
   Between releases `main` can still carry a bundle behind its sources, since a `refactor` or `chore` commit
   cuts no release; that is what committing your rebuild alongside the source is for.
 - **Defaults live in [`src/config/defaults.ts`](./src/config/defaults.ts), not in `action.yml`.** Overridable inputs deliberately carry

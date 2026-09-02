@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Question or Discussion
+  - name: The action on the Marketplace
+    url: https://github.com/marketplace/actions/github-star-tracker
+    about: The published action this repository builds
+  - name: Question, idea or discussion
     url: https://github.com/fbuireu/github-star-tracker/discussions
-    about: Ask questions or discuss ideas with the community
-  - name: Documentation
-    url: https://github.com/fbuireu/github-star-tracker#readme
-    about: Check out the documentation for usage guides and examples
+    about: Ask a question, or propose something before opening a feature request.

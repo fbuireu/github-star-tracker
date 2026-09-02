@@ -33,3 +33,46 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
           fail_ci_if_error: false
+
+  release:
+    name: Semantic Release
+    needs: [check]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT }}
+          persist-credentials: false
+      - uses: ./.github/actions/prepare-env
+      - name: Build
+        run: pnpm build
+      - name: Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+        run: pnpm exec semantic-release
+      - name: Update major version tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          git fetch --tags --force
+          LATEST_TAG=$(git tag --list 'v[0-9]*' --sort=-version:refname | head -n 1)
+          MAJOR_VERSION=$(echo "$LATEST_TAG" | cut -d. -f1)
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git tag -fa "$MAJOR_VERSION" "${LATEST_TAG}^{}" -m "Update $MAJOR_VERSION to $LATEST_TAG"
+
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GH_REPO}.git" "$MAJOR_VERSION" --force

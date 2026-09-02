@@ -4,8 +4,8 @@
 	"labels": ["dependencies", "renovate", "bot"],
 	"schedule": ["on the 1st and 15th day of the month"],
 	"minimumReleaseAge": "4 days",
-	"pinDigests": true,
 	"rangeStrategy": "pin",
+	"pinDigests": true,
 	"automergeStrategy": "squash",
 	"lockFileMaintenance": {
 		"enabled": true,

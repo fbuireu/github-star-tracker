@@ -107,7 +107,7 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
    `dist/index.js` and `dist/index.js.map` alongside your source changes.
 
    Nothing fails your pull request if you forget, and a release will not ship the stale bundle either;
-   [`release.yml`](./.github/workflows/release.yml) rebuilds it before publishing. What you are keeping honest is `main` itself: a commit type
+   the `release` job in [`ci.yml`](./.github/workflows/ci.yml) rebuilds it before publishing. What you are keeping honest is `main` itself: a commit type
    that does not cut a release (`refactor`, `chore`, `test`, `docs`, `ci`) leaves `main`'s `dist/` behind its
    sources until the next `feat` or `fix`, which anyone referencing `@main` would run. The `pre-push` hook
    rebuilds the bundle for you, so in practice this is a matter of committing what it leaves behind.
@@ -272,8 +272,9 @@ WIP                             # Not descriptive at all
 
 ### Automated Releases
 
-`.github/workflows/release.yml` runs on every push to `main`. It runs `pnpm run verify` first, so a
-release only happens if lint, type-check, coverage and the build all pass. semantic-release then:
+The `release` job in `.github/workflows/ci.yml` runs on every push to `main`, after the `Check` job has
+passed `pnpm verify` on the same commit, so a release only happens if lint, type-check, coverage and the
+build all pass. It rebuilds the bundle, and semantic-release then:
 
 1. Analyzes the commits since the last release
 2. Determines the version bump from the commit types
