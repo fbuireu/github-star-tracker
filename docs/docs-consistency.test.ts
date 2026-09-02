@@ -958,7 +958,7 @@ describe("the layer table is the import contract", () => {
 // `action.yml` is a human decision Renovate never touches, and the guides exist to warn that it differs from
 // `engines.node`. It is read from the manifest here rather than written down twice.
 const STATED_VERSION =
-	/\b(?:Node(?:\.js)?|pnpm|TypeScript|Astro|Next(?:\.js)?|React|Effect|Flutter|Dart|[Ww]rangler|Ruby|Starlight)\s+(?:v|@)?\d+(?:\.\d+)*\b/g;
+	/\b(?:Node(?:\.js)?|pnpm|TypeScript|Astro|Next(?:\.js)?|React|Effect|Flutter|Dart|[Ww]rangler|Ruby|Starlight|Tailwind(?: CSS)?)\s+(?:v|@)?\d+(?:\.\d+)*\b/g;
 const SHIPPED_RUNTIME = read("action.yml").match(/^\s*using:\s*['"]?(node\d+)/m)?.[1] ?? "";
 const SHIPPED_MAJOR = `Node ${SHIPPED_RUNTIME.replace("node", "")}`;
 const SKIPPED_DOCUMENT_DIRECTORIES = new Set(["node_modules", "dist", ".git", "adr"]);
