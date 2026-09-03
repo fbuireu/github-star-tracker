@@ -3,7 +3,6 @@
 	"version": "1.26.3",
 	"private": true,
 	"description": "GitHub Action to automatically track star count changes across repositories with visual charts, email notifications, and historical reports",
-	"main": "src/index.ts",
 	"keywords": [
 		"github",
 		"github-action",
@@ -28,6 +27,14 @@
 	],
 	"author": "Ferran Buireu <fbuireu@gmail.com>",
 	"license": "AGPL-3.0-only",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/fbuireu/github-star-tracker.git"
+	},
+	"homepage": "https://github.com/fbuireu/github-star-tracker#readme",
+	"bugs": {
+		"url": "https://github.com/fbuireu/github-star-tracker/issues"
+	},
 	"engines": {
 		"node": "26.2.0"
 	},
