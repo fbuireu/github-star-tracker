@@ -63,8 +63,10 @@ pnpm build            # tsx esbuild.config.ts -> dist/index.js
 pnpm lint             # biome lint, the root command the variants pass paths to
 pnpm lint:all         # lint .
 pnpm lint:all:fix     # lint:all --fix
+pnpm lint:changed     # lint --write, over what changed against main
 pnpm format           # biome check --write, the root command lint-staged appends files to
 pnpm format:all       # format .
+pnpm format:changed   # format, over what changed against main
 pnpm format:check     # biome check, no writes; what verify runs
 pnpm typecheck        # tsc --noEmit
 pnpm test:ut          # vitest run
