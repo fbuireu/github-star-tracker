@@ -957,8 +957,39 @@ describe("the layer table is the import contract", () => {
 // The one number a document may state is the shipped runtime, because it is not a dependency: `runs.using` in
 // `action.yml` is a human decision Renovate never touches, and the guides exist to warn that it differs from
 // `engines.node`. It is read from the manifest here rather than written down twice.
-const STATED_VERSION =
-	/\b(?:Node(?:\.js)?|pnpm|TypeScript|Astro|Next(?:\.js)?|React|Effect|Flutter|Dart|[Ww]rangler|Ruby|Starlight|Tailwind(?: CSS)?)\s+(?:v|@)?\d+(?:\.\d+)*\b/g;
+// Which names are policed is read from the manifests: a repository that never declared Astro has no business
+// forbidding "Astro 7", and a dependency added tomorrow is policed the day its manifest names it. The runtimes
+// are the only names every repository carries.
+const VERSIONED_DEPENDENCIES: Record<string, string[]> = {
+	astro: ["Astro"],
+	"@astrojs/starlight": ["Starlight"],
+	effect: ["Effect"],
+	next: ["Next", "Next.js"],
+	react: ["React"],
+	tailwindcss: ["Tailwind", "Tailwind CSS"],
+	typescript: ["TypeScript"],
+	wrangler: ["wrangler", "Wrangler"],
+};
+const escapeForRegExp = (name: string): string => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const statedVersionPattern = (names: string[]): RegExp =>
+	new RegExp(`\\b(?:${names.map(escapeForRegExp).join("|")})\\s+(?:v|@)?\\d+(?:\\.\\d+)*\\b`, "g");
+interface PolicedNamesParams {
+	readonly declared: Set<string>;
+	readonly runtimes: string[];
+}
+const policedNames = ({ declared, runtimes }: PolicedNamesParams): string[] => [
+	...runtimes,
+	...Object.entries(VERSIONED_DEPENDENCIES)
+		.filter(([dependency]) => declared.has(dependency))
+		.flatMap(([, names]) => names),
+];
+const declaredIn = (manifests: { dependencies?: object; devDependencies?: object }[]): Set<string> =>
+	new Set(manifests.flatMap((manifest) => Object.keys({ ...manifest.dependencies, ...manifest.devDependencies })));
+const POLICED_NAMES = policedNames({
+	declared: declaredIn([JSON.parse(read("package.json"))]),
+	runtimes: ["Node", "Node.js", "pnpm"],
+});
+const STATED_VERSION = statedVersionPattern(POLICED_NAMES);
 const SHIPPED_RUNTIME = read("action.yml").match(/^\s*using:\s*['"]?(node\d+)/m)?.[1] ?? "";
 const SHIPPED_MAJOR = `Node ${SHIPPED_RUNTIME.replace("node", "")}`;
 const SKIPPED_DOCUMENT_DIRECTORIES = new Set(["node_modules", "dist", ".git", "adr"]);
@@ -971,6 +1002,11 @@ const markdownDocuments = (dir: string): string[] =>
 	});
 
 describe("stated versions", () => {
+	it("polices the runtimes and every versioned dependency the manifests declare, and nothing else", () => {
+		expect(POLICED_NAMES).toEqual(expect.arrayContaining(["Node", "pnpm"]));
+		expect(POLICED_NAMES.length).toBeGreaterThan(2);
+	});
+
 	it("reads the shipped runtime from action.yml and finds it quoted where the gap is explained", () => {
 		expect(SHIPPED_RUNTIME).toMatch(/^node\d+$/);
 		expect(read("esbuild.config.ts")).toContain(`"${SHIPPED_RUNTIME}"`);
