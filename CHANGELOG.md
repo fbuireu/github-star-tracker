@@ -1,3 +1,10 @@
+## [1.26.4](https://github.com/fbuireu/github-star-tracker/compare/v1.26.3...v1.26.4) (2026-09-04)
+
+
+### Bug Fixes
+
+* assert garbage ([1cc10cc](https://github.com/fbuireu/github-star-tracker/commit/1cc10ccf1baff5f9da7d774bceb64e0534e1ac94))
+
 ## [1.26.3](https://github.com/fbuireu/github-star-tracker/compare/v1.26.2...v1.26.3) (2026-09-01)
 
 
