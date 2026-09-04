@@ -46,7 +46,7 @@ invisible precedence bug with a visible magic value in every user's workflow fil
 - **The manifest stops self-documenting its defaults**, which is the cost. `action.yml` shows `default: ''`
   for 43 of its 47 inputs; the other four are the three above and `github-token`, which declares no default
   at all because it is required. Anyone reading the manifest for a real value must read the description prose
-  or `src/config/defaults.ts`. Two tests are what keep that prose honest:
+  or `src/config/defaults.ts`. The tests below are what keep that prose honest:
   - [`src/config/action-inputs.test.ts`](../../src/config/action-inputs.test.ts) asserts that every key of `DEFAULTS` except `sendOnNoChanges` has an
     input whose default is empty, and that the complete set of inputs carrying a non-empty default is exactly
     `config-path`, `send-on-no-changes` and `smtp-port`. Adding a default to an overridable input fails it.
@@ -56,7 +56,7 @@ invisible precedence bug with a visible magic value in every user's workflow fil
 - **This is hard to reverse in the direction that matters.** Giving the manifest real defaults is a one-line
   edit per input that breaks no test at the type level and produces no error at runtime; it silently flips
   precedence for every existing user whose `star-tracker.yml` sets that option, and the symptom they see is
-  "my config file stopped working" with nothing in the log. The two tests above exist because this is a
+  "my config file stopped working" with nothing in the log. The tests above exist because this is a
   change that cannot be caught by reading the diff.
 - **A new overridable input is four edits, not three**: the `action.yml` entry with an empty default and the
   `(default X) (overrides config file)` prose, the `Config` field, the `DEFAULTS` entry, and the

@@ -48,7 +48,7 @@ records why. It composes `getBaselineSnapshot`, `compareStars`, `createSnapshot`
 - **`now` governs the whole measurement, not half of it.** It reaches `getBaselineSnapshot` *and*
   `createSnapshot`, so an injected clock dates the Snapshot the Run appends as well as the Baseline it
   resolves. It used to reach only the first, so injecting a `now` produced an `updatedHistory` whose newest
-  Snapshot carried the real time: an interface promising more than it delivered, with two tests already
+  Snapshot carried the real time: an interface promising more than it delivered, with tests already
   relying on the half that worked.
 
 ## Purity and time

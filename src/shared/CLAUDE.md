@@ -43,7 +43,7 @@ helpers, no setup; mocking stays in the test files that need it. Nothing outside
 - This folder is the sanctioned exception to the **named-params-for-2+-arguments** rule, but only partly:
   some factories take up to three positional arguments, while the rest already take a destructured params or
   options object. Follow the shape of the factory you are extending; do not "fix" the positional ones.
-- **Two test files define their own local factories** with the same names but different signatures:
+- **Some test files define their own local factories** with the same names but different signatures:
   [`velocity.test.ts`](../domain/velocity.test.ts) has its own `makeHistory` and [`svg-chart.test.ts`](../presentation/svg-chart.test.ts) its own `makeSnapshot` /
   `makeMultiRepoSnapshot`. Neither imports `@shared/tests`, so do not assume the name means the shared
   factory.

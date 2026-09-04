@@ -104,7 +104,7 @@ concept. `index.ts` imports
 | `presentation/` | `@presentation/*` | Pure rendering: data in, markdown/HTML/SVG/CSV string out |
 | `shared/` | `@shared/*` | Cross-cutting code owning no layer (today: test factories) |
 
-Tests are colocated next to the file they cover, as `src/**/*.test.ts`. Two test files cover no module:
+Tests are colocated next to the file they cover, as `src/**/*.test.ts`. The test files covering no module are:
 [`src/config/action-inputs.test.ts`](./src/config/action-inputs.test.ts), which asserts against `action.yml` rather than against a module, and
 [`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts), the docs guard described below, which lives with the documents it checks
 instead of under `src/`.

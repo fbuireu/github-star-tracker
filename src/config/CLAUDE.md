@@ -8,7 +8,7 @@ inputs (`@infrastructure/notification` does), does **not** read `github-token` /
 
 **`loadConfig()` takes no arguments and reads the ambient inputs on purpose**, and
 [ADR 0018](../../docs/adr/0018-loadconfig-reads-the-ambient-action-inputs.md) records why: parameterising it
-deletes 49 test lines, 27 of them the same repeated mock, and forces the orchestrator to relearn every input
+deletes a block of test lines, most of them the same repeated mock, and forces the orchestrator to relearn every input
 name, which is exactly the coupling
 [ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md) removed. Do not re-propose it.
 
