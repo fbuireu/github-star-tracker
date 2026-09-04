@@ -6,7 +6,6 @@ The action follows a **Domain-Driven Design<sub>(ish)</sub>** layering with a **
 ---
 config:
   look: handDrawn
-  theme: neutral
 ---
 flowchart RL
     entry["index.ts"] --> application

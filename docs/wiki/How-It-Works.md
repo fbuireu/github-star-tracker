@@ -8,7 +8,6 @@ A deep dive into the execution pipeline and data flow of GitHub Star Tracker, ph
 ---
 config:
   look: handDrawn
-  theme: neutral
 ---
 flowchart TD
     trigger(["Workflow Trigger"])
@@ -47,29 +46,29 @@ flowchart TD
     readonly -->|No| commit --> setout
     readonly -->|Yes| setout
 
-    style trigger fill:#e1f5ff,stroke:#01579b,stroke-width:2px
-    style config fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style fetch fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style filter fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style init fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    style read fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    style baseline fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    style compare fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    style stargazers fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    style history fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    style forecast fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    style md fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    style json fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    style csv fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    style svg fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    style html fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    style charts fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    style write fill:#fce4ec,stroke:#880e4f,stroke-width:2px
-    style readonly fill:#fce4ec,stroke:#880e4f,stroke-width:2px
-    style commit fill:#fce4ec,stroke:#880e4f,stroke-width:2px
-    style setout fill:#fce4ec,stroke:#880e4f,stroke-width:2px
-    style email fill:#fce4ec,stroke:#880e4f,stroke-width:2px
-    style send fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    style trigger stroke:#1565c0,stroke-width:3px
+    style config stroke:#e65100,stroke-width:3px
+    style fetch stroke:#e65100,stroke-width:3px
+    style filter stroke:#e65100,stroke-width:3px
+    style init stroke:#7b1fa2,stroke-width:3px
+    style read stroke:#7b1fa2,stroke-width:3px
+    style baseline stroke:#7b1fa2,stroke-width:3px
+    style compare stroke:#7b1fa2,stroke-width:3px
+    style stargazers stroke:#7b1fa2,stroke-width:3px
+    style history stroke:#7b1fa2,stroke-width:3px
+    style forecast stroke:#7b1fa2,stroke-width:3px
+    style md stroke:#2e7d32,stroke-width:3px
+    style json stroke:#2e7d32,stroke-width:3px
+    style csv stroke:#2e7d32,stroke-width:3px
+    style svg stroke:#2e7d32,stroke-width:3px
+    style html stroke:#2e7d32,stroke-width:3px
+    style charts stroke:#2e7d32,stroke-width:3px
+    style write stroke:#c2185b,stroke-width:3px
+    style readonly stroke:#c2185b,stroke-width:3px
+    style commit stroke:#c2185b,stroke-width:3px
+    style setout stroke:#c2185b,stroke-width:3px
+    style email stroke:#c2185b,stroke-width:3px
+    style send stroke:#c2185b,stroke-width:3px
 ```
 
 Two edges in that diagram are easy to miss, and both matter:

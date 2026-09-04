@@ -19,7 +19,6 @@ the whole tree, when a primitive earns a type of its own, is
 ---
 config:
   look: handDrawn
-  theme: neutral
 ---
 flowchart TD
     idx["src/index.ts"] --> app["@application<br/>tracker.ts, the only use case"]
@@ -43,8 +42,8 @@ flowchart TD
     test["@shared/tests<br/>imported from *.test.ts only"] -.-> cfg
     test -.-> dom
 
-    classDef pure fill:#8a6a0f,stroke:#dfb317,stroke-width:2px,color:#fff
-    classDef shell fill:#9b2530,stroke:#d73a49,stroke-width:2px,color:#fff
+    classDef pure stroke:#dfb317,stroke-width:3px
+    classDef shell stroke:#d73a49,stroke-width:3px
     class dom,pres,i18n,test pure
     class idx,app,cfg,infra shell
 ```
