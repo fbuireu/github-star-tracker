@@ -3,6 +3,7 @@ import * as path from "node:path";
 import * as core from "@actions/core";
 import { CompareAgainst, NotificationMode } from "@domain/types";
 import { LOCALES } from "@i18n";
+import { errorMessage } from "@shared/errors";
 import * as yaml from "js-yaml";
 import { DEFAULTS } from "./defaults";
 import {
@@ -252,7 +253,7 @@ function parseConfigYaml({ content, configPath }: ParseConfigYamlParams): Record
 	try {
 		return yaml.load(content) as Record<string, unknown> | null;
 	} catch (error) {
-		core.warning(`Failed to parse config file ${configPath}: ${(error as Error).message}`);
+		core.warning(`Failed to parse config file ${configPath}: ${errorMessage(error)}`);
 		return null;
 	}
 }

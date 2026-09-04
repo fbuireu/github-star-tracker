@@ -102,7 +102,7 @@ concept. `index.ts` imports
 | `i18n/` | `@i18n` | Locale bundles, `getTranslations`, `interpolate` |
 | `infrastructure/` | `@infrastructure/*` | All I/O: octokit, `git` CLI, `fs`, nodemailer |
 | `presentation/` | `@presentation/*` | Pure rendering: data in, markdown/HTML/SVG/CSV string out |
-| `shared/` | `@shared/*` | Cross-cutting code owning no layer (today: test factories) |
+| `shared/` | `@shared/*` | Cross-cutting code owning no layer: `errorMessage`, and the test factories |
 
 Tests are colocated next to the file they cover, as `src/**/*.test.ts`. The test files covering no module are:
 [`src/config/action-inputs.test.ts`](./src/config/action-inputs.test.ts), which asserts against `action.yml` rather than against a module, and
@@ -126,7 +126,7 @@ re-export from [`src/i18n/index.ts`](./src/i18n/index.ts) instead.
 | [`src/i18n/`](./src/i18n/CLAUDE.md) | Bundles, placeholder rules, adding a locale |
 | [`src/infrastructure/`](./src/infrastructure/CLAUDE.md) | The four adapters: octokit, git worktree, persistence, SMTP |
 | [`src/presentation/`](./src/presentation/CLAUDE.md) | Renderers, the chart quartet, escaping and injection rules |
-| [`src/shared/`](./src/shared/CLAUDE.md) | Fixture factories and why this folder stays almost empty |
+| [`src/shared/`](./src/shared/CLAUDE.md) | `errorMessage`, the fixture factories, and why this folder stays almost empty |
 
 ## Conventions
 

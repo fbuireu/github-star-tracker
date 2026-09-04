@@ -19598,137 +19598,6 @@ var require_lib = __commonJS({
   }
 });
 
-// node_modules/.pnpm/content-type@2.0.0/node_modules/content-type/dist/index.js
-var require_dist = __commonJS({
-  "node_modules/.pnpm/content-type@2.0.0/node_modules/content-type/dist/index.js"(exports2) {
-    "use strict";
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.format = format;
-    exports2.parse = parse3;
-    var TEXT_REGEXP = /^[\u0009\u0020-\u007e\u0080-\u00ff]*$/;
-    var TOKEN_REGEXP = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/;
-    var QUOTE_REGEXP = /[\\"]/g;
-    var TYPE_REGEXP = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+\/[!#$%&'*+.^_`|~0-9A-Za-z-]+$/;
-    var NullObject = /* @__PURE__ */ (() => {
-      const C = function() {
-      };
-      C.prototype = /* @__PURE__ */ Object.create(null);
-      return C;
-    })();
-    function format(obj) {
-      const { type, parameters } = obj;
-      if (!type || !TYPE_REGEXP.test(type)) {
-        throw new TypeError(`Invalid type: ${type}`);
-      }
-      let result = type;
-      if (parameters) {
-        for (const param of Object.keys(parameters)) {
-          if (!TOKEN_REGEXP.test(param)) {
-            throw new TypeError(`Invalid parameter name: ${param}`);
-          }
-          result += `; ${param}=${qstring(parameters[param])}`;
-        }
-      }
-      return result;
-    }
-    function parse3(header, options) {
-      const len = header.length;
-      let index = skipOWS(header, 0, len);
-      const valueStart = index;
-      index = skipValue(header, index, len);
-      const valueEnd = trailingOWS(header, valueStart, index);
-      const type = header.slice(valueStart, valueEnd).toLowerCase();
-      const parameters = options?.parameters === false ? new NullObject() : parseParameters(header, index, len);
-      return { type, parameters };
-    }
-    var SP = 32;
-    var HTAB = 9;
-    var SEMI = 59;
-    var EQ = 61;
-    var DQUOTE = 34;
-    var BSLASH = 92;
-    function parseParameters(header, index, len) {
-      const parameters = new NullObject();
-      parameter: while (index < len) {
-        index = skipOWS(header, index + 1, len);
-        const keyStart = index;
-        while (index < len) {
-          const code = header.charCodeAt(index);
-          if (code === SEMI)
-            continue parameter;
-          if (code === EQ) {
-            const keyEnd = trailingOWS(header, keyStart, index);
-            const key = header.slice(keyStart, keyEnd).toLowerCase();
-            index = skipOWS(header, index + 1, len);
-            if (index < len && header.charCodeAt(index) === DQUOTE) {
-              index++;
-              let value = "";
-              while (index < len) {
-                const code2 = header.charCodeAt(index++);
-                if (code2 === DQUOTE) {
-                  index = skipValue(header, index, len);
-                  if (parameters[key] === void 0)
-                    parameters[key] = value;
-                  break;
-                }
-                if (code2 === BSLASH && index < len) {
-                  value += header[index++];
-                  continue;
-                }
-                value += String.fromCharCode(code2);
-              }
-              continue parameter;
-            }
-            const valueStart = index;
-            index = skipValue(header, index, len);
-            if (parameters[key] === void 0) {
-              const valueEnd = trailingOWS(header, valueStart, index);
-              parameters[key] = header.slice(valueStart, valueEnd);
-            }
-            continue parameter;
-          }
-          index++;
-        }
-      }
-      return parameters;
-    }
-    function skipValue(str, index, len) {
-      while (index < len) {
-        const char = str.charCodeAt(index);
-        if (char === SEMI)
-          break;
-        index++;
-      }
-      return index;
-    }
-    function skipOWS(header, index, len) {
-      while (index < len) {
-        const char = header.charCodeAt(index);
-        if (char !== SP && char !== HTAB)
-          break;
-        index++;
-      }
-      return index;
-    }
-    function trailingOWS(header, start, end) {
-      while (end > start) {
-        const char = header.charCodeAt(end - 1);
-        if (char !== SP && char !== HTAB)
-          break;
-        end--;
-      }
-      return end;
-    }
-    function qstring(str) {
-      if (TOKEN_REGEXP.test(str))
-        return str;
-      if (TEXT_REGEXP.test(str))
-        return `"${str.replace(QUOTE_REGEXP, "\\$&")}"`;
-      throw new TypeError(`Invalid parameter value: ${str}`);
-    }
-  }
-});
-
 // node_modules/.pnpm/nodemailer@9.0.6/node_modules/nodemailer/lib/punycode/index.js
 var require_punycode = __commonJS({
   "node_modules/.pnpm/nodemailer@9.0.6/node_modules/nodemailer/lib/punycode/index.js"(exports2, module2) {
@@ -29248,14 +29117,14 @@ var require_xoauth2 = __commonJS({
             JSON.stringify(logData)
           );
           if (data.error) {
-            let errorMessage = data.error;
+            let errorMessage2 = data.error;
             if (data.error_description) {
-              errorMessage += ": " + data.error_description;
+              errorMessage2 += ": " + data.error_description;
             }
             if (data.error_uri) {
-              errorMessage += " (" + data.error_uri + ")";
+              errorMessage2 += " (" + data.error_uri + ")";
             }
-            const err2 = new Error(errorMessage);
+            const err2 = new Error(errorMessage2);
             err2.code = errors.EOAUTH2;
             return callback(err2);
           }
@@ -34167,10 +34036,111 @@ function withDefaults(oldDefaults, newDefaults) {
 }
 var endpoint = withDefaults(null, DEFAULTS);
 
-// node_modules/.pnpm/@octokit+request@10.0.13/node_modules/@octokit/request/dist-bundle/index.js
-var import_content_type = __toESM(require_dist(), 1);
+// node_modules/.pnpm/content-type@3.0.0/node_modules/content-type/dist/index.js
+var NullObject = /* @__PURE__ */ (() => {
+  const C = function() {
+  };
+  C.prototype = /* @__PURE__ */ Object.create(null);
+  return C;
+})();
+function parse2(header, options) {
+  const stopChar = options?.comma === true ? COMMA : 65536;
+  const len = header.length;
+  let index = skipOWS(header, options?.start ?? 0, len);
+  const valueStart = index;
+  index = skipValue(header, index, len, stopChar);
+  const valueEnd = trailingOWS(header, valueStart, index);
+  const type = header.slice(valueStart, valueEnd).toLowerCase();
+  if (options?.parameters === false) {
+    return { type, index, parameters: new NullObject() };
+  }
+  return parseParameters(header, type, index, len, stopChar);
+}
+var SP = 32;
+var HTAB = 9;
+var SEMI = 59;
+var EQ = 61;
+var DQUOTE = 34;
+var BSLASH = 92;
+var COMMA = 44;
+function parseParameters(header, type, index, len, stopChar) {
+  const parameters = new NullObject();
+  parameter: while (index < len) {
+    if (header.charCodeAt(index) === stopChar)
+      break;
+    index = skipOWS(header, index + 1, len);
+    const keyStart = index;
+    while (index < len) {
+      const code = header.charCodeAt(index);
+      if (code === stopChar)
+        break parameter;
+      if (code === SEMI)
+        continue parameter;
+      if (code === EQ) {
+        const keyEnd = trailingOWS(header, keyStart, index);
+        const key = header.slice(keyStart, keyEnd).toLowerCase();
+        index = skipOWS(header, index + 1, len);
+        if (index < len && header.charCodeAt(index) === DQUOTE) {
+          index++;
+          let value = "";
+          while (index < len) {
+            const code2 = header.charCodeAt(index++);
+            if (code2 === DQUOTE) {
+              index = skipValue(header, index, len, stopChar);
+              if (parameters[key] === void 0)
+                parameters[key] = value;
+              break;
+            }
+            if (code2 === BSLASH && index < len) {
+              value += header[index++];
+              continue;
+            }
+            value += String.fromCharCode(code2);
+          }
+          continue parameter;
+        }
+        const valueStart = index;
+        index = skipValue(header, index, len, stopChar);
+        if (parameters[key] === void 0) {
+          const valueEnd = trailingOWS(header, valueStart, index);
+          parameters[key] = header.slice(valueStart, valueEnd);
+        }
+        continue parameter;
+      }
+      index++;
+    }
+  }
+  return { type, index, parameters };
+}
+function skipValue(str, index, len, stopChar) {
+  while (index < len) {
+    const code = str.charCodeAt(index);
+    if (code === SEMI || code === stopChar)
+      break;
+    index++;
+  }
+  return index;
+}
+function skipOWS(header, index, len) {
+  while (index < len) {
+    const char = header.charCodeAt(index);
+    if (char !== SP && char !== HTAB)
+      break;
+    index++;
+  }
+  return index;
+}
+function trailingOWS(header, start, end) {
+  while (end > start) {
+    const char = header.charCodeAt(end - 1);
+    if (char !== SP && char !== HTAB)
+      break;
+    end--;
+  }
+  return end;
+}
 
-// node_modules/.pnpm/json-with-bigint@3.5.10/node_modules/json-with-bigint/json-with-bigint.js
+// node_modules/.pnpm/json-with-bigint@3.5.12/node_modules/json-with-bigint/json-with-bigint.js
 var intRegex = /^-?\d+$/;
 var noiseValue = /^-?\d+n+$/;
 var originalStringify = JSON.stringify;
@@ -34427,7 +34397,7 @@ var JSONParseV2 = (text, reviver) => {
 };
 var MAX_INT = Number.MAX_SAFE_INTEGER.toString();
 var MAX_DIGITS = MAX_INT.length;
-var stringsOrLargeNumbers = /"(?:\\.|[^"])*"|-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?/g;
+var stringsOrLargeNumbers = /"(?:[^"\\]|\\.)*"|-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?/g;
 var noiseValueWithQuotes = /^"-?\d+n+"$/;
 var applyReviverIteratively = (parsed, userReviver) => {
   const rootHolder = { "": parsed };
@@ -34544,8 +34514,8 @@ var RequestError = class extends Error {
   }
 };
 
-// node_modules/.pnpm/@octokit+request@10.0.13/node_modules/@octokit/request/dist-bundle/index.js
-var VERSION2 = "10.0.13";
+// node_modules/.pnpm/@octokit+request@10.0.15/node_modules/@octokit/request/dist-bundle/index.js
+var VERSION2 = "10.0.15";
 var defaults_default = {
   headers: {
     "user-agent": `octokit-request.js/${VERSION2} ${getUserAgent()}`
@@ -34663,7 +34633,7 @@ async function getResponseData(response) {
   if (!contentType) {
     return response.text().catch(noop);
   }
-  const mimetype = (0, import_content_type.parse)(contentType);
+  const mimetype = parse2(contentType);
   if (isJSONResponse(mimetype)) {
     let text = "";
     try {
@@ -35018,10 +34988,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -37313,7 +37283,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -37436,7 +37406,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_c3ea356ddfc2d3f6c79aaefa1ec85b18/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -37939,6 +37909,12 @@ function interpolate({ template, params }) {
 }
 function getTranslations(locale) {
   return TRANSLATIONS[locale] || FALLBACK_LANG;
+}
+
+// src/shared/errors.ts
+function errorMessage(error2) {
+  const { message } = error2 ?? {};
+  return typeof message === "string" && message.trim() !== "" ? message : String(error2);
 }
 
 // node_modules/.pnpm/js-yaml@5.4.1/node_modules/js-yaml/dist/js-yaml.mjs
@@ -40690,7 +40666,7 @@ function parseConfigYaml({ content, configPath }) {
   try {
     return load(content);
   } catch (error2) {
-    warning(`Failed to parse config file ${configPath}: ${error2.message}`);
+    warning(`Failed to parse config file ${configPath}: ${errorMessage(error2)}`);
     return null;
   }
 }
@@ -41639,7 +41615,7 @@ function readJsonFile({ filePath, fallback }) {
     return JSON.parse(contents);
   } catch (error2) {
     throw new Error(
-      `${path3.basename(filePath)} on the data branch is not valid JSON (${error2.message}). Fix or delete the file on that branch and re-run.`
+      `${path3.basename(filePath)} on the data branch is not valid JSON (${errorMessage(error2)}). Fix or delete the file on that branch and re-run.`
     );
   }
 }
@@ -41662,6 +41638,15 @@ function assertJsonObject(parsed) {
     `${DATA_FILES.history} on the data branch is valid JSON but not an object (found ${Array.isArray(parsed) ? "an array" : JSON.stringify(parsed)}). Reading it as an empty history would discard your tracking record, so this run stops instead. Fix or delete the file on that branch and re-run.`
   );
 }
+function assertSnapshotList(snapshots) {
+  if (snapshots === void 0 || Array.isArray(snapshots)) {
+    return;
+  }
+  const found = snapshots !== null && typeof snapshots === "object" ? "an object" : JSON.stringify(snapshots);
+  throw new Error(
+    `${DATA_FILES.history} on the data branch has a "snapshots" key that is not an array (found ${found}). Reading it as an empty history would discard your tracking record, so this run stops instead. Fix or delete the file on that branch and re-run.`
+  );
+}
 function readHistory(dataDir) {
   const parsed = readJsonFile({
     filePath: path3.join(dataDir, DATA_FILES.history),
@@ -41670,7 +41655,8 @@ function readHistory(dataDir) {
   assertJsonObject(parsed);
   const { version, ...raw } = parsed;
   assertReadableFormat(version);
-  return { ...raw, snapshots: Array.isArray(raw.snapshots) ? raw.snapshots : [] };
+  assertSnapshotList(raw.snapshots);
+  return { ...raw, snapshots: raw.snapshots ?? [] };
 }
 function writeHistory({ dataDir, history }) {
   writeJsonFile({
@@ -41748,7 +41734,7 @@ function commitAndPush({ dataDir, dataBranch, message, token }) {
       options: { cwd }
     });
   } catch (error2) {
-    if (!PUSH_REJECTED_PATTERN.test(error2.message)) throw error2;
+    if (!PUSH_REJECTED_PATTERN.test(errorMessage(error2))) throw error2;
     throw new Error(
       `Another run pushed to "${dataBranch}" while this one was working, so this run's snapshot was not recorded; its report and any email have already gone out. Re-run to record it. To stop runs overlapping, give the workflow a "concurrency" group, or set read-only on whichever workflow should not be the writer.`
     );
@@ -43969,7 +43955,7 @@ async function trackStars() {
             });
             delivery = sent ? Delivery.SENT : Delivery.FAILED;
           } catch (error2) {
-            warning(`Failed to send email: ${error2.message}`);
+            warning(`Failed to send email: ${errorMessage(error2)}`);
             delivery = Delivery.FAILED;
           }
         } else if (emailConfig) {
@@ -44005,9 +43991,8 @@ async function trackStars() {
       }
     });
   } catch (error2) {
-    const err = error2;
-    setFailed(`Star Tracker failed: ${err.message}`);
-    if (err.stack) debug(err.stack);
+    setFailed(`Star Tracker failed: ${errorMessage(error2)}`);
+    if (error2 instanceof Error && error2.stack) debug(error2.stack);
   }
 }
 function setOutputs({

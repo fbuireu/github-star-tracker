@@ -39,12 +39,16 @@ flowchart TD
     infra --> i18n
     dom -->|"Locale, LOCALE_MAP<br/>(formatting.ts only)"| i18n
 
+    app --> err["@shared/errors<br/>errorMessage"]
+    cfg --> err
+    infra --> err
+
     test["@shared/tests<br/>imported from *.test.ts only"] -.-> cfg
     test -.-> dom
 
     classDef pure stroke:#dfb317,stroke-width:3px
     classDef shell stroke:#d73a49,stroke-width:3px
-    class dom,pres,i18n,test pure
+    class dom,pres,i18n,test,err pure
     class idx,app,cfg,infra shell
 ```
 
@@ -60,14 +64,14 @@ only one that performs I/O.
 | Layer | Alias | Responsibility | May import | Must not import |
 | --- | --- | --- | --- | --- |
 | `src/` entry | - | `index.ts` calls `trackStars()` at module load, un-awaited | `@application` | anything else |
-| application | `@application/*` | Sequencing the single use case; composition root for Octokit | config, domain, i18n, infrastructure, presentation, `@actions/*`, `@octokit/plugin-retry` | nothing; it is the top |
+| application | `@application/*` | Sequencing the single use case; composition root for Octokit | config, domain, i18n, infrastructure, presentation, shared, `@actions/*`, `@octokit/plugin-retry` | nothing; it is the top |
 | assets | `@assets/*` | Not a layer: the star mark the README embeds, no code | nothing; it imports nothing and nothing imports it | - |
-| config | `@config/*` | Action inputs + `star-tracker.yml` -> a fully-populated `Config` | `@domain/types`, `@i18n`, `@actions/core`, `js-yaml`, `node:fs/path` | application, infrastructure, presentation |
+| config | `@config/*` | Action inputs + `star-tracker.yml` -> a fully-populated `Config` | `@domain/types`, `@i18n`, `@shared/errors`, `@actions/core`, `js-yaml`, `node:fs/path` | application, infrastructure, presentation |
 | domain | `@domain/*` | Pure business core: the Tracked Set, comparison, snapshots, forecast, velocity, stargazer diffing and sampling, star-history reconstruction, formatting | `@i18n` only | everything else, incl. `@actions/*`, octokit, `node:fs` |
 | i18n | `@i18n` | Translation bundles, `getTranslations`, `interpolate` | nothing (true leaf) | everything |
-| infrastructure | `@infrastructure/*` | All I/O: octokit REST, `git` CLI, `fs`, nodemailer | config, domain (types, constants, and the pure deciders in `tracked-set` / `sampling`), i18n, `node:*`, `@actions/*`, `nodemailer` | application, presentation |
+| infrastructure | `@infrastructure/*` | All I/O: octokit REST, `git` CLI, `fs`, nodemailer | config, domain (types, constants, and the pure deciders in `tracked-set` / `sampling`), i18n, `@shared/errors`, `node:*`, `@actions/*`, `nodemailer` | application, presentation |
 | presentation | `@presentation/*` | Pure rendering: data in, string out (markdown/HTML/SVG/CSV/badge) | `@config/types`, domain, i18n | infrastructure, `@actions/*`, `node:fs`, any network |
-| shared | `@shared/*` | Cross-cutting non-layer code; today only `shared/tests` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only) | used from `*.test.ts` only |
+| shared | `@shared/*` | Cross-cutting non-layer code: `errors.ts`, plus the `shared/tests` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only) | application, infrastructure, presentation |
 
 This table is the **normative statement of the layer boundaries**, and `docs/docs-consistency.test.ts` reads
 it as data: the *May import* column of each row is parsed for the layer names it mentions, and every
@@ -77,8 +81,9 @@ states in prose and the test states as a list: no `node:*`, no `@actions/*`, no 
 and no `js-yaml` under `domain/`, `presentation/` or `i18n/`. The diagram is the table's picture, and anything
 the table forbids is forbidden however convenient.
 
-**A colocated test may import whatever its own layer may**, plus `@shared/tests`, which is that folder's only
-consumer. It may not reach further, and the one place that does is named in the test rather than waved
+**A colocated test may import whatever its own layer may**, plus anything under `@shared`: the fixture
+factories in `shared/tests` have no consumer outside a `*.test.ts`, and `shared/errors` is already named by
+every row that reaches for it. It may not reach further, and the one place that does is named in the test rather than waved
 through: [`src/config/action-inputs.test.ts`](./src/config/action-inputs.test.ts) reads `DEFAULT_SMTP_PORT`
 from `@infrastructure/notification/email` to assert `action.yml`'s `smtp-port` description against the
 constant that actually implements it. It asserts against the manifest rather than against a module, the two

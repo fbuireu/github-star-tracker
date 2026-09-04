@@ -31,7 +31,7 @@ edit or delete.
 
 ## Decision
 
-**`readHistory` refuses to guess.** Three guards in `src/infrastructure/persistence/storage.ts` turn an
+**`readHistory` refuses to guess.** Four guards in `src/infrastructure/persistence/storage.ts` turn an
 unreadable `stars-data.json` into a failed Run, and each throws its own message naming what it found and what
 to do about it:
 
@@ -45,8 +45,11 @@ to do about it:
   tells the reader to upgrade the action or point `data-branch` elsewhere. That guard is
   [ADR 0015](./0015-the-stored-history-declares-its-format-version.md); this ADR is why it throws rather than
   falling back.
+- **`assertSnapshotList`** fires when the file is a sound object whose `snapshots` key is present and holds
+  something other than an array. It names what it found and repeats the same reasoning, because the outcome
+  it prevents is the same one. An **absent** `snapshots` key is not an error: that is a first Run.
 
-All three propagate out of `withDataBranch` to `trackStars`, which fails the Action. Nothing is published and
+All four propagate out of `withDataBranch` to `trackStars`, which fails the Action. Nothing is published and
 nothing is pushed, so the unreadable file is left exactly as it was.
 
 ## Consequences
@@ -60,21 +63,24 @@ nothing is pushed, so the unreadable file is left exactly as it was.
   what was found and the action to take, because the reader is looking at a red Action log and has no reason
   to know a data branch exists. Shortening one of them to "invalid history" removes the only thing that makes
   loud failure better than silent reset.
-- **There is one deliberate exception, and it is not an oversight.** A `snapshots` key that is not an array
-  still normalizes quietly to `[]` rather than throwing. The surrounding object is intact in that case, so
-  `starsAtLastNotification` is still readable and is spread through untouched; throwing would discard a
-  Notification baseline that is perfectly good in order to complain about a sibling key. The rule is that the
-  guards protect the *container*, and a single malformed key inside an otherwise sound container is repaired
-  rather than fatal.
+- **The `snapshots` key is guarded too, which reverses an exception this ADR used to make.** It originally
+  let a `snapshots` key that was not an array normalize quietly to `[]`, reasoning that the surrounding object
+  was intact and the Notification baseline in `starsAtLastNotification` was perfectly good, so throwing would
+  discard it to complain about a sibling key. That reasoning is circular. The baseline only needs to survive
+  if the Run continues, and a Run that continues on an empty `snapshots` does the exact thing the Context
+  above forbids: it publishes a Report calling every Star new, writes one Snapshot and pushes over the file it
+  could not read. Keeping one good key is no consolation for discarding the record it belongs to. Only an
+  **absent** `snapshots` key still yields `[]`, because that is what a first Run looks like.
 - **`readStargazers` deliberately does not get the same treatment.** It keeps an absence fallback because
   `stargazers.json` is rebuilt from the API on the next Run, so a silent reset there costs one Run's New
   Stargazer list rather than the whole record. Do not "make the two readers consistent"; the asymmetry is the
-  decision. It is an asymmetry about `assertJsonObject` and `assertReadableFormat`, not about the parse
+  decision. It is an asymmetry about `assertJsonObject`, `assertReadableFormat` and `assertSnapshotList`, not about the parse
   catch: that one lives in the shared `readJsonFile`, so bytes that are not JSON fail the Run whichever file
   they are in.
-- **The container rule applies to both readers, and `readStargazers` had to be taught it.** The bullet above
-  about a malformed `snapshots` key states the general rule, that the guards protect the container while a
-  bad key inside a sound one is repaired. `readStargazers` performed no repair at all: it returned
+- **The container rule survives, scoped to the disposable file, and `readStargazers` had to be taught it.**
+  The guards protect the container, and a bad key inside a sound container is repaired rather than fatal, but
+  only where a silent repair costs one Run rather than the whole record. That is `stargazers.json`, and it is
+  not `stars-data.json`. `readStargazers` performed no repair at all: it returned
   `JSON.parse`'s output under the `StargazerMap` type, so an entry holding a number reached `diffStargazers`
   and failed the Run on `new Set(5)`. Crashing on a file this ADR calls disposable is neither of the two
   behaviours it weighs. A non-object now gives `{}` and an entry that is not an array of strings is dropped

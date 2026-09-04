@@ -17,6 +17,7 @@ import { retry } from "@octokit/plugin-retry";
 import { resolveChartHistories } from "@presentation/charts";
 import type { RenderedRun } from "@presentation/run";
 import { renderEmptyRun, renderRun } from "@presentation/run";
+import { errorMessage } from "@shared/errors";
 
 export async function trackStars(): Promise<void> {
 	try {
@@ -136,7 +137,7 @@ export async function trackStars(): Promise<void> {
 
 						delivery = sent ? Delivery.SENT : Delivery.FAILED;
 					} catch (error) {
-						core.warning(`Failed to send email: ${(error as Error).message}`);
+						core.warning(`Failed to send email: ${errorMessage(error)}`);
 						delivery = Delivery.FAILED;
 					}
 				} else if (emailConfig) {
@@ -178,10 +179,9 @@ export async function trackStars(): Promise<void> {
 			},
 		});
 	} catch (error) {
-		const err = error as Error;
-		core.setFailed(`Star Tracker failed: ${err.message}`);
+		core.setFailed(`Star Tracker failed: ${errorMessage(error)}`);
 
-		if (err.stack) core.debug(err.stack);
+		if (error instanceof Error && error.stack) core.debug(error.stack);
 	}
 }
 

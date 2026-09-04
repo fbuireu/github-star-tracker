@@ -3,6 +3,7 @@ import * as path from "node:path";
 import * as core from "@actions/core";
 import type { StargazerMap } from "@domain/stargazers";
 import type { History } from "@domain/types";
+import { errorMessage } from "@shared/errors";
 import { authenticatedArgs, execute } from "../git/commands";
 
 const DATA_FORMAT_VERSION = 1;
@@ -35,7 +36,7 @@ function readJsonFile<T>({ filePath, fallback }: ReadJsonFileParams<T>): T {
 		return JSON.parse(contents) as T;
 	} catch (error) {
 		throw new Error(
-			`${path.basename(filePath)} on the data branch is not valid JSON (${(error as Error).message}). Fix or delete the file on that branch and re-run.`,
+			`${path.basename(filePath)} on the data branch is not valid JSON (${errorMessage(error)}). Fix or delete the file on that branch and re-run.`,
 		);
 	}
 }
@@ -69,6 +70,18 @@ function assertJsonObject(parsed: unknown): asserts parsed is Record<string, unk
 	);
 }
 
+function assertSnapshotList(snapshots: unknown): void {
+	if (snapshots === undefined || Array.isArray(snapshots)) {
+		return;
+	}
+
+	const found = snapshots !== null && typeof snapshots === "object" ? "an object" : JSON.stringify(snapshots);
+
+	throw new Error(
+		`${DATA_FILES.history} on the data branch has a "snapshots" key that is not an array (found ${found}). Reading it as an empty history would discard your tracking record, so this run stops instead. Fix or delete the file on that branch and re-run.`,
+	);
+}
+
 export function readHistory(dataDir: string): History {
 	const parsed = readJsonFile<unknown>({
 		filePath: path.join(dataDir, DATA_FILES.history),
@@ -80,8 +93,9 @@ export function readHistory(dataDir: string): History {
 	const { version, ...raw } = parsed as Partial<History> & { version?: unknown };
 
 	assertReadableFormat(version);
+	assertSnapshotList(raw.snapshots);
 
-	return { ...raw, snapshots: Array.isArray(raw.snapshots) ? raw.snapshots : [] };
+	return { ...raw, snapshots: raw.snapshots ?? [] };
 }
 
 interface WriteHistoryParams {
@@ -226,7 +240,7 @@ export function commitAndPush({ dataDir, dataBranch, message, token }: CommitAnd
 			options: { cwd },
 		});
 	} catch (error) {
-		if (!PUSH_REJECTED_PATTERN.test((error as Error).message)) throw error;
+		if (!PUSH_REJECTED_PATTERN.test(errorMessage(error))) throw error;
 
 		throw new Error(
 			`Another run pushed to "${dataBranch}" while this one was working, so this run's snapshot was not recorded; its report and any email have already gone out. Re-run to record it. To stop runs overlapping, give the workflow a "concurrency" group, or set read-only on whichever workflow should not be the writer.`,

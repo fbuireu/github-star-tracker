@@ -73,14 +73,19 @@ describe("readHistory", () => {
 		expect(readHistory("/data")).toEqual({ snapshots: [] });
 	});
 
-	it("guarantees an array when snapshots is not an array", () => {
+	it.each([
+		["a string", '{"snapshots":"garbage"}'],
+		["a number", '{"snapshots":5}'],
+		["null", '{"snapshots":null}'],
+		["an object", '{"snapshots":{"2026-01-01":1}}'],
+	])("refuses a snapshots key holding %s rather than silently restarting the tracking record", (_label, contents) => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
-		vi.mocked(fs.readFileSync).mockReturnValue('{"snapshots":"garbage"}');
+		vi.mocked(fs.readFileSync).mockReturnValue(contents);
 
-		expect(readHistory("/data")).toEqual({ snapshots: [] });
+		expect(() => readHistory("/data")).toThrow(/"snapshots" key that is not an array/);
 	});
 
-	it("preserves starsAtLastNotification while coercing snapshots", () => {
+	it("preserves starsAtLastNotification when the snapshots key is absent", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue('{"starsAtLastNotification":520}');
 

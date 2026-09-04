@@ -2,13 +2,35 @@
 
 The escape hatch for code every layer may reach for but that is not domain logic, configuration, rendering or
 I/O. It is deliberately almost empty: putting something here is a statement that no layer owns it, and that
-claim is usually wrong. Today it holds only `tests/`, a barrel of fixture factories.
+claim is usually wrong. Today it holds two things: [`errors.ts`](./errors.ts), and `tests/`, a barrel of fixture
+factories.
 
 **Anything added here needs a reason why no existing layer owns it.** Formatting goes to
 `@domain/formatting`, config parsing to `@config/parsers`, rendering primitives to `@presentation/shared`,
 and git, fs or HTTP to `@infrastructure`. If one of those fits, use it. In particular, `shared` must never
 accumulate domain logic: a helper that reasons about stars, snapshots, deltas, forecasts or dates-as-business-data
 belongs in `@domain`.
+
+## errors.ts
+
+One export, `errorMessage(error: unknown): string`. A `catch` binding is `unknown`, so every site that wanted
+to interpolate `error.message` into a log line used to write `(error as Error).message`: a lie whenever the
+throw is a string, a plain object or `undefined`, and five of them had accumulated. `errorMessage` reads a
+string `message` off the value when there is one and falls back to `String(error)` when there is not, so it
+never returns the empty string and never throws.
+
+**It lives here because no layer owns it.** Its callers are `@application/tracker`, `@config/loader` and
+`@infrastructure/persistence/storage`, and `config` may not import `infrastructure`, so there is no lower
+layer the three of them share. That is the reason this folder asks for, spelled out.
+
+- **It is not `describeFetchError`, and neither is built on the other.**
+  [`@infrastructure/github/errors`](../infrastructure/github/errors.ts) prefixes an octokit `status` and
+  deliberately treats a blank message as *absent* so a status-only failure reads `HTTP 500` rather than
+  `HTTP 500 Error`. `errorMessage` has no status to fall back on, so a blank message must become
+  `String(error)` instead. Same shape, opposite handling of the blank case; folding one into the other
+  breaks `describeFetchError`'s tests, which is the point.
+- **`.stack` is not here.** The one site that wants it, the top-level `catch` in `trackStars`, narrows with
+  `error instanceof Error` inline. A second helper for a single caller would be this folder accumulating.
 
 ## tests/
 

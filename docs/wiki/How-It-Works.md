@@ -508,7 +508,7 @@ commit. Anything written after the commit would not be staged.
 
 ### Reading `stars-data.json`
 
-Three guards run before the stored file is trusted, and each of them **fails the run** rather than
+Four guards run before the stored file is trusted, and each of them **fails the run** rather than
 continuing on a guess, because silently reading a populated data branch as empty would append a snapshot
 over the top of a discarded record:
 
@@ -517,11 +517,13 @@ over the top of a discarded record:
 | The file is not valid JSON | The run stops and names the parse error, asking you to fix or delete the file on the data branch |
 | The file is valid JSON but not an object (`null`, an array, a number, a string) | The run stops rather than reading it as an empty history |
 | The file declares a `version` higher than this action writes | The run stops and asks you to upgrade the action, or to point `data-branch` at a branch this version wrote |
+| The file is an object but its `snapshots` key is not an array | The run stops rather than reading it as an empty history |
 
 `version` is stamped as the first key of the file by the writer and stripped again on read, so it never
 reaches the report. An **absent** `version` means version 1 and is accepted, because every data branch that
-predates the field has none. A `snapshots` key that is not an array is the one tolerated case: it normalizes
-to an empty list while `starsAtLastNotification` survives.
+predates the field has none. A `snapshots` key that is **absent** is the one tolerated case, because that is
+what the first run on a fresh branch looks like; a `snapshots` key that is present but holds something other
+than an array stops the run like any other unreadable file.
 
 ### Chart Pruning
 

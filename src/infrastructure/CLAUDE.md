@@ -181,19 +181,21 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
   `writeFileSync` under a different field name. `writeHistory` and `writeStargazers` stay separate because
   they are JSON and one of them stamps the format version; `writeChart` stays separate because it creates a
   directory.
-- **`readHistory` always returns a usable `History`.** A missing file gives `{ snapshots: [] }`; a stored
-  `snapshots` that is not an array normalizes to `[]` while `starsAtLastNotification` survives untouched.
-  Downstream domain code never null-checks it.
+- **`readHistory` always returns a usable `History` or throws.** A missing file gives `{ snapshots: [] }`, and
+  so does a file with no `snapshots` key at all, `starsAtLastNotification` surviving untouched. A `snapshots`
+  key that is present and is not an array throws instead of normalizing. Downstream domain code never
+  null-checks it.
 - **Invalid JSON throws and does not fall back.** Silently resetting corrupt history would destroy a user's
   tracking record, so keep it fatal
-  ([ADR 0021](../../docs/adr/0021-an-unreadable-stored-history-fails-the-run.md), which covers all three
+  ([ADR 0021](../../docs/adr/0021-an-unreadable-stored-history-fails-the-run.md), which covers all four
   guards here and why the accepted cost is that a broken file blocks every later run until a human fixes
   it). The parse catch lives in the shared `readJsonFile`, so unparseable **bytes** are fatal for
-  `stargazers.json` too; what `readStargazers` does not get is `assertJsonObject` or `assertReadableFormat`.
+  `stargazers.json` too; what `readStargazers` does not get is `assertJsonObject`, `assertReadableFormat` or
+  `assertSnapshotList`.
 - **`readStargazers` repairs its container's contents rather than trusting them.** A missing file gives `{}`,
   a parsed value that is not a plain object gives `{}`, and an entry whose value is not an array of strings
-  is dropped while its siblings survive. That is ADR 0021's container rule, the one that lets a malformed
-  `snapshots` key normalize instead of throwing, applied to the reader that had never had it. `StargazerMap`
+  is dropped while its siblings survive. That is ADR 0021's container rule, which survives only for the file
+  that ADR calls disposable, applied to the reader that had never had it. `StargazerMap`
   is `Record<string, string[]>` and the reader used to hand back whatever `JSON.parse` produced under that
   type, so a hand-edited `{"user/repo": 5}` reached `diffStargazers`, hit `new Set(5)` and failed the whole
   Run with `TypeError: number 5 is not iterable` over a file ADR 0021 calls disposable.
@@ -201,8 +203,10 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
   A `stars-data.json` holding `null`, `[]`, `5` or a string destructured to `{}`, normalized to
   `{ snapshots: [] }`, and the Run then treated a populated Data Branch as a first Run, appending one
   Snapshot and **pushing**, discarding the record, while reporting success. `assertJsonObject` makes the
-  stated invariant true. A `snapshots` key that is not an array still normalizes to `[]`; that one is
-  deliberate and pinned, because the surrounding object is intact and `starsAtLastNotification` must survive.
+  stated invariant true, and `assertSnapshotList` finishes the job one level down: a `snapshots` key holding
+  a string, a number, `null` or an object used to normalize to `[]` and reach exactly the same ending, with
+  `starsAtLastNotification` preserved as the sole consolation for a discarded record. ADR 0021 records why
+  that exception was reversed. Only an **absent** `snapshots` key still yields `[]`.
 - **`stars-data.json` carries a `version` and this folder owns it end to end**
   ([ADR 0015](../../docs/adr/0015-the-stored-history-declares-its-format-version.md)). `writeHistory` stamps
   `DATA_FORMAT_VERSION` as the first key; `readHistory` validates it through `assertReadableFormat` and
