@@ -2,7 +2,7 @@
 
 How the action is built, for contributors. What it does and how to configure it is the
 [README](./README.md) and the user guides in [docs/wiki/](./docs/wiki/), in particular
-[How It Works](./docs/wiki/How-It-Works.md) and [Technical Stack](./docs/wiki/Technical-Stack.md); this
+[How It Works](../../wiki/How-It-Works) and [Technical Stack](../../wiki/Technical-Stack); this
 document does not restate them. Conventions and the maintenance contract are [CLAUDE.md](./CLAUDE.md), the
 domain vocabulary is [CONTEXT.md](./CONTEXT.md).
 

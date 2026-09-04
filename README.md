@@ -11,7 +11,7 @@
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue?style=flat-square)](https://www.gnu.org/licenses/agpl-3.0)
 [![Product Hunt](https://img.shields.io/badge/Product%20Hunt-featured-orange?style=flat-square&logo=producthunt&logoColor=white)](https://www.producthunt.com/products/github-star-tracker)
 
-**[Documentation](docs/wiki/Home.md)** · **[Getting Started](docs/wiki/Getting-Started.md)** · **[Configuration](docs/wiki/Configuration.md)** · **[Examples](docs/wiki/Examples.md)** · **[Troubleshooting](docs/wiki/Troubleshooting.md)**
+**[Documentation](../../wiki/Home)** · **[Getting Started](../../wiki/Getting-Started)** · **[Configuration](../../wiki/Configuration)** · **[Examples](../../wiki/Examples)** · **[Troubleshooting](../../wiki/Troubleshooting)**
 
 </div>
 
@@ -22,7 +22,7 @@
 >
 > **GitHub Star Tracker keeps working.** It runs inside *your* workflow, with *your* token, against *your* repositories: exactly the access GitHub is keeping. Star counts, reports, badges, CSV and notifications are unaffected in every case.
 >
-> The one thing that depends on your *role* rather than your token's scopes is the stargazer endpoint, and it is what star-history charts and stargazer tracking are reconstructed from. If you track a repository you do not administer (an organization repo where you are a read-only member, or any repo reached through a fine-grained token with no explicit grant on its organization), those two fall back to the stored per-run snapshots. [Known Limitations](docs/wiki/Known-Limitations.md) has the detail.
+> The one thing that depends on your *role* rather than your token's scopes is the stargazer endpoint, and it is what star-history charts and stargazer tracking are reconstructed from. If you track a repository you do not administer (an organization repo where you are a read-only member, or any repo reached through a fine-grained token with no explicit grant on its organization), those two fall back to the stored per-run snapshots. [Known Limitations](../../wiki/Known-Limitations) has the detail.
 
 ---
 
@@ -92,7 +92,7 @@ the email body, and reaches you through the `report-html` and `report-html-path`
 3. Add it as a **repository secret** named `STAR_TRACKER_TOKEN`
 
 > [!NOTE]
-> The default `GITHUB_TOKEN` is not sufficient. See the **[PAT guide](<docs/wiki/Personal-Access-Token-(PAT).md>)** for details, including why a fine-grained token can leave the stargazer sections empty.
+> The default `GITHUB_TOKEN` is not sufficient. See the **[PAT guide](<../../wiki/Personal-Access-Token-(PAT)>)** for details, including why a fine-grained token can leave the stargazer sections empty.
 
 ### 2. Add the Workflow
 
@@ -128,7 +128,7 @@ jobs:
 
 ## Configuration
 
-Set options directly in the workflow or via a YAML config file. See the **[Configuration guide](docs/wiki/Configuration.md)** for full details.
+Set options directly in the workflow or via a YAML config file. See the **[Configuration guide](../../wiki/Configuration)** for full details.
 
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
@@ -201,7 +201,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 > [!IMPORTANT]
 > `notification-threshold` decides **when** you get an email; `compare-against` decides **what period the report body covers**. The two are independent: the threshold accumulates from the Notification Baseline, while the report diffs against a stored snapshot. So a threshold that takes several runs to trip still produces a report covering only the `compare-against` window. Set them to match if you want the email body to span what the threshold accumulated.
 
-See **[`notification-threshold`](docs/wiki/Configuration.md#notification-threshold)** for how the counter behaves on a fresh data branch, when you raise the value, and on a `read-only` run.
+See **[`notification-threshold`](../../wiki/Configuration#notification-threshold)** for how the counter behaves on a fresh data branch, when you raise the value, and on a `read-only` run.
 
 In the YAML config file, option keys may be written with either dashes or underscores (`include-charts` and `include_charts` are both accepted), so you can copy option names straight from this table without rewriting the separators.
 
@@ -228,7 +228,7 @@ To email on every N stars, use `notification-threshold: 'N'` with `notification-
 
 </details>
 
-**[API Reference](docs/wiki/API-Reference.md):** Complete inputs, outputs, and data formats
+**[API Reference](../../wiki/API-Reference):** Complete inputs, outputs, and data formats
 
 ---
 
@@ -293,7 +293,7 @@ flowchart TD
     style send stroke:#c2185b,stroke-width:3px
 ```
 
-**[How It Works](docs/wiki/How-It-Works.md):** The full execution pipeline, phase by phase. **[Architecture](docs/wiki/Architecture.md):** the DDD<sub>(ish)</sub> layering, one ubiquitous language and a pure core, and how much of the tactical catalogue is taken
+**[How It Works](../../wiki/How-It-Works):** The full execution pipeline, phase by phase. **[Architecture](../../wiki/Architecture):** the DDD<sub>(ish)</sub> layering, one ubiquitous language and a pure core, and how much of the tactical catalogue is taken
 
 ### How the charts read dates
 
@@ -324,7 +324,7 @@ The line style is configurable via `chart-curve` (`monotone` by default, plus `c
 > [!TIP]
 > SVG charts automatically adapt to dark and light mode. No extra configuration needed: they use `prefers-color-scheme` to match the viewer's theme.
 
-**[Viewing Reports](docs/wiki/Viewing-Reports.md)**: All access methods (data branch, badges, outputs, email)
+**[Viewing Reports](../../wiki/Viewing-Reports)**: All access methods (data branch, badges, outputs, email)
 
 ---
 
@@ -332,21 +332,21 @@ The line style is configurable via `chart-curve` (`monotone` by default, plus `c
 
 | Guide                                                                 | Description                               |
 | --------------------------------------------------------------------- | ----------------------------------------- |
-| **[Getting Started](docs/wiki/Getting-Started.md)**                          | Setup from token to first run             |
-| **[How It Works](docs/wiki/How-It-Works.md)**                                | Execution flow, phase by phase            |
-| **[Architecture](docs/wiki/Architecture.md)**                                | DDD(ish) layers, and where the DDD stops |
-| **[Configuration](docs/wiki/Configuration.md)**                              | All options and settings                  |
-| **[API Reference](docs/wiki/API-Reference.md)**                              | Inputs, outputs, and data formats         |
-| **[Examples](docs/wiki/Examples.md)**                                        | Real-world workflow configurations        |
-| **[Star Trend Charts](docs/wiki/Star-Trend-Charts.md)**                      | Chart types, embedding, and customization |
-| **[Email Notifications](docs/wiki/Email-Notifications.md)**                  | Built-in SMTP and external action setup   |
-| **[Viewing Reports](docs/wiki/Viewing-Reports.md)**                          | Data branch, badges, outputs, raw data    |
-| **[Data Management](docs/wiki/Data-Management.md)**                          | Storage, rotation, and manual management  |
-| **[Internationalization](<docs/wiki/Internationalization-(i18n).md>)**       | Multi-language support                    |
-| **[Personal Access Token](<docs/wiki/Personal-Access-Token-(PAT).md>)**      | Classic and fine-grained token setup      |
-| **[Technical Stack](docs/wiki/Technical-Stack.md)**                          | Technologies and design decisions         |
-| **[Known Limitations](docs/wiki/Known-Limitations.md)**                      | Constraints and workarounds               |
-| **[Troubleshooting](docs/wiki/Troubleshooting.md)**                          | Common issues and solutions               |
+| **[Getting Started](../../wiki/Getting-Started)**                          | Setup from token to first run             |
+| **[How It Works](../../wiki/How-It-Works)**                                | Execution flow, phase by phase            |
+| **[Architecture](../../wiki/Architecture)**                                | DDD(ish) layers, and where the DDD stops |
+| **[Configuration](../../wiki/Configuration)**                              | All options and settings                  |
+| **[API Reference](../../wiki/API-Reference)**                              | Inputs, outputs, and data formats         |
+| **[Examples](../../wiki/Examples)**                                        | Real-world workflow configurations        |
+| **[Star Trend Charts](../../wiki/Star-Trend-Charts)**                      | Chart types, embedding, and customization |
+| **[Email Notifications](../../wiki/Email-Notifications)**                  | Built-in SMTP and external action setup   |
+| **[Viewing Reports](../../wiki/Viewing-Reports)**                          | Data branch, badges, outputs, raw data    |
+| **[Data Management](../../wiki/Data-Management)**                          | Storage, rotation, and manual management  |
+| **[Internationalization](<../../wiki/Internationalization-(i18n)>)**       | Multi-language support                    |
+| **[Personal Access Token](<../../wiki/Personal-Access-Token-(PAT)>)**      | Classic and fine-grained token setup      |
+| **[Technical Stack](../../wiki/Technical-Stack)**                          | Technologies and design decisions         |
+| **[Known Limitations](../../wiki/Known-Limitations)**                      | Constraints and workarounds               |
+| **[Troubleshooting](../../wiki/Troubleshooting)**                          | Common issues and solutions               |
 
 For *why* the action is built the way it is, one decision per file, see the
 [architecture decision records](docs/adr/). They include the

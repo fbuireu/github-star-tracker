@@ -97,7 +97,7 @@ triggering repository and cannot list your repositories at all
 
 - **Classic:** `public_repo` if you only track public repositories, `repo` if you track private ones
 - **Fine-grained:** `Contents: Read and write`, because the action pushes to the data branch with this
-  token. `Contents: Read-only` is enough for a [`read-only`](docs/wiki/Configuration.md) run
+  token. `Contents: Read-only` is enough for a [`read-only`](../../wiki/Configuration) run
 
 The workflow's own `permissions:` block only governs `GITHUB_TOKEN`, which `actions/checkout` uses:
 
@@ -163,7 +163,7 @@ Email is sent over SMTP with the credentials you supply separately; the GitHub t
 
 A git branch is the only storage backend the action has. That is how a stateless Action remembers anything
 ([ADR 0001](docs/adr/0001-star-data-lives-on-a-dedicated-data-branch.md)), and there is no alternative
-backend to point it at. A [`read-only`](docs/wiki/Configuration.md) run still reads that branch; it simply
+backend to point it at. A [`read-only`](../../wiki/Configuration) run still reads that branch; it simply
 never writes to it.
 
 - Historical star data, the report, the badge and the charts live on that branch

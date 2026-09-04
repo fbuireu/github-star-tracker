@@ -74,7 +74,7 @@ Every one is real, from this repository, and each names where it ended up.
 Stars, which is the number `MAX_REACHABLE_STARGAZERS` is named after. Read by `diffStargazers` and
 `buildStargazerMap`. Crosses into the Data Branch. The concept already had a name, `incomplete`; the fetch
 was simply not setting it. The user-facing half is in
-[Known Limitations](../wiki/Known-Limitations.md).
+[Known Limitations](https://github.com/fbuireu/github-star-tracker/wiki/Known-Limitations).
 
 **Fixed as a guard, because question 1 was no: a malformed `stargazers.json` entry.** Nothing this action
 writes produces `{"user/repo": 5}`, so the way in is a hand-edited Data Branch, which
