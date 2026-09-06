@@ -1,4 +1,4 @@
-Real-world workflow configurations for common use cases. For rendered chart outputs and a side-by-side comparison of every chart option, see the **[examples gallery](https://github.com/fbuireu/github-star-tracker/blob/main/examples/README.md)**.
+Real-world workflow configurations for common use cases. For rendered chart outputs and a side-by-side comparison of every chart option, see the **[examples gallery](https://github.com/fbuireu/github-star-tracker/blob/main/docs/examples/README.md)**.
 
 ---
 
@@ -443,7 +443,7 @@ absence from a sample is not evidence. Repositories below the threshold are unaf
 
 ### Customized Charts
 
-Tune the chart appearance: the curve style, theme, colors, milestones, trend line and time window. To see what each option looks like, browse the rendered side-by-side comparisons in the **[examples gallery](https://github.com/fbuireu/github-star-tracker/blob/main/examples/README.md)**.
+Tune the chart appearance: the curve style, theme, colors, milestones, trend line and time window. To see what each option looks like, browse the rendered side-by-side comparisons in the **[examples gallery](https://github.com/fbuireu/github-star-tracker/blob/main/docs/examples/README.md)**.
 
 ```yaml
 - uses: fbuireu/github-star-tracker@v1

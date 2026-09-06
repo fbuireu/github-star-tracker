@@ -237,7 +237,7 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
   a push failure from leaking the token. Any new call passing a secret in argv must do the same.
 - `commitAndPush` has **no read-only awareness**; calling it on a read-only run would push. The guard lives in
   `data-branch.ts`, which is also what guarantees every `write*` has completed before it.
-- Filenames are module-private but referenced by users' workflows and READMEs. Renaming [`stars-badge.svg`](../../examples/stars-badge.svg),
+- Filenames are module-private but referenced by users' workflows and READMEs. Renaming [`stars-badge.svg`](../../docs/examples/stars-badge.svg),
   `stars-data.json`, `stars-data.csv`, `stargazers.json` or the report [`README.md`](../../README.md) is a breaking change to
   consumers outside this repo.
 

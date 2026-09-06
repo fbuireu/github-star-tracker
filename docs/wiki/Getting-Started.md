@@ -66,7 +66,7 @@ After the first run:
    - [`README.md`](https://github.com/fbuireu/github-star-tracker/blob/main/README.md), the full Markdown report
    - `stars-data.json`, the historical data
    - `stars-data.csv`, the same run as a flat CSV
-   - [`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/examples/stars-badge.svg), the star count badge
+   - [`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/docs/examples/stars-badge.svg), the star count badge
    - `charts/`, the SVG charts the report embeds
 
 ### If the Branch Never Appears

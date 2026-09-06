@@ -27,7 +27,7 @@ Shows the **total star count** across all tracked repositories over time.
 - X-axis date labels scaled to the time span: years for multi-year histories (e.g. `2023 2024 2025`), day-level labels for shorter ranges
 - Optional **trend line**: when `chart-trend-line` is enabled, a dashed line in the palette's neutral gray is overlaid on top of the star line. It is computed as a 7-point moving average, which smooths week-to-week noise so the underlying growth direction is easier to read; it describes the past only and is a different thing from the forecast. This chart has no legend, so the gray dashed line is the trend line and the solid line is the actual star count.
 
-![Star History](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/examples/star-history.svg)
+![Star History](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/docs/examples/star-history.svg)
 
 ### 2. Per-Repo Charts
 
@@ -43,7 +43,7 @@ That holds whenever the repository's own reconstruction has at least 2 points. W
 - One chart per top repo
 - Collapsible in the Markdown report via `<details>`
 
-![Per-Repo Chart](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/examples/per-repo.svg)
+![Per-Repo Chart](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/docs/examples/per-repo.svg)
 
 ### 3. Comparison Chart
 
@@ -55,7 +55,7 @@ Top N repositories overlaid on a single chart for comparison.
 - Legend showing repo names (short names when all repos share the same owner)
 - Up to 10 repos (limited by `CHART.maxComparison`)
 
-![Comparison Chart](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/examples/comparison.svg)
+![Comparison Chart](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/docs/examples/comparison.svg)
 
 
 ### 4. Forecast Chart
@@ -69,7 +69,7 @@ Observed history plus projected growth for the next 4 weeks.
 - Dashed red line for weighted moving average forecast
 - Legend distinguishing methods
 
-![Forecast Chart](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/examples/forecast.svg)
+![Forecast Chart](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/docs/examples/forecast.svg)
 
 ---
 
@@ -212,7 +212,7 @@ Where the media query reaches:
 | HTML email | No. Gmail strips `<style>` blocks, so set [`email-theme`](Configuration#email-theme) to pick the palette instead |
 | QuickChart PNGs in email | No. The image is rasterised once, on whatever background `email-theme` resolves to |
 
-The badge ([`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/examples/stars-badge.svg)) carries no dark-mode styles at all. It uses a fixed dark label with an
+The badge ([`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/docs/examples/stars-badge.svg)) carries no dark-mode styles at all. It uses a fixed dark label with an
 accent-coloured value, legible on either background.
 
 ### Animations (SVG only)
@@ -310,7 +310,7 @@ On a repository above GitHub's stargazer listing cap the chart's recent tail is 
 
 ## Comparing Options
 
-A look at how the main settings change the chart, to help you pick. For a rendered side-by-side of every option (default vs on/off vs variants), see the **[examples gallery](https://github.com/fbuireu/github-star-tracker/blob/main/examples/README.md)**.
+A look at how the main settings change the chart, to help you pick. For a rendered side-by-side of every option (default vs on/off vs variants), see the **[examples gallery](https://github.com/fbuireu/github-star-tracker/blob/main/docs/examples/README.md)**.
 
 ### Curve styles (`chart-curve`)
 

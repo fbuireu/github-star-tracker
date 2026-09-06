@@ -167,7 +167,7 @@ promise, not a fix.
 
 `docs/docs-consistency.test.ts` makes the mechanical half of that contract executable. It reads every
 document and asserts the checkable claims against the repo: no dead markdown links, no citation of a source
-or test file that does not exist, no sample chart in [`examples/README.md`](./examples/README.md) without its SVG, every `action.yml`
+or test file that does not exist, no sample chart in [`docs/examples/README.md`](./docs/examples/README.md) without its SVG, every `action.yml`
 input and output named on the surfaces that list them **and listed alphabetically** there, the translation-key table in
 `docs/wiki/Internationalization-(i18n).md` matching [`src/i18n/en.json`](./src/i18n/en.json) section for section and key for key,
 every documented `stars-data.json` example showing the `version` the writer actually stamps,

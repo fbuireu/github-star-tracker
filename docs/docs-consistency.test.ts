@@ -81,7 +81,6 @@ const DOCS = [
 		"CONTRIBUTING.md",
 		"README.md",
 		"SECURITY.md",
-		"examples/README.md",
 	].filter((doc) => fs.existsSync(doc)),
 	...walk({ dir: ".github", keep: isMarkdown }),
 	...walk({ dir: "docs", keep: isMarkdown }),
@@ -246,9 +245,9 @@ describe("documentation consistency", () => {
 	});
 
 	it("embeds only sample charts that exist", () => {
-		const missing = [...read("examples/README.md").matchAll(SVG_LINK_PATTERN)]
+		const missing = [...read("docs/examples/README.md").matchAll(SVG_LINK_PATTERN)]
 			.map((match) => match[1])
-			.filter((svg) => !fs.existsSync(path.join("examples", svg)));
+			.filter((svg) => !fs.existsSync(path.join("docs/examples", svg)));
 
 		expect(missing).toEqual([]);
 	});

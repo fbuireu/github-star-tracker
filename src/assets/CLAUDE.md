@@ -15,7 +15,7 @@ lives only there.
 
 ## Invariants
 
-- **The file needs a `<title>`.** [`biome.json`](../../biome.json) includes `src/**`, so unlike the sample charts in `examples/`
+- **The file needs a `<title>`.** [`biome.json`](../../biome.json) includes `src/**`, so unlike the sample charts in `docs/examples/`
   this file is linted and `a11y/noSvgWithoutTitle` fails the build without one. Suppressions are not allowed
   anywhere in this repo, so the title is the fix, and it doubles as the accessible name.
 - **The star is a bar chart clipped by a star polygon**, not a star outline: eight rising `rect`s inside

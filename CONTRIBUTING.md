@@ -413,10 +413,10 @@ whole documentation set and fails on, among other things:
   [`src/i18n/en.json`](./src/i18n/en.json) section for section and key for key
 - A documented `stars-data.json` example whose `version` is not the one the writer stamps
 - A function or arrow taking two or more positional parameters
-- A sample chart in [`examples/README.md`](./examples/README.md) with no corresponding SVG
+- A sample chart in [`docs/examples/README.md`](./docs/examples/README.md) with no corresponding SVG
 
 "The whole documentation set" is meant literally: the root guides, everything under `docs/` and `.github/`,
-every layer `CLAUDE.md`, `examples/README.md`, and this file along with [`SECURITY.md`](./SECURITY.md) and
+every layer `CLAUDE.md`, `docs/examples/README.md`, and this file along with [`SECURITY.md`](./SECURITY.md) and
 `CODE_OF_CONDUCT.md`. If you edit any of them, the test reads what you wrote.
 
 A failure means the docs and the code disagree, so fix whichever is wrong. The test cannot check prose or

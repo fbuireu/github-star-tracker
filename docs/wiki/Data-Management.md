@@ -24,7 +24,7 @@ The working directory for the branch is derived from the name: a dot followed by
 | [`README.md`](https://github.com/fbuireu/github-star-tracker/blob/main/README.md) | Markdown report with embedded charts | Every run |
 | `stars-data.json` | Historical snapshot data | Every run |
 | `stars-data.csv` | Flat per-repo export (`repository,owner,name,stars,previous,delta,status`) | Every run |
-| [`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/examples/stars-badge.svg) | Star count badge | Every run |
+| [`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/docs/examples/stars-badge.svg) | Star count badge | Every run |
 | `stargazers.json` | Stargazer login map | Only with `track-stargazers: true` |
 | `charts/star-history.svg` | Total stars chart | Charts on, once the charted series has at least 2 points |
 | `charts/comparison.svg` | Top repos comparison | Same condition, plus at least one top repository |

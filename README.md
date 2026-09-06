@@ -48,13 +48,13 @@ branch already holds.
 
 - **Animated SVG charts:** star history, per-repo trends, top repos comparison, and growth forecasts, with automatic dark/light mode support:
 
-  <img src="examples/star-history.svg" alt="Star History" width="800">
-  <img src="examples/comparison.svg" alt="Top Repositories" width="800">
-  <img src="examples/forecast.svg" alt="Growth Forecast" width="800">
+  <img src="docs/examples/star-history.svg" alt="Star History" width="800">
+  <img src="docs/examples/comparison.svg" alt="Top Repositories" width="800">
+  <img src="docs/examples/forecast.svg" alt="Growth Forecast" width="800">
 
 - **Shields.io-style badge:** embeddable star count that updates automatically:
 
-  <img src="examples/stars-badge.svg" alt="Stars">
+  <img src="docs/examples/stars-badge.svg" alt="Stars">
 
 - **Markdown report:** summary tables, delta indicators, every New Repository and Removed Repository since the baseline, stargazer details, and forecast tables.
 
@@ -303,7 +303,7 @@ The per-run snapshots on the data branch are still kept for the report's delta t
 
 One caveat: GitHub caps the stargazers listing at roughly **40,000 per repo** (oldest first), so on a very large repo the most recent stars fall outside the Reachable Stargazers and the Covered Stars behind the curve stop short of the true total. The reachable portion is drawn accurately and the recent tail is bridged with a straight ramp up to the current total, so the early curve stays honest and the chart never goes flat at the end. Pair this with `smart-sampling` to keep the request cost bounded on big repos.
 
-The line style is configurable via `chart-curve` (`monotone` by default, plus `catmull-rom`, `cubic-bezier` and `rounded-step`), along with theme, colors, milestones, point markers, the time window and more. See the **[examples gallery](examples/)** for a rendered comparison of every option.
+The line style is configurable via `chart-curve` (`monotone` by default, plus `catmull-rom`, `cubic-bezier` and `rounded-step`), along with theme, colors, milestones, point markers, the time window and more. See the **[examples gallery](docs/examples/)** for a rendered comparison of every option.
 
 ---
 
