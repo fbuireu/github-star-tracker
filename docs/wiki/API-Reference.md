@@ -248,6 +248,7 @@ Animated SVG files committed to the data branch:
 | `charts/comparison.svg` | Top N repos overlaid |
 | `charts/forecast.svg` | Historical and projected trends |
 | `charts/{owner}-{repo}.svg` | Per-repo star history |
+| `charts/forecast-{owner}-{repo}.svg` | One repo's history and projected trends |
 
 To embed any of these, see **[Viewing Reports](Viewing-Reports#method-2-badges)**.
 
@@ -265,6 +266,7 @@ To embed any of these, see **[Viewing Reports](Viewing-Reports#method-2-badges)*
 | `charts/comparison.svg` | Top repos comparison | After first run (with multiple repos and `include-charts` on) |
 | `charts/forecast.svg` | Growth forecast | After enough history points exist |
 | `charts/{owner}-{repo}.svg` | Per-repo charts | After first run (for top N repos with stargazers) |
+| `charts/forecast-{owner}-{repo}.svg` | Per-repo growth forecast | For a top repo with enough stargazer history of its own to fit |
 | `stargazers.json` | Stargazer login map | Only with `track-stargazers: true` |
 
 ---

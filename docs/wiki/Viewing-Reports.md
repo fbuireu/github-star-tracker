@@ -61,6 +61,9 @@ Display your star count in your main README.
 
 <!-- Per-repo chart (replace owner-repo with your repo) -->
 ![Per-Repo](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/charts/owner-repo.svg)
+
+<!-- Per-repo forecast chart -->
+![Per-Repo Forecast](https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/charts/forecast-owner-repo.svg)
 ```
 
 ---

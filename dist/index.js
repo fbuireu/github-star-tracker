@@ -41000,6 +41000,10 @@ var ForecastMethod = {
   LINEAR_REGRESSION: "linear-regression",
   WEIGHTED_MOVING_AVERAGE: "weighted-moving-average"
 };
+var ForecastSource = {
+  OWN: "own",
+  AGGREGATE: "aggregate"
+};
 function clampPrediction(value) {
   return Math.max(0, Math.round(value));
 }
@@ -41035,10 +41039,15 @@ function computeForecast({ history, topRepoNames, historyForRepo }) {
   const aggregateForecasts = forecastFromSeries(toSeries({ values: totalValues, days: aggregateDays }));
   const repos = topRepoNames.map((repoFullName) => {
     const candidate = historyForRepo?.(repoFullName);
-    const source = candidate && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST ? candidate : history;
-    const days = source === history ? aggregateDays : calendarDays(source);
-    const values = repoStarSeries({ snapshots: source.snapshots, repoFullName });
-    return { repoFullName, forecasts: forecastFromSeries(toSeries({ values, days })) };
+    const ownHistory = candidate && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST ? candidate : null;
+    const fitted = ownHistory ?? history;
+    const days = ownHistory === null ? aggregateDays : calendarDays(ownHistory);
+    const values = repoStarSeries({ snapshots: fitted.snapshots, repoFullName });
+    return {
+      repoFullName,
+      source: ownHistory === null ? ForecastSource.AGGREGATE : ForecastSource.OWN,
+      forecasts: forecastFromSeries(toSeries({ values, days }))
+    };
   });
   return { aggregate: { forecasts: aggregateForecasts }, repos };
 }
@@ -42174,12 +42183,9 @@ function movingAverageSeries({ values, window: window2 }) {
     return Math.round(sum / slice.length);
   });
 }
-function buildForecastChartSeries({
-  historicalData,
-  forecastData
-}) {
-  const forecastLength = forecastData.aggregate.forecasts[0]?.points.length ?? 0;
-  const findPoints = (method) => forecastData.aggregate.forecasts.find((forecast) => forecast.method === method)?.points;
+function buildForecastChartSeries({ historicalData, forecasts }) {
+  const forecastLength = forecasts[0]?.points.length ?? 0;
+  const findPoints = (method) => forecasts.find((forecast) => forecast.method === method)?.points;
   const lastHistorical = historicalData.at(-1) ?? 0;
   const padLength = historicalData.length;
   const projectFromLast = (points) => [
@@ -42314,18 +42320,39 @@ function comparisonSpec({ repoNames, title, ...window2 }) {
     milestones: []
   };
 }
-function forecastSpec({ forecastData, title, palette, lineColor, ...window2 }) {
-  if (window2.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) return null;
+function forecastSpec({ forecastData, ...rest }) {
+  return projectionSpec({
+    ...rest,
+    forecasts: forecastData.aggregate.forecasts,
+    observed: (snapshots) => snapshots.map((snapshot) => snapshot.totalStars)
+  });
+}
+function perRepoForecastSpec({ forecastData, repoFullName, ...rest }) {
+  return projectionSpec({
+    ...rest,
+    forecasts: forecastData.repos.find((repo) => repo.repoFullName === repoFullName)?.forecasts ?? [],
+    observed: (snapshots) => repoStarSeries({ snapshots, repoFullName })
+  });
+}
+function projectionSpec({
+  forecasts,
+  observed,
+  title,
+  palette,
+  lineColor,
+  ...window2
+}) {
+  if (window2.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || forecasts.length === 0) return null;
   const t = getTranslations(window2.locale);
   const { snapshots, labels: historicalLabels } = selectWindow({
     ...window2,
     axisLabels: AxisLabels.DATES
   });
-  const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
-  const forecastLabels = (forecastData.aggregate.forecasts[0]?.points ?? []).map(
+  const historicalData = observed(snapshots);
+  const forecastLabels = (forecasts[0]?.points ?? []).map(
     (point) => interpolate({ template: t.forecast.week, params: { n: point.weekOffset } })
   );
-  const series = buildForecastChartSeries({ historicalData, forecastData });
+  const series = buildForecastChartSeries({ historicalData, forecasts });
   return {
     labels: [...historicalLabels, ...forecastLabels],
     series: [
@@ -42363,7 +42390,8 @@ var ChartKind = {
   STAR_HISTORY: "star-history",
   PER_REPO: "per-repo",
   COMPARISON: "comparison",
-  FORECAST: "forecast"
+  FORECAST: "forecast",
+  PER_REPO_FORECAST: "per-repo-forecast"
 };
 function buildChartSpec({
   request: request2,
@@ -42405,6 +42433,15 @@ function buildChartSpec({
         ...window2,
         forecastData: request2.forecastData,
         title: request2.title ?? t.forecast.sectionTitle,
+        palette,
+        lineColor: request2.lineColor
+      });
+    case ChartKind.PER_REPO_FORECAST:
+      return perRepoForecastSpec({
+        ...window2,
+        forecastData: request2.forecastData,
+        repoFullName: request2.repoFullName,
+        title: request2.title ?? `${request2.repoFullName} ${t.forecast.sectionTitle}`,
         palette,
         lineColor: request2.lineColor
       });
@@ -42453,8 +42490,14 @@ function prepareReportData({
     generatedAt
   };
 }
+function perRepoFileStem(repoFullName) {
+  return repoFullName.replace("/", "-");
+}
 function perRepoChartFile(repoFullName) {
-  return `${repoFullName.replace("/", "-")}.svg`;
+  return `${perRepoFileStem(repoFullName)}.svg`;
+}
+function perRepoForecastChartFile(repoFullName) {
+  return `forecast-${perRepoFileStem(repoFullName)}.svg`;
 }
 function buildForecastWeekHeaders(t) {
   return Array.from(
@@ -42952,14 +42995,18 @@ function resolveChartHistories({
     maxPoints: config.chartMaxPoints,
     now
   }) : { snapshots: [] };
+  const reconstructions = /* @__PURE__ */ new Map();
   const reconstructedForRepo = (repoFullName) => {
+    const known = reconstructions.get(repoFullName);
+    if (known !== void 0) return known;
     const repo = repos.find((candidate2) => candidate2.fullName === repoFullName);
-    if (!repo) return null;
-    const candidate = reconstruct({
+    const candidate = repo ? reconstruct({
       subset: [repo],
       stargazers: repoStargazers.filter((entry) => entry.repoFullName === repoFullName)
-    });
-    return candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : null;
+    }) : null;
+    const resolved = candidate !== null && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : null;
+    reconstructions.set(repoFullName, resolved);
+    return resolved;
   };
   return {
     aggregate: resolveChartHistory({
@@ -43036,6 +43083,20 @@ function buildChartFiles({
     });
     if (forecastChart) {
       files.push({ filename: CHART_FILES.forecast, svg: forecastChart });
+    }
+    for (const { repoFullName, source } of forecastData.repos) {
+      const fitted = source === ForecastSource.OWN ? chartHistories.reconstructedForRepo(repoFullName) : null;
+      if (fitted === null) continue;
+      const repoForecastChart = renderChart({
+        kind: ChartKind.PER_REPO_FORECAST,
+        history: fitted,
+        forecastData,
+        repoFullName,
+        lineColor: config.chartLineColor
+      });
+      if (repoForecastChart) {
+        files.push({ filename: perRepoForecastChartFile(repoFullName), svg: repoForecastChart });
+      }
     }
   }
   return files;
@@ -43362,8 +43423,9 @@ function buildReportModel(params) {
     forecastData = null,
     now,
     chartHistories = null,
-    hasChartFile = () => true
+    drawn = null
   } = params;
+  const isDrawn = (filename) => drawn === null || drawn.has(filename);
   const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config;
   const {
     sorted,
@@ -43383,7 +43445,12 @@ function buildReportModel(params) {
   const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
   const topRepos = toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount });
   const chartHistory = hasChartHistory ? history : null;
-  const perRepoCharts = chartHistory !== null && chartHistories !== null ? topRepos.filter((repo) => hasChartFile(repo.fullName)).map((repo) => ({ ...repo, history: chartHistories.forRepo(repo.fullName) })) : [];
+  const perRepoCharts = chartHistory !== null && chartHistories !== null ? topRepos.filter((repo) => isDrawn(perRepoChartFile(repo.fullName))).map((repo) => ({ ...repo, history: chartHistories.forRepo(repo.fullName) })) : [];
+  const perRepoForecasts = forecastData === null ? [] : forecastData.repos.map(({ repoFullName, forecasts }) => ({
+    repoFullName,
+    forecasts,
+    chartHistory: chartHistory !== null && chartHistories !== null && isDrawn(perRepoForecastChartFile(repoFullName)) ? chartHistories.reconstructedForRepo(repoFullName) : null
+  }));
   return {
     summary: results.summary,
     now: reportDate,
@@ -43400,7 +43467,8 @@ function buildReportModel(params) {
     stargazers: toStargazerSection(params),
     velocity: toVelocitySection(velocity),
     velocityIsNested: forecastData !== null,
-    forecast: forecastData
+    forecast: forecastData,
+    perRepoForecasts
   };
 }
 function buildForecastTable({ title, forecasts, t }) {
@@ -43548,11 +43616,14 @@ function generateHtmlReport({ model, config }) {
         ${history !== null ? `<div style="margin-top:16px;text-align:center;">
           <img src="${chartUrl({ kind: ChartKind.FORECAST, history, forecastData, lineColor })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>` : ""}
-        ${forecastData.repos.length > 0 ? `<h3 style="font-size:16px;margin:20px 0 12px;">${t.forecast.byRepository}</h3>` : ""}
-        ${forecastData.repos.map(
+        ${model.perRepoForecasts.length > 0 ? `<h3 style="font-size:16px;margin:20px 0 12px;">${t.forecast.byRepository}</h3>` : ""}
+        ${model.perRepoForecasts.map(
     (repo) => `
         <div style="margin-top:16px;">
           ${buildHtmlForecastTable({ title: repo.repoFullName, forecasts: repo.forecasts, t, palette })}
+          ${repo.chartHistory !== null ? `<div style="margin-top:12px;text-align:center;">
+            <img src="${chartUrl({ kind: ChartKind.PER_REPO_FORECAST, history: repo.chartHistory, forecastData, repoFullName: repo.repoFullName, lineColor })}" alt="${escapeHtml(repo.repoFullName)}" style="max-width:100%;height:auto;border-radius:4px;">
+          </div>` : ""}
         </div>`
   ).join("")}
       </div>` : "";
@@ -43787,10 +43858,10 @@ function generateMarkdownReport({ model, config }) {
       t
     }),
     ...chartHistory !== null ? ["", `![${t.forecast.sectionTitle}](./charts/${CHART_FILES.forecast})`, ""] : [],
-    ...forecastData.repos.length > 0 ? [
+    ...model.perRepoForecasts.length > 0 ? [
       `### ${t.forecast.byRepository}`,
       "",
-      ...forecastData.repos.flatMap((repo) => [
+      ...model.perRepoForecasts.flatMap((repo) => [
         "<details>",
         `<summary>${escapeMarkup(repo.repoFullName)}</summary>`,
         "",
@@ -43800,6 +43871,10 @@ function generateMarkdownReport({ model, config }) {
           t
         }),
         "",
+        ...repo.chartHistory !== null ? [
+          `![${escapeMarkdown(repo.repoFullName)}](./charts/${perRepoForecastChartFile(repo.repoFullName)})`,
+          ""
+        ] : [],
         "</details>",
         ""
       ])
@@ -43890,11 +43965,10 @@ function renderRun({
     forecastData,
     topRepoNames: topRepositories({ repos: results.repos, limit: config.topRepos })
   });
-  const drawn = new Set(charts.map((file) => file.filename));
   const model = buildReportModel({
     ...reportParams,
     chartHistories,
-    hasChartFile: (repoFullName) => drawn.has(perRepoChartFile(repoFullName))
+    drawn: new Set(charts.map((file) => file.filename))
   });
   const rendering = { model, config };
   return {

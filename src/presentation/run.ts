@@ -13,7 +13,6 @@ import { generateHtmlReport } from "./html";
 import { generateMarkdownReport } from "./markdown";
 import { buildReportModel } from "./report-model";
 import type { ReportParams } from "./shared";
-import { perRepoChartFile } from "./shared";
 
 export interface RenderedRun {
 	markdown: string;
@@ -94,11 +93,10 @@ export function renderRun({
 		forecastData,
 		topRepoNames: topRepositories({ repos: results.repos, limit: config.topRepos }),
 	});
-	const drawn = new Set(charts.map((file) => file.filename));
 	const model = buildReportModel({
 		...reportParams,
 		chartHistories,
-		hasChartFile: (repoFullName) => drawn.has(perRepoChartFile(repoFullName)),
+		drawn: new Set(charts.map((file) => file.filename)),
 	});
 	const rendering = { model, config };
 

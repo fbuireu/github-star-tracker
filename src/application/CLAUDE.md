@@ -52,9 +52,11 @@ is not repeated here. What follows is what that table cannot express.
 - **This layer relays no chart options.** The renderers read `config` themselves
   ([ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md)), so a new one costs
   nothing here.
-- **Chart histories are resolved once, by one module.** `resolveChartHistories` returns `.aggregate` and
-  `.forRepo(name)`; this layer reads `.aggregate` for the Forecast and the Reports and hands the whole thing
-  to `buildChartFiles`. It creates the instant itself, so the global chart and every per-repo chart end on
+- **Chart histories are resolved once, by one module.** `resolveChartHistories` returns `.aggregate`,
+  `.forRepo(name)` and `.reconstructedForRepo(name)`; this layer reads `.aggregate` for the Forecast and the
+  Reports, passes `.reconstructedForRepo` to `computeForecast` as its `historyForRepo` hook (never `.forRepo`,
+  for the reason [`../domain/CLAUDE.md`](../domain/CLAUDE.md) gives), and hands the whole thing to
+  `buildChartFiles`. It creates the instant itself, so the global chart and every per-repo chart end on
   the same moment by construction rather than by the shell remembering to share a `Date`.
 - **`topRepoNames` is not computed here.** It is `topRepositories({ repos: results.repos, limit:
   config.topRepos })` from `@domain/comparison`, the same call `@presentation/report-model` makes for the

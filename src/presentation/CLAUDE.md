@@ -14,14 +14,21 @@ email path goes through QuickChart because mail clients will not display inline 
 ([ADR 0010](../../docs/adr/0010-quickchart-renders-the-email-charts.md)).
 
 - **[`chart-spec.ts`](./chart-spec.ts) decides what a Chart is**, and names which one is wanted. A `ChartRequest` is a
-  discriminated union over the four `ChartKind`s [CONTEXT.md](../../CONTEXT.md) lists (star history, per repo, comparison,
-  forecast), carrying only that kind's own inputs (`repoFullName`, `repoNames`, `forecastData`, the
+  discriminated union over the five `ChartKind`s [CONTEXT.md](../../CONTEXT.md) lists (star history, per repo, comparison,
+  forecast, per-repo forecast), carrying only that kind's own inputs (`repoFullName`, `repoNames`, `forecastData`, the
   star-history Milestone and trend flags) plus an optional `title`. `buildChartSpec({ request, locale,
   palette, axisLabels, range, maxPoints })` maps one onto a `ChartSpec`: labels, an ordered list of series
   with a resolved colour, the title, whether to show a legend, and **the Milestones to draw, already
   resolved, already filtered to the visible ones and already labelled**. It returns `null` when there is too
-  little history. The four spec builders behind it are module-private; both renderers read the spec and
+  little history. The five spec builders behind it are module-private; both renderers read the spec and
   neither re-derives it ([ADR 0014](../../docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
+- **The two forecast kinds mirror the two star-history kinds.** `FORECAST` is to `PER_REPO_FORECAST` what
+  `STAR_HISTORY` is to `PER_REPO`: the aggregate plots `forecastData.aggregate` over `snapshot.totalStars`,
+  the per-repo one plots the named repository's own `RepoForecast` over `repoStarSeries`, and the per-repo one
+  returns `null` for a name the Forecast does not cover. Both builders are two lines over one private
+  `projectionSpec`, which owns the guard, the dated x-axis, the week labels and the three-series layout, so
+  the two kinds cannot drift apart in anything but which series they read. A single kind with an optional
+  `repoFullName` would have saved that helper and hidden a second altitude inside one `case`.
 - **Milestone visibility is decided once, in `starHistorySpec`.** The extremes are taken over **every series
   in the spec**, not just the primary one, and the comparison is **strict** (`> min && < max`), so a Milestone
   equal to an extreme is never drawn. They are the raw data extremes, not the padded axis bounds. `milestones`
@@ -35,6 +42,13 @@ email path goes through QuickChart because mail clients will not display inline 
 - **[`charts.ts`](./charts.ts) orchestrates.** `buildChartFiles` reads `Config`, builds the shared style object once, binds
   it into a local `renderChart(request)`, and returns `{ filename, svg }[]`. It renders nothing itself and
   returns `[]` when charts are off or the history has fewer than 2 snapshots.
+- **A per-repo Forecast Chart is drawn only for a repository the Forecast fitted to its own history.**
+  `buildChartFiles` walks `forecastData.repos`, keeps the ones whose `source` is `ForecastSource.OWN`, and
+  plots each over `chartHistories.reconstructedForRepo(name)`: the very History `@domain/forecast` fitted, so
+  the observed curve and the projection continuing it cannot describe different series. A repository fitted to
+  the aggregate (`ForecastSource.AGGREGATE`) gets its Forecast table and no Chart, because drawing the
+  Tracked Set's shape under one repository's name is the drift, not the fix. Do not re-derive that condition
+  from `MIN_SNAPSHOTS_FOR_FORECAST` here; the domain already answered it.
 - **`resolveChartHistories` owns the Reconstructed History at both altitudes, and owns the instant.** It
   reconstructs via `@domain/star-history` and resolves each result against the Stored History (reconstruction
   wins at >= 2 snapshots, otherwise the fallback), exposing `.aggregate` for the Tracked Set and
@@ -42,6 +56,13 @@ email path goes through QuickChart because mail clients will not display inline 
   `Date` it creates, so every chart in a run ends on the same moment without the caller threading one.
   `resolveChartHistory` is private, which is what stops the two altitudes drifting back into two layers
   sharing a `Date` by convention.
+- **`reconstructedForRepo` reconstructs each repository once and remembers the answer**, `null` included,
+  in a `Map` private to the closure; `forRepo` reads through it. Five consumers ask for the same repository
+  in one run (the Forecast hook, the two per-repo charts, and the two model lists that carry their
+  histories), and `buildStarHistory` buckets every `starred_at` each time it is called, so without the
+  memo a run with `top-repos: 10` over large repositories did that work five times over. The cache is
+  correct because the closure captures every input (`repos`, `repoStargazers`, `config`, `now`), so nothing
+  a second call could see differs from the first.
 - **[`svg-chart.ts`](./svg-chart.ts) draws.** `renderSvgChart({ request, locale, ...style })` is its only export: it builds the
   spec with year-thinned axis labels and maps the series onto `SvgDataset`s. One private `renderSvg` does all
   the drawing.
@@ -99,14 +120,24 @@ assembling the params for each.
   could date the markdown Report and the HTML Report differently. Never read the clock in a renderer; take it
   off the model.
 - **`topRepoNames` is not a parameter, and the linked set is the *drawn* set.** `renderRun` takes the names
-  from `topRepositories`, draws the charts first, then builds the model with a `hasChartFile` predicate
-  closed over the filenames it actually got back. `model.perRepoCharts` is therefore the repositories that
+  from `topRepositories`, draws the charts first, then builds the model with `drawn`, the set of filenames
+  it actually got back. `model.perRepoCharts` is therefore the repositories that
   have a chart, and both dialects iterate it. Ranking alone was not enough: `renderSvgChart` also returns
   `null` for a top repository whose own Reconstructed History is too short, which left [`markdown.ts`](./markdown.ts) linking
   an image no run had written.
 - **`ChartHistories` exposes two per-repo accessors, `forRepo` and `reconstructedForRepo`, and they are not
-  interchangeable.** A Chart takes the first, a Forecast must take the second;
-  [`../domain/CLAUDE.md`](../domain/CLAUDE.md) carries the rule and the bug it came from.
+  interchangeable.** A star-history Chart takes the first, a Forecast — its figures *and* its Chart — must
+  take the second; [`../domain/CLAUDE.md`](../domain/CLAUDE.md) carries the rule and the bug it came from.
+  So the two charts a Report shows for one repository can plot different curves: the star-history one falls
+  back to the Stored History when nothing could be reconstructed, the Forecast one is never drawn in that
+  case at all.
+- **`drawn` is one `ReadonlySet<string>` of filenames, filled only here, and the model composes the names
+  it asks about.** `buildReportModel` calls `perRepoChartFile` and `perRepoForecastChartFile` itself and
+  tests membership; a second chart family costs one more lookup, not one more parameter. It used to be one
+  predicate per family, `hasChartFile` and `hasForecastChartFile`, which were adjacent, same-typed and not
+  interchangeable, the exact shape of the `history` / `velocityHistory` hazard above. Absent `drawn` (the
+  dialect tests build a model without rendering charts) every candidate counts as drawn, which is the
+  behaviour the old default `() => true` had.
 - **`model.perRepoCharts` carries the History each chart was drawn from**, so the email chart and the
   data-branch SVG plot the same series. Per-repo and aggregate are not interchangeable here:
   `buildStarHistory` anchors its earliest edge to the earliest Star among the repositories it is handed, so
@@ -172,6 +203,12 @@ its spec: assert a section rule there, not through one dialect's markup.
   `nextMilestone !== null && daysToNextMilestone !== null` pair.
 - `buildForecastTable` returns headers and rows; each dialect wraps them in its own table markup. Headers are
   always `FORECAST_WEEKS` long regardless of how many points a forecast carries.
+- **`model.perRepoForecasts` is the one list both dialects iterate for the per-repo half of the Forecast
+  section**, and each entry carries `chartHistory`: the History its Chart was drawn from, or `null` when the
+  run drew none. `model.forecast` still carries the whole `ForecastData` for the aggregate table, but a
+  dialect that walks `model.forecast.repos` has gone back to two sources for one section, which is how a
+  Report came to link an image no run had written. Same shape as `chartHistory`: `null` means "no Chart", not
+  "no data".
 - **The two dialects take the same params.** `ReportParams` carries `config: Config` plus the run's data,
   and each dialect reads the options it honours ([ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md)).
   Markdown emits relative `./charts/*.svg` links and reads no chart style at all; `html.ts` reads
@@ -280,7 +317,10 @@ uses that everywhere. Do not write a second escape map.
   surroundings the mail client has darkened. `email-theme` exists so that path can be forced independently of
   `chart-theme`; `html.ts` receives it as its `theme`.
 - `perRepoChartFile` replaces only the **first** `/`, so a nested-looking name would keep later slashes and
-  produce an invalid filename.
+  produce an invalid filename. `perRepoForecastChartFile` shares that stem and prefixes it, so a Forecast
+  Chart is `forecast-<owner>-<repo>.svg`, beside the aggregate's `forecast.svg`. The prefix is deliberate:
+  as a *suffix* it would collide with the star-history chart of any repository actually named `*-forecast`,
+  which is a common enough name; the prefix only collides with an owner named `forecast-…`.
 - `repoStarSeries` returns `0`, not `null`, for a repo missing from a snapshot, so a per-repo chart for an
   unknown repo renders a flat zero line rather than returning `null`. The [`chart.test.ts`](./chart.test.ts) case named
   "renders a flat zero series for a repository absent from every snapshot" asserts exactly that.

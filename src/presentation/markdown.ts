@@ -5,7 +5,7 @@ import { CHART_FILES, SECTION_ICON } from "./constants";
 import { EscapeDialect, escapeFor } from "./escaping";
 import { buildForecastTable, StargazerOutcome, type TopRepo } from "./report-model";
 import type { RenderReportParams } from "./shared";
-import { perRepoChartFile } from "./shared";
+import { perRepoChartFile, perRepoForecastChartFile } from "./shared";
 
 const escapeMarkdown = escapeFor(EscapeDialect.MARKDOWN);
 const escapeMarkup = escapeFor(EscapeDialect.MARKUP);
@@ -207,11 +207,11 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 					t,
 				}),
 				...(chartHistory !== null ? ["", `![${t.forecast.sectionTitle}](./charts/${CHART_FILES.forecast})`, ""] : []),
-				...(forecastData.repos.length > 0
+				...(model.perRepoForecasts.length > 0
 					? [
 							`### ${t.forecast.byRepository}`,
 							"",
-							...forecastData.repos.flatMap((repo) => [
+							...model.perRepoForecasts.flatMap((repo) => [
 								"<details>",
 								`<summary>${escapeMarkup(repo.repoFullName)}</summary>`,
 								"",
@@ -221,6 +221,12 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 									t,
 								}),
 								"",
+								...(repo.chartHistory !== null
+									? [
+											`![${escapeMarkdown(repo.repoFullName)}](./charts/${perRepoForecastChartFile(repo.repoFullName)})`,
+											"",
+										]
+									: []),
 								"</details>",
 								"",
 							]),

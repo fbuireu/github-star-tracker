@@ -32,6 +32,12 @@ History plus the projected growth for the next weeks.
 
 ![Growth Forecast](forecast.svg)
 
+### Per-Repo Growth Forecast
+
+The same three series for a single top repository, fitted to that repo's own history rather than to the tracked set's total. The two methods separate here because growth accelerated recently: the weighted moving average follows the recent weeks, the linear regression averages the whole span. Drawn only for a repo with at least 3 reconstructed points of its own; below that the action publishes the figures as a table and no chart.
+
+![Per-Repo Growth Forecast](per-repo-forecast.svg)
+
 ### Badge
 
 ![Stars](stars-badge.svg)

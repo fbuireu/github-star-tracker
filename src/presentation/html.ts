@@ -231,15 +231,22 @@ export function generateHtmlReport({ model, config }: RenderReportParams): strin
 						: ""
 				}
         ${
-					forecastData.repos.length > 0
+					model.perRepoForecasts.length > 0
 						? `<h3 style="font-size:16px;margin:20px 0 12px;">${t.forecast.byRepository}</h3>`
 						: ""
 				}
-        ${forecastData.repos
+        ${model.perRepoForecasts
 					.map(
 						(repo) => `
         <div style="margin-top:16px;">
           ${buildHtmlForecastTable({ title: repo.repoFullName, forecasts: repo.forecasts, t, palette })}
+          ${
+						repo.chartHistory !== null
+							? `<div style="margin-top:12px;text-align:center;">
+            <img src="${chartUrl({ kind: ChartKind.PER_REPO_FORECAST, history: repo.chartHistory, forecastData, repoFullName: repo.repoFullName, lineColor })}" alt="${escapeHtml(repo.repoFullName)}" style="max-width:100%;height:auto;border-radius:4px;">
+          </div>`
+							: ""
+					}
         </div>`,
 					)
 					.join("")}

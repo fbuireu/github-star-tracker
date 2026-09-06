@@ -1,6 +1,6 @@
 import type { Config } from "@config/types";
 import type { ForecastData } from "@domain/forecast";
-import { ForecastMethod } from "@domain/forecast";
+import { ForecastMethod, ForecastSource } from "@domain/forecast";
 import type { StargazerDiffResult } from "@domain/stargazers";
 import type { History } from "@domain/types";
 import { makeComparisonResults, makeConfig, makeHistory, makeMultiRepoHistory } from "@shared/tests";
@@ -359,6 +359,7 @@ describe("generateMarkdownReport", () => {
 			repos: [
 				{
 					repoFullName: "user/repo-a",
+					source: ForecastSource.OWN,
 					forecasts: [
 						{
 							method: ForecastMethod.LINEAR_REGRESSION,
@@ -391,6 +392,40 @@ describe("generateMarkdownReport", () => {
 		expect(report).toContain("Week 1");
 		expect(report).toContain("25");
 		expect(report).toContain("user/repo-a");
+	});
+
+	it("links each per-repo forecast chart the run actually drew", () => {
+		const history = makeMultiRepoHistory(
+			[
+				{ "user/repo-a": 10, "user/repo-b": 10 },
+				{ "user/repo-a": 15, "user/repo-b": 10 },
+			],
+			{ stepDays: 1 },
+		);
+		const forecastData: ForecastData = {
+			aggregate: {
+				forecasts: [{ method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 1, predicted: 25 }] }],
+			},
+			repos: [
+				{
+					repoFullName: "user/repo-a",
+					source: ForecastSource.OWN,
+					forecasts: [{ method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 1, predicted: 17 }] }],
+				},
+			],
+		};
+
+		const drawn = renderMarkdown({ history, forecastData, config: { includeCharts: true } });
+		const undrawn = renderMarkdown({
+			history,
+			forecastData,
+			config: { includeCharts: true },
+			drawn: new Set(),
+		});
+
+		expect(drawn).toContain("![user/repo-a](./charts/forecast-user-repo-a.svg)");
+		expect(undrawn).not.toContain("forecast-user-repo-a.svg");
+		expect(undrawn).toContain("By Repository");
 	});
 
 	it("renders a translated label for every forecast method", () => {

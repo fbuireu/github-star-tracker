@@ -1,7 +1,7 @@
 import type { Config } from "@config/types";
 import { ChartTheme } from "@config/types";
 import type { ForecastData } from "@domain/forecast";
-import { ForecastMethod } from "@domain/forecast";
+import { ForecastMethod, ForecastSource } from "@domain/forecast";
 import type { RepoStargazers } from "@domain/stargazers";
 import type { History, SnapshotRepo } from "@domain/types";
 import { makeConfig, makeMultiRepoHistory, makeStargazerSeries } from "@shared/tests";
@@ -101,6 +101,26 @@ describe("buildChartFiles", () => {
 		expect(filenames(build())).not.toContain("forecast.svg");
 	});
 
+	it("renders a per-repo forecast chart only for a repository fitted to its own history", () => {
+		const forecastWith = (source: ForecastSource): ForecastData => ({
+			...FORECAST,
+			repos: [{ repoFullName: "user/repo-a", source, forecasts: FORECAST.aggregate.forecasts }],
+		});
+		const repoStargazers = [
+			{
+				repoFullName: "user/repo-a",
+				stargazers: makeStargazerSeries({ count: 60, startMs: Date.UTC(2026, 0, 1), stepDays: 1 }),
+			},
+		];
+
+		expect(filenames(build({ forecastData: forecastWith(ForecastSource.OWN), repoStargazers }))).toContain(
+			"forecast-user-repo-a.svg",
+		);
+		expect(filenames(build({ forecastData: forecastWith(ForecastSource.AGGREGATE), repoStargazers }))).not.toContain(
+			"forecast-user-repo-a.svg",
+		);
+	});
+
 	it("returns non-empty SVG for every file it lists", () => {
 		for (const file of build({ forecastData: FORECAST })) {
 			expect(file.svg).toContain("<svg");
@@ -198,6 +218,26 @@ describe("resolveChartHistories", () => {
 
 	it("falls back for a repository that is not in the tracked set", () => {
 		expect(histories({ storedHistory: stored }).forRepo("user/ghost")).toBe(stored);
+	});
+
+	it("reconstructs each repository once, however many consumers ask for it", () => {
+		const resolved = histories({
+			storedHistory: stored,
+			repoStargazers: [
+				{
+					repoFullName: "user/repo-a",
+					stargazers: makeStargazerSeries({ count: 60, startMs: Date.UTC(2026, 0, 1), stepDays: 1 }),
+				},
+			],
+		});
+
+		const first = resolved.reconstructedForRepo("user/repo-a");
+
+		expect(first).not.toBeNull();
+		expect(resolved.reconstructedForRepo("user/repo-a")).toBe(first);
+		expect(resolved.forRepo("user/repo-a")).toBe(first);
+		expect(resolved.reconstructedForRepo("user/ghost")).toBeNull();
+		expect(resolved.reconstructedForRepo("user/ghost")).toBeNull();
 	});
 
 	it("reconstructs each repository from its own stargazers, on the same instant", () => {

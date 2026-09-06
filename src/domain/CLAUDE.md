@@ -113,6 +113,11 @@ snapshot everything else is diffed against.
   returns `null`, or whose own History is shorter than `MIN_SNAPSHOTS_FOR_FORECAST`, is fitted to the
   aggregate, which holds such a repository **flat at `repo.stars`** (`edges.map(() => repo.stars)`, the issue
   #148 guard). Flat is the honest answer when there is nothing to reconstruct from.
+- **Each `RepoForecast` says which of the two it was, in `source`** (`ForecastSource`: `OWN` or
+  `AGGREGATE`). It is the one thing about a per-repo Forecast a caller cannot re-derive without repeating the
+  fallback rule above, and `@presentation/charts` reads it to decide whether that repository gets a Forecast
+  Chart of its own: a projection fitted to the aggregate describes the Tracked Set's shape, not the
+  repository's, so it is published as a table and not drawn as a curve.
 - **`forRepo` is the wrong hook to pass here, and passing it was a live bug.** It falls back to the Stored
   History, where `repoStarSeries` yields `0` for every Snapshot taken before the repository joined the
   Tracked Set, so a repository whose Stargazers could not be read was projected off a fabricated

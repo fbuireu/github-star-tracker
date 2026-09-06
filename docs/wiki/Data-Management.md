@@ -30,6 +30,7 @@ The working directory for the branch is derived from the name: a dot followed by
 | `charts/comparison.svg` | Top repos comparison | Same condition, plus at least one top repository |
 | `charts/forecast.svg` | Growth forecast | Same, plus the 3 points a forecast needs |
 | `charts/{owner}-{repo}.svg` | Per-repo charts | Same condition, one per top repository |
+| `charts/forecast-{owner}-{repo}.svg` | Per-repo growth forecast | Same, and only for a top repository whose forecast was fitted to its own reconstructed history |
 
 **"The charted series" is not always the reconstruction.** Charts prefer the **Reconstructed History**, built
 from each stargazer's `starred_at` date, which is why they render on the very first run. When that

@@ -6,10 +6,16 @@ import { computeVelocity, type VelocityMetrics } from "@domain/velocity";
 import type { Translations } from "@i18n";
 import { MIN_SNAPSHOTS_FOR_CHART } from "./constants";
 import type { ReportParams } from "./shared";
-import { buildForecastWeekHeaders, forecastMethodLabel, prepareReportData } from "./shared";
-import type { PerRepoChart, TopRepo } from "./types";
+import {
+	buildForecastWeekHeaders,
+	forecastMethodLabel,
+	perRepoChartFile,
+	perRepoForecastChartFile,
+	prepareReportData,
+} from "./shared";
+import type { PerRepoChart, PerRepoForecast, TopRepo } from "./types";
 
-export type { PerRepoChart, TopRepo };
+export type { PerRepoChart, PerRepoForecast, TopRepo };
 
 export const StargazerOutcome = {
 	NEW: "new",
@@ -48,6 +54,7 @@ export interface ReportModel {
 	velocity: VelocitySection | null;
 	velocityIsNested: boolean;
 	forecast: ForecastData | null;
+	perRepoForecasts: PerRepoForecast[];
 }
 
 interface ToTopReposParams {
@@ -100,8 +107,9 @@ export function buildReportModel(params: ReportParams): ReportModel {
 		forecastData = null,
 		now,
 		chartHistories = null,
-		hasChartFile = () => true,
+		drawn = null,
 	} = params;
+	const isDrawn = (filename: string): boolean => drawn === null || drawn.has(filename);
 	const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config;
 
 	const {
@@ -126,9 +134,20 @@ export function buildReportModel(params: ReportParams): ReportModel {
 	const perRepoCharts: PerRepoChart[] =
 		chartHistory !== null && chartHistories !== null
 			? topRepos
-					.filter((repo) => hasChartFile(repo.fullName))
+					.filter((repo) => isDrawn(perRepoChartFile(repo.fullName)))
 					.map((repo) => ({ ...repo, history: chartHistories.forRepo(repo.fullName) }))
 			: [];
+	const perRepoForecasts: PerRepoForecast[] =
+		forecastData === null
+			? []
+			: forecastData.repos.map(({ repoFullName, forecasts }) => ({
+					repoFullName,
+					forecasts,
+					chartHistory:
+						chartHistory !== null && chartHistories !== null && isDrawn(perRepoForecastChartFile(repoFullName))
+							? chartHistories.reconstructedForRepo(repoFullName)
+							: null,
+				}));
 
 	return {
 		summary: results.summary,
@@ -147,6 +166,7 @@ export function buildReportModel(params: ReportParams): ReportModel {
 		velocity: toVelocitySection(velocity),
 		velocityIsNested: forecastData !== null,
 		forecast: forecastData,
+		perRepoForecasts,
 	};
 }
 

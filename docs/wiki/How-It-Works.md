@@ -471,6 +471,7 @@ Generates self-contained animated SVG charts committed to `charts/` on the data 
 | Per-Repo | `charts/{owner}-{repo}.svg` | Individual repo history |
 | Comparison | `charts/comparison.svg` | Top N repos overlaid |
 | Forecast | `charts/forecast.svg` | Historical + projected trends (dashed lines) |
+| Per-Repo Forecast | `charts/forecast-{owner}-{repo}.svg` | One repo's history + its own projected trends |
 
 Features: smooth curves (`monotone` by default, four shapes available), CSS draw-line animation, fade-in point markers, nice Y-axis steps, locale-aware date labels, legend (for multi-series).
 
