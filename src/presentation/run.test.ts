@@ -1,7 +1,7 @@
 import { ChartCurve, type Config } from "@config/types";
 import { EMPTY_SUMMARY } from "@domain/comparison";
 import type { ForecastData } from "@domain/forecast";
-import { ForecastMethod } from "@domain/forecast";
+import { ForecastMethod, ForecastSource } from "@domain/forecast";
 import { deltaIndicator } from "@domain/formatting";
 import type { StargazerDiffResult } from "@domain/stargazers";
 import { getTranslations } from "@i18n";
@@ -162,6 +162,39 @@ describe("renderRun", () => {
 		expect(drawn).not.toContain("user-repo-a.svg");
 		expect(rendered.markdown).toContain("star-history.svg");
 		expect(rendered.markdown).not.toContain("user-repo-a.svg");
+	});
+
+	it("links every per-repo Forecast Chart it drew, and draws none it cannot fit", () => {
+		const forecastData: ForecastData = {
+			aggregate: {
+				forecasts: [{ method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 1, predicted: 70 }] }],
+			},
+			repos: [
+				{
+					repoFullName: "user/repo-a",
+					source: ForecastSource.OWN,
+					forecasts: [{ method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 1, predicted: 40 }] }],
+				},
+				{
+					repoFullName: "user/repo-b",
+					source: ForecastSource.AGGREGATE,
+					forecasts: [{ method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 1, predicted: 30 }] }],
+				},
+			],
+		};
+		const rendered = renderRun({
+			config: makeConfig({ includeCharts: true, topRepos: 2 }),
+			results: makeComparisonResults(),
+			previousTimestamp: "2026-01-01T00:00:00Z",
+			chartHistories: chartHistories(),
+			storedHistory: STORED,
+			forecastData,
+		});
+		const drawn = rendered.charts.map((chart) => chart.filename).filter((filename) => filename.startsWith("forecast-"));
+
+		expect(drawn).toEqual(["forecast-user-repo-a.svg"]);
+		expect(rendered.markdown).toContain("forecast-user-repo-a.svg");
+		expect(rendered.markdown).not.toContain("forecast-user-repo-b.svg");
 	});
 
 	it("agrees between the two Reports on whether the comparison Chart appears", () => {

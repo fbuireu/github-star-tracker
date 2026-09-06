@@ -71,6 +71,19 @@ Observed history plus projected growth for the next 4 weeks.
 
 ![Forecast Chart](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/docs/examples/forecast.svg)
 
+### 5. Per-Repo Forecast Chart
+
+**File:** `charts/forecast-{owner}-{repo}.svg`
+
+The same three series as the forecast chart above, for a single top repository: its own observed history plus
+the linear regression and weighted moving average fitted to it.
+
+- One chart per top repository, drawn under that repository's forecast table
+- Drawn **only** when the repository has enough star history of its own to fit — at least 3 reconstructed
+  points. When it does not, the action falls back to projecting it from the tracked set's aggregate shape,
+  publishes those figures as a table, and draws no chart, because that curve would describe the whole set
+  rather than the repository named above it.
+
 ---
 
 ## Two Chart Systems
@@ -243,7 +256,7 @@ with:
 ## Embedding Charts in Your README
 
 Every chart is a raw file on the data branch, so a plain Markdown image tag is all you need. The snippets for
-all four charts and for the badge live in **[Viewing Reports](Viewing-Reports#method-2-badges)**. They are the same
+all five charts and for the badge live in **[Viewing Reports](Viewing-Reports#method-2-badges)**. They are the same
 URLs whichever page you come from, so they are written once there.
 
 ---

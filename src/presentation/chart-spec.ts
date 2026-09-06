@@ -1,6 +1,6 @@
 import { ChartRange } from "@config/types";
 import { MS_PER_DAY, STAR_MILESTONES } from "@domain/constants";
-import { type ForecastData, ForecastMethod } from "@domain/forecast";
+import { type ForecastData, ForecastMethod, type ForecastResult } from "@domain/forecast";
 import { buildAxisLabels, formatCount, formatDate } from "@domain/formatting";
 import { repoStarSeries } from "@domain/snapshot";
 import { toEpochMs } from "@domain/time";
@@ -85,16 +85,13 @@ interface ForecastChartSeries {
 
 interface BuildForecastChartSeriesParams {
 	historicalData: number[];
-	forecastData: ForecastData;
+	forecasts: ForecastResult[];
 }
 
-function buildForecastChartSeries({
-	historicalData,
-	forecastData,
-}: BuildForecastChartSeriesParams): ForecastChartSeries {
-	const forecastLength = forecastData.aggregate.forecasts[0]?.points.length ?? 0;
+function buildForecastChartSeries({ historicalData, forecasts }: BuildForecastChartSeriesParams): ForecastChartSeries {
+	const forecastLength = forecasts[0]?.points.length ?? 0;
 	const findPoints = (method: string): { predicted: number }[] | undefined =>
-		forecastData.aggregate.forecasts.find((forecast) => forecast.method === method)?.points;
+		forecasts.find((forecast) => forecast.method === method)?.points;
 	const lastHistorical = historicalData.at(-1) ?? 0;
 	const padLength = historicalData.length;
 	const projectFromLast = (points: { predicted: number }[] | undefined): (number | null)[] => [
@@ -326,26 +323,58 @@ function comparisonSpec({ repoNames, title, ...window }: ComparisonSpecParams): 
 	};
 }
 
-interface ForecastSpecParams extends Omit<WindowParams, "axisLabels"> {
-	forecastData: ForecastData;
+interface ProjectionSpecParams extends Omit<WindowParams, "axisLabels"> {
+	forecasts: ForecastResult[];
+	observed: (snapshots: Snapshot[]) => number[];
 	title: string;
 	palette: ColorPalette;
 	lineColor?: string;
 }
 
-function forecastSpec({ forecastData, title, palette, lineColor, ...window }: ForecastSpecParams): ChartSpec | null {
-	if (window.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) return null;
+interface ForecastSpecParams extends Omit<ProjectionSpecParams, "forecasts" | "observed"> {
+	forecastData: ForecastData;
+}
+
+interface PerRepoForecastSpecParams extends ForecastSpecParams {
+	repoFullName: string;
+}
+
+function forecastSpec({ forecastData, ...rest }: ForecastSpecParams): ChartSpec | null {
+	return projectionSpec({
+		...rest,
+		forecasts: forecastData.aggregate.forecasts,
+		observed: (snapshots) => snapshots.map((snapshot) => snapshot.totalStars),
+	});
+}
+
+function perRepoForecastSpec({ forecastData, repoFullName, ...rest }: PerRepoForecastSpecParams): ChartSpec | null {
+	return projectionSpec({
+		...rest,
+		forecasts: forecastData.repos.find((repo) => repo.repoFullName === repoFullName)?.forecasts ?? [],
+		observed: (snapshots) => repoStarSeries({ snapshots, repoFullName }),
+	});
+}
+
+function projectionSpec({
+	forecasts,
+	observed,
+	title,
+	palette,
+	lineColor,
+	...window
+}: ProjectionSpecParams): ChartSpec | null {
+	if (window.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || forecasts.length === 0) return null;
 
 	const t = getTranslations(window.locale);
 	const { snapshots, labels: historicalLabels } = selectWindow({
 		...window,
 		axisLabels: AxisLabels.DATES,
 	});
-	const historicalData = snapshots.map((snapshot) => snapshot.totalStars);
-	const forecastLabels = (forecastData.aggregate.forecasts[0]?.points ?? []).map((point) =>
+	const historicalData = observed(snapshots);
+	const forecastLabels = (forecasts[0]?.points ?? []).map((point) =>
 		interpolate({ template: t.forecast.week, params: { n: point.weekOffset } }),
 	);
-	const series = buildForecastChartSeries({ historicalData, forecastData });
+	const series = buildForecastChartSeries({ historicalData, forecasts });
 
 	return {
 		labels: [...historicalLabels, ...forecastLabels],
@@ -386,6 +415,7 @@ export const ChartKind = {
 	PER_REPO: "per-repo",
 	COMPARISON: "comparison",
 	FORECAST: "forecast",
+	PER_REPO_FORECAST: "per-repo-forecast",
 } as const;
 
 export type ChartKind = (typeof ChartKind)[keyof typeof ChartKind];
@@ -420,11 +450,19 @@ export interface ForecastChartRequest extends ChartRequestBase {
 	lineColor?: string;
 }
 
+export interface PerRepoForecastChartRequest extends ChartRequestBase {
+	kind: typeof ChartKind.PER_REPO_FORECAST;
+	forecastData: ForecastData;
+	repoFullName: string;
+	lineColor?: string;
+}
+
 export type ChartRequest =
 	| StarHistoryChartRequest
 	| PerRepoChartRequest
 	| ComparisonChartRequest
-	| ForecastChartRequest;
+	| ForecastChartRequest
+	| PerRepoForecastChartRequest;
 
 interface BuildChartSpecParams {
 	request: ChartRequest;
@@ -476,6 +514,15 @@ export function buildChartSpec({
 				...window,
 				forecastData: request.forecastData,
 				title: request.title ?? t.forecast.sectionTitle,
+				palette,
+				lineColor: request.lineColor,
+			});
+		case ChartKind.PER_REPO_FORECAST:
+			return perRepoForecastSpec({
+				...window,
+				forecastData: request.forecastData,
+				repoFullName: request.repoFullName,
+				title: request.title ?? `${request.repoFullName} ${t.forecast.sectionTitle}`,
 				palette,
 				lineColor: request.lineColor,
 			});

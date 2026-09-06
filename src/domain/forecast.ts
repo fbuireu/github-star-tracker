@@ -20,8 +20,16 @@ export interface ForecastResult {
 	points: ForecastPoint[];
 }
 
+export const ForecastSource = {
+	OWN: "own",
+	AGGREGATE: "aggregate",
+} as const;
+
+export type ForecastSource = (typeof ForecastSource)[keyof typeof ForecastSource];
+
 export interface RepoForecast {
 	repoFullName: string;
+	source: ForecastSource;
 	forecasts: ForecastResult[];
 }
 
@@ -78,11 +86,16 @@ export function computeForecast({ history, topRepoNames, historyForRepo }: Compu
 	const aggregateForecasts = forecastFromSeries(toSeries({ values: totalValues, days: aggregateDays }));
 	const repos: RepoForecast[] = topRepoNames.map((repoFullName) => {
 		const candidate = historyForRepo?.(repoFullName);
-		const source = candidate && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST ? candidate : history;
-		const days = source === history ? aggregateDays : calendarDays(source);
-		const values = repoStarSeries({ snapshots: source.snapshots, repoFullName });
+		const ownHistory = candidate && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST ? candidate : null;
+		const fitted = ownHistory ?? history;
+		const days = ownHistory === null ? aggregateDays : calendarDays(ownHistory);
+		const values = repoStarSeries({ snapshots: fitted.snapshots, repoFullName });
 
-		return { repoFullName, forecasts: forecastFromSeries(toSeries({ values, days })) };
+		return {
+			repoFullName,
+			source: ownHistory === null ? ForecastSource.AGGREGATE : ForecastSource.OWN,
+			forecasts: forecastFromSeries(toSeries({ values, days })),
+		};
 	});
 
 	return { aggregate: { forecasts: aggregateForecasts }, repos };

@@ -19,7 +19,7 @@ export interface ReportParams {
 	forecastData?: ForecastData | null;
 	now?: Date;
 	chartHistories?: ChartHistories | null;
-	hasChartFile?: (repoFullName: string) => boolean;
+	drawn?: ReadonlySet<string>;
 }
 
 export interface RenderReportParams {
@@ -101,8 +101,16 @@ export function prepareReportData({
 	};
 }
 
+function perRepoFileStem(repoFullName: string): string {
+	return repoFullName.replace("/", "-");
+}
+
 export function perRepoChartFile(repoFullName: string): string {
-	return `${repoFullName.replace("/", "-")}.svg`;
+	return `${perRepoFileStem(repoFullName)}.svg`;
+}
+
+export function perRepoForecastChartFile(repoFullName: string): string {
+	return `forecast-${perRepoFileStem(repoFullName)}.svg`;
 }
 
 export function buildForecastWeekHeaders(t: Translations): string[] {

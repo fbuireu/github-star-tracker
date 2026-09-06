@@ -2,7 +2,7 @@ import { DEFAULTS } from "@config/defaults";
 import type { Config } from "@config/types";
 import { ChartTheme } from "@config/types";
 import type { ForecastData } from "@domain/forecast";
-import { ForecastMethod } from "@domain/forecast";
+import { ForecastMethod, ForecastSource } from "@domain/forecast";
 import { DOWN_ARROW, UP_ARROW } from "@domain/formatting";
 import type { StargazerDiffResult } from "@domain/stargazers";
 import type { History } from "@domain/types";
@@ -441,6 +441,7 @@ describe("generateHtmlReport", () => {
 			repos: [
 				{
 					repoFullName: "user/repo-a",
+					source: ForecastSource.OWN,
 					forecasts: [
 						{
 							method: ForecastMethod.LINEAR_REGRESSION,
@@ -504,6 +505,42 @@ describe("generateHtmlReport", () => {
 		});
 
 		expect(html).toContain(COLORS.neutral);
+	});
+
+	it("embeds a per-repo forecast chart only when the run drew one", () => {
+		const history = makeMultiRepoHistory(
+			[
+				{ "user/repo-a": 10, "user/repo-b": 10 },
+				{ "user/repo-a": 15, "user/repo-b": 10 },
+			],
+			{ stepDays: 1 },
+		);
+		const forecastData: ForecastData = {
+			aggregate: {
+				forecasts: [{ method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 1, predicted: 25 }] }],
+			},
+			repos: [
+				{
+					repoFullName: "user/repo-a",
+					source: ForecastSource.OWN,
+					forecasts: [{ method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 1, predicted: 17 }] }],
+				},
+			],
+		};
+
+		const drawn = renderHtml({ history, forecastData, config: { includeCharts: true } });
+		const undrawn = renderHtml({
+			history,
+			forecastData,
+			config: { includeCharts: true },
+			drawn: new Set(),
+		});
+		const titlesIn = (html: string): string[] =>
+			[...html.matchAll(QUICKCHART_CONFIG)].map((match) => decodeURIComponent(match[1]));
+
+		expect(titlesIn(drawn).some((config) => config.includes("user/repo-a Growth Forecast"))).toBe(true);
+		expect(titlesIn(undrawn).some((config) => config.includes("user/repo-a Growth Forecast"))).toBe(false);
+		expect(undrawn).toContain("By Repository");
 	});
 
 	it("renders a translated label for every forecast method", () => {

@@ -1,7 +1,7 @@
-import type { History } from "@domain/types";
+import type { History, SnapshotRepo } from "@domain/types";
 import { describe, expect, it } from "vitest";
 import type { ForecastData } from "./forecast";
-import { computeForecast, ForecastMethod } from "./forecast";
+import { computeForecast, ForecastMethod, ForecastSource } from "./forecast";
 
 function expectForecast(result: ForecastData | null): ForecastData {
 	expect(result).not.toBeNull();
@@ -195,5 +195,30 @@ describe("computeForecast", () => {
 
 		expect(withFallback.repos[0]).toEqual(withoutHook.repos[0]);
 		expect(withFallback.repos[0].forecasts[0].points[0].predicted).toBe(40);
+	});
+
+	it("reports which history each repository was fitted to", () => {
+		const reposAt = (step: number): SnapshotRepo[] => [
+			{ fullName: "user/a", name: "a", owner: "user", stars: step * 10 },
+			{ fullName: "user/b", name: "b", owner: "user", stars: step * 20 },
+		];
+		const history: History = {
+			snapshots: [
+				{ timestamp: "2026-01-01T00:00:00Z", totalStars: 30, repos: reposAt(1) },
+				{ timestamp: "2026-01-08T00:00:00Z", totalStars: 60, repos: reposAt(2) },
+				{ timestamp: "2026-01-15T00:00:00Z", totalStars: 90, repos: reposAt(3) },
+			],
+		};
+
+		const result = expectForecast(
+			computeForecast({
+				history,
+				topRepoNames: ["user/a", "user/b"],
+				historyForRepo: (repoFullName) => (repoFullName === "user/a" ? history : null),
+			}),
+		);
+
+		expect(result.repos[0].source).toBe(ForecastSource.OWN);
+		expect(result.repos[1].source).toBe(ForecastSource.AGGREGATE);
 	});
 });

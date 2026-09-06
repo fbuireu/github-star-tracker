@@ -1,7 +1,7 @@
 import { ChartRange } from "@config/types";
 import { STAR_MILESTONES } from "@domain/constants";
 import type { ForecastData } from "@domain/forecast";
-import { ForecastMethod } from "@domain/forecast";
+import { ForecastMethod, ForecastSource } from "@domain/forecast";
 import { formatCount } from "@domain/formatting";
 import type { History } from "@domain/types";
 import type { Locale } from "@i18n";
@@ -74,6 +74,7 @@ describe("buildChartSpec", () => {
 			{ kind: ChartKind.PER_REPO, history: singleSnapshot, repoFullName: "user/repo-a" },
 			{ kind: ChartKind.COMPARISON, history: singleSnapshot, repoNames: ["user/repo-a"] },
 			{ kind: ChartKind.FORECAST, history: singleSnapshot, forecastData },
+			{ kind: ChartKind.PER_REPO_FORECAST, history: singleSnapshot, forecastData, repoFullName: "user/repo-a" },
 		];
 
 		it("returns null for every kind below 2 snapshots", () => {
@@ -86,7 +87,7 @@ describe("buildChartSpec", () => {
 				}),
 			);
 
-			expect(specs).toEqual([null, null, null, null]);
+			expect(specs).toEqual([null, null, null, null, null]);
 		});
 
 		it("returns null for a comparison with no repositories", () => {
@@ -113,9 +114,32 @@ describe("buildChartSpec", () => {
 					request: { kind: ChartKind.COMPARISON, history: multiRepo, repoNames: ["user/repo-a"] },
 				}).title,
 				specOf({ request: { kind: ChartKind.FORECAST, history, forecastData } }).title,
+				specOf({
+					request: {
+						kind: ChartKind.PER_REPO_FORECAST,
+						history: multiRepo,
+						forecastData: {
+							...forecastData,
+							repos: [
+								{
+									repoFullName: "user/repo-a",
+									source: ForecastSource.OWN,
+									forecasts: forecastData.aggregate.forecasts,
+								},
+							],
+						},
+						repoFullName: "user/repo-a",
+					},
+				}).title,
 			];
 
-			expect(titles).toEqual(["Star History", "user/repo-a Star History", "Top Repositories", "Growth Forecast"]);
+			expect(titles).toEqual([
+				"Star History",
+				"user/repo-a Star History",
+				"Top Repositories",
+				"Growth Forecast",
+				"user/repo-a Growth Forecast",
+			]);
 		});
 
 		it("lets an explicit title win", () => {
@@ -310,6 +334,59 @@ describe("buildChartSpec", () => {
 
 			expect(spec.labels).toHaveLength(5);
 			expect(spec.labels.slice(-2)).toEqual(["Week 1", "Week 2"]);
+		});
+
+		it("plots one repository's own series and its own projections when asked for it", () => {
+			const perRepo: ForecastData = {
+				...forecastData,
+				repos: [
+					{
+						repoFullName: "user/repo-a",
+						source: ForecastSource.OWN,
+						forecasts: [
+							{
+								method: ForecastMethod.LINEAR_REGRESSION,
+								points: [
+									{ weekOffset: 1, predicted: 100 },
+									{ weekOffset: 2, predicted: 110 },
+								],
+							},
+							{
+								method: ForecastMethod.WEIGHTED_MOVING_AVERAGE,
+								points: [
+									{ weekOffset: 1, predicted: 95 },
+									{ weekOffset: 2, predicted: 98 },
+								],
+							},
+						],
+					},
+				],
+			};
+
+			const spec = specOf({
+				request: {
+					kind: ChartKind.PER_REPO_FORECAST,
+					history: multiRepo,
+					forecastData: perRepo,
+					repoFullName: "user/repo-a",
+				},
+			});
+
+			expect(spec.title).toBe("user/repo-a Growth Forecast");
+			expect(spec.series[0].data).toEqual([50, 70, 90, null, null]);
+			expect(spec.series[1].data).toEqual([null, null, 90, 100, 110]);
+			expect(spec.series[2].data).toEqual([null, null, 90, 95, 98]);
+		});
+
+		it("returns null for a repository the forecast does not cover", () => {
+			const spec = buildChartSpec({
+				request: { kind: ChartKind.PER_REPO_FORECAST, history: multiRepo, forecastData, repoFullName: "user/ghost" },
+				locale: "en",
+				palette: LIGHT_PALETTE,
+				axisLabels: AxisLabels.DATES,
+			});
+
+			expect(spec).toBeNull();
 		});
 
 		it("always dates its x-axis, whatever the adapter asks for", () => {

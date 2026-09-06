@@ -1,3 +1,4 @@
+import type { ForecastResult } from "@domain/forecast";
 import type { History } from "@domain/types";
 
 export interface ColorPalette {
@@ -30,4 +31,10 @@ export interface TopRepo {
 
 export interface PerRepoChart extends TopRepo {
 	history: History;
+}
+
+export interface PerRepoForecast {
+	repoFullName: string;
+	forecasts: ForecastResult[];
+	chartHistory: History | null;
 }

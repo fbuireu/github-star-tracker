@@ -1,7 +1,7 @@
 import type { Config } from "@config/types";
 import { FORECAST_WEEKS } from "@domain/constants";
 import type { ForecastData } from "@domain/forecast";
-import { ForecastMethod } from "@domain/forecast";
+import { ForecastMethod, ForecastSource } from "@domain/forecast";
 import type { StargazerDiffResult } from "@domain/stargazers";
 import { getTranslations } from "@i18n";
 import { makeComparisonResults, makeConfig, makeHistory, makeRepoResult } from "@shared/tests";
@@ -176,6 +176,65 @@ describe("buildReportModel", () => {
 		it("nests under the forecast only when there is a forecast", () => {
 			expect(modelOf().velocityIsNested).toBe(false);
 			expect(modelOf({ forecastData }).velocityIsNested).toBe(true);
+		});
+	});
+
+	describe("per-repo forecasts", () => {
+		const history = makeHistory([100, 120, 150]);
+		const withRepos: ForecastData = {
+			...forecastData,
+			repos: [
+				{
+					repoFullName: "user/repo-a",
+					source: ForecastSource.OWN,
+					forecasts: forecastData.aggregate.forecasts,
+				},
+			],
+		};
+		const chartHistories = {
+			aggregate: history,
+			forRepo: () => history,
+			reconstructedForRepo: () => history,
+		};
+
+		it("is empty without a forecast", () => {
+			expect(modelOf().perRepoForecasts).toEqual([]);
+		});
+
+		it("carries the history a drawn forecast chart was plotted from", () => {
+			const model = modelOf({
+				forecastData: withRepos,
+				history,
+				chartHistories,
+				config: { includeCharts: true },
+			});
+
+			expect(model.perRepoForecasts).toHaveLength(1);
+			expect(model.perRepoForecasts[0].chartHistory).toBe(history);
+		});
+
+		it("keeps the table but drops the history when no chart file was written", () => {
+			const model = modelOf({
+				forecastData: withRepos,
+				history,
+				chartHistories,
+				config: { includeCharts: true },
+				drawn: new Set(),
+			});
+
+			expect(model.perRepoForecasts[0].forecasts).toEqual(forecastData.aggregate.forecasts);
+			expect(model.perRepoForecasts[0].chartHistory).toBeNull();
+		});
+
+		it("drops the history when charts are off", () => {
+			const model = modelOf({
+				forecastData: withRepos,
+				history,
+				chartHistories,
+				config: { includeCharts: false },
+			});
+
+			expect(model.perRepoForecasts[0].chartHistory).toBeNull();
 		});
 	});
 });

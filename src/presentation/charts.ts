@@ -1,12 +1,12 @@
 import type { Config } from "@config/types";
-import type { ForecastData } from "@domain/forecast";
+import { type ForecastData, ForecastSource } from "@domain/forecast";
 import { buildStarHistory } from "@domain/star-history";
 import type { RepoStargazers } from "@domain/stargazers";
 import type { History, SnapshotRepo } from "@domain/types";
 import type { ChartRequest } from "./chart-spec";
 import { ChartKind } from "./chart-spec";
 import { CHART_FILES, MIN_SNAPSHOTS_FOR_CHART } from "./constants";
-import { perRepoChartFile } from "./shared";
+import { perRepoChartFile, perRepoForecastChartFile } from "./shared";
 import { renderSvgChart } from "./svg-chart";
 import type { ChartHistories } from "./types";
 
@@ -51,17 +51,24 @@ export function resolveChartHistories({
 				})
 			: { snapshots: [] };
 
+	const reconstructions = new Map<string, History | null>();
 	const reconstructedForRepo = (repoFullName: string): History | null => {
+		const known = reconstructions.get(repoFullName);
+
+		if (known !== undefined) return known;
+
 		const repo = repos.find((candidate) => candidate.fullName === repoFullName);
+		const candidate = repo
+			? reconstruct({
+					subset: [repo],
+					stargazers: repoStargazers.filter((entry) => entry.repoFullName === repoFullName),
+				})
+			: null;
+		const resolved = candidate !== null && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : null;
 
-		if (!repo) return null;
+		reconstructions.set(repoFullName, resolved);
 
-		const candidate = reconstruct({
-			subset: [repo],
-			stargazers: repoStargazers.filter((entry) => entry.repoFullName === repoFullName),
-		});
-
-		return candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : null;
+		return resolved;
 	};
 
 	return {
@@ -157,6 +164,24 @@ export function buildChartFiles({
 
 		if (forecastChart) {
 			files.push({ filename: CHART_FILES.forecast, svg: forecastChart });
+		}
+
+		for (const { repoFullName, source } of forecastData.repos) {
+			const fitted = source === ForecastSource.OWN ? chartHistories.reconstructedForRepo(repoFullName) : null;
+
+			if (fitted === null) continue;
+
+			const repoForecastChart = renderChart({
+				kind: ChartKind.PER_REPO_FORECAST,
+				history: fitted,
+				forecastData,
+				repoFullName,
+				lineColor: config.chartLineColor,
+			});
+
+			if (repoForecastChart) {
+				files.push({ filename: perRepoForecastChartFile(repoFullName), svg: repoForecastChart });
+			}
 		}
 	}
 
