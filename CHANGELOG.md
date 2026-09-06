@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/fbuireu/github-star-tracker/compare/v1.26.4...v1.27.0) (2026-09-06)
+
+
+### Features
+
+* **charts:** draw a growth forecast chart per top repository ([#186](https://github.com/fbuireu/github-star-tracker/issues/186)) ([ddf63da](https://github.com/fbuireu/github-star-tracker/commit/ddf63da7109365fa5b671ba7a59995bc85c5a5b8))
+
 ## [1.26.4](https://github.com/fbuireu/github-star-tracker/compare/v1.26.3...v1.26.4) (2026-09-04)
 
 
