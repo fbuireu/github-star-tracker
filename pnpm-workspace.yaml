@@ -6,4 +6,6 @@ blockExoticSubdeps: true
 allowBuilds:
   esbuild: true
   "@biomejs/biome": true
-  
+minimumReleaseAgeExclude:
+  # Renovate security update: nodemailer@9.1.1
+  - nodemailer@9.1.1
