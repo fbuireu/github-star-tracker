@@ -31,7 +31,7 @@ edit or delete.
 
 ## Decision
 
-**`readHistory` refuses to guess.** Four guards in `src/infrastructure/persistence/storage.ts` turn an
+**`readHistory` refuses to guess.** Guards in `src/infrastructure/persistence/storage.ts` turn an
 unreadable `stars-data.json` into a failed Run, and each throws its own message naming what it found and what
 to do about it:
 
@@ -49,7 +49,7 @@ to do about it:
   something other than an array. It names what it found and repeats the same reasoning, because the outcome
   it prevents is the same one. An **absent** `snapshots` key is not an error: that is a first Run.
 
-All four propagate out of `withDataBranch` to `trackStars`, which fails the Action. Nothing is published and
+They all propagate out of `withDataBranch` to `trackStars`, which fails the Action. Nothing is published and
 nothing is pushed, so the unreadable file is left exactly as it was.
 
 ## Consequences

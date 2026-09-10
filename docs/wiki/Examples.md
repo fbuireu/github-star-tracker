@@ -262,7 +262,7 @@ builds the report, sets every output and sends the email, but never commits, so 
     compare-against: '7d'
 ```
 
-Three things to get right:
+Things to get right:
 
 - The job needs only `permissions: contents: read`. Nothing is pushed.
 - **The branch must already exist.** A read-only run refuses to create one and fails the job.

@@ -41,7 +41,7 @@ instead of being re-raised every six months.
 
 ## Decision
 
-**Three questions, asked in order. A concept earns a type only when the answers carry it there.**
+**The questions, asked in order. A concept earns a type only when the answers carry it there.**
 
 1. **Is the illegal state reachable?** A shape the type permits but no code path produces is a guard, not a
    bug. Protect it the cheapest way that turns it into a compile error or a loud failure, and say in the
@@ -53,7 +53,7 @@ instead of being re-raised every six months.
    Data Branch, or is spelled twice in two dialects has earned a real type. One that lives inside a single
    function has not.
 
-**Three "no" answers mean writing the rule rather than coding it**: a bullet in the folder's `CLAUDE.md`, a
+**A "no" to every one of them means writing the rule rather than coding it**: a bullet in the folder's `CLAUDE.md`, a
 sentence in [CONTEXT.md](../../CONTEXT.md), an assertion in
 [`docs-consistency.test.ts`](../docs-consistency.test.ts), or an ADR. A divergence that is *named* is
 finished work rather than a debt, and the maintenance contract in [CLAUDE.md](../../CLAUDE.md) is what keeps
@@ -85,7 +85,7 @@ repair is six lines in the reader.
 
 **Fixed as a guard, because question 3 was no: the first-run flag.** `buildReportModel` recovered
 `isFirstRun` by comparing the rendered baseline date against the locale bundle's `report.firstRun` label. It
-does not cross a layer, is not persisted, and no Snapshot timestamp can collide with any of the four labels.
+does not cross a layer, is not persisted, and no Snapshot timestamp can collide with any of those labels.
 So no `FirstRun` value object; `prepareReportData` returns the boolean beside the string it already derives
 from the same input, and the illegal state stops being representable.
 
@@ -95,19 +95,19 @@ yes, and a branded type would still have to be unwrapped at both readers. The ru
 reader meets it: the stargazer-diffing section of `src/domain/CLAUDE.md` states that the sort is correct
 only while every value is a same-format ISO string, and the `github/` section of
 [`src/infrastructure/CLAUDE.md`](../../src/infrastructure/CLAUDE.md) states that the layer never parses or
-normalizes it. Two sentences beat a type that crosses five layers.
+normalizes it. A sentence or two beats a type that crosses every layer.
 
 **Rejected: a `RepoFullName` type.** `fullName` is a `Map` key in `compareStars`, split on `/` for a removed
 repository's owner, split again for the comparison chart's short labels, interpolated into GitHub URLs by
-both report dialects, and turned into a filename by `perRepoChartFile`. Five jobs, and it is persisted in
-every Snapshot. It passes all three questions, and it was still rejected: each of its hazards is already
+both report dialects, and turned into a filename by `perRepoChartFile`. All of those jobs, and it is persisted in
+every Snapshot. It passes every question, and it was still rejected: each of its hazards is already
 named at the place it bites, `perRepoChartFile` replacing only the first `/` and `compareStars` resolving
 duplicate keys last-wins, and a type would have prevented neither. It would, however, appear in `Snapshot`,
 `SnapshotRepo`, `RepoInfo`, `RepoResult` and `StargazerMap`, and so in the persisted format and its version.
 Revisit it only alongside a `DATA_FORMAT_VERSION` bump that is happening anyway.
 
 **Rejected: unifying the two chart style projections.** `charts.ts` and `emailChartStyle` both project
-`Config` onto an adapter style, and six options appear in both. The parity a shared type would assert is
+`Config` onto an adapter style, and a set of options appears in both. The parity a shared type would assert is
 false, which [ADR 0014](./0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md) and
 [`src/presentation/CLAUDE.md`](../../src/presentation/CLAUDE.md) both already say: `chart.ts` collapses two
 curves onto one, reads `emailTheme` rather than `chartTheme`, and never receives `maxPoints`. The drift is
@@ -122,8 +122,8 @@ is, and named here so it is not re-raised as an oversight.
 
 ## Consequences
 
-- **A finding closed by a written rule is closed.** Reopening one means showing that an answer to one of the
-  three questions changed, not that the primitive still looks untyped. The `starredAt`, `fullName`, chart
+- **A finding closed by a written rule is closed.** Reopening one means showing that one of the
+  answers changed, not that the primitive still looks untyped. The `starredAt`, `fullName`, chart
   style and `MS_PER_DAY` cases above are closed on that basis.
 - **The commit message has to say which answer applied.** "This is a guard" is load-bearing: it tells the
   next reader that the accompanying test constructs an unreachable state deliberately, so they do not go
@@ -133,8 +133,8 @@ is, and named here so it is not re-raised as an oversight.
   code moves, and a wrong "not reachable" leaves a live bug in place. The page-ceiling case is exactly that
   shape: it looked like a guard until the direction of GitHub's pagination made it reachable on every Run
   for the repositories the feature exists for. When the argument is not conclusive, treat it as reachable.
-- **It does not license leaving primitives untyped by default.** All three questions have to fail. A concept
-  that reaches an action output or the Data Branch has already answered the third one.
+- **It does not license leaving primitives untyped by default.** Every question has to fail. A concept
+  that reaches an action output or the Data Branch has already answered the boundary question.
 - **Where it bites:** the *Conventions* section of [CLAUDE.md](../../CLAUDE.md) points here, and each
   rejected case above is also named in the folder guide that owns it, so a reader meets the rule before they
   meet this file.

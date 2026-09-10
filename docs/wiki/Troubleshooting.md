@@ -72,7 +72,7 @@ git push origin --delete star-tracker-data
 
 ## Configuration Errors That Fail the Run
 
-Almost every bad configuration value warns and falls back to the default. **Two throw**, and both stop the
+Almost every bad configuration value warns and falls back to the default. **Some throw**, and they stop the
 run before anything is fetched.
 
 ### "Invalid data-branch ..."
@@ -98,13 +98,13 @@ Star Tracker failed: Invalid visibility "<value>". Must be one of: public, priva
 **Cause:** a typo in `visibility`. It throws rather than warning because every other value changes *which
 repositories are tracked*, so a silent fallback would quietly report on the wrong set.
 
-**Fix:** use one of the four values above.
+**Fix:** use one of the values above.
 
 ---
 
 ## Data Branch Errors
 
-All four fail the run. None of them is recoverable by re-running: fix the branch or the workflow first.
+All of them fail the run. None of them is recoverable by re-running: fix the branch or the workflow first.
 
 ### "... is not valid JSON"
 
@@ -168,7 +168,7 @@ Star Tracker failed: Git command failed: "git <args>"
 above. The second line is git's own message and is the part worth reading.
 
 **Fix:** depends entirely on that message. Missing `permissions: contents: write`, a protected branch rule
-on the data branch and a detached or shallow checkout are the usual three.
+on the data branch and a detached or shallow checkout are the usual causes.
 
 ---
 
@@ -182,14 +182,14 @@ recorded and no email is attempted.
 
 **Cause:** the filters combined to nothing. `only-repos` cannot bring back a repository `only-orgs` already
 excluded, which is the usual surprise; `min-stars` and `visibility: private` on an account with no private
-repositories are the other two.
+repositories are the other usual causes.
 
 **Fix:** remove filters one at a time until repositories reappear. The run log prints the surviving count
 after each filtering stage, which localises it quickly.
 
 ### `new-stargazers` Is 0 Although Stars Clearly Moved
 
-**Cause:** the stargazer diff skips two kinds of repository.
+**Cause:** the stargazer diff skips certain kinds of repository.
 
 - A **sampled** repository (one over `smart-sampling-threshold` while `smart-sampling` is on) is never
   diffed, because absence from a sample is not evidence that someone unstarred. These are named in a note in
@@ -254,7 +254,7 @@ git push origin --delete star-tracker-data
 
 **Cause:** Two runs that both write overlapped. The action reads the data branch when it starts and pushes
 when it finishes, and everything in between (listing repositories, fetching stargazers, rendering) takes
-minutes. If a second writing run starts in that window, both branch from the same commit and the one that
+minutes. If another writing run starts in that window, both branch from the same commit and the one that
 finishes last is refused. The usual trigger is a scheduled run plus a manual **Run workflow**; it can also
 happen if a run takes longer than the schedule interval.
 

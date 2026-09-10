@@ -54,7 +54,7 @@ DDD applied where it pays, not by the book. The method splits in two, and only o
 
 The **strategic** half is load-bearing and is taken whole. The **tactical** half, the catalogue of value objects, aggregates, repositories and events, asks for an abstraction before the code has earned it; taken on faith it adds boilerplate that ends up hiding the very rules it was meant to protect. It is adopted here only where a concrete force calls for it.
 
-The two strategic ideas the design leans on:
+The strategic ideas the design leans on:
 
 **One ubiquitous language.** [`CONTEXT.md`](https://github.com/fbuireu/github-star-tracker/blob/main/CONTEXT.md) defines every domain word (Snapshot, Baseline Snapshot, Delta, Tracked Set, Covered Stars, Delivery) and, for each, lists the synonyms it displaces, so a near-miss word cannot drift in. A term means the same thing in the star mathematics, in a chart title, in an email and on this page.
 
@@ -68,7 +68,7 @@ Neither half of that is a matter of taste. The boundaries are asserted by a test
 
 ## Where the detail lives
 
-This page is the shape, not the rules. The normative statement of which layer may import which is the layer table in [`ARCHITECTURE.md`](https://github.com/fbuireu/github-star-tracker/blob/main/ARCHITECTURE.md), and a test reads that table as data and asserts it against every import in `src`, so the arrows above cannot quietly stop being true. Restating the import rules here would be a second copy that nothing checks.
+This page is the shape, not the rules. The normative statement of which layer may import which is the layer table in [`ARCHITECTURE.md`](https://github.com/fbuireu/github-star-tracker/blob/main/ARCHITECTURE.md), and a test reads that table as data and asserts it against every import in `src`, so the arrows above cannot quietly stop being true. Restating the import rules here would be another copy that nothing checks.
 
 | Question | Where |
 |---|---|
@@ -78,4 +78,4 @@ This page is the shape, not the rules. The normative statement of which layer ma
 | When does a bare `string` or `number` earn a type of its own? | [ADR 0022](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md) |
 | What does one layer actually guarantee? | The `CLAUDE.md` inside that layer's folder |
 | What happens, step by step, on a run? | **[How It Works](How-It-Works)** |
-| Why these tools and these five dependencies? | **[Technical Stack](Technical-Stack)** |
+| Why these tools and these dependencies? | **[Technical Stack](Technical-Stack)** |

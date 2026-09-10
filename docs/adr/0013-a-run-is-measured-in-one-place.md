@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-Turning one observation into a Run's figures took five pure functions called in one exact order:
+Turning one observation into a Run's figures took a handful of pure functions called in one exact order:
 `getBaselineSnapshot` resolved the Comparison Window, `compareStars` diffed against it, `createSnapshot`
 recorded the result, `addSnapshot` appended it, and `shouldNotify` decided whether the Notification Threshold
 was cleared. Each was individually testable and individually harmless. The order was not.
@@ -23,10 +23,10 @@ rejects a non-positive `max-history` a layer away.
 
 All six lived as prose in two `CLAUDE.md` files. `@application/tracker` was the only caller, so nothing ever
 diverged, but nothing prevented it either, and the failure mode is a wrong Star Count rather than a crash.
-Its test mocked all five functions, so it asserted the call sequence it was itself defining: a reordering
+Its test mocked every one of them, so it asserted the call sequence it was itself defining: a reordering
 would have changed the numbers and kept the suite green.
 
-Leaving the five exported and documenting the order harder was the obvious alternative. It had already been
+Leaving them exported and documenting the order harder was the obvious alternative. It had already been
 tried; the prose is what exists today, and it did not stop the ordering from being invisible at the call
 site.
 
@@ -37,7 +37,7 @@ History, the Comparison Window, `maxHistory` and the Notification Threshold and 
 Baseline's timestamp, the comparison results, the Summary, the appended History, how many Snapshots the
 `max-history` trim dropped, and whether the threshold was reached.
 
-The five functions it composes stay exported from their own modules and keep their own tests. They are
+The functions it composes stay exported from their own modules and keep their own tests. They are
 internal seams within `@domain`, not a surface `@application` crosses. What changed is that no caller can
 reach them in the wrong order, because no caller reaches them at all.
 

@@ -76,7 +76,7 @@ only one that performs I/O.
 This table is the **normative statement of the layer boundaries**, and `docs/docs-consistency.test.ts` reads
 it as data: the *May import* column of each row is parsed for the layer names it mentions, and every
 cross-layer import in `src/**/*.ts` must appear there. A layer may always import itself, and it must do so
-relatively, so a cross-layer relative path is its own failure. The pure layers carry a second rule the table
+relatively, so a cross-layer relative path is its own failure. The pure layers carry a further rule the table
 states in prose and the test states as a list: no `node:*`, no `@actions/*`, no `@octokit/*`, no `nodemailer`
 and no `js-yaml` under `domain/`, `presentation/` or `i18n/`. The diagram is the table's picture, and anything
 the table forbids is forbidden however convenient.
@@ -88,8 +88,8 @@ through: [`src/config/action-inputs.test.ts`](./src/config/action-inputs.test.ts
 from `@infrastructure/notification/email` to assert `action.yml`'s `smtp-port` description against the
 constant that actually implements it. It asserts against the manifest rather than against a module, the two
 values it compares genuinely live in two layers, and duplicating the constant into `config` to satisfy the
-arrow would put the same number in two places, which is the thing the assertion exists to prevent. Adding a
-second such crossing means adding a line to `TEST_LAYER_CROSSINGS` and a paragraph here saying why. The codebase-wide conventions those boundaries sit inside
+arrow would put the same number in two places, which is the thing the assertion exists to prevent. Adding
+another such crossing means adding a line to `TEST_LAYER_CROSSINGS` and a paragraph here saying why. The codebase-wide conventions those boundaries sit inside
 (aliases, named params, no comments, purity) are stated once in [CLAUDE.md](./CLAUDE.md#conventions), and
 what each layer actually guarantees is that layer's own `CLAUDE.md`, linked in [§6](#6-where-things-live).
 The decision to layer the tree this way is [ADR 0004](./docs/adr/0004-layered-source-structure.md).
@@ -113,7 +113,7 @@ carries no comments, so there are no step markers in the source to match them ag
 | 10 | `fetchAllStargazers({ octokit, repos, config })` | infrastructure/github | Only when `includeCharts \|\| trackStargazers`. Per-repo failures degrade to `core.warning` |
 | 11 | `branch.readStargazers()` -> `diffStargazers` -> `buildStargazerMap(...)` | persistence + domain | Only when `trackStargazers`. The map is handed to `publish`, not written here |
 | 12 | `topRepositories({ repos: results.repos, limit: config.topRepos })` | domain/comparison | The single definition of Top Repositories; `@presentation/report-model` calls the same function for the Report |
-| 13 | `resolveChartHistories({ config, storedHistory: updatedHistory, repos, repoStargazers })` | presentation/charts | Owns both altitudes and the instant: reconstructs via `@domain/star-history` (capped at 365 buckets) and resolves each result against the stored history, where reconstruction wins at >= 2 snapshots. It exposes three accessors: `.aggregate` for the Tracked Set, `.forRepo(name)` for one Repository *with* the stored-history fallback, and `.reconstructedForRepo(name)` for the reconstruction alone, returning `null` rather than falling back |
+| 13 | `resolveChartHistories({ config, storedHistory: updatedHistory, repos, repoStargazers })` | presentation/charts | Owns both altitudes and the instant: reconstructs via `@domain/star-history` (capped at 365 buckets) and resolves each result against the stored history, where reconstruction wins at >= 2 snapshots. Its accessors are `.aggregate` for the Tracked Set, `.forRepo(name)` for one Repository *with* the stored-history fallback, and `.reconstructedForRepo(name)` for the reconstruction alone, returning `null` rather than falling back |
 | 14 | `computeForecast({ history, topRepoNames, historyForRepo })` | domain/forecast | `null` below 3 snapshots; always 2 methods x 4 weekly points. `historyForRepo` is `.reconstructedForRepo`, deliberately *not* `.forRepo`: a fabricated fallback ramp would be projected as if it were real growth |
 | 15 | `renderRun({ config, results, previousTimestamp, chartHistories, storedHistory, stargazerDiff, forecastData })` | presentation | The layer's single entry point: markdown, HTML, CSV, badge and every chart file in one `RenderedRun`. It builds the `ReportModel` once, derives the chart history from `chartHistories` and the Top Repositories from that model, so no caller can hand the reports the wrong `History` or chart a different set than it links ([ADR 0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md)) |
 | 16 | `notificationIsDue({ changed, thresholdReached })` | domain/notification | Gates the send. The same predicate is what `settleNotification` computes internally, so the rule cannot go stale in one place and not the other |
@@ -121,7 +121,7 @@ carries no comments, so there are no step markers in the source to match them ag
 | 18 | `settleNotification({ changed, thresholdReached, delivery, history, totalStars })` | domain/notification | Returns `shouldNotify`, `notificationSent` and `historyToPersist` as one outcome; calls `recordNotification` only when the baseline may advance |
 | 19 | `writeHtmlReport({ htmlReport })` | infrastructure/persistence | Writes to `RUNNER_TEMP`, falling back to the working directory, so the file is off the Data Branch and outlives the run. Deliberately **before** `publish`: a failing write must not end a run that has already committed and pushed |
 | 20 | `branch.publish({ history, stargazerMap, report, badge, csv, charts, commitMessage })` | infrastructure/persistence | Writes every data-branch artefact, prunes the `charts/*.svg` this run did not produce, then commits and pushes, unless `readOnly`, where the write happens and the push does not |
-| 21 | `setOutputs(...)` | application | Eleven outputs, exactly matching the `outputs:` block of [`action.yml`](./action.yml) |
+| 21 | `setOutputs(...)` | application | Every output, exactly matching the `outputs:` block of [`action.yml`](./action.yml) |
 
 Failure policy: everything is wrapped in one `try/catch` that ends in `core.setFailed('Star Tracker failed: <msg>')` plus `core.debug(stack)`. Email is the only inner failure that is deliberately non-fatal.
 
@@ -146,7 +146,7 @@ State has to survive between runs of a stateless Action. Artifacts expire and ar
     forecast-<owner>-<repo>.svg
 ```
 
-`read-only: true` runs everything (fetch, compare, render, all outputs, email) but skips `commitAndPush`, so a second workflow such as a weekly digest using `compare-against` can share a data branch without appending snapshots or racing the writer. There are **two guards, both inside `@infrastructure`**: `initializeDataBranch` refuses to bring an absent Data Branch into existence, and `publish` writes every artefact into the worktree and then returns before `commitAndPush`. `tracker.ts` passes `readOnly` into `withDataBranch` and never branches on it itself.
+`read-only: true` runs everything (fetch, compare, render, all outputs, email) but skips `commitAndPush`, so another workflow such as a weekly digest using `compare-against` can share a data branch without appending snapshots or racing the writer. The guards **all live inside `@infrastructure`**: `initializeDataBranch` refuses to bring an absent Data Branch into existence, and `publish` writes every artefact into the worktree and then returns before `commitAndPush`. `tracker.ts` passes `readOnly` into `withDataBranch` and never branches on it itself.
 
 ## 4. Outputs
 
@@ -161,16 +161,16 @@ State has to survive between runs of a stateless Action. Artifacts expire and ar
 | `charts/*.svg` | `@presentation/charts` -> `@presentation/svg-chart` | `writeChart` |
 | Email chart images | `@presentation/chart` (quickchart.io URLs, no SVG) | embedded by [`html.ts`](./src/presentation/html.ts) |
 | Email | `@presentation/html` body | `@infrastructure/notification/email` `sendEmail` |
-| Action outputs (11) | - | `setOutputs` in `tracker.ts` |
+| Action outputs | - | `setOutputs` in `tracker.ts` |
 
-The eleven action outputs, alphabetically as `action.yml` declares them: `lost-stars`, `new-stargazers`, `new-stars`, `notification-sent`, `report`, `report-csv`, `report-html`, `report-html-path`, `should-notify`, `stars-changed`, `total-stars`. Their values, and the difference between `should-notify` (the decision) and `notification-sent` (delivery), are in [src/application/CLAUDE.md](./src/application/CLAUDE.md).
+The action outputs, alphabetically as `action.yml` declares them: `lost-stars`, `new-stargazers`, `new-stars`, `notification-sent`, `report`, `report-csv`, `report-html`, `report-html-path`, `should-notify`, `stars-changed`, `total-stars`. Their values, and the difference between `should-notify` (the decision) and `notification-sent` (delivery), are in [src/application/CLAUDE.md](./src/application/CLAUDE.md).
 
 ## 5. Build & release
 
 The scripts, Biome settings and git hooks are listed once in [CLAUDE.md](./CLAUDE.md#commands); this section covers what happens to the bundle and the release, which lives nowhere else.
 
 - **Bundling.** [`esbuild.config.ts`](./esbuild.config.ts) (run via `tsx`) bundles `src/index.ts` into [`dist/index.js`](./dist/index.js), `platform: node`, `target: node24`, `format: cjs`, `sourcemap: true`, with the alias map derived from [`tsconfig.json`](./tsconfig.json). `dist/` is **committed** because GitHub runs a JS action straight from the repository at the referenced ref: there is no install step, so the bundle must be in the tree ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)).
-- **Node version.** Three pins move together and only two of them are asserted: `engines.node` and `packageManager` in [`package.json`](./package.json), plus [`.nvmrc`](./.nvmrc), which is what every job in [`ci.yml`](./.github/workflows/ci.yml) actually installs through `node-version-file`. `docs/docs-consistency.test.ts` asserts that `.nvmrc` and `engines.node` agree, so moving one without the other fails the build.
+- **Node version.** The pins move together and only some of them are asserted: `engines.node` and `packageManager` in [`package.json`](./package.json), plus [`.nvmrc`](./.nvmrc), which is what every job in [`ci.yml`](./.github/workflows/ci.yml) actually installs through `node-version-file`. `docs/docs-consistency.test.ts` asserts that `.nvmrc` and `engines.node` agree, so moving one without the other fails the build.
 - **Release.** [`.releaserc.json`](./.releaserc.json): semantic-release on `main` with commit-analyzer, release-notes-generator, changelog, npm (`npmPublish: false`), git (commits `package.json`, [`pnpm-lock.yaml`](./pnpm-lock.yaml), [`CHANGELOG.md`](./CHANGELOG.md) and `dist/`) and github plugins. The `release` job in `ci.yml` needs `check`, which is `pnpm verify` on the same sha, and rebuilds the bundle in its own checkout before it runs.
 
 [`.github/workflows/`](./.github/workflows):
@@ -186,7 +186,7 @@ The scripts, Biome settings and git hooks are listed once in [CLAUDE.md](./CLAUD
 
 ## 6. Where things live
 
-Three axes, three kinds of document. [CONTEXT.md](./CONTEXT.md) is the domain glossary: what the words
+One axis per kind of document. [CONTEXT.md](./CONTEXT.md) is the domain glossary: what the words
 **mean**. The `CLAUDE.md` files, one at the root and one per layer, are **structure**.
 [docs/adr/](./docs/adr/) is **why**:
 
@@ -221,10 +221,10 @@ copying that file. The shape the docs test asserts is spelled out in
 
 **The per-layer guides and what each covers are the table in [CLAUDE.md](./CLAUDE.md#structure--aliases).**
 That file is loaded into every agent session, so the list lives there and is not repeated here. Root
-[`CLAUDE.md`](./CLAUDE.md) itself is the ninth document: commands, alias wiring, conventions and the
+[`CLAUDE.md`](./CLAUDE.md) itself is a document of its own: commands, alias wiring, conventions and the
 maintenance contract.
 
-One guide per layer, no deeper: the four `infrastructure/` adapters and `shared/tests` are sections inside their parent's guide rather than files of their own, because a guide in a subdirectory only reaches the agent once it reads a file in that exact folder.
+One guide per layer, no deeper: the `infrastructure/` adapters and `shared/tests` are sections inside their parent's guide rather than files of their own, because a guide in a subdirectory only reaches the agent once it reads a file in that exact folder.
 
 ## 7. Extending it
 

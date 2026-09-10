@@ -95,7 +95,7 @@ what makes the counter keep growing across quiet runs.
 
 ### What the reader must not do to this file
 
-The three things that make a run stop rather than continue on a guess:
+The things that make a run stop rather than continue on a guess:
 
 | If `stars-data.json` | The run |
 |---|---|
@@ -107,7 +107,7 @@ An **absent** `version` is fine and always will be: every data branch predating 
 read as version 1. A `snapshots` key that is not an array is the one tolerated case; it normalizes to an
 empty list while `starsAtLastNotification` survives.
 
-Why all three stop the run rather than starting over, and the accepted cost that a broken file blocks every
+Why they all stop the run rather than starting over, and the accepted cost that a broken file blocks every
 later run until a human fixes it, is
 [ADR 0021](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0021-an-unreadable-stored-history-fails-the-run.md).
 The `version` field itself is
@@ -192,7 +192,7 @@ still opens the worktree, reads `stars-data.json` and `stargazers.json`, compute
 artefact above into that worktree, sends the email and sets every output. It then logs
 `Read-only run: leaving <branch> untouched` and throws the worktree away without committing.
 
-Two things follow, and both surprise people:
+Things follow from that, and they surprise people:
 
 - **The branch must already exist.** A read-only run refuses to create one and fails outright, so the "First
   Run Behavior" above does not apply to it. Point `data-branch` at the branch your tracking workflow
@@ -200,7 +200,7 @@ Two things follow, and both surprise people:
 - **Nothing is remembered.** No snapshot is appended and `starsAtLastNotification` never advances, so a
   `notification-threshold` other than `0` cannot work on a read-only run. The action warns when both are set.
 
-This is what lets a second workflow, typically a weekly digest, share a data branch with the workflow that
+This is what lets another workflow, typically a weekly digest, share a data branch with the workflow that
 maintains it without the two racing to push.
 
 ---

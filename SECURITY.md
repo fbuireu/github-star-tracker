@@ -42,7 +42,7 @@ config file, and writes rendered files to a branch. That shapes what is interest
 - Rate limiting, quota exhaustion or API cost caused by tracking a very large set of repositories.
 - Vulnerabilities in GitHub Actions, GitHub itself, or your SMTP provider. Report those to them.
 
-Two defences are worth knowing about before you write a report, because they already hold:
+Defences worth knowing about before you write a report, because they already hold:
 
 - Git is invoked through `execFileSync` with an argument array ([`src/infrastructure/git/commands.ts`](./src/infrastructure/git/commands.ts)), so
   no config value reaches a shell. There is no `git` string to break out of.

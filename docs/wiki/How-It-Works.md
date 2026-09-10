@@ -71,11 +71,11 @@ flowchart TD
     style send stroke:#c2185b,stroke-width:3px
 ```
 
-Two edges in that diagram are easy to miss, and both matter:
+Some edges in that diagram are easy to miss, and they matter:
 
 - **No repositories matched.** When every filter combined leaves nothing, the run warns
   `No repositories matched the configured filters`, renders an empty report, writes the HTML report, sets all
-  eleven outputs to their zeroed values and returns. It never opens the data branch, so nothing is committed
+  every output to its zeroed value and returns. It never opens the data branch, so nothing is committed
   and no email is attempted. The run still succeeds.
 - **Read-only run.** With `read-only: true` everything happens except the push: the run reads the branch,
   computes, renders, writes every artefact into the worktree, sends the email and sets every output, then
@@ -90,7 +90,7 @@ Two edges in that diagram are easy to miss, and both matter:
 
 **File:** [`src/index.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/index.ts)
 
-A two-line bootstrap delegating to the application orchestrator:
+A tiny bootstrap delegating to the application orchestrator:
 
 ```typescript
 import { trackStars } from '@application/tracker';
@@ -120,7 +120,7 @@ Action Inputs > Config File (YAML) > Built-in Defaults
    logged as a warning and also falls back to the defaults, so neither fails the run
 3. Action input extraction via `@actions/core`
 4. Type-safe conversion using parsers (`parseBool`, `parseList`, `parseHexColor`,
-   `parseNotificationThreshold`, and the three number parsers `parsePositiveNumber`,
+   `parseNotificationThreshold`, and the number parsers `parsePositiveNumber`,
    `parseNonNegativeNumber` and `parsePositiveDecimal`). Which number parser a key uses is deliberate,
    not interchangeable
 5. Merge: inputs override file values; missing values fall through to defaults
@@ -232,7 +232,7 @@ Creates or accesses a Git worktree for the data branch, isolating persistence fr
 6. If the branch exists: `git fetch` + `git worktree add`
 7. If it is new: create an orphan branch with `git checkout --orphan` + an empty initial commit
 
-**Two failures start here**, and both fail the run:
+**The failures that start here** both fail the run:
 
 - No repository is checked out. The action needs the worktree machinery, so it converts git's own message
   into `This action must run inside a checked-out repository. Add an "actions/checkout" step before this
@@ -281,7 +281,7 @@ The time windows make a genuine daily, weekly or monthly digest possible even wh
 
 **The baseline choice only changes what the current run is compared against; it never changes what gets stored.** Every run still appends its own snapshot to the Stored History, and neither the charts, the forecast nor the velocity section is windowed by `compare-against`.
 
-Those three do not share one series, though, and the difference is worth knowing:
+Those do not share one series, though, and the difference is worth knowing:
 
 | Section | Series it reads |
 |---|---|
@@ -339,7 +339,7 @@ Stargazers are fetched whenever charts are enabled (`include-charts: true`, the 
 
 New stargazers appear in reports with avatar, profile link, and starred date.
 
-Two kinds of repository are skipped by the diff, and only one of them says so. A **sampled** repository is
+Some kinds of repository are skipped by the diff, and only one of them says so. A **sampled** repository is
 excluded deliberately (absence from a sample is not evidence) and is named in a note in the report. A
 repository whose list came back `incomplete` is skipped **silently**. Either way its stars still count, so
 `new-stargazers` can read `0` on a run where the totals clearly moved.
@@ -368,7 +368,7 @@ Requires at least **3 points** (`MIN_SNAPSHOTS_FOR_FORECAST`). Projects **4 cale
 
 Both methods are **time-aware**: they use each point's real timestamp to derive a stars-per-day rate, so predictions do not depend on how far apart the points happen to be. That matters because the two possible series are spaced very differently: a Reconstructed History spreads its points across the repository's entire lifetime, while a Stored History follows your workflow schedule.
 
-Two methods are computed in parallel:
+The methods are computed in parallel:
 
 | Method | Description | Strength |
 |---|---|---|
@@ -473,7 +473,7 @@ Generates self-contained animated SVG charts committed to `charts/` on the data 
 | Forecast | `charts/forecast.svg` | Historical + projected trends (dashed lines) |
 | Per-Repo Forecast | `charts/forecast-{owner}-{repo}.svg` | One repo's history + its own projected trends |
 
-Features: smooth curves (`monotone` by default, four shapes available), CSS draw-line animation, fade-in point markers, nice Y-axis steps, locale-aware date labels, legend (for multi-series).
+Features: smooth curves (`monotone` by default, several shapes available), CSS draw-line animation, fade-in point markers, nice Y-axis steps, locale-aware date labels, legend (for multi-series).
 
 When charts are enabled, the History passed to chart generation is the **Reconstructed History**, not the Stored History. At least **2 points** (`MIN_SNAPSHOTS_FOR_CHART`) are needed; below that the Stored History is used as the fallback, so a chart is still drawn, just over the tracker's own runs rather than the repository's life.
 
@@ -509,7 +509,7 @@ commit. Anything written after the commit would not be staged.
 
 ### Reading `stars-data.json`
 
-Four guards run before the stored file is trusted, and each of them **fails the run** rather than
+Guards run before the stored file is trusted, and each of them **fails the run** rather than
 continuing on a guess, because silently reading a populated data branch as empty would append a snapshot
 over the top of a discarded record:
 
@@ -560,11 +560,11 @@ Every other push failure keeps git's own wording, because that detail is the use
 ### Read-only runs
 
 `read-only: true` makes a run a pure reader of the data branch. It still fetches, compares, renders every
-artefact into the worktree, sets all eleven outputs and sends the email; it just never commits or pushes,
-and the worktree is thrown away at the end. That is what lets a second workflow (a weekly digest, say) share
+artefact into the worktree, sets every output and sends the email; it just never commits or pushes,
+and the worktree is thrown away at the end. That is what lets another workflow (a weekly digest, say) share
 a data branch with the workflow that maintains it without the two racing to write.
 
-Two consequences follow from nothing being written:
+Consequences follow from nothing being written:
 
 - The branch must already exist. A read-only run refuses to create it (see Phase 3).
 - `starsAtLastNotification` never advances, so a `notification-threshold` other than `0` cannot work on a
@@ -612,7 +612,7 @@ Controls when notifications fire. A notification always requires that something 
 that stored value rather than against the previous run: the counter does **not** reset on runs that do not
 notify, it keeps accumulating until it trips.
 
-Whether a run advances it depends on the decision *and* on what the transport did. There are three outcomes:
+Whether a run advances it depends on the decision *and* on what the transport did. The outcomes:
 
 | The run decided to notify, and the send was | Baseline |
 |---|---|
@@ -620,7 +620,7 @@ Whether a run advances it depends on the decision *and* on what the transport di
 | Never attempted, because no SMTP is configured at all | advances to the current total, because the `should-notify` output *is* the notification here |
 | Attempted and failed, including an `smtp-host` with an empty `email-to` | held back, so the accumulated change is not lost |
 
-Only the third case holds it. A run that decides **not** to notify never touches it, whatever the transport
+Only an attempted-and-failed send holds it. A run that decides **not** to notify never touches it, whatever the transport
 ([ADR 0011](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md)).
 
 The `notification-mode` input (config key `notification_mode`) decides how that accumulated change is measured:

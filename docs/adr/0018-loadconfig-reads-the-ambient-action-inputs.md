@@ -68,7 +68,7 @@ inputs" reading them ambiently is the truthful shape, not an accident.
 that `@config` was the sole exception in an otherwise dependency-injected tree, was simply wrong about the
 code:
 
-- **`getEmailConfig` in [`src/infrastructure/notification/email.ts`](../../src/infrastructure/notification/email.ts) reads six ambient inputs**: `smtp-host`,
+- **`getEmailConfig` in [`src/infrastructure/notification/email.ts`](../../src/infrastructure/notification/email.ts) reads the ambient SMTP inputs**: `smtp-host`,
   `smtp-port`, `smtp-username`, `smtp-password`, `email-to` and `email-from`. It takes only a `Locale`, for
   the default `from` name. It owns the SMTP input group the way `loadConfig` owns the tracking one, and it
   calls `core.setSecret` on the password, which is a reason to keep the read where the value is produced

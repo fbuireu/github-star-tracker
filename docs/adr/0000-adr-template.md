@@ -10,7 +10,7 @@ Template. Not a decision: copy this file, do not edit it in place.
 
 Copy this file to `NNNN-kebab-title.md`, numbered one above the highest existing ADR, and add a row for it to the index in [`ARCHITECTURE.md`](../../ARCHITECTURE.md). The `# N. Title` heading carries that same number and states the decision in one line; the file slug is the short form of it.
 
-Write an ADR only when the decision is **hard to reverse**, **surprising without context** and **the result of a real trade-off**. All three, or it is not an ADR.
+Write an ADR only when the decision is **hard to reverse**, **surprising without context** and **the result of a real trade-off**. All of them, or it is not an ADR.
 
 This section holds the forces, not the answer: what the situation was, what the alternatives were, and why the obvious option was not obviously right. Someone reading it two years from now has none of the context you have today, and the constraint that made this hard is the part they will be missing.
 

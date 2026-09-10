@@ -1,6 +1,6 @@
 # Contributing to GitHub Star Tracker
 
-This action is a TypeScript codebase bundled into a committed [`dist/index.js`](./dist/index.js). Two things catch out most
+This action is a TypeScript codebase bundled into a committed [`dist/index.js`](./dist/index.js). What catches out most
 first pull requests: the bundle is expected to be rebuilt in the same commit as the source, which no check
 enforces, and the documentation set is verified by a test, which does. Both are covered below.
 
@@ -63,11 +63,12 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
    pnpm install
    ```
 
-   The Node version lives in three places that must agree: [`.nvmrc`](./.nvmrc), which both CI workflows
-   read through `node-version-file`; `engines.node` in [`package.json`](./package.json); and the *Versions* section of the
-   root [`CLAUDE.md`](./CLAUDE.md), where [`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts) asserts it against
-   `package.json`. Bumping Node means editing all three in one commit. The pnpm version lives in
-   `packageManager` and in that same `CLAUDE.md` section.
+   The Node version lives in the places that must agree: [`.nvmrc`](./.nvmrc), which every CI job
+   installs from through `node-version-file`, and `engines.node` in [`package.json`](./package.json).
+   [`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts) asserts that they say the same thing,
+   so bumping Node means editing them in one commit. The *Versions* section of the root
+   [`CLAUDE.md`](./CLAUDE.md) names where each runtime is pinned and quotes no digit of its own, which is a
+   rule that same test holds it to. The pnpm version lives in `packageManager` and nowhere else.
 
    Note that `engines.node` is the *development* pin. The shipped runtime is `node24`, set by
    `runs.using` in [`action.yml`](./action.yml) and by the esbuild `target`, so a `node:*` API newer than Node 24 will
@@ -122,7 +123,7 @@ Found a typo? Something unclear? Documentation improvements are always welcome:
 
 ### Git Hooks
 
-Husky installs three hooks on `pnpm install`, so some of the checks above run whether you ask for them or
+Husky installs its hooks on `pnpm install`, so some of the checks above run whether you ask for them or
 not:
 
 | Hook | Runs | What it means for you |
@@ -380,7 +381,7 @@ resolution, sampling, notification settlement, formatting and time parsing, plus
 
 ### Documentation that ships with the code
 
-Four kinds of document, one job each. `CLAUDE.md` appears twice below because it is the same artefact at
+One job per kind of document. `CLAUDE.md` appears twice below because it is the same artefact at
 two scales, repo-wide and per layer. They are maintained by hand, so a code change that does not update
 them leaves them lying:
 

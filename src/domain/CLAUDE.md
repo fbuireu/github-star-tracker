@@ -19,7 +19,7 @@ archived/fork/min-stars rules and the `onlyRepos` short-circuit over `RepoInfo`,
 fetch without performing one. `shouldSample` applies the strict threshold, `reachablePages` clamps to
 GitHub's paging ceiling, `sampledPages` picks the evenly-spread pages Smart Sampling reads, and
 `coveredStars` says how many Stars those pages account for, the figure [`star-history.ts`](./star-history.ts) reads to decide
-whether to draw a Ramped Tail. All four are arithmetic, so they belong here and not behind an HTTP client.
+whether to draw a Ramped Tail. All of them are arithmetic, so they belong here and not behind an HTTP client.
 
 ## The Run Measurement is the layer's front door
 
@@ -29,7 +29,7 @@ records why. It composes `getBaselineSnapshot`, `compareStars`, `createSnapshot`
 `shouldNotify` in the one order that is correct, and returns `baselineTimestamp`, `results`, `summary`,
 `updatedHistory`, `droppedSnapshots` and `thresholdReached`.
 
-- **The five it composes stay exported and stay tested.** They are internal seams within this layer, not a
+- **The functions it composes stay exported and stay tested.** They are internal seams within this layer, not a
   surface another layer crosses. Do not call them from outside `@domain`: the ordering rules they carry are
   what `measureRun` exists to make unreachable.
 - **`measureRun` never advances the Notification baseline.** It reports `thresholdReached` and stops there.
@@ -101,7 +101,7 @@ snapshot everything else is diffed against.
 
 ## Forecast, velocity, notifications
 
-- `computeForecast` returns `null` below 3 snapshots; otherwise always exactly two `ForecastResult`s, one per
+- `computeForecast` returns `null` below 3 snapshots; otherwise always one `ForecastResult` per
   **Forecast Method** (`ForecastMethod`: linear regression, then weighted moving average), each with 4 weekly
   points.
 - Projections anchor on the **last observed value**, not the fitted one:
@@ -113,7 +113,7 @@ snapshot everything else is diffed against.
   returns `null`, or whose own History is shorter than `MIN_SNAPSHOTS_FOR_FORECAST`, is fitted to the
   aggregate, which holds such a repository **flat at `repo.stars`** (`edges.map(() => repo.stars)`, the issue
   #148 guard). Flat is the honest answer when there is nothing to reconstruct from.
-- **Each `RepoForecast` says which of the two it was, in `source`** (`ForecastSource`: `OWN` or
+- **Each `RepoForecast` says which it was, in `source`** (`ForecastSource`: `OWN` or
   `AGGREGATE`). It is the one thing about a per-repo Forecast a caller cannot re-derive without repeating the
   fallback rule above, and `@presentation/charts` reads it to decide whether that repository gets a Forecast
   Chart of its own: a projection fitted to the aggregate describes the Tracked Set's shape, not the
@@ -135,7 +135,7 @@ snapshot everything else is diffed against.
   the newest one does not parse. The two policies are deliberately different, and
   [ADR 0017](../../docs/adr/0017-velocity-and-forecast-read-unparseable-timestamps-differently.md) records
   why: a Forecast needs plausible *spacing*, a Velocity needs a true *duration*, and a synthetic cadence
-  supplies the first honestly and the second not at all. Routing `computeVelocity` through `calendarDays`
+  supplies plausible spacing honestly and a true duration not at all. Routing `computeVelocity` through `calendarDays`
   would turn a `null` into a fabricated rate with no test failing.
 - `computeVelocity` uses the last snapshot and the newest earlier one at least 0.25 days back, skipping
   closer pairs so a manual re-run minutes after a scheduled one cannot inflate the rate. It is a
@@ -171,7 +171,7 @@ Charts are rebuilt from raw stargazer timestamps rather than from stored snapsho
 
 `incomplete` means **"this list is not the whole story"**, not "this list is empty". It covers a fetch that
 returned nothing, one that was cut short mid-pagination, *and* one that ran out of pages at GitHub's
-40,000-stargazer ceiling. The second case used to be flagged only by
+40,000-stargazer ceiling. The cut-short case used to be flagged only by
 `coveredStars`, which neither guard consulted, so a repo whose fetch died on page 6 of 15 overwrote its
 stored entry with the 500 oldest logins and reported the other 1,000 as new on the next successful Run.
 `@infrastructure` sets it; nothing here recomputes it.

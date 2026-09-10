@@ -29,7 +29,7 @@ just an option that does not take effect.
 lives in `DEFAULTS` in [`src/config/defaults.ts`](../../src/config/defaults.ts), which is the last link of the resolution chain and the only
 place any of these values is written down as a value.
 
-Only the three inputs with **no** config-file counterpart carry a non-empty default, because for them there
+Only the inputs with **no** config-file counterpart carry a non-empty default, because for them there
 is no precedence to protect: `config-path` (`'star-tracker.yml'`), `send-on-no-changes` (`'false'`) and
 `smtp-port` (`'587'`).
 
@@ -44,7 +44,7 @@ invisible precedence bug with a visible magic value in every user's workflow fil
 ## Consequences
 
 - **The manifest stops self-documenting its defaults**, which is the cost. `action.yml` shows `default: ''`
-  for 43 of its 47 inputs; the other four are the three above and `github-token`, which declares no default
+  for all but a handful of its inputs; the exceptions are the ones above and `github-token`, which declares no default
   at all because it is required. Anyone reading the manifest for a real value must read the description prose
   or `src/config/defaults.ts`. The tests below are what keep that prose honest:
   - [`src/config/action-inputs.test.ts`](../../src/config/action-inputs.test.ts) asserts that every key of `DEFAULTS` except `sendOnNoChanges` has an
@@ -58,7 +58,7 @@ invisible precedence bug with a visible magic value in every user's workflow fil
   precedence for every existing user whose `star-tracker.yml` sets that option, and the symptom they see is
   "my config file stopped working" with nothing in the log. The tests above exist because this is a
   change that cannot be caught by reading the diff.
-- **A new overridable input is four edits, not three**: the `action.yml` entry with an empty default and the
+- **A new overridable input takes one more edit than it looks**: the `action.yml` entry with an empty default and the
   `(default X) (overrides config file)` prose, the `Config` field, the `DEFAULTS` entry, and the
   `FIELD_SOURCES` resolver. Skipping the empty default is the one of those the compiler will not catch.
 - **An empty string can never be a meaningful value for an overridable input**, since it is indistinguishable

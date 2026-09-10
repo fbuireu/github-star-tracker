@@ -10,7 +10,7 @@ the big picture: layer map, end-to-end run, the data branch, build and release.
 A JavaScript action (TypeScript sources bundled by esbuild into [`dist/index.js`](./dist/index.js), `runs.using: node24` per
 [`action.yml`](./action.yml)). On each run it lists the token owner's repositories, compares their star counts against a
 snapshot stored on a dedicated data branch, and commits a markdown report, JSON/CSV data, a badge and
-animated SVG charts back to that branch. It exposes eleven action outputs and can send an HTML digest over
+animated SVG charts back to that branch. It exposes a set of action outputs and can send an HTML digest over
 SMTP. There is exactly one use case: `trackStars()`.
 
 ## Stack
@@ -26,25 +26,25 @@ SMTP. There is exactly one use case: `trackStars()`.
 ## Versions
 
 **This section names where each runtime is pinned and never what the pin says.** A digit written here is a
-claim a bot invalidates on its own, and the two ways of defending one both cost more than they return.
+claim a bot invalidates on its own, and every way of defending one costs more than it returns.
 Asserting it against the manifest fails every dependency pull request on a line the bot cannot edit, which is
-what contribKit did until it stopped. Quoting it without asserting it rots, which is what two sibling guides
-did. This repository took a third way and kept both, with `customManagers` rewriting the prose in the same
-pull request as the manifest; that worked, and it was still two regexes over prose, a grouping rule holding
+what contribKit did until it stopped. Quoting it without asserting it rots, which is what sibling guides
+did. This repository took another way and kept both, with `customManagers` rewriting the prose in the same
+pull request as the manifest; that worked, and it was still regexes over prose, a grouping rule holding
 them together and a documented trap for whoever added the next pin. Read the file instead.
 
 - Node (`engines.node`, and [`.nvmrc`](./.nvmrc), which every job in [`ci.yml`](./.github/workflows/ci.yml) installs from via `node-version-file`)
 - pnpm (`packageManager`): always use pnpm, never npm/yarn
 
-Both are deliberate pins rather than dependency ranges, and seven rules in
+Both are deliberate pins rather than dependency ranges, and the rules in
 [`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts) assert the shape a bump cannot change: both
 runtimes are named here and neither is quoted, `.nvmrc` and `engines.node` agree, `packageManager` is the sole
 declaration of the package manager, each pin is exact rather than a range, no workflow or composite action
 sets `node-version` by hand, no document outside the ADRs names a runtime or a framework beside a version, and
 the one number the guides do state, the shipped runtime below, is read out of `action.yml` rather than
 written down twice.
-Nothing compared `.nvmrc` with `engines.node` until that rule existed, so the two places this repository
-declares Node could drift in silence; a workflow that pinned it by hand would be a third declaration with a
+Nothing compared `.nvmrc` with `engines.node` until that rule existed, so the places this repository
+declares Node could drift in silence; a workflow that pinned it by hand would be a further declaration with a
 new hiding place. Every sibling repository carries the same set.
 
 **`engines.node` is the development pin; the shipped runtime is `node24`** (`action.yml` `runs.using`, and
@@ -71,7 +71,7 @@ pnpm format:check     # biome check, no writes; what verify runs
 pnpm typecheck        # tsc --noEmit
 pnpm test:ut          # vitest run
 pnpm test:ut:watch    # vitest, watch mode
-pnpm test:ut:coverage # test:ut --coverage (85% threshold, all four metrics)
+pnpm test:ut:coverage # test:ut --coverage (85% threshold, every metric)
 pnpm test:ut:changed  # test:ut --changed origin/main
 pnpm test:docs        # the docs contract alone
 pnpm verify           # format:check && typecheck && test:ut:coverage && build
@@ -81,7 +81,7 @@ Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run 
 
 ## Structure & aliases
 
-`src/` is a mini-DDD tree: one entry point plus seven layers, each with an alias and an explicit set of
+`src/` is a mini-DDD tree: one entry point plus its layers, each with an alias and an explicit set of
 things it may depend on ([ADR 0004](./docs/adr/0004-layered-source-structure.md)), and one folder that is
 not a layer at all, `assets/`, holding the brand files the README embeds. The `(ish)` means **DDD applied
 where it pays, not by the book**: what carries the design is the ubiquitous language of
@@ -124,8 +124,8 @@ re-export from [`src/i18n/index.ts`](./src/i18n/index.ts) instead.
 | [`src/config/`](./src/config/CLAUDE.md) | Input + YAML precedence, what throws vs warns, parser vocabularies |
 | [`src/domain/`](./src/domain/CLAUDE.md) | Comparison semantics, snapshots, forecast/velocity maths, star-history |
 | [`src/i18n/`](./src/i18n/CLAUDE.md) | Bundles, placeholder rules, adding a locale |
-| [`src/infrastructure/`](./src/infrastructure/CLAUDE.md) | The four adapters: octokit, git worktree, persistence, SMTP |
-| [`src/presentation/`](./src/presentation/CLAUDE.md) | Renderers, the chart quartet, escaping and injection rules |
+| [`src/infrastructure/`](./src/infrastructure/CLAUDE.md) | The adapters: octokit, git worktree, persistence, SMTP |
+| [`src/presentation/`](./src/presentation/CLAUDE.md) | Renderers, the chart set, escaping and injection rules |
 | [`src/shared/`](./src/shared/CLAUDE.md) | `errorMessage`, the fixture factories, and why this folder stays almost empty |
 
 ## Conventions
@@ -150,10 +150,10 @@ re-export from [`src/i18n/index.ts`](./src/i18n/index.ts) instead.
   (`node:fs`), `infrastructure` owns everything outbound, and `application` writes the Action log and the
   outputs. `infrastructure` is the only layer that reaches the network, not the only one that does I/O.
 - **A primitive earns a type only when it crosses a boundary.** Ask, in order: is the illegal state
-  reachable, does anything read it, does it leave the layer. Three noes mean writing the rule down instead,
-  in the folder's guide, in `CONTEXT.md` or in `docs/docs-consistency.test.ts`, and a named divergence is
-  finished work rather than a debt. [ADR 0022](./docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md)
-  carries the criterion and seven worked cases from this tree, including the ones it decided **not** to
+  reachable, does anything read it, does it leave the layer. A no to every one of them means writing the rule
+  down instead, in the folder's guide, in `CONTEXT.md` or in `docs/docs-consistency.test.ts`, and a named
+  divergence is finished work rather than a debt. [ADR 0022](./docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md)
+  carries the criterion and the worked cases from this tree, including the ones it decided **not** to
   model. Say in the commit message which answer applied, because "this is a guard" tells the next reader the
   test constructs an unreachable state on purpose.
 - **Conventional commits** (commitlint + husky). semantic-release owns versioning. Do NOT add a
@@ -195,12 +195,12 @@ wrong. It cannot check prose or rationale; that part is still on you. Keep its a
 | A decision an ADR records | that ADR: amend it, or supersede it with a new one and say so in both `## Status` blocks |
 
 Propose an ADR in [`docs/adr/`](./docs/adr/) when a decision is **hard to reverse**, **surprising without
-context** and **the result of a real trade-off**. All three, or it is not an ADR. Copy
+context** and **the result of a real trade-off**. All of them, or it is not an ADR. Copy
 [ADR 0000](./docs/adr/0000-adr-template.md), the template, number it one above the highest existing file,
 add it to the index in `ARCHITECTURE.md`, and link it from wherever it bites: a gotcha here, a nested
 guide, a wiki page. Both the template shape and the incoming contextual link are asserted.
 
-Two traps worth naming, because both have already happened here: deleting a resolved entry from a "known
+Traps worth naming, because each has already happened here: deleting a resolved entry from a "known
 inconsistencies" list is part of the fix, not tidying to do later; and a `file.ts:123` citation silently rots
 the moment anything above it moves, so prefer naming the symbol.
 

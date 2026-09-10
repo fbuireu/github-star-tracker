@@ -35,7 +35,7 @@ done, and it is precisely the part that did *not* drift. What drifted was everyt
 
 `@presentation/chart-spec` decides **what** a Chart is; the two renderers decide **how** it looks.
 
-A `ChartRequest` names *which* Chart is wanted: a discriminated union over the four `ChartKind`s
+A `ChartRequest` names *which* Chart is wanted: a discriminated union over the `ChartKind`s
 [CONTEXT.md](../../CONTEXT.md) already lists, each variant carrying only its own inputs. `buildChartSpec`
 maps one onto a `ChartSpec` (axis labels, an ordered list of series with a resolved colour, and the
 Milestones to draw, each already filtered to the visible ones and carrying both its `value` and its rendered
@@ -46,9 +46,9 @@ Milestones to draw, each already filtered to the visible ones and carrying both 
 and `chartImageUrl`, taking a request plus its own style. Each maps a `ChartSpec` onto its own dialect and
 owns nothing else about the Chart's content.
 
-The request is what stops the seam being re-described at every call: before it, each adapter exported four
-near-identical generators whose params interfaces restated the same fields, and every caller restated the
-style bag once per chart. A fifth chart kind cost two exports, two params interfaces and two call sites; it
+The request is what stops the seam being re-described at every call: before it, each adapter exported a
+near-identical generator per kind whose params interfaces restated the same fields, and every caller restated the
+style bag once per chart. A new chart kind cost two exports, two params interfaces and two call sites; it
 now costs one union variant and one `case`.
 
 The dialect-specific facts stay in the adapters, because they are genuinely not shared: the SVG path

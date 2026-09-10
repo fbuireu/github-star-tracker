@@ -2,7 +2,7 @@
 
 The layer that owns every outbound side effect: the GitHub REST API, the `git` CLI, the filesystem and SMTP.
 It is the only layer that reaches the network, which is not the same as being the only one that performs I/O;
-the root [`CLAUDE.md`](../../CLAUDE.md) states that rule for the whole tree. Four adapters, no framework.
+the root [`CLAUDE.md`](../../CLAUDE.md) states that rule for the whole tree. Adapters only, no framework.
 None of them decide *when* work happens: `@application/tracker` is the composition root and their only
 consumer. They hold no business logic, and no string they build is localized or ends up in a Report. They do
 write plain log lines.
@@ -34,7 +34,7 @@ Fetch, then map, then narrow. `getRepos` maps GitHub's rows onto `RepoInfo` **fi
 
 **The narrowing rules are not in this folder.** They are pure and they read domain vocabulary
 (`repo.owner`, `repo.name`, `repo.stars`), not GitHub's `owner.login` / `stargazers_count`, so
-[`tracked-set.test.ts`](../domain/tracked-set.test.ts) asserts them without a fake octokit or a mocked logger. This folder does the two things
+[`tracked-set.test.ts`](../domain/tracked-set.test.ts) asserts them without a fake octokit or a mocked logger. This folder does what
 the domain cannot: it fetches, and it logs. `resolveTrackedSet` returns `afterOnlyOrgs`, `afterOnlyRepos` and
 `invalidPatterns` as **numbers and strings**; `getRepos` turns them into `core.info` and `core.warning`
 lines.
@@ -127,7 +127,7 @@ lines.
 - **Every remote command carries the token, as a *fallback*, not an override.** `ls-remote` and `fetch` used
   to run unauthenticated while only the push was authenticated, relying on whatever `actions/checkout` had
   persisted. On a repository checked out with `persist-credentials: false`, which is what OpenSSF and zizmor
-  recommend and what this repo's own five checkout steps use, there is nothing to rely on, so the probe
+  recommend and what this repo's own checkout steps use, there is nothing to rely on, so the probe
   failed on every run. `authenticatedArgs` ([`git/commands.ts`](./git/commands.ts)) fixes that case.
 - **It does not win against `actions/checkout`, and it is not meant to.** Verified with `GIT_TRACE_CURL`
   against the real remote, because two reviews reasoned about this from the config file and both got it wrong:
@@ -177,7 +177,7 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
 - Every other `write*`/`read*` helper in `storage.ts` is internal to this folder.
 - **One writer covers every plain-text artefact.** `writeArtefact({ dataDir, artefact, contents })` takes an
   `Artefact` (`REPORT`, `BADGE` or `CSV`) and looks the filename up in `DATA_FILES`. Adding a text format
-  is one entry in that enum and one in the table, not a fourth function that is `path.join` plus
+  is one entry in that enum and one in the table, not a new function that is `path.join` plus
   `writeFileSync` under a different field name. `writeHistory` and `writeStargazers` stay separate because
   they are JSON and one of them stamps the format version; `writeChart` stays separate because it creates a
   directory.
@@ -187,7 +187,7 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
   null-checks it.
 - **Invalid JSON throws and does not fall back.** Silently resetting corrupt history would destroy a user's
   tracking record, so keep it fatal
-  ([ADR 0021](../../docs/adr/0021-an-unreadable-stored-history-fails-the-run.md), which covers all four
+  ([ADR 0021](../../docs/adr/0021-an-unreadable-stored-history-fails-the-run.md), which covers the
   guards here and why the accepted cost is that a broken file blocks every later run until a human fixes
   it). The parse catch lives in the shared `readJsonFile`, so unparseable **bytes** are fatal for
   `stargazers.json` too; what `readStargazers` does not get is `assertJsonObject`, `assertReadableFormat` or
@@ -252,7 +252,7 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
   literally `undefined` (a test asserts the value, not an absent key).
 - From-address resolution, in order: a `from` containing `@` is used verbatim; otherwise a `username`
   containing `@` becomes `` `${from} <${username}>` ``; otherwise the bare `from` as a display name.
-- **Three distinct "no email" outcomes**, and the log level is the difference: not configured (`info`, here),
+- **Distinct "no email" outcomes**, and the log level is the difference: not configured (`info`, here),
   configured but nothing to say (`info`, in the caller), configured but empty `email-to` (`warning`, here,
   because it is almost certainly a misconfiguration). Rejected recipients warn but still count as delivered.
 - **Failures propagate as rejections, not warnings.** Do not add a local try/catch: it would swallow the error
@@ -271,7 +271,7 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
   `execute` is the seam, so a test scripts failures by *which git command ran* (`args.includes('ls-remote')`,
   matching on membership rather than `args[0]`, since an authenticated command begins with `-c`)
   and asserts on argv through a local `ranGit(...)` helper. They used to drive `execFileSync` with positional
-  `mockReturnValueOnce` chains up to seven deep, where adding or reordering one git call shifted every later
+  `mockReturnValueOnce` chains many levels deep, where adding or reordering one git call shifted every later
   mock and broke tests that looked unrelated. Do not mock a level deeper than the seam again.
 - [`storage.test.ts`](./persistence/storage.test.ts) mocks `@actions/core` with a factory exposing only `info`, `debug` and `setSecret`.
   Adding a `core.warning(...)` to `storage.ts` fails the suite with "not a function", not a useful assertion.

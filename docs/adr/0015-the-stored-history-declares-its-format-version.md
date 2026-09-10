@@ -14,9 +14,9 @@ is different: it accumulates one Snapshot per Run, up to `max-history`, and it l
 **user's** repository. There is no migration step a release can run on their behalf, and no way to reach the
 data at all.
 
-Until now the file carried no marker saying what wrote it. `readHistory` checked three things: that the bytes
+Until now the file carried no marker saying what wrote it. `readHistory` checked only shape: that the bytes
 parse as JSON, that what they parse to is an object rather than an array or a bare scalar
-(`assertJsonObject`), and that `snapshots` is an array. All three are shape checks, not version checks, and
+(`assertJsonObject`), and that `snapshots` is an array. All of those are shape checks, not version checks, and
 the gap between them is where the danger sits. Malformed JSON and a non-object file are both caught and made
 fatal on purpose, because silently resetting a user's tracking record is the one failure worth being loud
 about ([ADR 0021](./0021-an-unreadable-stored-history-fails-the-run.md) is that decision). But a file written
@@ -62,7 +62,7 @@ history, so a shape change there can be handled by changing the filename instead
 - **A forward-incompatible file fails the Run rather than degrading it.** A user who downgrades the action
   after a format bump gets an error naming both versions, not a report full of zeroes. The cost is that
   pinning an older major version against a newer data branch stops working, which is the honest outcome. That
-  `assertReadableFormat` is one of four guards choosing loud failure over a silent reset is
+  `assertReadableFormat` is one of the guards choosing loud failure over a silent reset is
   [ADR 0021](./0021-an-unreadable-stored-history-fails-the-run.md).
 - Every user's `stars-data.json` gains one line on its next Run. The 2-space, no-trailing-newline formatting
   is otherwise untouched, so the diff is a single added key rather than a rewritten file.

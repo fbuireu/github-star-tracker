@@ -151,7 +151,7 @@ The human-readable rendering of a Run: which repositories moved, by how much, pl
 _Avoid_: summary, output, changelog, newsletter
 
 **Chart**:
-A rendered visualisation of history, of one of five kinds: the Tracked Set's total over time, one Top Repository over time, several of them side by side, the Tracked Set's observed history continued into a Forecast, or one Top Repository's.
+A rendered visualisation of history, of one of these kinds: the Tracked Set's total over time, one Top Repository over time, several of them side by side, the Tracked Set's observed history continued into a Forecast, or one Top Repository's.
 _Avoid_: graph, plot, figure, visualization
 
 **Badge**:

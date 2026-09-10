@@ -46,7 +46,7 @@ is not repeated here. What follows is what that table cannot express.
 - **Rendering is one call.** `renderRun` in `@presentation/run` returns the markdown, HTML, CSV, badge and
   chart files together, so this layer never calls a renderer directly and never assembles report params.
   It passes `chartHistories` and the **stored** History under separate names, and `renderRun` derives the
-  chart history from the first, which is what retired the old hazard of handing the reports two
+  chart history from `chartHistories`, which is what retired the old hazard of handing the reports two
   interchangeable-looking `History` values, where swapping them made Velocity an average over a chart bucket.
   What gets persisted is always the stored History.
 - **This layer relays no chart options.** The renderers read `config` themselves
@@ -70,8 +70,8 @@ is not repeated here. What follows is what that table cannot express.
 
 ## Outputs
 
-Eleven keys, matching the `outputs:` block of [`action.yml`](../../action.yml) exactly, listed here alphabetically as every
-surface that lists them must be. The four report values pass through as-is; the rest are wrapped in
+Every key of the `outputs:` block of [`action.yml`](../../action.yml) exactly, listed here alphabetically as every
+surface that lists them must be. The report values pass through as-is; the rest are wrapped in
 `String()`.
 
 | Key | Value |
@@ -89,7 +89,7 @@ surface that lists them must be. The four report values pass through as-is; the 
 | `total-stars` | the matching `Summary` field |
 
 **There is one `setOutputs`, not two.** The empty-repos path calls it with `renderEmptyRun(config)` and a
-zeroed `Summary`, so the eleven keys cannot drift between the two paths. That render also emits a real CSV
+zeroed `Summary`, so the keys cannot drift between the two paths. That render also emits a real CSV
 header rather than `''`, because a consumer parsing `report-csv` used to get a header on one path and an
 empty string on the other, and its message comes from `report.noRepositories` in the locale bundle like
 every other user-facing string.
@@ -119,9 +119,9 @@ fetch is gated on `includeCharts || trackStargazers`.
   `tracker.test.ts`, so change the wording and the test together or not at all.
 - `tracker.test.ts` mocks most of the tree but deliberately **not** `@presentation/run`,
   `@presentation/charts` or `@domain/star-history`, so `renderRun`, `buildChartFiles` and `buildStarHistory`
-  execute for real and the four renderer mocks still apply underneath. Mocking `@presentation/run` instead
-  would cut four mocks and also stop `buildChartFiles` running, which is what the chart-request assertions
-  pinning #148 and the per-repo timelines depend on, so the mock count stays at 17 on purpose.
+  execute for real and the renderer mocks still apply underneath. Mocking `@presentation/run` instead
+  would cut those mocks and also stop `buildChartFiles` running, which is what the chart-request assertions
+  pinning #148 and the per-repo timelines depend on, so the mocks stay as they are on purpose.
 - `tracker.test.ts` mocks `@presentation/svg-chart` down to its single `renderSvgChart`, so "which chart was
   drawn" is read off the `request.kind` of each call. The local `chartRequests(kind)` and `mockCharts({
   [kind]: svg })` helpers exist for exactly that. There is no per-kind mock to assert on any more.

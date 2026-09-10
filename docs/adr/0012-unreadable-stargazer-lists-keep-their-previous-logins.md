@@ -23,8 +23,8 @@ Smart Sampling produced the identical defect by a different route. A sample is n
 "Cannot be trusted" is carried on a `RepoStargazers` as two flags, and `diffStargazers` and
 `buildStargazerMap` in [`src/domain/stargazers.ts`](../../src/domain/stargazers.ts) both skip a Repository carrying either. `sampled` marks a
 Repository read by Smart Sampling ([ADR 0008](./0008-sampled-repositories-are-excluded-from-stargazer-diffing.md)).
-`incomplete` marks the three ways a full read can fail to be one: the fetch threw, the fetch was truncated at
-the reachable ceiling, or it returned no Stargazers for a Repository that has Stars. One rule, not four:
+`incomplete` marks the ways a full read can fail to be one: the fetch threw, the fetch was truncated at
+the reachable ceiling, or it returned no Stargazers for a Repository that has Stars. One rule, not one per case:
 `buildStargazerMap` seeds itself from the previous map and only overwrites the entries it read in full.
 
 ## Consequences

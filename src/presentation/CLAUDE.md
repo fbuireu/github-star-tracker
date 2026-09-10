@@ -6,29 +6,29 @@ side-effect free: it returns a string or `null`, never writes a file, never call
 `@actions/core`. Deciding *what* to render is the caller's job; deciding *how many stars a repo gained* is
 the domain's.
 
-## The chart quartet
+## The chart modules
 
-There are four chart modules rather than one library call for two reasons: the SVG is emitted by hand so it
+There are separate chart modules rather than one library call for two reasons: the SVG is emitted by hand so it
 stays self-contained and theme-aware ([ADR 0006](../../docs/adr/0006-hand-rendered-svg-charts.md)), and the
 email path goes through QuickChart because mail clients will not display inline SVG
 ([ADR 0010](../../docs/adr/0010-quickchart-renders-the-email-charts.md)).
 
 - **[`chart-spec.ts`](./chart-spec.ts) decides what a Chart is**, and names which one is wanted. A `ChartRequest` is a
-  discriminated union over the five `ChartKind`s [CONTEXT.md](../../CONTEXT.md) lists (star history, per repo, comparison,
+  discriminated union over the `ChartKind`s [CONTEXT.md](../../CONTEXT.md) lists (star history, per repo, comparison,
   forecast, per-repo forecast), carrying only that kind's own inputs (`repoFullName`, `repoNames`, `forecastData`, the
   star-history Milestone and trend flags) plus an optional `title`. `buildChartSpec({ request, locale,
   palette, axisLabels, range, maxPoints })` maps one onto a `ChartSpec`: labels, an ordered list of series
   with a resolved colour, the title, whether to show a legend, and **the Milestones to draw, already
   resolved, already filtered to the visible ones and already labelled**. It returns `null` when there is too
-  little history. The five spec builders behind it are module-private; both renderers read the spec and
+  little history. The spec builders behind it are module-private; both renderers read the spec and
   neither re-derives it ([ADR 0014](../../docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
 - **The two forecast kinds mirror the two star-history kinds.** `FORECAST` is to `PER_REPO_FORECAST` what
   `STAR_HISTORY` is to `PER_REPO`: the aggregate plots `forecastData.aggregate` over `snapshot.totalStars`,
   the per-repo one plots the named repository's own `RepoForecast` over `repoStarSeries`, and the per-repo one
-  returns `null` for a name the Forecast does not cover. Both builders are two lines over one private
-  `projectionSpec`, which owns the guard, the dated x-axis, the week labels and the three-series layout, so
+  returns `null` for a name the Forecast does not cover. Both builders are thin wrappers over one private
+  `projectionSpec`, which owns the guard, the dated x-axis, the week labels and the series layout, so
   the two kinds cannot drift apart in anything but which series they read. A single kind with an optional
-  `repoFullName` would have saved that helper and hidden a second altitude inside one `case`.
+  `repoFullName` would have saved that helper and hidden another altitude inside one `case`.
 - **Milestone visibility is decided once, in `starHistorySpec`.** The extremes are taken over **every series
   in the spec**, not just the primary one, and the comparison is **strict** (`> min && < max`), so a Milestone
   equal to an extreme is never drawn. They are the raw data extremes, not the padded axis bounds. `milestones`
@@ -57,10 +57,10 @@ email path goes through QuickChart because mail clients will not display inline 
   `resolveChartHistory` is private, which is what stops the two altitudes drifting back into two layers
   sharing a `Date` by convention.
 - **`reconstructedForRepo` reconstructs each repository once and remembers the answer**, `null` included,
-  in a `Map` private to the closure; `forRepo` reads through it. Five consumers ask for the same repository
-  in one run (the Forecast hook, the two per-repo charts, and the two model lists that carry their
+  in a `Map` private to the closure; `forRepo` reads through it. Several consumers ask for the same repository
+  in one run (the Forecast hook, the per-repo charts, and the model lists that carry their
   histories), and `buildStarHistory` buckets every `starred_at` each time it is called, so without the
-  memo a run with `top-repos: 10` over large repositories did that work five times over. The cache is
+  memo a run with `top-repos: 10` over large repositories redid that work once per consumer. The cache is
   correct because the closure captures every input (`repos`, `repoStargazers`, `config`, `now`), so nothing
   a second call could see differs from the first.
 - **[`svg-chart.ts`](./svg-chart.ts) draws.** `renderSvgChart({ request, locale, ...style })` is its only export: it builds the
@@ -78,16 +78,16 @@ than translated (`` `${repoFullName} Star History` ``).
 milestone font sizes, the milestone stroke width and its dash pattern. Both charts are the same 800x400
 canvas, so those are one visual decision rather than two. `SVG_CHART` and `chart.ts`'s `CHART_STYLE` both
 read them, and the SVG side turns the dash array into its `'6,6'` string. The **series** dash patterns stay
-per-adapter on purpose: the SVG uses one dash for every dashed series, Chart.js uses three.
+per-adapter on purpose: the SVG uses one dash for every dashed series, Chart.js a pattern per series kind.
 
 **The style options both adapters share default in `CHART_DEFAULTS`** (`constants.ts`): `smoothing`,
 `curve`, `showPoints`, `beginAtZero` and `theme`. Each adapter still writes its own
 `option = CHART_DEFAULTS.option`, because a destructured default cannot be spread, but the *values* live in
-one place, so the two cannot drift the way five duplicated literals could. `yAxisSide` and `animate` are SVG
+one place, so the two cannot drift the way duplicated literals could. `yAxisSide` and `animate` are SVG
 only: a PNG has no axis side to choose and cannot animate. `range` is **not** email-only; `charts.ts` passes
 it too, and both adapters window on it.
 
-**Six options are projected from `Config` twice.** `charts.ts` builds the SVG bag inline, `emailChartStyle`
+**A set of options is projected from `Config` twice.** `charts.ts` builds the SVG bag inline, `emailChartStyle`
 in [`shared.ts`](./shared.ts) builds the email one, and `smoothing`, `curve`, `showPoints`, `beginAtZero`, `range` and
 `lineWidth` appear in both; twice already an option has shipped honoured by the SVG alone and needed a later
 `fix:` to reach the email. **Do not merge the two projections into one shared type.** It would save one line
@@ -110,8 +110,8 @@ type `Omit`s the field so the caller cannot believe otherwise. `maxPoints` is li
 
 `renderRun` ([`src/presentation/run.ts`](./run.ts)) is what `@application` calls: one function in, one `RenderedRun` out,
 carrying markdown, html, csv, badge and the chart files. Every other layer already had a single entry point
-(`measureRun` for `@domain`, `withDataBranch` for `@infrastructure`); this one had five, and the shell was
-assembling the params for each.
+(`measureRun` for `@domain`, `withDataBranch` for `@infrastructure`); this one had one per renderer, and the
+shell was assembling the params for each.
 
 - **It builds the `ReportModel` once and hands the same one to both dialects, and there is exactly one clock
   read per render.** `now` is injectable, defaults to `new Date()` here, reaches `prepareReportData`, and
@@ -126,14 +126,14 @@ assembling the params for each.
   `null` for a top repository whose own Reconstructed History is too short, which left [`markdown.ts`](./markdown.ts) linking
   an image no run had written.
 - **`ChartHistories` exposes two per-repo accessors, `forRepo` and `reconstructedForRepo`, and they are not
-  interchangeable.** A star-history Chart takes the first, a Forecast — its figures *and* its Chart — must
-  take the second; [`../domain/CLAUDE.md`](../domain/CLAUDE.md) carries the rule and the bug it came from.
+  interchangeable.** A star-history Chart takes `forRepo`, a Forecast — its figures *and* its Chart — must
+  take `reconstructedForRepo`; [`../domain/CLAUDE.md`](../domain/CLAUDE.md) carries the rule and the bug it came from.
   So the two charts a Report shows for one repository can plot different curves: the star-history one falls
   back to the Stored History when nothing could be reconstructed, the Forecast one is never drawn in that
   case at all.
 - **`drawn` is one `ReadonlySet<string>` of filenames, filled only here, and the model composes the names
   it asks about.** `buildReportModel` calls `perRepoChartFile` and `perRepoForecastChartFile` itself and
-  tests membership; a second chart family costs one more lookup, not one more parameter. It used to be one
+  tests membership; another chart family costs one more lookup, not one more parameter. It used to be one
   predicate per family, `hasChartFile` and `hasForecastChartFile`, which were adjacent, same-typed and not
   interchangeable, the exact shape of the `history` / `velocityHistory` hazard above. Absent `drawn` (the
   dialect tests build a model without rendering charts) every candidate counts as drawn, which is the
@@ -150,7 +150,7 @@ assembling the params for each.
 - It renders; it decides nothing about **whether** to render. Charts still come back `[]` when charts are
   off, and the report renderers still read `config` for the options they honour.
 - The individual renderers stay exported and stay tested. They are internal seams within this layer, the
-  same way `@domain`'s five are behind `measureRun`. `generateMarkdownReport` and `generateHtmlReport` take
+  same way `@domain`'s are behind `measureRun`. `generateMarkdownReport` and `generateHtmlReport` take
   `{ model, config }`: the model is the data, the config is which options that dialect honours.
 - **`renderRun` also renders the Notification subject** (`emailSubject` on `RenderedRun`) and
   `renderEmptyRun(config)` renders the whole no-repositories run. Both were English literals built in the
@@ -173,7 +173,7 @@ them**, once. `markdown.ts` and `html.ts` are dialects over it and own only mark
 its spec: assert a section rule there, not through one dialect's markup.
 
 - The model resolves `chartHistory` (the history *only* when it is plottable, so the dialects narrow on
-  `!== null`), `showComparisonChart`, `topRepos`, `isFirstRun`, the Velocity figures and the three-way
+  `!== null`), `showComparisonChart`, `topRepos`, `isFirstRun`, the Velocity figures and the
   Stargazer outcome. A dialect that recomputes any of these has reintroduced the drift this module exists to
   stop.
 - **`isFirstRun` comes from `prepareReportData` alongside `prev`, not from comparing `prev` to a
@@ -181,7 +181,7 @@ its spec: assert a section rule there, not through one dialect's markup.
   string when there is no baseline, so `buildReportModel` used to recover the fact by asking whether the
   rendered string equalled that label. Both halves are decided in `prepareReportData` from the same
   `previousTimestamp`, so the round trip through a localized string bought nothing and put a boolean the
-  header depends on at the mercy of a wording change in any of the four bundles.
+  header depends on at the mercy of a wording change in any of the bundles.
 - **`ReportModel` exposes `chartHistory` and no `hasChartHistory` field.** The flag was
   `chartHistory !== null` by construction, and while both were public the dialects picked different ones and
   spelled the same rule two ways. `hasChartHistory` survives only as a local in `report-model.ts`; it is
@@ -217,7 +217,7 @@ its spec: assert a section rule there, not through one dialect's markup.
   in the renderer that wants it.
 - **`html.ts` splits `config` two ways, and it is the only place that knows which is which**:
   `chartMilestones`, `chartCustomMilestones`, `chartTrendLine` and `chartLineColor` become part of the
-  `ChartRequest`; `emailChartStyle(config)` in `shared.ts` projects the six adapter-style fields
+  `ChartRequest`; `emailChartStyle(config)` in `shared.ts` projects the adapter-style fields
   (`smoothing`, `curve`, `showPoints`, `beginAtZero`, `range`, `lineWidth`) that reach `chartImageUrl`. That
   projection is the email counterpart of the `style` object `charts.ts` builds for the SVG path; keep the
   two lists in step deliberately rather than by accident.
@@ -227,8 +227,8 @@ its spec: assert a section rule there, not through one dialect's markup.
   per-series palette and takes none on both paths. `lineWidth` becomes Chart.js `borderWidth`, emitted
   **only when supplied**, and `emailChartStyle` always supplies it because `Config.chartLineWidth` always has
   a value. The optionality is there for direct callers of `chartImageUrl`: it must not default to
-  `SVG_CHART.lineWidth`, which is the SVG renderer's own fallback and would put the same literal in a third
-  place.
+  `SVG_CHART.lineWidth`, which is the SVG renderer's own fallback and would put the same literal in yet
+  another place.
 
 ## Invariants & rules
 
@@ -254,8 +254,8 @@ its spec: assert a section rule there, not through one dialect's markup.
 - **Y domain**: `padding = max(1, ceil((maxData - minData) * 0.1))`, floor is `beginAtZero ? 0 : max(0, minData - padding)`
   and never negative. Ticks are de-duplicated after rounding, so a small range yields fewer than 5 ticks
   rather than repeating one.
-- **Only `catmull-rom` is clamped** to the plot box, because it is the only overshooting curve; the other
-  three are non-overshooting by construction.
+- **Only `catmull-rom` is clamped** to the plot box, because it is the only overshooting curve; the others
+  are non-overshooting by construction.
 - **`null` splits a series into segments**, each drawn as its own path/fill/circle group. Only a segment
   starting at index 0 that is filled and not dashed is anchored to the baseline. Dashed datasets get no fill,
   no circles and no draw animation.
@@ -281,7 +281,7 @@ its spec: assert a section rule there, not through one dialect's markup.
 
 **Every escaper in this layer lives in `src/presentation/escaping.ts`,** behind one function. A renderer
 binds the dialect it needs once at module load (`const escapeHtml = escapeFor(EscapeDialect.MARKUP);`) and
-uses that everywhere. Do not write a second escape map.
+uses that everywhere. Do not write another escape map.
 
 | Dialect | Escapes | Used by |
 | --- | --- | --- |
@@ -290,7 +290,7 @@ uses that everywhere. Do not write a second escape map.
 | `MARKDOWN` | `& < >` plus `[ ] ( ) \`` | `markdown.ts` for link text, link targets and headings |
 | `CSV` | delimiter, quote, newline, **and** the `= + - @` formula prefix | `csv.ts` |
 
-- `svg-chart.ts` wraps **exactly three** things: the chart title, x-axis labels and legend labels. If you
+- `svg-chart.ts` wraps **exactly these** things: the chart title, x-axis labels and legend labels. If you
   interpolate user text into a new attribute, wrap it.
 - `badge.ts` measures the **raw** label and value to compute its widths and escapes only at interpolation.
   Escaping first would let a single `&` widen the badge by four characters.

@@ -1,6 +1,6 @@
 # src/i18n
 
-The only place user-facing text lives: four JSON bundles (`en`, `es`, `ca`, `it`), the `Locale` union, the
+The only place user-facing text lives: the JSON bundles (`en`, `es`, `ca`, `it`), the `Locale` union, the
 map from those short codes to the BCP-47 codes `Intl` needs, and a `{placeholder}` interpolator. It is the
 tree's only true leaf: it imports nothing from any other layer, because every other layer (including
 `domain`) depends on it. It does no number or date formatting (`@domain/formatting`) and no escaping.
@@ -31,7 +31,7 @@ keys) and the bundles sit beside them as `.json`, typed by the `Record<Locale, T
   `LOCALE_MAP[locale]`, so 1,200 renders `1.2K` in `en`, `1,2 mil` in `es`, `1,2 k` in `ca` and `1,2K` in
   `it`. Only the `en` form is pinned: [`formatting.test.ts`](../domain/formatting.test.ts) asserts the English string and that the Italian
   one merely differs from it, under the name *follows the report locale instead of always using English*.
-  The other three come out of the ICU data Node ships, so a runtime bump can change them with no test
+  The others come out of the ICU data Node ships, so a runtime bump can change them with no test
   failing; re-check them rather than trusting this line. In `es` and `ca` the separator before the suffix is
   a non-breaking space (U+00A0), not the ordinary space printed above. This is load-bearing beyond
   wording, because `@presentation/badge` derives its widths from the **rendered** length: `★ 1,2 mil` is

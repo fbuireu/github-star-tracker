@@ -42,7 +42,7 @@
 
 ## What You Get
 
-A writing run commits these artefacts to a dedicated data branch. Two runs commit nothing: a `read-only`
+A writing run commits these artefacts to a dedicated data branch. Some runs commit nothing: a `read-only`
 run, which renders and reports in full but never pushes, and any run whose output is byte-for-byte what the
 branch already holds.
 
@@ -76,8 +76,8 @@ the email body, and reaches you through the `report-html` and `report-html-path`
 - **GitHub Enterprise:** GHES support, auto-detected or explicit API URL
 - **Multi-language:** English, Spanish, Catalan, Italian
 - **CSV export:** machine-readable output for data pipelines
-- **Eleven action outputs** for workflow chaining: `lost-stars`, `new-stargazers`, `new-stars`, `notification-sent`, `report`, `report-csv`, `report-html`, `report-html-path`, `should-notify`, `stars-changed` and `total-stars`
-- **No install step:** its five runtime dependencies are bundled into the committed `dist/`, so the runner clones and executes, with no `npm install` in your workflow ([ADR 0003](docs/adr/0003-commit-the-bundled-dist-directory.md))
+- **Action outputs** for workflow chaining: `lost-stars`, `new-stargazers`, `new-stars`, `notification-sent`, `report`, `report-csv`, `report-html`, `report-html-path`, `should-notify`, `stars-changed` and `total-stars`
+- **No install step:** its runtime dependencies are bundled into the committed `dist/`, so the runner clones and executes, with no `npm install` in your workflow ([ADR 0003](docs/adr/0003-commit-the-bundled-dist-directory.md))
 - **Enforced coverage:** the build gate is 85% on lines, functions, branches and statements, over an extensive unit test suite
 - **Future-proof:** unaffected by GitHub's 2026 stargazers API restrictions, since it uses your own credentials on your own repositories
 
@@ -184,7 +184,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `notification-threshold` | `0`                   | `0` (every run with changes), N (accumulated change since the last notification), or `auto` (adaptive) |
 | `only-orgs`              | -                     | Only track repos under these Owners (exact name or `/regex/`) |
 | `only-repos`             | -                     | Only track these repos (exact name or `/regex/`)              |
-| `read-only`              | `false`               | Make this a Read-Only Run: it still fetches, reports, sets outputs and emails, it just never commits or pushes. Use it for a second workflow that shares a data branch with the workflow that writes it |
+| `read-only`              | `false`               | Make this a Read-Only Run: it still fetches, reports, sets outputs and emails, it just never commits or pushes. Use it for another workflow that shares a data branch with the workflow that writes it |
 | `send-on-no-changes`     | `false`               | Email even with no changes                                    |
 | `smart-sampling`         | `false`               | Sample stargazer pages for high-star repos (avoids rate limits) |
 | `smart-sampling-pages`   | `30`                  | Max evenly-spaced stargazer pages per sampled repo            |

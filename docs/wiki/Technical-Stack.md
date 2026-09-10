@@ -1,12 +1,12 @@
-Why GitHub Star Tracker is built out of these tools and these five dependencies, and what each one buys.
+Why GitHub Star Tracker is built out of these tools and these dependencies, and what each one buys.
 
 For the shape of the code itself, read **[Architecture](Architecture)** for the layering and **[How It Works](How-It-Works)** for a run end to end, with [`ARCHITECTURE.md`](https://github.com/fbuireu/github-star-tracker/blob/main/ARCHITECTURE.md) in the repository as the normative version of both. This page does not restate them.
 
 ---
 
-## Architecture in Three Sentences
+## Architecture, Briefly
 
-The codebase is a Functional Core, Imperative Shell split across seven layers: `domain`, `presentation` and `i18n` are pure, `config`, `infrastructure` and `application` own the side effects, and `shared` holds cross-cutting test fixtures. Dependencies flow inward only, cross-layer imports go through a TypeScript path alias declared once in [`tsconfig.json`](https://github.com/fbuireu/github-star-tracker/blob/main/tsconfig.json), and every function taking two or more arguments takes a single destructured object instead.
+The codebase is a Functional Core, Imperative Shell split across its layers: `domain`, `presentation` and `i18n` are pure, `config`, `infrastructure` and `application` own the side effects, and `shared` holds cross-cutting test fixtures. Dependencies flow inward only, cross-layer imports go through a TypeScript path alias declared once in [`tsconfig.json`](https://github.com/fbuireu/github-star-tracker/blob/main/tsconfig.json), and every function taking two or more arguments takes a single destructured object instead.
 
 That shape is **Domain-Driven Design<sub>(ish)</sub>**, and the parenthesis is load-bearing: what is adopted is the ubiquitous language and the layer boundaries, not the tactical pattern catalogue. **[Architecture](Architecture)** says which patterns were dropped and why. The normative version of all of it is `ARCHITECTURE.md` and the per-layer `CLAUDE.md` files in the repository.
 
@@ -16,7 +16,7 @@ That shape is **Domain-Driven Design<sub>(ish)</sub>**, and the parenthesis is l
 
 **TypeScript**, bundled by esbuild into a single committed [`dist/index.js`](https://github.com/fbuireu/github-star-tracker/blob/main/dist/index.js).
 
-There are two Node versions in play, deliberately, and they are different numbers:
+There are different Node versions in play, deliberately:
 
 | Number | Where it is pinned | What it governs |
 |---|---|---|
@@ -45,7 +45,7 @@ The gap is a trap worth knowing about before you contribute. esbuild's `target` 
 
 ## Dependencies
 
-Five runtime packages, all bundled into `dist/index.js`:
+The runtime packages, all bundled into `dist/index.js`:
 
 | Package | Purpose |
 |---|---|
@@ -61,7 +61,7 @@ Because the bundle carries them, the action installs nothing at run time: GitHub
 
 ## Design Decisions Behind Those Choices
 
-The full reasoning, alternatives and costs of the larger decisions are recorded as [architecture decision records](https://github.com/fbuireu/github-star-tracker/tree/main/docs/adr) in the repository. The short version of the four that shape the dependency list:
+The full reasoning, alternatives and costs of the larger decisions are recorded as [architecture decision records](https://github.com/fbuireu/github-star-tracker/tree/main/docs/adr) in the repository. The short version of the ones that shape the dependency list:
 
 ### YAML for the config file, not JSON
 
@@ -73,7 +73,7 @@ The action creates a temporary working directory for the data branch with `git w
 
 ### A custom i18n engine, not a library
 
-[`src/i18n/index.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/index.ts) is roughly 30 lines: a bundle lookup plus a `{placeholder}` interpolation function. That covers the whole requirement (four languages, flat key substitution, no plurals or dates), and it means one fewer dependency inside a bundle that ships to every consumer.
+[`src/i18n/index.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/index.ts) is small: a bundle lookup plus a `{placeholder}` interpolation function. That covers the whole requirement (the supported languages, flat key substitution, no plurals or dates), and it means one fewer dependency inside a bundle that ships to every consumer.
 
 ### Nodemailer, with `secure` inferred from the port
 

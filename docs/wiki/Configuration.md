@@ -17,7 +17,7 @@ Complete reference for all GitHub Star Tracker configuration options.
 
 ## Configuration Methods
 
-GitHub Star Tracker supports two configuration methods:
+GitHub Star Tracker supports these configuration methods:
 
 ### 1. Action Inputs (Workflow File)
 
@@ -102,7 +102,7 @@ include_charts: true # Used
 
 ## How Values Are Parsed
 
-The two configuration sources do not read values the same way. The differences are small and they bite silently, because a rejected value falls through instead of failing.
+The configuration sources do not read values the same way. The differences are small and they bite silently, because a rejected value falls through instead of failing.
 
 ### Booleans
 
@@ -217,7 +217,7 @@ with:
 ```
 
 > [!WARNING]
-> This is one of only two inputs whose invalid value **fails the run** instead of falling back, because a bad branch name would otherwise surface much later as a confusing `git` error. The name is checked against git's own rules before anything else happens. It is rejected when it:
+> This is one of the few inputs whose invalid value **fails the run** instead of falling back, because a bad branch name would otherwise surface much later as a confusing `git` error. The name is checked against git's own rules before anything else happens. It is rejected when it:
 >
 > - is empty, or is exactly `@`
 > - contains whitespace, or any of `~ ^ : ? * [ \`
@@ -321,7 +321,7 @@ Run without writing to the data branch. Config file key: `read_only`.
 
 A read-only run does everything except touch the data branch: it fetches the repositories, picks the Baseline Snapshot, builds the report, sets every output and sends the email. It simply never commits or pushes.
 
-Use it for a second workflow that shares a data branch with your tracking workflow, typically a weekly digest paired with [`compare-against`](#compare-against). Without it, the digest run would append its own snapshot to the branch and could race the run that actually maintains it.
+Use it for another workflow that shares a data branch with your tracking workflow, typically a weekly digest paired with [`compare-against`](#compare-against). Without it, the digest run would append its own snapshot to the branch and could race the run that actually maintains it.
 
 ```yaml
 - uses: fbuireu/github-star-tracker@v1
@@ -412,7 +412,7 @@ Filter repositories by visibility.
 - `private`: only private repos
 - `owned`: only repos you own (excludes collaborator repos)
 
-An unrecognised value **fails the run** rather than falling back. This and [`data-branch`](#data-branch) are the only two inputs that behave that way.
+An unrecognised value **fails the run** rather than falling back. This and [`data-branch`](#data-branch) are the only inputs that behave that way.
 
 ```yaml
 with:
@@ -716,11 +716,11 @@ with:
 
 ## Filtering Options
 
-Four of these inputs take lists: `exclude-orgs`, `exclude-repos`, `only-orgs` and `only-repos`. They share one grammar, so it is stated here once rather than in each section.
+Some of these inputs take lists: `exclude-orgs`, `exclude-repos`, `only-orgs` and `only-repos`. They share one grammar, so it is stated here once rather than in each section.
 
 Each is a comma-separated list, and each entry is either an **exact, case-sensitive name** or a **regular expression wrapped in slashes**, optionally with flags: `/^demo-.*/`, `/^demo-.*/i`. The `only-orgs` and `exclude-orgs` lists match the owner name; `only-repos` and `exclude-repos` match the repository name on its own, without the owner. In a config file the same lists can be written as YAML sequences, one entry per line. An entry that looks like a regex but does not compile is skipped with the warning `Ignoring invalid pattern "..."` rather than failing the run.
 
-The four compose: `only-orgs` narrows first, then `only-repos` narrows what is left, then the exclusions apply.
+They compose: `only-orgs` narrows first, then `only-repos` narrows what is left, then the exclusions apply.
 
 ### `exclude-orgs`
 

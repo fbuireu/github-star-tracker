@@ -2,7 +2,7 @@
 
 The escape hatch for code every layer may reach for but that is not domain logic, configuration, rendering or
 I/O. It is deliberately almost empty: putting something here is a statement that no layer owns it, and that
-claim is usually wrong. Today it holds two things: [`errors.ts`](./errors.ts), and `tests/`, a barrel of fixture
+claim is usually wrong. Today it holds [`errors.ts`](./errors.ts) and `tests/`, a barrel of fixture
 factories.
 
 **Anything added here needs a reason why no existing layer owns it.** Formatting goes to
@@ -15,13 +15,13 @@ belongs in `@domain`.
 
 One export, `errorMessage(error: unknown): string`. A `catch` binding is `unknown`, so every site that wanted
 to interpolate `error.message` into a log line used to write `(error as Error).message`: a lie whenever the
-throw is a string, a plain object or `undefined`, and five of them had accumulated. `errorMessage` reads a
+throw is a string, a plain object or `undefined`, and they had accumulated. `errorMessage` reads a
 string `message` off the value when there is one and falls back to `String(error)` when there is not, so it
 never returns the empty string and never throws.
 
 **It lives here because no layer owns it.** Its callers are `@application/tracker`, `@config/loader` and
 `@infrastructure/persistence/storage`, and `config` may not import `infrastructure`, so there is no lower
-layer the three of them share. That is the reason this folder asks for, spelled out.
+layer they all share. That is the reason this folder asks for, spelled out.
 
 - **It is not `describeFetchError`, and neither is built on the other.**
   [`@infrastructure/github/errors`](../infrastructure/github/errors.ts) prefixes an octokit `status` and
@@ -30,11 +30,11 @@ layer the three of them share. That is the reason this folder asks for, spelled 
   `String(error)` instead. Same shape, opposite handling of the blank case; folding one into the other
   breaks `describeFetchError`'s tests, which is the point.
 - **`.stack` is not here.** The one site that wants it, the top-level `catch` in `trackStars`, narrows with
-  `error instanceof Error` inline. A second helper for a single caller would be this folder accumulating.
+  `error instanceof Error` inline. Another helper for a single caller would be this folder accumulating.
 
 ## tests/
 
-Ten pure factories, all exported from [`src/shared/tests/index.ts`](./tests/index.ts): `makeConfig`, `makeRepoInfo`,
+Pure factories, all exported from [`src/shared/tests/index.ts`](./tests/index.ts): `makeConfig`, `makeRepoInfo`,
 `makeStargazer`, `makeStargazerSeries`, `makeSnapshot`, `makeHistory`, `makeMultiRepoSnapshot`,
 `makeMultiRepoHistory`, `makeRepoResult` and `makeComparisonResults`. Each builds a value with sensible
 defaults so a test only spells out the fields it actually asserts on. No assertions, no mocks, no `vi.*`
@@ -62,9 +62,11 @@ helpers, no setup; mocking stays in the test files that need it. Nothing outside
 
 ## Gotchas
 
-- This folder is the sanctioned exception to the **named-params-for-2+-arguments** rule, but only partly:
-  some factories take up to three positional arguments, while the rest already take a destructured params or
-  options object. Follow the shape of the factory you are extending; do not "fix" the positional ones.
+- This folder is **not** an exception to the **named-params-for-2+-arguments** rule. It used to be excused,
+  which is exactly where the rule had drifted, and `docs/docs-consistency.test.ts` now asserts it over the
+  whole of `src`. `makeHistory` and `makeMultiRepoHistory` take a leading positional list followed by an
+  options object; every other factory takes a single destructured params or options object. Follow the shape
+  of the factory you are extending.
 - **Some test files define their own local factories** with the same names but different signatures:
   [`velocity.test.ts`](../domain/velocity.test.ts) has its own `makeHistory` and [`svg-chart.test.ts`](../presentation/svg-chart.test.ts) its own `makeSnapshot` /
   `makeMultiRepoSnapshot`. Neither imports `@shared/tests`, so do not assume the name means the shared

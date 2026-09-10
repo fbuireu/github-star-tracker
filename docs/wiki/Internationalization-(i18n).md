@@ -56,7 +56,7 @@ locale: es
 | `ca` | `Informe de Seguiment d'Estrelles a GitHub: 523 (+15)` |
 | `it` | `Report Tracciamento Stelle GitHub: 523 (+15)` |
 
-The shape is `email.subjectLine` (`{subject}: {totalStars} ({delta})`, identical in all four bundles)
+The shape is `email.subjectLine` (`{subject}: {totalStars} ({delta})`, identical in every bundle)
 interpolated over `email.subject`. This is the only place the subject is written out; do not restate it
 elsewhere.
 
@@ -76,7 +76,7 @@ src/i18n/
 └── types.ts     # Translations interface
 ```
 
-`index.ts` validates nothing. Checking that a configured `locale` is one of the four is the config loader's
+`index.ts` validates nothing. Checking that a configured `locale` is one of them is the config loader's
 job ([`src/config/loader.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/config/loader.ts)), which warns before this folder is ever reached.
 
 ### Translation Keys
@@ -117,7 +117,7 @@ verbatim rather than becoming `undefined` or an empty string.
 
 ## Fallback Behavior
 
-There are **two** fallbacks to English, at different moments, and only the first one you ever see.
+English is fallen back to at more than one moment, and only the config-time one is ever visible.
 
 **At config time**, an invalid `locale` input is caught by the config loader:
 
@@ -150,9 +150,9 @@ against the existing `Translations` interface at compile time: a missing or mist
 Note that *extra* keys are silently accepted, because an imported module is not a fresh object literal and
 gets no excess-property check, which is why `pnpm typecheck` is the check that matters here.
 
-Three documentation edits belong in the same commit, none of them derived from the code:
+These documentation edits belong in the same commit, none of them derived from the code:
 
-- the `locale` input description in [`action.yml`](https://github.com/fbuireu/github-star-tracker/blob/main/action.yml), which hard-codes the four locale names
+- the `locale` input description in [`action.yml`](https://github.com/fbuireu/github-star-tracker/blob/main/action.yml), which hard-codes the locale names
 - the **Supported Locales** and **Localized Email Subjects** tables on this page
 - the `locale` section of [Configuration](Configuration#locale)
 

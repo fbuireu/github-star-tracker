@@ -75,7 +75,7 @@ Observed history plus projected growth for the next 4 weeks.
 
 **File:** `charts/forecast-{owner}-{repo}.svg`
 
-The same three series as the forecast chart above, for a single top repository: its own observed history plus
+The same series as the forecast chart above, for a single top repository: its own observed history plus
 the linear regression and weighted moving average fitted to it.
 
 - One chart per top repository, drawn under that repository's forecast table
@@ -86,16 +86,16 @@ the linear regression and weighted moving average fitted to it.
 
 ---
 
-## Two Chart Systems
+## The Chart Systems
 
-GitHub Star Tracker uses two complementary chart systems:
+GitHub Star Tracker uses complementary chart systems:
 
 | System | Format | Used In | Features |
 |---|---|---|---|
 | **SVG Charts** | Animated SVG | Data branch [`README.md`](https://github.com/fbuireu/github-star-tracker/blob/main/README.md) | CSS animations, self-contained, no external deps |
 | **QuickChart URLs** | PNG via URL | HTML email reports | Compatible with email clients |
 
-### Why Two Systems?
+### Why More Than One System?
 
 - **SVG charts** use CSS animations (`@keyframes`) that render beautifully in GitHub Markdown but are not supported by email clients
 - **QuickChart URLs** generate static PNG images via [QuickChart.io](https://quickchart.io) that work in all email clients
@@ -186,7 +186,7 @@ This palette is fixed in both senses: `chart-line-color` does not reach it, and 
 - Linear regression: the palette's positive green, dashed
 - Weighted moving average: the palette's negative red, dashed
 
-**Three of those series are palette colours, so they move with `chart-theme`.** They are fixed with respect to `chart-line-color`, not with respect to the theme:
+**Some of those series are palette colours, so they move with `chart-theme`.** They are fixed with respect to `chart-line-color`, not with respect to the theme:
 
 | Series | `chart-theme: light` (and `auto`) | `chart-theme: dark` |
 |---|---|---|
@@ -205,7 +205,7 @@ reader's system theme.
 **What that media query switches is the chrome, not the data.** Background, title, legend text, axis labels,
 grid lines and axis strokes swap; series strokes are written as inline attributes resolved once, and under
 `auto` they resolve from the light palette. So a dark-mode reader of an `auto` chart gets dark chrome around
-light-palette data. Setting `chart-theme: dark` explicitly does recolour the three series in the table above,
+light-palette data. Setting `chart-theme: dark` explicitly does recolour those series,
 because the palette is then chosen before rendering rather than by the reader's browser.
 
 | Element | Light | Dark |
@@ -256,7 +256,7 @@ with:
 ## Embedding Charts in Your README
 
 Every chart is a raw file on the data branch, so a plain Markdown image tag is all you need. The snippets for
-all five charts and for the badge live in **[Viewing Reports](Viewing-Reports#method-2-badges)**. They are the same
+all the charts and for the badge live in **[Viewing Reports](Viewing-Reports#method-2-badges)**. They are the same
 URLs whichever page you come from, so they are written once there.
 
 ---
@@ -283,7 +283,7 @@ still showing the top ten. Beyond that the lines stop being distinguishable.
 Every `chart-*` input, with its default and full description, is in
 **[Configuration](Configuration#chart-line-color)**. That page is the reference; this one does not restate it.
 
-What belongs here is which of the **two chart systems** honours each one. The SVG charts on the data branch
+What belongs here is which of the **chart systems** honours each one. The SVG charts on the data branch
 are hand-rendered; the email charts are QuickChart images, and some options cannot survive that trip:
 
 | Input | SVG charts | Email charts |
@@ -291,7 +291,7 @@ are hand-rendered; the email charts are QuickChart images, and some options cann
 | `chart-line-color` | Yes | Yes |
 | `chart-line-width` | Yes | Yes |
 | `chart-smoothing` | Yes | Yes |
-| `chart-curve` | Exact | Approximated, see [Two Chart Systems](#two-chart-systems) |
+| `chart-curve` | Exact | Approximated, see [The Chart Systems](#the-chart-systems) |
 | `chart-show-points` | Yes | Yes |
 | `chart-milestones` | Yes | Yes |
 | `chart-custom-milestones` | Yes | Yes |
@@ -327,7 +327,7 @@ A look at how the main settings change the chart, to help you pick. For a render
 
 ### Curve styles (`chart-curve`)
 
-All four curves keep the plateaus flat except `catmull-rom`, which overshoots at the foot of a step, briefly drawing the line below the previous value.
+All the curves keep the plateaus flat except `catmull-rom`, which overshoots at the foot of a step, briefly drawing the line below the previous value.
 
 | Curve | Overshoots? | Best for |
 |---|---|---|

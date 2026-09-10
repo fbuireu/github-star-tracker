@@ -121,7 +121,7 @@ When charts are enabled (the default), forecasts extrapolate from the Reconstruc
 
 ### Approach
 
-Two complementary methods are provided, each with different strengths:
+Complementary methods are provided, each with different strengths:
 
 **Linear Regression** fits a straight line through the whole observed series using least squares. It is resilient to noise and captures long-term trends, but it reacts slowly to recent changes.
 
@@ -180,7 +180,7 @@ How the two palettes differ, and where the media query reaches at all, is in
 
 ### Limitation
 
-The action produces two types of charts:
+The action produces these types of charts:
 
 1. **Animated SVG charts** - generated locally, committed to the data branch. Support dark/light mode via CSS media queries. No external dependencies.
 2. **QuickChart PNG charts** - generated via [QuickChart.io](https://quickchart.io), used in HTML email reports. Static images that follow [`email-theme`](Configuration#email-theme) rather than the reader's own colour scheme, and dependent on an external service.

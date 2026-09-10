@@ -22,14 +22,14 @@ the resolver. Every parser is reached through `loader.ts`'s field table in produ
 `loadConfig` does **not** resolve keys one at a time. `FIELD_SOURCES` in `loader.ts` is one row per key
 naming how to parse the action input and how to parse the config-file value; `resolveTabledFields` folds it,
 deriving the kebab-case input name from the key and falling back to `DEFAULTS`. Adding a `Config` field
-means adding a row, not four lines in four places.
+means adding a row, not the same edit repeated in place after place.
 
 The row types are the vocabulary: `boolField`, `positiveField`, `nonNegativeField`, `listField` and
-`enumField(allowed)`. Two rows (`chart-line-color`, `chart-line-width`) pass `namesFallback: true` to
-`scalarField`, which is what makes their warning name the fallback rather than say "Ignoring it." That used
-to be a second combinator, byte-identical to `scalarField` but for the one template literal.
+`enumField(allowed)`. The rows that pass `namesFallback: true` to `scalarField` (`chart-line-color`,
+`chart-line-width`) are what makes their warning name the fallback rather than say "Ignoring it." That used
+to be a combinator of its own, byte-identical to `scalarField` but for the one template literal.
 
-**Four keys are deliberately outside the table**, and each is a documented exception: `visibility` throws
+**Some keys are deliberately outside the table**, and each is a documented exception: `visibility` throws
 instead of warning, `dataBranch` runs an extra validator, `sendOnNoChanges` never reads the config file and
 never warns, and `chartCustomMilestones` has its own precedence (see below). Anything else belongs in the
 table.
@@ -53,7 +53,7 @@ table.
   independently, so reordering the rows changes nothing. What is load-bearing is that the `emailTheme:` line
   sits **after** `...tabled` in the literal: above the spread, the un-collapsed `auto` from `tabled` would
   win back.
-- **Only two things throw**: an unknown `visibility`, and an invalid `data-branch`. Everything else (a bad
+- **Only these throw**: an unknown `visibility`, and an invalid `data-branch`. Everything else (a bad
   enum, bool, number or colour, and malformed YAML) warns and falls back. A missing config file is `info`,
   not a warning.
 - `visibility` is resolved with `Object.values(...).find(...)`, not an object index, so `visibility: toString`
@@ -61,7 +61,7 @@ table.
 - **`data-branch` validation** rejects `''`, `'@'`, whitespace, `~ ^ : ? * [ \`, control characters, the
   sequences `..` `//` `/.` `@{`, a leading `-` `.` `/`, and a trailing `/` `.` `.lock`. It accepts
   `data/star-tracker`, `_star-data`, `stars@v2`, `v1.2.3`, `UPPER_case-1`.
-- **Booleans use two different vocabularies.** Action inputs accept only `true`/`false`, so `yes`, `on` and
+- **Booleans use different vocabularies on each path.** Action inputs accept only `true`/`false`, so `yes`, `on` and
   `1` are **invalid** and warn. Config-file values accept the full YAML set (`true|yes|on|y|1` /
   `false|no|off|n|0`), and a quoted `"false"` is `false`, not a truthy string.
 - **Numbers are strict.** A string input must match `/^[+-]?\d+$/` after trimming, so `'3.7'` and `'42abc'`
@@ -92,7 +92,7 @@ table.
 
 [`docs/docs-consistency.test.ts`](../../docs/docs-consistency.test.ts) reads the real [`action.yml`](../../action.yml) too, and asserts the **prose**: every overridable
 input states its real `DEFAULTS` value as `(default X)` and carries `(overrides config file)`. Those two
-strings had drifted: sixteen `chart-*` and `velocity-metrics` inputs were file-readable while saying
+strings had drifted: the `chart-*` and `velocity-metrics` inputs were file-readable while saying
 nothing about it, which reads as "input only".
 
 [`action-inputs.test.ts`](./action-inputs.test.ts) reads the real `action.yml` and asserts every `Config` key except `sendOnNoChanges`
@@ -100,11 +100,11 @@ has a kebab-case input whose `default` is **empty**, and that only `config-path`
 `smtp-port` carry a non-empty default. **Never add a `default:` to an overridable input**: the test fails and
 the config file stops working, because a non-empty default always beats it.
 [ADR 0020](../../docs/adr/0020-overridable-inputs-declare-an-empty-default.md) records why that is a
-precedence trap rather than a lint rule, and why those three inputs are safe exceptions.
+precedence trap rather than a lint rule, and why those inputs are safe exceptions.
 
 It derives the input name with **`toActionInputName`, exported from `loader.ts`**, the same function the fold
 uses, so the test cannot disagree with the loader about what a key is called. It also pins the `outputs:`
-block: eleven keys, alphabetical, each described. That list is the only executable check on the output
+block: every key, alphabetical, each described. That list is the only executable check on the output
 contract *from the manifest side*; [`tracker.test.ts`](../application/tracker.test.ts) closes the loop from the code side by comparing the
 names `setOutputs` actually emits against `action.yml`. Between them the contract is checked in both
 directions, where the manifest list alone was a copy of `action.yml` compared with `action.yml` and would not
@@ -114,7 +114,7 @@ the code agree on the names.
 
 Real defaults therefore live in `defaults.ts` and are only *described* in the `action.yml` prose. Every
 overridable input does state its default in that prose today, so check `defaults.ts` before trusting a
-description rather than assuming one is missing. Two of those descriptions promise behaviour this folder does
+description rather than assuming one is missing. Some of those descriptions promise behaviour this folder does
 not implement:
 
 - `chart-max-points` says "capped at 365". That clamp is **not** applied here: `loadConfig` passes the raw
@@ -122,11 +122,11 @@ not implement:
 - `chart-custom-milestones` says it "Requires chart-milestones to be enabled". Nothing enforces that; the two
   resolve independently, so custom milestones combined with `chart-milestones: false` silently do nothing.
 
-Three literals are duplicated between the manifest and code, so changing `action.yml` alone has no effect:
+Some literals are duplicated between the manifest and code, so changing `action.yml` alone has no effect:
 `smtp-port`'s `"587"` (`DEFAULT_SMTP_PORT` in `@infrastructure/notification/email`), `config-path`'s
 `'star-tracker.yml'` (`DEFAULT_CONFIG_PATH` in `loader.ts`) and `send-on-no-changes`'s `'false'`
-(`DEFAULTS.sendOnNoChanges`). All three pairs are pinned by `action-inputs.test.ts`. The third is the
-asymmetric one: because the manifest always supplies a non-empty `'false'`, `DEFAULTS.sendOnNoChanges` is
+(`DEFAULTS.sendOnNoChanges`). Every one of those pairs is pinned by `action-inputs.test.ts`.
+`send-on-no-changes` is the asymmetric one: because the manifest always supplies a non-empty `'false'`, `DEFAULTS.sendOnNoChanges` is
 reached **only** through an unparseable input, so a drift there shows up as an invalid value behaving
 differently from an absent one rather than as a changed default.
 
