@@ -68,7 +68,7 @@ weighed and left alone. The worked cases below are that record.
 
 Every one is real, from this repository, and each names where it ended up.
 
-**Fixed, because all three answers were yes: a stargazer fetch stopped by the page ceiling.**
+**Fixed, because every answer was yes: a stargazer fetch stopped by the page ceiling.**
 `fetchRepoStargazers` ends either on a page shorter than `STARGAZER_PAGE_SIZE` or on exhausting
 `MAX_REACHABLE_PAGE`, and it reported both as a clean enumeration. Reachable on any repository above 40,000
 Stars, which is the number `MAX_REACHABLE_STARGAZERS` is named after. Read by `diffStargazers` and
@@ -81,7 +81,7 @@ writes produces `{"user/repo": 5}`, so the way in is a hand-edited Data Branch, 
 [ADR 0021](./0021-an-unreadable-stored-history-fails-the-run.md) expects a user to do. But the outcome was a
 `TypeError` out of `new Set(5)` that failed the Run, which is neither of the two behaviours that ADR weighs.
 `readStargazers` now applies the container rule ADR 0021 already states for `readHistory`. No new type: the
-repair is six lines in the reader.
+repair is a few lines in the reader.
 
 **Fixed as a guard, because question 3 was no: the first-run flag.** `buildReportModel` recovered
 `isFirstRun` by comparing the rendered baseline date against the locale bundle's `report.firstRun` label. It
