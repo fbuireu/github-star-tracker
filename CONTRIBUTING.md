@@ -397,7 +397,7 @@ The root [`CLAUDE.md`](./CLAUDE.md) has the full table of what to update for a g
 
 ### The documentation test
 
-`docs/docs-consistency.test.ts` runs with `pnpm run test`, so it gates every pull request. It reads the
+`docs/docs-consistency.test.ts` runs with `pnpm run test:ut`, so it gates every pull request. It reads the
 whole documentation set and fails on, among other things:
 
 - A markdown link pointing at a file that does not exist
