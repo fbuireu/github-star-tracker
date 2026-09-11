@@ -63,21 +63,41 @@ pnpm build            # tsx esbuild.config.ts -> dist/index.js
 pnpm lint             # biome lint, the root command the variants pass paths to
 pnpm lint:all         # lint .
 pnpm lint:all:fix     # lint:all --fix
-pnpm lint:changed     # lint --write, over what changed against main
+pnpm lint:changed     # lint --write, over what changed against the push target
 pnpm format           # biome check --write, the root command lint-staged appends files to
 pnpm format:all       # format .
-pnpm format:changed   # format, over what changed against main
+pnpm format:changed   # format, over what changed against the push target
 pnpm format:check     # biome check, no writes; what verify runs
+pnpm since            # prints the push target the :changed variants diff against
 pnpm typecheck        # tsc --noEmit
 pnpm test:ut          # vitest run
 pnpm test:ut:watch    # vitest, watch mode
 pnpm test:ut:coverage # test:ut --coverage (85% threshold, every metric)
-pnpm test:ut:changed  # test:ut --changed origin/main
+pnpm test:ut:changed  # test:ut --changed, over what changed against the push target
 pnpm test:docs        # the docs contract alone
-pnpm verify           # format:check && typecheck && test:ut:coverage && build
+pnpm verify           # format:check && typecheck && test:ut:coverage && build; what CI runs
+pnpm verify:changed   # the same with test:ut:changed in place of coverage; what pre-push runs
 ```
 
 Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run src/domain/forecast.test.ts`.
+
+**`pnpm since` is where the `:changed` variants get their base, and having one is the point.** It resolves
+`@{push}`, the ref the current branch would push to, and falls back to `origin/main` when the branch has no
+upstream yet. Biome and Vitest each default to something else and neither default is right here: Biome's
+`--changed` diffs against `vcs.defaultBranch`, which is `main`, so on `main` it selects nothing at all and
+`pnpm format:changed` reported *Checked 0 files* however much had changed; Vitest's `--changed` with no ref
+means uncommitted work only, which at push time is usually nothing. Both failure modes are a green check that
+checked nothing, which is worse than a slow one. Passing the base explicitly is what stops the variants from
+depending on which branch you happen to be on.
+
+**The hooks: `pre-commit` runs lint-staged, `commit-msg` runs commitlint, `pre-push` runs `verify:changed`.**
+The hook deliberately does not run `verify`, because the coverage floor and a changed-only run cannot both
+hold: `vitest.config.ts` sets `coverage.include` over all of `src`, which is what makes v8 report a file no
+test loaded as zero, so any subset run drags the global average under the threshold and fails on a clean
+tree. Coverage is therefore a CI concern. That costs nothing in practice, since `ci.yml` runs the full
+`pnpm verify` on the pushed sha and the `release` job needs it, so a push whose coverage dropped cuts no
+release; what the hook buys is that the slow whole-repo run stops standing between you and a push, which is
+when a hook starts getting skipped with `--no-verify` and protects nothing at all.
 
 ## Structure & aliases
 
