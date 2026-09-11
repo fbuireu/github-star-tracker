@@ -1,3 +1,11 @@
+## [1.27.2](https://github.com/fbuireu/github-star-tracker/compare/v1.27.1...v1.27.2) (2026-09-11)
+
+
+### Bug Fixes
+
+* stop the :changed scripts shelling out for their base ([85c82c6](https://github.com/fbuireu/github-star-tracker/commit/85c82c635da43ca3aea6c6f074dc77c2beca65de))
+* teach the release parsers the ! grammar without a preset ([e4533b2](https://github.com/fbuireu/github-star-tracker/commit/e4533b2cf6a0974fa8711f99c5b2be60b7b26b06))
+
 ## [1.27.1](https://github.com/fbuireu/github-star-tracker/compare/v1.27.0...v1.27.1) (2026-09-09)
 
 
