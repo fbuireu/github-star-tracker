@@ -75,8 +75,9 @@ pnpm test:ut:watch    # vitest, watch mode
 pnpm test:ut:coverage # test:ut --coverage (85% threshold, every metric)
 pnpm test:ut:changed  # test:ut --changed, over what changed against the push target
 pnpm test:docs        # the docs contract alone
-pnpm verify           # format:check && typecheck && test:ut:coverage && build; what CI runs
-pnpm verify:changed   # the same with test:ut:changed in place of coverage; what pre-push runs
+pnpm verify:static    # format:check && typecheck && build: everything verify does but the suite
+pnpm verify           # verify:static && test:ut:coverage; what CI runs
+pnpm verify:changed   # verify:static && test:ut:changed; what pre-push runs
 ```
 
 Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run src/domain/forecast.test.ts`.

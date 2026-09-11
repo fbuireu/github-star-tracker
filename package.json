@@ -57,8 +57,9 @@
 		"test:ut:coverage": "pnpm test:ut --coverage",
 		"test:ut:changed": "pnpm test:ut --changed $(pnpm run --silent since)",
 		"test:docs": "pnpm test:ut docs/docs-consistency.test.ts",
-		"verify": "pnpm format:check && pnpm typecheck && pnpm test:ut:coverage && pnpm build",
-		"verify:changed": "pnpm format:check && pnpm typecheck && pnpm test:ut:changed && pnpm build"
+		"verify:static": "pnpm format:check && pnpm typecheck && pnpm build",
+		"verify": "pnpm verify:static && pnpm test:ut:coverage",
+		"verify:changed": "pnpm verify:static && pnpm test:ut:changed"
 	},
 	"dependencies": {
 		"@actions/core": "3.0.1",
