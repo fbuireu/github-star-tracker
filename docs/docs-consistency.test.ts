@@ -1028,8 +1028,10 @@ describe("stated versions", () => {
 	});
 });
 
-const RELEASE_PRESET = "conventionalcommits";
-const PRESET_PACKAGE = `conventional-changelog-${RELEASE_PRESET}`;
+const BREAKING_PARSER_OPTS = {
+	headerPattern: "^(\\w*)(?:\\((.*)\\))?!?: (.*)$",
+	breakingHeaderPattern: "^(\\w*)(?:\\((.*)\\))?!: (.*)$",
+};
 const COMMIT_PARSING_PLUGINS = ["@semantic-release/commit-analyzer", "@semantic-release/release-notes-generator"];
 const RELEASE_CONFIG_PATTERN = /^\.releaserc(\.\w+)?$|^release\.config\./;
 const SKIPPED_TREE_DIRECTORIES = new Set(["node_modules", ".git", "dist", "coverage"]);
@@ -1047,32 +1049,30 @@ const releaseConfigs = (dir: string): string[] =>
 		return RELEASE_CONFIG_PATTERN.test(entry.name) ? [full] : [];
 	});
 
-interface PresetOfParams {
+interface ParserOptsOfParams {
 	plugins: ReleasePlugin[];
 	name: string;
 }
 
-const presetOf = ({ plugins, name }: PresetOfParams): unknown => {
+const parserOptsOf = ({ plugins, name }: ParserOptsOfParams): unknown => {
 	const entry = plugins.find((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) === name);
-	return Array.isArray(entry) ? entry[1]?.preset : undefined;
+
+	return Array.isArray(entry) ? entry[1]?.parserOpts : undefined;
 };
 
 describe("the release config parses the commit grammar commitlint accepts", () => {
 	const configs = releaseConfigs(".");
 
-	it("names a preset on every plugin that parses a commit message, and the same one throughout", () => {
-		const unnamed = configs.flatMap((file) => {
-			const config = JSON.parse(read(file)) as ReleaseConfig;
+	it("teaches every plugin that parses a commit message the same header grammar", () => {
+		const wrong = configs.flatMap((file) => {
+			const { plugins } = JSON.parse(read(file)) as ReleaseConfig;
+
 			return COMMIT_PARSING_PLUGINS.filter(
-				(name) => presetOf({ plugins: config.plugins, name }) !== RELEASE_PRESET,
-			).map((name) => `${file}: ${name} declares ${String(presetOf({ plugins: config.plugins, name }))}`);
+				(name) => JSON.stringify(parserOptsOf({ plugins, name })) !== JSON.stringify(BREAKING_PARSER_OPTS),
+			).map((name) => `${file}: ${name}`);
 		});
 
 		expect(configs.length).toBeGreaterThan(0);
-		expect(unnamed).toEqual([]);
-	});
-
-	it("declares the preset package rather than borrowing the copy commitlint happens to install", () => {
-		expect(Object.keys(pkg.devDependencies)).toContain(PRESET_PACKAGE);
+		expect(wrong).toEqual([]);
 	});
 });
