@@ -245,6 +245,20 @@ the moment anything above it moves, so prefer naming the symbol.
   [`src/infrastructure/`](./src/infrastructure/CLAUDE.md) names it; `src/config/action-inputs.test.ts` covers
   the manifest rather than a module. [`client.ts`](./src/infrastructure/github/client.ts) is the sole module with no colocated test, so anything else
   missing one is drift, not a convention.
+- **The release config names its preset, and leaving it implicit silently drops every `!` breaking change.**
+  `@semantic-release/commit-analyzer` falls back to `conventional-changelog-angular` when no `preset` is
+  given, whose `headerPattern` is `/^(\w*)(?:\((.*)\))?: (.*)$/`: it wants the colon straight after the
+  scope, so `feat(x)!: …` does not match, the commit is analysed with no type at all and the analyser
+  answers *no release*. The job still ends green and publishes nothing, which is the failure mode that
+  matters. `conventional-changelog-conventionalcommits` spells the same pattern with `!?` before the colon
+  and carries a `breakingHeaderPattern`, so it reads the `!` as major. Nothing warns you, because
+  `@commitlint/config-conventional` accepts the `!` (it is in the spec), so the pull-request title check
+  passes and only the release quietly does nothing. Both parsing plugins, the analyser and the notes
+  generator, name the preset, or the version and the changelog come from different grammars; the preset
+  package is a devDependency of its own rather than the copy commitlint drags in, since the analyser
+  resolves it by name at run time and pnpm exposes commitlint's copy only through the hidden
+  `node_modules/.pnpm/node_modules` hoist directory. `docs/docs-consistency.test.ts` asserts all of it.
+  Under this preset `!` means major on **any** type, `docs!:` and `chore!:` included.
 - **Biome allows no suppressions.** Fix the root cause instead of `biome-ignore`. 120-col, tabs, LF,
   double quotes: Biome's defaults bar the line width, and the same config every sibling repo runs;
   [`.gitattributes`](./.gitattributes) pins `* text=auto eol=lf`. `noConsole` is an error with no allowlist: no `console`

@@ -459,6 +459,7 @@ describe("inputs and outputs are listed alphabetically", () => {
 
 interface PackageManifest {
 	scripts: Record<string, string>;
+	devDependencies: Record<string, string>;
 }
 
 interface TsConfig {
@@ -1024,5 +1025,54 @@ describe("stated versions", () => {
 
 		expect(documents.length).toBeGreaterThan(0);
 		expect(stated).toEqual([]);
+	});
+});
+
+const RELEASE_PRESET = "conventionalcommits";
+const PRESET_PACKAGE = `conventional-changelog-${RELEASE_PRESET}`;
+const COMMIT_PARSING_PLUGINS = ["@semantic-release/commit-analyzer", "@semantic-release/release-notes-generator"];
+const RELEASE_CONFIG_PATTERN = /^\.releaserc(\.\w+)?$|^release\.config\./;
+const SKIPPED_TREE_DIRECTORIES = new Set(["node_modules", ".git", "dist", "coverage"]);
+
+type ReleasePlugin = string | [string, Record<string, unknown>?];
+
+interface ReleaseConfig {
+	plugins: ReleasePlugin[];
+}
+
+const releaseConfigs = (dir: string): string[] =>
+	fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+		const full = path.join(dir, entry.name);
+		if (entry.isDirectory()) return SKIPPED_TREE_DIRECTORIES.has(entry.name) ? [] : releaseConfigs(full);
+		return RELEASE_CONFIG_PATTERN.test(entry.name) ? [full] : [];
+	});
+
+interface PresetOfParams {
+	plugins: ReleasePlugin[];
+	name: string;
+}
+
+const presetOf = ({ plugins, name }: PresetOfParams): unknown => {
+	const entry = plugins.find((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) === name);
+	return Array.isArray(entry) ? entry[1]?.preset : undefined;
+};
+
+describe("the release config parses the commit grammar commitlint accepts", () => {
+	const configs = releaseConfigs(".");
+
+	it("names a preset on every plugin that parses a commit message, and the same one throughout", () => {
+		const unnamed = configs.flatMap((file) => {
+			const config = JSON.parse(read(file)) as ReleaseConfig;
+			return COMMIT_PARSING_PLUGINS.filter(
+				(name) => presetOf({ plugins: config.plugins, name }) !== RELEASE_PRESET,
+			).map((name) => `${file}: ${name} declares ${String(presetOf({ plugins: config.plugins, name }))}`);
+		});
+
+		expect(configs.length).toBeGreaterThan(0);
+		expect(unnamed).toEqual([]);
+	});
+
+	it("declares the preset package rather than borrowing the copy commitlint happens to install", () => {
+		expect(Object.keys(pkg.devDependencies)).toContain(PRESET_PACKAGE);
 	});
 });
