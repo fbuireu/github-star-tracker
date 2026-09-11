@@ -95,7 +95,7 @@ yes, and a branded type would still have to be unwrapped at both readers. The ru
 reader meets it: the stargazer-diffing section of `src/domain/CLAUDE.md` states that the sort is correct
 only while every value is a same-format ISO string, and the `github/` section of
 [`src/infrastructure/CLAUDE.md`](../../src/infrastructure/CLAUDE.md) states that the layer never parses or
-normalizes it. A sentence or two beats a type that crosses every layer.
+normalizes it. A written rule beats a type that crosses every layer.
 
 **Rejected: a `RepoFullName` type.** `fullName` is a `Map` key in `compareStars`, split on `/` for a removed
 repository's owner, split again for the comparison chart's short labels, interpolated into GitHub URLs by
