@@ -63,17 +63,16 @@ pnpm build            # tsx esbuild.config.ts -> dist/index.js
 pnpm lint             # biome lint, the root command the variants pass paths to
 pnpm lint:all         # lint .
 pnpm lint:all:fix     # lint:all --fix
-pnpm lint:changed     # lint --write, over what changed against the push target
+pnpm lint:changed     # lint --write, over what biome sees as changed; see the gotcha
 pnpm format           # biome check --write, the root command lint-staged appends files to
 pnpm format:all       # format .
-pnpm format:changed   # format, over what changed against the push target
+pnpm format:changed   # format, over the same; see the gotcha
 pnpm format:check     # biome check, no writes; what verify runs
-pnpm since            # prints the push target the :changed variants diff against
 pnpm typecheck        # tsc --noEmit
 pnpm test:ut          # vitest run
 pnpm test:ut:watch    # vitest, watch mode
 pnpm test:ut:coverage # test:ut --coverage (85% threshold, every metric)
-pnpm test:ut:changed  # test:ut --changed, over what changed against the push target
+pnpm test:ut:changed  # test:ut --changed origin/main
 pnpm test:docs        # the docs contract alone
 pnpm verify:static    # format:check && typecheck && build: everything verify does but the suite
 pnpm verify           # verify:static && test:ut:coverage; what CI runs
@@ -82,14 +81,17 @@ pnpm verify:changed   # verify:static && test:ut:changed; what pre-push runs
 
 Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run src/domain/forecast.test.ts`.
 
-**`pnpm since` is where the `:changed` variants get their base, and having one is the point.** It resolves
-`@{push}`, the ref the current branch would push to, and falls back to `origin/main` when the branch has no
-upstream yet. Biome and Vitest each default to something else and neither default is right here: Biome's
-`--changed` diffs against `vcs.defaultBranch`, which is `main`, so on `main` it selects nothing at all and
-`pnpm format:changed` reported *Checked 0 files* however much had changed; Vitest's `--changed` with no ref
-means uncommitted work only, which at push time is usually nothing. Both failure modes are a green check that
-checked nothing, which is worse than a slow one. Passing the base explicitly is what stops the variants from
-depending on which branch you happen to be on.
+**A `:changed` variant names a literal base, and computing one is what it must not do.** A `package.json`
+script runs under `cmd` on Windows, where `$(...)` is not substituted but passed through as literal argv, so
+a script that resolved the branch's push target broke every push from a Windows checkout. `test:ut:changed`
+therefore takes `origin/main` outright. On a branch that is wider than the push needs and never narrower, so
+it errs safe.
+
+**Biome's `--changed` selects nothing on `main`, and that is left alone.** It diffs against
+`vcs.defaultBranch`, which is `main`, so standing on `main` there is nothing to compare and
+`pnpm format:changed` answers *Checked 0 files* however much has changed. Setting `defaultBranch` to a
+revision expression works (`@{push}` resolves) and is worse: on a branch with no upstream it silently checks
+nothing and exits zero. Reach for `format:all` instead, which reads this tree in under a second.
 
 **The hooks: `pre-commit` runs lint-staged, `commit-msg` runs commitlint, `pre-push` runs `verify:changed`.**
 The hook deliberately does not run `verify`, because the coverage floor and a changed-only run cannot both
