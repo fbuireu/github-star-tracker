@@ -1,0 +1,35 @@
+name: Content Issue
+description: Report a typo, a wrong translation or a mistake in the rendered report, the email digest or the wiki
+title: '[Content]: '
+labels: ['content', 'triage']
+assignees: ['fbuireu']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The report's, badge's and email digest's wording lives in the locale bundles under `src/i18n`, one file per language, and the wiki under `docs/wiki`, so a mistake in either can be fixed by a pull request. Report it here if you would rather not open one, and say which language it is in.
+  - type: input
+    id: url
+    attributes:
+      label: Location
+      description: The page URL, or where the text appears
+      placeholder: A wiki page URL, the report on your data branch, or the email digest
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: What it says now
+      description: Quote the text with the problem
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: What it should say
+      description: Your suggested correction, if you have one
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Anything else that helps locate or understand the issue

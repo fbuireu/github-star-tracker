@@ -7,9 +7,9 @@ reached through the floating `v1` tag that the release workflow force-updates
 after every release. There is no backporting: a fix ships in the next patch or
 minor release, and pointing your workflow at `@v1` is how you get it.
 
-| Version | Supported |
-| ------- | --------- |
-| Latest v1 release, via the `v1` tag | Yes |
+| Component | Supported |
+| --- | --- |
+| The latest v1 release, via the `v1` tag | Yes |
 | Any older v1.x tag you pinned | No, upgrade to the `v1` tag |
 
 There has never been a pre-1.0 release line, so nothing older exists to support.
@@ -40,28 +40,46 @@ branch. That shapes what is interesting to report.
 
 ### Out of scope
 
-- The data branch being readable by anyone who can read the repository. That
-  is by design, and it is what makes the badge and charts embeddable. See
-  [Data Storage](#data-storage) below.
-- A workflow that supplies a token with more scope than it needs, or hardcodes
-  a secret. That is a configuration problem in your repository, and
-  [Security Best Practices](#security-best-practices) covers it.
-- Rate limiting, quota exhaustion or API cost caused by tracking a very large
-  set of repositories.
 - Vulnerabilities in the platforms and services the action is built on: GitHub
   Actions, GitHub itself, or your SMTP provider. Report those to them.
+- Rate limiting, quota exhaustion or API cost caused by tracking a very large
+  set of repositories.
+- A workflow that supplies a token with more scope than it needs, or hardcodes
+  a secret. That is a configuration problem in that repository; the wiki's
+  [Personal Access Token](https://github.com/fbuireu/github-star-tracker/wiki/Personal-Access-Token-(PAT))
+  page names the least scope that works.
 
-### Defences worth knowing about before you write a report
+### Documented trade-offs, not vulnerabilities
 
-They already hold, and a way around either is exactly the kind of report this
-policy is for:
+Some behaviour that looks reportable is a documented, deliberate decision.
+Please check these before reporting:
 
-- Git is invoked through `execFileSync` with an argument array
+- **The data branch is readable by anyone who can read the repository**, and
+  on a public repository that is public. A git branch is the only storage
+  backend the action has, which is how a stateless Action remembers anything
+  ([ADR 0001](../docs/adr/0001-star-data-lives-on-a-dedicated-data-branch.md)),
+  and that visibility is what makes the badge and charts embeddable. The
+  wiki's
+  [Known Limitations](https://github.com/fbuireu/github-star-tracker/wiki/Known-Limitations)
+  page says what is and is not exposed; if your star history should not be
+  public, point `data-branch` at a branch in a private repository.
+- **The action needs a Personal Access Token, not the injected
+  `GITHUB_TOKEN`.** That one is scoped to the triggering repository and cannot
+  list your repositories at all
+  ([ADR 0002](../docs/adr/0002-require-a-personal-access-token.md)). A
+  [`read-only`](https://github.com/fbuireu/github-star-tracker/wiki/Configuration)
+  run needs only read access to contents.
+- **Two defences already hold, and a way around either is exactly the kind of
+  report this policy is for.** Git is invoked through `execFileSync` with an
+  argument array
   ([`src/infrastructure/git/commands.ts`](../src/infrastructure/git/commands.ts)),
-  so no config value reaches a shell. There is no `git` string to break out of.
-- The git credential header is a base64 blob registered with `core.setSecret`
-  the moment it is built, so it is masked in the log even when git echoes the
-  command.
+  so no config value reaches a shell; and the git credential header and
+  `smtp-password` are registered with `core.setSecret` the moment they exist,
+  so they are masked in the log even when git echoes the command or a workflow
+  supplies the password literally.
+
+A report that one of these exposes something *beyond* its documented scope is
+very much welcome.
 
 ## Reporting a Vulnerability
 
@@ -102,108 +120,6 @@ Whichever way it reaches me, include:
 
 Reports made in good faith will not result in legal action. Thank you for
 helping keep the action and its users safe.
-
-## Security Best Practices
-
-When using this GitHub Action:
-
-### 1. Token Permissions
-
-The action needs a **Personal Access Token**, not the injected `GITHUB_TOKEN`.
-That one is scoped to the triggering repository and cannot list your
-repositories at all
-([ADR 0002](../docs/adr/0002-require-a-personal-access-token.md)). Give it the
-least it can work with:
-
-- **Classic:** `public_repo` if you only track public repositories, `repo` if
-  you track private ones
-- **Fine-grained:** `Contents: Read and write`, because the action pushes to
-  the data branch with this token. `Contents: Read-only` is enough for a
-  [`read-only`](https://github.com/fbuireu/github-star-tracker/wiki/Configuration)
-  run
-
-The workflow's own `permissions:` block only governs `GITHUB_TOKEN`, which
-`actions/checkout` uses:
-
-```yaml
-permissions:
-  contents: write
-```
-
-### 2. Secrets Management
-
-Never expose tokens in logs or outputs:
-
-```yaml
-- uses: fbuireu/github-star-tracker@v1
-  with:
-    github-token: ${{ secrets.STAR_TRACKER_TOKEN }} # Correct: your PAT, from a secret
-    # github-token: ${{ secrets.GITHUB_TOKEN }}     # Wrong: cannot enumerate your repositories
-    # github-token: ghp_xxxxx                       # Wrong: never hardcode a token
-```
-
-`smtp-password` is passed to `core.setSecret` the moment it is read, so it
-stays masked in the Action log even if a workflow supplies it literally. Supply
-it from a secret anyway.
-
-### 3. Configuration Files
-
-`star-tracker.yml` is committed to your repository and carries **no
-credentials**: the SMTP inputs are read from the workflow only and have no
-config-file counterpart. Keep it to tracking options:
-
-```yaml
-# star-tracker.yml, safe to commit
-visibility: public
-min_stars: 5
-```
-
-```yaml
-# the workflow, where the secrets live
-with:
-  smtp-password: ${{ secrets.SMTP_PASSWORD }}
-```
-
-### 4. Regular Updates
-
-Keep the action updated to the latest version:
-
-```yaml
-- uses: fbuireu/github-star-tracker@v1 # Correct: picks up minor and patch releases
-# - uses: fbuireu/github-star-tracker@v1.0.0 # Pinned, so it will not receive security fixes
-```
-
-## Known Security Considerations
-
-### GitHub Token Access
-
-This action requires a Personal Access Token with repository access. The token
-is used to:
-
-- List the repositories the token's owner can see
-- Read star counts, and stargazer lists when `track-stargazers` or charts are
-  on
-- Push the report, data, badge and charts to the data branch
-
-Email is sent over SMTP with the credentials you supply separately; the GitHub
-token has no part in it.
-
-### Data Storage
-
-A git branch is the only storage backend the action has. That is how a
-stateless Action remembers anything
-([ADR 0001](../docs/adr/0001-star-data-lives-on-a-dedicated-data-branch.md)),
-and there is no alternative backend to point it at. A
-[`read-only`](https://github.com/fbuireu/github-star-tracker/wiki/Configuration)
-run still reads that branch; it simply never writes to it.
-
-- Historical star data, the report, the badge and the charts live on that
-  branch
-- Anyone who can read the repository can read them, and the raw URLs are what
-  make the badge and charts embeddable
-- On a private repository they inherit its access; on a public one they are
-  public. If your star history should not be public, point `data-branch` at a
-  branch in a private repository
 
 ## Security Updates
 

@@ -7,3 +7,11 @@ coverage:
     patch:
       default:
         informational: true
+
+ignore:
+  - "**/*.d.ts"
+  - "**/types.ts"
+  - "**/defaults.ts"
+  - "**/constants.ts"
+  - "src/index.ts"
+  - "src/shared/tests/**"

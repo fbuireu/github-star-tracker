@@ -18,6 +18,14 @@ body:
       placeholder: What happened?
     validations:
       required: true
+  - type: input
+    id: url
+    attributes:
+      label: Workflow run URL
+      description: Where did it happen?
+      placeholder: https://github.com/you/your-repo/actions/runs/...
+    validations:
+      required: true
   - type: textarea
     id: steps
     attributes:
