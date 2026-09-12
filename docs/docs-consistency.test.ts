@@ -23,7 +23,7 @@ const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
 const VERSIONS_SECTION = /^## Versions$([\s\S]*?)^## /m;
 const QUOTED_VERSION = /\d+\.\d+/;
 const REPINNED_RUNTIME = /^\s*(?:node-version|version|ruby-version|wranglerVersion):\s*["']?\d/m;
-const CONTRIBUTOR_GUIDE = "CONTRIBUTING.md";
+const CONTRIBUTOR_GUIDE = ".github/CONTRIBUTING.md";
 const UNDOCUMENTED_SCRIPTS = new Set(["prepare", "test:watch", "test:changed"]);
 const OUTPUT_SURFACES = [
 	"README.md",
@@ -73,15 +73,7 @@ function walk({ dir, keep }: WalkParams): string[] {
 const isMarkdown = (filename: string): boolean => filename.endsWith(".md");
 
 const DOCS = [
-	...[
-		"CLAUDE.md",
-		"ARCHITECTURE.md",
-		"CODE_OF_CONDUCT.md",
-		"CONTEXT.md",
-		"CONTRIBUTING.md",
-		"README.md",
-		"SECURITY.md",
-	].filter((doc) => fs.existsSync(doc)),
+	...["CLAUDE.md", "ARCHITECTURE.md", "CONTEXT.md", "README.md"].filter((doc) => fs.existsSync(doc)),
 	...walk({ dir: ".github", keep: isMarkdown }),
 	...walk({ dir: "docs", keep: isMarkdown }),
 	...walk({ dir: "src", keep: (filename) => filename === "CLAUDE.md" }),
@@ -655,7 +647,7 @@ describe("the guides quote the constants the code declares", () => {
 
 	it("names every runtime it pins", () => {
 		const unnamed = ["Node", "pnpm"].flatMap((runtime) =>
-			["CLAUDE.md", "CONTRIBUTING.md"].filter((doc) => !read(doc).includes(runtime)).map((doc) => `${doc}: ${runtime}`),
+			["CLAUDE.md", CONTRIBUTOR_GUIDE].filter((doc) => !read(doc).includes(runtime)).map((doc) => `${doc}: ${runtime}`),
 		);
 
 		expect(unnamed).toEqual([]);

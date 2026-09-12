@@ -35,7 +35,10 @@
 - [ ] Added new tests for changes
 - [ ] Manually tested with a sample workflow
 - [ ] The bundle builds (`pnpm build`)
-- [ ] Attached the rendered output (report, badge or chart) if this PR changes what gets rendered
+
+## Screenshots (if applicable)
+
+<!-- Before and after, as rendered: the report, the badge or a chart, if this PR changes what gets rendered -->
 
 ## Checklist
 
@@ -44,6 +47,7 @@
 - [ ] `pnpm verify` passes (format check, typecheck, coverage and build)
 - [ ] I have performed a self-review of my own code
 - [ ] My change carries no inline comments; rationale lives in this PR, the commit messages, an ADR or the folder's guide
+- [ ] I used the glossary's words ([`CONTEXT.md`](../CONTEXT.md)) rather than synonyms
 - [ ] I rebuilt `dist/` with `pnpm build` and committed it, if I touched anything under `src/`
 - [ ] Changed inputs, outputs or defaults are reflected in [`action.yml`](../action.yml), the wiki and the README
 - [ ] I updated any `CLAUDE.md`, [`CONTEXT.md`](../CONTEXT.md), [`ARCHITECTURE.md`](../ARCHITECTURE.md), ADR or wiki page my change affects, in this same PR, and `pnpm test:docs` passes

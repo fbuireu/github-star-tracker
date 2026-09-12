@@ -359,7 +359,7 @@ or hosting a modified version.
 
 - **[Report bugs](../../issues/new?template=bug_report.yml)**
 - **[Request features](../../issues/new?template=feature_request.yml)**
-- **[Contributing guidelines](CONTRIBUTING.md)**
+- **[Contributing guidelines](.github/CONTRIBUTING.md)**
 - **[Security policy](../../security/policy)**
 
 If you find this project useful, consider supporting its development:

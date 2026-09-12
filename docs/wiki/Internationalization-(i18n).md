@@ -156,7 +156,7 @@ These documentation edits belong in the same commit, none of them derived from t
 - the **Supported Locales** and **Localized Email Subjects** tables on this page
 - the `locale` section of [Configuration](Configuration#locale)
 
-See **[Contributing](https://github.com/fbuireu/github-star-tracker/blob/main/CONTRIBUTING.md)** for development setup.
+See **[Contributing](https://github.com/fbuireu/github-star-tracker/blob/main/.github/CONTRIBUTING.md)** for development setup.
 
 ---
 
