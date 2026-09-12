@@ -28,8 +28,8 @@ That reads like the textbook case for accepting dependencies rather than creatin
 reviews have proposed it. The arithmetic does not support it.
 
 Parameterising `loadConfig({ inputs, file })` deletes setup lines, not test cases: the largest single block
-is the 27 repetitions of `vi.mocked(fs.existsSync).mockReturnValue(true);`. It deletes **zero** of the 100
-`it` blocks. The 29 per-test `vi.mocked(fs.readFileSync)` sites and the 51 `mockInputs` sites are not
+is the 27 repetitions of `vi.mocked(fs.existsSync).mockReturnValue(true);`. It deletes **zero** of its
+`it` blocks, of which there are just under a hundred. The 29 per-test `vi.mocked(fs.readFileSync)` sites and the 51 `mockInputs` sites are not
 deletions either: the YAML and the input object relocate from a mock call into an argument, and in the 27
 cases that set both they merge into one nested literal that is longer than the two lines it replaces.
 
@@ -83,10 +83,13 @@ between reading an input group and consuming one, not between `@config` and the 
 ## Consequences
 
 - **`loader.test.ts` keeps two `vi.mock` prologues and its `mockInputs` helper.** That is the accepted cost,
-  and it is smaller than it was recorded as being: at 933 lines the file is the *second* largest test file in
-  the tree, behind [`svg-chart.test.ts`](../../src/presentation/svg-chart.test.ts) at 1153. The earlier claim that it was the largest was the headline
-  cost of this decision and it was false, which weakens the argument by exactly that much: the cost is real
-  but ordinary, and it is worth re-checking rather than assuming if this is ever reconsidered.
+  and it is smaller than it was recorded as being: the file is not the largest test in the repository, and
+  is now third behind [`svg-chart.test.ts`](../../src/presentation/svg-chart.test.ts) and
+  [`docs/docs-consistency.test.ts`](../docs-consistency.test.ts). The earlier claim that it was the largest
+  was the headline cost of this decision and it was false, which weakens the argument by exactly that much:
+  the cost is real but ordinary. The line counts this paragraph used to quote had themselves moved by the
+  next time anyone read them, which is why it names the ranking instead; re-measure rather than assume if
+  this is ever reconsidered.
 - **The seam that does exist stays unused.** `loadConfigFile` is exported and separately tested, but
   `loadConfig` calls it as a module-local, so the test mocks `node:fs` a level below it. Anyone tempted to
   "use the seam that is already there" should read the caller paragraph above first.
