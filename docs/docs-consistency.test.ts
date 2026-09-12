@@ -1075,4 +1075,38 @@ describe("the release config parses the commit grammar commitlint accepts", () =
 		expect(configs.length).toBeGreaterThan(0);
 		expect(wrong).toEqual([]);
 	});
+
+	// The release commit is the one commit on `main` commitlint never checks: the hook runs on a branch and
+	// the pull-request title check reads the title. Its shape is `chore(release): <version> [skip ci]`, and
+	// the `[skip ci]` is load-bearing, because without it that push starts the run that cuts the next
+	// release. The monorepo siblings name the package in the scope instead, `chore(<package>): release …`.
+	it("commits the release under the release scope, and tells CI to leave it alone", () => {
+		const wrong = configs.flatMap((file) => {
+			const { plugins } = JSON.parse(read(file)) as ReleaseConfig;
+			const entry = plugins.find((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) === "@semantic-release/git");
+			const message = Array.isArray(entry) ? String(entry[1]?.message) : "";
+
+			return message.startsWith("chore(release): ${nextRelease.version}") && message.includes("[skip ci]")
+				? []
+				: [`${file}: ${message}`];
+		});
+
+		expect(wrong).toEqual([]);
+	});
+
+	// `assets` names what a release actually rewrites. `pnpm-lock.yaml` was on every list here and moved in
+	// none of the last twenty release commits: pnpm's lockfile does not record the importer's own version,
+	// so the npm plugin's bump never touches it. A list that names a file the release cannot change reads
+	// as a claim about what a release does.
+	it("commits only the files a release rewrites", () => {
+		const listed = configs.flatMap((file) => {
+			const { plugins } = JSON.parse(read(file)) as ReleaseConfig;
+			const entry = plugins.find((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) === "@semantic-release/git");
+			const assets = Array.isArray(entry) ? ((entry[1]?.assets as string[]) ?? []) : [];
+
+			return assets.filter((asset) => asset.includes("lock")).map((asset) => `${file}: ${asset}`);
+		});
+
+		expect(listed).toEqual([]);
+	});
 });
