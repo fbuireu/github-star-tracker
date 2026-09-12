@@ -282,11 +282,12 @@ build all pass. It rebuilds the bundle, and semantic-release then:
 3. Updates `package.json`
 4. Generates [`CHANGELOG.md`](./CHANGELOG.md) from the commits
 5. Creates the git tag and the GitHub release
-6. Commits `package.json`, [`pnpm-lock.yaml`](./pnpm-lock.yaml), `CHANGELOG.md` and `dist/` back to `main` as
+6. Commits `package.json`, `CHANGELOG.md` and `dist/` back to `main` as
    `chore(release): <version> [skip ci]`
 
-A final workflow step force-updates the floating `v1` tag to the new release, which is the tag consumers
-reference. No manual versioning is needed.
+A final workflow step force-updates the floating major-version tag, `v1` today, to the new release: that is
+the tag consumers reference. It reads the major off the newest `v[0-9]*` tag, so a major release moves the
+new one without an edit here. No manual versioning is needed.
 
 ---
 

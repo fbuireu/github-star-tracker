@@ -79,7 +79,7 @@ The same series as the forecast chart above, for a single top repository: its ow
 the linear regression and weighted moving average fitted to it.
 
 - One chart per top repository, drawn under that repository's forecast table
-- Drawn **only** when the repository has enough star history of its own to fit — at least 3 reconstructed
+- Drawn **only** when the repository has enough star history of its own to fit: at least 3 reconstructed
   points. When it does not, the action falls back to projecting it from the tracked set's aggregate shape,
   publishes those figures as a table, and draws no chart, because that curve would describe the whole set
   rather than the repository named above it.

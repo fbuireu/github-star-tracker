@@ -126,7 +126,7 @@ shell was assembling the params for each.
   `null` for a top repository whose own Reconstructed History is too short, which left [`markdown.ts`](./markdown.ts) linking
   an image no run had written.
 - **`ChartHistories` exposes two per-repo accessors, `forRepo` and `reconstructedForRepo`, and they are not
-  interchangeable.** A star-history Chart takes `forRepo`, a Forecast — its figures *and* its Chart — must
+  interchangeable.** A star-history Chart takes `forRepo`; a Forecast, its figures *and* its Chart alike, must
   take `reconstructedForRepo`; [`../domain/CLAUDE.md`](../domain/CLAUDE.md) carries the rule and the bug it came from.
   So the two charts a Report shows for one repository can plot different curves: the star-history one falls
   back to the Stored History when nothing could be reconstructed, the Forecast one is never drawn in that

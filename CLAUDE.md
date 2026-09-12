@@ -26,23 +26,20 @@ SMTP. There is exactly one use case: `trackStars()`.
 ## Versions
 
 **This section names where each runtime is pinned and never what the pin says.** A digit written here is a
-claim a bot invalidates on its own, and every way of defending one costs more than it returns.
-Asserting it against the manifest fails every dependency pull request on a line the bot cannot edit, which is
-what contribKit did until it stopped. Quoting it without asserting it rots, which is what sibling guides
-did. This repository took another way and kept both, with `customManagers` rewriting the prose in the same
-pull request as the manifest; that worked, and it was still regexes over prose, a grouping rule holding
-them together and a documented trap for whoever added the next pin. Read the file instead.
+claim a bot invalidates on its own, and every way of defending one costs more than it returns: asserting it
+against the manifest fails every dependency pull request on a line the bot cannot edit, quoting it without
+asserting it rots, and having Renovate's `customManagers` rewrite the prose alongside the manifest, which
+this repository did for a while, works and is still regexes over prose with a trap in it for whoever adds
+the next pin. Read the file instead.
 
 - Node (`engines.node`, and [`.nvmrc`](./.nvmrc), which every job in [`ci.yml`](./.github/workflows/ci.yml) installs from via `node-version-file`)
 - pnpm (`packageManager`): always use pnpm, never npm/yarn
 
 Both are deliberate pins rather than dependency ranges, and the rules in
-[`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts) assert the shape a bump cannot change: both
-runtimes are named here and neither is quoted, `.nvmrc` and `engines.node` agree, `packageManager` is the sole
-declaration of the package manager, each pin is exact rather than a range, no workflow or composite action
-sets `node-version` by hand, no document outside the ADRs names a runtime or a framework beside a version, and
-the one number the guides do state, the shipped runtime below, is read out of `action.yml` rather than
-written down twice.
+[`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts) assert the shape a bump cannot change:
+each runtime is named here, never quoted, pinned exactly, pinned once, and re-pinned in no workflow. Run
+`pnpm test:docs` for the list. The one number the guides do state, the shipped runtime below, is read out of
+`action.yml` rather than written down twice.
 Nothing compared `.nvmrc` with `engines.node` until that rule existed, so the places this repository
 declares Node could drift in silence; a workflow that pinned it by hand would be a further declaration with a
 new hiding place. Every sibling repository carries the same set.
