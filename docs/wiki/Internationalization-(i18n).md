@@ -119,13 +119,13 @@ verbatim rather than becoming `undefined` or an empty string.
 
 English is fallen back to at more than one moment, and only the config-time one is ever visible.
 
-**At config time**, an invalid `locale` input is caught by the config loader:
+At config time, an invalid `locale` input is caught by the config loader:
 
 1. The action logs a warning: `Invalid locale "xx". Must be "en", "es", "ca", or "it". Falling back to "en"`
 2. English translations are used for the entire run
 3. The workflow does **not** fail
 
-**At render time**, `getTranslations()` falls back to the English bundle for any locale it has no bundle
+At render time, `getTranslations()` falls back to the English bundle for any locale it has no bundle
 for, silently and with no warning. Because `Locale` is a closed union and the loader has already validated
 the input, that second fallback is unreachable in a normal run: it is the safety net for a value that
 dodged the type system, and it is the reason a partly-registered new locale renders in English rather than
@@ -162,6 +162,6 @@ See **[Contributing](https://github.com/fbuireu/github-star-tracker/blob/main/.g
 
 ## Next Steps
 
-- **[Configuration](Configuration)** - `locale` setting
-- **[Email Notifications](Email-Notifications)** - Localized email subjects
-- **[Star Trend Charts](Star-Trend-Charts)** - Localized chart labels
+- [Configuration](Configuration) - `locale` setting
+- [Email Notifications](Email-Notifications) - Localized email subjects
+- [Star Trend Charts](Star-Trend-Charts) - Localized chart labels

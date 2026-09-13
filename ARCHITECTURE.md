@@ -9,8 +9,8 @@ domain vocabulary is [CONTEXT.md](./CONTEXT.md).
 ## 1. Layer map
 
 The shape is Domain-Driven Design(ish) with a Functional Core, Imperative Shell pattern. The `(ish)` is
-load-bearing: these are *layers* sharing one vocabulary, not DDD bounded contexts with languages of their
-own. How much of the method is taken, and where it deliberately stops, is
+there for a reason: these are *layers* sharing one vocabulary, not DDD bounded contexts with languages of
+their own. How much of the method is taken, and where it deliberately stops, is
 [ADR 0004](./docs/adr/0004-layered-source-structure.md); the one question that cannot be answered once for
 the whole tree, when a primitive earns a type of its own, is
 [ADR 0022](./docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md). The domain vocabulary itself lives in [CONTEXT.md](./CONTEXT.md).
@@ -78,21 +78,23 @@ it as data: the *May import* column of each row is parsed for the layer names it
 cross-layer import in `src/**/*.ts` must appear there. A layer may always import itself, and it must do so
 relatively, so a cross-layer relative path is its own failure. The pure layers carry a further rule the table
 states in prose and the test states as a list: no `node:*`, no `@actions/*`, no `@octokit/*`, no `nodemailer`
-and no `js-yaml` under `domain/`, `presentation/` or `i18n/`. The diagram is the table's picture, and anything
-the table forbids is forbidden however convenient.
+and no `js-yaml` under `domain/`, `presentation/` or `i18n/`. The diagram draws what the table states. If the
+table forbids an import, no amount of convenience makes it allowed.
 
-**A colocated test may import whatever its own layer may**, plus anything under `@shared`: the fixture
-factories in `shared/tests` have no consumer outside a `*.test.ts`, and `shared/errors` is already named by
-every row that reaches for it. It may not reach further, and the one place that does is named in the test rather than waved
-through: [`src/config/action-inputs.test.ts`](./src/config/action-inputs.test.ts) reads `DEFAULT_SMTP_PORT`
-from `@infrastructure/notification/email` to assert `action.yml`'s `smtp-port` description against the
-constant that actually implements it. It asserts against the manifest rather than against a module, the two
-values it compares genuinely live in two layers, and duplicating the constant into `config` to satisfy the
-arrow would put the same number in two places, which is the thing the assertion exists to prevent. Adding
-another such crossing means adding a line to `TEST_LAYER_CROSSINGS` and a paragraph here saying why. The codebase-wide conventions those boundaries sit inside
-(aliases, named params, no comments, purity) are stated once in [CLAUDE.md](./CLAUDE.md#conventions), and
-what each layer actually guarantees is that layer's own `CLAUDE.md`, linked in [§6](#6-where-things-live).
-The decision to layer the tree this way is [ADR 0004](./docs/adr/0004-layered-source-structure.md).
+A colocated test may import whatever its own layer may, plus anything under `@shared`: the fixture factories
+in `shared/tests` have no consumer outside a `*.test.ts`, and `shared/errors` is already named by every row
+that reaches for it. It may not reach further, and the one place that does is named in the test rather than
+waved through: [`src/config/action-inputs.test.ts`](./src/config/action-inputs.test.ts) reads
+`DEFAULT_SMTP_PORT` from `@infrastructure/notification/email` to check `action.yml`'s `smtp-port` description
+against the constant that implements it. It asserts against the manifest rather than against a module, the
+two values it compares really do live in two layers, and copying the constant into `config` to satisfy the
+arrow would put the same number in two places, which is what the assertion exists to catch. Another crossing
+like it needs a line in `TEST_LAYER_CROSSINGS` and a paragraph here saying why.
+
+The conventions those boundaries sit inside (aliases, named params, no comments, purity) are stated once in
+[CLAUDE.md](./CLAUDE.md#conventions), what each layer guarantees is in that layer's own `CLAUDE.md`, linked
+in [§6](#6-where-things-live), and the decision to layer the tree this way is
+[ADR 0004](./docs/adr/0004-layered-source-structure.md).
 
 ## 2. A run, end to end
 
@@ -113,7 +115,7 @@ carries no comments, so there are no step markers in the source to match them ag
 | 10 | `fetchAllStargazers({ octokit, repos, config })` | infrastructure/github | Only when `includeCharts \|\| trackStargazers`. Per-repo failures degrade to `core.warning` |
 | 11 | `branch.readStargazers()` -> `diffStargazers` -> `buildStargazerMap(...)` | persistence + domain | Only when `trackStargazers`. The map is handed to `publish`, not written here |
 | 12 | `topRepositories({ repos: results.repos, limit: config.topRepos })` | domain/comparison | The single definition of Top Repositories; `@presentation/report-model` calls the same function for the Report |
-| 13 | `resolveChartHistories({ config, storedHistory: updatedHistory, repos, repoStargazers })` | presentation/charts | Owns both altitudes and the instant: reconstructs via `@domain/star-history` (capped at 365 buckets) and resolves each result against the stored history, where reconstruction wins at >= 2 snapshots. Its accessors are `.aggregate` for the Tracked Set, `.forRepo(name)` for one Repository *with* the stored-history fallback, and `.reconstructedForRepo(name)` for the reconstruction alone, returning `null` rather than falling back |
+| 13 | `resolveChartHistories({ config, storedHistory: updatedHistory, repos, repoStargazers })` | presentation/charts | Owns both scopes and the instant: reconstructs via `@domain/star-history` (capped at 365 buckets) and resolves each result against the stored history, where reconstruction wins at >= 2 snapshots. Its accessors are `.aggregate` for the Tracked Set, `.forRepo(name)` for one Repository *with* the stored-history fallback, and `.reconstructedForRepo(name)` for the reconstruction alone, returning `null` rather than falling back |
 | 14 | `computeForecast({ history, topRepoNames, historyForRepo })` | domain/forecast | `null` below 3 snapshots; always 2 methods x 4 weekly points. `historyForRepo` is `.reconstructedForRepo`, deliberately *not* `.forRepo`: a fabricated fallback ramp would be projected as if it were real growth |
 | 15 | `renderRun({ config, results, previousTimestamp, chartHistories, storedHistory, stargazerDiff, forecastData })` | presentation | The layer's single entry point: markdown, HTML, CSV, badge and every chart file in one `RenderedRun`. It builds the `ReportModel` once, derives the chart history from `chartHistories` and the Top Repositories from that model, so no caller can hand the reports the wrong `History` or chart a different set than it links ([ADR 0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md)) |
 | 16 | `notificationIsDue({ changed, thresholdReached })` | domain/notification | Gates the send. The same predicate is what `settleNotification` computes internally, so the rule cannot go stale in one place and not the other |
@@ -186,7 +188,7 @@ The scripts, Biome settings and git hooks are listed once in [CLAUDE.md](./CLAUD
 
 ## 6. Where things live
 
-One axis per kind of document. [CONTEXT.md](./CONTEXT.md) is the domain glossary: what the words
+One kind of document per question. [CONTEXT.md](./CONTEXT.md) is the domain glossary: what the words
 **mean**. The `CLAUDE.md` files, one at the root and one per layer, are **structure**.
 [docs/adr/](./docs/adr/) is **why**:
 
@@ -219,7 +221,7 @@ Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md),
 copying that file. The shape the docs test asserts is spelled out in
 [CLAUDE.md's maintenance contract](./CLAUDE.md#maintenance-contract).
 
-**The per-layer guides and what each covers are the table in [CLAUDE.md](./CLAUDE.md#structure--aliases).**
+The per-layer guides and what each covers are the table in [CLAUDE.md](./CLAUDE.md#structure--aliases).
 That file is loaded into every agent session, so the list lives there and is not repeated here. Root
 [`CLAUDE.md`](./CLAUDE.md) itself is a document of its own: commands, alias wiring, conventions and the
 maintenance contract.
@@ -241,4 +243,4 @@ One guide per layer, no deeper: the `infrastructure/` adapters and `shared/tests
 None outstanding.
 
 When one is found, record it here with the evidence that proves it, and delete the entry in the commit that
-fixes it. An entry that has quietly become false is worse than no list at all.
+fixes it. A stale entry sends the next reader hunting a problem that no longer exists.

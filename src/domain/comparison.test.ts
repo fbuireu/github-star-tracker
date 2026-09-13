@@ -83,6 +83,73 @@ describe("compareStars", () => {
 		expect(removed?.delta).toBe(-20);
 	});
 
+	it("counts a Removed Repository's Stars as lost and leaves them out of the total", () => {
+		const previous: Snapshot = {
+			timestamp: "2026-01-01T00:00:00Z",
+			totalStars: 30,
+			repos: [
+				{ fullName: "user/repo-a", name: "repo-a", owner: "user", stars: 10 },
+				{ fullName: "user/repo-b", name: "repo-b", owner: "user", stars: 20 },
+			],
+		};
+
+		const result = compareStars({
+			currentRepos: [makeRepoInfo({ name: "repo-a", stars: 10 })],
+			previousSnapshot: previous,
+		});
+
+		expect(result.summary.totalStars).toBe(10);
+		expect(result.summary.totalPrevious).toBe(30);
+		expect(result.summary.totalDelta).toBe(-20);
+		expect(result.summary.lostStars).toBe(20);
+		expect(result.summary.newStars).toBe(0);
+	});
+
+	it("reads a rename as a Removed Repository plus a New Repository, so lost Stars outrun the net delta", () => {
+		const previous: Snapshot = {
+			timestamp: "2026-01-01T00:00:00Z",
+			totalStars: 130,
+			repos: [
+				{ fullName: "user/old-name", name: "old-name", owner: "user", stars: 100 },
+				{ fullName: "user/keep", name: "keep", owner: "user", stars: 30 },
+			],
+		};
+
+		const result = compareStars({
+			currentRepos: [makeRepoInfo({ name: "new-name", stars: 100 }), makeRepoInfo({ name: "keep", stars: 30 })],
+			previousSnapshot: previous,
+		});
+
+		expect(result.repos.find((repo) => repo.name === "new-name")?.isNew).toBe(true);
+		expect(result.repos.find((repo) => repo.name === "old-name")?.isRemoved).toBe(true);
+		expect(result.summary.totalStars).toBe(130);
+		expect(result.summary.totalDelta).toBe(0);
+		expect(result.summary.lostStars).toBe(100);
+		expect(result.summary.newStars).toBe(0);
+		expect(result.summary.changed).toBe(true);
+	});
+
+	it("treats a Removed Repository with no Stars as a change that loses none", () => {
+		const previous: Snapshot = {
+			timestamp: "2026-01-01T00:00:00Z",
+			totalStars: 10,
+			repos: [
+				{ fullName: "user/repo-a", name: "repo-a", owner: "user", stars: 10 },
+				{ fullName: "user/empty", name: "empty", owner: "user", stars: 0 },
+			],
+		};
+
+		const result = compareStars({
+			currentRepos: [makeRepoInfo({ name: "repo-a", stars: 10 })],
+			previousSnapshot: previous,
+		});
+
+		expect(result.repos.find((repo) => repo.name === "empty")?.isRemoved).toBe(true);
+		expect(result.summary.lostStars).toBe(0);
+		expect(result.summary.totalDelta).toBe(0);
+		expect(result.summary.changed).toBe(true);
+	});
+
 	it("detects newly added repositories", () => {
 		const repos = [makeRepoInfo({ name: "repo-a", stars: 10 }), makeRepoInfo({ name: "new-repo", stars: 5 })];
 		const previous: Snapshot = {

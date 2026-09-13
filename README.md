@@ -4,14 +4,14 @@
 
 # GitHub Star Tracker
 
-**A GitHub Action that tracks star counts across all your repositories on a schedule, generates visual reports with charts and badges, and sends notifications when changes are detected.**
+**A GitHub Action that tracks star counts across all your repositories on a schedule, generates visual reports with charts and badges, and emails you once enough has changed to be worth reading.**
 
 [![CI](https://img.shields.io/github/actions/workflow/status/fbuireu/github-star-tracker/ci.yml?style=flat-square&logo=github&label=CI)](https://github.com/fbuireu/github-star-tracker/actions/workflows/ci.yml)
 [![Codecov](https://img.shields.io/codecov/c/gh/fbuireu/github-star-tracker?style=flat-square&logo=codecov)](https://codecov.io/gh/fbuireu/github-star-tracker)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue?style=flat-square)](https://www.gnu.org/licenses/agpl-3.0)
 [![Product Hunt](https://img.shields.io/badge/Product%20Hunt-featured-orange?style=flat-square&logo=producthunt&logoColor=white)](https://www.producthunt.com/products/github-star-tracker)
 
-**[Documentation](../../wiki/Home)** · **[Getting Started](../../wiki/Getting-Started)** · **[Configuration](../../wiki/Configuration)** · **[Examples](../../wiki/Examples)** · **[Troubleshooting](../../wiki/Troubleshooting)**
+[Documentation](../../wiki/Home) · **[Getting Started](../../wiki/Getting-Started)** · **[Configuration](../../wiki/Configuration)** · **[Examples](../../wiki/Examples)** · **[Troubleshooting](../../wiki/Troubleshooting)**
 
 </div>
 
@@ -228,7 +228,7 @@ To email on every N stars, use `notification-threshold: 'N'` with `notification-
 
 </details>
 
-**[API Reference](../../wiki/API-Reference):** Complete inputs, outputs, and data formats
+[API Reference](../../wiki/API-Reference): Complete inputs, outputs, and data formats
 
 ---
 
@@ -293,7 +293,7 @@ flowchart TD
     style send stroke:#c2185b,stroke-width:3px
 ```
 
-**[How It Works](../../wiki/How-It-Works):** The full execution pipeline, phase by phase. **[Architecture](../../wiki/Architecture):** the DDD<sub>(ish)</sub> layering, one ubiquitous language and a pure core, and how much of the tactical catalogue is taken
+[How It Works](../../wiki/How-It-Works): The full execution pipeline, phase by phase. **[Architecture](../../wiki/Architecture):** the DDD<sub>(ish)</sub> layering, one ubiquitous language and a pure core, and how much of the tactical catalogue is taken
 
 ### How the charts read dates
 
@@ -324,7 +324,7 @@ The line style is configurable via `chart-curve` (`monotone` by default, plus `c
 > [!TIP]
 > SVG charts automatically adapt to dark and light mode. No extra configuration needed: they use `prefers-color-scheme` to match the viewer's theme.
 
-**[Viewing Reports](../../wiki/Viewing-Reports)**: All access methods (data branch, badges, outputs, email)
+[Viewing Reports](../../wiki/Viewing-Reports): All access methods (data branch, badges, outputs, email)
 
 ---
 
@@ -357,10 +357,10 @@ or hosting a modified version.
 
 ## Support & Contributing
 
-- **[Report bugs](../../issues/new?template=bug_report.yml)**
-- **[Request features](../../issues/new?template=feature_request.yml)**
-- **[Contributing guidelines](.github/CONTRIBUTING.md)**
-- **[Security policy](../../security/policy)**
+- [Report bugs](../../issues/new?template=bug_report.yml)
+- [Request features](../../issues/new?template=feature_request.yml)
+- [Contributing guidelines](.github/CONTRIBUTING.md)
+- [Security policy](../../security/policy)
 
 If you find this project useful, consider supporting its development:
 

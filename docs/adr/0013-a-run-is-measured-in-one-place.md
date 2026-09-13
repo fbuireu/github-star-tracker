@@ -38,7 +38,7 @@ Baseline's timestamp, the comparison results, the Summary, the appended History,
 `max-history` trim dropped, and whether the threshold was reached.
 
 The functions it composes stay exported from their own modules and keep their own tests. They are
-internal seams within `@domain`, not a surface `@application` crosses. What changed is that no caller can
+internal seams within `@domain` rather than something `@application` reaches through. What changed is that no caller can
 reach them in the wrong order, because no caller reaches them at all.
 
 The rejected alternative is folding the Notification baseline advance into `measureRun`. It must stay out:

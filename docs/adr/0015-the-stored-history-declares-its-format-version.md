@@ -61,7 +61,8 @@ history, so a shape change there can be handled by changing the filename instead
   case can never be repurposed to mean anything else.
 - **A forward-incompatible file fails the Run rather than degrading it.** A user who downgrades the action
   after a format bump gets an error naming both versions, not a report full of zeroes. The cost is that
-  pinning an older major version against a newer data branch stops working, which is the honest outcome. That
+  pinning an older major version against a newer data branch stops working, which is the outcome that
+  tells the truth about what happened. That
   `assertReadableFormat` is one of the guards choosing loud failure over a silent reset is
   [ADR 0021](./0021-an-unreadable-stored-history-fails-the-run.md).
 - Every user's `stars-data.json` gains one line on its next Run. The 2-space, no-trailing-newline formatting

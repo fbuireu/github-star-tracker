@@ -8,7 +8,7 @@ Charts plot a **Reconstructed History**. Every star is placed on the date it was
 
 The **Stored History** on the data branch is still kept, and still drives the report's delta tables, the notification threshold and the velocity section, but the charts no longer depend on it. Why the charts were moved off it, and what that costs in stargazer API calls, is [ADR 0005](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0005-charts-are-reconstructed-from-stargazer-timestamps.md).
 
-**The Stored History is still the fallback.** A repository whose stargazers cannot be read has no reconstruction, and its chart is drawn from the Stored History instead. That series spans the tracker's own runs rather than the repository's life, which is what a suspiciously short or flat chart usually means.
+The Stored History is still the fallback. A repository whose stargazers cannot be read has no reconstruction, and its chart is drawn from the Stored History instead. That series spans the tracker's own runs rather than the repository's life, which is what a suspiciously short or flat chart usually means.
 
 ---
 
@@ -97,8 +97,8 @@ GitHub Star Tracker uses complementary chart systems:
 
 ### Why More Than One System?
 
-- **SVG charts** use CSS animations (`@keyframes`) that render beautifully in GitHub Markdown but are not supported by email clients
-- **QuickChart URLs** generate static PNG images via [QuickChart.io](https://quickchart.io) that work in all email clients
+- SVG charts use CSS animations (`@keyframes`) that render beautifully in GitHub Markdown but are not supported by email clients
+- QuickChart URLs generate static PNG images via [QuickChart.io](https://quickchart.io) that work in all email clients
 
 ### Curve fidelity
 
@@ -140,7 +140,7 @@ with:
 | Comparison | 2 | Plus at least 1 repo in top N |
 | Forecast | 3 | Linear regression needs 3+ |
 
-**Those minimums are about points in the series, not about how many stars you have.** The reconstruction is
+Those minimums are about points in the series, not about how many stars you have. The reconstruction is
 drawn as a fixed number of evenly spaced buckets across the span, `chart-max-points` of them (30 by default,
 never fewer than 2), so a **single** stargazer with a readable `starred_at` date already produces a 30-point
 curve on the very first run. What produces no curve at all is having no star event with a usable date
@@ -186,7 +186,7 @@ This palette is fixed in both senses: `chart-line-color` does not reach it, and 
 - Linear regression: the palette's positive green, dashed
 - Weighted moving average: the palette's negative red, dashed
 
-**Some of those series are palette colours, so they move with `chart-theme`.** They are fixed with respect to `chart-line-color`, not with respect to the theme:
+Some of those series are palette colours, so they move with `chart-theme`. They are fixed with respect to `chart-line-color`, not with respect to the theme:
 
 | Series | `chart-theme: light` (and `auto`) | `chart-theme: dark` |
 |---|---|---|
@@ -202,7 +202,7 @@ needed. Forcing [`chart-theme`](Configuration#chart-theme) to `light` or `dark` 
 bakes one palette in, which is what you want when the chart is embedded somewhere that does not follow the
 reader's system theme.
 
-**What that media query switches is the chrome, not the data.** Background, title, legend text, axis labels,
+What that media query switches is the chrome, not the data. Background, title, legend text, axis labels,
 grid lines and axis strokes swap; series strokes are written as inline attributes resolved once, and under
 `auto` they resolve from the light palette. So a dark-mode reader of an `auto` chart gets dark chrome around
 light-palette data. Setting `chart-theme: dark` explicitly does recolour those series,
@@ -281,7 +281,7 @@ still showing the top ten. Beyond that the lines stop being distinguishable.
 ## Chart customization
 
 Every `chart-*` input, with its default and full description, is in
-**[Configuration](Configuration#chart-line-color)**. That page is the reference; this one does not restate it.
+[Configuration](Configuration#chart-line-color). That page is the reference; this one does not restate it.
 
 What belongs here is which of the **chart systems** honours each one. The SVG charts on the data branch
 are hand-rendered; the email charts are QuickChart images, and some options cannot survive that trip:
@@ -317,7 +317,7 @@ with:
 
 ### Large repos
 
-On a repository above GitHub's stargazer listing cap the chart's recent tail is a bridged approximation rather than read data; [Known Limitations](Known-Limitations#-stargazer-listing-cap-40000) has the full account. Pair such repositories with `smart-sampling` to keep the request cost bounded.
+On a repository above GitHub's stargazer listing cap the chart's recent tail is a bridged approximation rather than read data; [Known Limitations](Known-Limitations#stargazer-listing-cap-40000) has the full account. Pair such repositories with `smart-sampling` to keep the request cost bounded.
 
 ---
 
@@ -349,12 +349,12 @@ examples gallery above shows each one rendered.
 | Charts render as source code | You are looking at the raw SVG file rather than the rendered data branch |
 
 Everything else, including flat lines, missing forecasts and charts that stop updating, is in
-**[Troubleshooting](Troubleshooting)**.
+[Troubleshooting](Troubleshooting).
 
 ---
 
 ## Next Steps
 
-- **[Viewing Reports](Viewing-Reports)** - How to access charts
-- **[Email Notifications](Email-Notifications)** - Charts in emails
-- **[Configuration](Configuration)** - Chart-related settings
+- [Viewing Reports](Viewing-Reports) - How to access charts
+- [Email Notifications](Email-Notifications) - Charts in emails
+- [Configuration](Configuration) - Chart-related settings

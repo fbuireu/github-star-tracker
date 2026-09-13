@@ -65,32 +65,32 @@ a dash array or a point radius. Each adapter maps them through its own table.
 - **The spec must stay free of dialect vocabulary.** No SVG attributes, no Chart.js option names, no
   `borderDash` arrays. The moment one leaks in, the other adapter has to work around it and the seam stops
   paying for itself.
-- **Rendered text is content, not appearance.** A `ChartMilestone` carries both its `value` and its `label`,
+- Rendered text is content, not appearance. A `ChartMilestone` carries both its `value` and its `label`,
   because leaving the label to the adapters is what let `chart.ts` format with a hardcoded `en-US` while
   `svg-chart.ts` used the run's Locale. Anything a reader reads is decided here; only how it is drawn is the
   adapter's.
-- **That rule is not yet fully honoured, and the exceptions are in [`chart-spec.ts`](../../src/presentation/chart-spec.ts) itself.** The `PER_REPO`
+- That rule is not yet fully honoured, and the exceptions are in [`chart-spec.ts`](../../src/presentation/chart-spec.ts) itself. The `PER_REPO`
   case of `buildChartSpec` falls back to an English title built inline from the repository's full name and
   the words "Star History" rather than reading the Locale bundle, so a per-repository chart is titled in English whatever
   `locale` is set to; the star-history and forecast kinds do read the bundle. Both `starHistorySpec` and
   `perRepoSpec` also name their primary series `'Stars'` as a literal. Neither leaks to the adapters, so the
   SVG and the email agree with each other, which is what this decision guarantees. They are simply agreed on
   untranslated text, and a locale bug here is fixed in the spec, not in a renderer.
-- **A new chart kind is a `ChartRequest` variant plus a `case` in `buildChartSpec`**, not two parallel
+- A new chart kind is a `ChartRequest` variant plus a `case` in `buildChartSpec`, not two parallel
   implementations, and neither adapter is touched. A new *style* option is one field on `ChartSpec` and one
   line in each adapter; a new *content* option is one field on the request variant.
-- **Default titles moved into `buildChartSpec`**, so the SVG and the email chart of a kind are always named
+- Default titles moved into `buildChartSpec`, so the SVG and the email chart of a kind are always named
   the same thing. The SVG star-history chart used to fall back to a hardcoded English `'Star History'` while
   the email one used the locale bundle.
-- **`AxisLabels` stopped being a per-call parameter.** It is now an adapter constant, and `forecastSpec`
+- `AxisLabels` stopped being a per-call parameter. It is now an adapter constant, and `forecastSpec`
   `Omit`s it from its params rather than accepting a value it overrides. The shape now says what the code
   always did.
-- **[`chart-spec.test.ts`](../../src/presentation/chart-spec.test.ts) is the seam's own test surface.** Content rules were previously asserted only
+- [`chart-spec.test.ts`](../../src/presentation/chart-spec.test.ts) is the seam's own test surface. Content rules were previously asserted only
   through [`svg-chart.test.ts`](../../src/presentation/svg-chart.test.ts) and [`chart.test.ts`](../../src/presentation/chart.test.ts), in duplicate and through rendered strings; those two are
   now free to be about appearance.
-- **The two renderers can no longer drift on content.** Window, cap, colours, labels and Milestone
+- The two renderers can no longer drift on content. Window, cap, colours, labels and Milestone
   visibility are computed once. They can still drift on appearance, which is the point.
-- **The cost is a layer of indirection and a vocabulary to learn** (`ChartSpec`, `AxisLabels`, `SeriesDash`,
+- The cost is a layer of indirection and a vocabulary to learn (`ChartSpec`, `AxisLabels`, `SeriesDash`,
   `SeriesWeight`) before either renderer makes sense. Reading `svg-chart.ts` alone no longer tells you where
   its data came from.
 - `charts.ts` now has a colocated [`charts.test.ts`](../../src/presentation/charts.test.ts), so the `Config`-to-style projection and the

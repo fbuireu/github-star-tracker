@@ -73,11 +73,11 @@ flowchart TD
 
 Some edges in that diagram are easy to miss, and they matter:
 
-- **No repositories matched.** When every filter combined leaves nothing, the run warns
+- No repositories matched. When every filter combined leaves nothing, the run warns
   `No repositories matched the configured filters`, renders an empty report, writes the HTML report, sets all
   every output to its zeroed value and returns. It never opens the data branch, so nothing is committed
   and no email is attempted. The run still succeeds.
-- **Read-only run.** With `read-only: true` everything happens except the push: the run reads the branch,
+- Read-only run. With `read-only: true` everything happens except the push: the run reads the branch,
   computes, renders, writes every artefact into the worktree, sends the email and sets every output, then
   logs `Read-only run: leaving <branch> untouched` and discards the worktree unpushed. See
   [Read-only runs](#read-only-runs) below.
@@ -126,7 +126,7 @@ Action Inputs > Config File (YAML) > Built-in Defaults
 5. Merge: inputs override file values; missing values fall through to defaults
 6. Validation of `visibility` enum and `locale`
 
-**Config file keys may be written with either underscores or dashes (`include_charts` and `include-charts` both work):**
+Config file keys may be written with either underscores or dashes (`include_charts` and `include-charts` both work):
 
 ```yaml
 # star-tracker.yml
@@ -232,7 +232,7 @@ Creates or accesses a Git worktree for the data branch, isolating persistence fr
 6. If the branch exists: `git fetch` + `git worktree add`
 7. If it is new: create an orphan branch with `git checkout --orphan` + an empty initial commit
 
-**The failures that start here** both fail the run:
+The failures that start here both fail the run:
 
 - No repository is checked out. The action needs the worktree machinery, so it converts git's own message
   into `This action must run inside a checked-out repository. Add an "actions/checkout" step before this
@@ -279,7 +279,7 @@ The current star counts are then diffed against that snapshot, so the baseline d
 
 The time windows make a genuine daily, weekly or monthly digest possible even when the tracker runs more frequently than that.
 
-**The baseline choice only changes what the current run is compared against; it never changes what gets stored.** Every run still appends its own snapshot to the Stored History, and neither the charts, the forecast nor the velocity section is windowed by `compare-against`.
+The baseline choice only changes what the current run is compared against; it never changes what gets stored. Every run still appends its own snapshot to the Stored History, and neither the charts, the forecast nor the velocity section is windowed by `compare-against`.
 
 Those do not share one series, though, and the difference is worth knowing:
 
@@ -321,7 +321,7 @@ Pure function computing the diff between current repos and the selected baseline
 
 Both are pure functions returning new objects (no mutation). `addSnapshot()` runs on every execution regardless of `compare-against`, so the Stored History is always complete.
 
-**Lowering `max-history` discards snapshots, and the run says so.** When the stored count exceeds the new
+Lowering `max-history` discards snapshots, and the run says so. When the stored count exceeds the new
 limit, the run logs a warning naming how many it is about to drop and inviting you to raise `max-history`
 *before* this run if you want to keep them. Once the run pushes, they are gone.
 
@@ -354,7 +354,7 @@ When charts are enabled, `buildStarHistory()` turns the fetched stargazers' `sta
 
 GitHub caps stargazer listing at roughly **40,000 per repo**, oldest first. Above that cap it is therefore the **recent** stars that are unreachable, not the early ones.
 
-`scaleCappedToTrueTotal()` draws the reachable stretch accurately and bridges the missing tail with a straight ramp up to the true current total, so the final point always equals the true count. The reasoning is [ADR 0007](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0007-bridge-unreachable-history-with-a-ramp.md); the user-facing consequences are in [Known Limitations](Known-Limitations#-stargazer-listing-cap-40000).
+`scaleCappedToTrueTotal()` draws the reachable stretch accurately and bridges the missing tail with a straight ramp up to the true current total, so the final point always equals the true count. The reasoning is [ADR 0007](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0007-bridge-unreachable-history-with-a-ramp.md); the user-facing consequences are in [Known Limitations](Known-Limitations#stargazer-listing-cap-40000).
 
 Pair high-star repos with `smart-sampling` to keep within rate limits.
 
@@ -550,7 +550,7 @@ Otherwise:
 
 Idempotent: no empty commits if data hasn't changed.
 
-**A rejected push is the one git failure that gets its own message.** The worktree is pinned to
+A rejected push is the one git failure that gets its own message. The worktree is pinned to
 `origin/<data-branch>` when the run starts and never re-fetched, so two overlapping *writing* runs branch
 from the same commit and the second push is refused as non-fast-forward. The run then fails with an
 explanation naming `concurrency` and `read-only` as the two fixes. Its report and any email have already
@@ -592,7 +592,7 @@ Consequences follow from nothing being written:
 | `notification-sent` | Whether an email actually left the runner. Distinct from `should-notify`: a courtesy send under `send-on-no-changes` sets this without the threshold being reached, and a configured send that failed leaves it `false` |
 | `new-stargazers` | New stargazers detected by diffing against the stored `stargazers.json`, which every writing run rewrites - not affected by `compare-against` (0 if tracking disabled) |
 
-**Per-run vs cumulative.** `new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the baseline selected in Phase 4. They are not cumulative across runs and carry no memory of whether an email was ever sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: it is driven by `notification-threshold` plus `notification-mode` against `starsAtLastNotification`, and its counter only resets when the threshold trips ([the full rule](Configuration#notification-threshold)).
+Per-run vs cumulative. `new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the baseline selected in Phase 4. They are not cumulative across runs and carry no memory of whether an email was ever sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: it is driven by `notification-threshold` plus `notification-mode` against `starsAtLastNotification`, and its counter only resets when the threshold trips ([the full rule](Configuration#notification-threshold)).
 
 Because of that, "email me every 500 stars" is expressed as `notification-threshold: '500'` plus `notification-mode: 'gains'`, gated on `if: steps.tracker.outputs.should-notify == 'true'`. It is **not** `if: steps.tracker.outputs.new-stars >= 500`, which would require 500 stars inside a single run and would therefore almost never fire on a daily schedule.
 

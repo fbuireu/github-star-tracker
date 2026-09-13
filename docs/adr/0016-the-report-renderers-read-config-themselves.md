@@ -52,7 +52,8 @@ injectable `now`, and a predicate saying whether a per-repository chart file was
 of them is a flattened chart-style field.
 
 That shape is described here rather than quoted, deliberately: the field list has grown three times since
-this decision and a verbatim-looking code block that is no longer verbatim is worse than no block at all.
+this decision, and a code block that looks verbatim while no longer being verbatim misleads where no block
+would not.
 Read `ReportParams` for the current list; read this ADR for why `config` is in it.
 
 `locale`, `includeCharts`, `topRepos` and `velocityMetrics` are read off `config` inside `buildReportModel`.

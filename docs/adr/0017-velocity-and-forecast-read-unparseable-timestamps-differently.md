@@ -58,7 +58,7 @@ does **not** own is "how a History becomes a day axis", because that is not one 
 
 ## Consequences
 
-- **A Run can report a Forecast and no Velocity**, from the same History, and that is correct rather than a
+- A Run can report a Forecast and no Velocity, from the same History, and that is correct rather than a
   bug. `velocityMetrics` renders nothing while the forecast tables render normally.
 - **Do not route `computeVelocity` through `calendarDays`.** It would replace a `null` with a fabricated
   rate, and no test would fail; the numbers would simply become wrong. This is the single most important

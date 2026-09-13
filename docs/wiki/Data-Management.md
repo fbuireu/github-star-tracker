@@ -32,7 +32,7 @@ The working directory for the branch is derived from the name: a dot followed by
 | `charts/{owner}-{repo}.svg` | Per-repo charts | Same condition, one per top repository |
 | `charts/forecast-{owner}-{repo}.svg` | Per-repo growth forecast | Same, and only for a top repository whose forecast was fitted to its own reconstructed history |
 
-**"The charted series" is not always the reconstruction.** Charts prefer the **Reconstructed History**, built
+"The charted series" is not always the reconstruction. Charts prefer the **Reconstructed History**, built
 from each stargazer's `starred_at` date, which is why they render on the very first run. When that
 reconstruction has fewer than 2 points, for a repository whose stargazers could not be read at all, the chart
 falls back to the **Stored History** instead. It is still drawn; it just spans the tracker's own runs rather
@@ -87,7 +87,7 @@ Each run creates a snapshot appended to the `snapshots` array in `stars-data.jso
   compared depends on [`notification-mode`](Configuration#notification-mode): `net` uses the absolute change,
   `gains` only counts upward movement
 
-**When the baseline advances** is not simply "when an email is sent". A run that decides to notify advances
+When the baseline advances is not simply "when an email is sent". A run that decides to notify advances
 it both when the send succeeds *and* when no SMTP transport is configured at all, because in that case the
 `should-notify` output is itself the notification. Only a send that was configured and **failed** holds it
 back, so the accumulated change is not lost. A run that does not decide to notify never touches it, which is
@@ -130,7 +130,7 @@ with:
   max-history: '104'  # Keep more history
 ```
 
-**Lowering `max-history` throws snapshots away.** When more snapshots are stored than the new limit allows,
+Lowering `max-history` throws snapshots away. When more snapshots are stored than the new limit allows,
 the run logs a warning naming how many it is about to drop and telling you to raise `max-history` *before*
 this run if you want to keep them. Once that run pushes, they are gone; the data branch is the only copy.
 
@@ -194,10 +194,10 @@ artefact above into that worktree, sends the email and sets every output. It the
 
 Things follow from that, and they surprise people:
 
-- **The branch must already exist.** A read-only run refuses to create one and fails outright, so the "First
+- The branch must already exist. A read-only run refuses to create one and fails outright, so the "First
   Run Behavior" above does not apply to it. Point `data-branch` at the branch your tracking workflow
   maintains, or drop `read-only` for one run so it can be created.
-- **Nothing is remembered.** No snapshot is appended and `starsAtLastNotification` never advances, so a
+- Nothing is remembered. No snapshot is appended and `starsAtLastNotification` never advances, so a
   `notification-threshold` other than `0` cannot work on a read-only run. The action warns when both are set.
 
 This is what lets another workflow, typically a weekly digest, share a data branch with the workflow that
@@ -218,7 +218,7 @@ git push origin --delete star-tracker-data
 The next writing run will recreate it. A read-only run will not.
 
 Cloning the branch, downloading `stars-data.json` and querying it with `jq` are all in
-**[Viewing Reports](Viewing-Reports#accessing-raw-data)**, which is where the raw-data recipes live.
+[Viewing Reports](Viewing-Reports#accessing-raw-data), which is where the raw-data recipes live.
 
 ---
 
@@ -237,6 +237,6 @@ With `max-history: 52` and 100 repos, `stars-data.json` stays under ~500 KB.
 
 ## Next Steps
 
-- **[Viewing Reports](Viewing-Reports)** - How to access your data
-- **[Configuration](Configuration)** - `data-branch` and `max-history` options
-- **[How It Works](How-It-Works)** - Full execution pipeline
+- [Viewing Reports](Viewing-Reports) - How to access your data
+- [Configuration](Configuration) - `data-branch` and `max-history` options
+- [How It Works](How-It-Works) - Full execution pipeline

@@ -6,14 +6,14 @@
 
 <!-- Check exactly one box, with an "x" -->
 
-- [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
-- [ ] ✨ New feature (non-breaking change which adds functionality)
-- [ ] 💥 Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] 📝 Documentation update
-- [ ] 🔧 Configuration or workflow change
-- [ ] ♻️ Code refactoring
-- [ ] ⚡ Performance improvement
-- [ ] ✅ Test update
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Documentation update
+- [ ] Configuration or workflow change
+- [ ] Code refactoring
+- [ ] Performance improvement
+- [ ] Test update
 
 ## Related Issue
 
@@ -66,6 +66,6 @@
 
 <!-- Add a funny or cute GIF here. Yes, really. -->
 
-_Thanks for contributing!_ ✨
+_Thanks for contributing._
 
 </div>

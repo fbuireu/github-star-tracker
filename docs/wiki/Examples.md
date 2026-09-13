@@ -196,7 +196,7 @@ Email once per 500 stars gained, not once per day. `notification-threshold` accu
 Gate on `should-notify`, never on `new-stars >= 500`: the latter demands 500 stars inside one run and
 therefore almost never fires. Why the two behave so differently, what `notification-mode` measures, and
 whether raising the threshold fires immediately are all in
-**[Email Notifications](Email-Notifications#notification-threshold)**.
+[Email Notifications](Email-Notifications#notification-threshold).
 
 ### Weekly Digest
 
@@ -265,7 +265,7 @@ builds the report, sets every output and sends the email, but never commits, so 
 Things to get right:
 
 - The job needs only `permissions: contents: read`. Nothing is pushed.
-- **The branch must already exist.** A read-only run refuses to create one and fails the job.
+- The branch must already exist. A read-only run refuses to create one and fails the job.
 - Leave `notification-threshold` at `0` and gate the mailer on `stars-changed`. The threshold's counter
   lives on the data branch, which this run never writes, so any other value would either fire every time or
   never fire. The action warns when both are set.
@@ -412,7 +412,7 @@ subset of pages instead of all of them, for repositories above a threshold:
 
 The trade-off is a coarser curve for those repositories and **no new-stargazer detection** for them, since
 absence from a sample is not evidence. Repositories below the threshold are unaffected. See
-[Known Limitations](Known-Limitations#-stargazer-api-rate-limits).
+[Known Limitations](Known-Limitations#stargazer-api-rate-limits).
 
 ### Custom Data Branch
 
@@ -551,6 +551,6 @@ filename:
 
 ## Next Steps
 
-- **[Configuration](Configuration)** - All available options
-- **[API Reference](API-Reference)** - Complete inputs/outputs
-- **[Troubleshooting](Troubleshooting)** - Common issues
+- [Configuration](Configuration) - All available options
+- [API Reference](API-Reference) - Complete inputs/outputs
+- [Troubleshooting](Troubleshooting) - Common issues

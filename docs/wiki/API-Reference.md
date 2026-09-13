@@ -340,6 +340,6 @@ See [Releases](https://github.com/fbuireu/github-star-tracker/releases) for the 
 
 ## Next Steps
 
-- **[Configuration](Configuration)**: detailed option descriptions
-- **[Examples](Examples)**: real-world workflows
-- **[Troubleshooting](Troubleshooting)**: common issues
+- [Configuration](Configuration): detailed option descriptions
+- [Examples](Examples): real-world workflows
+- [Troubleshooting](Troubleshooting): common issues

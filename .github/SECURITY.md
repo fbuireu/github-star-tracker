@@ -54,7 +54,7 @@ branch. That shapes what is interesting to report.
 Some behaviour that looks reportable is a documented, deliberate decision.
 Please check these before reporting:
 
-- **The data branch is readable by anyone who can read the repository**, and
+- The data branch is readable by anyone who can read the repository, and
   on a public repository that is public. A git branch is the only storage
   backend the action has, which is how a stateless Action remembers anything
   ([ADR 0001](../docs/adr/0001-star-data-lives-on-a-dedicated-data-branch.md)),

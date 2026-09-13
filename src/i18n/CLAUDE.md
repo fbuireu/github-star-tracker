@@ -10,19 +10,19 @@ keys) and the bundles sit beside them as `.json`, typed by the `Record<Locale, T
 
 ## Invariants & rules
 
-- **Placeholder syntax is exactly `/\{(\w+)\}/g`**: one brace pair around `[A-Za-z0-9_]+`. No spaces, no
+- Placeholder syntax is exactly `/\{(\w+)\}/g`: one brace pair around `[A-Za-z0-9_]+`. No spaces, no
   dots, no nesting, no `{{ }}`. `{first name}` and `{user.name}` are not placeholders and pass through
   untouched.
-- **Unknown placeholders are left verbatim.** A miss returns the original `{key}` text, never `undefined` or
+- Unknown placeholders are left verbatim. A miss returns the original `{key}` text, never `undefined` or
   an empty string. Values are coerced with `String(...)`, so `{count: 0}` renders `0`.
-- **`interpolate` escapes nothing, deliberately.** `@presentation/html` passes full `<a href=…>` markup as the
+- `interpolate` escapes nothing, deliberately. `@presentation/html` passes full `<a href=…>` markup as the
   footer params, so adding escaping here would double-escape every report.
 - **Never build a sentence by concatenation**; add a key with placeholders instead.
-- **`getTranslations` returns the shared bundle object, not a copy.** Every caller gets the same object graph;
+- `getTranslations` returns the shared bundle object, not a copy. Every caller gets the same object graph;
   never mutate `t`.
-- **The fallback is `en`.** Because `Locale` is a closed union this only fires for a value that dodged the
+- The fallback is `en`. Because `Locale` is a closed union this only fires for a value that dodged the
   type system at runtime; `@config/loader` already validates the input against `LOCALES` and warns first.
-- **`LOCALES` order is `en, es, ca, it`**, derived from the locale map and pinned by a test. It is the order
+- `LOCALES` order is `en, es, ca, it`, derived from the locale map and pinned by a test. It is the order
   shown in the loader's "Must be …" warning, so reordering the map changes user-visible output.
 - **Every locale-map value must match `/^[a-z]{2}-[A-Z]{2}$/`** (pinned by a test), because it goes straight
   to both `Date#toLocaleDateString` and `Intl.NumberFormat` in `@domain/formatting`.
@@ -33,8 +33,8 @@ keys) and the bundles sit beside them as `.json`, typed by the `Record<Locale, T
   one merely differs from it, under the name *follows the report locale instead of always using English*.
   The others come out of the ICU data Node ships, so a runtime bump can change them with no test
   failing; re-check them rather than trusting this line. In `es` and `ca` the separator before the suffix is
-  a non-breaking space (U+00A0), not the ordinary space printed above. This is load-bearing beyond
-  wording, because `@presentation/badge` derives its widths from the **rendered** length: `★ 1,2 mil` is
+  a non-breaking space (U+00A0), not the ordinary space printed above. That reaches further than wording,
+  because `@presentation/badge` derives its widths from the **rendered** length: `★ 1,2 mil` is
   three characters wider than `★ 1.2K`.
 
 ## Adding a locale
@@ -53,7 +53,7 @@ object literal and no excess-property check applies. So `pnpm typecheck` is the 
 
 ## Gotchas
 
-- **`@i18n` is a file alias, not a glob**, which is why `index.ts` re-exports `Translations` from `./types`.
+- `@i18n` is a file alias, not a glob, which is why `index.ts` re-exports `Translations` from `./types`.
   `@i18n/types` does not resolve; any new type consumers need must be re-exported the same way.
 - **The placeholder regex must keep its `g` flag.** `String.prototype.replaceAll` throws at runtime when
   handed a non-global regex. It is a module-level literal reused across calls, safe only because `replaceAll`

@@ -25,4 +25,4 @@ sample. That rule lives there and is not restated here.
 ## Consequences
 
 - This is a silent, per-Repository degradation triggered by a global setting: enabling Smart Sampling switches off New Stargazer reporting for precisely the busiest repositories, which are the ones most likely to have gained Stars and the ones a reader would most expect to see listed.
-- Reports name the affected repositories rather than quietly omitting them. That reporting is load-bearing: it is the only thing standing between this decision and a silent data-quality bug.
+- Reports name the affected repositories rather than quietly omitting them. Drop that reporting and this decision turns into a silent data-quality bug.

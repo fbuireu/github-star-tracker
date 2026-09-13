@@ -177,21 +177,21 @@ with:
   # 'auto' - adaptive, based on total stars
 ```
 
-**What the counter is.** The threshold is measured against `starsAtLastNotification`, a single number
+What the counter is. The threshold is measured against `starsAtLastNotification`, a single number
 persisted in `stars-data.json` on the data branch: the star total as of the last time the notification
 baseline advanced. The accumulated change is today's total minus that number, not the change since the last
 run.
 
-**When it advances.** A run that decides to notify moves it up to the current total, *unless* a configured
+When it advances. A run that decides to notify moves it up to the current total, *unless* a configured
 send failed. A failed SMTP send, or an `smtp-host` set with an empty `email-to`, leaves it where it was so
 the accumulated change is not lost and the next run tries again with a larger figure.
 
-**When there is no SMTP at all.** With no transport configured the `should-notify` output *is* the
+When there is no SMTP at all. With no transport configured the `should-notify` output *is* the
 notification, so the baseline advances as soon as the threshold trips. Otherwise a workflow gating an
 external mailer on `should-notify` would see it stay `true` forever. The `notification-sent` output is what
 tells the two situations apart: it is `true` only when an email actually left the runner.
 
-**Why `should-notify` is cumulative.** Runs that do not notify never touch the counter, so the accumulated
+Why `should-notify` is cumulative. Runs that do not notify never touch the counter, so the accumulated
 change keeps growing until it trips. That is the difference from `new-stars` and `lost-stars`, which are
 per-run figures measured against the comparison baseline and reset every run by construction.
 
@@ -371,7 +371,7 @@ jobs:
 
 What `compare-against` does to the figures in that digest, including what happens when the stored history is
 shorter than the window you asked for, is in
-**[Configuration > compare-against](Configuration#compare-against)**. The part that matters for a mailer is
+[Configuration > compare-against](Configuration#compare-against). The part that matters for a mailer is
 that it moves the baseline behind `new-stars`, `lost-stars` and `stars-changed`, so a subject line built from
 those covers the window you chose rather than the last run.
 
@@ -430,10 +430,10 @@ When `include-charts: true`, the HTML email includes chart images via QuickChart
 
 ### Chart Types in Email
 
-- **Total stars chart** - star trend over time
-- **Comparison chart** - top N repos overlaid
-- **Per-repo charts** - individual repo trends
-- **Forecast chart** - projected growth
+- Total stars chart - star trend over time
+- Comparison chart - top N repos overlaid
+- Per-repo charts - individual repo trends
+- Forecast chart - projected growth
 
 ### Limitations
 
@@ -490,7 +490,7 @@ The subject is always `<localized subject>: <total stars> (<delta>)`, for exampl
 
 ## Next Steps
 
-- **[Star Trend Charts](Star-Trend-Charts)** - Chart types and customization
-- **[Configuration](Configuration)** - All email-related inputs
-- **[Examples](Examples)** - Advanced email workflows
-- **[Troubleshooting](Troubleshooting)** - Detailed email issue resolution
+- [Star Trend Charts](Star-Trend-Charts) - Chart types and customization
+- [Configuration](Configuration) - All email-related inputs
+- [Examples](Examples) - Advanced email workflows
+- [Troubleshooting](Troubleshooting) - Detailed email issue resolution

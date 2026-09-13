@@ -17,7 +17,7 @@ Complete reference for all GitHub Star Tracker configuration options.
 
 ## Configuration Methods
 
-GitHub Star Tracker supports these configuration methods:
+There are two places an option can be set:
 
 ### 1. Action Inputs (Workflow File)
 
@@ -259,7 +259,7 @@ Enable star trend chart generation.
 
 When enabled, generates animated SVG charts committed to the `charts/` directory on the data branch, and QuickChart.io URLs in HTML email reports.
 
-When enabled, the action also fetches each repo's stargazers to read their `starred_at` dates and reconstruct the true cumulative star history. This happens whenever charts are on, independent of `track-stargazers`, and it is the single biggest cost of a run. For very large repos (GitHub caps stargazer listing at ~40,000 per repo, oldest first) the *recent* tail is unreachable and is bridged with a ramp: see [Known Limitations](Known-Limitations#-stargazer-listing-cap-40000). Pair those with `smart-sampling`.
+When enabled, the action also fetches each repo's stargazers to read their `starred_at` dates and reconstruct the true cumulative star history. This happens whenever charts are on, independent of `track-stargazers`, and it is the single biggest cost of a run. For very large repos (GitHub caps stargazer listing at ~40,000 per repo, oldest first) the *recent* tail is unreachable and is bridged with a ramp: see [Known Limitations](Known-Limitations#stargazer-listing-cap-40000). Pair those with `smart-sampling`.
 
 ```yaml
 with:
@@ -1020,7 +1020,7 @@ The action validates inputs at startup:
 
 ## Next Steps
 
-- **[API Reference](API-Reference)**: complete inputs and outputs reference
-- **[Examples](Examples)**: real-world configurations
-- **[Email Notifications](Email-Notifications)**: email setup details
-- **[Troubleshooting](Troubleshooting)**: common configuration issues
+- [API Reference](API-Reference): complete inputs and outputs reference
+- [Examples](Examples): real-world configurations
+- [Email Notifications](Email-Notifications): email setup details
+- [Troubleshooting](Troubleshooting): common configuration issues

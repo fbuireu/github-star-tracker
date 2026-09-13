@@ -31,7 +31,7 @@ edit or delete.
 
 ## Decision
 
-**`readHistory` refuses to guess.** Guards in `src/infrastructure/persistence/storage.ts` turn an
+`readHistory` refuses to guess. Guards in `src/infrastructure/persistence/storage.ts` turn an
 unreadable `stars-data.json` into a failed Run, and each throws its own message naming what it found and what
 to do about it:
 
@@ -54,16 +54,16 @@ nothing is pushed, so the unreadable file is left exactly as it was.
 
 ## Consequences
 
-- **A broken `stars-data.json` blocks every subsequent Run until a human edits the Data Branch.** The action
+- A broken `stars-data.json` blocks every subsequent Run until a human edits the Data Branch. The action
   cannot self-heal, and there is no input to force it past a guard. That is the accepted cost, and it is
   accepted because the alternative silently discards the one artefact the action cannot rebuild. A user who
   genuinely wants to start over deletes the file, and the absence fallback gives them an empty history on the
   next Run.
-- **The remediation text is part of the decision, not decoration.** Each message names the file, the branch,
+- The remediation text is part of the decision, not decoration. Each message names the file, the branch,
   what was found and the action to take, because the reader is looking at a red Action log and has no reason
   to know a data branch exists. Shortening one of them to "invalid history" removes the only thing that makes
   loud failure better than silent reset.
-- **The `snapshots` key is guarded too, which reverses an exception this ADR used to make.** It originally
+- The `snapshots` key is guarded too, which reverses an exception this ADR used to make. It originally
   let a `snapshots` key that was not an array normalize quietly to `[]`, reasoning that the surrounding object
   was intact and the Notification baseline in `starsAtLastNotification` was perfectly good, so throwing would
   discard it to complain about a sibling key. That reasoning is circular. The baseline only needs to survive
@@ -71,13 +71,13 @@ nothing is pushed, so the unreadable file is left exactly as it was.
   above forbids: it publishes a Report calling every Star new, writes one Snapshot and pushes over the file it
   could not read. Keeping one good key is no consolation for discarding the record it belongs to. Only an
   **absent** `snapshots` key still yields `[]`, because that is what a first Run looks like.
-- **`readStargazers` deliberately does not get the same treatment.** It keeps an absence fallback because
+- `readStargazers` deliberately does not get the same treatment. It keeps an absence fallback because
   `stargazers.json` is rebuilt from the API on the next Run, so a silent reset there costs one Run's New
   Stargazer list rather than the whole record. Do not "make the two readers consistent"; the asymmetry is the
   decision. It is an asymmetry about `assertJsonObject`, `assertReadableFormat` and `assertSnapshotList`, not about the parse
   catch: that one lives in the shared `readJsonFile`, so bytes that are not JSON fail the Run whichever file
   they are in.
-- **The container rule survives, scoped to the disposable file, and `readStargazers` had to be taught it.**
+- The container rule survives, scoped to the disposable file, and `readStargazers` had to be taught it.
   The guards protect the container, and a bad key inside a sound container is repaired rather than fatal, but
   only where a silent repair costs one Run rather than the whole record. That is `stargazers.json`, and it is
   not `stars-data.json`. `readStargazers` performed no repair at all: it returned

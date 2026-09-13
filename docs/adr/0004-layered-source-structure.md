@@ -16,22 +16,22 @@ The source is split into layers following **Domain-Driven Design<sub>(ish)</sub>
 
 The layers are `application`, `config`, `domain`, `i18n`, `infrastructure`, `presentation` and `shared`, plus `assets`, which is not a layer at all but the brand files the README embeds. `index.ts` sits above all of them and calls `trackStars()` at module load.
 
-**Each layer has an explicit set of layers and packages it may import, and everything else is forbidden.** The normative statement of that set is the layer-map table in [`ARCHITECTURE.md`](../../ARCHITECTURE.md); the diagram beside it is the same rules as a picture, and anything the table forbids is forbidden however convenient. This ADR records that the boundaries are enumerated rather than conventional; it does not restate them, because two copies of a dependency table drift.
+Each layer has an explicit set of layers and packages it may import, and everything else is forbidden. The normative statement of that set is the layer-map table in [`ARCHITECTURE.md`](../../ARCHITECTURE.md); the diagram beside it draws the same rules, and an import the table does not list is not allowed however convenient it looks. This ADR records that the boundaries are enumerated rather than conventional; it does not restate them, because two copies of a dependency table drift.
 
 Purity is the half of the rule that is not a matter of direction: `domain`, `presentation` and `i18n` perform no I/O at all, with no clock beyond an injectable `now`. Each impure layer owns exactly one kind of side effect and no other:
 
-- **`config` reads the action inputs and one YAML file**, and nothing else. That is its whole sanctioned side effect, and it is why `@config` is allowed `@actions/core` and `node:fs` when `presentation` is not.
-- **`infrastructure` owns everything outbound**: the GitHub REST API, the `git` CLI, the filesystem under the Data Branch worktree, and SMTP. It is the only layer that reaches the network, which is not the same as being the only layer that does I/O.
-- **`application` writes the Action log and the action outputs**, and sequences the run.
+- `config` reads the action inputs and one YAML file, and nothing else. That is its whole sanctioned side effect, and it is why `@config` is allowed `@actions/core` and `node:fs` when `presentation` is not.
+- `infrastructure` owns everything outbound: the GitHub REST API, the `git` CLI, the filesystem under the Data Branch worktree, and SMTP. It is the only layer that reaches the network, which is not the same as being the only layer that does I/O.
+- `application` writes the Action log and the action outputs, and sequences the run.
 
 `presentation` is permitted to import `@config/types`, which is a type-only edge from a pure layer to an impure one: the shape of `Config` is data, and reading it is not the side effect that makes `config` impure.
 
 ### What the `(ish)` means
 
-**Domain-Driven Design applied where it pays, not by the book.** The ideas that carry the design are adopted in full:
+Domain-Driven Design applied where it pays, not by the book. The ideas that carry the design are adopted in full:
 
 - **One ubiquitous language**, recorded in the root [`CONTEXT.md`](../../CONTEXT.md) and used by every layer. Snapshot, Baseline Snapshot, Delta, Tracked Set and Delivery mean the same thing in `domain`, in a chart title and in a log line, and the glossary lists the synonyms each word displaces so a near-miss cannot drift in.
-- **A domain layer with no infrastructure in it**, which is the boundary set out above and the whole return on the extra structure.
+- **A domain layer with no infrastructure in it**, which is the boundary set out above.
 
 The rest of the tactical catalogue is taken where it fits and left where it does not, one pattern at a time rather than as a package:
 
@@ -47,6 +47,6 @@ That list is a record of what was weighed, not a policy against the patterns. A 
 ## Consequences
 
 - The arithmetic that matters (Delta, Baseline Snapshot selection, Velocity, Forecast, Reconstructed History) and every rendered artefact can be exercised directly on plain values, with no GitHub API, git or SMTP anywhere near the test. That is the whole return on the extra structure.
-- The purity of `domain` and `presentation` is load-bearing rather than stylistic: the moment a network call or a filesystem write appears in either, that property is gone and the tests start needing mocks.
-- **The per-layer side-effect statement is what other decisions cite.** [ADR 0018](./0018-loadconfig-reads-the-ambient-action-inputs.md) rests on `config`'s side effect being *defined* as reading the ambient inputs, and [ADR 0016](./0016-the-report-renderers-read-config-themselves.md) rests on `presentation` being allowed `@config/types`. Narrowing either here silently invalidates those.
+- The purity of `domain` and `presentation` does real work rather than being a style choice: the moment a network call or a filesystem write appears in either, that property is gone and the tests start needing mocks.
+- The per-layer side-effect statement is what other decisions cite. [ADR 0018](./0018-loadconfig-reads-the-ambient-action-inputs.md) rests on `config`'s side effect being *defined* as reading the ambient inputs, and [ADR 0016](./0016-the-report-renderers-read-config-themselves.md) rests on `presentation` being allowed `@config/types`. Narrowing either here silently invalidates those.
 - The cost is navigational. Following one feature end to end means crossing several files, and small changes touch more places than they would in a flat layout.

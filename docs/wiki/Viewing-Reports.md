@@ -9,7 +9,7 @@ All data is automatically saved to a dedicated branch (default: `star-tracker-da
 ### Contents
 
 Every file the branch holds, and the condition under which each one appears, is tabulated in
-**[Data Management](Data-Management#generated-files)**.
+[Data Management](Data-Management#generated-files).
 
 ### Viewing
 
@@ -151,6 +151,6 @@ curl -s https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/
 
 ## Next Steps
 
-- **[Star Trend Charts](Star-Trend-Charts)** - Chart types and embedding
-- **[Email Notifications](Email-Notifications)** - Email setup
-- **[Data Management](Data-Management)** - How data is stored and rotated
+- [Star Trend Charts](Star-Trend-Charts) - Chart types and embedding
+- [Email Notifications](Email-Notifications) - Email setup
+- [Data Management](Data-Management) - How data is stored and rotated

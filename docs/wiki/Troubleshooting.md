@@ -297,9 +297,9 @@ on whichever one should not be the writer.
 
 **Cause:** The stargazers fetch for that repository came back empty or failed, so its history cannot be reconstructed. The run log includes a warning naming the affected repository and, for failures, the API error. Common reasons:
 
-- **Transient GitHub-side failures.** During the [2026 stargazers restriction](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/) rollout (~July 5–13, 2026) the endpoint intermittently returned `404`s, empty lists, or `5xx` errors with an empty/plain-text body **even to repository admins**, most commonly on deep pagination of very large (40,000+ star) repos. Since v1.22.3 the run log always includes the HTTP status (`Failed to fetch stargazers for <repo>: HTTP 5xx ...`), so you can tell a real restriction (`403`/`404`) apart from a transient server error at a glance, and `5xx`/network errors are retried automatically before being reported. Verify with `curl -i -H "Authorization: Bearer <token>" -H "Accept: application/vnd.github.star+json" "https://api.github.com/repos/<owner>/<repo>/stargazers?per_page=1"`. If it returns `200` with data, just re-run the workflow: charts are reconstructed from scratch on every run.
-- **The token's user is not an admin or collaborator on the repository**, per the same restriction: the list comes back `404` or empty (`200 []`) silently. Note this is about the user's *role*, not token scopes (implicit admin through org ownership works with a classic PAT). Typical setups: a fine-grained PAT without a grant on the repository's organization, or org repositories where you are a member with read access only. See [Known Limitations](Known-Limitations#-stargazers-api-access-restriction-2026).
-- **Rate limiting on large repositories.** A repository above 40,000 stars costs 400 API requests per run without smart sampling; a handful of large repos can exhaust the 5,000 requests/hour REST quota mid-run.
+- Transient GitHub-side failures. During the [2026 stargazers restriction](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/) rollout (~July 5–13, 2026) the endpoint intermittently returned `404`s, empty lists, or `5xx` errors with an empty/plain-text body **even to repository admins**, most commonly on deep pagination of very large (40,000+ star) repos. Since v1.22.3 the run log always includes the HTTP status (`Failed to fetch stargazers for <repo>: HTTP 5xx ...`), so you can tell a real restriction (`403`/`404`) apart from a transient server error at a glance, and `5xx`/network errors are retried automatically before being reported. Verify with `curl -i -H "Authorization: Bearer <token>" -H "Accept: application/vnd.github.star+json" "https://api.github.com/repos/<owner>/<repo>/stargazers?per_page=1"`. If it returns `200` with data, just re-run the workflow: charts are reconstructed from scratch on every run.
+- The token's user is not an admin or collaborator on the repository, per the same restriction: the list comes back `404` or empty (`200 []`) silently. Note this is about the user's *role*, not token scopes (implicit admin through org ownership works with a classic PAT). Typical setups: a fine-grained PAT without a grant on the repository's organization, or org repositories where you are a member with read access only. See [Known Limitations](Known-Limitations#stargazers-api-access-restriction-2026).
+- Rate limiting on large repositories. A repository above 40,000 stars costs 400 API requests per run without smart sampling; a handful of large repos can exhaust the 5,000 requests/hour REST quota mid-run.
 
 Since v1.22.3, a single failing page no longer discards the rest of a repo's history: the action keeps whatever pages it could fetch, logs which ones it had to skip, and scales the chart to the real coverage. If the repo's list still comes back completely empty, the per-repo chart falls back to the Stored History, which only covers the period the action has been running.
 
@@ -573,6 +573,6 @@ If your issue isn't covered here:
 
 ## Next Steps
 
-- **[Configuration](Configuration)** - All available options
-- **[Known Limitations](Known-Limitations)** - Current constraints
-- **[Examples](Examples)** - Working configurations
+- [Configuration](Configuration) - All available options
+- [Known Limitations](Known-Limitations) - Current constraints
+- [Examples](Examples) - Working configurations

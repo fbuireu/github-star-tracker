@@ -9,7 +9,7 @@ Accepted
 ## Context
 
 DDD splits cleanly in two here, and only one half is negotiable. The **strategic** half, one ubiquitous
-language and a domain that owes nothing to its host, is load-bearing and settled in
+language and a domain that owes nothing to its host, is what the rest rests on, and is settled in
 [ADR 0004](./0004-layered-source-structure.md). The **tactical** half, the catalogue of value objects,
 aggregates, repositories and events, is where the method asks for an abstraction *before the code has earned
 it*. Taken on faith it produces boilerplate that ends up hiding the rules it was supposed to protect: a
@@ -122,18 +122,18 @@ is, and named here so it is not re-raised as an oversight.
 
 ## Consequences
 
-- **A finding closed by a written rule is closed.** Reopening one means showing that one of the
+- A finding closed by a written rule is closed. Reopening one means showing that one of the
   answers changed, not that the primitive still looks untyped. The `starredAt`, `fullName`, chart
   style and `MS_PER_DAY` cases above are closed on that basis.
-- **The commit message has to say which answer applied.** "This is a guard" is load-bearing: it tells the
+- **The commit message has to say which answer applied.** "This is a guard" does real work: it tells the
   next reader that the accompanying test constructs an unreachable state deliberately, so they do not go
   looking for the user report behind it. A guard whose commit does not say so reads as a fixed bug and
   attracts a second, redundant fix later.
-- **This makes some real defects slower to reach.** Question 1 asks for a reachability argument before any
+- This makes some real defects slower to reach. Question 1 asks for a reachability argument before any
   code moves, and a wrong "not reachable" leaves a live bug in place. The page-ceiling case is exactly that
   shape: it looked like a guard until the direction of GitHub's pagination made it reachable on every Run
   for the repositories the feature exists for. When the argument is not conclusive, treat it as reachable.
-- **It does not license leaving primitives untyped by default.** Every question has to fail. A concept
+- It does not license leaving primitives untyped by default. Every question has to fail. A concept
   that reaches an action output or the Data Branch has already answered the boundary question.
 - **Where it bites:** the *Conventions* section of [CLAUDE.md](../../CLAUDE.md) points here, and each
   rejected case above is also named in the folder guide that owns it, so a reader meets the rule before they

@@ -103,10 +103,10 @@ Star counts, reports and badges are unaffected, so the run succeeds and the gap 
 
 ## Security Best Practices
 
-- **Set expiration:** 90 days is a reasonable default; set a calendar reminder to rotate. An expired token does not degrade the run, it fails it
-- **Store in GitHub Secrets only:** never commit tokens to code
-- **Rotate regularly:** revoke and regenerate periodically
-- **Monitor usage:** check token activity at [GitHub Settings > Tokens](https://github.com/settings/tokens)
+- Set expiration: 90 days is a reasonable default; set a calendar reminder to rotate. An expired token does not degrade the run, it fails it
+- Store in GitHub Secrets only: never commit tokens to code
+- Rotate regularly: revoke and regenerate periodically
+- Monitor usage: check token activity at [GitHub Settings > Tokens](https://github.com/settings/tokens)
 
 ---
 
@@ -125,5 +125,5 @@ Star counts, reports and badges are unaffected, so the run succeeds and the gap 
 
 ## Next Steps
 
-- **[Getting Started](Getting-Started)**: continue setup after creating your token
-- **[Configuration](Configuration)**: customize tracking options
+- [Getting Started](Getting-Started): continue setup after creating your token
+- [Configuration](Configuration): customize tracking options

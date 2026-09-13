@@ -1,6 +1,6 @@
 **Track star counts across every repository your token can see, on a schedule, with reports, charts and optional email alerts.**
 
-GitHub Star Tracker is a GitHub Action that monitors star counts across all your repositories, generates historical reports with charts and forecasts, and optionally sends email notifications when activity is detected.
+GitHub Star Tracker is a GitHub Action that monitors star counts across all your repositories, generates historical reports with charts and forecasts, and optionally emails you once enough has changed to be worth reading.
 
 ---
 
@@ -8,10 +8,10 @@ GitHub Star Tracker is a GitHub Action that monitors star counts across all your
 
 - Fetches star counts for your repos via the GitHub API
 - Compares against the previous snapshot to compute deltas
-- Generates a **Markdown report**, **SVG badge**, **animated SVG charts**, and an **HTML email digest**
-- Commits everything to an isolated **data branch** (your `main` branch is never touched)
-- Optionally tracks **individual stargazers** and produces **growth forecasts**
-- Sends **email notifications** when thresholds are met
+- Generates a Markdown report, an SVG badge, animated SVG charts and an HTML email digest
+- Commits everything to an isolated data branch, so your `main` branch is never touched
+- Optionally tracks individual stargazers and produces growth forecasts
+- Sends email notifications once the threshold is reached
 
 ---
 
@@ -19,21 +19,21 @@ GitHub Star Tracker is a GitHub Action that monitors star counts across all your
 
 | Page | Description |
 |------|-------------|
-| **[Getting Started](Getting-Started)** | Token setup, first workflow, first run |
-| **[How It Works](How-It-Works)** | Execution flow, data pipeline, phase by phase |
-| **[Architecture](Architecture)** | DDD(ish) layers, how much DDD and where it stops |
-| **[Technical Stack](Technical-Stack)** | Why these tools and these dependencies |
-| **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)** | Classic & fine-grained token creation |
-| **[Configuration](Configuration)** | All available options, file-based config, precedence |
-| **[API Reference](API-Reference)** | Complete inputs, outputs, and data formats |
-| **[Examples](Examples)** | Real-world workflows and advanced recipes |
-| **[Star Trend Charts](Star-Trend-Charts)** | SVG charts, QuickChart URLs, chart types |
-| **[Email Notifications](Email-Notifications)** | Built-in SMTP and external action setup |
-| **[Viewing Reports](Viewing-Reports)** | Data branch, badges, action outputs |
-| **[Data Management](Data-Management)** | Snapshots, history rotation, generated files |
-| **[Internationalization (i18n)](<Internationalization-(i18n)>)** | Multi-language support (en, es, ca, it) |
-| **[Known Limitations](Known-Limitations)** | Technical constraints and design trade-offs |
-| **[Troubleshooting](Troubleshooting)** | Common issues and solutions |
+| [Getting Started](Getting-Started) | Token setup, first workflow, first run |
+| [How It Works](How-It-Works) | Execution flow, data pipeline, phase by phase |
+| [Architecture](Architecture) | DDD(ish) layers, how much DDD and where it stops |
+| [Technical Stack](Technical-Stack) | Why these tools and these dependencies |
+| [Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>) | Classic & fine-grained token creation |
+| [Configuration](Configuration) | All available options, file-based config, precedence |
+| [API Reference](API-Reference) | Complete inputs, outputs, and data formats |
+| [Examples](Examples) | Real-world workflows and advanced recipes |
+| [Star Trend Charts](Star-Trend-Charts) | SVG charts, QuickChart URLs, chart types |
+| [Email Notifications](Email-Notifications) | Built-in SMTP and external action setup |
+| [Viewing Reports](Viewing-Reports) | Data branch, badges, action outputs |
+| [Data Management](Data-Management) | Snapshots, history rotation, generated files |
+| [Internationalization (i18n)](<Internationalization-(i18n)>) | Multi-language support (en, es, ca, it) |
+| [Known Limitations](Known-Limitations) | Technical constraints and design trade-offs |
+| [Troubleshooting](Troubleshooting) | Common issues and solutions |
 
 ---
 

@@ -20,8 +20,8 @@ that value on every run, the first link in the chain always matches, and the con
 config file would still parse, still validate, still warn about bad values, and still be silently ignored.
 
 Declaring the defaults in the manifest is the obvious thing to do and is what almost every action does. It is
-also what makes the second configuration surface a lie, and the failure is invisible: no error, no warning,
-just an option that does not take effect.
+also what turns the config file into a promise the action does not keep, and the failure is invisible: no
+error, no warning, just an option that does not take effect.
 
 ## Decision
 

@@ -52,13 +52,13 @@ Each layer documents its own rules in a colocated `CLAUDE.md`.
 
 DDD applied where it pays, not by the book. The method splits in two, and only one half is negotiable.
 
-The **strategic** half is load-bearing and is taken whole. The **tactical** half, the catalogue of value objects, aggregates, repositories and events, asks for an abstraction before the code has earned it; taken on faith it adds boilerplate that ends up hiding the very rules it was meant to protect. It is adopted here only where a concrete force calls for it.
+The **strategic** half does the real work and is taken whole. The **tactical** half, the catalogue of value objects, aggregates, repositories and events, asks for an abstraction before the code has earned it; taken on faith it adds boilerplate that ends up hiding the very rules it was meant to protect. It is adopted here only where a concrete force calls for it.
 
 The strategic ideas the design leans on:
 
-**One ubiquitous language.** [`CONTEXT.md`](https://github.com/fbuireu/github-star-tracker/blob/main/CONTEXT.md) defines every domain word (Snapshot, Baseline Snapshot, Delta, Tracked Set, Covered Stars, Delivery) and, for each, lists the synonyms it displaces, so a near-miss word cannot drift in. A term means the same thing in the star mathematics, in a chart title, in an email and on this page.
+One ubiquitous language. [`CONTEXT.md`](https://github.com/fbuireu/github-star-tracker/blob/main/CONTEXT.md) defines every domain word (Snapshot, Baseline Snapshot, Delta, Tracked Set, Covered Stars, Delivery) and, for each, lists the synonyms it displaces, so a near-miss word cannot drift in. A term means the same thing in the star mathematics, in a chart title, in an email and on this page.
 
-**A domain that performs no I/O.** `domain`, `presentation` and `i18n` reach no network, no filesystem and no clock beyond an injectable `now`, which is what lets the arithmetic and every rendered artefact be exercised on plain values with no GitHub API, git or SMTP anywhere near the test.
+A domain that performs no I/O: `domain`, `presentation` and `i18n` reach no network, no filesystem and no clock beyond an injectable `now`, which is what lets the arithmetic and every rendered artefact be exercised on plain values with no GitHub API, git or SMTP anywhere near the test.
 
 The rest of the tactical catalogue is taken only where it fits. There are no bounded contexts, because there is one language and one use case. There are no aggregates, because no value here has a lifecycle to guard: each is built once per run and never updated in place. The Repository pattern is present in shape, as the single data-branch facade, without the vocabulary or the interface-with-one-implementer that usually travels with it. Value objects are decided per concept rather than by default.
 
@@ -77,5 +77,5 @@ This page is the shape, not the rules. The normative statement of which layer ma
 | Why is the tree layered at all, and what did the `(ish)` drop? | [ADR 0004](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0004-layered-source-structure.md) |
 | When does a bare `string` or `number` earn a type of its own? | [ADR 0022](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md) |
 | What does one layer actually guarantee? | The `CLAUDE.md` inside that layer's folder |
-| What happens, step by step, on a run? | **[How It Works](How-It-Works)** |
-| Why these tools and these dependencies? | **[Technical Stack](Technical-Stack)** |
+| What happens, step by step, on a run? | [How It Works](How-It-Works) |
+| Why these tools and these dependencies? | [Technical Stack](Technical-Stack) |

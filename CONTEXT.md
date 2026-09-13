@@ -1,6 +1,6 @@
 # Star Tracking
 
-The domain of observing how many stars a set of GitHub repositories has accumulated over time, and of turning that observation into reports, charts and notifications. Everything here is about measurement and its fidelity, not about the APIs, files or libraries that obtain and store it.
+The domain of observing how many stars a set of GitHub repositories has accumulated over time, and of turning that observation into reports, charts and notifications. Everything here is about the measurement and how faithful it is, rather than about the APIs, files or libraries that obtain and store it.
 
 ## Repositories
 
@@ -13,11 +13,11 @@ The account a Repository belongs to, whether that account is a person or an orga
 _Avoid_: namespace, account holder
 
 **Visibility**:
-The audience a Repository is exposed to, and the primary axis on which the tracked set is narrowed: public, private, everything, or only what the Owner owns outright.
+The audience a Repository is exposed to, and the main way the tracked set is narrowed: public, private, everything, or only what the Owner owns outright.
 _Avoid_: scope, access level, privacy
 
 **Tracked Set**:
-The repositories that survive every configured filter and are therefore measured on a given Run. Repositories outside it are invisible to the domain: not counted, not charted, not reported.
+The repositories that survive every configured filter and are therefore measured on a given Run. A repository outside it is invisible to the domain: nothing counts it and nothing reports it.
 _Avoid_: selection, included repos, watchlist
 
 **New Repository**:
@@ -25,7 +25,7 @@ A Repository present in the current observation but absent from the Baseline Sna
 _Avoid_: added repo, first-seen repo, fresh repo
 
 **Removed Repository**:
-A Repository present in the Baseline Snapshot but absent from the current observation. Its Stars count as lost even though it is no longer part of the Tracked Set total.
+A Repository present in the Baseline Snapshot but absent from the current observation. Its Stars count as lost even though it is no longer part of the Tracked Set total. Absence is the only signal there is, so a deletion, a rename and a repository an edited filter dropped all arrive the same way.
 _Avoid_: deleted repo, dropped repo, missing repo
 
 **Top Repositories**:
@@ -35,7 +35,7 @@ _Avoid_: featured repos, highlights, leaders
 ## Stars and Stargazers
 
 **Star**:
-A single act of endorsement by one GitHub user on one Repository. It is the atomic unit everything in this domain counts.
+A single act of endorsement by one GitHub user on one Repository. It is the unit everything here counts.
 _Avoid_: like, favourite, upvote
 
 **Star Count**:
@@ -61,7 +61,7 @@ The Star Count of every Repository in the Tracked Set at a single instant, toget
 _Avoid_: data point, sample, entry, reading, measurement
 
 **Stored History**:
-The accumulated series of Snapshots, one appended per Run. It is the tracker's memory: it only knows what it has personally observed.
+The accumulated series of Snapshots, one appended per Run. It is the tracker's memory, and it holds only what the tracker observed itself.
 _Avoid_: tracked history, snapshot history, per-run history, timeline
 
 **Reconstructed History**:
@@ -69,7 +69,7 @@ A star timeline rebuilt from when each Stargazer starred, covering the period be
 _Avoid_: real history, true history, starred-at history
 
 **Comparison Window**:
-The reach the current observation is compared over: the immediately preceding Run, or the oldest observation within a stated age. It decides what "changed" means for a given Run, by deciding which Snapshot becomes the Baseline Snapshot.
+The reach the current observation is compared over: the immediately preceding Run, or the oldest observation within a stated age. It picks which Snapshot becomes the Baseline Snapshot, and so decides what "changed" means for a Run.
 _Avoid_: interval, period, range, lookback, timeframe
 
 **Baseline Snapshot**:
@@ -133,7 +133,7 @@ A Repository whose Stargazers were observed through Smart Sampling rather than e
 _Avoid_: partial repo, approximated repo, throttled repo
 
 **Covered Stars**:
-How many of a Repository's Stars a partial or interrupted enumeration actually accounts for. It is the honest denominator behind a Reconstructed History.
+How many of a Repository's Stars a partial or interrupted enumeration actually accounts for. It is the denominator a Reconstructed History rests on.
 _Avoid_: fetched stars, counted stars, sampled stars
 
 ## Outputs

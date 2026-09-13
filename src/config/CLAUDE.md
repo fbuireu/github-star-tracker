@@ -6,7 +6,7 @@ repo's `star-tracker.yml`. It produces a fully-populated `Config` (every field a
 inputs (`@infrastructure/notification` does), does **not** read `github-token` / `github-api-url`
 (`@application/tracker` does), and does **not** validate value *ranges*.
 
-**`loadConfig()` takes no arguments and reads the ambient inputs on purpose**, and
+`loadConfig()` takes no arguments and reads the ambient inputs on purpose, and
 [ADR 0018](../../docs/adr/0018-loadconfig-reads-the-ambient-action-inputs.md) records why: parameterising it
 deletes a block of test lines, most of them the same repeated mock, and forces the orchestrator to relearn every input
 name, which is exactly the coupling
@@ -29,7 +29,7 @@ The row types are the vocabulary: `boolField`, `positiveField`, `nonNegativeFiel
 `chart-line-width`) are what makes their warning name the fallback rather than say "Ignoring it." That used
 to be a combinator of its own, byte-identical to `scalarField` but for the one template literal.
 
-**Some keys are deliberately outside the table**, and each is a documented exception: `visibility` throws
+Some keys are deliberately outside the table, and each is a documented exception: `visibility` throws
 instead of warning, `dataBranch` runs an extra validator, `sendOnNoChanges` never reads the config file and
 never warns, and `chartCustomMilestones` has its own precedence (see below). Anything else belongs in the
 table.
@@ -39,18 +39,18 @@ table.
 - **Precedence, per key: action input, then config-file value, then `DEFAULTS`.** Never reversed. Enum keys
   use `input || fileValue`, so an empty-string input falls through; everything else uses `??` on the *parsed*
   result, so a value that parses to `false` or `0` still beats the file.
-- **Each input is parsed once.** The fold decides the value and whether to warn from the same result, so no
+- Each input is parsed once. The fold decides the value and whether to warn from the same result, so no
   key calls its parser twice.
 - A config-file value that is neither a string, a number, `null` nor absent is ignored rather than crashing
   the parser: `min_stars: true` falls back to the default.
-- **`emailTheme` is the one key whose default is another key.** It resolves through `resolveEnum` like every
+- `emailTheme` is the one key whose default is another key. It resolves through `resolveEnum` like every
   other enum row, but `ChartTheme.AUTO` is not a value it keeps: `auto` collapses to the already-resolved
   `chartTheme` before the `Config` is built, so `Config.emailTheme` is what the email should actually use and
   no consumer re-derives it. `DEFAULTS.emailTheme` is therefore `auto`, a marker meaning "inherit" rather
   than a palette, and it exists mainly so the config-file key `email_theme` is derived.
-- **That collapse is positional in `loadConfig`'s `Config` object literal, not in `FIELD_SOURCES`.**
+- That collapse is positional in `loadConfig`'s `Config` object literal, not in `FIELD_SOURCES`.
   `chartTheme` and `emailTheme` are both ordinary `enumField` rows and `resolveTabledFields` resolves them
-  independently, so reordering the rows changes nothing. What is load-bearing is that the `emailTheme:` line
+  independently, so reordering the rows changes nothing. What does matter is that the `emailTheme:` line
   sits **after** `...tabled` in the literal: above the spread, the un-collapsed `auto` from `tabled` would
   win back.
 - **Only these throw**: an unknown `visibility`, and an invalid `data-branch`. Everything else (a bad
@@ -58,15 +58,15 @@ table.
   not a warning.
 - `visibility` is resolved with `Object.values(...).find(...)`, not an object index, so `visibility: toString`
   is rejected instead of resolving off `Object.prototype`.
-- **`data-branch` validation** rejects `''`, `'@'`, whitespace, `~ ^ : ? * [ \`, control characters, the
+- `data-branch` validation rejects `''`, `'@'`, whitespace, `~ ^ : ? * [ \`, control characters, the
   sequences `..` `//` `/.` `@{`, a leading `-` `.` `/`, and a trailing `/` `.` `.lock`. It accepts
   `data/star-tracker`, `_star-data`, `stars@v2`, `v1.2.3`, `UPPER_case-1`.
-- **Booleans use different vocabularies on each path.** Action inputs accept only `true`/`false`, so `yes`, `on` and
+- Booleans use different vocabularies on each path. Action inputs accept only `true`/`false`, so `yes`, `on` and
   `1` are **invalid** and warn. Config-file values accept the full YAML set (`true|yes|on|y|1` /
   `false|no|off|n|0`), and a quoted `"false"` is `false`, not a truthy string.
-- **Numbers are strict.** A string input must match `/^[+-]?\d+$/` after trimming, so `'3.7'` and `'42abc'`
+- Numbers are strict. A string input must match `/^[+-]?\d+$/` after trimming, so `'3.7'` and `'42abc'`
   are rejected outright with no partial parse; a YAML number is truncated with `Math.trunc`.
-- **Sign is enforced per key, and which parser a key uses is load-bearing.** `max-history`, `top-repos` and
+- **Sign is enforced per key, and the parser a key uses is what enforces it.** `max-history`, `top-repos` and
   `smart-sampling-pages` use `parsePositiveNumber` (`> 0`), so `0` and negatives fall back to the default.
   `min-stars`, `chart-max-points` and `smart-sampling-threshold` use `parseNonNegativeNumber` (`>= 0`), which
   is what keeps `chart-max-points: 0` alive as a meaningful value, full history at weekly resolution, while
@@ -74,13 +74,13 @@ table.
   `.slice(-maxHistory)`, and `slice(-0)` would keep the entire array.
 - `chart-line-width` is the only decimal field and requires finite **and > 0**.
   `notification-threshold` matches `'auto'` **exactly**: no trim, no case-fold, so `'Auto'` is rejected.
-- **Lists**: `parseList` returns `undefined` (not `[]`) for empty input so the file value can still win, while
+- Lists: `parseList` returns `undefined` (not `[]`) for empty input so the file value can still win, while
   `toStringList` **preserves an empty array**, so `only_repos: []` in the file yields `[]` rather than falling
   back to `DEFAULTS`.
-- **`chart-custom-milestones` has special-cased precedence**: a non-empty *input* wins outright, even when it
+- `chart-custom-milestones` has special-cased precedence: a non-empty *input* wins outright, even when it
   parses to `[]`, and the file value is not consulted. It keeps finite values `> 0`, de-duplicates and sorts
   ascending, and uses `parseInt` per segment, so `'2500abc'` yields 2500 unlike the strict number parser.
-- **Config-file keys are derived mechanically** from `Object.keys(DEFAULTS)`. Both `snake_case` and
+- Config-file keys are derived mechanically from `Object.keys(DEFAULTS)`. Both `snake_case` and
   `kebab-case` are read, `snake_case` wins when both are present, and there is no hand-written key map, so
   adding a `Config` field automatically makes it file-readable.
 - **`sendOnNoChanges` is the one key that cannot come from the config file.** Input-only, parsed with a bare
@@ -132,13 +132,13 @@ differently from an absent one rather than as a changed default.
 
 ## Gotchas
 
-- **`loadConfigFile` returns every file key, with `undefined` for absent ones**, so `'minStars' in fileConfig`
+- `loadConfigFile` returns every file key, with `undefined` for absent ones, so `'minStars' in fileConfig`
   is not a presence test; use `??`. It returns `{}` when the file is missing, empty, unparseable, or parses
   to a non-object.
-- **Config-file parse failures are mostly silent.** Only the enum fields warn, because they are fed
+- Config-file parse failures are mostly silent. Only the enum fields warn, because they are fed
   `input || fileValue`; everything else warns on the input side only. A bad `min_stars: "abc"` in the YAML
   falls back with no warning at all.
-- **An unquoted hex colour in YAML is parsed as a number** (`chart_line_color: 123456`), and the file parser
+- An unquoted hex colour in YAML is parsed as a number (`chart_line_color: 123456`), and the file parser
   accepts strings only, so it silently becomes the default. Quote it. `action.yml` warns about the
   `#`-starts-a-comment half of this trap but not the numeric half.
 - `resolveEnum` takes `input || fileValue`, so an empty string means "not set" and returns the fallback

@@ -7,8 +7,8 @@ factories.
 
 **Anything added here needs a reason why no existing layer owns it.** Formatting goes to
 `@domain/formatting`, config parsing to `@config/parsers`, rendering primitives to `@presentation/shared`,
-and git, fs or HTTP to `@infrastructure`. If one of those fits, use it. In particular, `shared` must never
-accumulate domain logic: a helper that reasons about stars, snapshots, deltas, forecasts or dates-as-business-data
+and git, fs or HTTP to `@infrastructure`, so if one of those fits, use it. `shared` must never accumulate
+domain logic: a helper that reasons about stars, snapshots, deltas, forecasts or dates-as-business-data
 belongs in `@domain`.
 
 ## errors.ts
@@ -19,11 +19,11 @@ throw is a string, a plain object or `undefined`, and they had accumulated. `err
 string `message` off the value when there is one and falls back to `String(error)` when there is not, so it
 never returns the empty string and never throws.
 
-**It lives here because no layer owns it.** Its callers are `@application/tracker`, `@config/loader` and
+It lives here because no layer owns it. Its callers are `@application/tracker`, `@config/loader` and
 `@infrastructure/persistence/storage`, and `config` may not import `infrastructure`, so there is no lower
 layer they all share. That is the reason this folder asks for, spelled out.
 
-- **It is not `describeFetchError`, and neither is built on the other.**
+- It is not `describeFetchError`, and neither is built on the other.
   [`@infrastructure/github/errors`](../infrastructure/github/errors.ts) prefixes an octokit `status` and
   deliberately treats a blank message as *absent* so a status-only failure reads `HTTP 500` rather than
   `HTTP 500 Error`. `errorMessage` has no status to fall back on, so a blank message must become
@@ -44,15 +44,15 @@ helpers, no setup; mocking stays in the test files that need it. Nothing outside
   never `new Date(2026, 0, 1)`, which is local time and makes the suite timezone-dependent. The default epoch
   is in 2026; tests that also build dates by hand must stay in the same era or comparisons silently fall
   outside chart and forecast windows.
-- **`stepDays` defaults differ**: 1 in `makeStargazerSeries`, 7 in `makeHistory` and `makeMultiRepoHistory`.
+- `stepDays` defaults differ: 1 in `makeStargazerSeries`, 7 in `makeHistory` and `makeMultiRepoHistory`.
   Velocity and forecast maths are per-day, so changing the spacing changes the expected numbers.
-- **Snapshots come out chronologically ascending**, index 0 oldest, which is what the domain layer assumes.
-- **`makeHistory` snapshots have empty `repos`.** Anything reading per-repo series gets nothing from it; reach
+- Snapshots come out chronologically ascending, index 0 oldest, which is what the domain layer assumes.
+- `makeHistory` snapshots have empty `repos`. Anything reading per-repo series gets nothing from it; reach
   for `makeMultiRepoHistory` instead. Its keys must be `owner/name`, since `name` is taken from the second
   segment: a bare `'repo-a'` key yields `name: undefined` and a broken fixture.
-- **Overrides are a shallow merge.** Replacing `summary` replaces the whole object, so every field must be
+- Overrides are a shallow merge. Replacing `summary` replaces the whole object, so every field must be
   supplied, and nothing is recomputed from `repos`. Keeping the two consistent is the test's job.
-- **`makeConfig` shares `DEFAULTS`' array instances.** The spread is shallow, so the list fields are the
+- `makeConfig` shares `DEFAULTS`' array instances. The spread is shallow, so the list fields are the
   *same arrays* on every config the factory ever returns. Pass a fresh array in the overrides; never `push`
   into one. It does track `Config` automatically, so a new key needs no edit here, only in `@config/defaults`
   and [`action.yml`](../../action.yml).
@@ -67,7 +67,7 @@ helpers, no setup; mocking stays in the test files that need it. Nothing outside
   whole of `src`. `makeHistory` and `makeMultiRepoHistory` take a leading positional list followed by an
   options object; every other factory takes a single destructured params or options object. Follow the shape
   of the factory you are extending.
-- **Some test files define their own local factories** with the same names but different signatures:
+- Some test files define their own local factories with the same names but different signatures:
   [`velocity.test.ts`](../domain/velocity.test.ts) has its own `makeHistory` and [`svg-chart.test.ts`](../presentation/svg-chart.test.ts) its own `makeSnapshot` /
   `makeMultiRepoSnapshot`. Neither imports `@shared/tests`, so do not assume the name means the shared
   factory.

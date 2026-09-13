@@ -27,7 +27,7 @@ Check the existing issues first, then use the [bug report template](ISSUE_TEMPLA
 what you did, what you expected, and what actually happened, with the action version, the workflow log and
 the `star-tracker.yml` you ran it with, minus anything secret.
 
-**A mistake in the text is a content issue, not a bug.** The report's, badge's and email digest's wording
+A mistake in the text is a content issue, not a bug. The report's, badge's and email digest's wording
 lives in the locale bundles under `src/i18n` and the wiki under `docs/wiki`, so a pull request can fix
 either; if you would rather not open one, use the
 [content issue template](ISSUE_TEMPLATE/content_issue.yml) and say which language it is in.
@@ -88,7 +88,7 @@ cannot both hold; CI runs the full `pnpm verify` on the pushed sha, so a push wh
 fails its check. [CLAUDE.md](../CLAUDE.md) explains the trade. Because `pre-push` rebuilds the bundle, a
 push can leave `dist/` dirty; commit that result rather than discarding it.
 
-**The bundle.** `action.yml` runs `dist/index.js` directly, with no install step, so the bundle is committed
+The bundle. `action.yml` runs `dist/index.js` directly, with no install step, so the bundle is committed
 ([ADR 0003](../docs/adr/0003-commit-the-bundled-dist-directory.md)). Run `pnpm build` and commit the
 regenerated `dist/index.js` and `dist/index.js.map` alongside your source changes, whenever you touch any
 bundled file under `src/` (that is, anything except `*.test.ts` and the fixtures in
@@ -100,7 +100,7 @@ Nothing fails your pull request if you forget, and a release will not ship the s
 `main`'s `dist/` behind its sources until the next `feat` or `fix`, which anyone referencing `@main` would
 run.
 
-**Testing the action locally.** Create a throwaway workflow that uses the checked-out action:
+Testing the action locally. Create a throwaway workflow that uses the checked-out action:
 
 ```yaml
 # .github/workflows/test-local.yml
@@ -161,7 +161,7 @@ Breaking changes take a `!` after the type or a `BREAKING CHANGE:` footer, and b
 A scope is optional and unconstrained: [`commitlint.config.ts`](../commitlint.config.ts) extends
 `@commitlint/config-conventional` and declares no `scope-enum`.
 
-**`main` takes squash merges, so the pull request title is the commit that lands.** The `commit-msg` hook
+`main` takes squash merges, so the pull request title is the commit that lands. The `commit-msg` hook
 lints what you type locally, and [`commit-message.yml`](./workflows/commit-message.yml) lints the pull
 request title on every open and edit, because that title is what semantic-release parses. Title the pull
 request the way you would title a commit.
@@ -204,9 +204,9 @@ If you use AI tools when contributing:
 
 ## Questions
 
-- **Issues**: <https://github.com/fbuireu/github-star-tracker/issues>
-- **Discussions**: <https://github.com/fbuireu/github-star-tracker/discussions>
-- **Wiki**: <https://github.com/fbuireu/github-star-tracker/wiki>
-- **Security**: [SECURITY.md](./SECURITY.md)
+- Issues: <https://github.com/fbuireu/github-star-tracker/issues>
+- Discussions: <https://github.com/fbuireu/github-star-tracker/discussions>
+- Wiki: <https://github.com/fbuireu/github-star-tracker/wiki>
+- Security: [SECURITY.md](./SECURITY.md)
 
-Thanks for contributing! 🎉
+Thanks for contributing.

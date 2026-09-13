@@ -28,7 +28,7 @@ email path goes through QuickChart because mail clients will not display inline 
   returns `null` for a name the Forecast does not cover. Both builders are thin wrappers over one private
   `projectionSpec`, which owns the guard, the dated x-axis, the week labels and the series layout, so
   the two kinds cannot drift apart in anything but which series they read. A single kind with an optional
-  `repoFullName` would have saved that helper and hidden another altitude inside one `case`.
+  `repoFullName` would have saved that helper and buried the aggregate/per-repo split inside one `case`.
 - **Milestone visibility is decided once, in `starHistorySpec`.** The extremes are taken over **every series
   in the spec**, not just the primary one, and the comparison is **strict** (`> min && < max`), so a Milestone
   equal to an extreme is never drawn. They are the raw data extremes, not the padded axis bounds. `milestones`
@@ -47,15 +47,16 @@ email path goes through QuickChart because mail clients will not display inline 
   plots each over `chartHistories.reconstructedForRepo(name)`: the very History `@domain/forecast` fitted, so
   the observed curve and the projection continuing it cannot describe different series. A repository fitted to
   the aggregate (`ForecastSource.AGGREGATE`) gets its Forecast table and no Chart, because drawing the
-  Tracked Set's shape under one repository's name is the drift, not the fix. Do not re-derive that condition
-  from `MIN_SNAPSHOTS_FOR_FORECAST` here; the domain already answered it.
-- **`resolveChartHistories` owns the Reconstructed History at both altitudes, and owns the instant.** It
+  Tracked Set's shape under one repository's name reads as that repository's own curve. Do not re-derive
+  that condition from `MIN_SNAPSHOTS_FOR_FORECAST` here; the domain already answered it.
+- **`resolveChartHistories` owns the Reconstructed History for the Tracked Set and for a single repository,
+  and owns the instant.** It
   reconstructs via `@domain/star-history` and resolves each result against the Stored History (reconstruction
   wins at >= 2 snapshots, otherwise the fallback), exposing `.aggregate` for the Tracked Set and
   `.forRepo(name)` for one Repository, which falls back for a name outside the set. `now` defaults to a
   `Date` it creates, so every chart in a run ends on the same moment without the caller threading one.
-  `resolveChartHistory` is private, which is what stops the two altitudes drifting back into two layers
-  sharing a `Date` by convention.
+  `resolveChartHistory` is private, which is what stops the aggregate and the per-repo path drifting back
+  into two code paths sharing a `Date` by convention.
 - **`reconstructedForRepo` reconstructs each repository once and remembers the answer**, `null` included,
   in a `Map` private to the closure; `forRepo` reads through it. Several consumers ask for the same repository
   in one run (the Forecast hook, the per-repo charts, and the model lists that carry their
@@ -149,8 +150,8 @@ shell was assembling the params for each.
   at every call site.
 - It renders; it decides nothing about **whether** to render. Charts still come back `[]` when charts are
   off, and the report renderers still read `config` for the options they honour.
-- The individual renderers stay exported and stay tested. They are internal seams within this layer, the
-  same way `@domain`'s are behind `measureRun`. `generateMarkdownReport` and `generateHtmlReport` take
+- The individual renderers stay exported and stay tested. They are internal seams inside this layer, the
+  same way `@domain`'s sit behind `measureRun`. `generateMarkdownReport` and `generateHtmlReport` take
   `{ model, config }`: the model is the data, the config is which options that dialect honours.
 - **`renderRun` also renders the Notification subject** (`emailSubject` on `RenderedRun`) and
   `renderEmptyRun(config)` renders the whole no-repositories run. Both were English literals built in the

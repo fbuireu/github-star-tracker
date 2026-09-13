@@ -111,8 +111,8 @@ Embed the star history chart:
 
 ## Next Steps
 
-- **[Configuration](Configuration)**: customize filters, charts, locale, and more
-- **[Email Notifications](Email-Notifications)**: get reports sent to your inbox
-- **[Star Trend Charts](Star-Trend-Charts)**: understand the chart types
-- **[Examples](Examples)**: advanced workflow configurations
-- **[Troubleshooting](Troubleshooting)**: if something doesn't work
+- [Configuration](Configuration): customize filters, charts, locale, and more
+- [Email Notifications](Email-Notifications): get reports sent to your inbox
+- [Star Trend Charts](Star-Trend-Charts): understand the chart types
+- [Examples](Examples): advanced workflow configurations
+- [Troubleshooting](Troubleshooting): if something doesn't work
