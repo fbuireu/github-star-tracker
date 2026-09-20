@@ -23138,10 +23138,10 @@ var Octokit = class {
   auth;
 };
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.8/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_b05e717b89cdd67da7764161022795e3/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION5 = "17.0.0";
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.8/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_b05e717b89cdd67da7764161022795e3/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var Endpoints = {
   actions: {
     addCustomLabelsToSelfHostedRunnerForOrg: [
@@ -25433,7 +25433,7 @@ var Endpoints = {
 };
 var endpoints_default = Endpoints;
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.8/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_b05e717b89cdd67da7764161022795e3/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) {
   for (const [methodName, endpoint2] of Object.entries(endpoints)) {
@@ -25556,7 +25556,7 @@ function decorate(octokit, scope, methodName, defaults2, decorations) {
   return Object.assign(withDecorations, requestWithDefaults);
 }
 
-// node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.8/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+// node_modules/.pnpm/@octokit+plugin-rest-endpoi_b05e717b89cdd67da7764161022795e3/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
   const api = endpointsToMethods(octokit);
   return {
@@ -26067,7 +26067,7 @@ function errorMessage(error3) {
   return typeof message === "string" && message.trim() !== "" ? message : String(error3);
 }
 
-// node_modules/.pnpm/js-yaml@5.4.1/node_modules/js-yaml/dist/js-yaml.mjs
+// node_modules/.pnpm/js-yaml@5.4.2/node_modules/js-yaml/dist/js-yaml.mjs
 var NOT_RESOLVED = /* @__PURE__ */ Symbol("NOT_RESOLVED");
 function defineScalarTag(tagName, options) {
   return {
@@ -28416,6 +28416,7 @@ function doubleQuoteWhitespaceOnly(layout) {
 function applyForceQuotesOption(layout) {
   if (!layout.presenterOptions.forceQuotes) return;
   if (layout.isKey || layout.style !== SCALAR_STYLE.PLAIN) return;
+  if (layout.node.tag !== layout.presenterOptions.schema.defaultScalarTag.tagName) return;
   layout.style = layout.node.value.includes("\n") ? SCALAR_STYLE.DOUBLE_QUOTED : _preferredQuotedStyle(layout);
 }
 function tryLongOrMultilineAsBlock(layout) {
@@ -29598,14 +29599,14 @@ async function fetchSampledStargazers({
   };
 }
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/mailer/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/mailer/index.js
 var import_node_events = require("node:events");
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/shared/url.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/shared/url.js
 var import_node_net = __toESM(require("node:net"), 1);
 var import_node_url = __toESM(require("node:url"), 1);
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/punycode/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/punycode/index.js
 var maxInt = 2147483647;
 var base = 36;
 var tMin = 1;
@@ -29817,7 +29818,7 @@ var toASCII = function(input) {
   });
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/shared/url.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/shared/url.js
 var SLASHLESS_AUTHORITY = /^([a-zA-Z][a-zA-Z0-9+.-]*:)(?!\/\/)([\s\S]+)$/;
 var SURROUNDING_WHITESPACE = /^[\x00-\x20]+|[\x00-\x20]+$/g;
 var LEGACY_TRIM = /^[\x00-\x20\u00a0\ufeff]+/;
@@ -29938,17 +29939,17 @@ var resolve2 = (from, to) => {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/shared/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/shared/index.js
 var import_node_util = __toESM(require("node:util"), 1);
 var import_node_fs = __toESM(require("node:fs"), 1);
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/fetch/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/fetch/index.js
 var import_node_http = __toESM(require("node:http"), 1);
 var import_node_https = __toESM(require("node:https"), 1);
 var import_node_zlib = __toESM(require("node:zlib"), 1);
 var import_node_stream = require("node:stream");
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/fetch/cookies.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/fetch/cookies.js
 var import_node_net2 = __toESM(require("node:net"), 1);
 var SESSION_TIMEOUT = 1800;
 var Cookies = class {
@@ -30155,15 +30156,15 @@ var Cookies = class {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/package-info.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/package-info.js
 var name = "nodemailer";
-var version = "10.0.8";
+var version = "10.0.10";
 var homepage = "https://nodemailer.com/";
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/fetch/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/fetch/index.js
 var import_node_net3 = __toESM(require("node:net"), 1);
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/errors.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/errors.js
 var ETLS = "ETLS";
 var ENOAUTH = "ENOAUTH";
 var EOAUTH2 = "EOAUTH2";
@@ -30177,7 +30178,7 @@ var EFILEACCESS = "EFILEACCESS";
 var EURLACCESS = "EURLACCESS";
 var EFETCH = "EFETCH";
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/shared/objects.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/shared/objects.js
 var isProtoKey = (key) => key === "__proto__";
 var copyOwnKeys = (target, source, skip) => {
   Object.keys(source || {}).forEach((key) => {
@@ -30189,7 +30190,7 @@ var copyOwnKeys = (target, source, skip) => {
   return target;
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/fetch/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/fetch/index.js
 var MAX_REDIRECTS = 5;
 var TLS_OPTION_KEYS = [
   "ALPNProtocols",
@@ -30492,7 +30493,7 @@ function nmfetch(url, options) {
 nmfetch.Cookies = Cookies;
 var fetch_default = nmfetch;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/shared/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/shared/index.js
 var import_node_dns = __toESM(require("node:dns"), 1);
 var import_node_net4 = __toESM(require("node:net"), 1);
 var import_node_os = __toESM(require("node:os"), 1);
@@ -31002,7 +31003,7 @@ function createDefaultLogger(levels) {
   return logger;
 }
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/mime-funcs/mime-types.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/mime-funcs/mime-types.js
 var import_node_path = __toESM(require("node:path"), 1);
 var defaultMimeType = "application/octet-stream";
 var defaultExtension = "bin";
@@ -33099,13 +33100,13 @@ function detectExtension(mimeType) {
   }
 }
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/mime-node/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/mime-node/index.js
 var import_node_crypto = __toESM(require("node:crypto"), 1);
 var import_node_fs2 = __toESM(require("node:fs"), 1);
 var import_node_stream7 = require("node:stream");
 var import_node_url2 = __toESM(require("node:url"), 1);
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/base64/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/base64/index.js
 var base64_exports = {};
 __export(base64_exports, {
   Encoder: () => Encoder,
@@ -33201,7 +33202,7 @@ var Encoder = class extends import_node_stream2.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/qp/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/qp/index.js
 var qp_exports = {};
 __export(qp_exports, {
   Encoder: () => Encoder2,
@@ -33363,7 +33364,7 @@ var Encoder2 = class extends import_node_stream3.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/mime-funcs/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/mime-funcs/index.js
 function isPlainText(value, isParam) {
   const re = isParam ? /[\x00-\x1f\x7f"\u0080-\uFFFF]/ : /[\x00-\x08\x0b\x0c\x0e-\x1f\u0080-\uFFFF]/;
   return typeof value === "string" && !re.test(value);
@@ -33762,7 +33763,7 @@ function safeEncodeURIComponent(str) {
   return str.replace(/[\x00-\x1F *'()<>@,;:\\"[\]?=\u007F-\uFFFF]/g, (chr) => encodeURICharComponent(chr));
 }
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/addressparser/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/addressparser/index.js
 function _quoteLocalPart(address) {
   const lastAt = address.lastIndexOf("@");
   if (lastAt < 0) {
@@ -33788,6 +33789,14 @@ function _isWordCode(code) {
 function _isBoundary(text, at) {
   return _isWordCode(text.charCodeAt(at - 1)) !== _isWordCode(text.charCodeAt(at));
 }
+function _indexOfAt(text, from, to) {
+  for (let i = from; i < to; i++) {
+    if (text.charCodeAt(i) === 64) {
+      return i;
+    }
+  }
+  return -1;
+}
 function _looseAddressStart(text) {
   const len = text.length;
   let pos = 0;
@@ -33803,8 +33812,8 @@ function _looseAddressStart(text) {
     while (runEnd < len && !_isSpaceCode(text.charCodeAt(runEnd))) {
       runEnd++;
     }
-    let at = text.indexOf("@", runStart);
-    if (at >= 0 && at < runEnd) {
+    let at = _indexOfAt(text, runStart, runEnd);
+    if (at >= 0) {
       let lastBoundary = -1;
       for (let k = runEnd; k > runStart; k--) {
         if (_isBoundary(text, k)) {
@@ -33813,7 +33822,7 @@ function _looseAddressStart(text) {
         }
       }
       let atomStart = runStart;
-      while (lastBoundary >= 0 && at >= 0 && at < runEnd) {
+      while (lastBoundary >= 0 && at >= 0) {
         if (at > atomStart && runEnd > at + 1 && lastBoundary > at + 1) {
           for (let start = atomStart; start < at; start++) {
             if (_isBoundary(text, start)) {
@@ -33829,7 +33838,7 @@ function _looseAddressStart(text) {
           }
         }
         atomStart = at + 1;
-        at = text.indexOf("@", atomStart);
+        at = _indexOfAt(text, atomStart, runEnd);
       }
     }
     pos = runEnd;
@@ -33908,6 +33917,8 @@ function _handleAddress(tokens, depth) {
           break;
       }
     } else if (token.value) {
+      const prevPrevToken = i > 1 ? tokens[i - 2] : null;
+      const opensAfterEmptyQuotedString = prevToken?.type === "operator" && prevToken.value === '"' && !!prevToken.noBreak && prevPrevToken?.type === "operator" && prevPrevToken.value === '"';
       if (state === "address") {
         token.value = token.value.replace(/^[^<]*<\s*/, "");
       }
@@ -33925,7 +33936,7 @@ function _handleAddress(tokens, depth) {
         data[state].push(token.value);
         lastChars[state] = token.value.charAt(token.value.length - 1);
         if (state === "text") {
-          data.textWasQuoted.push(insideQuotes);
+          data.textWasQuoted.push(insideQuotes || opensAfterEmptyQuotedString);
         }
       }
     }
@@ -33994,6 +34005,10 @@ function _handleAddress(tokens, depth) {
     const addressFromQuotedText = !data.address.length && data.textWasQuoted.some((wasQuoted) => wasQuoted);
     data.text = data.text.join(" ");
     data.address = data.address.join(" ");
+    if (addressFromQuotedText && data.text) {
+      data.address = _quoteLocalPart(data.text);
+      data.text = "";
+    }
     _recoverAddrSpec(data);
     const address = {
       address: data.address || data.text || "",
@@ -34005,9 +34020,6 @@ function _handleAddress(tokens, depth) {
       } else {
         address.address = "";
       }
-    }
-    if (addressFromQuotedText && address.address) {
-      address.address = _quoteLocalPart(address.address);
     }
     addresses.push(address);
   }
@@ -34173,7 +34185,7 @@ function addressparser(str, options) {
   return parsedAddresses;
 }
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/mime-node/last-newline.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/mime-node/last-newline.js
 var import_node_stream4 = require("node:stream");
 var LastNewline = class extends import_node_stream4.Transform {
   constructor() {
@@ -34202,7 +34214,7 @@ var LastNewline = class extends import_node_stream4.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/mime-node/le-windows.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/mime-node/le-windows.js
 var import_node_stream5 = require("node:stream");
 var LeWindows = class extends import_node_stream5.Transform {
   constructor(options) {
@@ -34239,7 +34251,7 @@ var LeWindows = class extends import_node_stream5.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/mime-node/le-unix.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/mime-node/le-unix.js
 var import_node_stream6 = require("node:stream");
 var LeUnix = class extends import_node_stream6.Transform {
   constructor(options) {
@@ -34269,7 +34281,7 @@ var LeUnix = class extends import_node_stream6.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/mime-node/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/mime-node/index.js
 var FORMATTED_HEADERS = ["From", "Sender", "To", "Cc", "Bcc", "Reply-To", "Date", "References"];
 var ATEXT = "[A-Za-z0-9!#$%&'*+\\-/=?^_`{|}~\\x80-\\uFFFF]";
 var DOT_ATOM = new RegExp("^" + ATEXT + "+(?:\\." + ATEXT + "+)*$");
@@ -35396,7 +35408,7 @@ var MimeNode = class _MimeNode {
 };
 var mime_node_default = MimeNode;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/mail-composer/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/mail-composer/index.js
 function isContentObject(value) {
   const content = value;
   return typeof value === "object" && !!(content.content || content.path || content.href || content.raw);
@@ -35481,7 +35493,7 @@ var MailComposer = class {
       if (attachment.filename) {
         data.filename = attachment.filename;
       } else if (!isMessageNode && attachment.filename !== false) {
-        data.filename = (attachment.path || attachment.href || "").split("/").pop().split("?").shift() || "attachment-" + (i + 1);
+        data.filename = (attachment.path || attachment.href || "").split(/[/\\]/).pop().split("?").shift() || "attachment-" + (i + 1);
         if (data.filename.indexOf(".") < 0) {
           data.filename += "." + detectExtension2(data.contentType);
         }
@@ -35882,7 +35894,7 @@ var MailComposer = class {
 };
 var mail_composer_default = MailComposer;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/dkim/message-parser.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/dkim/message-parser.js
 var import_node_stream8 = require("node:stream");
 var MessageParser = class extends import_node_stream8.Transform {
   constructor(options) {
@@ -35992,11 +36004,13 @@ var MessageParser = class extends import_node_stream8.Transform {
     callback();
   }
   parseHeaders() {
-    const lines = (this.rawHeaders || Buffer.alloc(0)).toString("binary").split(/\r?\n/);
-    for (let i = lines.length - 1; i > 0; i--) {
-      if (/^[ \t]/.test(lines[i])) {
-        lines[i - 1] += "\n" + lines[i];
-        lines.splice(i, 1);
+    const rawLines = (this.rawHeaders || Buffer.alloc(0)).toString("binary").split(/\r?\n/);
+    const lines = [];
+    for (const rawLine of rawLines) {
+      if (lines.length && /^[ \t]/.test(rawLine)) {
+        lines[lines.length - 1] += "\n" + rawLine;
+      } else {
+        lines.push(rawLine);
       }
     }
     return lines.filter((line) => /[^ \t\r]/.test(line)).map((line) => ({
@@ -36006,7 +36020,7 @@ var MessageParser = class extends import_node_stream8.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/dkim/relaxed-body.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/dkim/relaxed-body.js
 var import_node_stream9 = require("node:stream");
 var import_node_crypto2 = __toESM(require("node:crypto"), 1);
 var CHAR_CR = 13;
@@ -36127,7 +36141,7 @@ var RelaxedBody = class extends import_node_stream9.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/dkim/sign.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/dkim/sign.js
 var import_node_crypto3 = __toESM(require("node:crypto"), 1);
 function sign(headers, hashAlgo, bodyHash, options) {
   options = options || {};
@@ -36195,7 +36209,7 @@ function relaxedHeaderLine(line) {
   return line.substr(line.indexOf(":") + 1).replace(/\r?\n/g, "").replace(/[ \t]+/g, " ").replace(/^ | $/g, "");
 }
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/dkim/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/dkim/index.js
 var import_node_stream10 = require("node:stream");
 var import_node_fs3 = __toESM(require("node:fs"), 1);
 var import_node_path2 = __toESM(require("node:path"), 1);
@@ -36384,7 +36398,7 @@ var DKIM = class {
 };
 var dkim_default = DKIM;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/smtp-connection/http-proxy-client.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/smtp-connection/http-proxy-client.js
 var import_node_net5 = __toESM(require("node:net"), 1);
 var import_node_tls = __toESM(require("node:tls"), 1);
 var MAX_RESPONSE_HEADER_BYTES = 64 * 1024;
@@ -36494,10 +36508,10 @@ function httpProxyClient(proxyUrl, destinationPort, destinationHost, tlsOptions,
 }
 var http_proxy_client_default = httpProxyClient;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/mailer/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/mailer/index.js
 var import_node_util2 = __toESM(require("node:util"), 1);
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/mailer/mail-message.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/mailer/mail-message.js
 var hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
 var MailMessage = class {
   constructor(mailer, data) {
@@ -36550,7 +36564,7 @@ var MailMessage = class {
     if (this.data.attachments && this.data.attachments.length) {
       this.data.attachments.forEach((attachment, i) => {
         if (!attachment.filename) {
-          attachment.filename = (attachment.path || attachment.href || "").split("/").pop().split("?").shift() || "attachment-" + (i + 1);
+          attachment.filename = (attachment.path || attachment.href || "").split(/[/\\]/).pop().split("?").shift() || "attachment-" + (i + 1);
           if (attachment.filename.indexOf(".") < 0) {
             attachment.filename += "." + detectExtension2(attachment.contentType);
           }
@@ -36749,7 +36763,7 @@ var MailMessage = class {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/mailer/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/mailer/index.js
 var import_node_net6 = __toESM(require("node:net"), 1);
 var import_node_dns2 = __toESM(require("node:dns"), 1);
 var import_node_crypto5 = __toESM(require("node:crypto"), 1);
@@ -37086,17 +37100,17 @@ var Mail = class extends import_node_events.EventEmitter {
 };
 var mailer_default = Mail;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/smtp-pool/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/smtp-pool/index.js
 var import_node_events4 = require("node:events");
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/smtp-connection/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/smtp-connection/index.js
 var import_node_events2 = require("node:events");
 var import_node_net7 = __toESM(require("node:net"), 1);
 var import_node_tls2 = __toESM(require("node:tls"), 1);
 var import_node_os2 = __toESM(require("node:os"), 1);
 var import_node_crypto6 = __toESM(require("node:crypto"), 1);
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/smtp-connection/data-stream.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/smtp-connection/data-stream.js
 var import_node_stream11 = require("node:stream");
 var DataStream = class extends import_node_stream11.Transform {
   constructor(options) {
@@ -37179,7 +37193,7 @@ var DataStream = class extends import_node_stream11.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/smtp-connection/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/smtp-connection/index.js
 var import_node_stream12 = require("node:stream");
 var CONNECTION_TIMEOUT = 2 * 60 * 1e3;
 var SOCKET_TIMEOUT = 10 * 60 * 1e3;
@@ -37187,6 +37201,7 @@ var GREETING_TIMEOUT = 30 * 1e3;
 var DNS_TIMEOUT = 30 * 1e3;
 var TEARDOWN_NOOP = () => {
 };
+var MAX_RESPONSE_SIZE = 1024 * 1024;
 function decodeServerResponse(str) {
   if (!str) {
     return str;
@@ -37195,7 +37210,10 @@ function decodeServerResponse(str) {
   return utf8.includes("\uFFFD") ? str : utf8;
 }
 function isPartialResponse(str) {
-  return /^\d+-/.test(str.slice(str.lastIndexOf("\n") + 1));
+  return isPartialLine(str.slice(str.lastIndexOf("\n") + 1));
+}
+function isPartialLine(line) {
+  return /^\d+-/.test(line);
 }
 var SMTPConnection = class extends import_node_events2.EventEmitter {
   constructor(options) {
@@ -37230,6 +37248,7 @@ var SMTPConnection = class extends import_node_events2.EventEmitter {
     this.secure = !!this.secureConnection;
     this._remainder = "";
     this._responseQueue = [];
+    this._responsePartial = false;
     this.lastServerResponse = false;
     this._socket = false;
     this._supportedAuth = [];
@@ -37742,27 +37761,46 @@ var SMTPConnection = class extends import_node_events2.EventEmitter {
     if (this._destroyed || !chunk || !chunk.length) {
       return;
     }
-    let data = chunk.toString("binary");
-    let lines = (this._remainder + data).split(/\r?\n/);
-    let lastline;
+    const maxResponseSize = this.options.maxResponseSize || MAX_RESPONSE_SIZE;
+    const data = chunk.toString("binary");
+    if (!data.includes("\n")) {
+      this._remainder += data;
+      if (this._remainder.length > maxResponseSize) {
+        return this._onResponseTooLarge();
+      }
+      return;
+    }
+    const lines = (this._remainder + data).split(/\r?\n/);
     this._remainder = lines.pop();
     for (let i = 0, len = lines.length; i < len; i++) {
-      if (this._responseQueue.length) {
-        lastline = this._responseQueue[this._responseQueue.length - 1];
-        if (isPartialResponse(lastline)) {
-          this._responseQueue[this._responseQueue.length - 1] += "\n" + lines[i];
-          continue;
-        }
+      if (this._responsePartial) {
+        this._responseQueue[this._responseQueue.length - 1] += "\n" + lines[i];
+      } else {
+        this._responseQueue.push(lines[i]);
       }
-      this._responseQueue.push(lines[i]);
+      this._responsePartial = isPartialLine(lines[i]);
+      if (this._responsePartial && this._responseQueue[this._responseQueue.length - 1].length > maxResponseSize) {
+        return this._onResponseTooLarge();
+      }
     }
-    if (this._responseQueue.length) {
-      lastline = this._responseQueue[this._responseQueue.length - 1];
-      if (isPartialResponse(lastline)) {
-        return;
-      }
+    if (this._remainder.length > maxResponseSize) {
+      return this._onResponseTooLarge();
+    }
+    if (this._responsePartial) {
+      return;
     }
     this._processResponse();
+  }
+  /**
+   * Drops a connection whose peer keeps extending a reply it never completes, releasing
+   * whatever was buffered for that reply
+   * @internal
+   */
+  _onResponseTooLarge() {
+    this._remainder = "";
+    this._responseQueue = [];
+    this._responsePartial = false;
+    this._onError(new Error("Server response exceeds maximum allowed size"), "EPROTOCOL", false, "CONN");
   }
   /**
    * 'error' listener for the socket
@@ -37886,6 +37924,7 @@ var SMTPConnection = class extends import_node_events2.EventEmitter {
   _upgradeConnection(callback) {
     this._remainder = "";
     this._responseQueue = [];
+    this._responsePartial = false;
     const socketPlain = this._socket;
     socketPlain.removeListener("data", this._onSocketData);
     socketPlain.removeListener("timeout", this._onSocketTimeout);
@@ -38636,7 +38675,7 @@ var SMTPConnection = class extends import_node_events2.EventEmitter {
 };
 var smtp_connection_default = SMTPConnection;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/xoauth2/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/xoauth2/index.js
 var import_node_stream13 = require("node:stream");
 var import_node_crypto7 = __toESM(require("node:crypto"), 1);
 var XOAuth2 = class extends import_node_stream13.Stream {
@@ -38955,7 +38994,7 @@ var XOAuth2 = class extends import_node_stream13.Stream {
 };
 var xoauth2_default = XOAuth2;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/smtp-pool/pool-resource.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/smtp-pool/pool-resource.js
 var import_node_events3 = require("node:events");
 var PoolResource = class extends import_node_events3.EventEmitter {
   constructor(pool) {
@@ -39154,7 +39193,7 @@ var PoolResource = class extends import_node_events3.EventEmitter {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/well-known/services.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/well-known/services.js
 var services = {
   "126": {
     "description": "126 Mail (NetEase)",
@@ -39820,7 +39859,7 @@ var services = {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/well-known/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/well-known/index.js
 var normalized = {};
 Object.keys(services).forEach((key) => {
   const service = services[key];
@@ -39850,7 +39889,7 @@ function wellKnown(key) {
   return normalized[key] || false;
 }
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/smtp-pool/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/smtp-pool/index.js
 var SMTPPool = class extends import_node_events4.EventEmitter {
   constructor(options) {
     super();
@@ -40310,7 +40349,7 @@ var SMTPPool = class extends import_node_events4.EventEmitter {
 };
 var smtp_pool_default = SMTPPool;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/smtp-transport/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/smtp-transport/index.js
 var import_node_events5 = require("node:events");
 var SMTPTransport = class extends import_node_events5.EventEmitter {
   constructor(options) {
@@ -40630,7 +40669,7 @@ var SMTPTransport = class extends import_node_events5.EventEmitter {
 };
 var smtp_transport_default = SMTPTransport;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/sendmail-transport/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/sendmail-transport/index.js
 var import_node_child_process = require("node:child_process");
 var SendmailTransport = class {
   constructor(options) {
@@ -40765,7 +40804,7 @@ var SendmailTransport = class {
 };
 var sendmail_transport_default = SendmailTransport;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/stream-transport/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/stream-transport/index.js
 var StreamTransport = class {
   constructor(options) {
     options = options || {};
@@ -40853,7 +40892,7 @@ var StreamTransport = class {
 };
 var stream_transport_default = StreamTransport;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/json-transport/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/json-transport/index.js
 var JSONTransport = class {
   constructor(options) {
     options = options || {};
@@ -40905,7 +40944,7 @@ var JSONTransport = class {
 };
 var json_transport_default = JSONTransport;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/ses-transport/index.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/ses-transport/index.js
 var import_node_events6 = __toESM(require("node:events"), 1);
 function tagSesError(err) {
   if (err && typeof err === "object" && !err.code) {
@@ -41087,7 +41126,7 @@ var SESTransport = class extends import_node_events6.default {
 };
 var ses_transport_default = SESTransport;
 
-// node_modules/.pnpm/nodemailer@10.0.8/node_modules/nodemailer/dist/esm/nodemailer.js
+// node_modules/.pnpm/nodemailer@10.0.10/node_modules/nodemailer/dist/esm/nodemailer.js
 var ETHEREAL_API = (process.env.ETHEREAL_API || "https://api.nodemailer.com").replace(/\/+$/, "");
 var ETHEREAL_WEB = (process.env.ETHEREAL_WEB || "https://ethereal.email").replace(/\/+$/, "");
 var ETHEREAL_API_KEY = (process.env.ETHEREAL_API_KEY || "").replace(/\s*/g, "") || null;
@@ -43888,6 +43927,6 @@ content-type/dist/index.js:
   (* v8 ignore if -- @preserve *)
 
 js-yaml/dist/js-yaml.mjs:
-  (*! js-yaml 5.4.1 https://github.com/nodeca/js-yaml @license MIT *)
+  (*! js-yaml 5.4.2 https://github.com/nodeca/js-yaml @license MIT *)
 */
 //# sourceMappingURL=index.js.map
