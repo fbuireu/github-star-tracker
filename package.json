@@ -30,7 +30,7 @@
 	"engines": {
 		"node": "26.2.0"
 	},
-	"packageManager": "pnpm@12.4.1",
+	"packageManager": "pnpm@12.4.2",
 	"scripts": {
 		"prepare": "husky",
 		"build": "tsx esbuild.config.ts",
@@ -56,11 +56,11 @@
 		"@actions/core": "3.0.1",
 		"@actions/github": "9.1.1",
 		"@octokit/plugin-retry": "8.1.1",
-		"js-yaml": "5.4.1",
-		"nodemailer": "10.0.8"
+		"js-yaml": "5.4.2",
+		"nodemailer": "10.0.10"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.5.13",
+		"@biomejs/biome": "2.5.14",
 		"@commitlint/cli": "21.2.2",
 		"@commitlint/config-conventional": "21.2.2",
 		"@commitlint/format": "21.2.2",
@@ -72,14 +72,14 @@
 		"@semantic-release/npm": "13.1.5",
 		"@semantic-release/release-notes-generator": "14.1.1",
 		"@types/js-yaml": "4.0.9",
-		"@types/node": "26.5.1",
-		"@vitest/coverage-v8": "5.0.0",
+		"@types/node": "26.6.1",
+		"@vitest/coverage-v8": "5.0.1",
 		"esbuild": "0.28.2",
 		"husky": "9.1.7",
 		"lint-staged": "17.5.1",
 		"semantic-release": "25.0.9",
 		"tsx": "4.23.13",
 		"typescript": "7.0.2",
-		"vitest": "5.0.0"
+		"vitest": "5.0.1"
 	}
 }
