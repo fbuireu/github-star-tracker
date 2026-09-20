@@ -32,7 +32,7 @@ Two defects came out of the same shape. `ReportParams` declared ten fields and `
 twenty-one, so the split was real at the declaration, but `reportParams` was a *variable*, which switches
 off TypeScript's excess-property check, so the markdown renderer silently accepted and discarded eleven
 chart-style fields it does not read. The whole guarantee rested on one spread on one line, and
-[`src/application/CLAUDE.md`](../../src/application/CLAUDE.md) had to carry a written warning naming it as the regression to watch for. It had
+[`src/application/AGENTS.md`](../../src/application/AGENTS.md) had to carry a written warning naming it as the regression to watch for. It had
 already happened once, leaving dark-mode readers a white chart background.
 
 `@presentation/charts` was already doing the opposite thing, and doing it well: `buildChartFiles({ config,
@@ -80,12 +80,12 @@ rather than the enums alone.
   `color-scheme` and palette, rather than in [`tracker.test.ts`](../../src/application/tracker.test.ts) against the shape of a mock call. The tracker
   test that pinned `theme` on a params object it did not read is gone.
 - **`@presentation` now depends on the whole `Config` shape**, not on a hand-picked subset. That is the cost:
-  a renderer's interface no longer states which options it honours, so the layer's `CLAUDE.md` has to. In
+  a renderer's interface no longer states which options it honours, so the layer's `AGENTS.md` has to. In
   exchange the shell stops restating a list that was wrong the moment anyone added to it.
 - **Test helpers take `config: Partial<Config>`** and build it with `makeConfig` from `@shared/tests`, so a
   test that cares about one option names that option rather than a flattened alias for it.
 - `chartLineWidth` now always reaches `chartImageUrl`, so the email chart always emits `borderWidth`. That
   was already true in production, since the tracker always passed it, but `html.test.ts` had a case asserting
   its absence, which only an incomplete params object could produce.
-- Where this bites is recorded in [`src/presentation/CLAUDE.md`](../../src/presentation/CLAUDE.md) and
-  [`src/application/CLAUDE.md`](../../src/application/CLAUDE.md).
+- Where this bites is recorded in [`src/presentation/AGENTS.md`](../../src/presentation/AGENTS.md) and
+  [`src/application/AGENTS.md`](../../src/application/AGENTS.md).

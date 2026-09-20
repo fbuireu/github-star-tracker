@@ -1,6 +1,6 @@
 # Architecture
 
-The action follows a **Domain-Driven Design<sub>(ish)</sub>** layering with a **Functional Core, Imperative Shell** pattern: the domain is pure, one ubiquitous language spans the whole tree, and each layer documents its own rules in a colocated `CLAUDE.md`. The dependency direction is strict and enumerated rather than conventional: the core knows nothing about GitHub, git, the filesystem or SMTP, and everything points inward toward it.
+The action follows a **Domain-Driven Design<sub>(ish)</sub>** layering with a **Functional Core, Imperative Shell** pattern: the domain is pure, one ubiquitous language spans the whole tree, and each layer documents its own rules in a colocated `AGENTS.md`. The dependency direction is strict and enumerated rather than conventional: the core knows nothing about GitHub, git, the filesystem or SMTP, and everything points inward toward it.
 
 ```mermaid
 ---
@@ -27,7 +27,7 @@ flowchart RL
 
 Every arrow above is an import some layer really makes; anything not drawn is forbidden.
 
-Each layer documents its own rules in a colocated `CLAUDE.md`.
+Each layer documents its own rules in a colocated `AGENTS.md`.
 
 ---
 
@@ -76,6 +76,6 @@ This page is the shape, not the rules. The normative statement of which layer ma
 | Which layer may import which, and what runs in what order? | [`ARCHITECTURE.md`](https://github.com/fbuireu/github-star-tracker/blob/main/ARCHITECTURE.md) |
 | Why is the tree layered at all, and what did the `(ish)` drop? | [ADR 0004](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0004-layered-source-structure.md) |
 | When does a bare `string` or `number` earn a type of its own? | [ADR 0022](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md) |
-| What does one layer actually guarantee? | The `CLAUDE.md` inside that layer's folder |
+| What does one layer actually guarantee? | The `AGENTS.md` inside that layer's folder |
 | What happens, step by step, on a run? | [How It Works](How-It-Works) |
 | Why these tools and these dependencies? | [Technical Stack](Technical-Stack) |

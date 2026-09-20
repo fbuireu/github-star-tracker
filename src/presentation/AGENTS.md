@@ -128,7 +128,7 @@ shell was assembling the params for each.
   an image no run had written.
 - **`ChartHistories` exposes two per-repo accessors, `forRepo` and `reconstructedForRepo`, and they are not
   interchangeable.** A star-history Chart takes `forRepo`; a Forecast, its figures *and* its Chart alike, must
-  take `reconstructedForRepo`; [`../domain/CLAUDE.md`](../domain/CLAUDE.md) carries the rule and the bug it came from.
+  take `reconstructedForRepo`; [`../domain/AGENTS.md`](../domain/AGENTS.md) carries the rule and the bug it came from.
   So the two charts a Report shows for one repository can plot different curves: the star-history one falls
   back to the Stored History when nothing could be reconstructed, the Forecast one is never drawn in that
   case at all.
@@ -191,7 +191,7 @@ its spec: assert a section rule there, not through one dialect's markup.
   `history !== null && model.showComparisonChart`. Those `!== null` tests are TypeScript narrowing, not the
   rule: `showComparisonChart` is the model's answer to "is there a comparison Chart".
 - **`topRepos` is not derived here.** It calls `topRepositories` in `@domain/comparison`, where that rule
-  lives ([`../domain/CLAUDE.md`](../domain/CLAUDE.md)), so the Report and the Charts cannot rank the Tracked
+  lives ([`../domain/AGENTS.md`](../domain/AGENTS.md)), so the Report and the Charts cannot rank the Tracked
   Set differently. `prepareReportData`'s `sorted` is that same module's `rankByStars`.
 - **`topRepos` is a `TopRepo[]`, not a list of names**: each entry carries the `fullName` the chart request
   needs *and* the Star Count and Delta the per-repo chart heading shows. `toTopRepos` takes the *membership*

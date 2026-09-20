@@ -8,7 +8,7 @@ For the shape of the code itself, read **[Architecture](Architecture)** for the 
 
 The codebase is a Functional Core, Imperative Shell split across its layers: `domain`, `presentation` and `i18n` are pure, `config`, `infrastructure` and `application` own the side effects, and `shared` holds cross-cutting test fixtures. Dependencies flow inward only, cross-layer imports go through a TypeScript path alias declared once in [`tsconfig.json`](https://github.com/fbuireu/github-star-tracker/blob/main/tsconfig.json), and every function taking two or more arguments takes a single destructured object instead.
 
-That shape is **Domain-Driven Design<sub>(ish)</sub>**, and the parenthesis matters: what is adopted is the ubiquitous language and the layer boundaries, not the tactical pattern catalogue. **[Architecture](Architecture)** says which patterns were dropped and why. The normative version of all of it is `ARCHITECTURE.md` and the per-layer `CLAUDE.md` files in the repository.
+That shape is **Domain-Driven Design<sub>(ish)</sub>**, and the parenthesis matters: what is adopted is the ubiquitous language and the layer boundaries, not the tactical pattern catalogue. **[Architecture](Architecture)** says which patterns were dropped and why. The normative version of all of it is `ARCHITECTURE.md` and the per-layer `AGENTS.md` files in the repository.
 
 ---
 

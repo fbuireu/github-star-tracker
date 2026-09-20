@@ -2,7 +2,7 @@
 
 The layer that owns every outbound side effect: the GitHub REST API, the `git` CLI, the filesystem and SMTP.
 It is the only layer that reaches the network, which is not the same as being the only one that performs I/O;
-the root [`CLAUDE.md`](../../CLAUDE.md) states that rule for the whole tree. Adapters only, no framework.
+the root [`AGENTS.md`](../../AGENTS.md) states that rule for the whole tree. Adapters only, no framework.
 None of them decide *when* work happens: `@application/tracker` is the composition root and their only
 consumer. They hold no business logic, and no string they build is localized or ends up in a Report. They do
 write plain log lines.

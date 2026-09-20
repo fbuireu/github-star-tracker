@@ -55,12 +55,12 @@ than here, and what follows is what that table cannot express.
 - Chart histories are resolved once, by one module. `resolveChartHistories` returns `.aggregate`,
   `.forRepo(name)` and `.reconstructedForRepo(name)`; this layer reads `.aggregate` for the Forecast and the
   Reports, passes `.reconstructedForRepo` to `computeForecast` as its `historyForRepo` hook (never `.forRepo`,
-  for the reason [`../domain/CLAUDE.md`](../domain/CLAUDE.md) gives), and hands the whole thing to
+  for the reason [`../domain/AGENTS.md`](../domain/AGENTS.md) gives), and hands the whole thing to
   `buildChartFiles`. It creates the instant itself, so the global chart and every per-repo chart end on
   the same moment by construction rather than by the shell remembering to share a `Date`.
 - **`topRepoNames` is not computed here.** It is `topRepositories({ repos: results.repos, limit:
   config.topRepos })` from `@domain/comparison`, the same call `@presentation/report-model` makes for the
-  Report. Why that single owner matters is in [`../domain/CLAUDE.md`](../domain/CLAUDE.md).
+  Report. Why that single owner matters is in [`../domain/AGENTS.md`](../domain/AGENTS.md).
 - Read-only runs do everything except the push. They still read, compute, render, write into the
   worktree, set every output and send the email, and the worktree is then discarded unpushed. The guard now
   lives inside `withDataBranch`, which receives `readOnly` and decides; this layer passes the flag and never
@@ -105,7 +105,7 @@ fetch is gated on `includeCharts || trackStargazers`.
   after `branch.publish`: a failing write then ended a run that had already committed, pushed and emailed,
   with `setFailed` and most outputs unset, and a re-run would append a second Snapshot for the same
   observation. Where `writeHtmlReport` puts the file, and why that location is outside the worktree, is in
-  [`../infrastructure/CLAUDE.md`](../infrastructure/CLAUDE.md).
+  [`../infrastructure/AGENTS.md`](../infrastructure/AGENTS.md).
 - `getEmailConfig` reads the SMTP inputs itself, inside `@infrastructure/notification/email`; the tracker
   never reads them. A missing `smtp-host` returns `null` and silently skips email.
 - `withDataBranch` throws when the data branch is absent from the remote **and** the run is read-only. That

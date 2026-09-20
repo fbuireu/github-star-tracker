@@ -48,15 +48,15 @@ instead of being re-raised every six months.
    commit message that it is a guard, so the next reader does not mistake the test for a reproduction.
 2. **Does anyone read it?** Modelling a concept nothing consumes invents a type whose only reader is its own
    test. This tree already deleted four such exports and says so in
-   [`src/domain/CLAUDE.md`](../../src/domain/CLAUDE.md).
+   [`src/domain/AGENTS.md`](../../src/domain/AGENTS.md).
 3. **Does it cross a boundary?** A concept that leaves `@domain`, reaches an action output, is written to the
    Data Branch, or is spelled twice in two dialects has earned a real type. One that lives inside a single
    function has not.
 
-**A "no" to every one of them means writing the rule rather than coding it**: a bullet in the folder's `CLAUDE.md`, a
+**A "no" to every one of them means writing the rule rather than coding it**: a bullet in the folder's `AGENTS.md`, a
 sentence in [CONTEXT.md](../../CONTEXT.md), an assertion in
 [`docs-consistency.test.ts`](../docs-consistency.test.ts), or an ADR. A divergence that is *named* is
-finished work rather than a debt, and the maintenance contract in [CLAUDE.md](../../CLAUDE.md) is what keeps
+finished work rather than a debt, and the maintenance contract in [AGENTS.md](../../AGENTS.md) is what keeps
 the name true.
 
 The rejected alternative is the one this file exists to stop being re-proposed: turning the primitives
@@ -92,9 +92,9 @@ from the same input, and the illegal state stops being representable.
 **Rejected: a `Timestamp` type for `starredAt`.** It is compared with `localeCompare` in `diffStargazers`
 and parsed with `toEpochMs` in `buildStarHistory`, so the same primitive is read two ways. Question 3 says
 yes, and a branded type would still have to be unwrapped at both readers. The rule is already named where a
-reader meets it: the stargazer-diffing section of `src/domain/CLAUDE.md` states that the sort is correct
+reader meets it: the stargazer-diffing section of `src/domain/AGENTS.md` states that the sort is correct
 only while every value is a same-format ISO string, and the `github/` section of
-[`src/infrastructure/CLAUDE.md`](../../src/infrastructure/CLAUDE.md) states that the layer never parses or
+[`src/infrastructure/AGENTS.md`](../../src/infrastructure/AGENTS.md) states that the layer never parses or
 normalizes it. A written rule beats a type that crosses every layer.
 
 **Rejected: a `RepoFullName` type.** `fullName` is a `Map` key in `compareStars`, split on `/` for a removed
@@ -109,7 +109,7 @@ Revisit it only alongside a `DATA_FORMAT_VERSION` bump that is happening anyway.
 **Rejected: unifying the two chart style projections.** `charts.ts` and `emailChartStyle` both project
 `Config` onto an adapter style, and a set of options appears in both. The parity a shared type would assert is
 false, which [ADR 0014](./0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md) and
-[`src/presentation/CLAUDE.md`](../../src/presentation/CLAUDE.md) both already say: `chart.ts` collapses two
+[`src/presentation/AGENTS.md`](../../src/presentation/AGENTS.md) both already say: `chart.ts` collapses two
 curves onto one, reads `emailTheme` rather than `chartTheme`, and never receives `maxPoints`. The drift is
 guarded instead by a test that renders a run twice per shared option, which is the written rule doing the
 work a type would do badly.
@@ -135,6 +135,6 @@ is, and named here so it is not re-raised as an oversight.
   for the repositories the feature exists for. When the argument is not conclusive, treat it as reachable.
 - It does not license leaving primitives untyped by default. Every question has to fail. A concept
   that reaches an action output or the Data Branch has already answered the boundary question.
-- **Where it bites:** the *Conventions* section of [CLAUDE.md](../../CLAUDE.md) points here, and each
+- **Where it bites:** the *Conventions* section of [AGENTS.md](../../AGENTS.md) points here, and each
   rejected case above is also named in the folder guide that owns it, so a reader meets the rule before they
   meet this file.

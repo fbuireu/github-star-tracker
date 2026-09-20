@@ -86,5 +86,5 @@ nothing is pushed, so the unreadable file is left exactly as it was.
   behaviours it weighs. A non-object now gives `{}` and an entry that is not an array of strings is dropped
   while its siblings survive.
 - Where this bites is recorded in the persistence section of
-  [`src/infrastructure/CLAUDE.md`](../../src/infrastructure/CLAUDE.md), and the recovery steps a user needs
+  [`src/infrastructure/AGENTS.md`](../../src/infrastructure/AGENTS.md), and the recovery steps a user needs
   are in [`docs/wiki/Data-Management.md`](../wiki/Data-Management.md).

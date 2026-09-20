@@ -6,7 +6,7 @@ here: the bundle is expected to be rebuilt in the same commit as the source, whi
 documentation set is verified by a test, which does. Read this before your first pull request; it will save
 you a rejected commit.
 
-If you want the shape of the codebase, that is [CLAUDE.md](../CLAUDE.md) and the nested guides it links, and
+If you want the shape of the codebase, that is [AGENTS.md](../AGENTS.md) and the nested guides it links, and
 [ARCHITECTURE.md](../ARCHITECTURE.md) for the big picture. If you want the vocabulary, that is
 [CONTEXT.md](../CONTEXT.md). If you want the *why*, that is [docs/adr/](../docs/adr/).
 
@@ -45,7 +45,7 @@ ideas are already being talked about.
 Use the [documentation template](ISSUE_TEMPLATE/documentation.yml), or just open a pull request. The
 user-facing documentation is the [wiki](../docs/wiki/), edited **in this repository** and published by
 [`sync-wiki.yml`](./workflows/sync-wiki.yml) on every push touching it, so an edit made in the wiki UI is
-overwritten on the next sync. The agent-facing guides (`CLAUDE.md` and friends) are held to the code by a
+overwritten on the next sync. The agent-facing guides (`AGENTS.md` and friends) are held to the code by a
 test, so read *The docs are part of the change* below before editing one.
 
 ## Getting started
@@ -85,7 +85,7 @@ Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run 
 Husky runs lint-staged on `pre-commit`, commitlint on `commit-msg` and `pnpm verify:changed` on `pre-push`.
 The hook runs the changed-only variant rather than `verify` because the coverage floor and a subset run
 cannot both hold; CI runs the full `pnpm verify` on the pushed sha, so a push whose coverage dropped still
-fails its check. [CLAUDE.md](../CLAUDE.md) explains the trade. Because `pre-push` rebuilds the bundle, a
+fails its check. [AGENTS.md](../AGENTS.md) explains the trade. Because `pre-push` rebuilds the bundle, a
 push can leave `dist/` dirty; commit that result rather than discarding it.
 
 The bundle. `action.yml` runs `dist/index.js` directly, with no install step, so the bundle is committed
@@ -126,7 +126,7 @@ the workflow log, and `core.debug` output only appears when the `ACTIONS_STEP_DE
 - **Use the glossary's words.** [CONTEXT.md](../CONTEXT.md) names one canonical term per concept: snapshot,
   baseline, data branch, sampled repo. A variable named after a retired term is a defect, not a style
   preference.
-- **No explanatory comments in `.ts` files**, without exception; the tree contains none. The `CLAUDE.md`
+- **No explanatory comments in `.ts` files**, without exception; the tree contains none. The `AGENTS.md`
   guides carry the explanation instead.
 - **One argument is positional and two or more are a single object typed `<FunctionName>Params`**:
   `makeRepoInfo({ name, stars }: MakeRepoInfoParams)`. The exception is a function a runtime calls back,
@@ -177,11 +177,11 @@ build when the docs and the repo disagree: a dead link, a cited file that is not
 `action.yml` input missing from a surface that lists them or out of alphabetical order, a documented default
 that is not the one the code declares, an ADR off its template. "The documentation set" is meant literally:
 the root guides, everything under `docs/` and `.github/`, this file included. When it fails, fix whichever
-side is wrong, and never delete an assertion to get green. [CLAUDE.md](../CLAUDE.md) has the full table of
+side is wrong, and never delete an assertion to get green. [AGENTS.md](../AGENTS.md) has the full table of
 what to update for a given change, and [ARCHITECTURE.md](../ARCHITECTURE.md) holds the ADR index.
 
 Changed inputs, outputs or defaults are reflected in [`action.yml`](../action.yml), the wiki, the README and
-the *Outputs* section of [`src/application/CLAUDE.md`](../src/application/CLAUDE.md), always alphabetically.
+the *Outputs* section of [`src/application/AGENTS.md`](../src/application/AGENTS.md), always alphabetically.
 
 ## Pull requests
 

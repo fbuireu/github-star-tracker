@@ -3,7 +3,7 @@
 How the action is built, for contributors. What it does and how to configure it is the
 [README](./README.md) and the user guides in [docs/wiki/](./docs/wiki/), in particular
 [How It Works](../../wiki/How-It-Works) and [Technical Stack](../../wiki/Technical-Stack); this
-document does not restate them. Conventions and the maintenance contract are [CLAUDE.md](./CLAUDE.md), the
+document does not restate them. Conventions and the maintenance contract are [AGENTS.md](./AGENTS.md), the
 domain vocabulary is [CONTEXT.md](./CONTEXT.md).
 
 ## 1. Layer map
@@ -58,7 +58,7 @@ imperative shell**, and each red layer owns a different side effect: `@config` r
 YAML file, `@infrastructure` owns everything outbound (REST, `git`, the filesystem, SMTP), `@application`
 writes the Action log and the outputs, and [`src/index.ts`](./src/index.ts) starts the run. `@config` reading `node:fs` is the
 detail most easily missed, and the rule it illustrates is stated once in
-[CLAUDE.md](./CLAUDE.md#conventions): `@infrastructure` is the only layer that reaches the network, not the
+[AGENTS.md](./AGENTS.md#conventions): `@infrastructure` is the only layer that reaches the network, not the
 only one that performs I/O.
 
 | Layer | Alias | Responsibility | May import | Must not import |
@@ -92,7 +92,7 @@ arrow would put the same number in two places, which is what the assertion exist
 like it needs a line in `TEST_LAYER_CROSSINGS` and a paragraph here saying why.
 
 The conventions those boundaries sit inside (aliases, named params, no comments, purity) are stated once in
-[CLAUDE.md](./CLAUDE.md#conventions), what each layer guarantees is in that layer's own `CLAUDE.md`, linked
+[AGENTS.md](./AGENTS.md#conventions), what each layer guarantees is in that layer's own `AGENTS.md`, linked
 in [§6](#6-where-things-live), and the decision to layer the tree this way is
 [ADR 0004](./docs/adr/0004-layered-source-structure.md).
 
@@ -165,11 +165,11 @@ State has to survive between runs of a stateless Action. Artifacts expire and ar
 | Email | `@presentation/html` body | `@infrastructure/notification/email` `sendEmail` |
 | Action outputs | - | `setOutputs` in `tracker.ts` |
 
-The action outputs, alphabetically as `action.yml` declares them: `lost-stars`, `new-stargazers`, `new-stars`, `notification-sent`, `report`, `report-csv`, `report-html`, `report-html-path`, `should-notify`, `stars-changed`, `total-stars`. Their values, and the difference between `should-notify` (the decision) and `notification-sent` (delivery), are in [src/application/CLAUDE.md](./src/application/CLAUDE.md).
+The action outputs, alphabetically as `action.yml` declares them: `lost-stars`, `new-stargazers`, `new-stars`, `notification-sent`, `report`, `report-csv`, `report-html`, `report-html-path`, `should-notify`, `stars-changed`, `total-stars`. Their values, and the difference between `should-notify` (the decision) and `notification-sent` (delivery), are in [src/application/AGENTS.md](./src/application/AGENTS.md).
 
 ## 5. Build & release
 
-The scripts, Biome settings and git hooks are listed once in [CLAUDE.md](./CLAUDE.md#commands); this section covers what happens to the bundle and the release, which lives nowhere else.
+The scripts, Biome settings and git hooks are listed once in [AGENTS.md](./AGENTS.md#commands); this section covers what happens to the bundle and the release, which lives nowhere else.
 
 - **Bundling.** [`esbuild.config.ts`](./esbuild.config.ts) (run via `tsx`) bundles `src/index.ts` into [`dist/index.js`](./dist/index.js), `platform: node`, `target: node24`, `format: cjs`, `sourcemap: true`, with the alias map derived from [`tsconfig.json`](./tsconfig.json). `dist/` is **committed** because GitHub runs a JS action straight from the repository at the referenced ref: there is no install step, so the bundle must be in the tree ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)).
 - **Node version.** The pins move together and only some of them are asserted: `engines.node` and `packageManager` in [`package.json`](./package.json), plus [`.nvmrc`](./.nvmrc), which is what every job in [`ci.yml`](./.github/workflows/ci.yml) actually installs through `node-version-file`. `docs/docs-consistency.test.ts` asserts that `.nvmrc` and `engines.node` agree, so moving one without the other fails the build.
@@ -189,7 +189,7 @@ The scripts, Biome settings and git hooks are listed once in [CLAUDE.md](./CLAUD
 ## 6. Where things live
 
 One kind of document per question. [CONTEXT.md](./CONTEXT.md) is the domain glossary: what the words
-**mean**. The `CLAUDE.md` files, one at the root and one per layer, are **structure**.
+**mean**. The `AGENTS.md` files, one at the root and one per layer, are **structure**.
 [docs/adr/](./docs/adr/) is **why**:
 
 | ADR | Decision |
@@ -219,11 +219,11 @@ One kind of document per question. [CONTEXT.md](./CONTEXT.md) is the domain glos
 
 Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md), and a new ADR starts by
 copying that file. The shape the docs test asserts is spelled out in
-[CLAUDE.md's maintenance contract](./CLAUDE.md#maintenance-contract).
+[AGENTS.md's maintenance contract](./AGENTS.md#maintenance-contract).
 
-The per-layer guides and what each covers are the table in [CLAUDE.md](./CLAUDE.md#structure--aliases).
+The per-layer guides and what each covers are the table in [AGENTS.md](./AGENTS.md#structure--aliases).
 That file is loaded into every agent session, so the list lives there and is not repeated here. Root
-[`CLAUDE.md`](./CLAUDE.md) itself is a document of its own: commands, alias wiring, conventions and the
+[`AGENTS.md`](./AGENTS.md) itself is a document of its own: commands, alias wiring, conventions and the
 maintenance contract.
 
 One guide per layer, no deeper: the `infrastructure/` adapters and `shared/tests` are sections inside their parent's guide rather than files of their own, because a guide in a subdirectory only reaches the agent once it reads a file in that exact folder.

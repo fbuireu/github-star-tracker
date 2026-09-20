@@ -18,7 +18,7 @@ const OUTPUT_KEY_PATTERN = /^ {2}([a-z][a-z-]*):$/gm;
 const LINE_CITATION_PATTERN = /`[\w/.-]+\.ts:\d+/g;
 const SCRIPT_PATTERN = /^pnpm ([a-z][a-z0-9:._-]*)/gm;
 const LAYER_ROW_PATTERN = /^\| `([\w-]+)\/` \| `(@[a-z\d]+)(?:\/\*)?` \|/gm;
-const GUIDE = "CLAUDE.md";
+const GUIDE = "AGENTS.md";
 const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
 const VERSIONS_SECTION = /^## Versions$([\s\S]*?)^## /m;
 const QUOTED_VERSION = /\d+\.\d+/;
@@ -30,7 +30,7 @@ const OUTPUT_SURFACES = [
 	"ARCHITECTURE.md",
 	"docs/wiki/API-Reference.md",
 	"docs/wiki/Viewing-Reports.md",
-	"src/application/CLAUDE.md",
+	"src/application/AGENTS.md",
 ];
 const MIN_EXPECTED_DOCS = 20;
 const ADR_DIRECTORY = "docs/adr";
@@ -73,10 +73,10 @@ function walk({ dir, keep }: WalkParams): string[] {
 const isMarkdown = (filename: string): boolean => filename.endsWith(".md");
 
 const DOCS = [
-	...["CLAUDE.md", "ARCHITECTURE.md", "CONTEXT.md", "README.md"].filter((doc) => fs.existsSync(doc)),
+	...["AGENTS.md", "ARCHITECTURE.md", "CONTEXT.md", "README.md"].filter((doc) => fs.existsSync(doc)),
 	...walk({ dir: ".github", keep: isMarkdown }),
 	...walk({ dir: "docs", keep: isMarkdown }),
-	...walk({ dir: "src", keep: (filename) => filename === "CLAUDE.md" }),
+	...walk({ dir: "src", keep: (filename) => filename === "AGENTS.md" }),
 ];
 
 const isTestFile = (filename: string): boolean => filename.endsWith(".test.ts");
@@ -495,7 +495,7 @@ describe("the root guide matches the manifests", () => {
 	});
 
 	it("gives every layer its own nested guide", () => {
-		const missing = layerRows.map(({ layer }) => `src/${layer}/CLAUDE.md`).filter((file) => !fs.existsSync(file));
+		const missing = layerRows.map(({ layer }) => `src/${layer}/AGENTS.md`).filter((file) => !fs.existsSync(file));
 
 		expect(missing).toEqual([]);
 	});
@@ -519,9 +519,9 @@ describe("the root guide matches the manifests", () => {
 
 const DOMAIN_CONSTANTS = "src/domain/constants.ts";
 const CHART_CONSTANTS = "src/presentation/constants.ts";
-const DOMAIN_GUIDE = "src/domain/CLAUDE.md";
-const CHART_GUIDE = "src/presentation/CLAUDE.md";
-const IO_GUIDE = "src/infrastructure/CLAUDE.md";
+const DOMAIN_GUIDE = "src/domain/AGENTS.md";
+const CHART_GUIDE = "src/presentation/AGENTS.md";
+const IO_GUIDE = "src/infrastructure/AGENTS.md";
 
 const declarationPattern = (name: string): RegExp => new RegExp(`\\b${name}\\b[^=:\\n]*[=:]\\s*([^;,\\n]+)`);
 const arrayLiteralPattern = (name: string): RegExp => new RegExp(`\\b${name}\\b[^=:]*[=:]\\s*\\[([\\s\\S]*?)\\]`);
@@ -647,7 +647,7 @@ describe("the guides quote the constants the code declares", () => {
 
 	it("names every runtime it pins", () => {
 		const unnamed = ["Node", "pnpm"].flatMap((runtime) =>
-			["CLAUDE.md", CONTRIBUTOR_GUIDE].filter((doc) => !read(doc).includes(runtime)).map((doc) => `${doc}: ${runtime}`),
+			["AGENTS.md", CONTRIBUTOR_GUIDE].filter((doc) => !read(doc).includes(runtime)).map((doc) => `${doc}: ${runtime}`),
 		);
 
 		expect(unnamed).toEqual([]);
@@ -710,7 +710,7 @@ describe("the guides quote the constants the code declares", () => {
 		const max = value({ file: "src/domain/star-history.ts", name: "MAX_HISTORY_BUCKETS" });
 
 		expect(prose(DOMAIN_GUIDE)).toContain(`clamp(maxPoints, ${min}, ${max})`);
-		expect(prose("src/config/CLAUDE.md")).toContain(`capped at ${max}`);
+		expect(prose("src/config/AGENTS.md")).toContain(`capped at ${max}`);
 	});
 
 	it("derives the reachable page cap rather than restating it", () => {
@@ -762,7 +762,7 @@ describe("the guides quote the constants the code declares", () => {
 		}).replace(QUOTE_PATTERN, "");
 
 		expect(prose(IO_GUIDE)).toContain(`falls back to \`${port}\``);
-		expect(prose("src/config/CLAUDE.md")).toContain(`\`"${port}"\``);
+		expect(prose("src/config/AGENTS.md")).toContain(`\`"${port}"\``);
 	});
 
 	it("keeps MS_PER_YEAR uncorrected for leap years", () => {
@@ -860,7 +860,7 @@ describe("the documented data-branch format matches the writer", () => {
 
 describe("the source follows the named-parameter convention", () => {
 	it("is the rule the root guide states", () => {
-		expect(read("CLAUDE.md")).toContain("One argument is positional; two or more are one object");
+		expect(read("AGENTS.md")).toContain("One argument is positional; two or more are one object");
 	});
 
 	it("declares no function or arrow taking two or more positional parameters", () => {

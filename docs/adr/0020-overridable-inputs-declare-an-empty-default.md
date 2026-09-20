@@ -64,6 +64,6 @@ invisible precedence bug with a visible magic value in every user's workflow fil
 - **An empty string can never be a meaningful value for an overridable input**, since it is indistinguishable
   from "unset". Any option that genuinely needs "explicitly nothing" needs a different representation, which
   is why the list-valued inputs treat empty as "no filter" rather than as an error.
-- Where this bites is recorded in the *Gotchas* section of the root [`CLAUDE.md`](../../CLAUDE.md) and in
-  [`src/config/CLAUDE.md`](../../src/config/CLAUDE.md), and the precedence itself is documented for users in
+- Where this bites is recorded in the *Gotchas* section of the root [`AGENTS.md`](../../AGENTS.md) and in
+  [`src/config/AGENTS.md`](../../src/config/AGENTS.md), and the precedence itself is documented for users in
   [`docs/wiki/Configuration.md`](../wiki/Configuration.md).

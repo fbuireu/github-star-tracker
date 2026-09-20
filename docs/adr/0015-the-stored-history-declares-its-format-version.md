@@ -71,6 +71,6 @@ history, so a shape change there can be handled by changing the filename instead
   reading an old shape and rewriting it, which nothing does today. It makes the format's evolution
   *detectable*, which is the prerequisite.
 - Where it bites is recorded in the persistence section of
-  [`src/infrastructure/CLAUDE.md`](../../src/infrastructure/CLAUDE.md), and the field is shown in the file
+  [`src/infrastructure/AGENTS.md`](../../src/infrastructure/AGENTS.md), and the field is shown in the file
   examples in [`docs/wiki/Data-Management.md`](../wiki/Data-Management.md) and
   [`docs/wiki/API-Reference.md`](../wiki/API-Reference.md).

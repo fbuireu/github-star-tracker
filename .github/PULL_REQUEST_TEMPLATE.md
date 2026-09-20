@@ -50,7 +50,7 @@
 - [ ] I used the glossary's words ([`CONTEXT.md`](../CONTEXT.md)) rather than synonyms
 - [ ] I rebuilt `dist/` with `pnpm build` and committed it, if I touched anything under `src/`
 - [ ] Changed inputs, outputs or defaults are reflected in [`action.yml`](../action.yml), the wiki and the README
-- [ ] I updated any `CLAUDE.md`, [`CONTEXT.md`](../CONTEXT.md), [`ARCHITECTURE.md`](../ARCHITECTURE.md), ADR or wiki page my change affects, in this same PR, and `pnpm test:docs` passes
+- [ ] I updated any `AGENTS.md`, [`CONTEXT.md`](../CONTEXT.md), [`ARCHITECTURE.md`](../ARCHITECTURE.md), ADR or wiki page my change affects, in this same PR, and `pnpm test:docs` passes
 - [ ] My changes generate no new warnings or errors
 - [ ] I have added tests that prove my fix is effective or that my feature works
 

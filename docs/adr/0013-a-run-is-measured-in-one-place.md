@@ -21,7 +21,7 @@ from the **pre-append** History, because that is what makes the Notification Thr
 Runs. And `addSnapshot` silently keeps the whole array when `maxHistory` is `0`, which is why `@config`
 rejects a non-positive `max-history` a layer away.
 
-All six lived as prose in two `CLAUDE.md` files. `@application/tracker` was the only caller, so nothing ever
+All six lived as prose in two `AGENTS.md` files. `@application/tracker` was the only caller, so nothing ever
 diverged, but nothing prevented it either, and the failure mode is a wrong Star Count rather than a crash.
 Its test mocked every one of them, so it asserted the call sequence it was itself defining: a reordering
 would have changed the numbers and kept the suite green.
@@ -67,6 +67,6 @@ acts, not one.
 - **The cost is one more indirection** between `@application` and the comparison maths, and a
   `RunMeasurement` shape that has to grow whenever a Run needs to report something new. That is the trade:
   a wider return type in exchange for an order that cannot be got wrong.
-- The invariants this replaces are recorded in [`src/domain/CLAUDE.md`](../../src/domain/CLAUDE.md) and
-  [`src/application/CLAUDE.md`](../../src/application/CLAUDE.md); the run sequence is the table in
+- The invariants this replaces are recorded in [`src/domain/AGENTS.md`](../../src/domain/AGENTS.md) and
+  [`src/application/AGENTS.md`](../../src/application/AGENTS.md); the run sequence is the table in
   [`ARCHITECTURE.md`](../../ARCHITECTURE.md).

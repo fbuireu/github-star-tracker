@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 Agent-facing guide for **github-star-tracker**, a GitHub Action that tracks star counts across a token
 owner's repositories. See [CONTEXT.md](./CONTEXT.md) for the domain glossary (snapshot, baseline, data
@@ -139,14 +139,14 @@ Nested guides: read the one for the layer you are touching; they carry the detai
 
 | Folder | Covers |
 | --- | --- |
-| [`src/application/`](./src/application/CLAUDE.md) | Run sequence, the output contract, failure policy |
-| [`src/assets/`](./src/assets/CLAUDE.md) | The mark, why it needs no light/dark pair, and why the README heading stays |
-| [`src/config/`](./src/config/CLAUDE.md) | Input + YAML precedence, what throws vs warns, parser vocabularies |
-| [`src/domain/`](./src/domain/CLAUDE.md) | Comparison semantics, snapshots, forecast/velocity maths, star-history |
-| [`src/i18n/`](./src/i18n/CLAUDE.md) | Bundles, placeholder rules, adding a locale |
-| [`src/infrastructure/`](./src/infrastructure/CLAUDE.md) | The adapters: octokit, git worktree, persistence, SMTP |
-| [`src/presentation/`](./src/presentation/CLAUDE.md) | Renderers, the chart set, escaping and injection rules |
-| [`src/shared/`](./src/shared/CLAUDE.md) | `errorMessage`, the fixture factories, and why this folder stays almost empty |
+| [`src/application/`](./src/application/AGENTS.md) | Run sequence, the output contract, failure policy |
+| [`src/assets/`](./src/assets/AGENTS.md) | The mark, why it needs no light/dark pair, and why the README heading stays |
+| [`src/config/`](./src/config/AGENTS.md) | Input + YAML precedence, what throws vs warns, parser vocabularies |
+| [`src/domain/`](./src/domain/AGENTS.md) | Comparison semantics, snapshots, forecast/velocity maths, star-history |
+| [`src/i18n/`](./src/i18n/AGENTS.md) | Bundles, placeholder rules, adding a locale |
+| [`src/infrastructure/`](./src/infrastructure/AGENTS.md) | The adapters: octokit, git worktree, persistence, SMTP |
+| [`src/presentation/`](./src/presentation/AGENTS.md) | Renderers, the chart set, escaping and injection rules |
+| [`src/shared/`](./src/shared/AGENTS.md) | `errorMessage`, the fixture factories, and why this folder stays almost empty |
 
 ## Conventions
 
@@ -161,7 +161,7 @@ Nested guides: read the one for the layer you are touching; they carry the detai
   `docs/docs-consistency.test.ts` asserts the rule over the whole of `src`, with no exemption. The fixture
   factories in [`src/shared/tests`](./src/shared/tests) and the co-located test helpers used to be excused,
   and that is where the rule had drifted furthest. A fixture is the code a reader copies from.
-- **No explanatory comments in `.ts` files**, without exception; the tree contains none. These `CLAUDE.md`
+- **No explanatory comments in `.ts` files**, without exception; the tree contains none. These `AGENTS.md`
   files carry the explanation instead. If something needs explaining it goes in the folder's *Invariants* or
   *Gotchas* section, not above the line.
 - **`domain`, `presentation` and `i18n` must stay pure.** No `@actions/*`, no `node:*`, no network, no fs, and
@@ -209,8 +209,8 @@ wrong. What it cannot check is prose or rationale, and that part is still on you
 | --- | --- |
 | What a domain word means, or introduce a new one | [`CONTEXT.md`](./CONTEXT.md), the glossary: vocabulary only |
 | A behaviour a doc states as an invariant or a gotcha | that bullet, or delete it if it stopped being true |
-| A layer's rules, or the files a concept is made of | that layer's nested `CLAUDE.md` (table above) |
-| A default, an input name, or an output | `action.yml`, [`docs/wiki/Configuration.md`](./docs/wiki/Configuration.md), [`docs/wiki/API-Reference.md`](./docs/wiki/API-Reference.md), the README table, [`docs/wiki/Viewing-Reports.md`](./docs/wiki/Viewing-Reports.md), and the *Outputs* section of [`src/application/CLAUDE.md`](./src/application/CLAUDE.md), always **alphabetically** and never appended at the end (`github-token` stays pinned first) |
+| A layer's rules, or the files a concept is made of | that layer's nested `AGENTS.md` (table above) |
+| A default, an input name, or an output | `action.yml`, [`docs/wiki/Configuration.md`](./docs/wiki/Configuration.md), [`docs/wiki/API-Reference.md`](./docs/wiki/API-Reference.md), the README table, [`docs/wiki/Viewing-Reports.md`](./docs/wiki/Viewing-Reports.md), and the *Outputs* section of [`src/application/AGENTS.md`](./src/application/AGENTS.md), always **alphabetically** and never appended at the end (`github-token` stays pinned first) |
 | A package script, a path alias, or a layer boundary | the *Commands* / *Structure & aliases* sections here |
 | The run order, the layer map, or the build pipeline | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
 | A decision an ADR records | that ADR: amend it, or supersede it with a new one and say so in both `## Status` blocks |
@@ -236,13 +236,13 @@ rots silently the moment anything above it moves, so name the symbol instead.
 - **Defaults live in [`src/config/defaults.ts`](./src/config/defaults.ts), not in `action.yml`.** Overridable inputs deliberately carry
   an empty `default:` so the config file can win ([ADR 0020](./docs/adr/0020-overridable-inputs-declare-an-empty-default.md));
   `src/config/action-inputs.test.ts` reads the real `action.yml` and fails if you add one, and
-  [`src/config/`](./src/config/CLAUDE.md) names the handful of inputs that do carry a default, and why.
+  [`src/config/`](./src/config/AGENTS.md) names the handful of inputs that do carry a default, and why.
 - Coverage is global at 85% for lines/functions/branches/statements. Excluded: [`src/index.ts`](./src/index.ts),
   `src/**/{types,defaults,constants}.ts`, `src/**/*.test.ts`, `src/shared/tests/**`. Changing a constant
   therefore produces no coverage signal, but many tests assert the resulting literals, so expect failures far
   from the edit.
 - One test file can cover two modules. Exactly one such pair is sanctioned and
-  [`src/infrastructure/`](./src/infrastructure/CLAUDE.md) names it; `src/config/action-inputs.test.ts` covers
+  [`src/infrastructure/`](./src/infrastructure/AGENTS.md) names it; `src/config/action-inputs.test.ts` covers
   the manifest rather than a module. [`client.ts`](./src/infrastructure/github/client.ts) is the sole module with no colocated test, so anything else
   missing one is drift, not a convention.
 - The release config teaches its parsers the `!` grammar, and a bare config silently drops every breaking

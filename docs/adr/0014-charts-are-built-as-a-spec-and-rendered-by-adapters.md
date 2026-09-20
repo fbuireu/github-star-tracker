@@ -95,4 +95,4 @@ a dash array or a point radius. Each adapter maps them through its own table.
   its data came from.
 - `charts.ts` now has a colocated [`charts.test.ts`](../../src/presentation/charts.test.ts), so the `Config`-to-style projection and the
   per-repo history fallback are asserted directly rather than through the tracker.
-- Where this bites is recorded in [`src/presentation/CLAUDE.md`](../../src/presentation/CLAUDE.md).
+- Where this bites is recorded in [`src/presentation/AGENTS.md`](../../src/presentation/AGENTS.md).

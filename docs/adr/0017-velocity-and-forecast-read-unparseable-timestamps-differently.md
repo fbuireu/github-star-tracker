@@ -68,5 +68,5 @@ does **not** own is "how a History becomes a day axis", because that is not one 
   standing between the fit and a degenerate one.
 - [`growth.test.ts`](../../src/domain/growth.test.ts) and [`velocity.test.ts`](../../src/domain/velocity.test.ts) both exercise the `MIN_RATE_INTERVAL_DAYS` skip, which is
   redundant but harmless: one asserts the shared rule, the other asserts that Velocity crosses it.
-- The rule was previously prose in [`src/domain/CLAUDE.md`](../../src/domain/CLAUDE.md) marked "deliberately
+- The rule was previously prose in [`src/domain/AGENTS.md`](../../src/domain/AGENTS.md) marked "deliberately
   different" with no reason attached. The prose stays; this ADR is the reason it pointed at nothing.

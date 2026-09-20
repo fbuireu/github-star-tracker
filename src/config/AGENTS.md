@@ -109,7 +109,7 @@ contract *from the manifest side*; [`tracker.test.ts`](../application/tracker.te
 names `setOutputs` actually emits against `action.yml`. Between them the contract is checked in both
 directions, where the manifest list alone was a copy of `action.yml` compared with `action.yml` and would not
 have noticed an output going missing from `setOutputs`. What each output *means* is
-[`src/application/`](../application/CLAUDE.md)'s to document; this folder only checks that the manifest and
+[`src/application/`](../application/AGENTS.md)'s to document; this folder only checks that the manifest and
 the code agree on the names.
 
 Real defaults therefore live in `defaults.ts` and are only *described* in the `action.yml` prose. Every
