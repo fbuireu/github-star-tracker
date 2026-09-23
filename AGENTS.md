@@ -233,6 +233,18 @@ rots silently the moment anything above it moves, so name the symbol instead.
   its own checkout right before `semantic-release` commits `dist/` as a release asset, and no pull-request
   check does any of that. Between releases `main` can still carry a bundle behind its sources, since a
   `refactor` or `chore` commit cuts no release, so commit your rebuild alongside the source.
+- **Nothing may land on `main` while `Semantic Release` is running, and a plain merge is enough to break it.**
+  `@semantic-release/git` commits the version bump, the changelog and `dist/` on the sha the job checked out and
+  pushes `HEAD:main`; a commit that reached `main` in the meantime makes that push a non-fast-forward and the job
+  fails after `Check` has already passed. The `release` concurrency group orders release jobs against each
+  other and cannot order a merge. That run leaves no tag behind, and re-running the failed job does not release
+  either: semantic-release checks that the branch it holds is up to date with the remote before publishing and
+  stands down when it is not. What cuts the release is a manual dispatch of `ci.yml` on `main` with its
+  `release` input checked, the only reason the workflow answers `workflow_dispatch` at all: the run checks
+  `main`'s head, rebuilds `dist/` and releases from a checkout that *is* up to date, so the version is computed
+  over every commit since the last tag, the refused one included. Left at its default a dispatch runs `Check`
+  and nothing else. Queue a merge behind a running release rather than beside it, and reach for the dispatch
+  when one lands beside it anyway.
 - **Defaults live in [`src/config/defaults.ts`](./src/config/defaults.ts), not in `action.yml`.** Overridable inputs deliberately carry
   an empty `default:` so the config file can win ([ADR 0020](./docs/adr/0020-overridable-inputs-declare-an-empty-default.md));
   `src/config/action-inputs.test.ts` reads the real `action.yml` and fails if you add one, and
