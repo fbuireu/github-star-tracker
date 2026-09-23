@@ -233,18 +233,19 @@ rots silently the moment anything above it moves, so name the symbol instead.
   its own checkout right before `semantic-release` commits `dist/` as a release asset, and no pull-request
   check does any of that. Between releases `main` can still carry a bundle behind its sources, since a
   `refactor` or `chore` commit cuts no release, so commit your rebuild alongside the source.
-- **Nothing may land on `main` while `Semantic Release` is running, and a plain merge is enough to break it.**
-  `@semantic-release/git` commits the version bump, the changelog and `dist/` on the sha the job checked out and
-  pushes `HEAD:main`; a commit that reached `main` in the meantime makes that push a non-fast-forward and the job
-  fails after `Check` has already passed. The `release` concurrency group orders release jobs against each
-  other and cannot order a merge. That run leaves no tag behind, and re-running the failed job does not release
-  either: semantic-release checks that the branch it holds is up to date with the remote before publishing and
-  stands down when it is not. What cuts the release is a manual dispatch of `ci.yml` on `main` with its
-  `release` input checked, the only reason the workflow answers `workflow_dispatch` at all: the run checks
-  `main`'s head, rebuilds `dist/` and releases from a checkout that *is* up to date, so the version is computed
-  over every commit since the last tag, the refused one included. Left at its default a dispatch runs `Check`
-  and nothing else. Queue a merge behind a running release rather than beside it, and reach for the dispatch
-  when one lands beside it anyway.
+- **A merge landing while `Semantic Release` runs joins that release instead of breaking it.**
+  `@semantic-release/git` commits the version bump, the changelog and `dist/` on the branch the job holds and
+  pushes `HEAD:main`, and `actions/checkout` pins the run's own sha, so a commit that reached `main` in the
+  meantime used to make that push a non-fast-forward: the job failed after `Check` had passed, no tag was
+  written, and a re-run stood down on *The local branch main is behind the remote one*. The job now
+  fast-forwards onto `origin/main` before it builds and releases, so `dist/` and the version both cover every
+  commit on `main` at that moment, the ones that landed mid-run included, and the run those commits queued
+  finds nothing left to publish. The cost is stated rather than hidden: `Check` ran on the absorbed commits in
+  their pull request rather than in the run that released them. Two cases still stand the job down, and both heal
+  on their own: `main` rewritten under the run, where the sha is no ancestor of the head and the step leaves
+  the checkout alone, and a merge landing in the seconds between the fast-forward and the push. Neither
+  writes a tag, so the run the newer head queued computes the release over everything since the last one
+  and cuts it; nobody has to dispatch anything.
 - **Defaults live in [`src/config/defaults.ts`](./src/config/defaults.ts), not in `action.yml`.** Overridable inputs deliberately carry
   an empty `default:` so the config file can win ([ADR 0020](./docs/adr/0020-overridable-inputs-declare-an-empty-default.md));
   `src/config/action-inputs.test.ts` reads the real `action.yml` and fails if you add one, and
