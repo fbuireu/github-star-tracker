@@ -1,3 +1,10 @@
+## [1.27.5](https://github.com/fbuireu/github-star-tracker/compare/v1.27.4...v1.27.5) (2026-09-24)
+
+
+### Bug Fixes
+
+* self-repo ([abea558](https://github.com/fbuireu/github-star-tracker/commit/abea55833958da3975f62d33b5f011dd0134255b))
+
 ## [1.27.4](https://github.com/fbuireu/github-star-tracker/compare/v1.27.3...v1.27.4) (2026-09-15)
 
 
