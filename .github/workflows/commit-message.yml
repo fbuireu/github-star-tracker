@@ -22,7 +22,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/prepare-env
+      - uses: $/.github/actions/prepare-env
 
       - name: Lint pull request title
         env:
