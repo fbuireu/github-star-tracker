@@ -240,12 +240,12 @@ rots silently the moment anything above it moves, so name the symbol instead.
   written, and a re-run stood down on *The local branch main is behind the remote one*. The job now
   fast-forwards onto `origin/main` before it builds and releases, so `dist/` and the version both cover every
   commit on `main` at that moment, the ones that landed mid-run included, and the run those commits queued
-  finds nothing left to publish. The cost is stated rather than hidden: `Check` ran on the absorbed commits in
+  finds nothing left to publish. The cost: `Check` ran on the absorbed commits in
   their pull request rather than in the run that released them. Two cases still stand the job down, and both heal
   on their own: `main` rewritten under the run, where the sha is no ancestor of the head and the step leaves
   the checkout alone, and a merge landing in the seconds between the fast-forward and the push. Neither
   writes a tag, so the run the newer head queued computes the release over everything since the last one
-  and cuts it; nobody has to dispatch anything.
+  and cuts it.
 - **Defaults live in [`src/config/defaults.ts`](./src/config/defaults.ts), not in `action.yml`.** Overridable inputs deliberately carry
   an empty `default:` so the config file can win ([ADR 0020](./docs/adr/0020-overridable-inputs-declare-an-empty-default.md));
   `src/config/action-inputs.test.ts` reads the real `action.yml` and fails if you add one, and
