@@ -59,7 +59,7 @@ More granular control, required expiration, better for team environments.
    - **Resource owner:** your account
    - **Repository access:** `All repositories`
    - **Permissions > Repository permissions:**
-     - `Contents`: **Read and write**, required. The action commits the report, data, badge and charts to the data branch, and it pushes with *this* token, not with the workflow's `GITHUB_TOKEN`. A token without it fails at the push
+     - `Contents`: **Read and write**, required. The action commits the report, data, badge and charts to the data branch, and it pushes with *this* token whenever `actions/checkout` persisted no credential of its own (`persist-credentials: false`). A token without it then fails at the push
      - `Metadata`: **Read-only**, mandatory. GitHub selects it automatically alongside `Contents`
 4. Click **"Generate token"**
 5. **Copy the token immediately.** It starts with `github_pat_`

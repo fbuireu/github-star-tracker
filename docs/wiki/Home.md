@@ -50,7 +50,7 @@ One step, one secret:
 > [!NOTE]
 > `STAR_TRACKER_TOKEN` must be a [Personal Access Token](<Personal-Access-Token-(PAT)>) with `repo` or `public_repo` scope. The default `GITHUB_TOKEN` is not sufficient: it cannot list repositories outside the repository that triggered the run.
 
-The action pushes to the data branch with that same token, so the workflow itself needs no `permissions: contents: write` grant.
+The job still needs `permissions: contents: write`: with `actions/checkout`'s default `persist-credentials: true`, git pushes the data branch with the workflow's `GITHUB_TOKEN`, and falls back to `github-token` only when checkout persisted nothing.
 
 See **[Getting Started](Getting-Started)** for the full walkthrough: the complete workflow file, the first run, and what lands on the data branch.
 

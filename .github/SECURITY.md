@@ -3,9 +3,10 @@
 ## Supported Versions
 
 Only the newest release on the v1 line receives security fixes, and it is
-reached through the floating `v1` tag that the release workflow force-updates
-after every release. There is no backporting: a fix ships in the next patch or
-minor release, and pointing your workflow at `@v1` is how you get it.
+reached through the floating `v1` tag that the `release` job in `ci.yml`
+force-updates after every release. There is no backporting: a fix ships in the
+next patch or minor release, and pointing your workflow at `@v1` is how you get
+it.
 
 | Component | Supported |
 | --- | --- |

@@ -688,6 +688,8 @@ Y-axis label side.
 | **Default** | `left` |
 | **Options** | `left`, `right` |
 
+Only affects the SVG charts; the chart images embedded in the email always draw their labels on the left.
+
 ---
 
 ### `email-theme`

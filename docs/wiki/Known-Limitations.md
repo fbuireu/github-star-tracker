@@ -18,7 +18,8 @@ The action requires the user to create a PAT and store it as a repository secret
 
 - Classic: `repo` (private + public) or `public_repo` (public only)
 - Fine-grained: `Repository access → All repositories` with `Metadata: Read-only` **and `Contents: Read and
-  write`**. The action pushes the data branch with this same token, so a metadata-only token fails at the push
+  write`**. When `actions/checkout` persisted no credential (`persist-credentials: false`) the action pushes the data
+  branch with this same token, so a metadata-only token fails at the push
 
 See **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)** for a step-by-step setup guide.
 

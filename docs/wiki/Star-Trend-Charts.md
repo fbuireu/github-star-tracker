@@ -281,7 +281,7 @@ still showing the top ten. Beyond that the lines stop being distinguishable.
 ## Chart customization
 
 Every `chart-*` input, with its default and full description, is in
-[Configuration](Configuration#chart-line-color). That page is the reference; this one does not restate it.
+[Configuration](Configuration#chart-customization). That page is the reference; this one does not restate it.
 
 What belongs here is which of the **chart systems** honours each one. The SVG charts on the data branch
 are hand-rendered; the email charts are QuickChart images, and some options cannot survive that trip:
@@ -336,7 +336,7 @@ All the curves keep the plateaus flat except `catmull-rom`, which overshoots at 
 | `cubic-bezier` | no | pronounced, symmetric easing between points |
 | `rounded-step` | no | discrete data you want to read as soft steps |
 
-Every other option's default and effect is in [Configuration](Configuration#chart-line-color), and the
+Every other option's default and effect is in [Configuration](Configuration#chart-customization), and the
 examples gallery above shows each one rendered.
 
 ---

@@ -29,11 +29,14 @@ on:
     - cron: '0 0 * * *' # Daily at midnight UTC
   workflow_dispatch: # Allow manual triggers
 
+permissions:
+  contents: write
+
 jobs:
   track:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: fbuireu/github-star-tracker@v1
         with:
           github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
@@ -42,7 +45,7 @@ jobs:
 That is the minimal setup: the action tracks every repository your token can see, with default settings.
 
 > [!NOTE]
-> The workflow needs no `permissions:` block. The action pushes to the data branch with `github-token` (your PAT), never with the workflow's `GITHUB_TOKEN`, so granting `contents: write` to the job changes nothing. The `actions/checkout` step only reads.
+> Keep the `contents: write` grant. `actions/checkout` persists the workflow's `GITHUB_TOKEN` in the checkout's git config by default, and git sends that credential in preference to `github-token` when the action pushes the data branch. Your PAT is what git falls back to only when the checkout step sets `persist-credentials: false`.
 
 ---
 

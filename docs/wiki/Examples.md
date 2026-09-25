@@ -20,7 +20,7 @@ jobs:
   track:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: fbuireu/github-star-tracker@v1
         with:
           github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
@@ -222,7 +222,7 @@ jobs:
   digest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Track stars
         id: tracker
         uses: fbuireu/github-star-tracker@v1
@@ -251,7 +251,7 @@ The counterpart of the workflow above: this one **reads** a data branch another 
 builds the report, sets every output and sends the email, but never commits, so the two cannot race to push.
 
 ```yaml
-- uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 - name: Build the digest
   id: tracker
   uses: fbuireu/github-star-tracker@v1

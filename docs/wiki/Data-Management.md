@@ -102,10 +102,11 @@ The things that make a run stop rather than continue on a guess:
 | is not valid JSON | fails, naming the parse error, and asks you to fix or delete the file on the data branch |
 | is valid JSON but not an object (`null`, an array, a number, a string) | fails rather than reading it as an empty history and pushing over your record |
 | declares a `version` higher than this action writes | fails and asks you to upgrade the action, or to point `data-branch` at a branch this version wrote |
+| is an object whose `snapshots` key is present but not an array | fails rather than reading it as an empty history |
 
 An **absent** `version` is fine and always will be: every data branch predating the field has none, so it is
-read as version 1. A `snapshots` key that is not an array is the one tolerated case; it normalizes to an
-empty list while `starsAtLastNotification` survives.
+read as version 1. An **absent** `snapshots` key is the one tolerated case, because that is what a first run
+looks like; it reads as an empty list while `starsAtLastNotification` survives.
 
 Why they all stop the run rather than starting over, and the accepted cost that a broken file blocks every
 later run until a human fixes it, is

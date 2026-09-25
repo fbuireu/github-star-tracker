@@ -138,7 +138,7 @@ the workflow log, and `core.debug` output only appears when the `ACTIONS_STEP_DE
   allowlist: report through `@actions/core`.
 - **Tests are colocated** next to the file they cover, as `src/**/*.test.ts`, and coverage is global at
   85% on every metric. Biome sorts named imports, so `import { describe, expect, it } from "vitest"` is the
-  only order that passes `pnpm lint:all`.
+  only order that passes `pnpm format:check`.
 - **Defaults live in `src/config/defaults.ts`, not in `action.yml`.** Overridable inputs deliberately
   carry an empty `default:` so the config file can win, and a test reads the real `action.yml` and fails if
   you add one.

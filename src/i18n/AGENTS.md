@@ -43,7 +43,10 @@ keys) and the bundles sit beside them as `.json`, typed by the `Record<Locale, T
    the placeholder names identical.
 2. Import it in `index.ts`, add `xx: 'xx-XX'` to the locale map, and add `xx` to the `TRANSLATIONS` literal
    (shorthand, so the key must equal the import name).
-3. Update the `locale` input description in [`action.yml`](../../action.yml) and the README's locale row.
+3. Update the `locale` input description in [`action.yml`](../../action.yml) and every document that lists the
+   locales. *Adding a New Locale* in
+   [`docs/wiki/Internationalization-(i18n).md`](<../../docs/wiki/Internationalization-(i18n).md>) names them
+   all, the README's among them.
 
 `LOCALES` and `Locale` derive themselves from the locale map; there is no second list to maintain. The type
 system enforces **completeness but not exactness**: a missing bundle or a missing/mistyped key is a compile

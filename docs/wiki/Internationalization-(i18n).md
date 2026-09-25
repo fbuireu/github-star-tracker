@@ -155,6 +155,9 @@ These documentation edits belong in the same commit, none of them derived from t
 - the `locale` input description in [`action.yml`](https://github.com/fbuireu/github-star-tracker/blob/main/action.yml), which hard-codes the locale names
 - the **Supported Locales** and **Localized Email Subjects** tables on this page
 - the `locale` section of [Configuration](Configuration#locale)
+- the `locale` row and the config-file key list in [API Reference](API-Reference)
+- the *Invalid Locale Warning* entry in [Troubleshooting](Troubleshooting)
+- the repository [README](https://github.com/fbuireu/github-star-tracker/blob/main/README.md): the *Multi-language* feature, the configuration example and the `locale` input row
 
 See **[Contributing](https://github.com/fbuireu/github-star-tracker/blob/main/.github/CONTRIBUTING.md)** for development setup.
 

@@ -464,11 +464,11 @@ before this action in your workflow.
 
 **Cause:** The workflow is missing the `actions/checkout` step. The action stores its data in a Git branch, so it needs the repository checked out before it runs.
 
-**Fix:** Add `actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3` as the first step:
+**Fix:** Add `actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1` as the first step:
 
 ```yaml
 steps:
-  - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+  - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
   - uses: fbuireu/github-star-tracker@v1
     with:
       github-token: ${{ secrets.STAR_TRACKER_TOKEN }}

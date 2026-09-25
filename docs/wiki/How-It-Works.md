@@ -74,7 +74,7 @@ flowchart TD
 Some edges in that diagram are easy to miss, and they matter:
 
 - No repositories matched. When every filter combined leaves nothing, the run warns
-  `No repositories matched the configured filters`, renders an empty report, writes the HTML report, sets all
+  `No repositories matched the configured filters`, renders an empty report, writes the HTML report, sets
   every output to its zeroed value and returns. It never opens the data branch, so nothing is committed
   and no email is attempted. The run still succeeds.
 - Read-only run. With `read-only: true` everything happens except the push: the run reads the branch,

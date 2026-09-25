@@ -23,6 +23,9 @@ flowchart RL
     presentation --> domain
     presentation --> i18n
     domain --> i18n
+    application --> shared
+    config --> shared
+    infrastructure --> shared
 ```
 
 Every arrow above is an import some layer really makes; anything not drawn is forbidden.
@@ -42,7 +45,7 @@ Each layer documents its own rules in a colocated `AGENTS.md`.
 | **config** | Action inputs plus `star-tracker.yml` resolved into one typed `Config` | Reads the inputs and one YAML file |
 | **infrastructure** | Everything outbound: the GitHub REST API, the `git` CLI, the Data Branch worktree, SMTP | Network, `child_process`, filesystem |
 | **application** | Sequences the single use case, `trackStars()` | Writes the Action log and the action outputs |
-| **shared** | Cross-cutting test fixtures, used from `*.test.ts` only | None |
+| **shared** | Cross-cutting code no layer owns: `errorMessage`, plus the test fixtures used from `*.test.ts` only | None |
 
 `assets/` sits beside them and is not a layer: it holds the brand files the README embeds, imports nothing and is imported by nothing.
 
