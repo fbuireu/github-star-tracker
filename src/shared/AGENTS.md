@@ -64,9 +64,12 @@ helpers, no setup; mocking stays in the test files that need it. Nothing outside
 
 - This folder is **not** an exception to the **named-params-for-2+-arguments** rule. It used to be excused,
   which is exactly where the rule had drifted, and `docs/docs-consistency.test.ts` now asserts it over the
-  whole of `src`. `makeHistory` and `makeMultiRepoHistory` take a leading positional list followed by an
-  options object; every other factory takes a single destructured params or options object. Follow the shape
-  of the factory you are extending.
+  whole of `src`. Every factory takes one argument: either a destructured `Make*Params` object, as in
+  `makeHistory({ starCounts, startMs, stepDays })` and `makeMultiRepoHistory({ snapshots, stepDays })`, or a
+  single `overrides` object (`makeConfig`, `makeStargazer`, `makeComparisonResults`). `makeHistory` and
+  `makeMultiRepoHistory` used to take their list positionally with an options object after it, and the
+  check missed them because it only recognised a plain identifier as the second parameter; it now matches a
+  destructured one too.
 - Some test files define their own local factories with the same names but different signatures:
   [`velocity.test.ts`](../domain/velocity.test.ts) has its own `makeHistory` and [`svg-chart.test.ts`](../presentation/svg-chart.test.ts) its own `makeSnapshot` /
   `makeMultiRepoSnapshot`. Neither imports `@shared/tests`, so do not assume the name means the shared

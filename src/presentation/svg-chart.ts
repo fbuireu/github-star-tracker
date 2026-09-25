@@ -190,11 +190,11 @@ function roundedStepPath({ points, radius }: RoundedStepPathParams): string {
 	return path;
 }
 
-const CURVE_PATHS: Record<ChartCurve, (points: Point[], clamp: ClampParams) => string> = {
-	[ChartCurve.CATMULL_ROM]: (points, clamp) => catmullRomPath({ points, clamp }),
-	[ChartCurve.MONOTONE]: (points) => monotonePath(points),
-	[ChartCurve.CUBIC_BEZIER]: (points) => cubicBezierPath(points),
-	[ChartCurve.ROUNDED_STEP]: (points) => roundedStepPath({ points, radius: ROUNDED_STEP_RADIUS }),
+const CURVE_PATHS: Record<ChartCurve, (params: CatmullRomPathParams) => string> = {
+	[ChartCurve.CATMULL_ROM]: catmullRomPath,
+	[ChartCurve.MONOTONE]: ({ points }) => monotonePath(points),
+	[ChartCurve.CUBIC_BEZIER]: ({ points }) => cubicBezierPath(points),
+	[ChartCurve.ROUNDED_STEP]: ({ points }) => roundedStepPath({ points, radius: ROUNDED_STEP_RADIUS }),
 };
 
 interface GenerateCurvePathParams {
@@ -216,7 +216,7 @@ function generateCurvePath({
 	if (points.length === 1) return `M${points[0].x},${points[0].y}`;
 	if (!smoothing) return straightPath(points);
 
-	return CURVE_PATHS[curve](points, { clampMinY, clampMaxY });
+	return CURVE_PATHS[curve]({ points, clamp: { clampMinY, clampMaxY } });
 }
 
 function calculatePathLength(points: Point[]): number {

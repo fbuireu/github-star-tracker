@@ -42462,10 +42462,10 @@ function roundedStepPath({ points, radius }) {
   return path6;
 }
 var CURVE_PATHS = {
-  [ChartCurve.CATMULL_ROM]: (points, clamp) => catmullRomPath({ points, clamp }),
-  [ChartCurve.MONOTONE]: (points) => monotonePath(points),
-  [ChartCurve.CUBIC_BEZIER]: (points) => cubicBezierPath(points),
-  [ChartCurve.ROUNDED_STEP]: (points) => roundedStepPath({ points, radius: ROUNDED_STEP_RADIUS })
+  [ChartCurve.CATMULL_ROM]: catmullRomPath,
+  [ChartCurve.MONOTONE]: ({ points }) => monotonePath(points),
+  [ChartCurve.CUBIC_BEZIER]: ({ points }) => cubicBezierPath(points),
+  [ChartCurve.ROUNDED_STEP]: ({ points }) => roundedStepPath({ points, radius: ROUNDED_STEP_RADIUS })
 };
 function generateCurvePath({
   points,
@@ -42477,7 +42477,7 @@ function generateCurvePath({
   if (points.length === 0) return "";
   if (points.length === 1) return `M${points[0].x},${points[0].y}`;
   if (!smoothing) return straightPath(points);
-  return CURVE_PATHS[curve](points, { clampMinY, clampMaxY });
+  return CURVE_PATHS[curve]({ points, clamp: { clampMinY, clampMaxY } });
 }
 function calculatePathLength(points) {
   let length = 0;

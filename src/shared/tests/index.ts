@@ -72,15 +72,17 @@ export function makeSnapshot({ timestamp, totalStars, repos = [] }: MakeSnapshot
 	return { timestamp, totalStars, repos };
 }
 
-interface MakeHistoryParams {
+export interface MakeHistoryParams {
+	starCounts: number[];
 	startMs?: number;
 	stepDays?: number;
 }
 
-export function makeHistory(
-	starCounts: number[],
-	{ startMs = DEFAULT_SERIES_START, stepDays = DEFAULT_HISTORY_STEP_DAYS }: MakeHistoryParams = {},
-): History {
+export function makeHistory({
+	starCounts,
+	startMs = DEFAULT_SERIES_START,
+	stepDays = DEFAULT_HISTORY_STEP_DAYS,
+}: MakeHistoryParams): History {
 	return {
 		snapshots: starCounts.map((totalStars, index) =>
 			makeSnapshot({ timestamp: new Date(startMs + index * stepDays * MS_PER_DAY).toISOString(), totalStars }),
@@ -108,10 +110,17 @@ export function makeMultiRepoSnapshot({ timestamp, repoStars }: MakeMultiRepoSna
 	};
 }
 
-export function makeMultiRepoHistory(
-	snapshots: Record<string, number>[],
-	{ startMs = DEFAULT_SERIES_START, stepDays = DEFAULT_HISTORY_STEP_DAYS }: MakeHistoryParams = {},
-): History {
+export interface MakeMultiRepoHistoryParams {
+	snapshots: Record<string, number>[];
+	startMs?: number;
+	stepDays?: number;
+}
+
+export function makeMultiRepoHistory({
+	snapshots,
+	startMs = DEFAULT_SERIES_START,
+	stepDays = DEFAULT_HISTORY_STEP_DAYS,
+}: MakeMultiRepoHistoryParams): History {
 	return {
 		snapshots: snapshots.map((repoStars, index) =>
 			makeMultiRepoSnapshot({ timestamp: new Date(startMs + index * stepDays * MS_PER_DAY).toISOString(), repoStars }),

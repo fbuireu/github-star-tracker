@@ -16,11 +16,13 @@ const REPO_TOTALS: SnapshotRepo[] = [
 	{ fullName: "user/repo-b", name: "repo-b", owner: "user", stars: 40 },
 ];
 
-const HISTORY = makeMultiRepoHistory([
-	{ "user/repo-a": 40, "user/repo-b": 20 },
-	{ "user/repo-a": 50, "user/repo-b": 30 },
-	{ "user/repo-a": 60, "user/repo-b": 40 },
-]);
+const HISTORY = makeMultiRepoHistory({
+	snapshots: [
+		{ "user/repo-a": 40, "user/repo-b": 20 },
+		{ "user/repo-a": 50, "user/repo-b": 30 },
+		{ "user/repo-a": 60, "user/repo-b": 40 },
+	],
+});
 
 const FORECAST: ForecastData = {
 	aggregate: {
@@ -78,7 +80,7 @@ describe("buildChartFiles", () => {
 	});
 
 	it("renders nothing when the history is too short to plot", () => {
-		const single = makeMultiRepoHistory([{ "user/repo-a": 40 }]);
+		const single = makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 40 }] });
 
 		expect(build({ storedHistory: single })).toEqual([]);
 	});
@@ -182,7 +184,9 @@ describe("buildChartFiles", () => {
 });
 
 describe("resolveChartHistories", () => {
-	const stored: History = makeMultiRepoHistory([{ "user/repo-a": 1 }, { "user/repo-a": 2 }, { "user/repo-a": 3 }]);
+	const stored: History = makeMultiRepoHistory({
+		snapshots: [{ "user/repo-a": 1 }, { "user/repo-a": 2 }, { "user/repo-a": 3 }],
+	});
 
 	it("prefers the reconstruction once it has enough snapshots to plot", () => {
 		const resolved = histories({

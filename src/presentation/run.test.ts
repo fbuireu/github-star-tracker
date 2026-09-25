@@ -11,22 +11,22 @@ import type { ChartHistories } from "./charts";
 import { generateCsvReport } from "./csv";
 import { renderEmptyRun, renderRun } from "./run";
 
-const STORED = makeMultiRepoHistory(
-	[
+const STORED = makeMultiRepoHistory({
+	snapshots: [
 		{ "user/repo-a": 10, "user/repo-b": 5 },
 		{ "user/repo-a": 60, "user/repo-b": 40 },
 	],
-	{ stepDays: 10 },
-);
+	stepDays: 10,
+});
 
-const RECONSTRUCTED = makeMultiRepoHistory(
-	[
+const RECONSTRUCTED = makeMultiRepoHistory({
+	snapshots: [
 		{ "user/repo-a": 20, "user/repo-b": 10 },
 		{ "user/repo-a": 40, "user/repo-b": 20 },
 		{ "user/repo-a": 60, "user/repo-b": 40 },
 	],
-	{ stepDays: 1 },
-);
+	stepDays: 1,
+});
 
 function chartHistories(aggregate = RECONSTRUCTED): ChartHistories {
 	return { aggregate, forRepo: () => aggregate, reconstructedForRepo: () => aggregate };

@@ -102,11 +102,11 @@ describe("buildReportModel", () => {
 
 	describe("chart history", () => {
 		it("is plottable only with charts on and at least two snapshots", () => {
-			const history = makeHistory([10, 20]);
+			const history = makeHistory({ starCounts: [10, 20] });
 			const outcomes = [
 				modelOf({ history, config: { includeCharts: true } }),
 				modelOf({ history, config: { includeCharts: false } }),
-				modelOf({ history: makeHistory([10]), config: { includeCharts: true } }),
+				modelOf({ history: makeHistory({ starCounts: [10] }), config: { includeCharts: true } }),
 				modelOf({ history: null, config: { includeCharts: true } }),
 			].map((model) => [model.chartHistory !== null, model.chartHistory]);
 
@@ -155,7 +155,7 @@ describe("buildReportModel", () => {
 	});
 
 	describe("Velocity", () => {
-		const velocityHistory = makeHistory([100, 200]);
+		const velocityHistory = makeHistory({ starCounts: [100, 200] });
 
 		it("is absent unless the metrics are enabled and a stored history is supplied", () => {
 			expect(modelOf({ velocityHistory }).velocity).toBeNull();
@@ -180,7 +180,7 @@ describe("buildReportModel", () => {
 	});
 
 	describe("per-repo forecasts", () => {
-		const history = makeHistory([100, 120, 150]);
+		const history = makeHistory({ starCounts: [100, 120, 150] });
 		const withRepos: ForecastData = {
 			...forecastData,
 			repos: [

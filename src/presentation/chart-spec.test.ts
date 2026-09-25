@@ -60,12 +60,14 @@ function milestoneValues(spec: ChartSpec): number[] {
 	return spec.milestones.map((milestone) => milestone.value);
 }
 
-const singleSnapshot: History = makeHistory([10]);
-const multiRepo = makeMultiRepoHistory([
-	{ "user/repo-a": 50, "user/repo-b": 30 },
-	{ "user/repo-a": 70, "user/repo-b": 35 },
-	{ "user/repo-a": 90, "user/repo-b": 40 },
-]);
+const singleSnapshot: History = makeHistory({ starCounts: [10] });
+const multiRepo = makeMultiRepoHistory({
+	snapshots: [
+		{ "user/repo-a": 50, "user/repo-b": 30 },
+		{ "user/repo-a": 70, "user/repo-b": 35 },
+		{ "user/repo-a": 90, "user/repo-b": 40 },
+	],
+});
 
 describe("buildChartSpec", () => {
 	describe("too little history", () => {
@@ -104,7 +106,7 @@ describe("buildChartSpec", () => {
 
 	describe("default titles", () => {
 		it("names each kind from the locale bundle, or the repository itself", () => {
-			const history = makeHistory([10, 20, 30]);
+			const history = makeHistory({ starCounts: [10, 20, 30] });
 			const titles = [
 				specOf({ request: { kind: ChartKind.STAR_HISTORY, history } }).title,
 				specOf({
@@ -144,7 +146,7 @@ describe("buildChartSpec", () => {
 
 		it("lets an explicit title win", () => {
 			const spec = specOf({
-				request: { kind: ChartKind.STAR_HISTORY, history: makeHistory([10, 20]), title: "Mine" },
+				request: { kind: ChartKind.STAR_HISTORY, history: makeHistory({ starCounts: [10, 20] }), title: "Mine" },
 			});
 
 			expect(spec.title).toBe("Mine");
@@ -154,7 +156,7 @@ describe("buildChartSpec", () => {
 	describe("star history", () => {
 		it("plots the total series, filled and unbroken", () => {
 			const spec = specOf({
-				request: { kind: ChartKind.STAR_HISTORY, history: makeHistory([10, 20, 30]) },
+				request: { kind: ChartKind.STAR_HISTORY, history: makeHistory({ starCounts: [10, 20, 30] }) },
 			});
 
 			expect(spec.series).toHaveLength(1);
@@ -172,7 +174,7 @@ describe("buildChartSpec", () => {
 			const spec = specOf({
 				request: {
 					kind: ChartKind.STAR_HISTORY,
-					history: makeHistory([10, 20]),
+					history: makeHistory({ starCounts: [10, 20] }),
 					lineColor: "#6f42c1",
 				},
 			});
@@ -183,7 +185,7 @@ describe("buildChartSpec", () => {
 		it("adds a trailing-average trend series that carries no emphasis", () => {
 			const values = [10, 20, 30, 40];
 			const spec = specOf({
-				request: { kind: ChartKind.STAR_HISTORY, history: makeHistory(values), trendLine: true },
+				request: { kind: ChartKind.STAR_HISTORY, history: makeHistory({ starCounts: values }), trendLine: true },
 			});
 
 			expect(spec.series).toHaveLength(2);
@@ -198,7 +200,7 @@ describe("buildChartSpec", () => {
 		});
 
 		it("resolves milestones: custom beats built-in, empty falls back, off is none", () => {
-			const history = makeHistory([10, 600]);
+			const history = makeHistory({ starCounts: [10, 600] });
 			const resolved = [
 				milestoneValues(specOf({ request: { kind: ChartKind.STAR_HISTORY, history } })),
 				milestoneValues(
@@ -217,7 +219,7 @@ describe("buildChartSpec", () => {
 		it("labels each milestone once, in the spec, using the requested locale", () => {
 			const request = {
 				kind: ChartKind.STAR_HISTORY,
-				history: makeHistory([10, 6000]),
+				history: makeHistory({ starCounts: [10, 6000] }),
 				customMilestones: [1000],
 			} as const;
 
@@ -231,7 +233,7 @@ describe("buildChartSpec", () => {
 			const spec = specOf({
 				request: {
 					kind: ChartKind.STAR_HISTORY,
-					history: makeHistory([10, 100]),
+					history: makeHistory({ starCounts: [10, 100] }),
 					customMilestones: [10, 50, 100],
 				},
 			});
@@ -244,7 +246,7 @@ describe("buildChartSpec", () => {
 			const spec = specOf({
 				request: {
 					kind: ChartKind.STAR_HISTORY,
-					history: makeHistory(values),
+					history: makeHistory({ starCounts: values }),
 					customMilestones: [12, 25, 35],
 					trendLine: true,
 				},
@@ -288,10 +290,12 @@ describe("buildChartSpec", () => {
 			const mixedOwners = specOf({
 				request: {
 					kind: ChartKind.COMPARISON,
-					history: makeMultiRepoHistory([
-						{ "alice/repo-a": 10, "bob/repo-b": 20 },
-						{ "alice/repo-a": 15, "bob/repo-b": 25 },
-					]),
+					history: makeMultiRepoHistory({
+						snapshots: [
+							{ "alice/repo-a": 10, "bob/repo-b": 20 },
+							{ "alice/repo-a": 15, "bob/repo-b": 25 },
+						],
+					}),
 					repoNames: ["alice/repo-a", "bob/repo-b"],
 				},
 			});
@@ -314,7 +318,7 @@ describe("buildChartSpec", () => {
 	});
 
 	describe("forecast", () => {
-		const history = makeHistory([100, 120, 150]);
+		const history = makeHistory({ starCounts: [100, 120, 150] });
 
 		it("continues the observed series into one series per Forecast Method", () => {
 			const spec = specOf({ request: { kind: ChartKind.FORECAST, history, forecastData } });
@@ -404,10 +408,10 @@ describe("buildChartSpec", () => {
 	});
 
 	describe("windowing", () => {
-		const history = makeHistory([10, 20, 30, 40, 50]);
+		const history = makeHistory({ starCounts: [10, 20, 30, 40, 50] });
 
 		it("thins x-axis labels to years for a multi-year history, or dates them in full", () => {
-			const multiYear = makeHistory([10, 20, 30], { stepDays: 400 });
+			const multiYear = makeHistory({ starCounts: [10, 20, 30], stepDays: 400 });
 			const thinned = specOf({
 				request: { kind: ChartKind.STAR_HISTORY, history: multiYear },
 				axisLabels: AxisLabels.THINNED,
@@ -434,7 +438,7 @@ describe("buildChartSpec", () => {
 			const spec = specOf({
 				request: {
 					kind: ChartKind.STAR_HISTORY,
-					history: makeHistory([10, 20, 30, 40, 50], { stepDays: 10 }),
+					history: makeHistory({ starCounts: [10, 20, 30, 40, 50], stepDays: 10 }),
 				},
 				range: ChartRange.D30,
 			});

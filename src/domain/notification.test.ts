@@ -165,7 +165,7 @@ describe("shouldNotify", () => {
 describe("recordNotification", () => {
 	it("advances the notification baseline to the delivered total", () => {
 		const history: History = {
-			...makeMultiRepoHistory([{ "user/repo-a": 100 }]),
+			...makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 100 }] }),
 			starsAtLastNotification: 50,
 		};
 
@@ -173,7 +173,7 @@ describe("recordNotification", () => {
 	});
 
 	it("returns a new history so the undelivered one is still persistable", () => {
-		const history: History = makeMultiRepoHistory([{ "user/repo-a": 100 }]);
+		const history: History = makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 100 }] });
 
 		const advanced = recordNotification({ history, totalStars: 100 });
 
@@ -184,7 +184,7 @@ describe("recordNotification", () => {
 });
 
 describe("settleNotification", () => {
-	const history: History = makeMultiRepoHistory([{ "user/repo-a": 100 }]);
+	const history: History = makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 100 }] });
 	const settle = (overrides: Partial<Parameters<typeof settleNotification>[0]> = {}) =>
 		settleNotification({
 			changed: true,

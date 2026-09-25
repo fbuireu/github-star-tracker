@@ -51,7 +51,7 @@ describe("generateMarkdownReport", () => {
 		expect(report).toContain("-2");
 	});
 
-	const velocityHistory = makeHistory([100, 200], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
+	const velocityHistory = makeHistory({ starCounts: [100, 200], startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
 	it("renders the velocity section when velocity-metrics is enabled", () => {
 		const report = renderMarkdown({ velocityHistory, config: { velocityMetrics: true } });
@@ -68,10 +68,7 @@ describe("generateMarkdownReport", () => {
 	});
 
 	it("computes velocity from the tracked history, not the chart history", () => {
-		const chartHistory = makeHistory([100, 5_000], {
-			startMs: Date.UTC(2025, 0, 1),
-			stepDays: 100,
-		});
+		const chartHistory = makeHistory({ starCounts: [100, 5_000], startMs: Date.UTC(2025, 0, 1), stepDays: 100 });
 
 		const report = renderMarkdown({
 			history: chartHistory,
@@ -84,7 +81,7 @@ describe("generateMarkdownReport", () => {
 	});
 
 	it("omits velocity when only a chart history is available", () => {
-		const chartHistory = makeHistory([100, 200], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
+		const chartHistory = makeHistory({ starCounts: [100, 200], startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
 		const report = renderMarkdown({ history: chartHistory, config: { velocityMetrics: true } });
 
@@ -92,7 +89,7 @@ describe("generateMarkdownReport", () => {
 	});
 
 	it("renders velocity with only the daily rate when growth and projection are unavailable", () => {
-		const flatHistory = makeHistory([0, 0], { startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
+		const flatHistory = makeHistory({ starCounts: [0, 0], startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
 		const report = renderMarkdown({
 			velocityHistory: flatHistory,
@@ -105,10 +102,7 @@ describe("generateMarkdownReport", () => {
 	});
 
 	it("shows negative growth without a plus sign", () => {
-		const decliningHistory = makeHistory([200, 150], {
-			startMs: Date.UTC(2025, 0, 1),
-			stepDays: 10,
-		});
+		const decliningHistory = makeHistory({ starCounts: [200, 150], startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
 
 		const report = renderMarkdown({
 			velocityHistory: decliningHistory,
@@ -190,9 +184,7 @@ describe("generateMarkdownReport", () => {
 	});
 
 	it("includes charts when history has multiple snapshots", () => {
-		const history = makeMultiRepoHistory([{ "user/repo-a": 20 }, { "user/repo-a": 23 }], {
-			stepDays: 1,
-		});
+		const history = makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 20 }, { "user/repo-a": 23 }], stepDays: 1 });
 
 		const report = renderMarkdown({ history, config: { includeCharts: true } });
 
@@ -201,13 +193,13 @@ describe("generateMarkdownReport", () => {
 	});
 
 	it("includes comparison chart in markdown", () => {
-		const history = makeMultiRepoHistory(
-			[
+		const history = makeMultiRepoHistory({
+			snapshots: [
 				{ "user/repo-a": 10, "user/repo-b": 10 },
 				{ "user/repo-a": 15, "user/repo-b": 10 },
 			],
-			{ stepDays: 1 },
-		);
+			stepDays: 1,
+		});
 
 		const report = renderMarkdown({ history, config: { includeCharts: true } });
 
@@ -216,13 +208,13 @@ describe("generateMarkdownReport", () => {
 	});
 
 	it("includes individual repo charts in collapsible section", () => {
-		const history = makeMultiRepoHistory(
-			[
+		const history = makeMultiRepoHistory({
+			snapshots: [
 				{ "user/repo-a": 10, "user/repo-b": 10 },
 				{ "user/repo-a": 15, "user/repo-b": 10 },
 			],
-			{ stepDays: 1 },
-		);
+			stepDays: 1,
+		});
 
 		const report = renderMarkdown({ history, config: { includeCharts: true } });
 
@@ -236,13 +228,13 @@ describe("generateMarkdownReport", () => {
 	});
 
 	it("heads each individual repo chart with its Star Count and Delta", () => {
-		const history = makeMultiRepoHistory(
-			[
+		const history = makeMultiRepoHistory({
+			snapshots: [
 				{ "user/repo-a": 10, "user/repo-b": 10 },
 				{ "user/repo-a": 15, "user/repo-b": 8 },
 			],
-			{ stepDays: 1 },
-		);
+			stepDays: 1,
+		});
 
 		const report = renderMarkdown({ history, config: { includeCharts: true } });
 
@@ -395,13 +387,13 @@ describe("generateMarkdownReport", () => {
 	});
 
 	it("links each per-repo forecast chart the run actually drew", () => {
-		const history = makeMultiRepoHistory(
-			[
+		const history = makeMultiRepoHistory({
+			snapshots: [
 				{ "user/repo-a": 10, "user/repo-b": 10 },
 				{ "user/repo-a": 15, "user/repo-b": 10 },
 			],
-			{ stepDays: 1 },
-		);
+			stepDays: 1,
+		});
 		const forecastData: ForecastData = {
 			aggregate: {
 				forecasts: [{ method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 1, predicted: 25 }] }],

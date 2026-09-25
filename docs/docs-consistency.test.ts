@@ -865,7 +865,7 @@ describe("the source follows the named-parameter convention", () => {
 
 	it("declares no function or arrow taking two or more positional parameters", () => {
 		const sources = walk({ dir: "src", keep: (filename) => filename.endsWith(".ts") });
-		const declaration = /(?:function\s+\w+|=)\s*\(\s*\w+\s*:\s*[^,()]+,\s*\w+\s*:/g;
+		const declaration = /(?:function\s+\w+|=)\s*\(\s*(?:\w+|\{[^{}]*\})\s*:\s*[^,()]+,\s*(?:\w+|\{[^{}]*\})\s*:/g;
 		const offenders = sources.flatMap((file) =>
 			[...read(file).matchAll(declaration)].map(
 				(match) => `${toPosix(file)} -> ${match[0].replace(/\s+/g, " ").trim()}`,

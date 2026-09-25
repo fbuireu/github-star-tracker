@@ -11,14 +11,14 @@ const CHART_CONFIG_PARAM = "&c=";
 const CHART_HEIGHT = "&h=";
 const CHART_WIDTH = "w=";
 
-const mockHistory: History = makeMultiRepoHistory(
-	[
+const mockHistory: History = makeMultiRepoHistory({
+	snapshots: [
 		{ "user/repo-a": 50, "user/repo-b": 50 },
 		{ "user/repo-a": 70, "user/repo-b": 50 },
 		{ "user/repo-a": 90, "user/repo-b": 60 },
 	],
-	{ startMs: Date.UTC(2025, 0, 1) },
-);
+	startMs: Date.UTC(2025, 0, 1),
+});
 
 describe("chart", () => {
 	describe("chartImageUrl: star history", () => {

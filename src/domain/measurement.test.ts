@@ -28,7 +28,9 @@ describe("measureRun", () => {
 	});
 
 	it("compares against the baseline the comparison window selects, not the newest snapshot", () => {
-		const storedHistory = makeMultiRepoHistory([{ "user/repo-a": 10 }, { "user/repo-a": 40 }, { "user/repo-a": 90 }]);
+		const storedHistory = makeMultiRepoHistory({
+			snapshots: [{ "user/repo-a": 10 }, { "user/repo-a": 40 }, { "user/repo-a": 90 }],
+		});
 
 		const lastRun = measureRun({
 			...BASE,
@@ -52,7 +54,7 @@ describe("measureRun", () => {
 	});
 
 	it("appends the run to the stored history without mutating it", () => {
-		const storedHistory = makeMultiRepoHistory([{ "user/repo-a": 10 }]);
+		const storedHistory = makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 10 }] });
 
 		const measurement = measureRun({
 			...BASE,
@@ -76,7 +78,9 @@ describe("measureRun", () => {
 	});
 
 	it("reports how many snapshots the max-history trim drops", () => {
-		const storedHistory = makeMultiRepoHistory([{ "user/repo-a": 1 }, { "user/repo-a": 2 }, { "user/repo-a": 3 }]);
+		const storedHistory = makeMultiRepoHistory({
+			snapshots: [{ "user/repo-a": 1 }, { "user/repo-a": 2 }, { "user/repo-a": 3 }],
+		});
 
 		expect(
 			measureRun({
@@ -100,7 +104,7 @@ describe("measureRun", () => {
 	});
 
 	it("counts what the appended history actually lost, even when max-history keeps everything", () => {
-		const storedHistory = makeMultiRepoHistory([{ "user/repo-a": 1 }, { "user/repo-a": 2 }]);
+		const storedHistory = makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 1 }, { "user/repo-a": 2 }] });
 		const measurement = measureRun({
 			...BASE,
 			maxHistory: 0,
@@ -113,7 +117,9 @@ describe("measureRun", () => {
 	});
 
 	it("trims the appended history to max-history", () => {
-		const storedHistory = makeMultiRepoHistory([{ "user/repo-a": 1 }, { "user/repo-a": 2 }, { "user/repo-a": 3 }]);
+		const storedHistory = makeMultiRepoHistory({
+			snapshots: [{ "user/repo-a": 1 }, { "user/repo-a": 2 }, { "user/repo-a": 3 }],
+		});
 
 		const measurement = measureRun({
 			...BASE,
@@ -127,7 +133,7 @@ describe("measureRun", () => {
 
 	it("measures the notification threshold against the pre-append baseline, so it accumulates", () => {
 		const storedHistory: History = {
-			...makeMultiRepoHistory([{ "user/repo-a": 100 }]),
+			...makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 100 }] }),
 			starsAtLastNotification: 100,
 		};
 
@@ -150,7 +156,7 @@ describe("measureRun", () => {
 
 	it("leaves the notification baseline untouched, so a threshold that was not delivered still accrues", () => {
 		const storedHistory: History = {
-			...makeMultiRepoHistory([{ "user/repo-a": 100 }]),
+			...makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 100 }] }),
 			starsAtLastNotification: 100,
 		};
 
@@ -167,7 +173,7 @@ describe("measureRun", () => {
 
 	it("honours the notification mode when stars are lost", () => {
 		const storedHistory: History = {
-			...makeMultiRepoHistory([{ "user/repo-a": 100 }]),
+			...makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 100 }] }),
 			starsAtLastNotification: 100,
 		};
 		const lost = { ...BASE, notificationThreshold: 20, trackedSet: [makeRepoInfo({ name: "repo-a", stars: 70 })] };
