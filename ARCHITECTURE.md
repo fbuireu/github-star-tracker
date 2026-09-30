@@ -19,6 +19,7 @@ the whole tree, when a primitive earns a type of its own, is
 ---
 config:
   look: handDrawn
+  layout: dagre
 ---
 flowchart TD
     idx["src/index.ts"] --> app["@application<br/>tracker.ts, the only use case"]

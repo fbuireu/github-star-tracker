@@ -238,6 +238,7 @@ To email on every N stars, use `notification-threshold: 'N'` with `notification-
 ---
 config:
   look: handDrawn
+  layout: dagre
 ---
 flowchart TD
     trigger(["Workflow Trigger"])

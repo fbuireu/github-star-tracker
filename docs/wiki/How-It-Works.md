@@ -8,6 +8,7 @@ A deep dive into the execution pipeline and data flow of GitHub Star Tracker, ph
 ---
 config:
   look: handDrawn
+  layout: dagre
 ---
 flowchart TD
     trigger(["Workflow Trigger"])
