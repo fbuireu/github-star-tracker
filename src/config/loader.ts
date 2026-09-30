@@ -135,9 +135,7 @@ function enumField<const T extends string>(allowed: readonly T[]): FieldResolver
 
 		if (!value) return fallback as T;
 
-		const match = schema.safeParse(value);
-
-		if (match.success) return match.data;
+		if (z.validate(schema, value)) return value;
 
 		core.warning(
 			`Invalid ${inputName} "${String(value)}". Must be ${formatChoices(allowed)}. Falling back to "${String(fallback)}"`,
@@ -267,20 +265,16 @@ export function loadConfigFile(configPath: string): FileConfig {
 
 function resolveVisibility(fileConfig: FileConfig): Visibility {
 	const raw = core.getInput("visibility") || fileConfig.visibility || DEFAULTS.visibility;
-	const visibility = VisibilitySchema.safeParse(raw);
-
-	if (!visibility.success) {
+	if (!z.validate(VisibilitySchema, raw)) {
 		throw new Error(`Invalid visibility "${String(raw)}". Must be one of: ${Object.values(Visibility).join(", ")}`);
 	}
 
-	return visibility.data;
+	return raw;
 }
 
 function resolveDataBranch(fileConfig: FileConfig): string {
 	const raw = core.getInput("data-branch") || fileConfig.dataBranch || DEFAULTS.dataBranch;
-	const dataBranch = DataBranchSchema.safeParse(raw);
-
-	if (dataBranch.success) return dataBranch.data;
+	if (z.validate(DataBranchSchema, raw)) return raw;
 
 	if (typeof raw !== "string") {
 		throw new Error(

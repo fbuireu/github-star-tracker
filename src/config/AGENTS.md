@@ -24,7 +24,8 @@ what lets one parser serve both the input string and the raw YAML value. The lis
 `parseNumberList`, `toStringList`) stay hand-written: they split and de-duplicate rather than validate, and a
 schema would only wrap the same code in a `transform`. `loader.ts` uses schemas for the three values it
 checks itself: `VisibilitySchema`, `DataBranchSchema` (git's ref rules as one `refine`) and the enum schema
-each `enumField` row builds once.
+each `enumField` row builds once. None of the three transforms and each message is written here, so they are
+checked with `z.validate`, never `safeParse`: the value that passes is the value that was given.
 
 ## The field table
 

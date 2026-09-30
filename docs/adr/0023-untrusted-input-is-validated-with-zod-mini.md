@@ -66,7 +66,7 @@ trusted, and nothing imports `zod` itself.** The schemas live beside the code th
   same way for every caller that shows one.
 
 `z.validate` is used where a yes/no is all the caller needs (the stargazer repair, the config file's top
-level, the API URL); `safeParse` where the caller needs the parsed output or the issue for its message.
+level, the API URL, `visibility`, `data-branch`, the enum inputs and `errorMessage`); `safeParse` where the caller needs the parsed output or the issue for its message.
 Parsers keep their behaviour: the schema replaces the check, not the policy of what warns, what falls back
 and what throws.
 

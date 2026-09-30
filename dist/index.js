@@ -28669,7 +28669,7 @@ var ErrorWithMessageSchema = object({
   message: string2().check(refine((message) => message.trim() !== ""))
 });
 function errorMessage(error3) {
-  return ErrorWithMessageSchema.safeParse(error3).data?.message ?? String(error3);
+  return validate(ErrorWithMessageSchema, error3) ? error3.message : String(error3);
 }
 function describeFound(value) {
   if (Array.isArray(value)) return "an array";
@@ -31354,8 +31354,7 @@ function enumField(allowed) {
   return ({ input, inputName, fileValue, fallback }) => {
     const value = input || fileValue;
     if (!value) return fallback;
-    const match = schema.safeParse(value);
-    if (match.success) return match.data;
+    if (validate(schema, value)) return value;
     warning(
       `Invalid ${inputName} "${String(value)}". Must be ${formatChoices(allowed)}. Falling back to "${String(fallback)}"`
     );
@@ -31458,16 +31457,14 @@ function loadConfigFile(configPath) {
 }
 function resolveVisibility(fileConfig) {
   const raw = getInput("visibility") || fileConfig.visibility || DEFAULTS2.visibility;
-  const visibility = VisibilitySchema.safeParse(raw);
-  if (!visibility.success) {
+  if (!validate(VisibilitySchema, raw)) {
     throw new Error(`Invalid visibility "${String(raw)}". Must be one of: ${Object.values(Visibility).join(", ")}`);
   }
-  return visibility.data;
+  return raw;
 }
 function resolveDataBranch(fileConfig) {
   const raw = getInput("data-branch") || fileConfig.dataBranch || DEFAULTS2.dataBranch;
-  const dataBranch = DataBranchSchema.safeParse(raw);
-  if (dataBranch.success) return dataBranch.data;
+  if (validate(DataBranchSchema, raw)) return raw;
   if (typeof raw !== "string") {
     throw new Error(
       `Invalid data-branch ${JSON.stringify(raw)} in the config file. It must be a string, so quote it in the config file.`

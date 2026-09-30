@@ -5,7 +5,7 @@ const ErrorWithMessageSchema = z.object({
 });
 
 export function errorMessage(error: unknown): string {
-	return ErrorWithMessageSchema.safeParse(error).data?.message ?? String(error);
+	return z.validate(ErrorWithMessageSchema, error) ? error.message : String(error);
 }
 
 export function describeFound(value: unknown): string {
