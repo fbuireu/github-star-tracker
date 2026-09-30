@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/fbuireu/github-star-tracker/compare/v1.27.5...v1.28.0) (2026-09-30)
+
+
+### Features
+
+* validate the stored history, GitHub responses and config with zod mini ([fab9fb8](https://github.com/fbuireu/github-star-tracker/commit/fab9fb8431dd4f1700abdb2087b08b0e8e8b90dc))
+
 ## [1.27.5](https://github.com/fbuireu/github-star-tracker/compare/v1.27.4...v1.27.5) (2026-09-24)
 
 
