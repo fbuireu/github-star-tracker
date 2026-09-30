@@ -89,8 +89,10 @@ lines.
 - **This folder decides no Smart Sampling arithmetic.** `@domain/sampling` owns all of it: `shouldSample`,
   `reachablePages`, `sampledPages` (which pages to read) and `coveredStars` (how many Stars those pages
   account for). This folder fetches the pages it is handed and reports what came back. That is why the page
-  spread, the rounding collisions and the ceiling clamp are asserted in [`sampling.test.ts`](../domain/sampling.test.ts) against plain
-  numbers instead of through a fake octokit.
+  spread (first and last page always kept, the whole budget spent on distinct ascending pages even when the
+  range is barely wider than it) and the ceiling clamp are asserted in [`sampling.test.ts`](../domain/sampling.test.ts) against plain
+  numbers instead of through a fake octokit. Two spread pages cannot round onto the same page: once the range
+  is wider than the budget, consecutive picks are more than one page apart.
 - The one `coveredStars` this folder computes itself is not sampling arithmetic. A *full* fetch that dies
   part-way reports `stargazers.length`, the exact number it holds, rather than
   `coveredStars({ lastFetchedPage, totalStars })`, which estimates from a page count and would understate a

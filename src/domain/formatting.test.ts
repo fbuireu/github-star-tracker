@@ -77,7 +77,7 @@ describe("trendIcon", () => {
 });
 
 describe("formatDate", () => {
-	it("formats date in English by default", () => {
+	it("formats date in English", () => {
 		const result = formatDate({ timestamp: "2026-03-15T00:00:00Z", locale: "en" });
 
 		expect(result).toContain("Mar");
@@ -118,12 +118,12 @@ describe("buildAxisLabels", () => {
 		expect(labels).toEqual(["2023", "", "2024", "", "2025"]);
 	});
 
-	it("emits the year label only at the first occurrence of each year", () => {
+	it("switches to year labels once the span reaches exactly one year", () => {
 		const timestamps = ["2023-01-01T12:00:00Z", "2023-06-01T12:00:00Z", "2024-01-01T12:00:00Z"];
 
 		const labels = buildAxisLabels({ timestamps, locale: "en" });
 
-		expect(labels.filter(Boolean)).toEqual(["2023", "2024"]);
+		expect(labels).toEqual(["2023", "", "2024"]);
 	});
 
 	it("falls back to day-level labels for spans shorter than a year", () => {

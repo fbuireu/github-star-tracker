@@ -68,7 +68,7 @@ describe("generateCsvReport", () => {
 					name: "new-repo",
 					current: 5,
 					previous: null,
-					delta: 5,
+					delta: 0,
 					isNew: true,
 					isRemoved: false,
 				},
@@ -76,7 +76,7 @@ describe("generateCsvReport", () => {
 			summary: baseSummary,
 		});
 
-		expect(csv).toContain("new-repo,5,,5,new");
+		expect(csv).toContain("new-repo,5,,0,new");
 	});
 
 	it('marks removed repos with status "removed"', () => {

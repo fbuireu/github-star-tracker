@@ -55,6 +55,15 @@ describe("fetchAllStargazers", () => {
 		expect(result[0].stargazers).toHaveLength(2);
 		expect(result[0].stargazers[0].login).toBe("alice");
 		expect(result[0].sampled).toBe(false);
+		expect(octokit.request).toHaveBeenCalledWith(
+			"GET /repos/{owner}/{repo}/stargazers",
+			expect.objectContaining({
+				owner: "user",
+				repo: "repo-a",
+				page: 1,
+				headers: { accept: "application/vnd.github.star+json" },
+			}),
+		);
 	});
 
 	it("handles pagination", async () => {
@@ -91,20 +100,6 @@ describe("fetchAllStargazers", () => {
 		expect(result[0].stargazers).toHaveLength(0);
 		expect(result[1].stargazers).toHaveLength(1);
 		expect(core.warning).toHaveBeenCalledWith(expect.stringContaining("Failed to fetch stargazers for user/repo-a"));
-	});
-
-	it("returns empty stargazers list for repos with no stargazers", async () => {
-		const octokit = {
-			request: vi.fn().mockResolvedValue({ data: [] }),
-		};
-
-		const result = await fetchAllStargazers({
-			octokit: octokit as unknown as Octokit,
-			repos: [makeRepoInfo({ name: "repo-a" })],
-			config: samplingOff,
-		});
-
-		expect(result[0].stargazers).toHaveLength(0);
 	});
 
 	it("keeps already-fetched pages when a later page fails mid-pagination", async () => {
@@ -254,28 +249,32 @@ describe("fetchAllStargazers", () => {
 			request: vi.fn().mockResolvedValue({ data: [] }),
 		};
 
-		await fetchAllStargazers({
+		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
 			repos: [makeRepoInfo({ name: "restricted", stars: 54000 })],
 			config: samplingOff,
 		});
 
+		expect(result[0].stargazers).toEqual([]);
+		expect(result[0].incomplete).toBe(true);
 		expect(core.warning).toHaveBeenCalledWith(
 			expect.stringContaining("Stargazers for user/restricted came back empty"),
 		);
 	});
 
-	it("does not warn about an empty stargazers list for a zero-star repo", async () => {
+	it("treats an empty list for a zero-star repo as complete and does not warn", async () => {
 		const octokit = {
 			request: vi.fn().mockResolvedValue({ data: [] }),
 		};
 
-		await fetchAllStargazers({
+		const result = await fetchAllStargazers({
 			octokit: octokit as unknown as Octokit,
 			repos: [makeRepoInfo({ name: "empty", stars: 0 })],
 			config: samplingOff,
 		});
 
+		expect(result[0].stargazers).toEqual([]);
+		expect(result[0].incomplete).toBe(false);
 		expect(core.warning).not.toHaveBeenCalled();
 	});
 
@@ -370,7 +369,7 @@ describe("fetchAllStargazers", () => {
 		});
 
 		const pages = octokit.request.mock.calls.map((call) => call[1].page);
-		expect(Math.max(...pages)).toBeLessThanOrEqual(400);
+		expect(Math.max(...pages)).toBe(MAX_REACHABLE_PAGE);
 	});
 
 	it("stops the full fetch at the reachable page cap for repos above 40,000 stars", async () => {

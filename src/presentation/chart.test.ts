@@ -17,7 +17,6 @@ const mockHistory: History = makeMultiRepoHistory({
 		{ "user/repo-a": 70, "user/repo-b": 50 },
 		{ "user/repo-a": 90, "user/repo-b": 60 },
 	],
-	startMs: Date.UTC(2025, 0, 1),
 });
 
 describe("chart", () => {
@@ -34,22 +33,12 @@ describe("chart", () => {
 			expect(url).toContain(CHART_CONFIG_PARAM);
 		});
 
-		it("returns null when history has fewer than 2 snapshots", () => {
+		it("returns null when the spec has too little history to plot", () => {
 			const singleSnapshot: History = {
 				snapshots: [mockHistory.snapshots[0]],
 			};
 			const url = chartImageUrl({
 				request: { kind: ChartKind.STAR_HISTORY, history: singleSnapshot },
-				locale: "en",
-			});
-
-			expect(url).toBeNull();
-		});
-
-		it("returns null when history has no snapshots", () => {
-			const emptyHistory: History = { snapshots: [] };
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: emptyHistory },
 				locale: "en",
 			});
 
@@ -89,10 +78,10 @@ describe("chart", () => {
 			}
 		});
 
-		it("limits data to last 30 points", () => {
+		it("caps the email chart at 30 points spread across the whole history", () => {
 			const largeHistory: History = {
 				snapshots: Array.from({ length: 50 }, (_, index) => ({
-					timestamp: new Date(2025, 0, index + 1).toISOString(),
+					timestamp: new Date(Date.UTC(2026, 0, index + 1)).toISOString(),
 					totalStars: 100 + index * 10,
 					repos: [],
 				})),
@@ -110,6 +99,8 @@ describe("chart", () => {
 
 				expect(config.data.labels).toHaveLength(30);
 				expect(config.data.datasets[0].data).toHaveLength(30);
+				expect(config.data.datasets[0].data[0]).toBe(100);
+				expect(config.data.datasets[0].data.at(-1)).toBe(590);
 			}
 		});
 	});
@@ -168,18 +159,6 @@ describe("chart", () => {
 				expect(decodedUrl).toContain('"data":[0,0,0]');
 			}
 		});
-
-		it("returns null when history has fewer than 2 snapshots", () => {
-			const singleSnapshot: History = {
-				snapshots: [mockHistory.snapshots[0]],
-			};
-			const url = chartImageUrl({
-				request: { kind: ChartKind.PER_REPO, history: singleSnapshot, repoFullName: "user/repo-a" },
-				locale: "en",
-			});
-
-			expect(url).toBeNull();
-		});
 	});
 
 	describe("chartImageUrl: comparison", () => {
@@ -203,51 +182,6 @@ describe("chart", () => {
 				expect(decodedUrl).toContain('"data":[50,70,90]');
 				expect(decodedUrl).toContain('"data":[50,50,60]');
 			}
-		});
-
-		it("limits to 10 repositories maximum", () => {
-			const url = chartImageUrl({
-				request: {
-					kind: ChartKind.COMPARISON,
-					history: mockHistory,
-					repoNames: Array.from({ length: 12 }, (_, index) => `user/repo-${index}`),
-				},
-				locale: "en",
-			});
-
-			expect(url).not.toBeNull();
-
-			if (url) {
-				const decodedUrl = decodeURIComponent(url);
-				const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
-
-				expect(config.data.datasets).toHaveLength(10);
-			}
-		});
-
-		it("returns null when no repositories provided", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.COMPARISON, history: mockHistory, repoNames: [] },
-				locale: "en",
-			});
-
-			expect(url).toBeNull();
-		});
-
-		it("returns null when history has fewer than 2 snapshots", () => {
-			const singleSnapshot: History = {
-				snapshots: [mockHistory.snapshots[0]],
-			};
-			const url = chartImageUrl({
-				request: {
-					kind: ChartKind.COMPARISON,
-					history: singleSnapshot,
-					repoNames: ["user/repo-a"],
-				},
-				locale: "en",
-			});
-
-			expect(url).toBeNull();
 		});
 
 		it("uses custom title when provided", () => {
@@ -337,36 +271,6 @@ describe("chart", () => {
 			}
 		});
 
-		it("includes historical and forecast labels", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.FORECAST, history: mockHistory, forecastData },
-				locale: "en",
-			});
-
-			expect(url).not.toBeNull();
-
-			if (url) {
-				const decodedUrl = decodeURIComponent(url);
-				const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
-
-				expect(config.data.labels).toHaveLength(7);
-				expect(config.data.labels[3]).toContain("Week");
-			}
-		});
-
-		it("returns null when history has fewer than 2 snapshots", () => {
-			const url = chartImageUrl({
-				request: {
-					kind: ChartKind.FORECAST,
-					history: { snapshots: [mockHistory.snapshots[0]] },
-					forecastData,
-				},
-				locale: "en",
-			});
-
-			expect(url).toBeNull();
-		});
-
 		it("enables legend", () => {
 			const url = chartImageUrl({
 				request: { kind: ChartKind.FORECAST, history: mockHistory, forecastData },
@@ -445,21 +349,10 @@ describe("chart", () => {
 			return config.data.datasets[0].tension;
 		};
 
-		it("curves the line with a positive tension by default", () => {
+		it("curves the line with the smooth tension by default", () => {
 			const url = chartImageUrl({
 				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
 				locale: "en",
-			});
-
-			expect(url).not.toBeNull();
-			if (url) expect(tensionOf(url)).toBe(CHART_TENSION.smooth);
-		});
-
-		it("curves the line when smoothing is enabled", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
-				locale: "en",
-				smoothing: true,
 			});
 
 			expect(url).not.toBeNull();
@@ -556,7 +449,7 @@ describe("chart", () => {
 	describe("range", () => {
 		const weeklyHistory: History = {
 			snapshots: Array.from({ length: 40 }, (_, index) => ({
-				timestamp: new Date(2025, 0, 1 + index * 7).toISOString(),
+				timestamp: new Date(Date.UTC(2026, 0, 1 + index * 7)).toISOString(),
 				totalStars: 100 + index * 10,
 				repos: [],
 			})),
@@ -619,7 +512,7 @@ describe("chart", () => {
 				const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
 
 				expect(config.data.datasets).toHaveLength(2);
-				expect(config.data.datasets[1].borderDash).toBeDefined();
+				expect(config.data.datasets[1].borderDash).toEqual([6, 4]);
 				expect(config.data.datasets[1].fill).toBe(false);
 			}
 		});

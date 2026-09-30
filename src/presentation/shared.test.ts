@@ -1,7 +1,7 @@
 import { ChartTheme } from "@config/types";
 import type { ComparisonResults } from "@domain/types";
 import { makeComparisonResults, makeRepoResult } from "@shared/tests";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { colorSchemeFor, prepareReportData } from "./shared";
 
 function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResults {
@@ -10,13 +10,13 @@ function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResu
 			makeRepoResult({ name: "repo-a", overrides: { current: 15, previous: 10, delta: 5 } }),
 			makeRepoResult({ name: "repo-b", overrides: { current: 8, previous: 10, delta: -2 } }),
 			makeRepoResult({ name: "repo-c", overrides: { current: 0, previous: 3, delta: -3, isRemoved: true } }),
-			makeRepoResult({ name: "repo-d", overrides: { current: 5, previous: null, delta: 5, isNew: true } }),
+			makeRepoResult({ name: "repo-d", overrides: { current: 5, previous: null, delta: 0, isNew: true } }),
 		],
 		summary: {
 			totalStars: 28,
 			totalPrevious: 23,
 			totalDelta: 5,
-			newStars: 10,
+			newStars: 5,
 			lostStars: 5,
 			changed: true,
 		},
@@ -79,18 +79,16 @@ describe("prepareReportData", () => {
 		expect(sorted.map((repo) => repo.current)).toEqual([15, 8, 5]);
 	});
 
-	it("formats current date as YYYY-MM-DD", () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-06-15T12:00:00Z"));
-
-		const { now } = prepareReportData({
+	it("formats the run date as YYYY-MM-DD and keeps the full stamp", () => {
+		const { now, generatedAt } = prepareReportData({
 			results: makeResults(),
 			previousTimestamp: "2026-01-01T00:00:00Z",
 			locale: "en",
+			now: new Date("2026-06-15T12:00:00Z"),
 		});
 
 		expect(now).toBe("2026-06-15");
-		vi.useRealTimers();
+		expect(generatedAt).toBe("2026-06-15T12:00:00.000Z");
 	});
 
 	it("formats previous timestamp as date only", () => {
@@ -104,13 +102,14 @@ describe("prepareReportData", () => {
 	});
 
 	it("uses first run label when previousTimestamp is null", () => {
-		const { prev } = prepareReportData({
+		const { prev, isFirstRun } = prepareReportData({
 			results: makeResults(),
 			previousTimestamp: null,
 			locale: "en",
 		});
 
 		expect(prev).toBe("first run");
+		expect(isFirstRun).toBe(true);
 	});
 
 	it("uses localized first run label", () => {

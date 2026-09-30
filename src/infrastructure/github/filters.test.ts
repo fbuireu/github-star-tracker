@@ -25,10 +25,13 @@ function createMockOctokit(mock: MockOctokit): Octokit {
 }
 
 function makeRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
+	const name = overrides.name ?? "test-repo";
+	const owner = overrides.owner ?? { login: "user" };
+
 	return {
-		name: "test-repo",
-		full_name: "user/test-repo",
-		owner: { login: "user" },
+		name,
+		full_name: `${owner.login}/${name}`,
+		owner,
 		private: false,
 		archived: false,
 		fork: false,
@@ -41,14 +44,16 @@ const defaultConfig: Config = makeConfig({ includeCharts: false, notificationThr
 
 describe("mapRepos", () => {
 	it("maps raw GitHub API repos to clean objects", () => {
-		const repos = [makeRepo({ name: "my-repo", stargazers_count: 42 })];
+		const repos = [
+			makeRepo({ name: "my-repo", full_name: "octo-org/my-repo", owner: { login: "octo-org" }, stargazers_count: 42 }),
+		];
 		const mapped = mapRepos(repos);
 
 		expect(mapped).toEqual([
 			{
-				owner: "user",
+				owner: "octo-org",
 				name: "my-repo",
-				fullName: "user/test-repo",
+				fullName: "octo-org/my-repo",
 				private: false,
 				archived: false,
 				fork: false,
@@ -287,7 +292,7 @@ describe("getRepos", () => {
 		expect(result[0]).toEqual({
 			owner: "user",
 			name: "repo1",
-			fullName: "user/test-repo",
+			fullName: "user/repo1",
 			private: false,
 			archived: false,
 			fork: false,

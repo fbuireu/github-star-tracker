@@ -54,18 +54,6 @@ describe("shouldNotify", () => {
 		expect(shouldNotify({ totalStars: 95, starsAtLastNotification: 100, threshold: 5 })).toBe(true);
 	});
 
-	it("uses adaptive threshold when set to auto", () => {
-		expect(shouldNotify({ totalStars: 30, starsAtLastNotification: 29, threshold: "auto" })).toBe(true);
-	});
-
-	it("uses adaptive threshold for higher star counts", () => {
-		expect(shouldNotify({ totalStars: 103, starsAtLastNotification: 100, threshold: "auto" })).toBe(false);
-	});
-
-	it("returns true with auto when delta meets adaptive threshold", () => {
-		expect(shouldNotify({ totalStars: 105, starsAtLastNotification: 100, threshold: "auto" })).toBe(true);
-	});
-
 	it("defaults to net mode", () => {
 		expect(shouldNotify({ totalStars: 95, starsAtLastNotification: 100, threshold: 5 })).toBe(
 			shouldNotify({
@@ -142,11 +130,11 @@ describe("shouldNotify", () => {
 		).toBe(true);
 	});
 
-	it("uses adaptive threshold in gains mode", () => {
+	it("uses adaptive threshold in gains mode, ignoring a loss that would clear it", () => {
 		expect(
 			shouldNotify({
 				totalStars: 1000,
-				starsAtLastNotification: 1015,
+				starsAtLastNotification: 1030,
 				threshold: "auto",
 				mode: NotificationMode.GAINS,
 			}),

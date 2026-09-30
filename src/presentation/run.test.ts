@@ -32,6 +32,8 @@ function chartHistories(aggregate = RECONSTRUCTED): ChartHistories {
 	return { aggregate, forRepo: () => aggregate, reconstructedForRepo: () => aggregate };
 }
 
+const NOW = new Date("2026-03-04T12:00:00.000Z");
+
 function render(config = makeConfig({ includeCharts: true, topRepos: 2 })) {
 	return renderRun({
 		config,
@@ -40,6 +42,7 @@ function render(config = makeConfig({ includeCharts: true, topRepos: 2 })) {
 		chartHistories: chartHistories(),
 		storedHistory: STORED,
 		forecastData: null,
+		now: NOW,
 	});
 }
 
@@ -47,7 +50,7 @@ describe("renderRun", () => {
 	it("returns every artefact a run publishes", () => {
 		const rendered = render();
 
-		expect(rendered.markdown).toContain("#");
+		expect(rendered.markdown).toContain("# Star Tracker Report");
 		expect(rendered.html).toContain("<!DOCTYPE html>");
 		expect(rendered.csv).toContain("repository");
 		expect(rendered.badge).toContain("<svg");
@@ -90,25 +93,19 @@ describe("renderRun", () => {
 
 	it("measures Velocity from the stored history, never from the chart history", () => {
 		const config = makeConfig({ includeCharts: true, velocityMetrics: true });
-		const fromStored = renderRun({
+		const rendered = renderRun({
 			config,
 			results: makeComparisonResults(),
 			previousTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories(),
 			storedHistory: STORED,
 			forecastData: null,
-		});
-		const asIfItUsedTheChartHistory = renderRun({
-			config,
-			results: makeComparisonResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
-			chartHistories: chartHistories(),
-			storedHistory: RECONSTRUCTED,
-			forecastData: null,
+			now: NOW,
 		});
 
-		expect(fromStored.markdown).toContain("Growth Velocity");
-		expect(fromStored.markdown).not.toBe(asIfItUsedTheChartHistory.markdown);
+		expect(rendered.markdown).toContain("**Stars per day:** 8.5");
+		expect(rendered.html).toContain("<strong>Stars per day:</strong> 8.5<");
+		expect(rendered.markdown).not.toContain("**Stars per day:** 40");
 	});
 
 	it("charts exactly the Top Repositories the Report names, with no list passed in", () => {
@@ -323,7 +320,7 @@ describe("renderEmptyRun", () => {
 		const rendered = renderEmptyRun(makeConfig());
 
 		expect(rendered.charts).toEqual([]);
-		expect(rendered.badge).toContain("<svg");
+		expect(rendered.badge).toContain("<title>Total Stars: \u2605 0</title>");
 	});
 });
 

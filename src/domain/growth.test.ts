@@ -100,14 +100,17 @@ describe("weightedDailyRate", () => {
 	});
 
 	it("weights recent deltas more heavily (accelerating)", () => {
-		expect(weightedDailyRate(series({ values: [10, 11, 13, 18] }))).toBeGreaterThan(2);
+		const rate = weightedDailyRate(series({ values: [10, 11, 13, 18] }));
+
+		expect(rate).toBeCloseTo((1 * 1 + 2 * 2 + 5 * 3) / 6);
+		expect(rate).toBeGreaterThan((18 - 10) / 3);
 	});
 
 	it("weights recent deltas more heavily (decelerating)", () => {
-		const resultAccel = weightedDailyRate(series({ values: [10, 20, 25, 26] }));
-		const resultConst = weightedDailyRate(series({ values: [10, 14, 18, 22] }));
+		const rate = weightedDailyRate(series({ values: [10, 20, 25, 26] }));
 
-		expect(resultAccel).toBeLessThan(resultConst);
+		expect(rate).toBeCloseTo((10 * 1 + 5 * 2 + 1 * 3) / 6);
+		expect(rate).toBeLessThan((26 - 10) / 3);
 	});
 
 	it("normalizes the rate by real day spacing", () => {

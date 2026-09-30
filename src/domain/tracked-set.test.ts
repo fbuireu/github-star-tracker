@@ -27,7 +27,7 @@ describe("resolveTrackedSet", () => {
 		expect(tracked({ repos, filters: config }).map((repo) => repo.name)).toEqual(["app-web"]);
 	});
 
-	it("warns and skips a malformed regex pattern instead of failing the run", () => {
+	it("reports and skips a malformed regex pattern instead of failing the run", () => {
 		const repos = [makeRepoInfo({ name: "keep-me" }), makeRepoInfo({ name: "drop-me" })];
 		const config = makeConfig({ excludeRepos: ["/[unclosed/", "drop-me"] });
 
@@ -139,7 +139,7 @@ describe("resolveTrackedSet", () => {
 		expect(result[0].name).toBe("popular");
 	});
 
-	it("only_repos overrides all other filters", () => {
+	it("only-repos overrides all other filters", () => {
 		const repos = [
 			makeRepoInfo({ name: "wanted", stars: 10, overrides: { archived: true, fork: true } }),
 			makeRepoInfo({ name: "unwanted" }),
@@ -151,7 +151,7 @@ describe("resolveTrackedSet", () => {
 		expect(result[0].name).toBe("wanted");
 	});
 
-	it("returns empty array when no repos match only_repos", () => {
+	it("returns empty array when no repos match only-repos", () => {
 		const repos = [makeRepoInfo({ name: "test-repo" })];
 		const config = { ...defaultConfig, onlyRepos: ["nonexistent"] };
 
@@ -229,19 +229,19 @@ describe("resolveTrackedSet", () => {
 			makeRepoInfo({ name: "unwanted", stars: 10, overrides: { owner: "org-a", fullName: "org-a/unwanted" } }),
 		];
 		const config = { ...defaultConfig, onlyOrgs: ["org-a"], onlyRepos: ["wanted"] };
-		const result = tracked({ repos, filters: config });
+		const result = trackedSet({ repos, filters: config });
 
-		expect(result).toHaveLength(1);
-		expect(result[0].owner).toBe("org-a");
-		expect(result[0].name).toBe("wanted");
+		expect(result.repos).toHaveLength(1);
+		expect(result.repos[0].owner).toBe("org-a");
+		expect(result.repos[0].name).toBe("wanted");
+		expect(result.afterOnlyOrgs).toBe(2);
+		expect(result.afterOnlyRepos).toBe(1);
 	});
 
-	it("does not filter by org when org lists are empty", () => {
-		const repos = [
-			makeRepoInfo({ name: "a", stars: 10, overrides: { owner: "org-a", fullName: "org-a/a" } }),
-			makeRepoInfo({ name: "b", stars: 10, overrides: { owner: "org-b", fullName: "org-b/b" } }),
-		];
+	it("reports no narrowing counts when neither only-orgs nor only-repos ran", () => {
+		const result = trackedSet({ repos: [makeRepoInfo({ name: "a" }), makeRepoInfo({ name: "b" })] });
 
-		expect(tracked({ repos })).toHaveLength(2);
+		expect(result.afterOnlyOrgs).toBeNull();
+		expect(result.afterOnlyRepos).toBeNull();
 	});
 });

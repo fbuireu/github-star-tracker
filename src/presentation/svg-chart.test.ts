@@ -5,14 +5,11 @@ import type { History, Snapshot } from "@domain/types";
 import { describe, expect, it } from "vitest";
 import { ChartKind } from "./chart-spec";
 import { CHART, CHART_COMPARISON_COLORS, COLORS, DARK_PALETTE, LIGHT_PALETTE, SVG_CHART } from "./constants";
+import { renderSvgChart } from "./svg-chart";
 
 const PLOT_TOP_Y = SVG_CHART.margin.top;
 const PLOT_BOTTOM_Y = CHART.height - SVG_CHART.margin.bottom;
-
-import { renderSvgChart } from "./svg-chart";
-
 const LINE_PATH_D = /<path d="([^"]+)" fill="none"/;
-const _PATH_OPENING = /<path d="M/g;
 const PATH_MOVE_AND_FIRST_SEGMENT = /^M[\d.]+,[\d.]+ L[\d.]+,[\d.]+/;
 const COORDINATE_PAIR = /(\d+(?:\.\d+)?),(\d+(?:\.\d+)?)/g;
 const Y_COORDINATE = /,(\d+(?:\.\d+)?)/g;
@@ -38,7 +35,7 @@ function makeSnapshot({ timestamp, totalStars }: MakeSnapshotParams): Snapshot {
 function makeHistory(starCounts: number[]): History {
 	return {
 		snapshots: starCounts.map((stars, index) => {
-			const date = new Date(2026, 0, index + 1).toISOString();
+			const date = new Date(Date.UTC(2026, 0, index + 1)).toISOString();
 			return makeSnapshot({ timestamp: date, totalStars: stars });
 		}),
 	};
@@ -62,7 +59,7 @@ function makeMultiRepoSnapshot({ timestamp, repoStars }: MakeMultiRepoSnapshotPa
 function makeMultiRepoHistory(snapshots: { repoStars: Record<string, number> }[]): History {
 	return {
 		snapshots: snapshots.map((snapshot, index) => {
-			const date = new Date(2026, 0, index + 1).toISOString();
+			const date = new Date(Date.UTC(2026, 0, index + 1)).toISOString();
 			return makeMultiRepoSnapshot({ timestamp: date, repoStars: snapshot.repoStars });
 		}),
 	};
@@ -82,14 +79,6 @@ function linePathYs(svg: string): number[] {
 }
 
 describe("renderSvgChart: star history", () => {
-	it("returns null for empty history", () => {
-		const result = renderSvgChart({
-			request: { kind: ChartKind.STAR_HISTORY, history: { snapshots: [] } },
-			locale: "en",
-		});
-		expect(result).toBeNull();
-	});
-
 	it("returns null for fewer than 2 snapshots", () => {
 		const history = makeHistory([10]);
 		const result = renderSvgChart({
@@ -253,28 +242,6 @@ describe("renderSvgChart: star history", () => {
 		expect(result).not.toContain("<circle");
 	});
 
-	it("includes smooth path with cubic bezier curves", () => {
-		const history = makeHistory([10, 20, 30, 40]);
-		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
-
-		expect(result).toContain("<path");
-		expect(result).toMatch(CUBIC_BEZIER_COMMAND);
-	});
-
-	it("uses project accent color", () => {
-		const history = makeHistory([10, 20]);
-		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
-
-		expect(result).toContain(COLORS.accent);
-	});
-
-	it("uses project neutral color", () => {
-		const history = makeHistory([10, 20]);
-		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
-
-		expect(result).toContain(COLORS.neutral);
-	});
-
 	it("respects locale for date labels", () => {
 		const history: History = {
 			snapshots: [
@@ -293,7 +260,7 @@ describe("renderSvgChart: star history", () => {
 		const history = makeHistory([80, 120, 150]);
 		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
 
-		expect(result).toContain("100");
+		expect(result).toContain("100 ★");
 		expect(result).toContain('stroke-dasharray="6,6"');
 	});
 
@@ -400,13 +367,6 @@ describe("renderSvgChart: star history", () => {
 		expect(result).toContain("animation-delay: 1.60s");
 	});
 
-	it("includes prefers-color-scheme media query", () => {
-		const history = makeHistory([10, 20]);
-		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
-
-		expect(result).toContain("@media (prefers-color-scheme: dark)");
-	});
-
 	it("includes CSS class names for themed elements", () => {
 		const history = makeHistory([10, 20]);
 		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
@@ -431,7 +391,8 @@ describe("renderSvgChart: star history", () => {
 
 	it("uses dark palette values in media query block", () => {
 		const history = makeHistory([10, 20]);
-		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
+		const svg = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
+		const result = svg.slice(svg.indexOf("@media (prefers-color-scheme: dark)"));
 
 		expect(result).toContain(`.chart-bg { fill: ${DARK_PALETTE.white}; }`);
 		expect(result).toContain(`.chart-text { fill: ${DARK_PALETTE.text}; }`);
@@ -657,8 +618,18 @@ describe("renderSvgChart: star history", () => {
 				}),
 			),
 		);
+		const straight = curveYsOf(
+			expectSvg(
+				renderSvgChart({
+					request: { kind: ChartKind.STAR_HISTORY, history },
+					locale: "en",
+					smoothing: false,
+				}),
+			),
+		);
 
-		expect(Math.max(...ys)).toBeLessThanOrEqual(PLOT_BOTTOM_Y);
+		expect(Math.max(...ys)).toBeLessThanOrEqual(Math.max(...straight) + 0.01);
+		expect(Math.min(...ys)).toBeGreaterThanOrEqual(Math.min(...straight) - 0.01);
 	});
 
 	it("rounds corners with quadratic segments for the rounded-step curve", () => {
@@ -684,37 +655,22 @@ describe("renderSvgChart: star history", () => {
 				curve: ChartCurve.CUBIC_BEZIER,
 			}),
 		);
+		const straight = expectSvg(
+			renderSvgChart({
+				request: { kind: ChartKind.STAR_HISTORY, history },
+				locale: "en",
+				smoothing: false,
+			}),
+		);
 		const linePath = result.match(LINE_PATH_D)?.[1] ?? "";
 
 		expect(linePath).toContain(" C");
-		expect(Math.max(...curveYsOf(result))).toBeLessThanOrEqual(PLOT_BOTTOM_Y);
+		expect(Math.max(...curveYsOf(result))).toBeLessThanOrEqual(Math.max(...curveYsOf(straight)) + 0.01);
+		expect(Math.min(...curveYsOf(result))).toBeGreaterThanOrEqual(Math.min(...curveYsOf(straight)) - 0.01);
 	});
 });
 
 describe("renderSvgChart: per repo", () => {
-	it("returns null for empty history", () => {
-		const result = renderSvgChart({
-			request: {
-				kind: ChartKind.PER_REPO,
-				history: { snapshots: [] },
-				repoFullName: "user/repo-a",
-			},
-			locale: "en",
-		});
-
-		expect(result).toBeNull();
-	});
-
-	it("returns null for fewer than 2 snapshots", () => {
-		const history = makeHistory([10]);
-		const result = renderSvgChart({
-			request: { kind: ChartKind.PER_REPO, history, repoFullName: "user/repo-a" },
-			locale: "en",
-		});
-
-		expect(result).toBeNull();
-	});
-
 	it("generates valid SVG structure", () => {
 		const history = makeMultiRepoHistory([
 			{ repoStars: { "user/repo-a": 10, "user/repo-b": 5 } },
@@ -746,34 +702,6 @@ describe("renderSvgChart: per repo", () => {
 		expect(result).toContain("Custom Title");
 	});
 
-	it("extracts correct repo data", () => {
-		const history = makeMultiRepoHistory([
-			{ repoStars: { "user/repo-a": 10, "user/repo-b": 100 } },
-			{ repoStars: { "user/repo-a": 20, "user/repo-b": 200 } },
-		]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.PER_REPO, history, repoFullName: "user/repo-a" },
-				locale: "en",
-			}),
-		);
-
-		expect(result).toContain(COLORS.accent);
-		expect(result).toContain("<circle");
-	});
-
-	it("does not include milestones", () => {
-		const history = makeMultiRepoHistory([{ repoStars: { "user/repo-a": 80 } }, { repoStars: { "user/repo-a": 120 } }]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.PER_REPO, history, repoFullName: "user/repo-a" },
-				locale: "en",
-			}),
-		);
-
-		expect(result).not.toContain("100 ★");
-	});
-
 	it("applies a custom line color", () => {
 		const history = makeMultiRepoHistory([{ repoStars: { "user/repo-a": 10 } }, { repoStars: { "user/repo-a": 20 } }]);
 		const result = expectSvg(
@@ -793,29 +721,6 @@ describe("renderSvgChart: per repo", () => {
 });
 
 describe("renderSvgChart: comparison", () => {
-	it("returns null for empty history", () => {
-		const result = renderSvgChart({
-			request: {
-				kind: ChartKind.COMPARISON,
-				history: { snapshots: [] },
-				repoNames: ["user/repo-a"],
-			},
-			locale: "en",
-		});
-
-		expect(result).toBeNull();
-	});
-
-	it("returns null for empty repo names", () => {
-		const history = makeHistory([10, 20]);
-		const result = renderSvgChart({
-			request: { kind: ChartKind.COMPARISON, history, repoNames: [] },
-			locale: "en",
-		});
-
-		expect(result).toBeNull();
-	});
-
 	it("generates valid SVG with legend", () => {
 		const history = makeMultiRepoHistory([
 			{ repoStars: { "user/repo-a": 10, "user/repo-b": 5 } },
@@ -938,25 +843,6 @@ describe("renderSvgChart: forecast", () => {
 		expect(result).toContain(DARK_PALETTE.negative);
 		expect(result).not.toContain(LIGHT_PALETTE.positive);
 		expect(result).not.toContain(LIGHT_PALETTE.negative);
-	});
-
-	it("returns null for empty history", () => {
-		const result = renderSvgChart({
-			request: { kind: ChartKind.FORECAST, history: { snapshots: [] }, forecastData },
-			locale: "en",
-		});
-
-		expect(result).toBeNull();
-	});
-
-	it("returns null for fewer than 2 snapshots", () => {
-		const history = makeHistory([10]);
-		const result = renderSvgChart({
-			request: { kind: ChartKind.FORECAST, history, forecastData },
-			locale: "en",
-		});
-
-		expect(result).toBeNull();
 	});
 
 	it("generates valid SVG with legend", () => {

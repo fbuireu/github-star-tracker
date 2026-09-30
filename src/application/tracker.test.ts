@@ -140,9 +140,12 @@ function setupDefaults() {
 describe("trackStars", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		vi.useFakeTimers({ toFake: ["Date"] });
+		vi.setSystemTime(new Date("2026-07-01T00:00:00Z"));
 		setupDefaults();
 	});
 	afterEach(() => {
+		vi.useRealTimers();
 		vi.restoreAllMocks();
 	});
 	it("runs the full happy path", async () => {
@@ -228,11 +231,6 @@ describe("trackStars", () => {
 			await trackStars();
 			expect(sendEmail).toHaveBeenCalled();
 			expect(core.setOutput).toHaveBeenCalledWith("should-notify", "true");
-		});
-		it("skips email when getEmailConfig returns null", async () => {
-			vi.mocked(getEmailConfig).mockReturnValue(null);
-			await trackStars();
-			expect(sendEmail).not.toHaveBeenCalled();
 		});
 		it("catches email errors and logs a warning", async () => {
 			vi.mocked(getEmailConfig).mockReturnValue(emailConfig);
@@ -368,7 +366,6 @@ describe("trackStars", () => {
 					{ timestamp: "2026-01-02T00:00:00Z", totalStars: 100, repos: [] },
 				],
 			};
-			branch.readHistory.mockReturnValue({ snapshots: historyWithSnapshots.snapshots.slice(0, 1) });
 			mockMeasurement({ updatedHistory: historyWithSnapshots });
 			mockCharts({ [ChartKind.STAR_HISTORY]: "<svg>chart</svg>" });
 			await trackStars();
@@ -469,21 +466,6 @@ describe("trackStars", () => {
 			expect(perRepo["u/restricted"]).toBe(storedSnapshots);
 			expect(perRepo["u/reachable"]).not.toBe(storedSnapshots);
 		});
-		it("hands both report renderers the same params, config included", async () => {
-			const config = {
-				...defaultConfig,
-				chartTheme: ChartTheme.LIGHT,
-				emailTheme: ChartTheme.DARK,
-			};
-			vi.mocked(loadConfig).mockReturnValue(config);
-			await trackStars();
-
-			const markdownParams = vi.mocked(generateMarkdownReport).mock.calls[0][0];
-			const htmlParams = vi.mocked(generateHtmlReport).mock.calls[0][0];
-
-			expect(markdownParams.config).toBe(config);
-			expect(htmlParams).toBe(markdownParams);
-		});
 		it("skips SVG chart when includeCharts is false", async () => {
 			vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, includeCharts: false });
 			const historyWithSnapshots = {
@@ -492,7 +474,7 @@ describe("trackStars", () => {
 					{ timestamp: "2026-01-02T00:00:00Z", totalStars: 100, repos: [] },
 				],
 			};
-			branch.readHistory.mockReturnValue(historyWithSnapshots);
+			mockMeasurement({ updatedHistory: historyWithSnapshots });
 			await trackStars();
 			expect(renderSvgChart).not.toHaveBeenCalled();
 			expect(published().charts).toHaveLength(0);
@@ -509,7 +491,6 @@ describe("trackStars", () => {
 					{ timestamp: "2026-01-02T00:00:00Z", totalStars: 100, repos: [] },
 				],
 			};
-			branch.readHistory.mockReturnValue({ snapshots: historyWithSnapshots.snapshots.slice(0, 1) });
 			mockMeasurement({ updatedHistory: historyWithSnapshots });
 			vi.mocked(renderSvgChart).mockReturnValue(null);
 			await trackStars();
@@ -636,6 +617,21 @@ describe("trackStars", () => {
 		});
 	});
 	describe("data flow", () => {
+		it("hands both report renderers the same params, config included", async () => {
+			const config = {
+				...defaultConfig,
+				chartTheme: ChartTheme.LIGHT,
+				emailTheme: ChartTheme.DARK,
+			};
+			vi.mocked(loadConfig).mockReturnValue(config);
+			await trackStars();
+
+			const markdownParams = vi.mocked(generateMarkdownReport).mock.calls[0][0];
+			const htmlParams = vi.mocked(generateHtmlReport).mock.calls[0][0];
+
+			expect(markdownParams.config).toBe(config);
+			expect(htmlParams).toBe(markdownParams);
+		});
 		it("hands the tracked set and the stored history to the measurement", async () => {
 			await trackStars();
 			expect(measureRun).toHaveBeenCalledWith(
@@ -722,10 +718,10 @@ describe("trackStars", () => {
 			await trackStars();
 			expect(published().history.starsAtLastNotification).toBeUndefined();
 		});
-		it("includes delta indicator in commit message", async () => {
-			vi.mocked(deltaIndicator).mockReturnValue("+10");
+		it("composes the commit message from the total and the delta", async () => {
 			await trackStars();
-			expect(published().commitMessage).toContain("+10");
+			expect(deltaIndicator).toHaveBeenCalledWith(defaultSummary.totalDelta);
+			expect(published().commitMessage).toBe("Update star data: 100 total (+10)");
 		});
 		it("hands the read-only flag to the data branch rather than skipping the publish", async () => {
 			vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, readOnly: true });

@@ -15,6 +15,15 @@ import type { ReportParams } from "./shared";
 
 const QUICKCHART_CONFIG = /https:\/\/quickchart\.io\/chart\?[^"]*&c=([^"]+)/g;
 
+interface DeltaCellParams {
+	color: string;
+	delta: string;
+}
+
+function deltaCell({ color, delta }: DeltaCellParams): RegExp {
+	return new RegExp(`color:${color};font-weight:600;">\\s*${delta.replace("+", "\\+")}\\s*</td>`);
+}
+
 interface RenderHtml extends Partial<Omit<ReportParams, "config">> {
 	config?: Partial<Config>;
 }
@@ -41,13 +50,13 @@ function renderHtml({ config, ...overrides }: RenderHtml = {}): string {
 }
 
 describe("generateHtmlReport", () => {
-	const velocityHistory = makeHistory({ starCounts: [100, 200], startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
+	const velocityHistory = makeHistory({ starCounts: [100, 200], stepDays: 10 });
 
 	it("renders the velocity section when velocity-metrics is enabled", () => {
 		const html = renderHtml({ velocityHistory, config: { velocityMetrics: true } });
 
-		expect(html).toContain("Growth Velocity");
-		expect(html).toContain("Stars per day");
+		expect(html).toContain('<h2 style="font-size:18px;margin-bottom:12px;">🚀 Growth Velocity</h2>');
+		expect(html).toContain("<li><strong>Stars per day:</strong> 10</li>");
 	});
 
 	it("omits the velocity section by default", () => {
@@ -57,7 +66,7 @@ describe("generateHtmlReport", () => {
 	});
 
 	it("renders velocity with only the daily rate when growth and projection are unavailable", () => {
-		const flatHistory = makeHistory({ starCounts: [0, 0], startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
+		const flatHistory = makeHistory({ starCounts: [0, 0], stepDays: 10 });
 
 		const html = renderHtml({ velocityHistory: flatHistory, config: { velocityMetrics: true } });
 
@@ -67,7 +76,7 @@ describe("generateHtmlReport", () => {
 	});
 
 	it("shows negative growth without a plus sign", () => {
-		const decliningHistory = makeHistory({ starCounts: [200, 150], startMs: Date.UTC(2025, 0, 1), stepDays: 10 });
+		const decliningHistory = makeHistory({ starCounts: [200, 150], stepDays: 10 });
 
 		const html = renderHtml({
 			velocityHistory: decliningHistory,
@@ -132,22 +141,17 @@ describe("generateHtmlReport", () => {
 		expect(html).toContain('href="https://github.com/user/repo-a"');
 	});
 
-	it("uses green color for positive deltas", () => {
+	it("colours each Delta cell by its sign", () => {
 		const html = renderHtml();
 
-		expect(html).toContain(COLORS.positive);
-	});
-
-	it("uses red color for negative deltas", () => {
-		const html = renderHtml();
-
-		expect(html).toContain(COLORS.negative);
+		expect(html).toMatch(deltaCell({ color: COLORS.positive, delta: "+5" }));
+		expect(html).toMatch(deltaCell({ color: COLORS.negative, delta: "-2" }));
 	});
 
 	it("includes summary stats", () => {
 		const html = renderHtml();
 
-		expect(html).toContain("23");
+		expect(html).toContain(">23</div>");
 		expect(html).toContain("Total Stars");
 		expect(html).toContain("Net change");
 	});
@@ -463,7 +467,7 @@ describe("generateHtmlReport", () => {
 		expect(html).toContain("Linear Regression");
 		expect(html).toContain("Weighted Moving Average");
 		expect(html).toContain("Week 1");
-		expect(html).toContain("25");
+		expect(html).toContain('font-size:12px;">25</td>');
 		expect(html).toContain("By Repository");
 		expect(html).toContain("user/repo-a");
 		expect(html).not.toContain("<details>");
@@ -495,7 +499,7 @@ describe("generateHtmlReport", () => {
 			}),
 		});
 
-		expect(html).toContain(COLORS.neutral);
+		expect(html).toMatch(deltaCell({ color: COLORS.neutral, delta: "0" }));
 	});
 
 	it("embeds a per-repo forecast chart only when the run drew one", () => {

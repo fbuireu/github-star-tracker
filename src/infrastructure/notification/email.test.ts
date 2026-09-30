@@ -67,6 +67,25 @@ describe("getEmailConfig", () => {
 
 		expect(config?.from).toBe("GitHub Star Tracker");
 	});
+
+	it("falls back to 587 and warns when smtp-port is not a usable port", () => {
+		vi.mocked(core.getInput).mockImplementation((name: string) =>
+			name === "smtp-host" ? "smtp.test.com" : name === "smtp-port" ? "not-a-port" : "",
+		);
+
+		expect(getEmailConfig("en")?.port).toBe(587);
+		expect(core.warning).toHaveBeenCalledWith(expect.stringContaining("Invalid smtp-port"));
+	});
+
+	it("masks the SMTP password so it cannot leak through error text", () => {
+		vi.mocked(core.getInput).mockImplementation((name: string) =>
+			name === "smtp-host" ? "smtp.test.com" : name === "smtp-password" ? "hunter2" : "",
+		);
+
+		getEmailConfig("en");
+
+		expect(core.setSecret).toHaveBeenCalledWith("hunter2");
+	});
 });
 
 describe("sendEmail", () => {
@@ -136,7 +155,7 @@ describe("sendEmail", () => {
 			htmlBody: "<p>Body</p>",
 		});
 
-		expect(core.info).toHaveBeenCalledWith(expect.stringContaining("recipient@example.com"));
+		expect(core.info).toHaveBeenCalledWith("Email sent to recipient@example.com (message ID: test-id)");
 	});
 
 	it("warns when recipients are rejected", async () => {
@@ -197,24 +216,5 @@ describe("sendEmail", () => {
 		});
 
 		expect(nodemailer.createTransport).toHaveBeenCalledWith(expect.objectContaining({ auth: undefined }));
-	});
-
-	it("falls back to 587 and warns when smtp-port is not a usable port", () => {
-		vi.mocked(core.getInput).mockImplementation((name: string) =>
-			name === "smtp-host" ? "smtp.test.com" : name === "smtp-port" ? "not-a-port" : "",
-		);
-
-		expect(getEmailConfig("en")?.port).toBe(587);
-		expect(core.warning).toHaveBeenCalledWith(expect.stringContaining("Invalid smtp-port"));
-	});
-
-	it("masks the SMTP password so it cannot leak through error text", () => {
-		vi.mocked(core.getInput).mockImplementation((name: string) =>
-			name === "smtp-host" ? "smtp.test.com" : name === "smtp-password" ? "hunter2" : "",
-		);
-
-		getEmailConfig("en");
-
-		expect(core.setSecret).toHaveBeenCalledWith("hunter2");
 	});
 });

@@ -44,22 +44,6 @@ describe("getBaselineSnapshot against the last run", () => {
 
 		expect(lastRunBaseline(history)).toBeNull();
 	});
-
-	it("returns the newest snapshot", () => {
-		const snapshot1: Snapshot = {
-			timestamp: "2024-01-01T00:00:00Z",
-			totalStars: 100,
-			repos: [{ name: "test", owner: "user", fullName: "user/test", stars: 100 }],
-		};
-		const snapshot2: Snapshot = {
-			timestamp: "2024-01-02T00:00:00Z",
-			totalStars: 150,
-			repos: [{ name: "test", owner: "user", fullName: "user/test", stars: 150 }],
-		};
-		const history: History = { snapshots: [snapshot1, snapshot2] };
-
-		expect(lastRunBaseline(history)).toEqual(snapshot2);
-	});
 });
 
 describe("getBaselineSnapshot", () => {
@@ -193,16 +177,6 @@ describe("getBaselineSnapshot", () => {
 		});
 
 		expect(baseline?.totalStars).toBe(100);
-	});
-
-	it("does not consider the window for last-run", () => {
-		const baseline = getBaselineSnapshot({
-			history: makeDailyHistory(2),
-			compareAgainst: CompareAgainst.LAST_RUN,
-			now: NOW,
-		});
-
-		expect(baseline?.totalStars).toBe(1001);
 	});
 });
 

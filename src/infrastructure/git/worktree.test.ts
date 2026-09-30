@@ -61,9 +61,14 @@ describe("initializeDataBranch", () => {
 	it("guards the repository and sets the bot identity before touching the branch", () => {
 		initializeDataBranch({ dataBranch: BRANCH });
 
-		expect(ranGit("rev-parse", "--is-inside-work-tree")).toBe(true);
-		expect(ranGit("config", "user.name", "github-actions[bot]")).toBe(true);
-		expect(ranGit("config", "user.email", "github-actions[bot]@users.noreply.github.com")).toBe(true);
+		const commands = vi.mocked(execute).mock.calls.map(([params]) => params.args.join(" "));
+
+		expect(commands.slice(0, 4)).toEqual([
+			"rev-parse --is-inside-work-tree",
+			"config user.name github-actions[bot]",
+			"config user.email github-actions[bot]@users.noreply.github.com",
+			`ls-remote --heads origin ${BRANCH}`,
+		]);
 	});
 
 	it("adds the worktree from the remote branch when it already exists", () => {

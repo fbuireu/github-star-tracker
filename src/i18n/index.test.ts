@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getTranslations, interpolate, LOCALE_MAP, LOCALES } from "./index";
+import { getTranslations, interpolate, LOCALE_MAP, LOCALES, type Locale } from "./index";
 
 const INTL_LOCALE_CODE_PATTERN = /^[a-z]{2}-[A-Z]{2}$/;
 
@@ -34,10 +34,10 @@ describe("interpolate", () => {
 });
 
 describe("getTranslations", () => {
-	it("returns English translations by default", () => {
-		const t = getTranslations("en");
+	it("falls back to English for a locale it has no bundle for", () => {
+		const t = getTranslations("fr" as Locale);
 
-		expect(t.report.title).toBe("Star Tracker Report");
+		expect(t).toBe(getTranslations("en"));
 	});
 
 	it("returns English translations for en locale", () => {
@@ -70,10 +70,10 @@ describe("LOCALES", () => {
 		expect(LOCALES).toEqual(["en", "es", "ca", "it"]);
 	});
 
-	it("has a translation bundle for every listed locale", () => {
-		for (const locale of LOCALES) {
-			expect(getTranslations(locale).report.title).toBeTruthy();
-		}
+	it("has a bundle of its own for every listed locale, not the English fallback", () => {
+		const titles = LOCALES.map((locale) => getTranslations(locale).report.title);
+
+		expect(new Set(titles).size).toBe(LOCALES.length);
 	});
 
 	it("maps every locale to an Intl code", () => {

@@ -45,6 +45,20 @@ Nothing compared `.nvmrc` with `engines.node` until that rule existed, so the tw
 declares Node could drift without anyone noticing. A workflow that pinned it by hand would add a third place
 to look. Every sibling repository carries the same set.
 
+Those rules hold the pins to each other, so one more rule reads this section itself: a bullet here must not
+quote a version, or it could go stale while everything else still passed. Only the line that opens a bullet
+is checked, because the prose beneath it narrates the arrangement this section used to carry, and that
+history is why the decision exists. The exact-pin rule is what keeps the others meaningful: a range would
+make "the version `engines.node` declares" ambiguous. None of them reads a digit out of prose, so a Renovate
+bump moves through them untouched.
+
+The same reasoning covers every other document. A tool named beside a version states what its manifest
+already states, and the manifest is the only copy Renovate keeps current, so `docs/docs-consistency.test.ts`
+rejects such a pairing in any markdown file. Which names it polices is read from the manifests: the runtimes,
+plus each versioned dependency `package.json` actually declares, so a dependency added tomorrow is policed the
+day it lands and one this repository never declared is not. Two exemptions: the ADRs, because a decision is
+dated and quotes the versions it decided on, and the shipped runtime below, which is not a dependency.
+
 `engines.node` is the development pin; the shipped runtime is `node24` (`action.yml` `runs.using`, and
 [`esbuild.config.ts`](./esbuild.config.ts) `target`). Those are different numbers on purpose, and the gap is
 a trap: `@types/node` tracks the *development* version, and esbuild's `target` lowers syntax without

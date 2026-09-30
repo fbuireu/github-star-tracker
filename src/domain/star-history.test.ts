@@ -219,15 +219,15 @@ describe("buildStarHistory", () => {
 		}
 	});
 
-	it("produces at least two snapshots for a single star", () => {
+	it("raises a one-point budget to two snapshots, so a single star still draws a line", () => {
 		const result = buildStarHistory({
 			repoStargazers: [repoStargazers({ fullName: "user/a", dates: ["2026-06-01T00:00:00Z"] })],
 			repos: [repoTotal({ fullName: "user/a", stars: 1 })],
-			maxPoints: 30,
+			maxPoints: 1,
 			now: NOW,
 		});
 
-		expect(result.snapshots.length).toBeGreaterThanOrEqual(2);
+		expect(result.snapshots).toHaveLength(2);
 		expect(result.snapshots.at(-1)?.totalStars).toBe(1);
 	});
 

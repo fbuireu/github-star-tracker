@@ -4,7 +4,7 @@ import { computeVelocity } from "./velocity";
 
 const makeHistory = (points: { day: number; totalStars: number }[]): History => ({
 	snapshots: points.map(({ day, totalStars }) => ({
-		timestamp: new Date(2025, 0, 1 + day).toISOString(),
+		timestamp: new Date(Date.UTC(2026, 0, 1 + day)).toISOString(),
 		totalStars,
 		repos: [],
 	})),

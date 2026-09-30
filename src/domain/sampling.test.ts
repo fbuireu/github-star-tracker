@@ -60,12 +60,11 @@ describe("sampledPages", () => {
 		expect(pages.at(-1)).toBe(reachablePages(1000));
 	});
 
-	it("returns pages in ascending order with no duplicates when rounding collides", () => {
-		const pages = sampledPages({ totalStars: 300, maxPages: 5 });
+	it("spends the whole budget on distinct ascending pages when the range is barely wider than it", () => {
+		const pages = sampledPages({ totalStars: 1100, maxPages: 10 });
 
-		expect(pages).toEqual([...new Set(pages)]);
-		expect(pages).toEqual([...pages].sort((earlier, later) => earlier - later));
-		expect(pages.at(-1)).toBe(3);
+		expect(pages).toEqual([1, 2, 3, 4, 5, 7, 8, 9, 10, 11]);
+		expect(new Set(pages).size).toBe(10);
 	});
 
 	it("never asks for a page beyond the paging ceiling", () => {

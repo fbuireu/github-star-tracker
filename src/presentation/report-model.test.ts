@@ -38,10 +38,11 @@ function modelOf({ config, ...overrides }: ModelOf = {}) {
 describe("buildReportModel", () => {
 	describe("run identity", () => {
 		it("dates the run and the baseline it is measured against", () => {
-			const model = modelOf();
+			const model = modelOf({ now: new Date("2026-03-04T23:59:59.999Z") });
 
 			expect(model.prev).toBe("2026-01-01");
-			expect(model.now).toBe(new Date().toISOString().split("T")[0]);
+			expect(model.now).toBe("2026-03-04");
+			expect(model.generatedAt).toBe("2026-03-04T23:59:59.999Z");
 			expect(model.isFirstRun).toBe(false);
 		});
 
@@ -164,13 +165,18 @@ describe("buildReportModel", () => {
 		});
 
 		it("resolves the projection to a single present-or-absent value", () => {
-			const model = modelOf({ velocityHistory, config: { velocityMetrics: true } });
-
-			expect(model.velocity).toMatchObject({
-				starsPerDay: expect.any(Number),
-				growthPercent: 100,
-				projection: { days: expect.any(Number), milestone: expect.any(Number) },
+			const growing = modelOf({ velocityHistory, config: { velocityMetrics: true } });
+			const flat = modelOf({
+				velocityHistory: makeHistory({ starCounts: [100, 100] }),
+				config: { velocityMetrics: true },
 			});
+
+			expect(growing.velocity).toEqual({
+				starsPerDay: 14.29,
+				growthPercent: 100,
+				projection: { days: 21, milestone: 500 },
+			});
+			expect(flat.velocity?.projection).toBeNull();
 		});
 
 		it("nests under the forecast only when there is a forecast", () => {

@@ -75,10 +75,10 @@ describe("computeForecast", () => {
 
 		expect(result.repos).toHaveLength(1);
 		expect(result.repos[0].repoFullName).toBe("user/repo-a");
-		expect(result.repos[0].forecasts).toHaveLength(2);
+		expect(result.repos[0].forecasts.map((forecast) => forecast.points[0].predicted)).toEqual([65, 65]);
 	});
 
-	it("handles repo missing from some snapshots", () => {
+	it("reads a repository missing from a snapshot as zero there", () => {
 		const history: History = {
 			snapshots: [
 				{
@@ -100,12 +100,8 @@ describe("computeForecast", () => {
 		};
 
 		const result = expectForecast(computeForecast({ history, topRepoNames: ["user/repo-a"] }));
-		expect(result.repos[0].forecasts).toHaveLength(2);
-		for (const forecast of result.repos[0].forecasts) {
-			for (const point of forecast.points) {
-				expect(point.predicted).toBeGreaterThanOrEqual(0);
-			}
-		}
+
+		expect(result.repos[0].forecasts.map((forecast) => forecast.points[0].predicted)).toEqual([65, 83]);
 	});
 
 	it("projects calendar weeks regardless of snapshot spacing (#143)", () => {

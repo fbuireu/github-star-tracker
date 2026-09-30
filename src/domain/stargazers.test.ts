@@ -1,6 +1,7 @@
 import { makeStargazer } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import type { RepoStargazers, Stargazer, StargazerMap } from "./stargazers";
+import { buildStargazerMap, diffStargazers } from "./stargazers";
 
 interface MakeStarParams {
 	login: string;
@@ -9,8 +10,6 @@ interface MakeStarParams {
 
 const makeStar = ({ login, starredAt = "2026-01-15" }: MakeStarParams): Stargazer =>
 	makeStargazer({ login, starredAt });
-
-import { buildStargazerMap, diffStargazers } from "./stargazers";
 
 describe("diffStargazers", () => {
 	it("treats all as new when previous map is empty (first run)", () => {
@@ -88,6 +87,18 @@ describe("diffStargazers", () => {
 		expect(result.totalNew).toBe(1);
 		expect(result.entries.map((entry) => entry.repoFullName)).toEqual(["user/repo-a"]);
 		expect(result.sampledRepos).toEqual(["user/huge"]);
+	});
+
+	it("reports nobody as new for a repository whose fetch came back incomplete", () => {
+		const current: RepoStargazers[] = [
+			{ repoFullName: "user/repo-a", stargazers: [makeStar({ login: "alice" })] },
+			{ repoFullName: "user/big", stargazers: [makeStar({ login: "oldest-1" })], incomplete: true },
+		];
+		const result = diffStargazers({ current, previousMap: { "user/big": ["newer-2"] } });
+
+		expect(result.totalNew).toBe(1);
+		expect(result.entries.map((entry) => entry.repoFullName)).toEqual(["user/repo-a"]);
+		expect(result.sampledRepos).toBeUndefined();
 	});
 
 	it("omits sampledRepos when no repo is sampled", () => {

@@ -1,22 +1,27 @@
-import { describe, expect, it, vi } from "vitest";
-import { execute } from "./commands";
+import { execFileSync } from "node:child_process";
+import * as core from "@actions/core";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { authenticatedArgs, execute } from "./commands";
 
 vi.mock("node:child_process", () => ({
 	execFileSync: vi.fn(),
 }));
+vi.mock("@actions/core", () => ({
+	setSecret: vi.fn(),
+}));
 
 describe("execute", () => {
-	it("returns trimmed output from execFileSync", async () => {
-		const { execFileSync } = await import("node:child_process");
+	beforeEach(() => {
+		vi.mocked(execFileSync).mockReset();
+	});
 
+	it("returns trimmed output from execFileSync", () => {
 		vi.mocked(execFileSync).mockReturnValue("  output  ");
 
 		expect(execute({ args: ["status"] })).toBe("output");
 	});
 
-	it("invokes git with an argument array and never a shell string", async () => {
-		const { execFileSync } = await import("node:child_process");
-
+	it("invokes git with an argument array and never a shell string", () => {
 		vi.mocked(execFileSync).mockReturnValue("ok");
 
 		execute({ args: ["status"], options: { cwd: "/tmp" } });
@@ -28,9 +33,7 @@ describe("execute", () => {
 		});
 	});
 
-	it("passes arguments containing shell metacharacters through verbatim", async () => {
-		const { execFileSync } = await import("node:child_process");
-
+	it("passes arguments containing shell metacharacters through verbatim", () => {
 		vi.mocked(execFileSync).mockReturnValue("ok");
 
 		execute({ args: ["commit", "-m", "Update: 12 total (+3); rm -rf /"] });
@@ -42,8 +45,7 @@ describe("execute", () => {
 		);
 	});
 
-	it("throws error with stderr when command fails", async () => {
-		const { execFileSync } = await import("node:child_process");
+	it("throws error with stderr when command fails", () => {
 		const error = new Error("exec failed") as Error & { stderr?: string };
 
 		error.stderr = "  fatal: not a repo  ";
@@ -55,8 +57,7 @@ describe("execute", () => {
 		expect(() => execute({ args: ["log"] })).toThrow('Git command failed: "git log"\nfatal: not a repo');
 	});
 
-	it("throws error with message when no stderr", async () => {
-		const { execFileSync } = await import("node:child_process");
+	it("throws error with message when no stderr", () => {
 		const error = new Error("spawn failed");
 		vi.mocked(execFileSync).mockImplementation(() => {
 			throw error;
@@ -65,13 +66,26 @@ describe("execute", () => {
 		expect(() => execute({ args: ["push"] })).toThrow('Git command failed: "git push"\nspawn failed');
 	});
 
-	it("throws error with Unknown error when no stderr or message", async () => {
-		const { execFileSync } = await import("node:child_process");
-
+	it("throws error with Unknown error when no stderr or message", () => {
 		vi.mocked(execFileSync).mockImplementation(() => {
 			throw {};
 		});
 
 		expect(() => execute({ args: ["fetch"] })).toThrow('Git command failed: "git fetch"\nUnknown error');
+	});
+});
+
+describe("authenticatedArgs", () => {
+	it("prefixes one basic-auth extraheader and masks the credential it builds", () => {
+		const credential = Buffer.from("x-access-token:secret-token").toString("base64");
+
+		expect(authenticatedArgs({ token: "secret-token", args: ["fetch", "origin", "main"] })).toEqual([
+			"-c",
+			`http.extraheader=AUTHORIZATION: basic ${credential}`,
+			"fetch",
+			"origin",
+			"main",
+		]);
+		expect(core.setSecret).toHaveBeenCalledWith(credential);
 	});
 });

@@ -192,9 +192,11 @@ describe("createSnapshot", () => {
 			changed: false,
 		};
 
-		const snapshot = createSnapshot({ currentRepos: repos, summary });
+		const now = new Date("2026-03-04T12:00:00.000Z");
 
-		expect(snapshot.timestamp).toBeDefined();
+		const snapshot = createSnapshot({ currentRepos: repos, summary, now });
+
+		expect(snapshot.timestamp).toBe(now.toISOString());
 		expect(snapshot.totalStars).toBe(10);
 		expect(snapshot.repos).toHaveLength(1);
 		expect(snapshot.repos[0]).toEqual({
@@ -206,7 +208,7 @@ describe("createSnapshot", () => {
 	});
 });
 
-describe("topRepositories", () => {
+describe("rankByStars and topRepositories", () => {
 	const repos = [
 		makeRepoResult({ name: "small", overrides: { current: 5 } }),
 		makeRepoResult({ name: "large", overrides: { current: 90 } }),

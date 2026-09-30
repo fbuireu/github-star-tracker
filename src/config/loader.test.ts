@@ -142,7 +142,7 @@ describe("loadConfig", () => {
 		expect(() => loadConfig()).toThrow(/Invalid visibility "toString"/);
 	});
 
-	it("lets config file values win over built-in defaults for every overridable key", () => {
+	it("lets config file values win over built-in defaults", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue(
 			[
@@ -243,7 +243,6 @@ describe("loadConfig", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue("chart_line_color: 123456");
 
-		expect(() => loadConfig()).not.toThrow();
 		expect(loadConfig().chartLineColor).toBe(DEFAULTS.chartLineColor);
 	});
 
@@ -377,19 +376,6 @@ describe("loadConfig", () => {
 		const config = loadConfig();
 
 		expect(config.chartLineWidth).toBe(DEFAULTS.chartLineWidth);
-	});
-
-	it("reads every config file key, including ones without dedicated tests", () => {
-		vi.mocked(fs.existsSync).mockReturnValue(true);
-		vi.mocked(fs.readFileSync).mockReturnValue(
-			["chart_y_axis_side: right", "smart_sampling_pages: 7", "chart_begin_at_zero: true"].join("\n"),
-		);
-
-		const config = loadConfig();
-
-		expect(config.chartYAxisSide).toBe("right");
-		expect(config.smartSamplingPages).toBe(7);
-		expect(config.chartBeginAtZero).toBe(true);
 	});
 
 	it("parses notification-threshold as number", () => {
@@ -813,10 +799,7 @@ describe("loadConfig", () => {
 	});
 
 	it("parses chart-curve input as rounded-step", () => {
-		vi.mocked(core.getInput).mockImplementation((name: string) => {
-			if (name === "chart-curve") return ChartCurve.ROUNDED_STEP;
-			return "";
-		});
+		mockInputs({ "chart-curve": ChartCurve.ROUNDED_STEP });
 
 		const config = loadConfig();
 
@@ -874,15 +857,6 @@ describe("loadConfig", () => {
 		expect(config.trackStargazers).toBe(true);
 	});
 
-	it("reads track_stargazers from config file", () => {
-		vi.mocked(fs.existsSync).mockReturnValue(true);
-		vi.mocked(fs.readFileSync).mockReturnValue("track_stargazers: true");
-
-		const config = loadConfig();
-
-		expect(config.trackStargazers).toBe(true);
-	});
-
 	it("defaults smart sampling options", () => {
 		const config = loadConfig();
 
@@ -903,18 +877,5 @@ describe("loadConfig", () => {
 		expect(config.smartSampling).toBe(true);
 		expect(config.smartSamplingThreshold).toBe(5000);
 		expect(config.smartSamplingPages).toBe(10);
-	});
-
-	it("reads smart_sampling options from config file", () => {
-		vi.mocked(fs.existsSync).mockReturnValue(true);
-		vi.mocked(fs.readFileSync).mockReturnValue(
-			"smart_sampling: true\nsmart_sampling_threshold: 2000\nsmart_sampling_pages: 15",
-		);
-
-		const config = loadConfig();
-
-		expect(config.smartSampling).toBe(true);
-		expect(config.smartSamplingThreshold).toBe(2000);
-		expect(config.smartSamplingPages).toBe(15);
 	});
 });

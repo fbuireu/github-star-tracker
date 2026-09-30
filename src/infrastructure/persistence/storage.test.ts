@@ -293,6 +293,13 @@ describe("readStargazers", () => {
 		expect(readStargazers("/data")).toEqual({ "user/sound": ["alice"] });
 	});
 
+	it("fails with an actionable message when the stored file is not valid JSON", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue("{ not json");
+
+		expect(() => readStargazers("/data")).toThrow(/stargazers\.json on the data branch is not valid JSON/);
+	});
+
 	it("returns an empty map for a file that is valid JSON but not an object", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify([["alice"]]));

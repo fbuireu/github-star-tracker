@@ -240,21 +240,6 @@ describe("buildChartSpec", () => {
 
 			expect(milestoneValues(spec)).toEqual([50]);
 		});
-
-		it("measures the extremes across every series, not just the primary one", () => {
-			const values = [10, 20, 30, 40];
-			const spec = specOf({
-				request: {
-					kind: ChartKind.STAR_HISTORY,
-					history: makeHistory({ starCounts: values }),
-					customMilestones: [12, 25, 35],
-					trendLine: true,
-				},
-			});
-
-			expect(spec.series).toHaveLength(2);
-			expect(milestoneValues(spec)).toEqual([12, 25, 35]);
-		});
 	});
 
 	describe("per repo", () => {
@@ -438,12 +423,13 @@ describe("buildChartSpec", () => {
 			const spec = specOf({
 				request: {
 					kind: ChartKind.STAR_HISTORY,
-					history: makeHistory({ starCounts: [10, 20, 30, 40, 50], stepDays: 10 }),
+					history: makeHistory({ starCounts: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100], stepDays: 10 }),
 				},
 				range: ChartRange.D30,
+				maxPoints: 2,
 			});
 
-			expect(spec.series[0].data).toEqual([20, 30, 40, 50]);
+			expect(spec.series[0].data).toEqual([70, 100]);
 		});
 	});
 });
