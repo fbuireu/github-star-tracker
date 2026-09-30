@@ -272,6 +272,31 @@ describe("getRepos", () => {
 		expect(core.info).not.toHaveBeenCalledWith(expect.stringContaining("After filtering"));
 	});
 
+	it("refuses a repository row it cannot read instead of tracking a broken count", async () => {
+		const { stargazers_count: _missing, ...unreadable } = makeRepo({ name: "broken" });
+		const octokit = createMockOctokit({
+			rest: { repos: { listForAuthenticatedUser: vi.fn().mockResolvedValue({ data: [makeRepo(), unreadable] }) } },
+		});
+
+		await expect(getRepos({ octokit, config: defaultConfig })).rejects.toThrow(
+			"GitHub returned a repository list this action cannot read: [1].stargazers_count (expected number, found nothing).",
+		);
+	});
+
+	it("refuses a repository whose owner is missing", async () => {
+		const octokit = createMockOctokit({
+			rest: {
+				repos: {
+					listForAuthenticatedUser: vi.fn().mockResolvedValue({ data: [{ ...makeRepo(), owner: null }] }),
+				},
+			},
+		});
+
+		await expect(getRepos({ octokit, config: defaultConfig })).rejects.toThrow(
+			"[0].owner (expected object, found null)",
+		);
+	});
+
 	it("fetches, filters, and maps repos", async () => {
 		const mockRepos = [makeRepo({ name: "repo1", stargazers_count: 10 }), makeRepo({ name: "repo2", archived: true })];
 		const mockOctokit: MockOctokit = {

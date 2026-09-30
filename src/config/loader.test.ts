@@ -90,6 +90,16 @@ describe("loadConfigFile", () => {
 		expect(loadConfigFile("star-tracker.yml")).toEqual({});
 	});
 
+	it.each([
+		["a list", "- visibility\n- private"],
+		["a scalar", "private"],
+	])("ignores a config file whose top level is %s", (_label, contents) => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue(contents);
+
+		expect(loadConfigFile("star-tracker.yml")).toEqual({});
+	});
+
 	it("returns empty object and warns on malformed YAML", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue('visibility: "public"\n  bad: : :');
@@ -140,6 +150,36 @@ describe("loadConfig", () => {
 		mockInputs({ visibility: "toString" });
 
 		expect(() => loadConfig()).toThrow(/Invalid visibility "toString"/);
+	});
+
+	it("throws on a visibility in the config file that is not a string", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue("visibility: 5");
+
+		expect(() => loadConfig()).toThrow('Invalid visibility "5". Must be one of: public, private, all, owned');
+	});
+
+	it.each([
+		["a number", "data_branch: 2026", "2026"],
+		["a boolean", "data_branch: true", "true"],
+		["a list", "data_branch:\n- stars", '["stars"]'],
+	])("throws a readable error on a data_branch that is %s", (_label, contents, shown) => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue(contents);
+
+		expect(() => loadConfig()).toThrow(
+			`Invalid data-branch ${shown} in the config file. It must be a string, so quote it in the config file.`,
+		);
+	});
+
+	it("warns and falls back on an enum in the config file that is not a string", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue("locale: 5");
+
+		expect(loadConfig().locale).toBe(DEFAULTS.locale);
+		expect(core.warning).toHaveBeenCalledWith(
+			'Invalid locale "5". Must be "en", "es", "ca", or "it". Falling back to "en"',
+		);
 	});
 
 	it("lets config file values win over built-in defaults", () => {
@@ -758,6 +798,20 @@ describe("loadConfig", () => {
 		const config = loadConfig();
 
 		expect(config.chartCustomMilestones).toEqual([100, 300]);
+	});
+
+	it("reads chart-custom-milestones from the config file as a single number", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue("chart_custom_milestones: 1000");
+
+		expect(loadConfig().chartCustomMilestones).toEqual([1000]);
+	});
+
+	it("ignores chart-custom-milestones in the config file when it is neither a list, a string nor a number", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue("chart_custom_milestones:\n  first: 100");
+
+		expect(loadConfig().chartCustomMilestones).toEqual(DEFAULTS.chartCustomMilestones);
 	});
 
 	it("warns and falls back when chart-custom-milestones input has no valid numbers", () => {

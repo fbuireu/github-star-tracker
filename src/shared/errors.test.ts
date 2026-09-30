@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { errorMessage } from "./errors";
+import * as z from "zod/mini";
+import { describeFound, describeIssue, errorMessage } from "./errors";
 
 describe("errorMessage", () => {
 	it("reads the message off an Error", () => {
@@ -28,5 +29,57 @@ describe("errorMessage", () => {
 
 	it("ignores a non-string message", () => {
 		expect(errorMessage({ message: 500 })).toBe("[object Object]");
+	});
+});
+
+describe("describeFound", () => {
+	it("names containers by kind and quotes scalars as JSON", () => {
+		expect(describeFound([1])).toBe("an array");
+		expect(describeFound({ a: 1 })).toBe("an object");
+		expect(describeFound(null)).toBe("null");
+		expect(describeFound("7")).toBe('"7"');
+		expect(describeFound(7)).toBe("7");
+		expect(describeFound(undefined)).toBe("nothing");
+	});
+});
+
+describe("describeIssue", () => {
+	interface FirstIssueParams {
+		schema: z.ZodMiniType;
+		value: unknown;
+	}
+
+	function firstIssue({ schema, value }: FirstIssueParams): z.core.$ZodIssue {
+		const result = schema.safeParse(value, { reportInput: true });
+
+		if (result.success) throw new Error("expected the value to be rejected");
+
+		return result.error.issues[0];
+	}
+
+	it("renders the path with indexes in brackets and keys after dots", () => {
+		const schema = z.object({ items: z.array(z.object({ count: z.number() })) });
+		const value = { items: [{ count: 1 }, { count: "2" }] };
+
+		expect(describeIssue(firstIssue({ schema, value }))).toBe('items[1].count (expected number, found "2")');
+	});
+
+	it("says a missing key was found as nothing", () => {
+		const schema = z.object({ name: z.string() });
+
+		expect(describeIssue(firstIssue({ schema, value: {} }))).toBe("name (expected string, found nothing)");
+	});
+
+	it("calls the root the value and leads with an index at the top of a list", () => {
+		const schema = z.array(z.string());
+
+		expect(describeIssue(firstIssue({ schema, value: {} }))).toBe("the value (expected array, found an object)");
+		expect(describeIssue(firstIssue({ schema, value: ["a", null] }))).toBe("[1] (expected string, found null)");
+	});
+
+	it("leaves out the expectation for an issue that is not about the type", () => {
+		const schema = z.number().check(z.maximum(1));
+
+		expect(describeIssue(firstIssue({ schema, value: 2 }))).toBe("the value (found 2)");
 	});
 });

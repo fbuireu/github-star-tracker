@@ -17,6 +17,15 @@ name, which is exactly the coupling
 the resolver. Every parser is reached through `loader.ts`'s field table in production, so none is exported
 *only* for a test; `parsers.test.ts` does exercise them directly, which is why they are exported at all.
 
+The validating parsers are `zod/mini` schemas behind plain functions: each one is
+`Schema.safeParse(value).data`, so a value the schema rejects is `undefined` and the caller's fallback runs
+([ADR 0023](../../docs/adr/0023-untrusted-input-is-validated-with-zod-mini.md)). They take `unknown`, which is
+what lets one parser serve both the input string and the raw YAML value. The list parsers (`parseList`,
+`parseNumberList`, `toStringList`) stay hand-written: they split and de-duplicate rather than validate, and a
+schema would only wrap the same code in a `transform`. `loader.ts` uses schemas for the three values it
+checks itself: `VisibilitySchema`, `DataBranchSchema` (git's ref rules as one `refine`) and the enum schema
+each `enumField` row builds once.
+
 ## The field table
 
 `loadConfig` does **not** resolve keys one at a time. `FIELD_SOURCES` in `loader.ts` is one row per key
@@ -41,9 +50,12 @@ table.
   result, so a value that parses to `false` or `0` still beats the file.
 - Each input is parsed once. The fold decides the value and whether to warn from the same result, so no
   key calls its parser twice.
-- A config-file value that is neither a string, a number, `null` nor absent is ignored rather than crashing
-  the parser: `min_stars: true` falls back to the default.
-- `emailTheme` is the one key whose default is another key. It resolves through `resolveEnum` like every
+- A config-file value of the wrong kind is ignored rather than crashing the parser: `min_stars: true` falls
+  back to the default. Nothing casts the YAML: `loadConfigFile` returns `unknown` values, and each parser or
+  schema decides what it accepts. Two values used to crash here with a `TypeError` instead, and now do not: a
+  bare number for `chart_custom_milestones` (`1000` is read as `[1000]`) and a non-string `data_branch`
+  (which throws its own "quote it" error, below).
+- `emailTheme` is the one key whose default is another key. It resolves through `enumField` like every
   other enum row, but `ChartTheme.AUTO` is not a value it keeps: `auto` collapses to the already-resolved
   `chartTheme` before the `Config` is built, so `Config.emailTheme` is what the email should actually use and
   no consumer re-derives it. `DEFAULTS.emailTheme` is therefore `auto`, a marker meaning "inherit" rather
@@ -56,11 +68,14 @@ table.
 - **Only these throw**: an unknown `visibility`, and an invalid `data-branch`. Everything else (a bad
   enum, bool, number or colour, and malformed YAML) warns and falls back. A missing config file is `info`,
   not a warning.
-- `visibility` is resolved with `Object.values(...).find(...)`, not an object index, so `visibility: toString`
-  is rejected instead of resolving off `Object.prototype`.
+- `visibility` is resolved with `z.enum(Object.values(Visibility))`, not an object index, so
+  `visibility: toString` is rejected instead of resolving off `Object.prototype`, and so is a non-string
+  `visibility: 5`.
 - `data-branch` validation rejects `''`, `'@'`, whitespace, `~ ^ : ? * [ \`, control characters, the
   sequences `..` `//` `/.` `@{`, a leading `-` `.` `/`, and a trailing `/` `.` `.lock`. It accepts
-  `data/star-tracker`, `_star-data`, `stars@v2`, `v1.2.3`, `UPPER_case-1`.
+  `data/star-tracker`, `_star-data`, `stars@v2`, `v1.2.3`, `UPPER_case-1`. A config-file value that is not a
+  string (`data_branch: 2026`, `data_branch: true`) throws a different message asking for it to be quoted,
+  because the git-rules message would be wrong about `2026`.
 - Booleans use different vocabularies on each path. Action inputs accept only `true`/`false`, so `yes`, `on` and
   `1` are **invalid** and warn. Config-file values accept the full YAML set (`true|yes|on|y|1` /
   `false|no|off|n|0`), and a quoted `"false"` is `false`, not a truthy string.
@@ -134,15 +149,17 @@ differently from an absent one rather than as a changed default.
 
 - `loadConfigFile` returns every file key, with `undefined` for absent ones, so `'minStars' in fileConfig`
   is not a presence test; use `??`. It returns `{}` when the file is missing, empty, unparseable, or parses
-  to a non-object.
+  to anything but a mapping (a list, a scalar).
 - Config-file parse failures are mostly silent. Only the enum fields warn, because they are fed
   `input || fileValue`; everything else warns on the input side only. A bad `min_stars: "abc"` in the YAML
   falls back with no warning at all.
 - An unquoted hex colour in YAML is parsed as a number (`chart_line_color: 123456`), and the file parser
   accepts strings only, so it silently becomes the default. Quote it. `action.yml` warns about the
   `#`-starts-a-comment half of this trap but not the numeric half.
-- `resolveEnum` takes `input || fileValue`, so an empty string means "not set" and returns the fallback
-  **without** warning. Only a non-empty, non-matching value warns.
+- `enumField` takes `input || fileValue`, so an empty string means "not set" and returns the fallback
+  **without** warning. Only a non-empty, non-matching value warns, a non-string file value included.
+- A YAML list is not a boolean. `include_forks: [yes]` used to read as `true`, because the file parser
+  stringified whatever it got; `parseFileBool` now accepts a boolean, a string or a number and nothing else.
 - **Warning wording is asserted verbatim**, including the Oxford comma
   (`'Invalid locale "fr". Must be "en", "es", "ca", or "it". Falling back to "en"'`). The generic parser
   message deliberately does *not* name a fallback, because the config file may still supply one.

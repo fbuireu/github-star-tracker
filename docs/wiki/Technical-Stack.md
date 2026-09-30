@@ -54,6 +54,7 @@ The runtime packages, all bundled into `dist/index.js`:
 | `@octokit/plugin-retry` | Automatic retries for transient GitHub API failures |
 | `js-yaml` | YAML config file parsing |
 | `nodemailer` | SMTP email delivery |
+| `zod` | Runtime validation of untrusted data (the stored history, GitHub responses, inputs and the config file), imported as `zod/mini` |
 
 Because the bundle carries them, the action installs nothing at run time: GitHub executes `dist/index.js` straight from the repository, and the consumer has **zero runtime dependencies** to audit or resolve.
 
@@ -74,6 +75,10 @@ The action creates a temporary working directory for the data branch with `git w
 ### A custom i18n engine, not a library
 
 [`src/i18n/index.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/index.ts) is small: a bundle lookup plus a `{placeholder}` interpolation function. That covers the whole requirement (the supported languages, flat key substitution, no plurals or dates), and it means one fewer dependency inside a bundle that ships to every consumer.
+
+### `zod/mini`, not full `zod`
+
+Everything the action reads from outside itself, meaning `stars-data.json` and `stargazers.json` on the data branch, GitHub's responses, the action inputs and `star-tracker.yml`, is checked against a schema before it is trusted. The action imports the functional `zod/mini` build rather than `zod`: it writes every user-facing error message itself, so it needs neither full `zod`'s method-chaining API nor its bundled English messages, and `zod/mini` adds well under half as much to the bundle. The measured numbers and the alternatives are in [ADR 0023](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0023-untrusted-input-is-validated-with-zod-mini.md).
 
 ### Nodemailer, with `secure` inferred from the port
 

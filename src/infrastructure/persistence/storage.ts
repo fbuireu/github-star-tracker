@@ -3,7 +3,8 @@ import * as path from "node:path";
 import * as core from "@actions/core";
 import type { StargazerMap } from "@domain/stargazers";
 import type { History } from "@domain/types";
-import { errorMessage } from "@shared/errors";
+import { describeFound, describeIssue, errorMessage } from "@shared/errors";
+import * as z from "zod/mini";
 import { authenticatedArgs, execute } from "../git/commands";
 
 const DATA_FORMAT_VERSION = 1;
@@ -20,12 +21,12 @@ const DATA_FILES = {
 	chartsDir: "charts",
 } as const;
 
-interface ReadJsonFileParams<T> {
+interface ReadJsonFileParams {
 	filePath: string;
-	fallback: T;
+	fallback: unknown;
 }
 
-function readJsonFile<T>({ filePath, fallback }: ReadJsonFileParams<T>): T {
+function readJsonFile({ filePath, fallback }: ReadJsonFileParams): unknown {
 	if (!fs.existsSync(filePath)) {
 		return fallback;
 	}
@@ -33,7 +34,7 @@ function readJsonFile<T>({ filePath, fallback }: ReadJsonFileParams<T>): T {
 	const contents = fs.readFileSync(filePath, "utf8");
 
 	try {
-		return JSON.parse(contents) as T;
+		return JSON.parse(contents);
 	} catch (error) {
 		throw new Error(
 			`${path.basename(filePath)} on the data branch is not valid JSON (${errorMessage(error)}). Fix or delete the file on that branch and re-run.`,
@@ -50,52 +51,59 @@ function writeJsonFile({ filePath, data }: WriteJsonFileParams): void {
 	fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
-function assertReadableFormat(version: unknown): void {
-	if (version === undefined || (typeof version === "number" && version <= DATA_FORMAT_VERSION)) {
-		return;
+const SnapshotRepoSchema = z.looseObject({
+	fullName: z.string(),
+	name: z.string(),
+	owner: z.string(),
+	stars: z.number(),
+});
+
+const SnapshotSchema = z.looseObject({
+	timestamp: z.string(),
+	totalStars: z.number(),
+	repos: z.array(SnapshotRepoSchema),
+});
+
+const StoredHistorySchema = z.looseObject({
+	version: z.optional(z.number().check(z.maximum(DATA_FORMAT_VERSION))),
+	snapshots: z.optional(z.array(SnapshotSchema)),
+	starsAtLastNotification: z.optional(z.number()),
+});
+
+const DISCARDS_RECORD = "Reading it as an empty history would discard your tracking record, so this run stops instead.";
+const FIX_OR_DELETE = "Fix or delete the file on that branch and re-run.";
+
+function describeUnreadableHistory(issue: z.core.$ZodIssue): string {
+	const [key, ...rest] = issue.path;
+
+	if (key === undefined) {
+		return `${DATA_FILES.history} on the data branch is valid JSON but not an object (found ${describeFound(issue.input)}). ${DISCARDS_RECORD} ${FIX_OR_DELETE}`;
 	}
 
-	throw new Error(
-		`${DATA_FILES.history} on the data branch declares format version ${JSON.stringify(version)}, which this version of the action does not understand (it writes version ${DATA_FORMAT_VERSION}). Upgrade the action, or point data-branch at a branch this version wrote.`,
-	);
-}
-
-function assertJsonObject(parsed: unknown): asserts parsed is Record<string, unknown> {
-	if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
-		return;
+	if (key === "version") {
+		return `${DATA_FILES.history} on the data branch declares format version ${JSON.stringify(issue.input)}, which this version of the action does not understand (it writes version ${DATA_FORMAT_VERSION}). Upgrade the action, or point data-branch at a branch this version wrote.`;
 	}
 
-	throw new Error(
-		`${DATA_FILES.history} on the data branch is valid JSON but not an object (found ${Array.isArray(parsed) ? "an array" : JSON.stringify(parsed)}). Reading it as an empty history would discard your tracking record, so this run stops instead. Fix or delete the file on that branch and re-run.`,
-	);
-}
-
-function assertSnapshotList(snapshots: unknown): void {
-	if (snapshots === undefined || Array.isArray(snapshots)) {
-		return;
+	if (key === "snapshots" && rest.length === 0) {
+		return `${DATA_FILES.history} on the data branch has a "snapshots" key that is not an array (found ${describeFound(issue.input)}). ${DISCARDS_RECORD} ${FIX_OR_DELETE}`;
 	}
 
-	const found = snapshots !== null && typeof snapshots === "object" ? "an object" : JSON.stringify(snapshots);
-
-	throw new Error(
-		`${DATA_FILES.history} on the data branch has a "snapshots" key that is not an array (found ${found}). Reading it as an empty history would discard your tracking record, so this run stops instead. Fix or delete the file on that branch and re-run.`,
-	);
+	return `${DATA_FILES.history} on the data branch has an unreadable value at ${describeIssue(issue)}. Reading past it would misreport or overwrite your tracking record, so this run stops instead. ${FIX_OR_DELETE}`;
 }
 
 export function readHistory(dataDir: string): History {
-	const parsed = readJsonFile<unknown>({
-		filePath: path.join(dataDir, DATA_FILES.history),
-		fallback: {},
-	});
+	const stored = StoredHistorySchema.safeParse(
+		readJsonFile({ filePath: path.join(dataDir, DATA_FILES.history), fallback: {} }),
+		{ reportInput: true },
+	);
 
-	assertJsonObject(parsed);
+	if (!stored.success) {
+		throw new Error(describeUnreadableHistory(stored.error.issues[0]));
+	}
 
-	const { version, ...raw } = parsed as Partial<History> & { version?: unknown };
+	const { version: _version, ...history } = stored.data;
 
-	assertReadableFormat(version);
-	assertSnapshotList(raw.snapshots);
-
-	return { ...raw, snapshots: raw.snapshots ?? [] };
+	return { ...history, snapshots: history.snapshots ?? [] };
 }
 
 interface WriteHistoryParams {
@@ -169,23 +177,22 @@ export function pruneCharts({ dataDir, keep }: PruneChartsParams): string[] {
 	return removed;
 }
 
-function isLoginList(value: unknown): value is string[] {
-	return Array.isArray(value) && value.every((login) => typeof login === "string");
-}
+const StargazerFileSchema = z.record(z.string(), z.unknown());
+
+const LoginListSchema = z.array(z.string());
 
 function toStargazerMap(parsed: unknown): StargazerMap {
-	if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+	if (!z.validate(StargazerFileSchema, parsed)) return {};
 
-	return Object.fromEntries(Object.entries(parsed).filter(([, logins]) => isLoginList(logins))) as StargazerMap;
+	return Object.fromEntries(
+		Object.entries(parsed).flatMap(([repo, logins]) =>
+			z.validate(LoginListSchema, logins) ? [[repo, logins] as const] : [],
+		),
+	);
 }
 
 export function readStargazers(dataDir: string): StargazerMap {
-	return toStargazerMap(
-		readJsonFile<unknown>({
-			filePath: path.join(dataDir, DATA_FILES.stargazers),
-			fallback: {},
-		}),
-	);
+	return toStargazerMap(readJsonFile({ filePath: path.join(dataDir, DATA_FILES.stargazers), fallback: {} }));
 }
 
 interface WriteStargazersParams {

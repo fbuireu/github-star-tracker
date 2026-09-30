@@ -27,4 +27,10 @@ describe("describeFetchError", () => {
 		expect(describeFetchError("a plain string error")).toBe("a plain string error");
 		expect(describeFetchError({ some: "object" })).toBe("[object Object]");
 	});
+
+	it("ignores a status that is not a number and a message that is not a string", () => {
+		expect(describeFetchError({ status: "500", message: "Server Error" })).toBe("Server Error");
+		expect(describeFetchError({ status: 502, message: 42 })).toBe("HTTP 502");
+		expect(describeFetchError({ status: "500", message: 42 })).toBe("[object Object]");
+	});
 });

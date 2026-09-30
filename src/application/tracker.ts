@@ -18,12 +18,25 @@ import { resolveChartHistories } from "@presentation/charts";
 import type { RenderedRun } from "@presentation/run";
 import { renderEmptyRun, renderRun } from "@presentation/run";
 import { errorMessage } from "@shared/errors";
+import * as z from "zod/mini";
+
+const ApiUrlSchema = z.url({ protocol: /^https?$/ });
+
+function resolveApiUrl(): string {
+	const apiUrl = core.getInput("github-api-url") || process.env.GITHUB_API_URL || "";
+
+	if (apiUrl === "" || z.validate(ApiUrlSchema, apiUrl)) return apiUrl;
+
+	throw new Error(
+		`Invalid github-api-url "${apiUrl}" (read from the input, or from GITHUB_API_URL when the input is empty). It must be an absolute http(s) URL, such as https://github.example.com/api/v3.`,
+	);
+}
 
 export async function trackStars(): Promise<void> {
 	try {
 		const config = loadConfig();
 		const token = core.getInput("github-token", { required: true });
-		const apiUrl = core.getInput("github-api-url") || process.env.GITHUB_API_URL || "";
+		const apiUrl = resolveApiUrl();
 		const octokit = github.getOctokit(token, apiUrl ? { baseUrl: apiUrl } : undefined, retry);
 
 		core.info("Fetching repositories...");

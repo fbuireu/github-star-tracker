@@ -77,6 +77,23 @@ describe("getEmailConfig", () => {
 		expect(core.warning).toHaveBeenCalledWith(expect.stringContaining("Invalid smtp-port"));
 	});
 
+	it.each(["0", "-25", "65536", "70000"])("falls back to 587 for the out-of-range smtp-port %s", (port) => {
+		vi.mocked(core.getInput).mockImplementation((name: string) =>
+			name === "smtp-host" ? "smtp.test.com" : name === "smtp-port" ? port : "",
+		);
+
+		expect(getEmailConfig("en")?.port).toBe(587);
+		expect(core.warning).toHaveBeenCalledWith(`Invalid smtp-port "${port}". Falling back to 587.`);
+	});
+
+	it("reads the leading integer of an smtp-port, as parseInt does", () => {
+		vi.mocked(core.getInput).mockImplementation((name: string) =>
+			name === "smtp-host" ? "smtp.test.com" : name === "smtp-port" ? "465abc" : "",
+		);
+
+		expect(getEmailConfig("en")?.port).toBe(465);
+	});
+
 	it("masks the SMTP password so it cannot leak through error text", () => {
 		vi.mocked(core.getInput).mockImplementation((name: string) =>
 			name === "smtp-host" ? "smtp.test.com" : name === "smtp-password" ? "hunter2" : "",
@@ -172,6 +189,27 @@ describe("sendEmail", () => {
 		});
 
 		expect(core.warning).toHaveBeenCalledWith(expect.stringContaining("bad@example.com"));
+	});
+
+	it("names a rejected recipient that nodemailer reports as an address object", async () => {
+		const transport = vi.mocked(nodemailer.createTransport)({});
+		vi.mocked(transport.sendMail).mockResolvedValueOnce({
+			messageId: "id",
+			rejected: [{ name: "Bad", address: "bad@example.com" }, "worse@example.com"],
+		} as never);
+
+		await sendEmail({ emailConfig, subject: "Subject", htmlBody: "<p>Body</p>" });
+
+		expect(core.warning).toHaveBeenCalledWith("Email rejected for: bad@example.com, worse@example.com");
+	});
+
+	it("does not warn when the rejected list is not a list", async () => {
+		const transport = vi.mocked(nodemailer.createTransport)({});
+		vi.mocked(transport.sendMail).mockResolvedValueOnce({ messageId: "id", rejected: "bad@example.com" } as never);
+
+		await sendEmail({ emailConfig, subject: "Subject", htmlBody: "<p>Body</p>" });
+
+		expect(core.warning).not.toHaveBeenCalled();
 	});
 
 	it("keeps the from address as-is when it already contains an email", async () => {

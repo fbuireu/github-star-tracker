@@ -39,7 +39,7 @@ Two things then survive that the change is supposed to remove:
   `loader.test.ts` assert its wording verbatim; the Oxford comma in the enum message is pinned deliberately.
   Parameterising the I/O leaves `vi.mock('@actions/core')` exactly where it was, so the file still has a mock
   and the "no ambient dependencies" story is two-thirds true at best. Threading a `reporter` parameter
-  instead means five more signatures (`FieldContext`, `FieldResolver`, `scalarField`, `resolveEnum`,
+  instead means five more signatures (`FieldContext`, `FieldResolver`, `scalarField`, `enumField`,
   `loadConfigFile`) to turn one assertion style into another of the same length.
 - **The caller.** `resolveTabledFields` derives the 34 tabled input names mechanically from
   `Object.keys(FIELD_SOURCES)` and `toActionInputName`. For `@application/tracker` to hand `loadConfig` a

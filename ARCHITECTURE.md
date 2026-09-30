@@ -40,7 +40,7 @@ flowchart TD
     infra --> i18n
     dom -->|"Locale, LOCALE_MAP<br/>(formatting.ts only)"| i18n
 
-    app --> err["@shared/errors<br/>errorMessage"]
+    app --> err["@shared/errors<br/>errorMessage, describeIssue"]
     cfg --> err
     infra --> err
 
@@ -65,14 +65,14 @@ only one that performs I/O.
 | Layer | Alias | Responsibility | May import | Must not import |
 | --- | --- | --- | --- | --- |
 | `src/` entry | - | `index.ts` calls `trackStars()` at module load, un-awaited | `@application` | anything else |
-| application | `@application/*` | Sequencing the single use case; composition root for Octokit | config, domain, i18n, infrastructure, presentation, shared, `@actions/*`, `@octokit/plugin-retry` | nothing; it is the top |
+| application | `@application/*` | Sequencing the single use case; composition root for Octokit | config, domain, i18n, infrastructure, presentation, shared, `@actions/*`, `@octokit/plugin-retry`, `zod/mini` | nothing; it is the top |
 | assets | `@assets/*` | Not a layer: the star mark the README embeds, no code | nothing; it imports nothing and nothing imports it | - |
-| config | `@config/*` | Action inputs + `star-tracker.yml` -> a fully-populated `Config` | `@domain/types`, `@i18n`, `@shared/errors`, `@actions/core`, `js-yaml`, `node:fs/path` | application, infrastructure, presentation |
+| config | `@config/*` | Action inputs + `star-tracker.yml` -> a fully-populated `Config` | `@domain/types`, `@i18n`, `@shared/errors`, `@actions/core`, `js-yaml`, `zod/mini`, `node:fs/path` | application, infrastructure, presentation |
 | domain | `@domain/*` | Pure business core: the Tracked Set, comparison, snapshots, forecast, velocity, stargazer diffing and sampling, star-history reconstruction, formatting | `@i18n` only | everything else, incl. `@actions/*`, octokit, `node:fs` |
 | i18n | `@i18n` | Translation bundles, `getTranslations`, `interpolate` | nothing (true leaf) | everything |
-| infrastructure | `@infrastructure/*` | All I/O: octokit REST, `git` CLI, `fs`, nodemailer | config, domain (types, constants, and the pure deciders in `tracked-set` / `sampling`), i18n, `@shared/errors`, `node:*`, `@actions/*`, `nodemailer` | application, presentation |
+| infrastructure | `@infrastructure/*` | All I/O: octokit REST, `git` CLI, `fs`, nodemailer | config, domain (types, constants, and the pure deciders in `tracked-set` / `sampling`), i18n, `@shared/errors`, `node:*`, `@actions/*`, `nodemailer`, `zod/mini` | application, presentation |
 | presentation | `@presentation/*` | Pure rendering: data in, string out (markdown/HTML/SVG/CSV/badge) | `@config/types`, domain, i18n | infrastructure, `@actions/*`, `node:fs`, any network |
-| shared | `@shared/*` | Cross-cutting non-layer code: `errors.ts`, plus the `shared/tests` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only) | application, infrastructure, presentation |
+| shared | `@shared/*` | Cross-cutting non-layer code: `errors.ts`, plus the `shared/tests` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only), `zod/mini` | application, infrastructure, presentation |
 
 This table is the **normative statement of the layer boundaries**, and `docs/docs-consistency.test.ts` reads
 it as data: the *May import* column of each row is parsed for the layer names it mentions, and every
@@ -106,11 +106,11 @@ carries no comments, so there are no step markers in the source to match them ag
 | --- | --- | --- | --- |
 | 1 | `trackStars()` from `src/index.ts` | entry | Un-awaited; `trackStars` never rejects |
 | 2 | `loadConfig()` | config | Precedence: action input -> config file -> `DEFAULTS`. Only unknown `visibility` and an invalid `data-branch` throw |
-| 3 | `core.getInput('github-token' / 'github-api-url')`, `github.getOctokit(token, baseUrl?, retry)` | application | The only place an Octokit instance is built; `@octokit/plugin-retry` attached here. The input wins over the `GITHUB_API_URL` env var, which is how GHES runners are auto-detected; with both empty, `getOctokit` receives `undefined` rather than an empty `baseUrl` |
-| 4 | `getRepos({ octokit, config })` | infrastructure/github | Paginates and maps, then narrows via `resolveTrackedSet` (`@domain/tracked-set`) and logs the counts it reports; result sorted by `full_name`. Fetch failure is fatal |
+| 3 | `core.getInput('github-token' / 'github-api-url')`, `github.getOctokit(token, baseUrl?, retry)` | application | The only place an Octokit instance is built; `@octokit/plugin-retry` attached here. The input wins over the `GITHUB_API_URL` env var, which is how GHES runners are auto-detected; with both empty, `getOctokit` receives `undefined` rather than an empty `baseUrl`. A non-empty value that is not an absolute `http(s)` URL throws before Octokit is built |
+| 4 | `getRepos({ octokit, config })` | infrastructure/github | Paginates and maps, then narrows via `resolveTrackedSet` (`@domain/tracked-set`) and logs the counts it reports; result sorted by `full_name`. Fetch failure is fatal, and so is a repository row that does not match `GitHubRepoSchema` |
 | 5 | empty result -> `renderEmptyRun`, `writeHtmlReport`, `setOutputs()` over an empty Summary, then `return` | application | Returns **before** `withDataBranch`, so no worktree, no commit, no email. The HTML report is still written, so a downstream step can rely on `report-html-path` on every run |
 | 6 | `withDataBranch({ dataBranch, readOnly, token, run })` | infrastructure/persistence | Opens the worktree via `initializeDataBranch`, hands the body a `DataBranch`, and runs `cleanup` in `finally`. `dataDir` never escapes the module |
-| 7 | `branch.readHistory()` | infrastructure/persistence | Normalizes an absent `snapshots` to `[]` while everything else survives. Invalid JSON, JSON that is not an object, a `snapshots` key that is not an array, and an unreadable format version all throw rather than resetting ([ADR 0021](./docs/adr/0021-an-unreadable-stored-history-fails-the-run.md)) |
+| 7 | `branch.readHistory()` | infrastructure/persistence | Normalizes an absent `snapshots` to `[]` while everything else survives. Invalid JSON, JSON that is not an object, a `snapshots` key that is not an array, an unreadable format version, and a snapshot, repo entry or `starsAtLastNotification` of the wrong shape all throw rather than resetting ([ADR 0021](./docs/adr/0021-an-unreadable-stored-history-fails-the-run.md)) |
 | 8 | `measureRun({ trackedSet, storedHistory, comparisonWindow, maxHistory, notificationThreshold, notificationMode })` | domain/measurement | The whole measurement in one call: resolves the Baseline, compares, snapshots, appends, and decides whether the threshold was reached. See [ADR 0013](./docs/adr/0013-a-run-is-measured-in-one-place.md) |
 | 9 | `measurement.droppedSnapshots > 0` -> prune warning | application | The domain reports the count; only the shell can log it |
 | 10 | `fetchAllStargazers({ octokit, repos, config })` | infrastructure/github | Only when `includeCharts \|\| trackStargazers`. Per-repo failures degrade to `core.warning` |
@@ -217,6 +217,7 @@ One kind of document per question. [CONTEXT.md](./CONTEXT.md) is the domain glos
 | [0020](./docs/adr/0020-overridable-inputs-declare-an-empty-default.md) | Overridable inputs declare an empty default |
 | [0021](./docs/adr/0021-an-unreadable-stored-history-fails-the-run.md) | An unreadable Stored History fails the Run |
 | [0022](./docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md) | A concept earns a type when it crosses a boundary |
+| [0023](./docs/adr/0023-untrusted-input-is-validated-with-zod-mini.md) | Untrusted input is validated with `zod/mini` schemas |
 
 Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md), and a new ADR starts by
 copying that file. The shape the docs test asserts is spelled out in

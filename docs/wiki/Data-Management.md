@@ -103,10 +103,13 @@ The things that make a run stop rather than continue on a guess:
 | is valid JSON but not an object (`null`, an array, a number, a string) | fails rather than reading it as an empty history and pushing over your record |
 | declares a `version` higher than this action writes | fails and asks you to upgrade the action, or to point `data-branch` at a branch this version wrote |
 | is an object whose `snapshots` key is present but not an array | fails rather than reading it as an empty history |
+| holds a snapshot, a repository entry or a `starsAtLastNotification` of the wrong shape (a missing `repos` list, a star count written as a string) | fails and names where, for example `snapshots[3].repos[0].stars (expected number, found "7")`, rather than comparing against a baseline it misread |
 
 An **absent** `version` is fine and always will be: every data branch predating the field has none, so it is
 read as version 1. An **absent** `snapshots` key is the one tolerated case, because that is what a first run
-looks like; it reads as an empty list while `starsAtLastNotification` survives.
+looks like; it reads as an empty list while `starsAtLastNotification` survives. Keys the action does not know
+about are kept and written back untouched, and a `timestamp` only has to be a string: one that is not a
+parseable date is tolerated here and handled where it is read.
 
 Why they all stop the run rather than starting over, and the accepted cost that a broken file blocks every
 later run until a human fixes it, is

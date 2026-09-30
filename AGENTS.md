@@ -19,7 +19,8 @@ SMTP. There is exactly one use case: `trackStars()`.
   `import type { … }` or `import { type X }`, or the build breaks. `resolveJsonModule` is on, which is how
   `src/i18n/*.json` is imported and type-checked.
 - Runtime deps, all bundled: `@actions/core`, `@actions/github`, `@octokit/plugin-retry`, `js-yaml`,
-  `nodemailer`. `node_modules` is not shipped.
+  `nodemailer`, `zod`. `node_modules` is not shipped. `zod` is imported only as `zod/mini`, never as `zod`
+  ([ADR 0023](./docs/adr/0023-untrusted-input-is-validated-with-zod-mini.md)).
 - esbuild (`platform: node`, `target: node24`, `format: cjs`), Vitest (v8 coverage), Biome (lint + format),
   semantic-release + commitlint, husky + lint-staged.
 

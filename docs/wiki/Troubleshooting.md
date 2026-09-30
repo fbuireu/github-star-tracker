@@ -89,6 +89,22 @@ trailing `/`, `.` or `.lock`.
 `v1.2.3` are all fine. This one throws rather than warning because falling back to the default branch would
 silently write your data somewhere you did not ask for.
 
+A `data_branch` in `star-tracker.yml` that YAML reads as a number, a boolean or a list fails with its own
+message instead, `Invalid data-branch 2026 in the config file. It must be a string, so quote it in the config
+file.` Quote the value: `data_branch: "2026"`.
+
+### "Invalid github-api-url ..."
+
+```
+Star Tracker failed: Invalid github-api-url "<value>" (read from the input, or from GITHUB_API_URL when the
+input is empty). It must be an absolute http(s) URL, such as https://github.example.com/api/v3.
+```
+
+**Cause:** the `github-api-url` input, or the runner's `GITHUB_API_URL` when the input is empty, is not an
+absolute `http`/`https` URL. A bare host name is the usual culprit.
+
+**Fix:** give the full API base URL including the scheme, e.g. `https://github.example.com/api/v3`.
+
 ### "Invalid visibility ..."
 
 ```
@@ -129,6 +145,20 @@ Reading it as an empty history would discard your tracking record, so this run s
 **Cause:** the file holds `null`, `[]`, a number or a string. Usually a script that overwrote it.
 
 **Fix:** restore the object shape (`{"version": 1, "snapshots": []}` at minimum) or delete the file.
+
+### "... has an unreadable value at ..."
+
+```
+Star Tracker failed: stars-data.json on the data branch has an unreadable value at snapshots[3].repos[0].stars
+(expected number, found "7"). Reading past it would misreport or overwrite your tracking record, so this run
+stops instead. Fix or delete the file on that branch and re-run.
+```
+
+**Cause:** the file is an object with a `snapshots` list, but one entry has the wrong shape: a snapshot with
+no `repos` list, a star count or total written as a string, a repository entry with no `fullName`, or a
+`starsAtLastNotification` that is not a number. Always a hand edit or a script: the action never writes these.
+
+**Fix:** correct the value at the path the message names, or delete the file to start the history over.
 
 ### "... declares format version N, which this version of the action does not understand"
 

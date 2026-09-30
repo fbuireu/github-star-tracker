@@ -520,6 +520,7 @@ over the top of a discarded record:
 | The file is valid JSON but not an object (`null`, an array, a number, a string) | The run stops rather than reading it as an empty history |
 | The file declares a `version` higher than this action writes | The run stops and asks you to upgrade the action, or to point `data-branch` at a branch this version wrote |
 | The file is an object but its `snapshots` key is not an array | The run stops rather than reading it as an empty history |
+| A snapshot, one of its repository entries or `starsAtLastNotification` has the wrong shape | The run stops and names the path and what it found there, e.g. `snapshots[3].repos[0].stars (expected number, found "7")` |
 
 `version` is stamped as the first key of the file by the writer and stripped again on read, so it never
 reaches the report. An **absent** `version` means version 1 and is accepted, because every data branch that
@@ -657,7 +658,7 @@ src/
 │   ├── types.ts                      # Config, Visibility, ChartCurve/Theme/Range types
 │   ├── defaults.ts                   # DEFAULTS
 │   ├── parsers.ts                    # bool, list, hex-colour and the three number parsers
-│   └── loader.ts                     # loadConfig(), loadConfigFile(), resolveEnum()
+│   └── loader.ts                     # loadConfig(), loadConfigFile(), enumField()
 ├── domain/
 │   ├── types.ts                      # RepoInfo, Snapshot, History, Summary, CompareAgainst, NotificationMode
 │   ├── constants.ts                  # MS_PER_DAY, STAR_MILESTONES, NOTIFICATION_THRESHOLDS
@@ -683,7 +684,7 @@ src/
 │   │   ├── commands.ts               # execute() - execFileSync('git', args), no shell
 │   │   └── worktree.ts               # initializeDataBranch(), cleanup()
 │   ├── github/
-│   │   ├── types.ts                  # Octokit, GitHubRepo types
+│   │   ├── types.ts                  # Octokit type, GitHubRepo and stargazer-row schemas
 │   │   ├── client.ts                 # fetchRepos()
 │   │   ├── filters.ts                # mapRepos(), getRepos()
 │   │   └── stargazers.ts             # fetchAllStargazers()

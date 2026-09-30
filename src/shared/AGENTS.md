@@ -13,11 +13,19 @@ belongs in `@domain`.
 
 ## errors.ts
 
-One export, `errorMessage(error: unknown): string`. A `catch` binding is `unknown`, so every site that wanted
+Three exports. `errorMessage(error: unknown): string` is the first. A `catch` binding is `unknown`, so every site that wanted
 to interpolate `error.message` into a log line used to write `(error as Error).message`: a lie whenever the
 throw is a string, a plain object or `undefined`, and they had accumulated. `errorMessage` reads a
-string `message` off the value when there is one and falls back to `String(error)` when there is not, so it
-never returns the empty string and never throws.
+non-blank string `message` off the value through a `zod/mini` schema when there is one and falls back to
+`String(error)` when there is not, so it never returns the empty string and never throws.
+
+`describeIssue(issue)` and `describeFound(value)` are the other two: they turn a schema issue into
+`snapshots[3].repos[0].stars (expected number, found "7")`. Their callers are
+`@infrastructure/persistence/storage` and `@infrastructure/github`, which is one layer but two adapters, and
+persistence reaching into `github/` (or the reverse) is the cross-adapter import
+[`src/infrastructure/`](../infrastructure/AGENTS.md) forbids. So there is no adapter both may import, and the
+wording of a rejected value has to be the same on both. `describeFound` is exported on its own because the
+stored-history messages that predate the schema say `found an array` / `found null` with the same rule.
 
 It lives here because no layer owns it. Its callers are `@application/tracker`, `@config/loader` and
 `@infrastructure/persistence/storage`, and `config` may not import `infrastructure`, so there is no lower

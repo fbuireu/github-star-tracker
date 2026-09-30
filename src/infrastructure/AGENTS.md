@@ -24,7 +24,9 @@ errors with remediation text and fail the action. Per-repo stargazer failures ar
 and downgraded to `core.warning` so the run continues with partial data. `sendEmail` rejects on SMTP failure, but
 the caller catches and warns. `describeFetchError` in [`github/errors.ts`](./github/errors.ts) is the single formatter behind every
 one of those wrapped messages: it renders `HTTP <status> <message>`, falling back to `String(error)` when the
-error carries neither. Change the shape of a fetch failure's text there, not at each call site.
+error carries neither. Change the shape of a fetch failure's text there, not at each call site. It reads
+`status` and `message` through a schema whose fields each fall back to absent on their own, so a numeric
+`message` or a string `status` drops that one part instead of throwing.
 
 ## github/
 
@@ -106,9 +108,18 @@ lines.
 - `fetchAllStargazers` is sequential on purpose. Parallelising would blow through the secondary rate
   limit that `@octokit/plugin-retry` exists to absorb. Retries happen inside octokit; this folder only ever
   sees the final failure, so its own handling is "give up on this page/repo", never "retry".
-- `starredAt` passes through verbatim as the raw ISO string. This folder never parses or normalizes it.
-- `GitHubRepo` is a hand-written structural subset, not octokit's generated type. Reading a new field means
-  adding it there first, and to the tests' `makeRepo` factory.
+- `starredAt` passes through verbatim as the raw ISO string. This folder never parses or normalizes it. The
+  one exception is a `starred_at` that is not a string at all (absent, or a number): the row schema reads it
+  as `""`, an unusable date, so the existing "without usable starred_at dates" warning covers it and
+  `diffStargazers` never calls `localeCompare` on `undefined`.
+- `GitHubRepo` is inferred from `GitHubRepoSchema` in [`types.ts`](./github/types.ts), a hand-written
+  structural subset, not octokit's generated type. Octokit's types are compile-time only, so both response
+  shapes are checked at runtime. `fetchRepos` validates the whole list after paging, outside the fetch `catch`,
+  so a row it cannot read fails the Run with `GitHub returned a repository list this action cannot read:`
+  and the path, not with the token-permissions remediation meant for a failed request. A stargazer page that
+  fails `GitHubStargazerRowSchema` (a `null` user, say) throws from `fetchStargazerPage` and takes the same
+  degradable path as a failed request, with the path in the warning instead of a `TypeError`. Reading a new
+  field means adding it to the schema first, and to the tests' `makeRepo` factory.
 
 ## git/
 
@@ -192,11 +203,20 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
   ([ADR 0021](../../docs/adr/0021-an-unreadable-stored-history-fails-the-run.md), which covers the
   guards here and why the accepted cost is that a broken file blocks every later run until a human fixes
   it). The parse catch lives in the shared `readJsonFile`, so unparseable **bytes** are fatal for
-  `stargazers.json` too; what `readStargazers` does not get is `assertJsonObject`, `assertReadableFormat` or
-  `assertSnapshotList`.
+  `stargazers.json` too; what `readStargazers` does not get is `StoredHistorySchema`.
+- `readHistory` validates the whole file with `StoredHistorySchema` (`zod/mini`), and
+  `describeUnreadableHistory` turns the first issue into one of four messages: not an object, an unreadable
+  `version`, a `snapshots` key that is not an array, or, for anything deeper, the path and what was found
+  there (`snapshots[3].repos[0].stars (expected number, found "7")`, built by `describeIssue` in
+  `@shared/errors`). The schema checks types only and is loose: keys it does not name survive the read and
+  are written back, and a `timestamp` need only be a string, because an unparseable one is
+  [ADR 0017](../../docs/adr/0017-velocity-and-forecast-read-unparseable-timestamps-differently.md)'s to handle.
+  `readHistory` returns `History`, so a required field added to `Snapshot` or `SnapshotRepo` without a matching
+  schema key is a type error here.
 - `readStargazers` repairs its container's contents rather than trusting them. A missing file gives `{}`,
   a parsed value that is not a plain object gives `{}`, and an entry whose value is not an array of strings
-  is dropped while its siblings survive. That is ADR 0021's container rule, which survives only for the file
+  is dropped while its siblings survive. Both checks are `z.validate` calls, because a yes/no is all a repair
+  needs; nothing reads their issues. That is ADR 0021's container rule, which survives only for the file
   that ADR calls disposable, applied to the reader that had never had it. `StargazerMap`
   is `Record<string, string[]>` and the reader used to hand back whatever `JSON.parse` produced under that
   type, so a hand-edited `{"user/repo": 5}` reached `diffStargazers`, hit `new Set(5)` and failed the whole
@@ -204,14 +224,14 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
 - So does JSON that parses but is not an object. That invariant used to cover only *unparseable* text.
   A `stars-data.json` holding `null`, `[]`, `5` or a string destructured to `{}`, normalized to
   `{ snapshots: [] }`, and the Run then treated a populated Data Branch as a first Run, appending one
-  Snapshot and **pushing**, discarding the record, while reporting success. `assertJsonObject` makes the
-  stated invariant true, and `assertSnapshotList` finishes the job one level down: a `snapshots` key holding
+  Snapshot and **pushing**, discarding the record, while reporting success. The schema's root makes the
+  stated invariant true, and its `snapshots` key finishes the job one level down: a `snapshots` key holding
   a string, a number, `null` or an object used to normalize to `[]` and reach exactly the same ending, with
   `starsAtLastNotification` preserved as the sole consolation for a discarded record. ADR 0021 records why
   that exception was reversed. Only an **absent** `snapshots` key still yields `[]`.
 - `stars-data.json` carries a `version` and this folder owns it end to end
   ([ADR 0015](../../docs/adr/0015-the-stored-history-declares-its-format-version.md)). `writeHistory` stamps
-  `DATA_FORMAT_VERSION` as the first key; `readHistory` validates it through `assertReadableFormat` and
+  `DATA_FORMAT_VERSION` as the first key; `readHistory` validates it through the schema's `version` key and
   **strips it**, so `History` in `@domain/types` never gains the field and the domain stays unaware a file
   format exists. Absent means version 1 and always will, because every existing data branch predates the
   field. A higher number, or a version that is not a number, throws rather than being read optimistically.
@@ -248,8 +268,9 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
 - `smtp-host` is the only mandatory switch. An empty host returns `null` *before* reading any other input,
   and `null` is the caller's master on/off switch.
 - `secure` is derived purely from the port (`port === 465`). There is no `smtp-secure` input.
-- The port is validated. `resolvePort` requires an integer in `1..MAX_TCP_PORT`; anything else, including a
-  non-numeric string, warns and falls back to `587`. `NaN` never reaches nodemailer.
+- The port is validated. `resolvePort` runs `PortSchema`: `parseInt`, then an integer in `1..MAX_TCP_PORT`;
+  anything else, including a non-numeric string, warns and falls back to `587`. `NaN` never reaches
+  nodemailer. Because the first step is `parseInt`, `'465abc'` is `465`.
 - Auth is all-or-nothing: `auth` is set only when username *and* password are both truthy, otherwise
   literally `undefined` (a test asserts the value, not an absent key).
 - From-address resolution, in order: a `from` containing `@` is used verbatim; otherwise a `username`
@@ -257,6 +278,8 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
 - Distinct "no email" outcomes, and the log level is the difference: not configured (`info`, here),
   configured but nothing to say (`info`, in the caller), configured but empty `email-to` (`warning`, here,
   because it is almost certainly a misconfiguration). Rejected recipients warn but still count as delivered.
+  nodemailer reports a rejected recipient as a string or an `{ name, address }` object; `RecipientListSchema`
+  turns both into the address, so the warning never prints `[object Object]`.
 - Failures propagate as rejections, not warnings. Do not add a local try/catch: it would swallow the error
   before the caller can report it. Equally, do not let it escape the caller's try, which would turn a mail
   outage into a red run.

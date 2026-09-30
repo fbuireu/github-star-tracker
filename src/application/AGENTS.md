@@ -66,7 +66,9 @@ than here, and what follows is what that table cannot express.
   lives inside `withDataBranch`, which receives `readOnly` and decides; this layer passes the flag and never
   branches on it.
 - `github-api-url` takes precedence over the `GITHUB_API_URL` env var; when both are empty `getOctokit` is
-  called with `undefined` options, not `{ baseUrl: '' }`.
+  called with `undefined` options, not `{ baseUrl: '' }`. A non-empty value must pass `ApiUrlSchema`, an
+  absolute `http`/`https` URL, or `resolveApiUrl` throws before Octokit is built. Without it a bare host
+  surfaced as a failed repository fetch whose remediation blamed the token.
 
 ## Outputs
 

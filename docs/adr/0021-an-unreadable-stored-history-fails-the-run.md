@@ -33,21 +33,32 @@ edit or delete.
 
 `readHistory` refuses to guess. Guards in `src/infrastructure/persistence/storage.ts` turn an
 unreadable `stars-data.json` into a failed Run, and each throws its own message naming what it found and what
-to do about it:
+to do about it. After the parse catch they are one schema, `StoredHistorySchema`, and
+`describeUnreadableHistory` turns its first issue into the message for the guard that issue belongs to
+([ADR 0023](./0023-untrusted-input-is-validated-with-zod-mini.md) is why a schema rather than hand-written
+asserts):
 
 - **The parse catch in `readJsonFile`** fires when the bytes are not JSON. It names the file and the parser's
   own error, and says to fix or delete the file on that branch and re-run.
-- **`assertJsonObject`** fires when the bytes are valid JSON but not an object: an array, `null`, or a bare
+- **The root of the schema** fires when the bytes are valid JSON but not an object: an array, `null`, or a bare
   scalar. Its message names what it found and states the reasoning outright, that reading it as an empty
   history would discard the tracking record, so the Run stops instead.
-- **`assertReadableFormat`** fires when the file declares a `version` this build cannot read, meaning a number
+- **The `version` key** fires when the file declares a `version` this build cannot read, meaning a number
   above `DATA_FORMAT_VERSION` or anything that is not a number and not absent. It names both versions and
   tells the reader to upgrade the action or point `data-branch` elsewhere. That guard is
   [ADR 0015](./0015-the-stored-history-declares-its-format-version.md); this ADR is why it throws rather than
   falling back.
-- **`assertSnapshotList`** fires when the file is a sound object whose `snapshots` key is present and holds
+- **The `snapshots` key** fires when the file is a sound object whose `snapshots` key is present and holds
   something other than an array. It names what it found and repeats the same reasoning, because the outcome
   it prevents is the same one. An **absent** `snapshots` key is not an error: that is a first Run.
+- **Everything inside the list** fires when a Snapshot, one of its repository entries or
+  `starsAtLastNotification` has the wrong shape: a Snapshot with no `repos`, a star count written as a string,
+  a repository entry that is not an object. The message names the path and what it found there
+  (`snapshots[3].repos[0].stars (expected number, found "7")`). The outcome it prevents is the same one: a
+  Snapshot with no `repos` used to be read as a Baseline holding no Repositories, so the Run reported every
+  Star as new and pushed. Only the types are checked. A `timestamp` must be a string but not a parseable
+  date, because [ADR 0017](./0017-velocity-and-forecast-read-unparseable-timestamps-differently.md) already
+  decides what an unparseable one means, and keys the schema does not name pass through untouched.
 
 They all propagate out of `withDataBranch` to `trackStars`, which fails the Action. Nothing is published and
 nothing is pushed, so the unreadable file is left exactly as it was.
@@ -74,7 +85,7 @@ nothing is pushed, so the unreadable file is left exactly as it was.
 - `readStargazers` deliberately does not get the same treatment. It keeps an absence fallback because
   `stargazers.json` is rebuilt from the API on the next Run, so a silent reset there costs one Run's New
   Stargazer list rather than the whole record. Do not "make the two readers consistent"; the asymmetry is the
-  decision. It is an asymmetry about `assertJsonObject`, `assertReadableFormat` and `assertSnapshotList`, not about the parse
+  decision. It is an asymmetry about `StoredHistorySchema`, not about the parse
   catch: that one lives in the shared `readJsonFile`, so bytes that are not JSON fail the Run whichever file
   they are in.
 - The container rule survives, scoped to the disposable file, and `readStargazers` had to be taught it.

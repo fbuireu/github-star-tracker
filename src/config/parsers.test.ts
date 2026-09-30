@@ -91,6 +91,14 @@ describe("parseFileBool", () => {
 	it("returns undefined for unrecognized values", () => {
 		expect(parseFileBool("maybe")).toBeUndefined();
 		expect(parseFileBool({})).toBeUndefined();
+		expect(parseFileBool(["yes"])).toBeUndefined();
+	});
+
+	it("reads YAML's 1 and 0 as numbers too, and trims a quoted value", () => {
+		expect(parseFileBool(1)).toBe(true);
+		expect(parseFileBool(0)).toBe(false);
+		expect(parseFileBool(" Yes ")).toBe(true);
+		expect(parseFileBool(2)).toBeUndefined();
 	});
 });
 
@@ -163,6 +171,12 @@ describe("integer coercion, through the signed parsers that use it", () => {
 		expect(parseNotificationThreshold("-5")).toBe(-5);
 	});
 
+	it("returns undefined for a config-file value that is neither a string nor a number", () => {
+		expect(parseNonNegativeNumber(true)).toBeUndefined();
+		expect(parsePositiveNumber([5])).toBeUndefined();
+		expect(parseNotificationThreshold({ value: 5 })).toBeUndefined();
+	});
+
 	it("truncates real numbers coming from the config file", () => {
 		expect(parseNonNegativeNumber(7)).toBe(7);
 		expect(parseNonNegativeNumber(7.9)).toBe(7);
@@ -200,6 +214,11 @@ describe("parseHexColor", () => {
 		expect(parseHexColor("#12")).toBeUndefined();
 		expect(parseHexColor("#1234567")).toBeUndefined();
 	});
+
+	it("returns undefined for a config-file value that is not a string", () => {
+		expect(parseHexColor(0x6b63ff)).toBeUndefined();
+		expect(parseHexColor(["#abc"])).toBeUndefined();
+	});
 });
 
 describe("parsePositiveDecimal", () => {
@@ -220,6 +239,12 @@ describe("parsePositiveDecimal", () => {
 		expect(parsePositiveDecimal("-1")).toBeUndefined();
 		expect(parsePositiveDecimal("Infinity")).toBeUndefined();
 		expect(parsePositiveDecimal("1e999")).toBeUndefined();
+		expect(parsePositiveDecimal(Number.POSITIVE_INFINITY)).toBeUndefined();
+		expect(parsePositiveDecimal(true)).toBeUndefined();
+	});
+
+	it("takes a real number from the config file as it is", () => {
+		expect(parsePositiveDecimal(1.5)).toBe(1.5);
 	});
 });
 
@@ -242,5 +267,10 @@ describe("parseNotificationThreshold", () => {
 
 	it("returns undefined for non-numeric strings", () => {
 		expect(parseNotificationThreshold("abc")).toBeUndefined();
+	});
+
+	it('only takes "auto" spelled exactly', () => {
+		expect(parseNotificationThreshold(" auto ")).toBeUndefined();
+		expect(parseNotificationThreshold("AUTO")).toBeUndefined();
 	});
 });

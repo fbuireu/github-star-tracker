@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import { getTranslations, type Locale } from "@i18n";
 import nodemailer from "nodemailer";
+import * as z from "zod/mini";
 
 const SECURE_SMTP_PORT = 465;
 export const DEFAULT_SMTP_PORT = "587";
@@ -27,10 +28,28 @@ export interface EmailConfig {
 	from: string;
 }
 
-function resolvePort(raw: string): number {
-	const parsed = Number.parseInt(raw || DEFAULT_SMTP_PORT, 10);
+const PortSchema = z.pipe(
+	z.pipe(
+		z.string(),
+		z.transform((raw) => Number.parseInt(raw, 10)),
+	),
+	z.int().check(z.minimum(1), z.maximum(MAX_TCP_PORT)),
+);
 
-	if (Number.isInteger(parsed) && parsed > 0 && parsed <= MAX_TCP_PORT) return parsed;
+const RecipientListSchema = z.array(
+	z.union([
+		z.string(),
+		z.pipe(
+			z.object({ address: z.string() }),
+			z.transform(({ address }) => address),
+		),
+	]),
+);
+
+function resolvePort(raw: string): number {
+	const port = PortSchema.safeParse(raw || DEFAULT_SMTP_PORT);
+
+	if (port.success) return port.data;
 
 	core.warning(`Invalid smtp-port "${raw}". Falling back to ${DEFAULT_SMTP_PORT}.`);
 
@@ -96,7 +115,7 @@ export async function sendEmail({ emailConfig, subject, htmlBody }: SendEmailPar
 		html: htmlBody,
 	});
 
-	const rejected = (info.rejected ?? []) as string[];
+	const rejected = RecipientListSchema.safeParse(info.rejected).data ?? [];
 	if (rejected.length > 0) {
 		core.warning(`Email rejected for: ${rejected.join(", ")}`);
 	}

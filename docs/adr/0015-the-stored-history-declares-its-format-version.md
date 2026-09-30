@@ -38,10 +38,10 @@ format change.
 end to end.
 
 `writeHistory` stamps `DATA_FORMAT_VERSION` as the first key on every write. `readHistory` reads it,
-hands it to `assertReadableFormat`, and strips it before returning, so the `History` the domain sees is
+checks it through the `version` key of `StoredHistorySchema`, and strips it before returning, so the `History` the domain sees is
 unchanged and `@domain` stays unaware that a file format exists at all.
 
-`assertReadableFormat` accepts exactly two things: **absent**, which means a file written before this ADR and
+That key accepts exactly two things: **absent**, which means a file written before this ADR and
 is therefore version 1, and a **number at or below** `DATA_FORMAT_VERSION`. Anything else, a higher number, a
 string, `null`, throws with remediation text naming the version it found. Reading forward is refused rather
 than attempted, because a newer writer is the one case where guessing would produce the silent nonsense this
@@ -63,7 +63,7 @@ history, so a shape change there can be handled by changing the filename instead
   after a format bump gets an error naming both versions, not a report full of zeroes. The cost is that
   pinning an older major version against a newer data branch stops working, which is the outcome that
   tells the truth about what happened. That
-  `assertReadableFormat` is one of the guards choosing loud failure over a silent reset is
+  the version check is one of the guards choosing loud failure over a silent reset is
   [ADR 0021](./0021-an-unreadable-stored-history-fails-the-run.md).
 - Every user's `stars-data.json` gains one line on its next Run. The 2-space, no-trailing-newline formatting
   is otherwise untouched, so the diff is a single added key rather than a rewritten file.

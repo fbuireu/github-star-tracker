@@ -601,6 +601,27 @@ describe("trackStars", () => {
 			await trackStars();
 			expect(github.getOctokit).toHaveBeenCalledWith("fake-token", { baseUrl: "https://ghes.corp.com/api/v3" }, retry);
 		});
+		it.each([
+			["a bare host", "ghes.corp.com"],
+			["a non-http scheme", "ftp://ghes.corp.com/api/v3"],
+			["a string that is not a URL", "not a url"],
+		])("fails the run on a github-api-url that is %s instead of calling GitHub", async (_label, apiUrl) => {
+			vi.mocked(core.getInput).mockImplementation((name: string) => {
+				if (name === "github-token") return "fake-token";
+				if (name === "github-api-url") return apiUrl;
+				return "";
+			});
+			await trackStars();
+			expect(github.getOctokit).not.toHaveBeenCalled();
+			expect(core.setFailed).toHaveBeenCalledWith(expect.stringContaining(`Invalid github-api-url "${apiUrl}"`));
+		});
+		it("names the GITHUB_API_URL fallback when that is where the bad URL came from", async () => {
+			process.env.GITHUB_API_URL = "ghes.corp.com";
+			await trackStars();
+			expect(core.setFailed).toHaveBeenCalledWith(
+				expect.stringContaining("or from GITHUB_API_URL when the input is empty"),
+			);
+		});
 		it("prefers input over GITHUB_API_URL env var", async () => {
 			process.env.GITHUB_API_URL = "https://ghes-env.corp.com/api/v3";
 			vi.mocked(core.getInput).mockImplementation((name: string) => {

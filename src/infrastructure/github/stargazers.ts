@@ -3,8 +3,12 @@ import type { Config } from "@config/types";
 import { coveredStars, MAX_REACHABLE_PAGE, STARGAZER_PAGE_SIZE, sampledPages, shouldSample } from "@domain/sampling";
 import type { RepoStargazers, Stargazer } from "@domain/stargazers";
 import type { RepoInfo } from "@domain/types";
+import { describeIssue } from "@shared/errors";
+import * as z from "zod/mini";
 import { describeFetchError } from "./errors";
-import type { GitHubStargazerRow, Octokit } from "./types";
+import { GitHubStargazerRowSchema, type Octokit } from "./types";
+
+const StargazerPageSchema = z.array(GitHubStargazerRowSchema);
 
 interface FetchAllStargazersParams {
 	octokit: Octokit;
@@ -109,9 +113,13 @@ async function fetchStargazerPage({ octokit, owner, name, page }: FetchStargazer
 			accept: "application/vnd.github.star+json",
 		},
 	});
-	const items = data as GitHubStargazerRow[];
+	const rows = StargazerPageSchema.safeParse(data, { reportInput: true });
 
-	return items.map((row) => ({
+	if (!rows.success) {
+		throw new Error(`GitHub returned a stargazer page this action cannot read: ${describeIssue(rows.error.issues[0])}`);
+	}
+
+	return rows.data.map((row) => ({
 		login: row.user.login,
 		avatarUrl: row.user.avatar_url,
 		profileUrl: row.user.html_url,

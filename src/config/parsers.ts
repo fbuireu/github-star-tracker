@@ -1,9 +1,63 @@
-const YAML_TRUE = new Set(["true", "yes", "on", "y", "1"]);
-const YAML_FALSE = new Set(["false", "no", "off", "n", "0"]);
+import * as z from "zod/mini";
 
-function isBlank(value: string | number | boolean | null | undefined): value is "" | null | undefined {
-	return value === "" || value === undefined || value === null;
+const YAML_TRUE = ["true", "yes", "on", "y", "1"];
+const YAML_FALSE = ["false", "no", "off", "n", "0"];
+const INTEGER_PATTERN = /^[+-]?\d+$/;
+const HEX_COLOR_PATTERN = /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+const TrimmedStringSchema = z.string().check(z.trim());
+
+interface BooleanVocabularyParams {
+	truthy: readonly string[];
+	falsy: readonly string[];
 }
+
+function booleanVocabulary({ truthy, falsy }: BooleanVocabularyParams) {
+	return z.pipe(
+		z.enum([...truthy, ...falsy]),
+		z.transform((word) => truthy.includes(word)),
+	);
+}
+
+const InputBoolSchema = z.union([
+	z.boolean(),
+	z.pipe(TrimmedStringSchema.check(z.toLowerCase()), booleanVocabulary({ truthy: ["true"], falsy: ["false"] })),
+]);
+
+const FileBoolSchema = z.union([
+	z.boolean(),
+	z.pipe(
+		z.pipe(
+			z.union([z.string(), z.number()]),
+			z.transform((value) => String(value).trim().toLowerCase()),
+		),
+		booleanVocabulary({ truthy: YAML_TRUE, falsy: YAML_FALSE }),
+	),
+]);
+
+const IntegerSchema = z.union([
+	z.pipe(z.number(), z.transform(Math.trunc)),
+	z.pipe(
+		TrimmedStringSchema.check(z.regex(INTEGER_PATTERN)),
+		z.transform((value) => Number.parseInt(value, 10)),
+	),
+]);
+
+const PositiveIntegerSchema = z.pipe(IntegerSchema, z.number().check(z.positive()));
+
+const NonNegativeIntegerSchema = z.pipe(IntegerSchema, z.number().check(z.nonnegative()));
+
+const PositiveDecimalSchema = z.pipe(
+	z.union([z.number(), z.pipe(z.string(), z.transform(Number.parseFloat))]),
+	z.number().check(z.positive()),
+);
+
+const NotificationThresholdSchema = z.union([z.literal("auto"), IntegerSchema]);
+
+const HexColorSchema = z.pipe(
+	TrimmedStringSchema.check(z.regex(HEX_COLOR_PATTERN)),
+	z.transform((value) => `#${value.replace(/^#/, "").toLowerCase()}`),
+);
 
 export function parseList(value: string | null | undefined): string[] | undefined {
 	if (!value || value.trim() === "") return undefined;
@@ -24,40 +78,20 @@ export function parseNumberList(value: string | null | undefined): number[] {
 	].sort((a, b) => a - b);
 }
 
-export function parsePositiveNumber(value: string | number | null | undefined): number | undefined {
-	const parsed = parseNumber(value);
-
-	return parsed !== undefined && parsed > 0 ? parsed : undefined;
+export function parsePositiveNumber(value: unknown): number | undefined {
+	return PositiveIntegerSchema.safeParse(value).data;
 }
 
-export function parseNonNegativeNumber(value: string | number | null | undefined): number | undefined {
-	const parsed = parseNumber(value);
-
-	return parsed !== undefined && parsed >= 0 ? parsed : undefined;
+export function parseNonNegativeNumber(value: unknown): number | undefined {
+	return NonNegativeIntegerSchema.safeParse(value).data;
 }
 
-export function parseBool(value: string | boolean | null | undefined): boolean | undefined {
-	if (isBlank(value)) return undefined;
-	if (typeof value === "boolean") return value;
-
-	const normalized = value.trim().toLowerCase();
-
-	if (normalized === "true") return true;
-	if (normalized === "false") return false;
-
-	return undefined;
+export function parseBool(value: unknown): boolean | undefined {
+	return InputBoolSchema.safeParse(value).data;
 }
 
 export function parseFileBool(value: unknown): boolean | undefined {
-	if (value === undefined || value === null || value === "") return undefined;
-	if (typeof value === "boolean") return value;
-
-	const normalized = String(value).trim().toLowerCase();
-
-	if (YAML_TRUE.has(normalized)) return true;
-	if (YAML_FALSE.has(normalized)) return false;
-
-	return undefined;
+	return FileBoolSchema.safeParse(value).data;
 }
 
 export function toStringList(value: unknown): string[] | undefined {
@@ -67,46 +101,14 @@ export function toStringList(value: unknown): string[] | undefined {
 	return typeof value === "string" ? parseList(value) : undefined;
 }
 
-const INTEGER_PATTERN = /^[+-]?\d+$/;
-
-function parseNumber(value: string | number | null | undefined): number | undefined {
-	if (isBlank(value)) return undefined;
-
-	if (typeof value === "number") {
-		return Number.isFinite(value) ? Math.trunc(value) : undefined;
-	}
-
-	const trimmed = value.trim();
-
-	return INTEGER_PATTERN.test(trimmed) ? Number.parseInt(trimmed, 10) : undefined;
+export function parseHexColor(value: unknown): string | undefined {
+	return HexColorSchema.safeParse(value).data;
 }
 
-const HEX_COLOR_PATTERN = /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
-
-export function parseHexColor(value: string | null | undefined): string | undefined {
-	if (isBlank(value)) return undefined;
-	const match = HEX_COLOR_PATTERN.exec(value.trim());
-
-	return match ? `#${match[1].toLowerCase()}` : undefined;
+export function parsePositiveDecimal(value: unknown): number | undefined {
+	return PositiveDecimalSchema.safeParse(value).data;
 }
 
-export function parseFileHexColor(value: unknown): string | undefined {
-	if (typeof value === "string") return parseHexColor(value);
-
-	return undefined;
-}
-
-export function parsePositiveDecimal(value: string | number | null | undefined): number | undefined {
-	if (isBlank(value)) return undefined;
-
-	const parsed = typeof value === "number" ? value : Number.parseFloat(value);
-
-	return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
-}
-
-export function parseNotificationThreshold(value: string | number | null | undefined): number | "auto" | undefined {
-	if (isBlank(value)) return undefined;
-	if (value === "auto") return "auto";
-
-	return parseNumber(value);
+export function parseNotificationThreshold(value: unknown): number | "auto" | undefined {
+	return NotificationThresholdSchema.safeParse(value).data;
 }

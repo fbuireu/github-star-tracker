@@ -5,11 +5,11 @@ import { CompareAgainst, NotificationMode } from "@domain/types";
 import { LOCALES } from "@i18n";
 import { errorMessage } from "@shared/errors";
 import * as yaml from "js-yaml";
+import * as z from "zod/mini";
 import { DEFAULTS } from "./defaults";
 import {
 	parseBool,
 	parseFileBool,
-	parseFileHexColor,
 	parseHexColor,
 	parseList,
 	parseNonNegativeNumber,
@@ -24,9 +24,9 @@ import { ChartAxisSide, ChartCurve, ChartRange, ChartTheme, Visibility } from ".
 
 type FileConfigKey = Exclude<keyof Config, "sendOnNoChanges">;
 
-type FileConfig = Partial<
-	Omit<{ [K in FileConfigKey]: Config[K] extends string ? string : Config[K] }, "chartCustomMilestones">
-> & { chartCustomMilestones?: number[] | string };
+type FileConfig = Partial<Record<FileConfigKey, unknown>>;
+
+const ConfigFileSchema = z.record(z.string(), z.unknown());
 
 const FILE_CONFIG_KEYS = Object.keys(DEFAULTS).filter((key): key is FileConfigKey => key !== "sendOnNoChanges");
 
@@ -46,22 +46,30 @@ function hasControlCharacter(value: string): boolean {
 	});
 }
 
-function assertValidDataBranch(dataBranch: string): void {
-	const isValid =
+function isValidDataBranch(dataBranch: string): boolean {
+	return (
 		dataBranch !== "" &&
 		dataBranch !== "@" &&
 		!DATA_BRANCH_FORBIDDEN_PATTERN.test(dataBranch) &&
 		!hasControlCharacter(dataBranch) &&
 		!DATA_BRANCH_FORBIDDEN_SEQUENCES.some((sequence) => dataBranch.includes(sequence)) &&
 		!["-", ".", "/"].some((prefix) => dataBranch.startsWith(prefix)) &&
-		!["/", ".", ".lock"].some((suffix) => dataBranch.endsWith(suffix));
-
-	if (!isValid) {
-		throw new Error(
-			`Invalid data-branch "${dataBranch}". It must be a valid git branch name: no whitespace and none of ~^:?*[\\, no "..", "//", "/." or "@{", it cannot start with "-", "." or "/", and it cannot end with "/", "." or ".lock".`,
-		);
-	}
+		!["/", ".", ".lock"].some((suffix) => dataBranch.endsWith(suffix))
+	);
 }
+
+const DataBranchSchema = z.string().check(z.refine(isValidDataBranch));
+
+const VisibilitySchema = z.enum(Object.values(Visibility));
+
+const CustomMilestonesFileSchema = z.union([
+	z.pipe(
+		z.array(z.unknown()),
+		z.transform((milestones) => milestones.join(",")),
+	),
+	z.string(),
+	z.pipe(z.number(), z.transform(String)),
+]);
 
 interface ToDelimitedParams {
 	key: string;
@@ -86,25 +94,6 @@ function formatChoices(choices: readonly string[]): string {
 
 function formatFallback(fallback: unknown): string {
 	return typeof fallback === "string" ? `"${fallback}"` : String(fallback);
-}
-
-interface ResolveEnumParams<T extends string> {
-	value: string | undefined;
-	allowed: readonly T[];
-	fallback: NoInfer<T>;
-	inputName: string;
-}
-
-function resolveEnum<T extends string>({ value, allowed, fallback, inputName }: ResolveEnumParams<T>): T {
-	if (!value) return fallback;
-
-	const match = allowed.find((choice) => choice === value);
-
-	if (match !== undefined) return match;
-
-	core.warning(`Invalid ${inputName} "${value}". Must be ${formatChoices(allowed)}. Falling back to "${fallback}"`);
-
-	return fallback;
 }
 
 interface FieldContext {
@@ -138,36 +127,31 @@ function scalarField<T>({ fromInput, fromFile, namesFallback = false }: FieldSou
 	};
 }
 
-function enumField<T extends string>(allowed: readonly T[]): FieldResolver<T> {
-	return ({ input, inputName, fileValue, fallback }) =>
-		resolveEnum({
-			value: input || (fileValue as string | undefined),
-			allowed,
-			fallback: fallback as T,
-			inputName,
-		});
-}
+function enumField<const T extends string>(allowed: readonly T[]): FieldResolver<T> {
+	const schema = z.enum(allowed);
 
-type ScalarValue = string | number | null | undefined;
+	return ({ input, inputName, fileValue, fallback }) => {
+		const value = input || fileValue;
 
-function fromFileScalar<T>(parse: (value: ScalarValue) => T | undefined) {
-	return (value: unknown): T | undefined =>
-		typeof value === "string" || typeof value === "number" || value === null || value === undefined
-			? parse(value)
-			: undefined;
+		if (!value) return fallback as T;
+
+		const match = schema.safeParse(value);
+
+		if (match.success) return match.data;
+
+		core.warning(
+			`Invalid ${inputName} "${String(value)}". Must be ${formatChoices(allowed)}. Falling back to "${String(fallback)}"`,
+		);
+
+		return fallback as T;
+	};
 }
 
 const boolField = scalarField<boolean>({ fromInput: parseBool, fromFile: parseFileBool });
 
-const positiveField = scalarField<number>({
-	fromInput: parsePositiveNumber,
-	fromFile: fromFileScalar(parsePositiveNumber),
-});
+const positiveField = scalarField<number>({ fromInput: parsePositiveNumber, fromFile: parsePositiveNumber });
 
-const nonNegativeField = scalarField<number>({
-	fromInput: parseNonNegativeNumber,
-	fromFile: fromFileScalar(parseNonNegativeNumber),
-});
+const nonNegativeField = scalarField<number>({ fromInput: parseNonNegativeNumber, fromFile: parseNonNegativeNumber });
 
 const listField = scalarField<string[]>({ fromInput: parseList, fromFile: toStringList });
 
@@ -188,7 +172,7 @@ const FIELD_SOURCES: { [K in TabledKey]: FieldResolver<Config[K]> } = {
 	locale: enumField(LOCALES),
 	notificationThreshold: scalarField<number | "auto">({
 		fromInput: parseNotificationThreshold,
-		fromFile: fromFileScalar(parseNotificationThreshold),
+		fromFile: parseNotificationThreshold,
 	}),
 	notificationMode: enumField(Object.values(NotificationMode)),
 	trackStargazers: boolField,
@@ -198,12 +182,12 @@ const FIELD_SOURCES: { [K in TabledKey]: FieldResolver<Config[K]> } = {
 	smartSamplingPages: positiveField,
 	chartLineColor: scalarField<string>({
 		fromInput: parseHexColor,
-		fromFile: parseFileHexColor,
+		fromFile: parseHexColor,
 		namesFallback: true,
 	}),
 	chartLineWidth: scalarField<number>({
 		fromInput: parsePositiveDecimal,
-		fromFile: fromFileScalar(parsePositiveDecimal),
+		fromFile: parsePositiveDecimal,
 		namesFallback: true,
 	}),
 	chartMaxPoints: nonNegativeField,
@@ -245,13 +229,13 @@ interface ParseConfigYamlParams {
 	configPath: string;
 }
 
-function parseConfigYaml({ content, configPath }: ParseConfigYamlParams): Record<string, unknown> | null {
+function parseConfigYaml({ content, configPath }: ParseConfigYamlParams): unknown {
 	if (content.trim() === "") {
 		return null;
 	}
 
 	try {
-		return yaml.load(content) as Record<string, unknown> | null;
+		return yaml.load(content);
 	} catch (error) {
 		core.warning(`Failed to parse config file ${configPath}: ${errorMessage(error)}`);
 		return null;
@@ -268,7 +252,7 @@ export function loadConfigFile(configPath: string): FileConfig {
 
 	const parsed = parseConfigYaml({ content: fs.readFileSync(fullPath, "utf8"), configPath });
 
-	if (!parsed || typeof parsed !== "object") {
+	if (!z.validate(ConfigFileSchema, parsed)) {
 		return {};
 	}
 
@@ -278,26 +262,35 @@ export function loadConfigFile(configPath: string): FileConfig {
 
 			return [key, parsed[snakeKey] ?? parsed[snakeKey.replaceAll("_", "-")]] as const;
 		}),
-	) as FileConfig;
+	);
 }
 
 function resolveVisibility(fileConfig: FileConfig): Visibility {
 	const raw = core.getInput("visibility") || fileConfig.visibility || DEFAULTS.visibility;
-	const options = Object.values(Visibility);
-	const match = options.find((option) => option === raw);
+	const visibility = VisibilitySchema.safeParse(raw);
 
-	if (match === undefined) {
-		throw new Error(`Invalid visibility "${raw}". Must be one of: ${options.join(", ")}`);
+	if (!visibility.success) {
+		throw new Error(`Invalid visibility "${String(raw)}". Must be one of: ${Object.values(Visibility).join(", ")}`);
 	}
 
-	return match;
+	return visibility.data;
 }
 
 function resolveDataBranch(fileConfig: FileConfig): string {
-	const dataBranch = core.getInput("data-branch") || fileConfig.dataBranch || DEFAULTS.dataBranch;
-	assertValidDataBranch(dataBranch);
+	const raw = core.getInput("data-branch") || fileConfig.dataBranch || DEFAULTS.dataBranch;
+	const dataBranch = DataBranchSchema.safeParse(raw);
 
-	return dataBranch;
+	if (dataBranch.success) return dataBranch.data;
+
+	if (typeof raw !== "string") {
+		throw new Error(
+			`Invalid data-branch ${JSON.stringify(raw)} in the config file. It must be a string, so quote it in the config file.`,
+		);
+	}
+
+	throw new Error(
+		`Invalid data-branch "${raw}". It must be a valid git branch name: no whitespace and none of ~^:?*[\\, no "..", "//", "/." or "@{", it cannot start with "-", "." or "/", and it cannot end with "/", "." or ".lock".`,
+	);
 }
 
 function resolveCustomMilestones(fileConfig: FileConfig): Config["chartCustomMilestones"] {
@@ -312,9 +305,7 @@ function resolveCustomMilestones(fileConfig: FileConfig): Config["chartCustomMil
 
 	if (fromInput !== null) return fromInput;
 
-	const fromFile = Array.isArray(fileConfig.chartCustomMilestones)
-		? parseNumberList(fileConfig.chartCustomMilestones.join(","))
-		: parseNumberList(fileConfig.chartCustomMilestones);
+	const fromFile = parseNumberList(CustomMilestonesFileSchema.safeParse(fileConfig.chartCustomMilestones).data);
 
 	return fromFile.length > 0 ? fromFile : DEFAULTS.chartCustomMilestones;
 }

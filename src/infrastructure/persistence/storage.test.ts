@@ -132,6 +132,78 @@ describe("readHistory", () => {
 
 		expect(() => readHistory("/data")).toThrow(/declares format version "1"/);
 	});
+
+	it("names the version rather than a later key when both are unreadable", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue('{"version":3,"snapshots":"garbage"}');
+
+		expect(() => readHistory("/data")).toThrow(/declares format version 3/);
+	});
+
+	it.each([
+		["a snapshot that is not an object", '{"snapshots":[null]}', "snapshots[0] (expected object, found null)"],
+		[
+			"a snapshot with no repos",
+			'{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":3}]}',
+			"snapshots[0].repos (expected array, found nothing)",
+		],
+		[
+			"a snapshot timestamp that is not a string",
+			'{"snapshots":[{"timestamp":20260101,"totalStars":3,"repos":[]}]}',
+			"snapshots[0].timestamp (expected string, found 20260101)",
+		],
+		[
+			"a snapshot total that is not a number",
+			'{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":"3","repos":[]}]}',
+			'snapshots[0].totalStars (expected number, found "3")',
+		],
+		[
+			"a repo entry that is not an object",
+			'{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":3,"repos":["user/test"]}]}',
+			'snapshots[0].repos[0] (expected object, found "user/test")',
+		],
+		[
+			"a repo star count that is not a number",
+			'{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":7,"repos":[{"fullName":"user/test","name":"test","owner":"user","stars":"7"}]}]}',
+			'snapshots[0].repos[0].stars (expected number, found "7")',
+		],
+		[
+			"a repo with no full name",
+			'{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":7,"repos":[{"name":"test","owner":"user","stars":7}]}]}',
+			"snapshots[0].repos[0].fullName (expected string, found nothing)",
+		],
+		[
+			"a notification baseline that is not a number",
+			'{"snapshots":[],"starsAtLastNotification":"520"}',
+			'starsAtLastNotification (expected number, found "520")',
+		],
+	])("refuses %s and names where it is", (_label, contents, location) => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue(contents);
+
+		expect(() => readHistory("/data")).toThrow(
+			`stars-data.json on the data branch has an unreadable value at ${location}.`,
+		);
+	});
+
+	it("keeps keys it does not know about so a write does not drop them", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue(
+			'{"version":1,"note":"kept","snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":0,"repos":[],"source":"manual"}]}',
+		);
+
+		expect(readHistory("/data")).toEqual({
+			note: "kept",
+			snapshots: [{ timestamp: "2026-01-01T00:00:00Z", totalStars: 0, repos: [], source: "manual" }],
+		});
+	});
+
+	it("accepts an unparseable timestamp, which velocity and forecast already tolerate", () => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue('{"snapshots":[{"timestamp":"not a date","totalStars":0,"repos":[]}]}');
+
+		expect(readHistory("/data").snapshots[0].timestamp).toBe("not a date");
+	});
 });
 
 describe("writeHistory", () => {
@@ -298,6 +370,17 @@ describe("readStargazers", () => {
 		vi.mocked(fs.readFileSync).mockReturnValue("{ not json");
 
 		expect(() => readStargazers("/data")).toThrow(/stargazers\.json on the data branch is not valid JSON/);
+	});
+
+	it.each([
+		["null", "null"],
+		["a number", "5"],
+		["a string", '"alice"'],
+	])("returns an empty map for a file holding %s", (_label, contents) => {
+		vi.mocked(fs.existsSync).mockReturnValue(true);
+		vi.mocked(fs.readFileSync).mockReturnValue(contents);
+
+		expect(readStargazers("/data")).toEqual({});
 	});
 
 	it("returns an empty map for a file that is valid JSON but not an object", () => {

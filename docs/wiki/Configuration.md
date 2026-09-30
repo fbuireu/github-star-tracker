@@ -227,6 +227,9 @@ with:
 > - ends with `/`, `.` or `.lock`
 >
 > Anything else is accepted, including slashes in the middle (`star-tracker/data` is fine).
+>
+> In `star-tracker.yml` the value must be a string. An unquoted `data_branch: 2026` or `data_branch: true` is a
+> YAML number or boolean, and fails the run asking you to quote it.
 
 ---
 
@@ -240,6 +243,8 @@ GitHub API base URL for GitHub Enterprise Server (GHES) instances.
 | **Default** | - (auto-detected on GHES runners via `GITHUB_API_URL`) |
 
 When running on a GHES runner, the action automatically detects the API URL from the `GITHUB_API_URL` environment variable. Only set this input if you need to override the auto-detected value or if you are running on a github.com runner targeting a GHES instance.
+
+Whichever of the two supplies it, the value must be an absolute `http` or `https` URL. Anything else (a bare host such as `github.example.com`, another scheme) fails the run before any request is made, instead of surfacing later as a fetch error that blames the token.
 
 ```yaml
 with:

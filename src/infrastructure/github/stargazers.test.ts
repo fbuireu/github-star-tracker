@@ -244,6 +244,53 @@ describe("fetchAllStargazers", () => {
 		);
 	});
 
+	it("reads a starred_at that is not a string as an unusable date rather than failing the page", async () => {
+		const rows = [makeStargazerResponse({ login: "alice" })].map((row) => ({ ...row, starred_at: 20260115 }));
+		const octokit = {
+			request: vi.fn().mockResolvedValue({ data: rows }),
+		};
+
+		const result = await fetchAllStargazers({
+			octokit: octokit as unknown as Octokit,
+			repos: [makeRepoInfo({ name: "repo-a", stars: 1 })],
+			config: samplingOff,
+		});
+
+		expect(result[0].stargazers).toEqual([expect.objectContaining({ login: "alice", starredAt: "" })]);
+		expect(core.warning).toHaveBeenCalledWith(
+			expect.stringContaining("Stargazers for user/repo-a came back without usable starred_at dates"),
+		);
+	});
+
+	it.each([
+		[
+			"a row with no user",
+			[{ starred_at: "2026-01-15T00:00:00Z", user: null }],
+			"[0].user (expected object, found null)",
+		],
+		[
+			"a user with no login",
+			[{ starred_at: "2026-01-15T00:00:00Z", user: { avatar_url: "a", html_url: "h" } }],
+			"[0].user.login (expected string, found nothing)",
+		],
+		["a page that is not a list", { message: "nope" }, "the value (expected array, found an object)"],
+	])("fails the repo with a readable reason on %s", async (_label, data, location) => {
+		const octokit = {
+			request: vi.fn().mockResolvedValue({ data }),
+		};
+
+		const result = await fetchAllStargazers({
+			octokit: octokit as unknown as Octokit,
+			repos: [makeRepoInfo({ name: "repo-a", stars: 1 })],
+			config: samplingOff,
+		});
+
+		expect(result[0]).toEqual(expect.objectContaining({ stargazers: [], incomplete: true }));
+		expect(core.warning).toHaveBeenCalledWith(
+			`Failed to fetch stargazers for user/repo-a: GitHub returned a stargazer page this action cannot read: ${location}`,
+		);
+	});
+
 	it("warns when a starred repo returns an empty stargazers list", async () => {
 		const octokit = {
 			request: vi.fn().mockResolvedValue({ data: [] }),

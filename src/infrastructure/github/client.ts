@@ -1,9 +1,13 @@
 import * as core from "@actions/core";
 import type { Config } from "@config/types";
+import { describeIssue } from "@shared/errors";
+import * as z from "zod/mini";
 import { describeFetchError } from "./errors";
-import type { GitHubRepo, Octokit } from "./types";
+import { type GitHubRepo, GitHubRepoSchema, type Octokit } from "./types";
 
 const REPOS_PER_PAGE = 100;
+
+const RepoListSchema = z.array(GitHubRepoSchema);
 
 interface FetchReposParams {
 	octokit: Octokit;
@@ -20,7 +24,7 @@ const VISIBILITY_PARAMS: Record<Config["visibility"], Pick<ListReposParams, "vis
 };
 
 export async function fetchRepos({ octokit, config }: FetchReposParams): Promise<GitHubRepo[]> {
-	const repos: GitHubRepo[] = [];
+	const fetched: unknown[] = [];
 	let page = 1;
 
 	const params = {
@@ -42,7 +46,7 @@ export async function fetchRepos({ octokit, config }: FetchReposParams): Promise
 
 			if (dataLength === 0) break;
 
-			repos.push(...data);
+			fetched.push(...data);
 			page++;
 		} while (dataLength >= REPOS_PER_PAGE);
 	} catch (error) {
@@ -51,7 +55,15 @@ export async function fetchRepos({ octokit, config }: FetchReposParams): Promise
 		);
 	}
 
-	core.info(`Fetched ${repos.length} repositories from GitHub`);
+	const repos = RepoListSchema.safeParse(fetched, { reportInput: true });
 
-	return repos;
+	if (!repos.success) {
+		throw new Error(
+			`GitHub returned a repository list this action cannot read: ${describeIssue(repos.error.issues[0])}.`,
+		);
+	}
+
+	core.info(`Fetched ${repos.data.length} repositories from GitHub`);
+
+	return repos.data;
 }
