@@ -3,6 +3,11 @@ import { getTranslations, interpolate, LOCALE_MAP, LOCALES, type Locale } from "
 
 const INTL_LOCALE_CODE_PATTERN = /^[a-z]{2}-[A-Z]{2}$/;
 
+const leafKeys = (bundle: object): string[] =>
+	Object.entries(bundle).flatMap(([key, value]) =>
+		typeof value === "object" && value !== null ? leafKeys(value).map((leaf) => `${key}.${leaf}`) : [key],
+	);
+
 describe("interpolate prototype safety", () => {
 	it("does not resolve a placeholder from the prototype chain", () => {
 		expect(interpolate({ template: "{constructor}", params: {} })).toBe("{constructor}");
@@ -34,10 +39,11 @@ describe("interpolate", () => {
 });
 
 describe("getTranslations", () => {
-	it("falls back to English for a locale it has no bundle for", () => {
-		const t = getTranslations("fr" as Locale);
+	it("falls back to English for a locale outside the union, prototype keys included", () => {
+		const english = getTranslations("en");
 
-		expect(t).toBe(getTranslations("en"));
+		expect(getTranslations("fr" as Locale)).toBe(english);
+		expect(getTranslations("toString" as Locale)).toBe(english);
 	});
 
 	it("returns English translations for en locale", () => {
@@ -74,6 +80,20 @@ describe("LOCALES", () => {
 		const titles = LOCALES.map((locale) => getTranslations(locale).report.title);
 
 		expect(new Set(titles).size).toBe(LOCALES.length);
+	});
+
+	it("gives every bundle exactly the keys of en.json", () => {
+		const english = leafKeys(getTranslations("en"));
+		const drift = LOCALES.flatMap((locale) => {
+			const keys = leafKeys(getTranslations(locale));
+
+			return [
+				...keys.filter((key) => !english.includes(key)).map((key) => `${locale}: extra ${key}`),
+				...english.filter((key) => !keys.includes(key)).map((key) => `${locale}: missing ${key}`),
+			];
+		});
+
+		expect(drift).toEqual([]);
 	});
 
 	it("maps every locale to an Intl code", () => {

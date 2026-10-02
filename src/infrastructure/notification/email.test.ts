@@ -4,25 +4,25 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { type EmailConfig, getEmailConfig, sendEmail } from "./email";
 
 vi.mock("@actions/core", () => ({
-	getInput: vi.fn().mockReturnValue(""),
+	getInput: vi.fn(() => ""),
 	info: vi.fn(),
 	warning: vi.fn(),
 	setSecret: vi.fn(),
 }));
 
 vi.mock("nodemailer", () => {
-	const mockSendMail = vi.fn().mockResolvedValue({ messageId: "test-id" });
+	const mockSendMail = vi.fn(async () => ({ messageId: "test-id" }));
 
 	return {
 		default: {
-			createTransport: vi.fn().mockReturnValue({ sendMail: mockSendMail }),
+			createTransport: vi.fn(() => ({ sendMail: mockSendMail })),
 		},
 	};
 });
 
 describe("getEmailConfig", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 	});
 
 	it("returns null when smtp-host is not provided", () => {
@@ -107,7 +107,7 @@ describe("getEmailConfig", () => {
 
 describe("sendEmail", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 	});
 
 	const emailConfig: EmailConfig = {

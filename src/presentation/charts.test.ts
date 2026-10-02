@@ -37,7 +37,7 @@ const FORECAST: ForecastData = {
 	repos: [],
 };
 
-interface HistoriesOf {
+interface HistoriesParams {
 	config?: Config;
 	storedHistory?: History;
 	repos?: SnapshotRepo[];
@@ -49,17 +49,17 @@ function histories({
 	storedHistory = HISTORY,
 	repos = REPO_TOTALS,
 	repoStargazers = [],
-}: HistoriesOf = {}): ChartHistories {
+}: HistoriesParams = {}): ChartHistories {
 	return resolveChartHistories({ config, storedHistory, repos, repoStargazers, now: NOW });
 }
 
-interface Build extends HistoriesOf {
+interface BuildParams extends HistoriesParams {
 	forecastData?: ForecastData | null;
 	topRepoNames?: string[];
 	chartHistories?: ChartHistories;
 }
 
-function build({ forecastData = null, topRepoNames, chartHistories, ...rest }: Build = {}) {
+function build({ forecastData = null, topRepoNames, chartHistories, ...rest }: BuildParams = {}) {
 	const config = rest.config ?? makeConfig({ includeCharts: true, topRepos: 2 });
 
 	return buildChartFiles({

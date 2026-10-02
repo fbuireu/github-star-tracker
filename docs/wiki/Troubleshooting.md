@@ -97,13 +97,15 @@ file.` Quote the value: `data_branch: "2026"`.
 
 ```
 Star Tracker failed: Invalid github-api-url "<value>" (read from the input, or from GITHUB_API_URL when the
-input is empty). It must be an absolute http(s) URL, such as https://github.example.com/api/v3.
+input is empty). Every request carries the token, and plain http would send it in clear text, so set an absolute
+https URL, such as https://github.example.com/api/v3.
 ```
 
 **Cause:** the `github-api-url` input, or the runner's `GITHUB_API_URL` when the input is empty, is not an
-absolute `http`/`https` URL. A bare host name is the usual culprit.
+absolute `https` URL. A bare host name is the usual culprit, and so is an `http://` URL, which would carry the
+token unencrypted.
 
-**Fix:** give the full API base URL including the scheme, e.g. `https://github.example.com/api/v3`.
+**Fix:** give the full API base URL with the `https` scheme, e.g. `https://github.example.com/api/v3`.
 
 ### "Invalid visibility ..."
 
@@ -444,11 +446,12 @@ A weekly `cron` on its own does not widen the reporting period. The report is di
 ### Log Says `Invalid smtp-port "..."`
 
 ```
-Invalid smtp-port "465 ". Falling back to 587.
+Invalid smtp-port "ssl". Falling back to 587.
 ```
 
-**Cause:** `smtp-port` was not a whole number between 1 and 65535. A stray space, a quote inside the value
-or a non-numeric secret all do it. The run does **not** fail.
+**Cause:** `smtp-port` did not start with a whole number between 1 and 65535: a word, a quote inside the value,
+a secret that expands to text, `0` or a number above 65535 all do it. The adapter reads the leading integer, so
+`465 ` and `465abc` are read as `465` without a warning. The run does **not** fail.
 
 **Fix:** the fallback matters more than the warning. Port `465` means implicit SSL and anything else means
 STARTTLS, so a rejected `465` silently switches the transport and the connection then fails against an

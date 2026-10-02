@@ -39,7 +39,7 @@ Two things then survive that the change is supposed to remove:
   `loader.test.ts` assert its wording verbatim; the Oxford comma in the enum message is pinned deliberately.
   Parameterising the I/O leaves `vi.mock('@actions/core')` exactly where it was, so the file still has a mock
   and the "no ambient dependencies" story is two-thirds true at best. Threading a `reporter` parameter
-  instead means five more signatures (`FieldContext`, `FieldResolver`, `scalarField`, `enumField`,
+  instead means five more signatures (`FieldResolverParams`, `FieldResolver`, `scalarField`, `enumField`,
   `loadConfigFile`) to turn one assertion style into another of the same length.
 - **The caller.** `resolveTabledFields` derives the 34 tabled input names mechanically from
   `Object.keys(FIELD_SOURCES)` and `toActionInputName`. For `@application/tracker` to hand `loadConfig` a
@@ -90,9 +90,9 @@ between reading an input group and consuming one, not between `@config` and the 
   the cost is real but ordinary. The line counts this paragraph used to quote had themselves moved by the
   next time anyone read them, which is why it names the ranking instead; re-measure rather than assume if
   this is ever reconsidered.
-- **The seam that does exist stays unused.** `loadConfigFile` is exported and separately tested, but
-  `loadConfig` calls it as a module-local, so the test mocks `node:fs` a level below it. Anyone tempted to
-  "use the seam that is already there" should read the caller paragraph above first.
+- **The narrower seam stays closed.** `loadConfigFile` is module-private and tested through `loadConfig`, so
+  the test mocks `node:fs` a level below it. Exporting it back to substitute it lands on the caller problem
+  above.
 - **Adding an input group means adding another ambient reader, not another parameter.** `getEmailConfig` is
   the precedent to copy: one function, one group, read at the point of use, with the caller told nothing
   about input names.

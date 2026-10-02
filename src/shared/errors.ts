@@ -4,8 +4,16 @@ const ErrorWithMessageSchema = z.object({
 	message: z.string().check(z.refine((message) => message.trim() !== "")),
 });
 
+function textOf(value: unknown): string {
+	try {
+		return String(value);
+	} catch {
+		return Object.prototype.toString.call(value);
+	}
+}
+
 export function errorMessage(error: unknown): string {
-	return z.validate(ErrorWithMessageSchema, error) ? error.message : String(error);
+	return z.validate(ErrorWithMessageSchema, error) ? error.message : textOf(error);
 }
 
 export function describeFound(value: unknown): string {

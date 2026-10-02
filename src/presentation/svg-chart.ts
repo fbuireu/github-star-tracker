@@ -56,17 +56,17 @@ function straightPath(points: Point[]): string {
 	return path;
 }
 
-interface ClampParams {
+interface CurveClamp {
 	clampMinY: number;
 	clampMaxY: number;
 }
 
-interface CatmullRomPathParams {
+interface CurvePathParams {
 	points: Point[];
-	clamp: ClampParams;
+	clamp: CurveClamp;
 }
 
-function catmullRomPath({ points, clamp: { clampMinY, clampMaxY } }: CatmullRomPathParams): string {
+function catmullRomPath({ points, clamp: { clampMinY, clampMaxY } }: CurvePathParams): string {
 	const tension = CHART_TENSION.smooth;
 	let path = `M${points[0].x},${points[0].y}`;
 
@@ -190,7 +190,7 @@ function roundedStepPath({ points, radius }: RoundedStepPathParams): string {
 	return path;
 }
 
-const CURVE_PATHS: Record<ChartCurve, (params: CatmullRomPathParams) => string> = {
+const CURVE_PATHS: Record<ChartCurve, (params: CurvePathParams) => string> = {
 	[ChartCurve.CATMULL_ROM]: catmullRomPath,
 	[ChartCurve.MONOTONE]: ({ points }) => monotonePath(points),
 	[ChartCurve.CUBIC_BEZIER]: ({ points }) => cubicBezierPath(points),
@@ -557,7 +557,7 @@ export function renderSvgChart({ request, locale, maxPoints, range, ...style }: 
 	const spec = buildChartSpec({
 		request,
 		locale,
-		palette: resolvePalette(style.theme),
+		palette: resolvePalette(style.theme ?? CHART_DEFAULTS.theme),
 		axisLabels: AxisLabels.THINNED,
 		range,
 		maxPoints,

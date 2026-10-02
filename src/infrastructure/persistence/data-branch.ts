@@ -14,7 +14,7 @@ import {
 	writeStargazers,
 } from "./storage";
 
-export interface ChartFile {
+interface ChartFile {
 	filename: string;
 	svg: string;
 }

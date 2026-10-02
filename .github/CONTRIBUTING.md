@@ -7,7 +7,8 @@ documentation set is verified by a test, which does. Read this before your first
 you a rejected commit.
 
 If you want the shape of the codebase, that is [AGENTS.md](../AGENTS.md) and the nested guides it links, and
-[ARCHITECTURE.md](../ARCHITECTURE.md) for the big picture. If you want the vocabulary, that is
+[ARCHITECTURE.md](../ARCHITECTURE.md) for the big picture. If you want how code here is written, and what a review
+holds a diff to, that is [CODING_STANDARDS.md](../CODING_STANDARDS.md). If you want the vocabulary, that is
 [CONTEXT.md](../CONTEXT.md). If you want the *why*, that is [docs/adr/](../docs/adr/).
 
 ## Code of Conduct
@@ -85,7 +86,7 @@ Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run 
 Husky runs lint-staged on `pre-commit`, commitlint on `commit-msg` and `pnpm verify:changed` on `pre-push`.
 The hook runs the changed-only variant rather than `verify` because the coverage floor and a subset run
 cannot both hold; CI runs the full `pnpm verify` on the pushed sha, so a push whose coverage dropped still
-fails its check. [AGENTS.md](../AGENTS.md) explains the trade. Because `pre-push` rebuilds the bundle, a
+fails its check. [ARCHITECTURE.md](../ARCHITECTURE.md) explains the trade. Because `pre-push` rebuilds the bundle, a
 push can leave `dist/` dirty; commit that result rather than discarding it.
 
 The bundle. `action.yml` runs `dist/index.js` directly, with no install step, so the bundle is committed
@@ -121,27 +122,11 @@ The action runs the committed `dist/index.js`, not your sources, so run `pnpm bu
 the workflow. For logging use `@actions/core` rather than `console`, which Biome rejects: its helpers annotate
 the workflow log, and `core.debug` output only appears when the `ACTIONS_STEP_DEBUG` secret is set.
 
-## Conventions that will bite you if you skip them
+## Code conventions
 
-- **Use the glossary's words.** [CONTEXT.md](../CONTEXT.md) names one canonical term per concept: snapshot,
-  baseline, data branch, sampled repo. A variable named after a retired term is a defect, not a style
-  preference.
-- **No explanatory comments in `.ts` files**, without exception; the tree contains none. The `AGENTS.md`
-  guides carry the explanation instead.
-- **One argument is positional and two or more are a single object typed `<FunctionName>Params`**:
-  `makeRepoInfo({ name, stars }: MakeRepoInfoParams)`. The exception is a function a runtime calls back,
-  such as the `sort` comparator `alphabetically`. The docs contract asserts this over the whole of `src`,
-  fixtures included.
-- **Cross-layer imports use the path aliases; same-layer imports stay relative.** `domain`, `presentation`
-  and `i18n` stay pure: no `@actions/*`, no `node:*`, no network, no clock beyond an injectable `now`.
-- **No Biome suppressions.** Fix the root cause instead of `biome-ignore`. `noConsole` is an error with no
-  allowlist: report through `@actions/core`.
-- **Tests are colocated** next to the file they cover, as `src/**/*.test.ts`, and coverage is global at
-  85% on every metric. Biome sorts named imports, so `import { describe, expect, it } from "vitest"` is the
-  only order that passes `pnpm format:check`.
-- **Defaults live in `src/config/defaults.ts`, not in `action.yml`.** Overridable inputs deliberately
-  carry an empty `default:` so the config file can win, and a test reads the real `action.yml` and fails if
-  you add one.
+How code here is written is [CODING_STANDARDS.md](../CODING_STANDARDS.md), the file a review holds a diff to. It
+opens with what Biome, the type checker and the tests already enforce; the rules after that are the ones a
+reviewer checks by hand.
 
 ## Commit rules
 
@@ -158,8 +143,9 @@ you choose is the version bump you get.
 
 Breaking changes take a `!` after the type or a `BREAKING CHANGE:` footer, and bump the major.
 
-A scope is optional and unconstrained: [`commitlint.config.ts`](../commitlint.config.ts) extends
-`@commitlint/config-conventional` and declares no `scope-enum`.
+A scope is optional and drawn from no fixed list: [`commitlint.config.ts`](../commitlint.config.ts) extends
+`@commitlint/config-conventional` and declares no `scope-enum`, but it does require a lower-, camel- or
+Pascal-case scope and caps the header at 130 characters.
 
 `main` takes squash merges, so the pull request title is the commit that lands. The `commit-msg` hook
 lints what you type locally, and [`commit-message.yml`](./workflows/commit-message.yml) lints the pull
@@ -180,8 +166,9 @@ the root guides, everything under `docs/` and `.github/`, this file included. Wh
 side is wrong, and never delete an assertion to get green. [AGENTS.md](../AGENTS.md) has the full table of
 what to update for a given change, and [ARCHITECTURE.md](../ARCHITECTURE.md) holds the ADR index.
 
-Changed inputs, outputs or defaults are reflected in [`action.yml`](../action.yml), the wiki, the README and
-the *Outputs* section of [`src/application/AGENTS.md`](../src/application/AGENTS.md), always alphabetically.
+Changed inputs, outputs or defaults are reflected in [`action.yml`](../action.yml), the wiki, the README, the
+*Outputs* section of [`src/application/AGENTS.md`](../src/application/AGENTS.md) and the outputs line of
+[`ARCHITECTURE.md`](../ARCHITECTURE.md), always alphabetically.
 
 ## Pull requests
 

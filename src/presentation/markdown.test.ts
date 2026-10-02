@@ -3,17 +3,17 @@ import type { ForecastData } from "@domain/forecast";
 import { ForecastMethod, ForecastSource } from "@domain/forecast";
 import type { StargazerDiffResult } from "@domain/stargazers";
 import type { History } from "@domain/types";
-import { makeComparisonResults, makeConfig, makeHistory, makeMultiRepoHistory } from "@shared/tests";
+import { makeComparisonResults, makeConfig, makeHistory, makeMultiRepoHistory, makeRepoResult } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import { generateMarkdownReport } from "./markdown";
 import { buildReportModel } from "./report-model";
 import type { ReportParams } from "./shared";
 
-interface RenderMarkdown extends Partial<Omit<ReportParams, "config">> {
+interface RenderMarkdownParams extends Partial<Omit<ReportParams, "config">> {
 	config?: Partial<Config>;
 }
 
-function renderMarkdown({ config, ...overrides }: RenderMarkdown = {}): string {
+function renderMarkdown({ config, ...overrides }: RenderMarkdownParams = {}): string {
 	const resolved = makeConfig(config);
 
 	return generateMarkdownReport({
@@ -21,7 +21,7 @@ function renderMarkdown({ config, ...overrides }: RenderMarkdown = {}): string {
 		model: buildReportModel({
 			config: resolved,
 			results: makeComparisonResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: overrides.history
 				? {
 						aggregate: overrides.history,
@@ -87,7 +87,7 @@ describe("generateMarkdownReport", () => {
 		expect(report).not.toContain("Growth Velocity");
 	});
 
-	it("renders velocity with only the daily rate when growth and projection are unavailable", () => {
+	it("renders velocity with only the daily rate when growth and the next Milestone are unavailable", () => {
 		const flatHistory = makeHistory({ starCounts: [0, 0], stepDays: 10 });
 
 		const report = renderMarkdown({
@@ -142,9 +142,9 @@ describe("generateMarkdownReport", () => {
 		expect(report.indexOf("Growth Velocity")).toBeLessThan(report.indexOf("Aggregate Forecast"));
 	});
 
-	it("notes the baseline date, and omits the note on a first run", () => {
+	it("notes the Baseline Snapshot's date, and omits the note on a first run, which has none", () => {
 		expect(renderMarkdown()).toContain("> Compared to snapshot from 2026-01-01");
-		expect(renderMarkdown({ previousTimestamp: null })).not.toContain("Compared to snapshot from");
+		expect(renderMarkdown({ baselineSnapshotTimestamp: null })).not.toContain("Compared to snapshot from");
 	});
 
 	it("shows NEW badge for new repos", () => {
@@ -458,5 +458,38 @@ describe("generateMarkdownReport", () => {
 		const report = renderMarkdown({ forecastData: null });
 
 		expect(report).not.toContain("Growth Forecast");
+	});
+
+	it("escapes every GitHub-sourced string it prints", () => {
+		const fullName = "user/repo<b>";
+		const forecasts = [{ method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 1, predicted: 20 }] }];
+
+		const report = renderMarkdown({
+			results: makeComparisonResults({
+				repos: [
+					makeRepoResult({ name: "repo<b>", overrides: { current: 15, previous: 10, delta: 5 } }),
+					makeRepoResult({ name: "gone<b>", overrides: { current: 0, previous: 3, delta: -3, isRemoved: true } }),
+				],
+			}),
+			history: makeMultiRepoHistory({ snapshots: [{ [fullName]: 10 }, { [fullName]: 15 }], stepDays: 1 }),
+			stargazerDiff: {
+				entries: [
+					{
+						repoFullName: fullName,
+						newStargazers: [{ login: "<b>", avatarUrl: "<b>", profileUrl: "<b>", starredAt: "<b>" }],
+					},
+				],
+				totalNew: 1,
+				sampledRepos: [fullName],
+			},
+			forecastData: {
+				aggregate: { forecasts },
+				repos: [{ repoFullName: fullName, source: ForecastSource.OWN, forecasts }],
+			},
+			config: { includeCharts: true },
+		});
+
+		expect(report).toContain("user/repo&lt;b&gt;");
+		expect(report).not.toContain("<b>");
 	});
 });

@@ -58,53 +58,53 @@ describe("getBaselineSnapshot", () => {
 	});
 
 	it("returns the most recent snapshot for last-run", () => {
-		const baseline = getBaselineSnapshot({
+		const baselineSnapshot = getBaselineSnapshot({
 			history: makeDailyHistory(30),
 			compareAgainst: CompareAgainst.LAST_RUN,
 			now: NOW,
 		});
 
-		expect(baseline?.totalStars).toBe(1029);
+		expect(baselineSnapshot?.totalStars).toBe(1029);
 	});
 
 	it("returns the most recent snapshot at least 24h old", () => {
-		const baseline = getBaselineSnapshot({
+		const baselineSnapshot = getBaselineSnapshot({
 			history: makeDailyHistory(30),
 			compareAgainst: CompareAgainst.H24,
 			now: NOW,
 		});
 
-		expect(baseline?.totalStars).toBe(1028);
+		expect(baselineSnapshot?.totalStars).toBe(1028);
 	});
 
 	it("returns the most recent snapshot at least 7 days old", () => {
-		const baseline = getBaselineSnapshot({
+		const baselineSnapshot = getBaselineSnapshot({
 			history: makeDailyHistory(30),
 			compareAgainst: CompareAgainst.D7,
 			now: NOW,
 		});
 
-		expect(baseline?.totalStars).toBe(1022);
+		expect(baselineSnapshot?.totalStars).toBe(1022);
 	});
 
 	it("falls back to the oldest snapshot when history is shorter than the window", () => {
-		const baseline = getBaselineSnapshot({
+		const baselineSnapshot = getBaselineSnapshot({
 			history: makeDailyHistory(30),
 			compareAgainst: CompareAgainst.D30,
 			now: NOW,
 		});
 
-		expect(baseline?.totalStars).toBe(1000);
+		expect(baselineSnapshot?.totalStars).toBe(1000);
 	});
 
 	it("falls back to the only snapshot available", () => {
-		const baseline = getBaselineSnapshot({
+		const baselineSnapshot = getBaselineSnapshot({
 			history: makeDailyHistory(1),
 			compareAgainst: CompareAgainst.D7,
 			now: NOW,
 		});
 
-		expect(baseline?.totalStars).toBe(1000);
+		expect(baselineSnapshot?.totalStars).toBe(1000);
 	});
 
 	it("picks the newest snapshot still inside the tolerated window", () => {
@@ -114,13 +114,13 @@ describe("getBaselineSnapshot", () => {
 				{ timestamp: "2026-03-24T07:00:00Z", totalStars: 200, repos: [] },
 			],
 		};
-		const baseline = getBaselineSnapshot({
+		const baselineSnapshot = getBaselineSnapshot({
 			history,
 			compareAgainst: CompareAgainst.D7,
 			now: NOW,
 		});
 
-		expect(baseline?.totalStars).toBe(100);
+		expect(baselineSnapshot?.totalStars).toBe(100);
 	});
 
 	it("tolerates cron jitter that pushes a snapshot just under the window", () => {
@@ -130,13 +130,13 @@ describe("getBaselineSnapshot", () => {
 				{ timestamp: "2026-03-24T00:05:00Z", totalStars: 200, repos: [] },
 			],
 		};
-		const baseline = getBaselineSnapshot({
+		const baselineSnapshot = getBaselineSnapshot({
 			history,
 			compareAgainst: CompareAgainst.D7,
 			now: NOW,
 		});
 
-		expect(baseline?.totalStars).toBe(200);
+		expect(baselineSnapshot?.totalStars).toBe(200);
 	});
 
 	it("never falls back to a snapshot whose timestamp is unparseable", () => {
@@ -146,13 +146,13 @@ describe("getBaselineSnapshot", () => {
 				{ timestamp: "2026-03-30T00:00:00Z", totalStars: 200, repos: [] },
 			],
 		};
-		const baseline = getBaselineSnapshot({
+		const baselineSnapshot = getBaselineSnapshot({
 			history,
 			compareAgainst: CompareAgainst.D7,
 			now: NOW,
 		});
 
-		expect(baseline?.totalStars).toBe(200);
+		expect(baselineSnapshot?.totalStars).toBe(200);
 	});
 
 	it("returns null when every snapshot has an unparseable timestamp", () => {
@@ -170,13 +170,13 @@ describe("getBaselineSnapshot", () => {
 				{ timestamp: "not-a-date", totalStars: 200, repos: [] },
 			],
 		};
-		const baseline = getBaselineSnapshot({
+		const baselineSnapshot = getBaselineSnapshot({
 			history,
 			compareAgainst: CompareAgainst.D7,
 			now: NOW,
 		});
 
-		expect(baseline?.totalStars).toBe(100);
+		expect(baselineSnapshot?.totalStars).toBe(100);
 	});
 });
 

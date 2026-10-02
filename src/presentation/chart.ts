@@ -1,4 +1,4 @@
-import { ChartCurve, ChartRange, type ChartTheme } from "@config/types";
+import { ChartCurve, type ChartRange, type ChartTheme } from "@config/types";
 import type { Locale } from "@i18n";
 import type { ChartMilestone, ChartRequest, ChartSeries } from "./chart-spec";
 import { AxisLabels, buildChartSpec, SeriesDash, SeriesWeight } from "./chart-spec";
@@ -292,7 +292,7 @@ export function chartImageUrl({
 	showPoints = CHART_DEFAULTS.showPoints,
 	beginAtZero = CHART_DEFAULTS.beginAtZero,
 	theme = CHART_DEFAULTS.theme,
-	range = ChartRange.ALL,
+	range,
 	lineWidth,
 }: ChartImageUrlParams): string | null {
 	const palette = resolvePalette(theme);

@@ -1,11 +1,10 @@
 # src/infrastructure
 
-The layer that owns every outbound side effect: the GitHub REST API, the `git` CLI, the filesystem and SMTP.
-It is the only layer that reaches the network, which is not the same as being the only one that performs I/O;
-the root [`AGENTS.md`](../../AGENTS.md) states that rule for the whole tree. Adapters only, no framework.
-None of them decide *when* work happens: `@application/tracker` is the composition root and their only
-consumer. They hold no business logic, and no string they build is localized or ends up in a Report. They do
-write plain log lines.
+The layer that owns the Run's outbound side effects: the GitHub REST API, the `git` CLI, every file the Run
+writes and SMTP. The Action log and the outputs are not among them: every shell layer logs, and
+`@application` sets the outputs. It is the only layer that reaches the network, which is not the same as being
+the only one that performs I/O. Adapters only, no framework. None of them decide *when* work happens:
+`@application/tracker` is the composition root and their only consumer.
 
 | Folder | Owns | Side effects |
 | --- | --- | --- |
@@ -14,19 +13,18 @@ write plain log lines.
 | `persistence/` | The Data Branch lifecycle, filenames, reads/writes, commit & push | fs, `git` (via `../git/*`) |
 | `notification/` | SMTP config from action inputs, sending the digest | `@actions/core` inputs, SMTP |
 
-"Same layer" means all of `src/infrastructure`, not one adapter: [`persistence/storage.ts`](./persistence/storage.ts) imports
-`../git/commands` and [`persistence/data-branch.ts`](./persistence/data-branch.ts) imports `../git/worktree`, exactly like
-[`github/filters.ts`](./github/filters.ts) imports `./client`. Persistence depending on git is the **only** cross-adapter direction
-allowed, and it does not run the other way.
+`persistence` is the one adapter that imports another: [`persistence/storage.ts`](./persistence/storage.ts) imports
+`../git/commands` and [`persistence/data-branch.ts`](./persistence/data-branch.ts) imports `../git/worktree`.
 
-The failure policy splits in two. Repository fetching and worktree setup are fatal: they throw wrapped
-errors with remediation text and fail the action. Per-repo stargazer failures are degradable, swallowed here
-and downgraded to `core.warning` so the run continues with partial data. `sendEmail` rejects on SMTP failure, but
-the caller catches and warns. `describeFetchError` in [`github/errors.ts`](./github/errors.ts) is the single formatter behind every
-one of those wrapped messages: it renders `HTTP <status> <message>`, falling back to `String(error)` when the
-error carries neither. Change the shape of a fetch failure's text there, not at each call site. It reads
-`status` and `message` through a schema whose fields each fall back to absent on their own, so a numeric
-`message` or a string `status` drops that one part instead of throwing.
+A failed repository-listing request always carries the token-permissions hint. Worktree setup throws remediation
+text for a missing `actions/checkout` and for a read-only Run on an absent Data Branch, and `execute`'s wrapper
+around git's own text for any other git failure. `describeFetchError` in [`github/errors.ts`](./github/errors.ts) renders every
+fetch failure's text, the fatal repository listing and the stargazer warnings alike, as
+`HTTP <status> <message>`, falling back to `String(error)` when the error carries neither. It reads `status` and
+`message` through a schema whose fields each fall back to absent on their own, so a numeric `message` or a string
+`status` drops that one part instead of throwing. `execute` reads git's text the same way, `stderr` and then
+`message` through `GitFailureSchema`, and falls back to `Unknown error`, so a throw that carries neither, or is not
+an object, still gets its wrapper.
 
 ## github/
 
@@ -34,16 +32,16 @@ Fetch, then map, then narrow. `getRepos` maps GitHub's rows onto `RepoInfo` **fi
 `resolveTrackedSet` in `@domain/tracked-set`, which decides what survives. What survives is the
 **Tracked Set**, and nothing downstream can see a repository outside it.
 
-**The narrowing rules are not in this folder.** They are pure and they read domain vocabulary
-(`repo.owner`, `repo.name`, `repo.stars`), not GitHub's `owner.login` / `stargazers_count`, so
-[`tracked-set.test.ts`](../domain/tracked-set.test.ts) asserts them without a fake octokit or a mocked logger. This folder does what
-the domain cannot: it fetches, and it logs. `resolveTrackedSet` returns `afterOnlyOrgs`, `afterOnlyRepos` and
-`invalidPatterns` as **numbers and strings**; `getRepos` turns them into `core.info` and `core.warning`
-lines.
+The narrowing rules live in `@domain/tracked-set` and read domain vocabulary (`repo.owner`, `repo.name`,
+`repo.stars`), not GitHub's `owner.login` / `stargazers_count`, and
+[`tracked-set.test.ts`](../domain/tracked-set.test.ts) asserts them. `resolveTrackedSet` returns `afterOnlyOrgs`,
+`afterOnlyRepos` and `invalidPatterns` as **numbers and strings**; `getRepos` turns them into `core.info` and
+`core.warning` lines.
 
 - **The `accept: application/vnd.github.star+json` header is what returns the dates**, and it is set per
-  request, not on the client. Without it GitHub returns bare user objects with **no `starred_at`** and the whole star-history
-  reconstruction silently degrades. Any new stargazer request must set it too.
+  request, not on the client. Without it GitHub returns bare user objects, with no `user` wrapper and **no
+  `starred_at`**, so every page fails `GitHubStargazerRowSchema`, every repository's fetch fails with a warning,
+  and the star-history reconstruction has nothing to work from. Any new stargazer request must set it too.
 - The token is always a user-supplied PAT, never the injected `GITHUB_TOKEN`, and the role it carries decides
   whether the stargazer endpoint answers at all
   ([ADR 0002](../../docs/adr/0002-require-a-personal-access-token.md)).
@@ -63,97 +61,83 @@ lines.
   translation in `VISIBILITY_PARAMS`. GitHub's REST vocabulary has no `owned`: it is expressed as
   `visibility: 'all'` plus `affiliation: 'owner'`, which is why the map is not the identity. It is keyed by
   bare string literals and typed `Record<Config['visibility'], …>`, so a new `Visibility` is still a type
-  error here while `@infrastructure` takes no *value* import from `@config` at all. The map used to live in
-  `@config/defaults`, which put octokit's dialect in the one layer that must not know octokit exists, and
-  its spec was in [`filters.test.ts`](./github/filters.test.ts) here the whole time.
+  error here.
 - A full stargazer fetch pages until it reads a page shorter than 100, the stargazer page size owned by
   `@domain/sampling`, so an exactly full page always costs one more request, **or until it exhausts
-  `MAX_REACHABLE_PAGE`**, which is the other way the loop can end. A sampled fetch does not page at all; it
-  reads the specific pages it was handed.
+  `MAX_REACHABLE_PAGE`**, or until a page fails (below). A sampled fetch does not page at all; it reads the
+  specific pages it was handed.
 - `fetchAllStargazers` returns exactly one entry per input repo, in input order, even when the fetch
   failed. Downstream code may assume 1:1 alignment.
-- `coveredStars` is `undefined` only when the fetch actually reached the end of the list, and set whenever
-  coverage was cut short. It is the signal `@domain/star-history` uses to decide the tail must be ramped. A
-  page that succeeds but returns nothing does not advance it.
+- `coveredStars` is set whenever a fetch that returned Stargazers was cut short, and `undefined` when the
+  fetch reached the end of the list or failed outright (no Stargazers, `incomplete` set). It is the signal
+  `@domain/star-history` uses to decide the tail must be ramped. A page that succeeds but returns nothing
+  does not advance it.
 - The page ceiling is a short fetch, not a clean one. A full fetch that runs all 400 pages with a full
   last page has no idea whether more exist, so it reports `coveredStars` and warns, exactly as a fetch that
   died mid-pagination does. `fetchAllStargazers` therefore marks it `incomplete`, which keeps a repository
-  above the ceiling out of new-stargazer diffing and out of the Stargazer map. It used to return
-  `{ stargazers }` with no coverage figure, so such a repository was diffed as if fully enumerated: the
-  reachable window is the **oldest** 40,000 logins and never moves, so it reported zero new stargazers on
-  every Run, forever, with nothing in the log. Charts were always right, because `@domain/star-history`
-  defaults a missing `coveredStars` to `MAX_REACHABLE_STARGAZERS` and so ramped the tail either way, which is
-  why the bug had no visible symptom on the side anyone looks at.
+  above the ceiling out of new-stargazer diffing and leaves its Stargazer map entry as it was: the reachable
+  window is the **oldest** 40,000 logins and never moves, so diffing it would report zero new Stargazers on
+  every Run.
 - Partial-failure semantics differ between the two paths: a **full** fetch rethrows if page 1 fails but keeps
   what it has if a later page fails; a **sampled** fetch attempts every selected page regardless, then
   rethrows only if nothing at all was collected. Sampled pages have no early break, so gaps in the page
   sequence are expected.
-- **This folder decides no Smart Sampling arithmetic.** `@domain/sampling` owns all of it: `shouldSample`,
-  `reachablePages`, `sampledPages` (which pages to read) and `coveredStars` (how many Stars those pages
-  account for). This folder fetches the pages it is handed and reports what came back. That is why the page
-  spread (first and last page always kept, the whole budget spent on distinct ascending pages even when the
-  range is barely wider than it) and the ceiling clamp are asserted in [`sampling.test.ts`](../domain/sampling.test.ts) against plain
-  numbers instead of through a fake octokit. Two spread pages cannot round onto the same page: once the range
-  is wider than the budget, consecutive picks are more than one page apart.
-- The one `coveredStars` this folder computes itself is not sampling arithmetic. A *full* fetch that dies
-  part-way reports `stargazers.length`, the exact number it holds, rather than
-  `coveredStars({ lastFetchedPage, totalStars })`, which estimates from a page count and would understate a
-  partial page. The two formulas answer the same question for different situations and are meant to differ;
-  only the sampled path goes through `@domain`.
+- `@domain/sampling` plans the fetch: `shouldSample`, `sampledPages` (which pages to read) and `coveredStars`
+  (how many Stars those pages account for). This folder fetches the pages it is handed and reports what came
+  back. [`sampling.test.ts`](../domain/sampling.test.ts) asserts that arithmetic on plain numbers, and
+  `stargazers.test.ts` repeats the spread, the small-repository fallback, the ceiling and the one-page budget
+  through a fake octokit, so a change to it fails both files.
+- A *full* fetch cut short, mid-pagination or at the ceiling, reports `stargazers.length` as its `coveredStars`;
+  only the sampled path goes through `@domain`'s `coveredStars`.
 - `sampled` is decided *before* the request, so it stays `true` on failure. The threshold comparison is
   strict: 1500 stars with threshold 1500 is not sampled. A sampled repo loses new-stargazer detection
   downstream ([ADR 0008](../../docs/adr/0008-sampled-repositories-are-excluded-from-stargazer-diffing.md)).
 - `MAX_REACHABLE_PAGE` is 400 because GitHub only pages through a repo's oldest 40,000 stargazers. It is
   derived in `@domain/sampling` from `MAX_REACHABLE_STARGAZERS` and `STARGAZER_PAGE_SIZE`, never written down.
-- `fetchAllStargazers` is sequential on purpose. Parallelising would blow through the secondary rate
-  limit that `@octokit/plugin-retry` exists to absorb. Retries happen inside octokit; this folder only ever
-  sees the final failure, so its own handling is "give up on this page/repo", never "retry".
-- `starredAt` passes through verbatim as the raw ISO string. This folder never parses or normalizes it. The
-  one exception is a `starred_at` that is not a string at all (absent, or a number): the row schema reads it
-  as `""`, an unusable date, so the existing "without usable starred_at dates" warning covers it and
-  `diffStargazers` never calls `localeCompare` on `undefined`.
+- `fetchAllStargazers` is sequential on purpose. Parallelising would trip GitHub's secondary rate limit,
+  which `@octokit/plugin-retry` absorbs only in part: with the defaults the tracker attaches, it retries a
+  `429` and never a `403`, and GitHub answers that limit with either. Retries happen inside octokit; this
+  folder only ever sees the final failure, so its own handling is "give up on this page/repo", never "retry".
+- A `starred_at` that is not a string (absent, or a number) is the one `starredAt` this folder does not pass
+  through: `GitHubStargazerRowSchema` reads it as `""`, an unusable date, so the "without usable starred_at
+  dates" warning covers it and `diffStargazers` never compares `undefined`.
 - `GitHubRepo` is inferred from `GitHubRepoSchema` in [`types.ts`](./github/types.ts), a hand-written
-  structural subset, not octokit's generated type. Octokit's types are compile-time only, so both response
-  shapes are checked at runtime. `fetchRepos` validates the whole list after paging, outside the fetch `catch`,
-  so a row it cannot read fails the Run with `GitHub returned a repository list this action cannot read:`
-  and the path, not with the token-permissions remediation meant for a failed request. A stargazer page that
-  fails `GitHubStargazerRowSchema` (a `null` user, say) throws from `fetchStargazerPage` and takes the same
-  degradable path as a failed request, with the path in the warning instead of a `TypeError`. Reading a new
-  field means adding it to the schema first, and to the tests' `makeRepo` factory.
+  structural subset, not octokit's generated type, whose shapes exist at compile time only. `fetchRepos`
+  checks that each page is a list before reading its length, and validates the whole list after paging, both
+  outside the fetch `catch`, so a page or a row it cannot read fails the Run with
+  `GitHub returned a repository list this action cannot read:` and the path, not with the token-permissions
+  hint meant for a failed request. A stargazer page that fails `GitHubStargazerRowSchema` (a `null` user, say)
+  throws from `fetchStargazerPage` and takes the same degradable path as a failed request, with the path in
+  the warning. Reading a new field means adding it to the schema first, and to the tests' `makeRepo` factory.
 
 ## git/
 
 - **`dataDir` is derived, never hardcoded**: `` `.${dataBranch}` ``. Code that needs the directory must use
   the value **returned** by `initializeDataBranch`. Why a branch at all is
   [ADR 0001](../../docs/adr/0001-star-data-lives-on-a-dedicated-data-branch.md).
-- Subcommands that must run *in* the worktree get `cwd: path.resolve(dataDir)`; the resolve is required
-  because a relative `cwd` would be read against the process cwd, not the repo root.
+- Subcommands that must run *in* the worktree get `cwd: path.resolve(dataDir)`. `dataDir` is relative, and
+  every path built on it resolves against the process cwd, which is where `worktree add` created the worktree.
 - `initializeDataBranch` runs its steps in this order deliberately: repo guard, commit identity, remote
   probe, stale-worktree removal, read-only guard, then create-orphan or fetch+add. Identity and cleanup
   therefore run even on a read-only run and even on a run about to throw.
 - Branch absence is empty output, never a thrown probe. `ls-remote --heads` exits 0 with no output when
-  nothing matches; `--exit-code` is what turns that into a failure, so it is deliberately *not* passed. The
-  probe used to carry it and sit in a bare `catch`, which read every network, DNS or auth failure as "the
-  branch is not there". The run then built an orphan, pushed it over the real branch, was rejected, and told
-  the user another run had raced it and to add a `concurrency` group. That remediation could never work. A
-  failing probe now propagates git's own text.
-- **Every remote command carries the token, as a *fallback*, not an override.** `ls-remote` and `fetch` used
-  to run unauthenticated while only the push was authenticated, relying on whatever `actions/checkout` had
-  persisted. On a repository checked out with `persist-credentials: false`, which is what OpenSSF and zizmor
-  recommend and what this repo's own checkout steps use, there is nothing to rely on, so the probe
-  failed on every run. `authenticatedArgs` ([`git/commands.ts`](./git/commands.ts)) fixes that case.
-- It does not win against `actions/checkout`, and it is not meant to. Verified with `GIT_TRACE_CURL`
-  against the real remote, because two reviews reasoned about this from the config file and both got it wrong:
-  `actions/checkout` persists its credential under the **URL-scoped** `http.https://github.com/.extraheader`,
-  ours is the **bare** `http.extraheader`, and when both match **only the URL-scoped one is sent**. Git
-  accumulates multiple values of the *same* key (two bare, or two URL-scoped, really do send two headers)
-  but a URL-scoped entry replaces the bare list rather than adding to it. So with the default
-  `persist-credentials: true` the run authenticates with checkout's token exactly as it always did, and
-  `github-token` is what git uses only when checkout persisted nothing.
-  A leading `-c http.extraheader=` was tried as a way to clear checkout's entry. It does not: an empty *bare*
-  value cannot reset a *URL-scoped* list. Only `-c http.https://github.com/.extraheader=` does, and hardcoding
-  that host would break GitHub Enterprise, so the fallback shape is deliberate. Do not add a reset back
-  without tracing what git actually sends.
+  nothing matches; `--exit-code` is what turns that into a failure, so it is deliberately *not* passed. A
+  failing probe propagates git's own text: read as absence, a network, DNS or auth failure would build an
+  orphan and push it over the real branch.
+- **Every remote command carries the token, as a *fallback*, not an override.** `authenticatedArgs`
+  ([`git/commands.ts`](./git/commands.ts)) adds it to `ls-remote`, `fetch` and the push. On a repository
+  checked out with `persist-credentials: false`, which OpenSSF and zizmor recommend and this repo's own
+  checkout steps use, `actions/checkout` persists nothing, and the token is the only credential git has.
+- It does not win against `actions/checkout`, and it is not meant to. `actions/checkout` persists its
+  credential under the **URL-scoped** `http.https://github.com/.extraheader`, ours is the **bare**
+  `http.extraheader`, and when both match **only the URL-scoped one is sent**. Git accumulates multiple values
+  of the *same* key (two bare, or two URL-scoped, really do send two headers) but a URL-scoped entry replaces
+  the bare list rather than adding to it. So with the default `persist-credentials: true` the run
+  authenticates with checkout's token, and `github-token` is what git uses only when checkout persisted
+  nothing. A leading `-c http.extraheader=` does not clear checkout's entry: an empty *bare* value cannot
+  reset a *URL-scoped* list. Only `-c http.https://github.com/.extraheader=` does, and hardcoding that host
+  would break GitHub Enterprise, so the fallback shape is deliberate. Trace what git sends
+  (`GIT_TRACE_CURL`) before adding a reset; reasoning from the config file gets this wrong.
 - `core.setSecret` is not optional here, because `execute` puts the whole argv into its error message.
 - Branch missing + read-only throws, before any worktree exists. A read-only run may never bring the
   data branch into existence. Branch missing + writable gives an *orphan* branch, so data history shares no
@@ -161,9 +145,6 @@ lines.
 - Branch present means `worktree add` from `origin/<branch>`, leaving HEAD detached, which is exactly why
   `commitAndPush` pushes the refspec `HEAD:<dataBranch>` and not a branch name. Do not "fix" either half
   in isolation.
-- `execute` uses `execFileSync` with an **argv array, never a shell**. Arguments containing `;`, quotes, `$`
-  or newlines pass verbatim to git (pinned by [`commands.test.ts`](./git/commands.test.ts)). Commit messages and branch names are
-  user-controlled, so never reintroduce string interpolation here.
 - `stdio` is all `pipe`, so git never writes to the Action log. Anything a user must see goes through
   `@actions/core` explicitly. `cleanup` is best-effort and idempotent: it never rethrows, so it is safe in a
   `finally`.
@@ -177,21 +158,18 @@ The one other export consumed from outside this folder is `writeHtmlReport`, whi
 when that is unset, so the report survives `cleanup`, exists on read-only runs and on runs where nothing
 matched, and never lands in a commit. On a local run that fallback puts it in the checkout root.
 
-- **`dataDir` never leaves this folder.** `initializeDataBranch` returns it, `withDataBranch` closes over it,
-  and every read and write derives its path from that closure. `@application` no longer holds it, so it
-  cannot thread a stale one into a later call.
+- `initializeDataBranch` returns `dataDir`, `withDataBranch` closes over it and hands it back to `cleanup`, and
+  every read and write derives its path from that closure.
 - `publish` is one call, and the order inside it matters: history, report, badge, CSV, the Stargazer map
   when there is one, then every chart, then `pruneCharts`, then the commit. `add -A` inside `commitAndPush`
   is what stages all of it, so any new write must go **before** the commit, which is exactly what putting
-  them in one function enforces. [`data-branch.test.ts`](./persistence/data-branch.test.ts) pins that ordering.
-- **The read-only guard lives here**, not in the tracker: `publish` writes everything into the worktree and
-  then returns without committing when `readOnly` is set. `commitAndPush` itself still has no read-only
-  awareness and must not gain any.
-- Every other `write*`/`read*` helper in `storage.ts` is internal to this folder.
-- One writer covers every plain-text artefact. `writeArtefact({ dataDir, artefact, contents })` takes an
-  `Artefact` (`REPORT`, `BADGE` or `CSV`) and looks the filename up in `DATA_FILES`. Adding a text format
-  is one entry in that enum and one in the table, not a new function that is `path.join` plus
-  `writeFileSync` under a different field name. `writeHistory` and `writeStargazers` stay separate because
+  them in one function enforces. [`data-branch.test.ts`](./persistence/data-branch.test.ts) pins that order.
+- `publish` writes everything into the worktree and then returns without committing when `readOnly` is set.
+- One writer covers every plain-text Artefact on the Data Branch.
+  `writeArtefact({ dataDir, artefact, contents })` takes an `Artefact` (`REPORT`, `BADGE` or `CSV`) and looks
+  the filename up in `DATA_FILES`. Adding a text format is one `Artefact` entry, one `DATA_FILES` row, one
+  `PublishedArtefacts` field and one `writeArtefact` line in `publish`, not a new function that is `path.join`
+  plus `writeFileSync` under a different field name. `writeHistory` and `writeStargazers` stay separate because
   they are JSON and one of them stamps the format version; `writeChart` stays separate because it creates a
   directory.
 - `readHistory` always returns a usable `History` or throws. A missing file gives `{ snapshots: [] }`, and
@@ -215,20 +193,15 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
   schema key is a type error here.
 - `readStargazers` repairs its container's contents rather than trusting them. A missing file gives `{}`,
   a parsed value that is not a plain object gives `{}`, and an entry whose value is not an array of strings
-  is dropped while its siblings survive. Both checks are `z.validate` calls, because a yes/no is all a repair
-  needs; nothing reads their issues. That is ADR 0021's container rule, which survives only for the file
-  that ADR calls disposable, applied to the reader that had never had it. `StargazerMap`
-  is `Record<string, string[]>` and the reader used to hand back whatever `JSON.parse` produced under that
-  type, so a hand-edited `{"user/repo": 5}` reached `diffStargazers`, hit `new Set(5)` and failed the whole
-  Run with `TypeError: number 5 is not iterable` over a file ADR 0021 calls disposable.
-- So does JSON that parses but is not an object. That invariant used to cover only *unparseable* text.
-  A `stars-data.json` holding `null`, `[]`, `5` or a string destructured to `{}`, normalized to
-  `{ snapshots: [] }`, and the Run then treated a populated Data Branch as a first Run, appending one
-  Snapshot and **pushing**, discarding the record, while reporting success. The schema's root makes the
-  stated invariant true, and its `snapshots` key finishes the job one level down: a `snapshots` key holding
-  a string, a number, `null` or an object used to normalize to `[]` and reach exactly the same ending, with
-  `starsAtLastNotification` preserved as the sole consolation for a discarded record. ADR 0021 records why
-  that exception was reversed. Only an **absent** `snapshots` key still yields `[]`.
+  is dropped while its siblings survive. Both checks are `z.validate` calls (`StargazerFileSchema`,
+  `LoginListSchema`), because a repair needs a yes or no and never an issue. That is ADR 0021's container rule,
+  which survives only for the file that ADR calls disposable. Unrepaired, a hand-edited `{"user/repo": 5}` would
+  reach `diffStargazers`, hit `new Set(5)` and fail the whole Run.
+- A `stars-data.json` that parses but is not an object throws as well (the schema's root), and so does a
+  `snapshots` key holding a string, a number, `null` or an object (its `snapshots` key). Read as
+  `{ snapshots: [] }`, either would make the Run treat a populated Data Branch as a first Run, append one
+  Snapshot and **push** over the record while reporting success. Only an **absent** `snapshots` key yields
+  `[]`.
 - `stars-data.json` carries a `version` and this folder owns it end to end
   ([ADR 0015](../../docs/adr/0015-the-stored-history-declares-its-format-version.md)). `writeHistory` stamps
   `DATA_FORMAT_VERSION` as the first key; `readHistory` validates it through the schema's `version` key and
@@ -250,10 +223,7 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
   `origin/<dataBranch>` at Run start and never re-fetched, so two overlapping writing Runs both branch from
   the same commit and the second one's push is refused as non-fast-forward. `commitAndPush` matches
   `PUSH_REJECTED_PATTERN` against the error and replaces only that case with remediation text naming
-  `concurrency` and `read-only`; anything else rethrows untouched, because git's own detail is the useful
-  part there. Do not widen the pattern into a bare catch: an auth or network failure must keep its message.
-  This layer does **not** retry. Re-reading and re-appending the Stored History after losing the race is a
-  behaviour change, not an error-handling one.
+  `concurrency` and `read-only`.
 - **`core.setSecret` on the push credential must stay before the push.** The base64 credential is passed as
   `-c http.extraheader=…`, and `execute` embeds the whole argv in any thrown error, so the mask is what keeps
   a push failure from leaking the token. Any new call passing a secret in argv must do the same.
@@ -268,22 +238,21 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
 - `smtp-host` is the only mandatory switch. An empty host returns `null` *before* reading any other input,
   and `null` is the caller's master on/off switch.
 - `secure` is derived purely from the port (`port === 465`). There is no `smtp-secure` input.
-- The port is validated. `resolvePort` runs `PortSchema`: `parseInt`, then an integer in `1..MAX_TCP_PORT`;
-  anything else, including a non-numeric string, warns and falls back to `587`. `NaN` never reaches
-  nodemailer. Because the first step is `parseInt`, `'465abc'` is `465`.
+- The port is validated. `resolvePort` runs `PortSchema`, which reads the input's leading integer
+  (`Number.parseInt`, so `"465 "` and `"465abc"` are `465`) and requires it in `1..MAX_TCP_PORT`. An empty input
+  is `587` without a warning; anything else, a non-numeric string included, warns and falls back to `587`. `NaN`
+  never reaches nodemailer.
 - Auth is all-or-nothing: `auth` is set only when username *and* password are both truthy, otherwise
   literally `undefined` (a test asserts the value, not an absent key).
 - From-address resolution, in order: a `from` containing `@` is used verbatim; otherwise a `username`
   containing `@` becomes `` `${from} <${username}>` ``; otherwise the bare `from` as a display name.
-- Distinct "no email" outcomes, and the log level is the difference: not configured (`info`, here),
-  configured but nothing to say (`info`, in the caller), configured but empty `email-to` (`warning`, here,
-  because it is almost certainly a misconfiguration). Rejected recipients warn but still count as delivered.
-  nodemailer reports a rejected recipient as a string or an `{ name, address }` object; `RecipientListSchema`
-  turns both into the address, so the warning never prints `[object Object]`.
-- Failures propagate as rejections, not warnings. Do not add a local try/catch: it would swallow the error
-  before the caller can report it. Equally, do not let it escape the caller's try, which would turn a mail
-  outage into a red run.
-- `getEmailConfig` is one of the few infrastructure functions that reads `@actions/core` inputs directly
+- Distinct "no email" outcomes, and the log level is the difference: not configured (no line: the caller
+  calls `sendEmail` only with a non-null `EmailConfig`, so the `info` in its `null` branch runs only under
+  `email.test.ts`), configured but nothing to say (`info`, in the caller), configured but empty `email-to`
+  (`warning`, here, because it is almost certainly a misconfiguration). Rejected recipients warn but still
+  count as delivered. nodemailer reports a rejected recipient as a string or an `{ name, address }` object, and
+  `RecipientListSchema` turns both into the address, so the warning never prints `[object Object]`.
+- `getEmailConfig` is the one infrastructure function that reads `@actions/core` inputs directly
   rather than receiving a parsed `Config`. Only `locale` is passed in, to resolve the default sender name, so
   changing `locale` changes the visible sender.
 - `smtp-password` is passed to `core.setSecret` as soon as it is read, so it is masked in the Action log
@@ -292,21 +261,17 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
 
 ## Gotchas
 
-- **[`worktree.test.ts`](./git/worktree.test.ts) and the `commitAndPush` tests mock `../git/commands`, not `node:child_process`.**
-  `execute` is the seam, so a test scripts failures by *which git command ran* (`args.includes('ls-remote')`,
-  matching on membership rather than `args[0]`, since an authenticated command begins with `-c`)
-  and asserts on argv through a local `ranGit(...)` helper. They used to drive `execFileSync` with positional
-  `mockReturnValueOnce` chains many levels deep, where adding or reordering one git call shifted every later
-  mock and broke tests that looked unrelated. Do not mock a level deeper than the seam again.
-- [`storage.test.ts`](./persistence/storage.test.ts) mocks `@actions/core` with a factory exposing only `info`, `debug` and `setSecret`.
-  Adding a `core.warning(...)` to `storage.ts` fails the suite with "not a function", not a useful assertion.
-- `filters.test.ts` is the spec for `client.ts` too, so a change to `client.ts` can fail here. It is the
-  one sanctioned case of a test file covering two modules, and `client.ts` is the only module in the tree
-  with no colocated test of its own.
+- [`worktree.test.ts`](./git/worktree.test.ts) and the `commitAndPush` tests script git through a mocked `execute`
+  and assert on argv through a local `ranGit(...)` helper.
+- [`storage.test.ts`](./persistence/storage.test.ts) and `worktree.test.ts` mock `@actions/core` with a
+  factory exposing only `info`, `debug` and `setSecret`. Adding a `core.warning(...)` to `storage.ts` or
+  `worktree.ts` fails the suite with "not a function", not a useful assertion.
+- `filters.test.ts` is the spec for `client.ts` too, so a change to `client.ts` can fail there.
 - Stale charts are pruned, but not by the writer. `writeChart` only writes; `pruneCharts({ dataDir, keep })`
   deletes the `charts/*.svg` files the current run did not produce, and `publish` calls it immediately after
   the write loop, which is what stops a repo dropping out of `top-repos` from stranding its chart forever.
-- The action **requires an `actions/checkout` step**; the repo guard converts git's opaque "not in a git
-  directory" into that instruction. Do not swallow it.
+- The action **requires an `actions/checkout` step**; the repo guard converts any failure of
+  `git rev-parse --is-inside-work-tree`, git's opaque "not a git repository" among them, into that
+  instruction. Do not swallow it.
 - `.<dataBranch>` is a hidden directory inside the primary checkout for the duration of the run. Linters,
   upload-artifact globs and other actions will see it until `cleanup`.

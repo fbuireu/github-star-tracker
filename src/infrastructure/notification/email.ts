@@ -7,7 +7,12 @@ const SECURE_SMTP_PORT = 465;
 export const DEFAULT_SMTP_PORT = "587";
 const MAX_TCP_PORT = 65_535;
 
-function resolveFromAddress({ from, username }: { from: string; username: string }): string {
+interface ResolveFromAddressParams {
+	from: string;
+	username: string;
+}
+
+function resolveFromAddress({ from, username }: ResolveFromAddressParams): string {
 	if (from.includes("@")) {
 		return from;
 	}

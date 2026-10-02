@@ -54,11 +54,11 @@ export function weightedDailyRate(points: SeriesPoint[]): number {
 	const dailyRates: number[] = [];
 
 	for (let index = 1; index < points.length; index++) {
-		const elapsedDays = points[index].day - points[index - 1].day;
+		const interval = latestRateInterval([points[index - 1], points[index]]);
 
-		if (elapsedDays < MIN_RATE_INTERVAL_DAYS) continue;
+		if (interval === null) continue;
 
-		dailyRates.push((points[index].value - points[index - 1].value) / elapsedDays);
+		dailyRates.push((interval.to.value - interval.from.value) / interval.days);
 	}
 
 	if (dailyRates.length === 0) return 0;

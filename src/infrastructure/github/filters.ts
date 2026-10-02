@@ -5,7 +5,7 @@ import type { RepoInfo } from "@domain/types";
 import { fetchRepos } from "./client";
 import type { GitHubRepo, Octokit } from "./types";
 
-export function mapRepos(repos: GitHubRepo[]): RepoInfo[] {
+function mapRepos(repos: GitHubRepo[]): RepoInfo[] {
 	return repos.map((repo) => ({
 		owner: repo.owner.login,
 		name: repo.name,

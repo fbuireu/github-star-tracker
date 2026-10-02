@@ -1,4 +1,4 @@
-import { ChartCurve, type Config } from "@config/types";
+import { ChartCurve, ChartRange, type Config } from "@config/types";
 import { EMPTY_SUMMARY } from "@domain/comparison";
 import type { ForecastData } from "@domain/forecast";
 import { ForecastMethod, ForecastSource } from "@domain/forecast";
@@ -25,7 +25,7 @@ const RECONSTRUCTED = makeMultiRepoHistory({
 		{ "user/repo-a": 40, "user/repo-b": 20 },
 		{ "user/repo-a": 60, "user/repo-b": 40 },
 	],
-	stepDays: 1,
+	stepDays: 30,
 });
 
 function chartHistories(aggregate = RECONSTRUCTED): ChartHistories {
@@ -38,7 +38,7 @@ function render(config = makeConfig({ includeCharts: true, topRepos: 2 })) {
 	return renderRun({
 		config,
 		results: makeComparisonResults(),
-		previousTimestamp: "2026-01-01T00:00:00Z",
+		baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 		chartHistories: chartHistories(),
 		storedHistory: STORED,
 		forecastData: null,
@@ -68,8 +68,8 @@ describe("renderRun", () => {
 		const rendered = render();
 		const stampIn = (report: string): string | undefined => report.match(/\d{4}-\d{2}-\d{2}T[\d:.]+Z/)?.[0];
 
-		expect(stampIn(rendered.markdown)).toBeDefined();
-		expect(stampIn(rendered.markdown)).toBe(stampIn(rendered.html));
+		expect(stampIn(rendered.markdown)).toBe(NOW.toISOString());
+		expect(stampIn(rendered.html)).toBe(NOW.toISOString());
 	});
 
 	it("dates the header and the footer from that one read, so they cannot straddle midnight", () => {
@@ -77,7 +77,7 @@ describe("renderRun", () => {
 		const rendered = renderRun({
 			config: makeConfig({ includeCharts: true, topRepos: 2 }),
 			results: makeComparisonResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories(),
 			storedHistory: STORED,
 			forecastData: null,
@@ -96,7 +96,7 @@ describe("renderRun", () => {
 		const rendered = renderRun({
 			config,
 			results: makeComparisonResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories(),
 			storedHistory: STORED,
 			forecastData: null,
@@ -123,7 +123,7 @@ describe("renderRun", () => {
 		const params = {
 			config,
 			results: makeComparisonResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			storedHistory: STORED,
 			forecastData: null,
 			now: new Date("2026-03-04T12:00:00Z"),
@@ -145,7 +145,7 @@ describe("renderRun", () => {
 		const rendered = renderRun({
 			config: makeConfig({ includeCharts: true, topRepos: 2 }),
 			results: makeComparisonResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: {
 				aggregate: RECONSTRUCTED,
 				forRepo: () => ({ snapshots: [] }),
@@ -182,7 +182,7 @@ describe("renderRun", () => {
 		const rendered = renderRun({
 			config: makeConfig({ includeCharts: true, topRepos: 2 }),
 			results: makeComparisonResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories(),
 			storedHistory: STORED,
 			forecastData,
@@ -199,7 +199,7 @@ describe("renderRun", () => {
 		const withoutTopRepos = renderRun({
 			config: makeConfig({ includeCharts: true, topRepos: 2 }),
 			results: makeComparisonResults({ repos: [] }),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories(),
 			storedHistory: STORED,
 			forecastData: null,
@@ -239,6 +239,10 @@ describe("the two Report dialects stay in step", () => {
 		},
 		repos: [],
 	};
+	const withRepoForecast: ForecastData = {
+		...forecastData,
+		repos: [{ repoFullName: "user/repo-a", source: ForecastSource.OWN, forecasts: forecastData.aggregate.forecasts }],
+	};
 	const withRemoved = makeComparisonResults({
 		repos: [
 			makeRepoResult({ name: "kept", overrides: { current: 60, delta: 10 } }),
@@ -256,6 +260,12 @@ describe("the two Report dialects stay in step", () => {
 		{ name: "stargazers", heading: t.stargazers.sectionTitle, stargazerDiff },
 		{ name: "forecast", heading: t.forecast.sectionTitle, forecastData },
 		{
+			name: "per-repo forecasts",
+			heading: t.forecast.byRepository,
+			forecastData: withRepoForecast,
+			config: makeConfig({ includeCharts: false }),
+		},
+		{
 			name: "velocity",
 			heading: t.velocity.sectionTitle,
 			config: makeConfig({ includeCharts: true, topRepos: 2, velocityMetrics: true }),
@@ -268,7 +278,7 @@ describe("the two Report dialects stay in step", () => {
 			const rendered = renderRun({
 				config: config ?? makeConfig({ includeCharts: true, topRepos: 2 }),
 				results: results ?? makeComparisonResults(),
-				previousTimestamp: "2026-01-01T00:00:00Z",
+				baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 				chartHistories: chartHistories(),
 				storedHistory: STORED,
 				stargazerDiff: diff,
@@ -284,7 +294,7 @@ describe("the two Report dialects stay in step", () => {
 		const rendered = renderRun({
 			config: makeConfig({ includeCharts: false }),
 			results: makeComparisonResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories({ snapshots: [] }),
 			storedHistory: { snapshots: [] },
 			forecastData: null,
@@ -338,7 +348,7 @@ describe("the Notification subject", () => {
 		const spanish = renderRun({
 			config: makeConfig({ includeCharts: true, locale: "es" }),
 			results: makeComparisonResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories(),
 			storedHistory: STORED,
 			forecastData: null,
@@ -355,6 +365,7 @@ describe("both chart systems honour the options they share", () => {
 		{ name: "chart-curve", changed: { chartCurve: ChartCurve.CATMULL_ROM } },
 		{ name: "chart-show-points", changed: { chartShowPoints: false } },
 		{ name: "chart-begin-at-zero", changed: { chartBeginAtZero: true } },
+		{ name: "chart-range", changed: { chartRange: ChartRange.D30 } },
 		{ name: "chart-line-width", changed: { chartLineWidth: 7 } },
 		{ name: "chart-line-color", changed: { chartLineColor: "#6b63ff" } },
 	];
@@ -363,7 +374,7 @@ describe("both chart systems honour the options they share", () => {
 		const rendered = renderRun({
 			config: makeConfig({ includeCharts: true, topRepos: 1, ...overrides }),
 			results: makeComparisonResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories(),
 			storedHistory: STORED,
 			forecastData: null,

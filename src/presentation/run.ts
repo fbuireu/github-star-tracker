@@ -58,7 +58,7 @@ export function renderEmptyRun(config: Config): RenderedRun {
 interface RenderRunParams {
 	config: Config;
 	results: ComparisonResults;
-	previousTimestamp: string | null;
+	baselineSnapshotTimestamp: string | null;
 	chartHistories: ChartHistories;
 	storedHistory: History;
 	stargazerDiff?: StargazerDiffResult | null;
@@ -69,7 +69,7 @@ interface RenderRunParams {
 export function renderRun({
 	config,
 	results,
-	previousTimestamp,
+	baselineSnapshotTimestamp,
 	chartHistories,
 	storedHistory,
 	stargazerDiff,
@@ -79,7 +79,7 @@ export function renderRun({
 	const reportParams: ReportParams = {
 		config,
 		results,
-		previousTimestamp,
+		baselineSnapshotTimestamp,
 		history: chartHistories.aggregate,
 		velocityHistory: storedHistory,
 		stargazerDiff,

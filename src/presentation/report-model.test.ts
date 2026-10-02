@@ -22,39 +22,39 @@ const forecastData: ForecastData = {
 	repos: [],
 };
 
-interface ModelOf extends Partial<Omit<ReportParams, "config">> {
+interface ModelOfParams extends Partial<Omit<ReportParams, "config">> {
 	config?: Partial<Config>;
 }
 
-function modelOf({ config, ...overrides }: ModelOf = {}) {
+function modelOf({ config, ...overrides }: ModelOfParams = {}) {
 	return buildReportModel({
 		config: makeConfig(config),
 		results: makeComparisonResults(),
-		previousTimestamp: "2026-01-01T00:00:00Z",
+		baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 		...overrides,
 	});
 }
 
 describe("buildReportModel", () => {
 	describe("run identity", () => {
-		it("dates the run and the baseline it is measured against", () => {
+		it("dates the run and the Baseline Snapshot it is measured against", () => {
 			const model = modelOf({ now: new Date("2026-03-04T23:59:59.999Z") });
 
-			expect(model.prev).toBe("2026-01-01");
+			expect(model.baselineSnapshotDate).toBe("2026-01-01");
 			expect(model.now).toBe("2026-03-04");
 			expect(model.generatedAt).toBe("2026-03-04T23:59:59.999Z");
 			expect(model.isFirstRun).toBe(false);
 		});
 
-		it("marks a missing baseline as the first run", () => {
-			const model = modelOf({ previousTimestamp: null });
+		it("marks a missing Baseline Snapshot as the first run", () => {
+			const model = modelOf({ baselineSnapshotTimestamp: null });
 
 			expect(model.isFirstRun).toBe(true);
-			expect(model.prev).toBe(getTranslations("en").report.firstRun);
+			expect(model.baselineSnapshotDate).toBe(getTranslations("en").report.firstRun);
 		});
 
-		it("reads the first run off the baseline, not off the rendered date", () => {
-			const model = modelOf({ previousTimestamp: getTranslations("en").report.firstRun });
+		it("reads the first run off the Baseline Snapshot, not off the rendered date", () => {
+			const model = modelOf({ baselineSnapshotTimestamp: getTranslations("en").report.firstRun });
 
 			expect(model.isFirstRun).toBe(false);
 		});
@@ -164,7 +164,7 @@ describe("buildReportModel", () => {
 			expect(modelOf({ velocityHistory, config: { velocityMetrics: true } }).velocity).not.toBeNull();
 		});
 
-		it("resolves the projection to a single present-or-absent value", () => {
+		it("resolves the next Milestone to a single present-or-absent value", () => {
 			const growing = modelOf({ velocityHistory, config: { velocityMetrics: true } });
 			const flat = modelOf({
 				velocityHistory: makeHistory({ starCounts: [100, 100] }),
@@ -174,9 +174,9 @@ describe("buildReportModel", () => {
 			expect(growing.velocity).toEqual({
 				starsPerDay: 14.29,
 				growthPercent: 100,
-				projection: { days: 21, milestone: 500 },
+				nextMilestone: { days: 21, milestone: 500 },
 			});
-			expect(flat.velocity?.projection).toBeNull();
+			expect(flat.velocity?.nextMilestone).toBeNull();
 		});
 
 		it("nests under the forecast only when there is a forecast", () => {

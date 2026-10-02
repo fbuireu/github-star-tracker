@@ -56,8 +56,8 @@ asserts):
   a repository entry that is not an object. The message names the path and what it found there
   (`snapshots[3].repos[0].stars (expected number, found "7")`). The outcome it prevents is the same one: a
   Snapshot with no `repos` used to be read as a Baseline holding no Repositories, so the Run reported every
-  Star as new and pushed. Only the types are checked. A `timestamp` must be a string but not a parseable
-  date, because [ADR 0017](./0017-velocity-and-forecast-read-unparseable-timestamps-differently.md) already
+  Star as new and pushed. Only the types are checked. A `timestamp` must be a string but need not be a
+  parseable date, because [ADR 0017](./0017-velocity-and-forecast-read-unparseable-timestamps-differently.md) already
   decides what an unparseable one means, and keys the schema does not name pass through untouched.
 
 They all propagate out of `withDataBranch` to `trackStars`, which fails the Action. Nothing is published and

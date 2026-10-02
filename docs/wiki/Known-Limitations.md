@@ -130,7 +130,7 @@ Linear Regression fits a straight line through the whole observed series using l
 predicted(week) = lastValue + slope * week * 7
 ```
 
-The fitted line supplies the *slope* only. Both methods anchor the projection on the **last observed
+The fitted line supplies the *slope* only. Both methods anchor the forecast on the **last observed
 value**, never on the fitted one, so the first predicted point continues from where the curve actually is.
 
 Weighted Moving Average computes deltas between consecutive snapshots and weights recent deltas higher. It is more responsive to recent acceleration or deceleration, but more sensitive to short-term noise.
@@ -143,7 +143,7 @@ The weighted rate is **per day**, so the week offset is multiplied by seven like
 
 Both methods clamp predictions to non-negative integers via `Math.max(0, Math.round(...))` to avoid nonsensical outputs (e.g., -3 stars).
 
-Forecasts require a minimum of **3 points** in the series they are fitted to (`MIN_SNAPSHOTS_FOR_FORECAST = 3`) and project **4 weeks ahead** (`FORECAST_WEEKS = 4`). That series is the Reconstructed History when charts are on, and it already carries around 30 points on the very first run. The three-point floor therefore bites only when no reconstruction is available, meaning `include-charts` is off or no `starred_at` date was reachable, and the Stored History is all there is. The thresholds are intentionally conservative: below them any extrapolation would be unreliable.
+Forecasts require a minimum of **3 points** in the series they are fitted to (`MIN_SNAPSHOTS_FOR_FORECAST = 3`) and project **4 weeks ahead** (`FORECAST_WEEKS = 4`). That series is the Reconstructed History when charts are on, and it already carries around 30 points on the very first run. The three-point floor therefore bites only when no reconstruction is available, meaning `include-charts` is off or no `starred_at` date was reachable, and the Stored History is all there is. A top repository's own forecast counts only the points that include that repository, so on the Stored History a repository fewer than 3 runs have recorded gets no forecast table of its own, rather than one fitted to zeros from before it was tracked. The thresholds are intentionally conservative: below them any extrapolation would be unreliable.
 
 ### Interpretation guide
 

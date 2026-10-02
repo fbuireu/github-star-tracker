@@ -50,7 +50,7 @@ vi.mock("@infrastructure/github/filters", () => ({ getRepos: vi.fn() }));
 vi.mock("@infrastructure/github/stargazers", () => ({ fetchAllStargazers: vi.fn() }));
 vi.mock("@infrastructure/persistence/data-branch", () => ({ withDataBranch: vi.fn() }));
 vi.mock("@infrastructure/persistence/storage", () => ({
-	writeHtmlReport: vi.fn().mockReturnValue("/tmp/star-tracker-report.html"),
+	writeHtmlReport: vi.fn(),
 }));
 vi.mock("@infrastructure/notification/email", () => ({
 	getEmailConfig: vi.fn(),
@@ -102,7 +102,7 @@ function publishedChart(filename: string): { filename: string; svg: string } | u
 type Measurement = ReturnType<typeof measureRun>;
 function mockMeasurement(overrides: Partial<Measurement> = {}): Measurement {
 	const measurement: Measurement = {
-		baselineTimestamp: null,
+		baselineSnapshotTimestamp: null,
 		results: defaultResults,
 		summary: defaultSummary,
 		updatedHistory: { ...defaultUpdatedHistory },
@@ -121,6 +121,7 @@ function setupDefaults() {
 	vi.mocked(loadConfig).mockReturnValue(defaultConfig);
 	vi.mocked(getRepos).mockResolvedValue(defaultRepos);
 	vi.mocked(withDataBranch).mockImplementation(({ run }) => run(branch as unknown as DataBranch));
+	vi.mocked(writeHtmlReport).mockReturnValue("/tmp/star-tracker-report.html");
 	branch.readHistory.mockReturnValue(defaultHistory);
 	mockMeasurement();
 	vi.mocked(deltaIndicator).mockReturnValue("+10");
@@ -139,14 +140,12 @@ function setupDefaults() {
 }
 describe("trackStars", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
-		vi.useFakeTimers({ toFake: ["Date"] });
-		vi.setSystemTime(new Date("2026-07-01T00:00:00Z"));
+		vi.resetAllMocks();
+		vi.useFakeTimers({ now: new Date("2026-07-01T00:00:00Z"), toFake: ["Date"] });
 		setupDefaults();
 	});
 	afterEach(() => {
 		vi.useRealTimers();
-		vi.restoreAllMocks();
 	});
 	it("runs the full happy path", async () => {
 		await trackStars();
@@ -213,7 +212,7 @@ describe("trackStars", () => {
 			vi.mocked(getEmailConfig).mockReturnValue(emailConfig);
 			await trackStars();
 			expect(sendEmail).not.toHaveBeenCalled();
-			expect(core.info).toHaveBeenCalledWith("No stars changed since the baseline, skipping email");
+			expect(core.info).toHaveBeenCalledWith("No stars changed since the Baseline Snapshot, skipping email");
 		});
 		it("skips email when threshold is not reached", async () => {
 			vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, notificationThreshold: 10 });
@@ -568,16 +567,11 @@ describe("trackStars", () => {
 		});
 	});
 	describe("github enterprise (GHES)", () => {
-		const savedApiUrl = process.env.GITHUB_API_URL;
 		beforeEach(() => {
-			delete process.env.GITHUB_API_URL;
+			vi.stubEnv("GITHUB_API_URL", undefined);
 		});
 		afterEach(() => {
-			if (savedApiUrl !== undefined) {
-				process.env.GITHUB_API_URL = savedApiUrl;
-			} else {
-				delete process.env.GITHUB_API_URL;
-			}
+			vi.unstubAllEnvs();
 		});
 		it("calls getOctokit without baseUrl when no API URL is configured", async () => {
 			await trackStars();
@@ -597,15 +591,17 @@ describe("trackStars", () => {
 			);
 		});
 		it("falls back to GITHUB_API_URL env var when input is empty", async () => {
-			process.env.GITHUB_API_URL = "https://ghes.corp.com/api/v3";
+			vi.stubEnv("GITHUB_API_URL", "https://ghes.corp.com/api/v3");
 			await trackStars();
 			expect(github.getOctokit).toHaveBeenCalledWith("fake-token", { baseUrl: "https://ghes.corp.com/api/v3" }, retry);
 		});
 		it.each([
-			["a bare host", "ghes.corp.com"],
-			["a non-http scheme", "ftp://ghes.corp.com/api/v3"],
-			["a string that is not a URL", "not a url"],
-		])("fails the run on a github-api-url that is %s instead of calling GitHub", async (_label, apiUrl) => {
+			{ label: "a bare host", apiUrl: "ghes.corp.com" },
+			{ label: "a scheme other than https", apiUrl: "ftp://ghes.corp.com/api/v3" },
+			{ label: "plain http", apiUrl: "http://ghes.corp.com/api/v3" },
+			{ label: "https without its slashes", apiUrl: "https:/ghes.corp.com/api/v3" },
+			{ label: "a string that is not a URL", apiUrl: "not a url" },
+		])("fails the run on a github-api-url that is $label instead of calling GitHub", async ({ apiUrl }) => {
 			vi.mocked(core.getInput).mockImplementation((name: string) => {
 				if (name === "github-token") return "fake-token";
 				if (name === "github-api-url") return apiUrl;
@@ -616,14 +612,22 @@ describe("trackStars", () => {
 			expect(core.setFailed).toHaveBeenCalledWith(expect.stringContaining(`Invalid github-api-url "${apiUrl}"`));
 		});
 		it("names the GITHUB_API_URL fallback when that is where the bad URL came from", async () => {
-			process.env.GITHUB_API_URL = "ghes.corp.com";
+			vi.stubEnv("GITHUB_API_URL", "ghes.corp.com");
 			await trackStars();
 			expect(core.setFailed).toHaveBeenCalledWith(
 				expect.stringContaining("or from GITHUB_API_URL when the input is empty"),
 			);
 		});
+		it("refuses a plain http GITHUB_API_URL too, saying the token would travel in clear text", async () => {
+			vi.stubEnv("GITHUB_API_URL", "http://ghes.corp.com/api/v3");
+			await trackStars();
+			expect(github.getOctokit).not.toHaveBeenCalled();
+			expect(core.setFailed).toHaveBeenCalledWith(
+				'Star Tracker failed: Invalid github-api-url "http://ghes.corp.com/api/v3" (read from the input, or from GITHUB_API_URL when the input is empty). Every request carries the token, and plain http would send it in clear text, so set an absolute https URL, such as https://github.example.com/api/v3.',
+			);
+		});
 		it("prefers input over GITHUB_API_URL env var", async () => {
-			process.env.GITHUB_API_URL = "https://ghes-env.corp.com/api/v3";
+			vi.stubEnv("GITHUB_API_URL", "https://ghes-env.corp.com/api/v3");
 			vi.mocked(core.getInput).mockImplementation((name: string) => {
 				if (name === "github-token") return "fake-token";
 				if (name === "github-api-url") return "https://ghes-input.corp.com/api/v3";
@@ -695,13 +699,13 @@ describe("trackStars", () => {
 			await trackStars();
 			expect(measureRun).toHaveBeenCalledWith(expect.objectContaining({ comparisonWindow: CompareAgainst.D7 }));
 		});
-		it("derives previousTimestamp from the measured baseline when present", async () => {
-			mockMeasurement({ baselineTimestamp: "2026-01-01T00:00:00Z" });
+		it("dates the Reports from the measured Baseline Snapshot when there is one", async () => {
+			mockMeasurement({ baselineSnapshotTimestamp: "2026-01-01T00:00:00Z" });
 			await trackStars();
 
 			const { model } = vi.mocked(generateMarkdownReport).mock.calls[0][0];
 
-			expect(model.prev).toBe("2026-01-01");
+			expect(model.baselineSnapshotDate).toBe("2026-01-01");
 			expect(model.isFirstRun).toBe(false);
 		});
 		it("warns when max-history drops stored snapshots", async () => {

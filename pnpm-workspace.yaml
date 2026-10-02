@@ -1,7 +1,7 @@
 packages:
   - ./
 savePrefix: ""
-minimumReleaseAge: 4320 # 3 days
+minimumReleaseAge: 4320
 blockExoticSubdeps: true
 allowBuilds:
   esbuild: true

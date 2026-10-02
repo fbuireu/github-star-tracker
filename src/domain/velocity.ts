@@ -30,20 +30,24 @@ function nextMilestoneAbove(value: number): number | null {
 	return STAR_MILESTONES.find((milestone) => milestone > value) ?? null;
 }
 
-export function computeVelocity({ history }: { history: History }): VelocityMetrics | null {
+interface ComputeVelocityParams {
+	history: History;
+}
+
+export function computeVelocity({ history }: ComputeVelocityParams): VelocityMetrics | null {
 	const snapshots = history.snapshots;
 	if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
 
 	const last = snapshots[snapshots.length - 1];
 	if (toEpochMs(last.timestamp) === null) return null;
 
-	const points = snapshots.reduce<SeriesPoint[]>((observed, snapshot) => {
+	const points: SeriesPoint[] = [];
+
+	for (const snapshot of snapshots) {
 		const timeMs = toEpochMs(snapshot.timestamp);
 
-		if (timeMs !== null) observed.push({ day: timeMs / MS_PER_DAY, value: snapshot.totalStars });
-
-		return observed;
-	}, []);
+		if (timeMs !== null) points.push({ day: timeMs / MS_PER_DAY, value: snapshot.totalStars });
+	}
 
 	const interval = latestRateInterval(points);
 	if (interval === null) return null;

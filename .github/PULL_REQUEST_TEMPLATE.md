@@ -45,12 +45,12 @@
 <!-- Check all that apply, with an "x" -->
 
 - [ ] `pnpm verify` passes (format check, typecheck, coverage and build)
-- [ ] I have performed a self-review of my own code
-- [ ] My change carries no inline comments; rationale lives in this PR, the commit messages, an ADR or the folder's guide
+- [ ] I have reviewed my own diff against [`CODING_STANDARDS.md`](../CODING_STANDARDS.md)
+- [ ] My change carries no inline comments; rationale lives in this PR, the commit messages, an ADR or a rule in [`CODING_STANDARDS.md`](../CODING_STANDARDS.md)
 - [ ] I used the glossary's words ([`CONTEXT.md`](../CONTEXT.md)) rather than synonyms
 - [ ] I rebuilt `dist/` with `pnpm build` and committed it, if I touched anything under `src/`
-- [ ] Changed inputs, outputs or defaults are reflected in [`action.yml`](../action.yml), the wiki, the README and the *Outputs* section of [`src/application/AGENTS.md`](../src/application/AGENTS.md), alphabetically
-- [ ] I updated any `AGENTS.md`, [`CONTEXT.md`](../CONTEXT.md), [`ARCHITECTURE.md`](../ARCHITECTURE.md), ADR or wiki page my change affects, in this same PR, and `pnpm test:docs` passes
+- [ ] Changed inputs, outputs or defaults are reflected in [`action.yml`](../action.yml), the wiki, the README, the *Outputs* section of [`src/application/AGENTS.md`](../src/application/AGENTS.md) and the outputs line of [`ARCHITECTURE.md`](../ARCHITECTURE.md), alphabetically
+- [ ] I updated any `AGENTS.md`, [`CODING_STANDARDS.md`](../CODING_STANDARDS.md), [`CONTEXT.md`](../CONTEXT.md), [`ARCHITECTURE.md`](../ARCHITECTURE.md), ADR or wiki page my change affects, in this same PR, and `pnpm test:docs` passes
 - [ ] My changes generate no new warnings or errors
 - [ ] I have added tests that prove my fix is effective or that my feature works
 

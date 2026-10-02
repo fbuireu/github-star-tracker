@@ -1,6 +1,6 @@
 # Architecture
 
-The action follows a **Domain-Driven Design<sub>(ish)</sub>** layering with a **Functional Core, Imperative Shell** pattern: the domain is pure, one ubiquitous language spans the whole tree, and each layer documents its own rules in a colocated `AGENTS.md`. The dependency direction is strict and enumerated rather than conventional: the core knows nothing about GitHub, git, the filesystem or SMTP, and everything points inward toward it.
+The action follows a **Domain-Driven Design<sub>(ish)</sub>** layering with a **Functional Core, Imperative Shell** pattern: the domain is pure, one ubiquitous language spans the whole tree, how code is written is one [`CODING_STANDARDS.md`](https://github.com/fbuireu/github-star-tracker/blob/main/CODING_STANDARDS.md), and each layer documents what it does in a colocated `AGENTS.md`. The dependency direction is strict and enumerated rather than conventional: the core knows nothing about GitHub, git, the filesystem or SMTP, and everything points inward toward it.
 
 ```mermaid
 ---
@@ -31,7 +31,7 @@ flowchart RL
 
 Every arrow above is an import some layer really makes; anything not drawn is forbidden.
 
-Each layer documents its own rules in a colocated `AGENTS.md`.
+Each layer documents what it does, and what bites while changing it, in a colocated `AGENTS.md`; the rules for how code is written anywhere in the tree are [`CODING_STANDARDS.md`](https://github.com/fbuireu/github-star-tracker/blob/main/CODING_STANDARDS.md).
 
 ---
 
@@ -46,7 +46,7 @@ Each layer documents its own rules in a colocated `AGENTS.md`.
 | **config** | Action inputs plus `star-tracker.yml` resolved into one typed `Config` | Reads the inputs and one YAML file |
 | **infrastructure** | Everything outbound: the GitHub REST API, the `git` CLI, the Data Branch worktree, SMTP | Network, `child_process`, filesystem |
 | **application** | Sequences the single use case, `trackStars()` | Writes the Action log and the action outputs |
-| **shared** | Cross-cutting code no layer owns: `errorMessage`, plus the test fixtures used from `*.test.ts` only | None |
+| **shared** | Cross-cutting code no layer owns: `errorMessage` and the schema-issue wording, plus the test fixtures used from `*.test.ts` only | None |
 
 `assets/` sits beside them and is not a layer: it holds the brand files the README embeds, imports nothing and is imported by nothing.
 
@@ -81,5 +81,6 @@ This page is the shape, not the rules. The normative statement of which layer ma
 | Why is the tree layered at all, and what did the `(ish)` drop? | [ADR 0004](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0004-layered-source-structure.md) |
 | When does a bare `string` or `number` earn a type of its own? | [ADR 0022](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md) |
 | What does one layer actually guarantee? | The `AGENTS.md` inside that layer's folder |
+| How is code written here, and what does a review hold a change to? | [`CODING_STANDARDS.md`](https://github.com/fbuireu/github-star-tracker/blob/main/CODING_STANDARDS.md) |
 | What happens, step by step, on a run? | [How It Works](How-It-Works) |
 | Why these tools and these dependencies? | [Technical Stack](Technical-Stack) |

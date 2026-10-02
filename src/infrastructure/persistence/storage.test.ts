@@ -31,11 +31,7 @@ vi.mock("@actions/core", () => ({
 
 describe("readHistory", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
-	});
-
-	afterEach(() => {
-		vi.restoreAllMocks();
+		vi.resetAllMocks();
 	});
 
 	it("returns empty history when file does not exist", () => {
@@ -74,11 +70,11 @@ describe("readHistory", () => {
 	});
 
 	it.each([
-		["a string", '{"snapshots":"garbage"}'],
-		["a number", '{"snapshots":5}'],
-		["null", '{"snapshots":null}'],
-		["an object", '{"snapshots":{"2026-01-01":1}}'],
-	])("refuses a snapshots key holding %s rather than silently restarting the tracking record", (_label, contents) => {
+		{ label: "a string", contents: '{"snapshots":"garbage"}' },
+		{ label: "a number", contents: '{"snapshots":5}' },
+		{ label: "null", contents: '{"snapshots":null}' },
+		{ label: "an object", contents: '{"snapshots":{"2026-01-01":1}}' },
+	])("refuses a snapshots key holding $label rather than silently restarting the tracking record", ({ contents }) => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue(contents);
 
@@ -100,12 +96,12 @@ describe("readHistory", () => {
 	});
 
 	it.each([
-		["null", "null"],
-		["an array", "[]"],
-		["an array of snapshots", '[{"timestamp":"2026-01-01","totalStars":1,"repos":[]}]'],
-		["a number", "5"],
-		["a string", '"snapshots"'],
-	])("refuses %s rather than silently restarting the tracking record", (_label, contents) => {
+		{ label: "null", contents: "null" },
+		{ label: "an array", contents: "[]" },
+		{ label: "an array of snapshots", contents: '[{"timestamp":"2026-01-01","totalStars":1,"repos":[]}]' },
+		{ label: "a number", contents: "5" },
+		{ label: "a string", contents: '"snapshots"' },
+	])("refuses $label rather than silently restarting the tracking record", ({ contents }) => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue(contents);
 
@@ -141,43 +137,49 @@ describe("readHistory", () => {
 	});
 
 	it.each([
-		["a snapshot that is not an object", '{"snapshots":[null]}', "snapshots[0] (expected object, found null)"],
-		[
-			"a snapshot with no repos",
-			'{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":3}]}',
-			"snapshots[0].repos (expected array, found nothing)",
-		],
-		[
-			"a snapshot timestamp that is not a string",
-			'{"snapshots":[{"timestamp":20260101,"totalStars":3,"repos":[]}]}',
-			"snapshots[0].timestamp (expected string, found 20260101)",
-		],
-		[
-			"a snapshot total that is not a number",
-			'{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":"3","repos":[]}]}',
-			'snapshots[0].totalStars (expected number, found "3")',
-		],
-		[
-			"a repo entry that is not an object",
-			'{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":3,"repos":["user/test"]}]}',
-			'snapshots[0].repos[0] (expected object, found "user/test")',
-		],
-		[
-			"a repo star count that is not a number",
-			'{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":7,"repos":[{"fullName":"user/test","name":"test","owner":"user","stars":"7"}]}]}',
-			'snapshots[0].repos[0].stars (expected number, found "7")',
-		],
-		[
-			"a repo with no full name",
-			'{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":7,"repos":[{"name":"test","owner":"user","stars":7}]}]}',
-			"snapshots[0].repos[0].fullName (expected string, found nothing)",
-		],
-		[
-			"a notification baseline that is not a number",
-			'{"snapshots":[],"starsAtLastNotification":"520"}',
-			'starsAtLastNotification (expected number, found "520")',
-		],
-	])("refuses %s and names where it is", (_label, contents, location) => {
+		{
+			label: "a snapshot that is not an object",
+			contents: '{"snapshots":[null]}',
+			location: "snapshots[0] (expected object, found null)",
+		},
+		{
+			label: "a snapshot with no repos",
+			contents: '{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":3}]}',
+			location: "snapshots[0].repos (expected array, found nothing)",
+		},
+		{
+			label: "a timestamp that is not a string",
+			contents: '{"snapshots":[{"timestamp":20260101,"totalStars":3,"repos":[]}]}',
+			location: "snapshots[0].timestamp (expected string, found 20260101)",
+		},
+		{
+			label: "a snapshot total that is not a number",
+			contents: '{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":"3","repos":[]}]}',
+			location: 'snapshots[0].totalStars (expected number, found "3")',
+		},
+		{
+			label: "a repo entry that is not an object",
+			contents: '{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":3,"repos":["user/test"]}]}',
+			location: 'snapshots[0].repos[0] (expected object, found "user/test")',
+		},
+		{
+			label: "a repo star count that is not a number",
+			contents:
+				'{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":7,"repos":[{"fullName":"user/test","name":"test","owner":"user","stars":"7"}]}]}',
+			location: 'snapshots[0].repos[0].stars (expected number, found "7")',
+		},
+		{
+			label: "a repo with no full name",
+			contents:
+				'{"snapshots":[{"timestamp":"2026-01-01T00:00:00Z","totalStars":7,"repos":[{"name":"test","owner":"user","stars":7}]}]}',
+			location: "snapshots[0].repos[0].fullName (expected string, found nothing)",
+		},
+		{
+			label: "a notification baseline that is a string",
+			contents: '{"snapshots":[],"starsAtLastNotification":"520"}',
+			location: 'starsAtLastNotification (expected number, found "520")',
+		},
+	])("refuses $label and names where it is", ({ contents, location }) => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue(contents);
 
@@ -208,7 +210,7 @@ describe("readHistory", () => {
 
 describe("writeHistory", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 	});
 
 	it("writes history to file", () => {
@@ -254,7 +256,7 @@ describe("writeHistory", () => {
 
 describe("writeArtefact", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 	});
 
 	it.each([
@@ -269,22 +271,16 @@ describe("writeArtefact", () => {
 });
 
 describe("writeHtmlReport", () => {
-	const originalRunnerTemp = process.env.RUNNER_TEMP;
-
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 	});
 
 	afterEach(() => {
-		if (originalRunnerTemp === undefined) {
-			delete process.env.RUNNER_TEMP;
-		} else {
-			process.env.RUNNER_TEMP = originalRunnerTemp;
-		}
+		vi.unstubAllEnvs();
 	});
 
 	it("writes the HTML report to RUNNER_TEMP and returns its path", () => {
-		process.env.RUNNER_TEMP = "/runner/tmp";
+		vi.stubEnv("RUNNER_TEMP", "/runner/tmp");
 		const htmlReport = "<p>Report</p>";
 
 		const filePath = writeHtmlReport({ htmlReport });
@@ -295,7 +291,7 @@ describe("writeHtmlReport", () => {
 	});
 
 	it("falls back to the current working directory when RUNNER_TEMP is unset", () => {
-		delete process.env.RUNNER_TEMP;
+		vi.stubEnv("RUNNER_TEMP", undefined);
 		const htmlReport = "<p>Report</p>";
 
 		const filePath = writeHtmlReport({ htmlReport });
@@ -306,7 +302,7 @@ describe("writeHtmlReport", () => {
 
 describe("writeChart", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 	});
 
 	it("creates charts directory and writes SVG file", () => {
@@ -333,7 +329,7 @@ describe("writeChart", () => {
 
 describe("readStargazers", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 	});
 
 	it("returns empty map when file does not exist", () => {
@@ -373,10 +369,10 @@ describe("readStargazers", () => {
 	});
 
 	it.each([
-		["null", "null"],
-		["a number", "5"],
-		["a string", '"alice"'],
-	])("returns an empty map for a file holding %s", (_label, contents) => {
+		{ label: "null", contents: "null" },
+		{ label: "a number", contents: "5" },
+		{ label: "a string", contents: '"alice"' },
+	])("returns an empty map for a file holding $label", ({ contents }) => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue(contents);
 
@@ -393,7 +389,7 @@ describe("readStargazers", () => {
 
 describe("writeStargazers", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 	});
 
 	it("writes stargazer map to file", () => {
@@ -421,9 +417,13 @@ describe("commitAndPush", () => {
 		return vi.mocked(execute).mock.calls.some(([params]) => JSON.stringify(params.args) === JSON.stringify(args));
 	}
 
-	function stageChanges({ pushError }: { pushError?: Error } = {}): void {
+	interface StageChangesParams {
+		pushError?: Error;
+	}
+
+	function stageChanges({ pushError }: StageChangesParams = {}): void {
 		vi.mocked(execute).mockImplementation(({ args }) => {
-			if (args[0] === "diff") throw new Error("Changes detected");
+			if (args.includes("diff")) throw new Error("Changes detected");
 			if (pushError && args.includes("push")) throw pushError;
 
 			return "";
@@ -431,12 +431,8 @@ describe("commitAndPush", () => {
 	}
 
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 		vi.mocked(execute).mockReturnValue("");
-	});
-
-	afterEach(() => {
-		vi.restoreAllMocks();
 	});
 
 	it("commits and pushes changes when there are staged changes", () => {
@@ -484,7 +480,7 @@ describe("commitAndPush", () => {
 
 describe("pruneCharts", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 	});
 
 	it("deletes chart files no longer produced and keeps the current ones", () => {

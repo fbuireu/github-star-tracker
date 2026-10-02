@@ -30,6 +30,10 @@ describe("errorMessage", () => {
 	it("ignores a non-string message", () => {
 		expect(errorMessage({ message: 500 })).toBe("[object Object]");
 	});
+
+	it("never throws for an object with no prototype, which String() cannot convert", () => {
+		expect(errorMessage(Object.create(null))).toBe("[object Object]");
+	});
 });
 
 describe("describeFound", () => {

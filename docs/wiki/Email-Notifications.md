@@ -10,7 +10,7 @@ GitHub Star Tracker can send HTML email reports with charts and star data. This 
 - New and removed repository lists, each with the star count that entered or left
 - Per-repo charts headed by that repo's star count and delta, so a curve never has to be read against the table
 - Stargazer section (if `track-stargazers` enabled)
-- Forecast tables (if enough history), aggregate first and then one per repository
+- Forecast tables (if enough history), aggregate first and then one per top repository with enough history of its own
 - Localized content based on `locale` setting
 - Responsive design for desktop and mobile
 
@@ -159,12 +159,12 @@ message ID. Set `email-from` to a real address, or use one as `smtp-username`.
 
 | Line | Level | Means |
 |---|---|---|
-| `Invalid smtp-port "<value>". Falling back to 587.` | warning | The port was not an integer in `1..65535`. The run continues on 587, which is STARTTLS, so a `465` typo silently changes the transport |
+| `Invalid smtp-port "<value>". Falling back to 587.` | warning | The port did not start with an integer in `1..65535` (the adapter reads the leading integer). The run continues on 587, which is STARTTLS, so a `465` typo silently changes the transport |
 | `SMTP configured but no email-to address provided, skipping email` | warning | Nothing was sent, and this counts as a **failed** delivery, so the notification baseline is held back |
 | `Email rejected for: <addresses>` | warning | The server accepted the message but refused those recipients. The run still reports the send as successful, so this is the usual answer to "the log says sent but it never arrived" |
 | `Email sent to <address> (message ID: ...)` | info | Delivered. The address shown is `email-to`, not the message ID's domain |
 | `Notification threshold not reached, skipping email` | info | SMTP is configured and stars moved, but the accumulated change has not tripped the threshold yet |
-| `No stars changed since the baseline, skipping email` | info | SMTP is configured and nothing moved |
+| `No stars changed since the Baseline Snapshot, skipping email` | info | SMTP is configured and nothing moved |
 
 ### Notification Threshold
 

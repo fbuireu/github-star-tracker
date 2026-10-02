@@ -1,5 +1,11 @@
 import { execFileSync } from "node:child_process";
 import * as core from "@actions/core";
+import * as z from "zod/mini";
+
+const GitFailureSchema = z.object({
+	stderr: z.catch(z.optional(z.string()), undefined),
+	message: z.catch(z.optional(z.string()), undefined),
+});
 
 interface ExecuteParams {
 	args: string[];
@@ -14,9 +20,8 @@ export function execute({ args, options = {} }: ExecuteParams): string {
 			...options,
 		}).trim();
 	} catch (error: unknown) {
-		const err = error as { stderr?: string; message?: string };
-		const stderr = err.stderr?.trim() || "";
-		const detail = stderr || err.message || "Unknown error";
+		const { stderr, message } = GitFailureSchema.safeParse(error).data ?? {};
+		const detail = stderr?.trim() || message || "Unknown error";
 
 		throw new Error(`Git command failed: "git ${args.join(" ")}"\n${detail}`);
 	}

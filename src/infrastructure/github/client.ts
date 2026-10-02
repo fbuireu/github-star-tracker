@@ -7,6 +7,8 @@ import { type GitHubRepo, GitHubRepoSchema, type Octokit } from "./types";
 
 const REPOS_PER_PAGE = 100;
 
+const RepoPageSchema = z.array(z.unknown());
+
 const RepoListSchema = z.array(GitHubRepoSchema);
 
 interface FetchReposParams {
@@ -16,6 +18,12 @@ interface FetchReposParams {
 
 type ListReposParams = NonNullable<Parameters<Octokit["rest"]["repos"]["listForAuthenticatedUser"]>[0]>;
 
+interface FetchRepoPageParams {
+	octokit: Octokit;
+	query: ListReposParams;
+	page: number;
+}
+
 const VISIBILITY_PARAMS: Record<Config["visibility"], Pick<ListReposParams, "visibility" | "affiliation">> = {
 	public: { visibility: "public" },
 	private: { visibility: "private" },
@@ -23,45 +31,46 @@ const VISIBILITY_PARAMS: Record<Config["visibility"], Pick<ListReposParams, "vis
 	owned: { visibility: "all", affiliation: "owner" },
 };
 
-export async function fetchRepos({ octokit, config }: FetchReposParams): Promise<GitHubRepo[]> {
-	const fetched: unknown[] = [];
-	let page = 1;
-
-	const params = {
-		per_page: REPOS_PER_PAGE,
-		sort: "full_name",
-		...VISIBILITY_PARAMS[config.visibility],
-	} satisfies ListReposParams;
-
+async function fetchRepoPage({ octokit, query, page }: FetchRepoPageParams): Promise<unknown> {
 	try {
-		let dataLength: number;
+		const { data } = await octokit.rest.repos.listForAuthenticatedUser({ ...query, page });
 
-		do {
-			const { data } = await octokit.rest.repos.listForAuthenticatedUser({
-				...params,
-				page,
-			});
-
-			dataLength = data.length;
-
-			if (dataLength === 0) break;
-
-			fetched.push(...data);
-			page++;
-		} while (dataLength >= REPOS_PER_PAGE);
+		return data;
 	} catch (error) {
 		throw new Error(
 			`Failed to fetch repositories from GitHub API: ${describeFetchError(error)}. Verify that your github-token has the correct permissions.`,
 		);
 	}
+}
+
+function unreadableRepoList(issue: z.core.$ZodIssue): Error {
+	return new Error(`GitHub returned a repository list this action cannot read: ${describeIssue(issue)}.`);
+}
+
+export async function fetchRepos({ octokit, config }: FetchReposParams): Promise<GitHubRepo[]> {
+	const fetched: unknown[] = [];
+	let page = 1;
+	let pageLength: number;
+
+	const query = {
+		per_page: REPOS_PER_PAGE,
+		sort: "full_name",
+		...VISIBILITY_PARAMS[config.visibility],
+	} satisfies ListReposParams;
+
+	do {
+		const rows = RepoPageSchema.safeParse(await fetchRepoPage({ octokit, query, page }), { reportInput: true });
+
+		if (!rows.success) throw unreadableRepoList(rows.error.issues[0]);
+
+		fetched.push(...rows.data);
+		pageLength = rows.data.length;
+		page++;
+	} while (pageLength >= REPOS_PER_PAGE);
 
 	const repos = RepoListSchema.safeParse(fetched, { reportInput: true });
 
-	if (!repos.success) {
-		throw new Error(
-			`GitHub returned a repository list this action cannot read: ${describeIssue(repos.error.issues[0])}.`,
-		);
-	}
+	if (!repos.success) throw unreadableRepoList(repos.error.issues[0]);
 
 	core.info(`Fetched ${repos.data.length} repositories from GitHub`);
 

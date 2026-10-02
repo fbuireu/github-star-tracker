@@ -6,16 +6,16 @@ import type { RepoInfo } from "./types";
 
 const defaultConfig: TrackedSetFilters = makeConfig();
 
-interface Tracked {
+interface TrackedSetParams {
 	repos: RepoInfo[];
 	filters?: TrackedSetFilters;
 }
 
-function trackedSet({ repos, filters = defaultConfig }: Tracked): TrackedSet {
+function trackedSet({ repos, filters = defaultConfig }: TrackedSetParams): TrackedSet {
 	return resolveTrackedSet({ repos, filters });
 }
 
-function tracked(params: Tracked): RepoInfo[] {
+function tracked(params: TrackedSetParams): RepoInfo[] {
 	return trackedSet(params).repos;
 }
 

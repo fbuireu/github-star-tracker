@@ -1,8 +1,3 @@
-export interface InterpolateParams {
-	template: string;
-	params: Record<string, string | number>;
-}
-
 export interface Translations {
 	badge: {
 		totalStars: string;

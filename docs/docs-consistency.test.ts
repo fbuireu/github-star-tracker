@@ -50,8 +50,11 @@ const HISTORY_FILE_SURFACES = ["docs/wiki/API-Reference.md", "docs/wiki/Data-Man
 const I18N_PAGE = "docs/wiki/Internationalization-(i18n).md";
 const I18N_SECTION_ROW_PATTERN = /^\| `(\w+)` \| ((?:`[\w.]+`(?:, )?)+) \|/gm;
 const I18N_KEY_PATTERN = /`([\w.]+)`/g;
+const MERMAID_DIAGRAM_PATTERN = /```mermaid\n([\s\S]*?)```/g;
+const MERMAID_FRONT_MATTER_PATTERN = /^---\n([\s\S]*?)\n---\n/;
+const DAGRE_LAYOUT_PATTERN = /^\s+layout: dagre$/m;
 
-const LINE_CITATION_ALLOWLIST = new Set([GUIDE, CONTRIBUTOR_GUIDE, ADR_TEMPLATE]);
+const LINE_CITATION_ALLOWLIST = new Set([ADR_TEMPLATE]);
 
 interface WalkParams {
 	dir: string;
@@ -73,7 +76,9 @@ function walk({ dir, keep }: WalkParams): string[] {
 const isMarkdown = (filename: string): boolean => filename.endsWith(".md");
 
 const DOCS = [
-	...["AGENTS.md", "ARCHITECTURE.md", "CONTEXT.md", "README.md"].filter((doc) => fs.existsSync(doc)),
+	...["AGENTS.md", "ARCHITECTURE.md", "CODING_STANDARDS.md", "CONTEXT.md", "README.md"].filter((doc) =>
+		fs.existsSync(doc),
+	),
 	...walk({ dir: ".github", keep: isMarkdown }),
 	...walk({ dir: "docs", keep: isMarkdown }),
 	...walk({ dir: "src", keep: (filename) => filename === "AGENTS.md" }),
@@ -106,7 +111,7 @@ const ENTRY_ROW_LABEL = "`src/` entry";
 const MODULE_SPECIFIER_PATTERN = /(?:vi\.mock|(?<![.\w])(?:from|import|require))\s*\(?\s*"([^"]+)"/g;
 const TEST_LAYER_EXEMPT_TARGETS = new Set(["shared"]);
 const PURE_LAYERS = new Set(["domain", "presentation", "i18n"]);
-const IMPURE_PREFIXES = ["node:", "@actions/", "@octokit/", "nodemailer", "js-yaml"];
+const IMPURE_PREFIXES = ["node:", "@actions/", "@octokit/", "nodemailer", "js-yaml", "zod"];
 const TEST_LAYER_CROSSINGS = new Set([
 	'src/config/action-inputs.test.ts -> infrastructure ("@infrastructure/notification/email")',
 ]);
@@ -193,12 +198,11 @@ interface CollectParams {
 }
 
 function collect({ pattern, isBroken }: CollectParams): string[] {
-	return DOCS.flatMap((doc) =>
-		[...read(doc).matchAll(pattern)]
-			.map((match) => match[1])
-			.filter((match) => isBroken(match, doc))
-			.map((match) => `${doc} -> ${match}`),
-	);
+	const cited = DOCS.flatMap((doc) => [...read(doc).matchAll(pattern)].map((match) => ({ doc, target: match[1] })));
+
+	expect(cited.length, `no document matches ${pattern}`).toBeGreaterThan(0);
+
+	return cited.filter(({ doc, target }) => isBroken(target, doc)).map(({ doc, target }) => `${doc} -> ${target}`);
 }
 
 describe("documentation consistency", () => {
@@ -236,16 +240,33 @@ describe("documentation consistency", () => {
 		expect(missing).toEqual([]);
 	});
 
-	it("embeds only sample charts that exist", () => {
-		const missing = [...read("docs/examples/README.md").matchAll(SVG_LINK_PATTERN)]
-			.map((match) => match[1])
-			.filter((svg) => !fs.existsSync(path.join("docs/examples", svg)));
+	it("pins every Mermaid diagram to the layout: dagre it was drawn with, so a renderer that defaults to ELK cannot redraw it", () => {
+		const diagrams = DOCS.flatMap((doc) =>
+			[...read(doc).matchAll(MERMAID_DIAGRAM_PATTERN)].map(([, body]) => ({ doc, body })),
+		);
+		const pinned = (body: string): boolean =>
+			DAGRE_LAYOUT_PATTERN.test(MERMAID_FRONT_MATTER_PATTERN.exec(body)?.[1] ?? "");
 
+		expect(pinned("---\nconfig:\n  look: handDrawn\n  layout: dagre\n---\nflowchart TD")).toBe(true);
+		expect(pinned("flowchart TD\n  a --> b")).toBe(false);
+		expect(diagrams.length).toBeGreaterThan(0);
+		expect(diagrams.filter(({ body }) => !pinned(body)).map(({ doc }) => doc)).toEqual([]);
+	});
+
+	it("embeds only sample charts that exist", () => {
+		const embedded = [...read("docs/examples/README.md").matchAll(SVG_LINK_PATTERN)].map((match) => match[1]);
+		const missing = embedded.filter((svg) => !fs.existsSync(path.join("docs/examples", svg)));
+
+		expect(embedded.length).toBeGreaterThan(0);
 		expect(missing).toEqual([]);
 	});
 });
 
 describe("architecture decision records", () => {
+	it("finds a decision beside the template, so every check below reads a real record", () => {
+		expect(ADR_FILES.filter((file) => file !== ADR_TEMPLATE).length).toBeGreaterThan(0);
+	});
+
 	it("numbers files sequentially from the template, with no gaps or duplicates", () => {
 		const numbers = ADR_FILES.map((file) => Number(adrNumber(file)));
 
@@ -278,12 +299,12 @@ describe("architecture decision records", () => {
 
 	it("references only ADRs that exist", () => {
 		const existing = new Set(ADR_FILES.map(adrNumber));
-		const dangling = DOCS.flatMap((doc) =>
-			adrReferencesIn(doc)
-				.filter((number) => !existing.has(number))
-				.map((number) => `${doc} -> ADR ${number}`),
-		);
+		const references = DOCS.flatMap((doc) => adrReferencesIn(doc).map((number) => ({ doc, number })));
+		const dangling = references
+			.filter(({ number }) => !existing.has(number))
+			.map(({ doc, number }) => `${doc} -> ADR ${number}`);
 
+		expect(references.length).toBeGreaterThan(0);
 		expect(dangling).toEqual([]);
 	});
 
@@ -326,8 +347,8 @@ function describedAs(value: Config[keyof Config]): string {
 
 describe("action.yml is documented", () => {
 	it("states a default in prose for every overridable input, and states the real one", () => {
-		const wrong = Object.entries(DEFAULTS)
-			.filter(([key]) => key !== "sendOnNoChanges")
+		const overridable = Object.entries(DEFAULTS).filter(([key]) => key !== "sendOnNoChanges");
+		const wrong = overridable
 			.map(([key, value]) => {
 				const name = toActionInputName(key);
 				const stated = proseDefault(manifest.inputs[name]?.description ?? "");
@@ -337,15 +358,19 @@ describe("action.yml is documented", () => {
 			})
 			.filter((mismatch) => mismatch !== null);
 
+		expect(overridable.length).toBeGreaterThan(0);
 		expect(wrong).toEqual([]);
 	});
 
 	it("tells the reader every overridable input can also come from the config file", () => {
-		const silent = Object.keys(DEFAULTS)
+		const overridable = Object.keys(DEFAULTS)
 			.filter((key) => key !== "sendOnNoChanges")
-			.map(toActionInputName)
-			.filter((name) => !(manifest.inputs[name]?.description ?? "").includes("(overrides config file)"));
+			.map(toActionInputName);
+		const silent = overridable.filter(
+			(name) => !(manifest.inputs[name]?.description ?? "").includes("(overrides config file)"),
+		);
 
+		expect(overridable.length).toBeGreaterThan(0);
 		expect(silent).toEqual([]);
 	});
 
@@ -368,10 +393,12 @@ describe("action.yml is documented", () => {
 	it("documents every input in the wiki", () => {
 		const configuration = read("docs/wiki/Configuration.md");
 		const reference = read("docs/wiki/API-Reference.md");
-		const undocumented = Object.keys(manifest.inputs).filter(
+		const inputs = Object.keys(manifest.inputs);
+		const undocumented = inputs.filter(
 			(input) => !configuration.includes(`\`${input}\``) && !reference.includes(`\`${input}\``),
 		);
 
+		expect(inputs.length).toBeGreaterThan(0);
 		expect(undocumented).toEqual([]);
 	});
 });
@@ -379,7 +406,14 @@ describe("action.yml is documented", () => {
 const PINNED_INPUT = "github-token";
 const NAME_ROW_PATTERN = /^\| `([a-z][a-z\d-]*)`/gm;
 const OPTION_HEADING_PATTERN = /^### `([a-z][a-z\d-]*)`$/gm;
-const ORDERED_SURFACES = ["README.md", "docs/wiki/API-Reference.md", "docs/wiki/Viewing-Reports.md"];
+const ORDERED_SURFACES = [
+	"README.md",
+	"docs/wiki/API-Reference.md",
+	"docs/wiki/Viewing-Reports.md",
+	"src/application/AGENTS.md",
+];
+const OUTPUT_LINE_DOC = "ARCHITECTURE.md";
+const BACKTICKED_NAME_PATTERN = /`([a-z][a-z\d-]*)`/g;
 const OPTION_GUIDE = "docs/wiki/Configuration.md";
 const GROUP_HEADING_PATTERN = /^## /m;
 
@@ -409,6 +443,7 @@ function listed({ surface, declared }: ListedParams): string[] {
 
 describe("inputs and outputs are listed alphabetically", () => {
 	it("declares them in that order in action.yml, after the required github-token", () => {
+		expect(declaredInputs.length).toBeGreaterThan(0);
 		expect(declaredInputs).toEqual(inOrder(declaredInputs));
 		expect(declaredOutputs).toEqual(inOrder(declaredOutputs));
 	});
@@ -429,6 +464,19 @@ describe("inputs and outputs are listed alphabetically", () => {
 
 		expect(silent).toEqual([]);
 		expect(misordered).toEqual([]);
+	});
+
+	it("names every output in that order where ARCHITECTURE.md lists them in one line", () => {
+		const line = read(OUTPUT_LINE_DOC)
+			.split("\n")
+			.find((candidate) => declaredOutputs.every((output) => candidate.includes(`\`${output}\``)));
+		const firstMentions = new Set(
+			[...(line ?? "").matchAll(BACKTICKED_NAME_PATTERN)]
+				.map(([, name]) => name)
+				.filter((name) => declaredOutputs.includes(name)),
+		);
+
+		expect([...firstMentions]).toEqual(inOrder(declaredOutputs));
 	});
 
 	it("orders the option sections of the configuration guide within each group", () => {
@@ -468,6 +516,7 @@ describe("the root guide matches the manifests", () => {
 	const documentedScripts = [...guide.matchAll(SCRIPT_PATTERN)].map(([, name]) => name);
 
 	it("documents only scripts that package.json declares", () => {
+		expect(documentedScripts.length).toBeGreaterThan(0);
 		expect(documentedScripts.filter((script) => !(script in pkg.scripts))).toEqual([]);
 	});
 
@@ -476,6 +525,7 @@ describe("the root guide matches the manifests", () => {
 			(script) => !UNDOCUMENTED_SCRIPTS.has(script) && !documentedScripts.includes(script),
 		);
 
+		expect(Object.keys(pkg.scripts).length).toBeGreaterThan(0);
 		expect(missing).toEqual([]);
 	});
 
@@ -497,7 +547,17 @@ describe("the root guide matches the manifests", () => {
 	it("gives every layer its own nested guide", () => {
 		const missing = layerRows.map(({ layer }) => `src/${layer}/AGENTS.md`).filter((file) => !fs.existsSync(file));
 
+		expect(layerRows.length).toBeGreaterThan(0);
 		expect(missing).toEqual([]);
+	});
+
+	it("runs no package script through a shell substitution, which cmd on Windows passes on as literal text", () => {
+		const substituting = Object.entries(pkg.scripts)
+			.filter(([, command]) => command.includes("$(") || command.includes("`"))
+			.map(([script]) => script);
+
+		expect(Object.keys(pkg.scripts).length).toBeGreaterThan(0);
+		expect(substituting).toEqual([]);
 	});
 
 	it("names the alias tsconfig maps to each layer, and no others", () => {
@@ -655,7 +715,7 @@ describe("the guides quote the constants the code declares", () => {
 
 	it("quotes a version for none of them, since nothing here would keep one current", () => {
 		const section = read(GUIDE).match(VERSIONS_SECTION)?.[1] ?? "";
-		const quoting = section.split("\n").filter((line) => line.startsWith("- ") && QUOTED_VERSION.test(line));
+		const quoting = section.split("\n").filter((line) => QUOTED_VERSION.test(line));
 
 		expect(section).not.toBe("");
 		expect(quoting).toEqual([]);
@@ -673,14 +733,14 @@ describe("the guides quote the constants the code declares", () => {
 		expect(manifest.packageManager.split("@")[0]).toBe("pnpm");
 	});
 
-	it("pins every runtime to an exact version, never a range", () => {
+	it("pins every runtime to an exact version, since a range has no one version to compare", () => {
 		const manifest = JSON.parse(read("package.json")) as { engines: { node: string }; packageManager: string };
 
 		expect(manifest.engines.node).toMatch(EXACT_VERSION);
 		expect(manifest.packageManager.split("@")[1]).toMatch(EXACT_VERSION);
 	});
 
-	it("lets no workflow or composite action pin a runtime the manifest already pins", () => {
+	it("lets no workflow or composite action pin a runtime the manifest already pins, a copy no rule compares", () => {
 		const candidates = walk({ dir: ".github", keep: (filename) => filename.endsWith(".yml") });
 		const repinned = candidates.filter((file) => REPINNED_RUNTIME.test(read(file)));
 
@@ -741,6 +801,7 @@ describe("the guides quote the constants the code declares", () => {
 			.filter(Number.isFinite);
 		const guide = prose(DOMAIN_GUIDE);
 
+		expect(ladder.length).toBeGreaterThan(0);
 		expect(ladder.filter((rung) => !guide.includes(rung))).toEqual([]);
 		expect([...guide.matchAll(QUOTED_RUNG_PATTERN)]).toHaveLength(ladder.length);
 		expect(guide).toContain(`exactly ${grouped(Math.max(...milestones))}`);
@@ -837,14 +898,15 @@ describe("the i18n key table matches the bundles", () => {
 describe("the documented data-branch format matches the writer", () => {
 	it("shows the version stars-data.json is actually stamped with", () => {
 		const stamped = read(STORAGE_MODULE).match(DATA_FORMAT_VERSION_PATTERN)?.[1];
-		const stale = HISTORY_FILE_SURFACES.flatMap((surface) =>
-			[...read(surface).matchAll(DOCUMENTED_VERSION_PATTERN)]
-				.map(([, documented]) => documented)
-				.filter((documented) => documented !== stamped)
-				.map((documented) => `${surface} shows version ${documented}, storage.ts writes ${stamped}`),
+		const shown = HISTORY_FILE_SURFACES.flatMap((surface) =>
+			[...read(surface).matchAll(DOCUMENTED_VERSION_PATTERN)].map(([, documented]) => ({ surface, documented })),
 		);
+		const stale = shown
+			.filter(({ documented }) => documented !== stamped)
+			.map(({ surface, documented }) => `${surface} shows version ${documented}, storage.ts writes ${stamped}`);
 
 		expect(stamped).toBeDefined();
+		expect(shown.length).toBeGreaterThan(0);
 		expect(stale).toEqual([]);
 	});
 });
@@ -863,6 +925,7 @@ describe("the source follows the named-parameter convention", () => {
 			),
 		);
 
+		expect(sources.length).toBeGreaterThan(0);
 		expect(offenders).toEqual([]);
 	});
 });
@@ -885,6 +948,20 @@ describe("the layer table is the import contract", () => {
 		expect([...layers].sort()).toEqual([...onDisk, ENTRY_LAYER].sort());
 	});
 
+	it("reads sources, crossing and same-layer imports and pure-layer files, so no assertion below checks an empty list", () => {
+		const edges = sources.flatMap(layerEdgesIn);
+		const empty = Object.entries({
+			sources,
+			"crossing imports": sources.flatMap(crossLayerEdges),
+			"same-layer imports": edges.filter(({ from, to }) => from === to),
+			"pure-layer files": sources.filter((file) => !isTest(file) && PURE_LAYERS.has(layerOf(file))),
+		})
+			.filter(([, list]) => list.length === 0)
+			.map(([census]) => census);
+
+		expect(empty).toEqual([]);
+	});
+
 	it("lets every source file import only the layers its row allows", () => {
 		const forbidden = sources
 			.filter((file) => !isTest(file))
@@ -903,6 +980,15 @@ describe("the layer table is the import contract", () => {
 			.map(({ file, to, specifier }) => `${file} -> ${to} ("${specifier}")`);
 
 		expect(relative.sort()).toEqual([]);
+	});
+
+	it("keeps every import inside a layer relative, tests included, so an alias always marks a crossing", () => {
+		const aliased = sources
+			.flatMap(layerEdgesIn)
+			.filter(({ from, to, specifier }) => from === to && specifier.startsWith("@"))
+			.map(({ file, specifier }) => `${file} -> "${specifier}"`);
+
+		expect(aliased.sort()).toEqual([]);
 	});
 
 	it("keeps the pure layers free of the shell's dependencies", () => {
@@ -941,6 +1027,7 @@ const VERSIONED_DEPENDENCIES: Record<string, string[]> = {
 	tailwindcss: ["Tailwind", "Tailwind CSS"],
 	typescript: ["TypeScript"],
 	wrangler: ["wrangler", "Wrangler"],
+	zod: ["Zod", "zod"],
 };
 const escapeForRegExp = (name: string): string => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const statedVersionPattern = (names: string[]): RegExp =>
@@ -973,7 +1060,7 @@ const markdownDocuments = (dir: string): string[] =>
 		return entry.name.endsWith(".md") && entry.name !== "CHANGELOG.md" ? [full] : [];
 	});
 
-describe("stated versions", () => {
+describe("stated versions, since a manifest is the only copy a bot keeps current", () => {
 	it("polices the runtimes and every versioned dependency the manifests declare, and nothing else", () => {
 		expect(POLICED_NAMES).toEqual(expect.arrayContaining(["Node", "pnpm"]));
 		expect(POLICED_NAMES.length).toBeGreaterThan(2);
@@ -986,7 +1073,7 @@ describe("stated versions", () => {
 		expect(read(CONTRIBUTOR_GUIDE)).toContain(SHIPPED_MAJOR);
 	});
 
-	it("states the current version of nothing a bot moves, outside the ADRs", () => {
+	it("states the current version of nothing a bot moves, outside the ADRs, which are dated", () => {
 		const documents = markdownDocuments(".");
 		const stated = documents.flatMap((file) =>
 			[...read(file).matchAll(STATED_VERSION)]
@@ -1048,7 +1135,7 @@ describe("the release config parses the commit grammar commitlint accepts", () =
 		expect(wrong).toEqual([]);
 	});
 
-	it("commits the release under the release scope, and tells CI to leave it alone", () => {
+	it("commits the release, which commitlint never sees, under the release scope and [skip ci] so it starts no run", () => {
 		const wrong = configs.flatMap((file) => {
 			const { plugins } = JSON.parse(read(file)) as ReleaseConfig;
 			const entry = plugins.find((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) === "@semantic-release/git");
@@ -1062,15 +1149,861 @@ describe("the release config parses the commit grammar commitlint accepts", () =
 		expect(wrong).toEqual([]);
 	});
 
-	it("commits only the files a release rewrites", () => {
-		const listed = configs.flatMap((file) => {
+	it("commits only the files a release rewrites, and a version bump never touches the lockfile", () => {
+		const committed = configs.flatMap((file) => {
 			const { plugins } = JSON.parse(read(file)) as ReleaseConfig;
 			const entry = plugins.find((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) === "@semantic-release/git");
 			const assets = Array.isArray(entry) ? ((entry[1]?.assets as string[]) ?? []) : [];
 
-			return assets.filter((asset) => asset.includes("lock")).map((asset) => `${file}: ${asset}`);
+			return assets.map((asset) => ({ file, asset }));
+		});
+		const lockfiles = committed
+			.filter(({ asset }) => asset.includes("lock"))
+			.map(({ file, asset }) => `${file}: ${asset}`);
+
+		expect(committed.length).toBeGreaterThan(0);
+		expect(lockfiles).toEqual([]);
+	});
+});
+
+const SOURCE_FILES = walk({ dir: "src", keep: (filename) => filename.endsWith(".ts") }).map(toPosix);
+const PRODUCTION_FILES = SOURCE_FILES.filter((file) => !isTestFile(file));
+const TYPESCRIPT_FILE_PATTERN = /\.[cm]?ts$/;
+const TYPESCRIPT_FILES = [
+	...fs.readdirSync(".").filter((filename) => TYPESCRIPT_FILE_PATTERN.test(filename)),
+	...walk({ dir: "src", keep: (filename) => TYPESCRIPT_FILE_PATTERN.test(filename) }),
+	...walk({ dir: "docs", keep: (filename) => TYPESCRIPT_FILE_PATTERN.test(filename) }),
+].map(toPosix);
+const REGEX_PRECEDING_PUNCTUATORS = new Set([..."(,=:[!&|?{};+-*%<>~^"]);
+const REGEX_PRECEDING_KEYWORDS = new Set(
+	"await case delete do else in instanceof new of return throw typeof void yield".split(" "),
+);
+const WORD_CHARACTER = /[\w$]/;
+const WHITESPACE_CHARACTER = /\s/;
+
+interface ScanParams {
+	text: string;
+	start: number;
+}
+
+function endOfString({ text, start }: ScanParams): number {
+	let index = start + 1;
+
+	while (index < text.length && text[index] !== text[start] && text[index] !== "\n") {
+		index += text[index] === "\\" ? 2 : 1;
+	}
+
+	return index + 1;
+}
+
+function endOfRegex({ text, start }: ScanParams): number {
+	let index = start + 1;
+	let inClass = false;
+
+	while (index < text.length && text[index] !== "\n" && (inClass || text[index] !== "/")) {
+		if (text[index] === "[") inClass = true;
+		if (text[index] === "]") inClass = false;
+
+		index += text[index] === "\\" ? 2 : 1;
+	}
+
+	index += 1;
+
+	while (index < text.length && WORD_CHARACTER.test(text[index])) index += 1;
+
+	return index;
+}
+
+function commentOffsets(text: string): number[] {
+	const offsets: number[] = [];
+	const openers: boolean[] = [];
+	let inTemplate = false;
+	let previous = "";
+	let index = 0;
+
+	while (index < text.length) {
+		const character = text[index];
+		const pair = text.slice(index, index + 2);
+
+		if (inTemplate) {
+			if (pair === "${") {
+				openers.push(true);
+				inTemplate = false;
+				previous = "{";
+			} else if (character === "`") {
+				inTemplate = false;
+				previous = character;
+			}
+
+			index += character === "\\" || pair === "${" ? 2 : 1;
+		} else if (pair === "//" || pair === "/*") {
+			const end = pair === "//" ? text.indexOf("\n", index) : text.indexOf("*/", index + 2) + 1;
+
+			offsets.push(index);
+			index = end <= 0 ? text.length : end + 1;
+		} else if (character === '"' || character === "'") {
+			index = endOfString({ text, start: index });
+			previous = character;
+		} else if (character === "`") {
+			inTemplate = true;
+			index += 1;
+		} else if (
+			character === "/" &&
+			(previous === "" || REGEX_PRECEDING_PUNCTUATORS.has(previous) || REGEX_PRECEDING_KEYWORDS.has(previous))
+		) {
+			index = endOfRegex({ text, start: index });
+			previous = character;
+		} else if (WORD_CHARACTER.test(character)) {
+			const start = index;
+
+			while (index < text.length && WORD_CHARACTER.test(text[index])) index += 1;
+
+			previous = text.slice(start, index);
+		} else {
+			if (character === "{") openers.push(false);
+			if (character === "}") inTemplate = openers.pop() === true;
+			if (!WHITESPACE_CHARACTER.test(character)) previous = character;
+
+			index += 1;
+		}
+	}
+
+	return offsets;
+}
+
+const lineOf = ({ text, start }: ScanParams): number => text.slice(0, start).split("\n").length;
+
+describe("the TypeScript carries no comments", () => {
+	it("has none in any .ts file, suppressions included: a line's reason lives in the commit, the pull request, an ADR or CODING_STANDARDS.md", () => {
+		const commented = TYPESCRIPT_FILES.flatMap((file) => {
+			const text = read(file);
+
+			return commentOffsets(text).map((start) => `${file}:${lineOf({ text, start })}`);
 		});
 
-		expect(listed).toEqual([]);
+		expect(TYPESCRIPT_FILES.length).toBeGreaterThan(0);
+		expect(commented).toEqual([]);
+	});
+});
+
+const NAMED_IMPORT_PATTERN = /^import\s+(type\s+)?\{([^}]*)\}\s*from\s*"([^"]+)"/gm;
+const TYPE_MODIFIER_PATTERN = /^type\s+/;
+const IMPORT_ALIAS_PATTERN = /\s+as\s+\w+$/;
+
+interface NamedImport {
+	name: string;
+	specifier: string;
+	module: string | null;
+	typeOnly: boolean;
+}
+
+function aliasTarget(specifier: string): string | null {
+	const { paths } = tsconfig.compilerOptions;
+
+	if (Object.hasOwn(paths, specifier)) return paths[specifier][0];
+
+	const wildcard = Object.keys(paths).find((alias) => alias.endsWith("/*") && specifier.startsWith(alias.slice(0, -1)));
+
+	return wildcard === undefined ? null : paths[wildcard][0].replace("*", specifier.slice(wildcard.length - 1));
+}
+
+interface ResolveModuleParams {
+	specifier: string;
+	file: string;
+}
+
+function resolveModule({ specifier, file }: ResolveModuleParams): string | null {
+	const target = specifier.startsWith(".") ? path.join(path.dirname(file), specifier) : aliasTarget(specifier);
+
+	if (target === null) return null;
+
+	const resolved = [target, `${target}.ts`, path.join(target, "index.ts")].find(
+		(candidate) => fs.existsSync(candidate) && fs.statSync(candidate).isFile(),
+	);
+
+	return resolved === undefined ? null : toPosix(path.normalize(resolved));
+}
+
+function namedImportsIn(file: string): NamedImport[] {
+	return [...read(file).matchAll(NAMED_IMPORT_PATTERN)].flatMap(([, typeClause, names, specifier]) =>
+		names
+			.split(",")
+			.map((entry) => entry.trim())
+			.filter((entry) => entry !== "")
+			.map((entry) => ({
+				name: entry.replace(TYPE_MODIFIER_PATTERN, "").replace(IMPORT_ALIAS_PATTERN, ""),
+				specifier,
+				module: resolveModule({ specifier, file }),
+				typeOnly: typeClause !== undefined || TYPE_MODIFIER_PATTERN.test(entry),
+			})),
+	);
+}
+
+const DESTRUCTURED_PARAMETER_PATTERN =
+	/(?:function\s+(\w+)\s*(?:<[^>()]*>)?|(?:const|let)\s+(\w+)\s*=\s*(?:async\s*)?(?:<[^>()]*>)?)\s*\(\s*\{[^{}]*\}\s*:\s*(\{|[A-Z]\w*)/g;
+const EXPORTED_PARAMS_PATTERN = /^export\s+(?:interface|type)\s+(\w+Params)\b/gm;
+const SHARED_PARAMS_TYPES = new Set(["RenderReportParams", "ReportParams"]);
+const INLINE_TYPE = "{";
+
+const paramsTypeFor = (name: string): string => `${name[0].toUpperCase()}${name.slice(1)}Params`;
+
+describe("a parameter object is named for the function that takes it", () => {
+	it("types a destructured parameter <FunctionName>Params, a type several functions share, or the record it unpacks", () => {
+		const destructuring = SOURCE_FILES.flatMap((file) =>
+			[...read(file).matchAll(DESTRUCTURED_PARAMETER_PATTERN)].map(([, declared, assigned, type]) => ({
+				file,
+				name: declared ?? assigned,
+				type,
+			})),
+		);
+		const misnamed = destructuring
+			.filter(
+				({ name, type }) =>
+					type === INLINE_TYPE ||
+					(type.endsWith("Params") && type !== paramsTypeFor(name) && !SHARED_PARAMS_TYPES.has(type)),
+			)
+			.map(({ file, name, type }) => `${file}: ${name} takes ${type === INLINE_TYPE ? "an inline type" : type}`);
+
+		expect(destructuring.length).toBeGreaterThan(0);
+		expect(misnamed).toEqual([]);
+	});
+
+	it("exports no *Params type but the ones several modules share", () => {
+		const exportedParams = SOURCE_FILES.flatMap((file) =>
+			[...read(file).matchAll(EXPORTED_PARAMS_PATTERN)].map(([, type]) => ({ file, type })),
+		);
+		const unshared = exportedParams
+			.filter(({ type }) => !SHARED_PARAMS_TYPES.has(type))
+			.map(({ file, type }) => `${file}: ${type}`);
+
+		expect(exportedParams.length).toBeGreaterThan(0);
+		expect(unshared).toEqual([]);
+	});
+});
+
+const RUNTIME_EXPORT_PATTERN = /^export\s+(?:async\s+)?(?:function|const|let|class)\s+(\w+)/gm;
+const MANIFEST_TESTS = ["src/config/action-inputs.test.ts", "docs/docs-consistency.test.ts"];
+const TEST_SUPPORT_DIRECTORY = "src/shared/tests/";
+
+describe("every export has a reader", () => {
+	it("gives each runtime export a reader outside its module: production code, or a test comparing it with action.yml", () => {
+		const readers = new Set(
+			[...PRODUCTION_FILES, ...MANIFEST_TESTS].flatMap((file) =>
+				namedImportsIn(file)
+					.filter(({ typeOnly }) => !typeOnly)
+					.map(({ module, name }) => `${module}#${name}`),
+			),
+		);
+		const exports = PRODUCTION_FILES.filter((file) => !file.startsWith(TEST_SUPPORT_DIRECTORY)).flatMap((file) =>
+			[...read(file).matchAll(RUNTIME_EXPORT_PATTERN)].map(([, name]) => `${file}#${name}`),
+		);
+		const unread = exports.filter((exported) => !readers.has(exported));
+
+		expect(readers.size).toBeGreaterThan(0);
+		expect(exports.length).toBeGreaterThan(0);
+		expect(unread).toEqual([]);
+	});
+});
+
+const GLOBAL_REGEX_DECLARATION_PATTERN = /^(?:export\s+)?const\s+(\w+)\s*=\s*\/.+\/[a-z]*g[a-z]*;$/gm;
+
+describe("a global regex keeps no state between calls", () => {
+	it("uses a module-level global regex only with replaceAll or matchAll, which reset its lastIndex", () => {
+		const declared = SOURCE_FILES.flatMap((file) =>
+			[...read(file).matchAll(GLOBAL_REGEX_DECLARATION_PATTERN)].map(([, name]) => ({ file, name })),
+		);
+		const misused = declared
+			.filter(({ file, name }) => {
+				const text = read(file);
+
+				return (
+					[...text.matchAll(new RegExp(`\\b${name}\\b`, "g"))].length - 1 !==
+					[...text.matchAll(new RegExp(`\\.(?:replaceAll|matchAll)\\(\\s*${name}\\b`, "g"))].length
+				);
+			})
+			.map(({ file, name }) => `${file}: ${name}`);
+
+		expect(declared.length).toBeGreaterThan(0);
+		expect(misused).toEqual([]);
+	});
+});
+
+const CLOCK_READ_PATTERN = /new Date\(\s*\)|Date\.now\(\s*\)/g;
+const INJECTED_CLOCK_PATTERN = /\bnow\s*(?:=|\?\?)\s*new Date\(\s*\)/g;
+const LOCAL_DATE_PATTERN = /new Date\([^()]*,/g;
+const ZONELESS_TIMESTAMP_PATTERN = /["'`]\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?["'`]/g;
+
+describe("time is injected and zoned", () => {
+	it("reads the clock in a pure layer only as the default of an injectable now", () => {
+		const clocks = PRODUCTION_FILES.filter((file) => PURE_LAYERS.has(layerOf(file))).map((file) => ({
+			file,
+			reads: [...read(file).matchAll(CLOCK_READ_PATTERN)].length,
+			injected: [...read(file).matchAll(INJECTED_CLOCK_PATTERN)].length,
+		}));
+		const unparameterised = clocks
+			.filter(({ reads, injected }) => reads !== injected)
+			.map(({ file, reads, injected }) => `${file}: ${reads} clock reads, ${injected} through now`);
+
+		expect(clocks.reduce((total, { reads }) => total + reads, 0)).toBeGreaterThan(0);
+		expect(unparameterised).toEqual([]);
+	});
+
+	it("builds no Date from local-time parts and writes no timestamp without its zone, so no result depends on where it runs", () => {
+		const local = SOURCE_FILES.flatMap((file) =>
+			[...read(file).matchAll(LOCAL_DATE_PATTERN), ...read(file).matchAll(ZONELESS_TIMESTAMP_PATTERN)].map(
+				([match]) => `${file}: ${match}`,
+			),
+		);
+
+		expect(SOURCE_FILES.length).toBeGreaterThan(0);
+		expect(local).toEqual([]);
+	});
+});
+
+const DECLARATION_MODULES = new Set(["types.ts", "defaults.ts", "constants.ts"]);
+const ENTRY_MODULE = "src/index.ts";
+const SPEC_ELSEWHERE = new Map([["src/infrastructure/github/client.ts", "src/infrastructure/github/filters.test.ts"]]);
+const TEST_RUNNER_PATTERN = /from\s*"vitest"|\b(?:vi|expect)\s*[.(]|\b(?:before|after)(?:Each|All)\s*\(/;
+const UNIT_TEST_FILES = SOURCE_FILES.filter(isTestFile);
+const TEARDOWN_HOOK_PATTERN = /\bafter(?:Each|All)\(/g;
+const SETUP_HOOK_PATTERN = /\bbeforeEach\(/g;
+const MOCK_IMPLEMENTATION_PATTERN =
+	/\bvi\.mocked\(([\w$.]+)\)\.mock(?:ReturnValue|Implementation|ResolvedValue|RejectedValue)(?:Once)?\(/g;
+const RESET_ALL_MOCKS = "vi.resetAllMocks()";
+const CLEAR_ALL_MOCKS = "vi.clearAllMocks()";
+const RESTORE_ALL_MOCKS = "vi.restoreAllMocks()";
+const SPY_PATTERN = /\bvi\.spyOn\(/;
+const STUB_UNDOS = [
+	{ stub: /\bvi\.stubGlobal\(/, undos: ["vi.unstubAllGlobals()"] },
+	{ stub: /\bvi\.stubEnv\(/, undos: ["vi.unstubAllEnvs()"] },
+	{ stub: /\bvi\.spyOn\(/, undos: ["vi.restoreAllMocks()", ".mockRestore()"] },
+	{ stub: /\bvi\.useFakeTimers\(/, undos: ["vi.useRealTimers()"] },
+];
+const PROCESS_ENV_WRITE_PATTERN = /\bprocess\.env(?:\.\w+|\[[^\]]+\])\s*=(?!=)|\bdelete\s+process\.env\b/;
+const REAL_CLOCK_YEAR_PATTERN = /new Date\(\s*\)\.get(?:UTC)?FullYear\(\)/;
+const CLOCK_BRACKET_PATTERN = /\bconst\s+(?:before|after)\w*\s*=\s*(?:Math\.floor\()?Date\.now\(\)/;
+
+interface HookBodiesParams {
+	text: string;
+	hook: RegExp;
+}
+
+function hookBodies({ text, hook }: HookBodiesParams): string[] {
+	return [...text.matchAll(hook)].map(({ index }) => {
+		const opening = text.indexOf("{", index);
+		let depth = 0;
+
+		for (let at = opening; at < text.length; at += 1) {
+			if (text[at] === "{") depth += 1;
+			if (text[at] === "}") depth -= 1;
+			if (depth === 0) return text.slice(opening, at + 1);
+		}
+
+		return "";
+	});
+}
+
+function missingUndos(text: string): string[] {
+	const bodies = hookBodies({ text, hook: TEARDOWN_HOOK_PATTERN });
+
+	return STUB_UNDOS.filter(({ stub }) => stub.test(text))
+		.filter(({ undos }) => !bodies.some((body) => undos.some((undo) => body.includes(undo))))
+		.map(({ undos }) => undos[0]);
+}
+
+function unresetMocks(text: string): string[] {
+	const setups = hookBodies({ text, hook: SETUP_HOOK_PATTERN });
+	const faked = [...new Set([...text.matchAll(MOCK_IMPLEMENTATION_PATTERN)].map(([, mock]) => mock))];
+	const resetsAll = setups.some((body) => body.includes(RESET_ALL_MOCKS));
+
+	return [
+		...faked.filter((mock) => !resetsAll && !setups.some((body) => body.includes(`vi.mocked(${mock}).mockReset()`))),
+		...(faked.length > 0 && text.includes(CLEAR_ALL_MOCKS) ? [CLEAR_ALL_MOCKS] : []),
+	];
+}
+
+const restoresNothing = (text: string): boolean => text.includes(RESTORE_ALL_MOCKS) && !SPY_PATTERN.test(text);
+
+describe("the tests", () => {
+	it("give every module a colocated test, bar declarations, the entry point and the test support", () => {
+		const modules = PRODUCTION_FILES.filter(
+			(file) =>
+				file !== ENTRY_MODULE &&
+				!file.startsWith(TEST_SUPPORT_DIRECTORY) &&
+				!DECLARATION_MODULES.has(path.basename(file)),
+		);
+		const untested = modules.filter(
+			(file) => !fs.existsSync(SPEC_ELSEWHERE.get(file) ?? file.replace(TYPESCRIPT_FILE_PATTERN, ".test.ts")),
+		);
+
+		expect(modules.length).toBeGreaterThan(0);
+		expect(untested).toEqual([]);
+	});
+
+	it("import the fixture factories into test files only", () => {
+		const production = PRODUCTION_FILES.filter(
+			(file) =>
+				!file.startsWith(TEST_SUPPORT_DIRECTORY) &&
+				specifiersIn(file).some((specifier) => resolveModule({ specifier, file })?.startsWith(TEST_SUPPORT_DIRECTORY)),
+		);
+
+		expect(PRODUCTION_FILES.length).toBeGreaterThan(0);
+		expect(production).toEqual([]);
+	});
+
+	it("keep the fixture factories to defaults: no assertion, no mock, no setup", () => {
+		const support = SOURCE_FILES.filter((file) => file.startsWith(TEST_SUPPORT_DIRECTORY));
+		const running = support.filter((file) => TEST_RUNNER_PATTERN.test(read(file)));
+
+		expect(support.length).toBeGreaterThan(0);
+		expect(running).toEqual([]);
+	});
+
+	it("vary the process environment through vi.stubEnv and never write to it", () => {
+		expect(UNIT_TEST_FILES.length).toBeGreaterThan(0);
+		expect(UNIT_TEST_FILES.filter((file) => PROCESS_ENV_WRITE_PATTERN.test(read(file)))).toEqual([]);
+	});
+
+	it("undo every stubbed global, stubbed variable, spy and fake clock in an afterEach or afterAll, which a failing assertion cannot skip", () => {
+		const stubbing = UNIT_TEST_FILES.filter((file) => STUB_UNDOS.some(({ stub }) => stub.test(read(file))));
+		const leaking = UNIT_TEST_FILES.flatMap((file) => missingUndos(read(file)).map((undo) => `${file}: ${undo}`));
+
+		expect(missingUndos('it("a", () => { vi.stubEnv("A", "1"); vi.unstubAllEnvs(); });')).toEqual([
+			"vi.unstubAllEnvs()",
+		]);
+		expect(
+			missingUndos('afterEach(() => { if (a) { b(); } spy.mockRestore(); }); const spy = vi.spyOn(a, "b");'),
+		).toEqual([]);
+		expect(stubbing.length).toBeGreaterThan(0);
+		expect(leaking).toEqual([]);
+	});
+
+	it("pin the clock rather than read the year off it or bracket Date.now()", () => {
+		const unpinned = UNIT_TEST_FILES.filter(
+			(file) => REAL_CLOCK_YEAR_PATTERN.test(read(file)) || CLOCK_BRACKET_PATTERN.test(read(file)),
+		);
+
+		expect(REAL_CLOCK_YEAR_PATTERN.test("year: new Date().getUTCFullYear(),")).toBe(true);
+		expect(CLOCK_BRACKET_PATTERN.test("const before = Math.floor(Date.now() / 1000);")).toBe(true);
+		expect(UNIT_TEST_FILES.length).toBeGreaterThan(0);
+		expect(unpinned).toEqual([]);
+	});
+
+	it("reset in a beforeEach every mock a test gives an implementation, which vi.clearAllMocks keeps for the next test", () => {
+		const faking = UNIT_TEST_FILES.filter((file) => [...read(file).matchAll(MOCK_IMPLEMENTATION_PATTERN)].length > 0);
+		const leaking = UNIT_TEST_FILES.flatMap((file) => unresetMocks(read(file)).map((mock) => `${file}: ${mock}`));
+
+		expect(
+			unresetMocks(
+				'beforeEach(() => { vi.clearAllMocks(); }); it("a", () => { vi.mocked(fs.existsSync).mockReturnValue(true); });',
+			),
+		).toEqual(["fs.existsSync", CLEAR_ALL_MOCKS]);
+		expect(
+			unresetMocks(
+				'beforeEach(() => { vi.mocked(run).mockReset(); }); it("a", () => { vi.mocked(run).mockImplementationOnce(f); });',
+			),
+		).toEqual([]);
+		expect(faking.length).toBeGreaterThan(0);
+		expect(leaking).toEqual([]);
+	});
+
+	it("call vi.restoreAllMocks only beside a vi.spyOn, the one kind of mock it restores", () => {
+		expect(restoresNothing("afterEach(() => { vi.restoreAllMocks(); });")).toBe(true);
+		expect(restoresNothing('afterEach(() => { vi.restoreAllMocks(); }); const spy = vi.spyOn(a, "b");')).toBe(false);
+		expect(UNIT_TEST_FILES.length).toBeGreaterThan(0);
+		expect(UNIT_TEST_FILES.filter((file) => restoresNothing(read(file)))).toEqual([]);
+	});
+});
+
+const DOMAIN_DIRECTORY = "src/domain/";
+const MEASUREMENT_MODULE = "src/domain/measurement.ts";
+const APPLICATION_DIRECTORY = "src/application/";
+const PRESENTATION_ALIAS = "@presentation/";
+const PRESENTATION_ENTRY_POINTS = new Set(["renderRun", "renderEmptyRun", "resolveChartHistories"]);
+
+describe("a layer is reached through its entry point", () => {
+	it("imports the steps measureRun composes nowhere outside the domain, so their order cannot be got wrong", () => {
+		const steps = new Set(
+			namedImportsIn(MEASUREMENT_MODULE)
+				.filter(({ typeOnly }) => !typeOnly)
+				.map(({ name }) => name),
+		);
+		const reached = SOURCE_FILES.filter((file) => !file.startsWith(DOMAIN_DIRECTORY)).flatMap((file) =>
+			namedImportsIn(file)
+				.filter(({ name, module }) => steps.has(name) && module?.startsWith(DOMAIN_DIRECTORY))
+				.map(({ name }) => `${file}: ${name}`),
+		);
+
+		expect(steps.size).toBeGreaterThan(0);
+		expect(reached).toEqual([]);
+	});
+
+	it("renders from the application only through the presentation entry points", () => {
+		const presentationImports = PRODUCTION_FILES.filter((file) => file.startsWith(APPLICATION_DIRECTORY)).flatMap(
+			(file) =>
+				namedImportsIn(file)
+					.filter(({ typeOnly, specifier }) => !typeOnly && specifier.startsWith(PRESENTATION_ALIAS))
+					.map(({ name }) => ({ file, name })),
+		);
+		const reached = presentationImports
+			.filter(({ name }) => !PRESENTATION_ENTRY_POINTS.has(name))
+			.map(({ file, name }) => `${file}: ${name}`);
+
+		expect(presentationImports.length).toBeGreaterThan(0);
+		expect(reached).toEqual([]);
+	});
+});
+
+const INFRASTRUCTURE_DIRECTORY = "src/infrastructure/";
+const PERSISTENCE_DIRECTORY = "src/infrastructure/persistence/";
+const PERSISTENCE_ENTRY_POINTS = new Set(["withDataBranch", "writeHtmlReport"]);
+const ALLOWED_ADAPTER_CROSSINGS = new Set(["persistence -> git"]);
+const GIT_RUNNER = "src/infrastructure/git/commands.ts";
+const GIT_RUNNER_CALL = "execFileSync";
+const CHILD_PROCESS_SPECIFIERS = new Set(["node:child_process", "child_process"]);
+const SHELL_OPTION_PATTERN = /\bshell\s*:/;
+const CONFIG_VALUE_IMPORT_PATTERN = /^import(?!\s+type\b)[^;]*?from\s*"@config\/[^"]*"/gm;
+const DATA_DIRECTORY_PATTERN = /\bdataDir\b/;
+
+const adapterOf = (file: string): string => file.slice(INFRASTRUCTURE_DIRECTORY.length).split("/")[0];
+
+describe("the infrastructure adapters keep to their folders", () => {
+	const infrastructureFiles = SOURCE_FILES.filter((file) => file.startsWith(INFRASTRUCTURE_DIRECTORY));
+
+	it("lets persistence import git, which it commits through, and no adapter import another", () => {
+		const adapterImports = infrastructureFiles.flatMap((file) =>
+			specifiersIn(file)
+				.map((specifier) => resolveModule({ specifier, file }) ?? "")
+				.filter((module) => module.startsWith(INFRASTRUCTURE_DIRECTORY) && adapterOf(module) !== adapterOf(file))
+				.map((module) => ({ file, crossing: `${adapterOf(file)} -> ${adapterOf(module)}` })),
+		);
+		const crossings = adapterImports
+			.filter(({ crossing }) => !ALLOWED_ADAPTER_CROSSINGS.has(crossing))
+			.map(({ file, crossing }) => `${file}: ${crossing}`);
+
+		expect(adapterImports.length).toBeGreaterThan(0);
+		expect(crossings).toEqual([]);
+	});
+
+	it("lets nothing outside persistence import it past withDataBranch and writeHtmlReport, or hold dataDir", () => {
+		const persistenceImports = SOURCE_FILES.filter((file) => !file.startsWith(PERSISTENCE_DIRECTORY)).flatMap((file) =>
+			namedImportsIn(file)
+				.filter(({ typeOnly, module }) => !typeOnly && module?.startsWith(PERSISTENCE_DIRECTORY))
+				.map(({ name }) => ({ file, name })),
+		);
+		const reached = persistenceImports
+			.filter(({ name }) => !PERSISTENCE_ENTRY_POINTS.has(name))
+			.map(({ file, name }) => `${file}: ${name}`);
+		const holding = SOURCE_FILES.filter(
+			(file) => !file.startsWith(INFRASTRUCTURE_DIRECTORY) && DATA_DIRECTORY_PATTERN.test(read(file)),
+		);
+
+		expect(persistenceImports.length).toBeGreaterThan(0);
+		expect(reached).toEqual([]);
+		expect(holding).toEqual([]);
+	});
+
+	it("imports @config for types only, so GitHub's dialect never reaches the layer that reads the inputs", () => {
+		const valued = infrastructureFiles.flatMap((file) =>
+			[...read(file).matchAll(CONFIG_VALUE_IMPORT_PATTERN)].map(
+				([statement]) => `${file}: ${statement.replaceAll(WHITESPACE_RUN_PATTERN, " ")}`,
+			),
+		);
+
+		expect(infrastructureFiles.length).toBeGreaterThan(0);
+		expect(valued).toEqual([]);
+	});
+
+	it("runs a child process only in git/commands.ts, through execFileSync and never a shell, since branch names and commit messages are user-controlled", () => {
+		const spawning = PRODUCTION_FILES.filter(
+			(file) => file !== GIT_RUNNER && specifiersIn(file).some((specifier) => CHILD_PROCESS_SPECIFIERS.has(specifier)),
+		);
+		const childProcessImports = namedImportsIn(GIT_RUNNER).filter(({ specifier }) =>
+			CHILD_PROCESS_SPECIFIERS.has(specifier),
+		);
+		const otherCalls = childProcessImports.filter(({ name }) => name !== GIT_RUNNER_CALL).map(({ name }) => name);
+
+		expect(childProcessImports.length).toBeGreaterThan(0);
+		expect(spawning).toEqual([]);
+		expect(otherCalls).toEqual([]);
+		expect(SHELL_OPTION_PATTERN.test(read(GIT_RUNNER))).toBe(false);
+	});
+});
+
+const ZOD_SPECIFIER_PATTERN = /^zod(?:\/|$)/;
+const ZOD_MINI_IMPORT = 'import * as z from "zod/mini";';
+const SCHEMA_DECLARATION_PATTERN = /^(?:export\s+)?const\s+(\w+)\s*=\s*z\./gm;
+const SCHEMA_NAME_PATTERN = /^[A-Z][A-Za-z]*Schema$/;
+const SCHEMA_PARSE_PATTERN = /\b(?:\w*Schema|schema|z)\.parse(?:Async)?\(/g;
+const PARSED_CAST_PATTERN = /\b(?:JSON\.parse|yaml\.load)\((?:[^()]|\([^()]*\))*\)\s*as\b/g;
+const SAFE_PARSE_PATTERN = /\.safeParse\(/g;
+const REPORT_INPUT_PATTERN = /\breportInput:\s*true\b/g;
+const ISSUE_WORDING = "describeIssue";
+
+describe("data from outside the action is checked by a zod/mini schema", () => {
+	it('imports zod only as import * as z from "zod/mini", since one import of zod bundles the classic build', () => {
+		const importing = SOURCE_FILES.filter((file) =>
+			specifiersIn(file).some((specifier) => ZOD_SPECIFIER_PATTERN.test(specifier)),
+		);
+		const wrong = importing.filter(
+			(file) =>
+				specifiersIn(file).filter((specifier) => ZOD_SPECIFIER_PATTERN.test(specifier)).length !== 1 ||
+				!read(file).includes(ZOD_MINI_IMPORT),
+		);
+
+		expect(importing.length).toBeGreaterThan(0);
+		expect(wrong).toEqual([]);
+	});
+
+	it("names each module-level schema <Concept>Schema and never calls parse, which throws zod's own English", () => {
+		const declared = PRODUCTION_FILES.flatMap((file) =>
+			[...read(file).matchAll(SCHEMA_DECLARATION_PATTERN)].map(([, name]) => ({ file, name })),
+		);
+		const misnamed = declared
+			.filter(({ name }) => !SCHEMA_NAME_PATTERN.test(name))
+			.map(({ file, name }) => `${file}: ${name}`);
+		const parsing = PRODUCTION_FILES.flatMap((file) =>
+			[...read(file).matchAll(SCHEMA_PARSE_PATTERN)].map(([call]) => `${file}: ${call}`),
+		);
+
+		expect(declared.length).toBeGreaterThan(0);
+		expect(misnamed).toEqual([]);
+		expect(parsing).toEqual([]);
+	});
+
+	it("runs every safeParse of a module that words an issue with reportInput, without which describeIssue finds nothing", () => {
+		const wording = PRODUCTION_FILES.filter((file) => namedImportsIn(file).some(({ name }) => name === ISSUE_WORDING));
+		const unreported = wording.filter(
+			(file) =>
+				[...read(file).matchAll(SAFE_PARSE_PATTERN)].length !== [...read(file).matchAll(REPORT_INPUT_PATTERN)].length,
+		);
+
+		expect(wording.length).toBeGreaterThan(0);
+		expect(unreported).toEqual([]);
+	});
+
+	it("casts no JSON.parse or yaml.load result, since only a schema can type what they return", () => {
+		const cast = PRODUCTION_FILES.flatMap((file) =>
+			[...read(file).matchAll(PARSED_CAST_PATTERN)].map(
+				([call]) => `${file}: ${call.replaceAll(WHITESPACE_RUN_PATTERN, " ")}`,
+			),
+		);
+
+		expect([..."yaml.load(read(file)) as unknown".matchAll(PARSED_CAST_PATTERN)]).toHaveLength(1);
+		expect(PRODUCTION_FILES.length).toBeGreaterThan(0);
+		expect(cast).toEqual([]);
+	});
+});
+
+const PRESENTATION_DIRECTORY = "src/presentation/";
+const ESCAPING_MODULE = "src/presentation/escaping.ts";
+const ESCAPE_ENTITY_PATTERN = /&(?:amp|lt|gt|quot|apos|#39);/;
+const ESCAPER_FACTORY = "escapeFor(";
+const ESCAPER_BINDING_PATTERN = /^const \w+ = escapeFor\(EscapeDialect\.[A-Z]+\);$/;
+const COMPACT_COUNT_PATTERN = /\bformatCount\b/;
+const FIXED_SPACE_MODULES = new Set([
+	"src/presentation/badge.ts",
+	"src/presentation/chart-spec.ts",
+	"src/presentation/svg-chart.ts",
+]);
+
+describe("the presentation layer escapes and compacts in one place each", () => {
+	const presentationFiles = PRODUCTION_FILES.filter((file) => file.startsWith(PRESENTATION_DIRECTORY));
+
+	it("writes an escape entity only in escaping.ts", () => {
+		const escaping = presentationFiles.filter(
+			(file) => file !== ESCAPING_MODULE && ESCAPE_ENTITY_PATTERN.test(read(file)),
+		);
+
+		expect(presentationFiles.length).toBeGreaterThan(0);
+		expect(escaping).toEqual([]);
+	});
+
+	it("binds each escaper once, at module load, to the dialect the renderer writes", () => {
+		const bindings = presentationFiles
+			.filter((file) => file !== ESCAPING_MODULE)
+			.flatMap((file) =>
+				read(file)
+					.split("\n")
+					.filter((line) => line.includes(ESCAPER_FACTORY))
+					.map((line) => ({ file, line: line.trim() })),
+			);
+		const unbound = bindings
+			.filter(({ line }) => !ESCAPER_BINDING_PATTERN.test(line))
+			.map(({ file, line }) => `${file}: ${line}`);
+
+		expect(bindings.length).toBeGreaterThan(0);
+		expect(unbound).toEqual([]);
+	});
+
+	it("compacts a Star Count only where space is fixed, so a Report prints the exact figure", () => {
+		const compacting = presentationFiles.filter(
+			(file) => !FIXED_SPACE_MODULES.has(file) && COMPACT_COUNT_PATTERN.test(read(file)),
+		);
+
+		expect(presentationFiles.filter((file) => FIXED_SPACE_MODULES.has(file))).toHaveLength(FIXED_SPACE_MODULES.size);
+		expect(compacting).toEqual([]);
+	});
+});
+
+const WIKI_DIRECTORY = "docs/wiki";
+const WIKI_LINK_PATTERN = /\]\(<?([^)>\s]+)|\b(?:src|href)="([^"]+)"/g;
+const EXTERNAL_TARGET_PATTERN = /^(?:[a-z]+:|#)/i;
+const REPOSITORY_PATH_PATTERN = /^\.|\/|\.\w+(?:#|$)/;
+
+describe("the wiki", () => {
+	it("reaches a repository file only by an absolute URL, since sync-wiki.yml publishes docs/wiki to a repository of its own", () => {
+		const links = walk({ dir: WIKI_DIRECTORY, keep: isMarkdown }).flatMap((page) =>
+			[...read(page).matchAll(WIKI_LINK_PATTERN)].map(([, markdown, html]) => ({ page, target: markdown ?? html })),
+		);
+		const relative = links
+			.filter(({ target }) => !EXTERNAL_TARGET_PATTERN.test(target) && REPOSITORY_PATH_PATTERN.test(target))
+			.map(({ page, target }) => `${toPosix(page)} -> ${target}`);
+
+		expect(links.length).toBeGreaterThan(0);
+		expect(relative).toEqual([]);
+	});
+});
+
+const YAML_FILE_PATTERN = /\.ya?ml$/;
+const GENERATED_YAML = new Set(["pnpm-lock.yaml"]);
+const YAML_COMMENT_PATTERN = /(?:^|\s)#/g;
+const USES_PATTERN = /^\s*(?:-\s+)?uses:\s*(\S+)(.*)$/;
+const SAME_REPOSITORY_ACTION_PATTERN = /^[.$]\//;
+const SHA_PIN_PATTERN = /^[\w.-]+\/[\w./-]+@[0-9a-f]{40}$/;
+const PIN_COMMENT_PATTERN = /^\s+#\s\S+$/;
+const TOOL_DIRECTIVE_PATTERN = /^#\s*(?:zizmor|yaml-language-server):/;
+const RENOVATE_ANNOTATION_PATTERN = /^# Renovate security update: \S/;
+const RENOVATE_ANNOTATED_FILE = "pnpm-workspace.yaml";
+
+const yamlFiles = (dir: string): string[] =>
+	fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+		const full = path.join(dir, entry.name);
+		if (entry.isDirectory()) return SKIPPED_TREE_DIRECTORIES.has(entry.name) ? [] : yamlFiles(full);
+		return YAML_FILE_PATTERN.test(entry.name) && !GENERATED_YAML.has(entry.name) ? [toPosix(full)] : [];
+	});
+
+const YAML_FILES = yamlFiles(".");
+
+interface SameDocumentParams {
+	text: string;
+	parsed: string;
+}
+
+function sameDocument({ text, parsed }: SameDocumentParams): boolean {
+	try {
+		return JSON.stringify(yaml.loadAll(text)) === parsed;
+	} catch {
+		return false;
+	}
+}
+
+interface YamlComment {
+	line: number;
+	comment: string;
+}
+
+function yamlComments(text: string): YamlComment[] {
+	const lines = text.split("\n");
+	const parsed = JSON.stringify(yaml.loadAll(text));
+
+	return lines.flatMap((line, index) => {
+		const start = [...line.matchAll(YAML_COMMENT_PATTERN)]
+			.map((match) => line.indexOf("#", match.index))
+			.find((at) =>
+				sameDocument({
+					text: [...lines.slice(0, index), line.slice(0, at).trimEnd(), ...lines.slice(index + 1)].join("\n"),
+					parsed,
+				}),
+			);
+
+		return start === undefined ? [] : [{ line: index + 1, comment: line.slice(start) }];
+	});
+}
+
+function unpinnedUses(text: string): string[] {
+	return text.split("\n").flatMap((line) => {
+		const uses = USES_PATTERN.exec(line);
+
+		if (uses === null || SAME_REPOSITORY_ACTION_PATTERN.test(uses[1])) return [];
+
+		return SHA_PIN_PATTERN.test(uses[1]) && PIN_COMMENT_PATTERN.test(uses[2]) ? [] : [line.trim()];
+	});
+}
+
+interface AllowedCommentParams {
+	file: string;
+	line: string;
+	comment: string;
+}
+
+function allowedComment({ file, line, comment }: AllowedCommentParams): boolean {
+	const uses = USES_PATTERN.exec(line);
+
+	return (
+		(uses !== null && SHA_PIN_PATTERN.test(uses[1])) ||
+		TOOL_DIRECTIVE_PATTERN.test(comment) ||
+		(file === RENOVATE_ANNOTATED_FILE && RENOVATE_ANNOTATION_PATTERN.test(comment))
+	);
+}
+
+describe("the YAML", () => {
+	it("pins every action of another repository to a full commit SHA, its version or branch in a trailing comment", () => {
+		const uses = YAML_FILES.flatMap((file) =>
+			read(file)
+				.split("\n")
+				.filter((line) => USES_PATTERN.test(line)),
+		);
+		const unpinned = YAML_FILES.flatMap((file) => unpinnedUses(read(file)).map((line) => `${file}: ${line}`));
+
+		expect(
+			unpinnedUses(
+				[
+					"      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1",
+					"      - uses: $/.github/actions/prepare-env",
+					"        uses: actions/setup-node@v7",
+					"      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413",
+				].join("\n"),
+			),
+		).toEqual(["uses: actions/setup-node@v7", "- uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413"]);
+		expect(uses.length).toBeGreaterThan(0);
+		expect(unpinned).toEqual([]);
+	});
+
+	it("carries no comment but a SHA pin's version, a tool directive and the line Renovate writes above an entry it exempts", () => {
+		const commented = YAML_FILES.flatMap((file) => {
+			const lines = read(file).split("\n");
+
+			return yamlComments(read(file))
+				.filter(({ line, comment }) => !allowedComment({ file, line: lines[line - 1], comment }))
+				.map(({ line, comment }) => `${file}:${line}: ${comment}`);
+		});
+
+		expect(yamlComments("a: 1 # why\nb: '#kept'\nc: |\n  # content\nd: x#y\n")).toEqual([
+			{ line: 1, comment: "# why" },
+		]);
+		expect(YAML_FILES.length).toBeGreaterThan(0);
+		expect(commented).toEqual([]);
+	});
+});
+
+describe("every census the assertions above read", () => {
+	it("finds something in each list derived from the repository, since an assertion over an empty list passes whatever the tree holds", () => {
+		const empty = Object.entries({
+			DOCS,
+			ADR_FILES,
+			TEST_FILENAMES: [...TEST_FILENAMES],
+			declaredInputs,
+			declaredOutputs,
+			SOURCE_FILES,
+			PRODUCTION_FILES,
+			TYPESCRIPT_FILES,
+			UNIT_TEST_FILES,
+			YAML_FILES,
+		})
+			.filter(([, list]) => list.length === 0)
+			.map(([census]) => census);
+
+		expect(empty).toEqual([]);
 	});
 });

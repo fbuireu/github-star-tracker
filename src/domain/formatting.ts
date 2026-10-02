@@ -3,15 +3,19 @@ import { LOCALE_MAP } from "@i18n";
 import { MS_PER_YEAR } from "./constants";
 import { toEpochMs } from "./time";
 
-export const UP_ARROW = "\u2B06\uFE0F";
-export const DOWN_ARROW = "\u2B07\uFE0F";
-export const DASH = "\u2796";
+const UP_ARROW = "\u2B06\uFE0F";
+const DOWN_ARROW = "\u2B07\uFE0F";
+const DASH = "\u2796";
 
 const COMPACT_MAX_FRACTION_DIGITS = 1;
 const compactFormatters = new Map<string, Intl.NumberFormat>();
 
+function intlCode(locale: Locale): string {
+	return LOCALE_MAP[locale] || LOCALE_MAP.en;
+}
+
 function compactFormatter(locale: Locale): Intl.NumberFormat {
-	const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
+	const localeCode = intlCode(locale);
 	const cached = compactFormatters.get(localeCode);
 
 	if (cached) return cached;
@@ -61,7 +65,7 @@ export function formatDate({ timestamp, locale }: FormatDateParams): string {
 
 	if (epochMs === null) return "";
 
-	const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
+	const localeCode = intlCode(locale);
 
 	return new Date(epochMs).toLocaleDateString(localeCode, {
 		month: "short",

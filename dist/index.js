@@ -25982,7 +25982,7 @@ var it_default = {
     trend: "Tendenza",
     newRepositories: "Nuovi Repository",
     removedRepositories: "Repository Rimossi",
-    removedRepoText: "{name}:aveva {count} stelle",
+    removedRepoText: "{name}: aveva {count} stelle",
     summary: "Riepilogo",
     starsGained: "Stelle guadagnate",
     starsLost: "Stelle perse",
@@ -26058,7 +26058,7 @@ function interpolate({ template, params }) {
   );
 }
 function getTranslations(locale) {
-  return TRANSLATIONS[locale] || FALLBACK_LANG;
+  return Object.hasOwn(TRANSLATIONS, locale) ? TRANSLATIONS[locale] : FALLBACK_LANG;
 }
 
 // node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/util.js
@@ -28668,8 +28668,15 @@ function refine(fn, _params = {}) {
 var ErrorWithMessageSchema = object({
   message: string2().check(refine((message) => message.trim() !== ""))
 });
+function textOf(value) {
+  try {
+    return String(value);
+  } catch {
+    return Object.prototype.toString.call(value);
+  }
+}
 function errorMessage(error3) {
-  return validate(ErrorWithMessageSchema, error3) ? error3.message : String(error3);
+  return validate(ErrorWithMessageSchema, error3) ? error3.message : textOf(error3);
 }
 function describeFound(value) {
   if (Array.isArray(value)) return "an array";
@@ -31350,11 +31357,11 @@ function scalarField({ fromInput, fromFile, namesFallback = false }) {
   };
 }
 function enumField(allowed) {
-  const schema = _enum(allowed);
+  const ChoiceSchema = _enum(allowed);
   return ({ input, inputName, fileValue, fallback }) => {
     const value = input || fileValue;
     if (!value) return fallback;
-    if (validate(schema, value)) return value;
+    if (validate(ChoiceSchema, value)) return value;
     warning(
       `Invalid ${inputName} "${String(value)}". Must be ${formatChoices(allowed)}. Falling back to "${String(fallback)}"`
     );
@@ -31530,9 +31537,9 @@ var EMPTY_SUMMARY = {
   lostStars: 0,
   changed: false
 };
-function compareStars({ currentRepos, previousSnapshot }) {
+function compareStars({ currentRepos, baselineSnapshot }) {
   const previousStars = /* @__PURE__ */ new Map();
-  for (const repo of previousSnapshot?.repos ?? []) {
+  for (const repo of baselineSnapshot?.repos ?? []) {
     previousStars.set(repo.fullName, repo.stars);
   }
   const currentNames = new Set(currentRepos.map((repo) => repo.fullName));
@@ -31552,7 +31559,7 @@ function compareStars({ currentRepos, previousSnapshot }) {
       isRemoved: false
     });
   }
-  for (const repo of previousSnapshot?.repos ?? []) {
+  for (const repo of baselineSnapshot?.repos ?? []) {
     if (currentNames.has(repo.fullName)) continue;
     const [owner, name2] = repo.fullName.split("/");
     repoResults.push({
@@ -31567,7 +31574,7 @@ function compareStars({ currentRepos, previousSnapshot }) {
     });
   }
   const totalStars = repoResults.filter((repo) => !repo.isRemoved).reduce((sum, repo) => sum + repo.current, 0);
-  const totalPrevious = previousSnapshot?.totalStars ?? 0;
+  const totalPrevious = baselineSnapshot?.totalStars ?? 0;
   const gained = repoResults.filter((repo) => repo.delta > 0).reduce((sum, repo) => sum + repo.delta, 0);
   const lost = repoResults.filter((repo) => repo.delta < 0).reduce((sum, repo) => sum + Math.abs(repo.delta), 0);
   const changed = repoResults.some((repo) => repo.delta !== 0 || repo.isNew || repo.isRemoved);
@@ -31646,9 +31653,9 @@ function weightedDailyRate(points) {
   if (points.length < MIN_POINTS_FOR_RATE) return 0;
   const dailyRates = [];
   for (let index = 1; index < points.length; index++) {
-    const elapsedDays = points[index].day - points[index - 1].day;
-    if (elapsedDays < MIN_RATE_INTERVAL_DAYS) continue;
-    dailyRates.push((points[index].value - points[index - 1].value) / elapsedDays);
+    const interval = latestRateInterval([points[index - 1], points[index]]);
+    if (interval === null) continue;
+    dailyRates.push((interval.to.value - interval.from.value) / interval.days);
   }
   if (dailyRates.length === 0) return 0;
   let weightedSum = 0;
@@ -31727,6 +31734,11 @@ var ForecastSource = {
   OWN: "own",
   AGGREGATE: "aggregate"
 };
+function snapshotsHolding({ history, repoFullName }) {
+  return {
+    snapshots: history.snapshots.filter((snapshot) => snapshot.repos.some((repo) => repo.fullName === repoFullName))
+  };
+}
 function clampPrediction(value) {
   return Math.max(0, Math.round(value));
 }
@@ -31757,20 +31769,21 @@ function computeForecast({ history, topRepoNames, historyForRepo }) {
     return null;
   }
   const toSeries = ({ values, days }) => values.map((value, index) => ({ day: days[index], value }));
-  const aggregateDays = calendarDays(history);
   const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
-  const aggregateForecasts = forecastFromSeries(toSeries({ values: totalValues, days: aggregateDays }));
-  const repos = topRepoNames.map((repoFullName) => {
+  const aggregateForecasts = forecastFromSeries(toSeries({ values: totalValues, days: calendarDays(history) }));
+  const repos = topRepoNames.flatMap((repoFullName) => {
     const candidate = historyForRepo?.(repoFullName);
     const ownHistory = candidate && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST ? candidate : null;
-    const fitted = ownHistory ?? history;
-    const days = ownHistory === null ? aggregateDays : calendarDays(ownHistory);
+    const fitted = snapshotsHolding({ history: ownHistory ?? history, repoFullName });
+    if (fitted.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) return [];
     const values = repoStarSeries({ snapshots: fitted.snapshots, repoFullName });
-    return {
-      repoFullName,
-      source: ownHistory === null ? ForecastSource.AGGREGATE : ForecastSource.OWN,
-      forecasts: forecastFromSeries(toSeries({ values, days }))
-    };
+    return [
+      {
+        repoFullName,
+        source: ownHistory === null ? ForecastSource.AGGREGATE : ForecastSource.OWN,
+        forecasts: forecastFromSeries(toSeries({ values, days: calendarDays(fitted) }))
+      }
+    ];
   });
   return { aggregate: { forecasts: aggregateForecasts }, repos };
 }
@@ -31781,8 +31794,11 @@ var DOWN_ARROW = "\u2B07\uFE0F";
 var DASH = "\u2796";
 var COMPACT_MAX_FRACTION_DIGITS = 1;
 var compactFormatters = /* @__PURE__ */ new Map();
+function intlCode(locale) {
+  return LOCALE_MAP[locale] || LOCALE_MAP.en;
+}
 function compactFormatter(locale) {
-  const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
+  const localeCode = intlCode(locale);
   const cached2 = compactFormatters.get(localeCode);
   if (cached2) return cached2;
   const formatter = new Intl.NumberFormat(localeCode, {
@@ -31811,7 +31827,7 @@ function trendIcon(delta) {
 function formatDate({ timestamp, locale }) {
   const epochMs = toEpochMs(timestamp);
   if (epochMs === null) return "";
-  const localeCode = LOCALE_MAP[locale] || LOCALE_MAP.en;
+  const localeCode = intlCode(locale);
   return new Date(epochMs).toLocaleDateString(localeCode, {
     month: "short",
     day: "numeric",
@@ -31869,11 +31885,11 @@ function settleNotification({
   totalStars
 }) {
   const shouldNotify2 = notificationIsDue({ changed, thresholdReached });
-  const baselineAdvances = shouldNotify2 && delivery !== Delivery.FAILED;
+  const notificationBaselineAdvances = shouldNotify2 && delivery !== Delivery.FAILED;
   return {
     shouldNotify: shouldNotify2,
     notificationSent: delivery === Delivery.SENT,
-    historyToPersist: baselineAdvances ? recordNotification({ history, totalStars }) : history
+    historyToPersist: notificationBaselineAdvances ? recordNotification({ history, totalStars }) : history
   };
 }
 
@@ -31887,17 +31903,17 @@ function measureRun({
   notificationMode,
   now
 }) {
-  const baseline = getBaselineSnapshot({
+  const baselineSnapshot = getBaselineSnapshot({
     history: storedHistory,
     compareAgainst: comparisonWindow,
     now
   });
-  const results = compareStars({ currentRepos: trackedSet, previousSnapshot: baseline });
+  const results = compareStars({ currentRepos: trackedSet, baselineSnapshot });
   const { summary: summary2 } = results;
   const snapshot = createSnapshot({ currentRepos: trackedSet, summary: summary2, now });
   const updatedHistory = addSnapshot({ history: storedHistory, snapshot, maxHistory });
   return {
-    baselineTimestamp: baseline === null ? null : baseline.timestamp,
+    baselineSnapshotTimestamp: baselineSnapshot === null ? null : baselineSnapshot.timestamp,
     results,
     summary: summary2,
     updatedHistory,
@@ -32015,6 +32031,7 @@ var GitHubStargazerRowSchema = object({
 
 // src/infrastructure/github/client.ts
 var REPOS_PER_PAGE = 100;
+var RepoPageSchema = array(unknown());
 var RepoListSchema = array(GitHubRepoSchema);
 var VISIBILITY_PARAMS = {
   public: { visibility: "public" },
@@ -32022,37 +32039,37 @@ var VISIBILITY_PARAMS = {
   all: { visibility: "all" },
   owned: { visibility: "all", affiliation: "owner" }
 };
-async function fetchRepos({ octokit, config: config2 }) {
-  const fetched = [];
-  let page = 1;
-  const params = {
-    per_page: REPOS_PER_PAGE,
-    sort: "full_name",
-    ...VISIBILITY_PARAMS[config2.visibility]
-  };
+async function fetchRepoPage({ octokit, query, page }) {
   try {
-    let dataLength;
-    do {
-      const { data } = await octokit.rest.repos.listForAuthenticatedUser({
-        ...params,
-        page
-      });
-      dataLength = data.length;
-      if (dataLength === 0) break;
-      fetched.push(...data);
-      page++;
-    } while (dataLength >= REPOS_PER_PAGE);
+    const { data } = await octokit.rest.repos.listForAuthenticatedUser({ ...query, page });
+    return data;
   } catch (error3) {
     throw new Error(
       `Failed to fetch repositories from GitHub API: ${describeFetchError(error3)}. Verify that your github-token has the correct permissions.`
     );
   }
+}
+function unreadableRepoList(issue3) {
+  return new Error(`GitHub returned a repository list this action cannot read: ${describeIssue(issue3)}.`);
+}
+async function fetchRepos({ octokit, config: config2 }) {
+  const fetched = [];
+  let page = 1;
+  let pageLength;
+  const query = {
+    per_page: REPOS_PER_PAGE,
+    sort: "full_name",
+    ...VISIBILITY_PARAMS[config2.visibility]
+  };
+  do {
+    const rows = RepoPageSchema.safeParse(await fetchRepoPage({ octokit, query, page }), { reportInput: true });
+    if (!rows.success) throw unreadableRepoList(rows.error.issues[0]);
+    fetched.push(...rows.data);
+    pageLength = rows.data.length;
+    page++;
+  } while (pageLength >= REPOS_PER_PAGE);
   const repos = RepoListSchema.safeParse(fetched, { reportInput: true });
-  if (!repos.success) {
-    throw new Error(
-      `GitHub returned a repository list this action cannot read: ${describeIssue(repos.error.issues[0])}.`
-    );
-  }
+  if (!repos.success) throw unreadableRepoList(repos.error.issues[0]);
   info(`Fetched ${repos.data.length} repositories from GitHub`);
   return repos.data;
 }
@@ -44012,6 +44029,10 @@ var path4 = __toESM(require("node:path"));
 
 // src/infrastructure/git/commands.ts
 var import_node_child_process2 = require("node:child_process");
+var GitFailureSchema = object({
+  stderr: _catch(optional(string2()), void 0),
+  message: _catch(optional(string2()), void 0)
+});
 function execute({ args, options = {} }) {
   try {
     return (0, import_node_child_process2.execFileSync)("git", args, {
@@ -44020,9 +44041,8 @@ function execute({ args, options = {} }) {
       ...options
     }).trim();
   } catch (error3) {
-    const err = error3;
-    const stderr = err.stderr?.trim() || "";
-    const detail = stderr || err.message || "Unknown error";
+    const { stderr, message } = GitFailureSchema.safeParse(error3).data ?? {};
+    const detail = stderr?.trim() || message || "Unknown error";
     throw new Error(`Git command failed: "git ${args.join(" ")}"
 ${detail}`);
   }
@@ -44671,12 +44691,12 @@ function selectWindow({ history, locale, range, maxPoints, axisLabels }) {
 function resolveMilestones(customMilestones) {
   return customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
 }
-function visibleMilestones({ series, thresholds, locale }) {
+function visibleMilestones({ series, milestones, locale }) {
   const values = series.flatMap((entry) => entry.data.filter((value) => value !== null));
   if (values.length === 0) return [];
   const min = Math.min(...values);
   const max = Math.max(...values);
-  return thresholds.filter((milestone) => milestone > min && milestone < max).map((value) => ({ value, label: `${formatCount({ count: value, locale })} \u2605` }));
+  return milestones.filter((milestone) => milestone > min && milestone < max).map((value) => ({ value, label: `${formatCount({ count: value, locale })} \u2605` }));
 }
 function starHistorySpec({
   title,
@@ -44718,7 +44738,7 @@ function starHistorySpec({
     showLegend: false,
     milestones: milestones ? visibleMilestones({
       series,
-      thresholds: resolveMilestones(customMilestones),
+      milestones: resolveMilestones(customMilestones),
       locale: window2.locale
     }) : []
   };
@@ -44767,20 +44787,20 @@ function comparisonSpec({ repoNames, title, ...window2 }) {
   };
 }
 function forecastSpec({ forecastData, ...rest }) {
-  return projectionSpec({
+  return forecastChartSpec({
     ...rest,
     forecasts: forecastData.aggregate.forecasts,
     observed: (snapshots) => snapshots.map((snapshot) => snapshot.totalStars)
   });
 }
 function perRepoForecastSpec({ forecastData, repoFullName, ...rest }) {
-  return projectionSpec({
+  return forecastChartSpec({
     ...rest,
     forecasts: forecastData.repos.find((repo) => repo.repoFullName === repoFullName)?.forecasts ?? [],
     observed: (snapshots) => repoStarSeries({ snapshots, repoFullName })
   });
 }
-function projectionSpec({
+function forecastChartSpec({
   forecasts,
   observed,
   title,
@@ -44910,7 +44930,7 @@ var THEME_CONFIG = {
   [ChartTheme.LIGHT]: { palette: LIGHT_PALETTE, colorScheme: ChartTheme.LIGHT },
   [ChartTheme.DARK]: { palette: DARK_PALETTE, colorScheme: ChartTheme.DARK }
 };
-function resolvePalette(theme = ChartTheme.AUTO) {
+function resolvePalette(theme) {
   return THEME_CONFIG[theme].palette;
 }
 function colorSchemeFor(theme) {
@@ -44918,7 +44938,7 @@ function colorSchemeFor(theme) {
 }
 function prepareReportData({
   results,
-  previousTimestamp,
+  baselineSnapshotTimestamp,
   locale,
   now = /* @__PURE__ */ new Date()
 }) {
@@ -44931,8 +44951,8 @@ function prepareReportData({
     removedRepos: repos.filter((repo) => repo.isRemoved),
     sorted: rankByStars(repos),
     now: generatedAt.split("T")[0],
-    prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun,
-    isFirstRun: previousTimestamp === null,
+    baselineSnapshotDate: baselineSnapshotTimestamp ? baselineSnapshotTimestamp.split("T")[0] : t.report.firstRun,
+    isFirstRun: baselineSnapshotTimestamp === null,
     generatedAt
   };
 }
@@ -45401,7 +45421,7 @@ function renderSvgChart({ request: request2, locale, maxPoints, range, ...style 
   const spec = buildChartSpec({
     request: request2,
     locale,
-    palette: resolvePalette(style.theme),
+    palette: resolvePalette(style.theme ?? CHART_DEFAULTS.theme),
     axisLabels: AxisLabels.THINNED,
     range,
     maxPoints
@@ -45586,15 +45606,15 @@ function generateBadge({ totalStars, locale }) {
 var CSV_HEADER = "repository,owner,name,stars,previous,delta,status";
 var NEW_LINE = "\n";
 var escapeCsvField2 = escapeFor(EscapeDialect.CSV);
-var REPO_STATUS = {
-  new: "new",
-  removed: "removed",
-  active: "active"
+var RepoStatus = {
+  NEW: "new",
+  REMOVED: "removed",
+  ACTIVE: "active"
 };
 function repoStatus(repo) {
-  if (repo.isNew) return REPO_STATUS.new;
-  if (repo.isRemoved) return REPO_STATUS.removed;
-  return REPO_STATUS.active;
+  if (repo.isNew) return RepoStatus.NEW;
+  if (repo.isRemoved) return RepoStatus.REMOVED;
+  return RepoStatus.ACTIVE;
 }
 function generateCsvReport({ repos }) {
   const rows = repos.map(
@@ -45753,7 +45773,7 @@ function chartImageUrl({
   showPoints = CHART_DEFAULTS.showPoints,
   beginAtZero = CHART_DEFAULTS.beginAtZero,
   theme = CHART_DEFAULTS.theme,
-  range = ChartRange.ALL,
+  range,
   lineWidth
 }) {
   const palette = resolvePalette(theme);
@@ -45814,11 +45834,11 @@ function computeVelocity({ history }) {
   if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
   const last = snapshots[snapshots.length - 1];
   if (toEpochMs(last.timestamp) === null) return null;
-  const points = snapshots.reduce((observed, snapshot) => {
+  const points = [];
+  for (const snapshot of snapshots) {
     const timeMs = toEpochMs(snapshot.timestamp);
-    if (timeMs !== null) observed.push({ day: timeMs / MS_PER_DAY, value: snapshot.totalStars });
-    return observed;
-  }, []);
+    if (timeMs !== null) points.push({ day: timeMs / MS_PER_DAY, value: snapshot.totalStars });
+  }
   const interval = latestRateInterval(points);
   if (interval === null) return null;
   const gained = interval.to.value - interval.from.value;
@@ -45856,14 +45876,14 @@ function toVelocitySection(metrics) {
   return {
     starsPerDay: metrics.starsPerDay,
     growthPercent: metrics.growthPercent,
-    projection: metrics.nextMilestone !== null && metrics.daysToNextMilestone !== null ? { days: metrics.daysToNextMilestone, milestone: metrics.nextMilestone } : null
+    nextMilestone: metrics.nextMilestone !== null && metrics.daysToNextMilestone !== null ? { days: metrics.daysToNextMilestone, milestone: metrics.nextMilestone } : null
   };
 }
 function buildReportModel(params) {
   const {
     config: config2,
     results,
-    previousTimestamp,
+    baselineSnapshotTimestamp,
     history = null,
     velocityHistory = null,
     forecastData = null,
@@ -45878,12 +45898,12 @@ function buildReportModel(params) {
     newRepos,
     removedRepos,
     now: reportDate,
-    prev,
+    baselineSnapshotDate,
     isFirstRun,
     generatedAt
   } = prepareReportData({
     results,
-    previousTimestamp,
+    baselineSnapshotTimestamp,
     locale,
     now
   });
@@ -45900,7 +45920,7 @@ function buildReportModel(params) {
   return {
     summary: results.summary,
     now: reportDate,
-    prev,
+    baselineSnapshotDate,
     generatedAt,
     isFirstRun,
     sorted,
@@ -45958,7 +45978,16 @@ function generateHtmlReport({ model, config: config2 }) {
   const t = getTranslations(locale);
   const palette = resolvePalette(theme);
   const chartUrl = (request2) => chartImageUrl({ request: request2, locale, theme, ...style });
-  const { summary: summary2, sorted, newRepos, removedRepos, now, prev, chartHistory: history, forecast: forecastData } = model;
+  const {
+    summary: summary2,
+    sorted,
+    newRepos,
+    removedRepos,
+    now,
+    baselineSnapshotDate,
+    chartHistory: history,
+    forecast: forecastData
+  } = model;
   const rows = sorted.map((repo) => {
     const badge = repo.isNew ? ` <span style="background:${palette.positive};color:${palette.white};padding:1px 6px;border-radius:3px;font-size:11px;">${t.report.badges.new}</span>` : "";
     return `
@@ -46018,7 +46047,7 @@ function generateHtmlReport({ model, config: config2 }) {
         ${individualRepoChartsHtml}` : ""}
       </div>` : "";
   const stargazers = model.stargazers;
-  const sampledNoteHtml = stargazers && stargazers.sampledRepos.length > 0 ? `<p style="color:${palette.neutral};">${interpolate({ template: t.stargazers.sampledNote, params: { repos: stargazers.sampledRepos.join(", ") } })}</p>` : "";
+  const sampledNoteHtml = stargazers && stargazers.sampledRepos.length > 0 ? `<p style="color:${palette.neutral};">${interpolate({ template: t.stargazers.sampledNote, params: { repos: stargazers.sampledRepos.map(escapeHtml).join(", ") } })}</p>` : "";
   const stargazerSection = stargazers && stargazers.outcome === StargazerOutcome.NEW ? `
       <div style="margin-top:24px;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.stargazers} ${t.stargazers.sectionTitle}</h2>
@@ -46033,7 +46062,7 @@ function generateHtmlReport({ model, config: config2 }) {
           <div style="display:flex;align-items:center;margin:4px 0;">
             <img src="${escapeHtml(stargazer.avatarUrl)}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
             <a href="${escapeHtml(stargazer.profileUrl)}" style="color:${palette.link};text-decoration:none;font-weight:600;">${escapeHtml(stargazer.login)}</a>
-            <span style="color:${palette.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split("T")[0] } })}</span>
+            <span style="color:${palette.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: escapeHtml(stargazer.starredAt.split("T")[0]) } })}</span>
           </div>`
     ).join("")}
         </div>`
@@ -46049,7 +46078,7 @@ function generateHtmlReport({ model, config: config2 }) {
         <ul style="margin:0;padding-left:20px;">
           <li><strong>${t.velocity.starsPerDay}:</strong> ${velocity.starsPerDay}</li>
           ${velocity.growthPercent !== null ? `<li><strong>${t.velocity.growth}:</strong> <span style="color:${deltaColor({ delta: velocity.growthPercent, palette })};">${formatSignedPercent(velocity.growthPercent)}</span></li>` : ""}
-          ${velocity.projection ? `<li>${interpolate({ template: t.velocity.projection, params: { days: velocity.projection.days, milestone: velocity.projection.milestone } })}</li>` : ""}
+          ${velocity.nextMilestone ? `<li>${interpolate({ template: t.velocity.projection, params: { days: velocity.nextMilestone.days, milestone: velocity.nextMilestone.milestone } })}</li>` : ""}
         </ul>` : "";
   const forecastSection = forecastData ? `
       <div style="margin-top:24px;">
@@ -46066,7 +46095,7 @@ function generateHtmlReport({ model, config: config2 }) {
         ${model.perRepoForecasts.map(
     (repo) => `
         <div style="margin-top:16px;">
-          ${buildHtmlForecastTable({ title: repo.repoFullName, forecasts: repo.forecasts, t, palette })}
+          ${buildHtmlForecastTable({ title: escapeHtml(repo.repoFullName), forecasts: repo.forecasts, t, palette })}
           ${repo.chartHistory !== null ? `<div style="margin-top:12px;text-align:center;">
             <img src="${chartUrl({ kind: ChartKind.PER_REPO_FORECAST, history: repo.chartHistory, forecastData, repoFullName: repo.repoFullName, lineColor })}" alt="${escapeHtml(repo.repoFullName)}" style="max-width:100%;height:auto;border-radius:4px;">
           </div>` : ""}
@@ -46084,7 +46113,7 @@ function generateHtmlReport({ model, config: config2 }) {
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${palette.text};background-color:${palette.white};">
   <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${palette.accent};">
     <h1 style="margin:0;font-size:24px;">${t.report.title}</h1>
-    <p style="color:${palette.neutral};margin:8px 0 0;">${now} ${model.isFirstRun ? `| ${t.report.firstRun}` : `| ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`}</p>
+    <p style="color:${palette.neutral};margin:8px 0 0;">${now} ${model.isFirstRun ? `| ${t.report.firstRun}` : `| ${interpolate({ template: t.report.comparedTo, params: { date: baselineSnapshotDate } })}`}</p>
   </div>
 
   <div style="display:flex;justify-content:space-around;padding:20px 0;text-align:center;">
@@ -46178,19 +46207,28 @@ function repoChartHeading2({ repo, t }) {
 }
 function generateMarkdownReport({ model, config: config2 }) {
   const t = getTranslations(config2.locale);
-  const { summary: summary2, sorted, newRepos, removedRepos, now, prev, chartHistory, forecast: forecastData } = model;
+  const {
+    summary: summary2,
+    sorted,
+    newRepos,
+    removedRepos,
+    now,
+    baselineSnapshotDate,
+    chartHistory,
+    forecast: forecastData
+  } = model;
   const header = [
     `# ${t.report.title}`,
     "",
     `**${now}** | ${t.report.total}: **${interpolate({ template: t.report.starsCount, params: { count: summary2.totalStars } })}** | ${t.report.change}: **${deltaIndicator(summary2.totalDelta)}**`,
     ""
   ];
-  const comparison = model.isFirstRun ? [] : [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ""];
+  const comparison = model.isFirstRun ? [] : [`> ${interpolate({ template: t.report.comparedTo, params: { date: baselineSnapshotDate } })}`, ""];
   const hasComparisonChart = model.showComparisonChart;
   const individualRepoCharts = model.perRepoCharts.flatMap((repo) => [
     `#### ${repoChartHeading2({ repo, t })}`,
     "",
-    `![${escapeMarkdown(repo.fullName)}](./charts/${perRepoChartFile(repo.fullName)})`,
+    `![${escapeMarkdown(repo.fullName)}](./charts/${escapeMarkdown(perRepoChartFile(repo.fullName))})`,
     ""
   ]);
   const chartSection = chartHistory !== null ? [
@@ -46255,7 +46293,7 @@ function generateMarkdownReport({ model, config: config2 }) {
   const sampledNote = stargazers && stargazers.sampledRepos.length > 0 ? [
     interpolate({
       template: t.stargazers.sampledNote,
-      params: { repos: stargazers.sampledRepos.join(", ") }
+      params: { repos: stargazers.sampledRepos.map(escapeMarkdown).join(", ") }
     }),
     ""
   ] : [];
@@ -46273,7 +46311,7 @@ function generateMarkdownReport({ model, config: config2 }) {
       `<summary>${escapeMarkup(entry.repoFullName)} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</summary>`,
       "",
       ...entry.newStargazers.map(
-        (stargazer) => `- <img src="${escapeMarkup(stargazer.avatarUrl)}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${escapeMarkdown(stargazer.login)}](${escapeMarkdown(stargazer.profileUrl)}): ${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split("T")[0] } })}`
+        (stargazer) => `- <img src="${escapeMarkup(stargazer.avatarUrl)}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${escapeMarkdown(stargazer.login)}](${escapeMarkdown(stargazer.profileUrl)}): ${interpolate({ template: t.stargazers.starredOn, params: { date: escapeMarkdown(stargazer.starredAt.split("T")[0]) } })}`
       ),
       "",
       "</details>",
@@ -46290,8 +46328,8 @@ function generateMarkdownReport({ model, config: config2 }) {
   const velocityLines = velocity ? [
     `- **${t.velocity.starsPerDay}:** ${velocity.starsPerDay}`,
     ...velocity.growthPercent !== null ? [`- **${t.velocity.growth}:** ${formatSignedPercent(velocity.growthPercent)}`] : [],
-    ...velocity.projection ? [
-      `- ${interpolate({ template: t.velocity.projection, params: { days: velocity.projection.days, milestone: velocity.projection.milestone } })}`
+    ...velocity.nextMilestone ? [
+      `- ${interpolate({ template: t.velocity.projection, params: { days: velocity.nextMilestone.days, milestone: velocity.nextMilestone.milestone } })}`
     ] : []
   ] : [];
   const forecastSection = forecastData ? [
@@ -46312,13 +46350,13 @@ function generateMarkdownReport({ model, config: config2 }) {
         `<summary>${escapeMarkup(repo.repoFullName)}</summary>`,
         "",
         renderForecastTable({
-          title: repo.repoFullName,
+          title: escapeMarkdown(repo.repoFullName),
           forecasts: repo.forecasts,
           t
         }),
         "",
         ...repo.chartHistory !== null ? [
-          `![${escapeMarkdown(repo.repoFullName)}](./charts/${perRepoForecastChartFile(repo.repoFullName)})`,
+          `![${escapeMarkdown(repo.repoFullName)}](./charts/${escapeMarkdown(perRepoForecastChartFile(repo.repoFullName))})`,
           ""
         ] : [],
         "</details>",
@@ -46388,7 +46426,7 @@ function renderEmptyRun(config2) {
 function renderRun({
   config: config2,
   results,
-  previousTimestamp,
+  baselineSnapshotTimestamp,
   chartHistories,
   storedHistory,
   stargazerDiff,
@@ -46398,7 +46436,7 @@ function renderRun({
   const reportParams = {
     config: config2,
     results,
-    previousTimestamp,
+    baselineSnapshotTimestamp,
     history: chartHistories.aggregate,
     velocityHistory: storedHistory,
     stargazerDiff,
@@ -46428,12 +46466,12 @@ function renderRun({
 }
 
 // src/application/tracker.ts
-var ApiUrlSchema = url({ protocol: /^https?$/ });
+var ApiUrlSchema = url({ protocol: /^https$/ }).check(_regex(/^https:\/\//i));
 function resolveApiUrl() {
   const apiUrl = getInput("github-api-url") || process.env.GITHUB_API_URL || "";
   if (apiUrl === "" || validate(ApiUrlSchema, apiUrl)) return apiUrl;
   throw new Error(
-    `Invalid github-api-url "${apiUrl}" (read from the input, or from GITHUB_API_URL when the input is empty). It must be an absolute http(s) URL, such as https://github.example.com/api/v3.`
+    `Invalid github-api-url "${apiUrl}" (read from the input, or from GITHUB_API_URL when the input is empty). Every request carries the token, and plain http would send it in clear text, so set an absolute https URL, such as https://github.example.com/api/v3.`
   );
 }
 async function trackStars() {
@@ -46470,9 +46508,8 @@ async function trackStars() {
           notificationThreshold: config2.notificationThreshold,
           notificationMode: config2.notificationMode
         });
-        const { results, summary: summary2, updatedHistory } = measurement;
-        const previousTimestamp = measurement.baselineTimestamp;
-        info(`Comparing star counts (baseline: ${previousTimestamp ?? "first run"})...`);
+        const { results, summary: summary2, updatedHistory, baselineSnapshotTimestamp } = measurement;
+        info(`Comparing star counts (Baseline Snapshot: ${baselineSnapshotTimestamp ?? "first run"})...`);
         info(`Total: ${summary2.totalStars} stars (${deltaIndicator(summary2.totalDelta)})`);
         if (measurement.droppedSnapshots > 0) {
           warning(
@@ -46512,7 +46549,7 @@ async function trackStars() {
         const rendered = renderRun({
           config: config2,
           results,
-          previousTimestamp,
+          baselineSnapshotTimestamp,
           chartHistories,
           storedHistory: updatedHistory,
           stargazerDiff,
@@ -46538,7 +46575,7 @@ async function trackStars() {
           }
         } else if (emailConfig) {
           info(
-            summary2.changed ? "Notification threshold not reached, skipping email" : "No stars changed since the baseline, skipping email"
+            summary2.changed ? "Notification threshold not reached, skipping email" : "No stars changed since the Baseline Snapshot, skipping email"
           );
         }
         const notification = settleNotification({

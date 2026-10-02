@@ -44,6 +44,22 @@ interface ComputeForecastParams {
 	historyForRepo?: (repoFullName: string) => History | null;
 }
 
+interface ToSeriesParams {
+	values: number[];
+	days: number[];
+}
+
+interface SnapshotsHoldingParams {
+	history: History;
+	repoFullName: string;
+}
+
+function snapshotsHolding({ history, repoFullName }: SnapshotsHoldingParams): History {
+	return {
+		snapshots: history.snapshots.filter((snapshot) => snapshot.repos.some((repo) => repo.fullName === repoFullName)),
+	};
+}
+
 function clampPrediction(value: number): number {
 	return Math.max(0, Math.round(value));
 }
@@ -78,24 +94,27 @@ export function computeForecast({ history, topRepoNames, historyForRepo }: Compu
 		return null;
 	}
 
-	const toSeries = ({ values, days }: { values: number[]; days: number[] }): SeriesPoint[] =>
+	const toSeries = ({ values, days }: ToSeriesParams): SeriesPoint[] =>
 		values.map((value, index) => ({ day: days[index], value }));
 
-	const aggregateDays = calendarDays(history);
 	const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
-	const aggregateForecasts = forecastFromSeries(toSeries({ values: totalValues, days: aggregateDays }));
-	const repos: RepoForecast[] = topRepoNames.map((repoFullName) => {
+	const aggregateForecasts = forecastFromSeries(toSeries({ values: totalValues, days: calendarDays(history) }));
+	const repos: RepoForecast[] = topRepoNames.flatMap((repoFullName) => {
 		const candidate = historyForRepo?.(repoFullName);
 		const ownHistory = candidate && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST ? candidate : null;
-		const fitted = ownHistory ?? history;
-		const days = ownHistory === null ? aggregateDays : calendarDays(ownHistory);
+		const fitted = snapshotsHolding({ history: ownHistory ?? history, repoFullName });
+
+		if (fitted.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) return [];
+
 		const values = repoStarSeries({ snapshots: fitted.snapshots, repoFullName });
 
-		return {
-			repoFullName,
-			source: ownHistory === null ? ForecastSource.AGGREGATE : ForecastSource.OWN,
-			forecasts: forecastFromSeries(toSeries({ values, days })),
-		};
+		return [
+			{
+				repoFullName,
+				source: ownHistory === null ? ForecastSource.AGGREGATE : ForecastSource.OWN,
+				forecasts: forecastFromSeries(toSeries({ values, days: calendarDays(fitted) })),
+			},
+		];
 	});
 
 	return { aggregate: { forecasts: aggregateForecasts }, repos };

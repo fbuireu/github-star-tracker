@@ -1,15 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	buildAxisLabels,
-	DASH,
-	DOWN_ARROW,
-	deltaIndicator,
-	formatCount,
-	formatDate,
-	formatSignedPercent,
-	trendIcon,
-	UP_ARROW,
-} from "./formatting";
+import { buildAxisLabels, deltaIndicator, formatCount, formatDate, formatSignedPercent, trendIcon } from "./formatting";
 
 describe("formatCount", () => {
 	it("formats small numbers as-is", () => {
@@ -64,15 +54,15 @@ describe("formatSignedPercent", () => {
 
 describe("trendIcon", () => {
 	it("returns up arrow for positive delta", () => {
-		expect(trendIcon(1)).toBe(UP_ARROW);
+		expect(trendIcon(1)).toBe("⬆️");
 	});
 
 	it("returns down arrow for negative delta", () => {
-		expect(trendIcon(-1)).toBe(DOWN_ARROW);
+		expect(trendIcon(-1)).toBe("⬇️");
 	});
 
 	it("returns dash for zero delta", () => {
-		expect(trendIcon(0)).toBe(DASH);
+		expect(trendIcon(0)).toBe("➖");
 	});
 });
 

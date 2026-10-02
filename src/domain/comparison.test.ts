@@ -4,9 +4,9 @@ import { compareStars, createSnapshot, rankByStars, topRepositories } from "./co
 import type { Snapshot } from "./types";
 
 describe("compareStars", () => {
-	it("handles first run with no previous snapshot", () => {
+	it("handles a first run with no Baseline Snapshot", () => {
 		const repos = [makeRepoInfo({ name: "repo-a", stars: 10 }), makeRepoInfo({ name: "repo-b", stars: 20 })];
-		const result = compareStars({ currentRepos: repos, previousSnapshot: null });
+		const result = compareStars({ currentRepos: repos, baselineSnapshot: null });
 
 		expect(result.summary.totalStars).toBe(30);
 		expect(result.summary.totalDelta).toBe(30);
@@ -16,8 +16,8 @@ describe("compareStars", () => {
 		expect(result.repos[0].delta).toBe(0);
 	});
 
-	it("resolves a duplicated repository in the baseline to its last entry", () => {
-		const previous: Snapshot = {
+	it("resolves a duplicated repository in the Baseline Snapshot to its last entry", () => {
+		const baselineSnapshot: Snapshot = {
 			timestamp: "2026-01-01T00:00:00Z",
 			totalStars: 10,
 			repos: [
@@ -28,7 +28,7 @@ describe("compareStars", () => {
 
 		const result = compareStars({
 			currentRepos: [makeRepoInfo({ name: "repo-a", stars: 50 })],
-			previousSnapshot: previous,
+			baselineSnapshot,
 		});
 
 		expect(result.repos).toHaveLength(1);
@@ -36,9 +36,9 @@ describe("compareStars", () => {
 		expect(result.repos[0].delta).toBe(10);
 	});
 
-	it("computes deltas against previous snapshot", () => {
+	it("computes deltas against the Baseline Snapshot", () => {
 		const repos = [makeRepoInfo({ name: "repo-a", stars: 15 }), makeRepoInfo({ name: "repo-b", stars: 18 })];
-		const previous: Snapshot = {
+		const baselineSnapshot: Snapshot = {
 			timestamp: "2026-01-01T00:00:00Z",
 			totalStars: 30,
 			repos: [
@@ -47,7 +47,7 @@ describe("compareStars", () => {
 			],
 		};
 
-		const result = compareStars({ currentRepos: repos, previousSnapshot: previous });
+		const result = compareStars({ currentRepos: repos, baselineSnapshot });
 
 		expect(result.summary.totalStars).toBe(33);
 		expect(result.summary.totalPrevious).toBe(30);
@@ -65,7 +65,7 @@ describe("compareStars", () => {
 
 	it("detects removed repositories", () => {
 		const repos = [makeRepoInfo({ name: "repo-a", stars: 10 })];
-		const previous: Snapshot = {
+		const baselineSnapshot: Snapshot = {
 			timestamp: "2026-01-01T00:00:00Z",
 			totalStars: 30,
 			repos: [
@@ -74,7 +74,7 @@ describe("compareStars", () => {
 			],
 		};
 
-		const result = compareStars({ currentRepos: repos, previousSnapshot: previous });
+		const result = compareStars({ currentRepos: repos, baselineSnapshot });
 		const removed = result.repos.find((repo) => repo.name === "repo-b");
 
 		expect(removed?.isRemoved).toBe(true);
@@ -84,7 +84,7 @@ describe("compareStars", () => {
 	});
 
 	it("counts a Removed Repository's Stars as lost and leaves them out of the total", () => {
-		const previous: Snapshot = {
+		const baselineSnapshot: Snapshot = {
 			timestamp: "2026-01-01T00:00:00Z",
 			totalStars: 30,
 			repos: [
@@ -95,7 +95,7 @@ describe("compareStars", () => {
 
 		const result = compareStars({
 			currentRepos: [makeRepoInfo({ name: "repo-a", stars: 10 })],
-			previousSnapshot: previous,
+			baselineSnapshot,
 		});
 
 		expect(result.summary.totalStars).toBe(10);
@@ -106,7 +106,7 @@ describe("compareStars", () => {
 	});
 
 	it("reads a rename as a Removed Repository plus a New Repository, so lost Stars outrun the net delta", () => {
-		const previous: Snapshot = {
+		const baselineSnapshot: Snapshot = {
 			timestamp: "2026-01-01T00:00:00Z",
 			totalStars: 130,
 			repos: [
@@ -117,7 +117,7 @@ describe("compareStars", () => {
 
 		const result = compareStars({
 			currentRepos: [makeRepoInfo({ name: "new-name", stars: 100 }), makeRepoInfo({ name: "keep", stars: 30 })],
-			previousSnapshot: previous,
+			baselineSnapshot,
 		});
 
 		expect(result.repos.find((repo) => repo.name === "new-name")?.isNew).toBe(true);
@@ -130,7 +130,7 @@ describe("compareStars", () => {
 	});
 
 	it("treats a Removed Repository with no Stars as a change that loses none", () => {
-		const previous: Snapshot = {
+		const baselineSnapshot: Snapshot = {
 			timestamp: "2026-01-01T00:00:00Z",
 			totalStars: 10,
 			repos: [
@@ -141,7 +141,7 @@ describe("compareStars", () => {
 
 		const result = compareStars({
 			currentRepos: [makeRepoInfo({ name: "repo-a", stars: 10 })],
-			previousSnapshot: previous,
+			baselineSnapshot,
 		});
 
 		expect(result.repos.find((repo) => repo.name === "empty")?.isRemoved).toBe(true);
@@ -152,13 +152,13 @@ describe("compareStars", () => {
 
 	it("detects newly added repositories", () => {
 		const repos = [makeRepoInfo({ name: "repo-a", stars: 10 }), makeRepoInfo({ name: "new-repo", stars: 5 })];
-		const previous: Snapshot = {
+		const baselineSnapshot: Snapshot = {
 			timestamp: "2026-01-01T00:00:00Z",
 			totalStars: 10,
 			repos: [{ fullName: "user/repo-a", name: "repo-a", owner: "user", stars: 10 }],
 		};
 
-		const result = compareStars({ currentRepos: repos, previousSnapshot: previous });
+		const result = compareStars({ currentRepos: repos, baselineSnapshot });
 		const newRepo = result.repos.find((repo) => repo.name === "new-repo");
 
 		expect(newRepo?.isNew).toBe(true);
@@ -168,13 +168,13 @@ describe("compareStars", () => {
 
 	it("reports no changes when stars are identical", () => {
 		const repos = [makeRepoInfo({ name: "repo-a", stars: 10 })];
-		const previous: Snapshot = {
+		const baselineSnapshot: Snapshot = {
 			timestamp: "2026-01-01T00:00:00Z",
 			totalStars: 10,
 			repos: [{ fullName: "user/repo-a", name: "repo-a", owner: "user", stars: 10 }],
 		};
 
-		const result = compareStars({ currentRepos: repos, previousSnapshot: previous });
+		const result = compareStars({ currentRepos: repos, baselineSnapshot });
 		expect(result.summary.changed).toBe(false);
 		expect(result.summary.totalDelta).toBe(0);
 	});

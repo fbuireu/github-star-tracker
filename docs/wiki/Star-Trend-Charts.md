@@ -80,9 +80,9 @@ the linear regression and weighted moving average fitted to it.
 
 - One chart per top repository, drawn under that repository's forecast table
 - Drawn **only** when the repository has enough star history of its own to fit: at least 3 reconstructed
-  points. When it does not, the action falls back to projecting it from the tracked set's aggregate shape,
-  publishes those figures as a table, and draws no chart, because that curve would describe the whole set
-  rather than the repository named above it.
+  points. When it does not, the action fits the repository to the points of the tracked set's history that
+  include it, publishes those figures as a table, and draws no chart, because that history's timeline starts
+  before the repository joined. With fewer than 3 such points the repository gets no forecast at all.
 
 ---
 
@@ -273,7 +273,8 @@ with:
 Default is `10`.
 
 The comparison chart draws from the same ranking but caps itself at **10 series** whatever `top-repos` says,
-so `top-repos: 20` gives you twenty per-repo charts and twenty per-repo forecasts, and a comparison chart
+so `top-repos: 20` gives you twenty per-repo charts and up to twenty per-repo forecasts (one for each repo with
+at least 3 points of its own), and a comparison chart
 still showing the top ten. Beyond that the lines stop being distinguishable.
 
 ---

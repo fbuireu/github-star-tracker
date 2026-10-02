@@ -67,6 +67,7 @@ acts, not one.
 - **The cost is one more indirection** between `@application` and the comparison maths, and a
   `RunMeasurement` shape that has to grow whenever a Run needs to report something new. That is the trade:
   a wider return type in exchange for an order that cannot be got wrong.
-- The invariants this replaces are recorded in [`src/domain/AGENTS.md`](../../src/domain/AGENTS.md) and
-  [`src/application/AGENTS.md`](../../src/application/AGENTS.md); the run sequence is the table in
+- The rule this sets is in [`CODING_STANDARDS.md`](../../CODING_STANDARDS.md), and `pnpm test:docs` fails on a
+  step of `measureRun` imported outside `@domain`; what `measureRun` composes is in
+  [`src/domain/AGENTS.md`](../../src/domain/AGENTS.md), and the run sequence is the table in
   [`ARCHITECTURE.md`](../../ARCHITECTURE.md).

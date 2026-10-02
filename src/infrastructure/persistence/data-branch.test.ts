@@ -33,7 +33,7 @@ vi.mock("./storage", async (importOriginal) => ({
 	writeArtefact: vi.fn(),
 	writeChart: vi.fn(),
 	writeStargazers: vi.fn(),
-	pruneCharts: vi.fn().mockReturnValue([]),
+	pruneCharts: vi.fn(),
 	commitAndPush: vi.fn(),
 }));
 
@@ -54,7 +54,7 @@ function makeArtefacts(overrides: Partial<PublishedArtefacts> = {}): PublishedAr
 const BASE = { dataBranch: "star-data", readOnly: false, token: "tok" };
 
 beforeEach(() => {
-	vi.clearAllMocks();
+	vi.resetAllMocks();
 	vi.mocked(initializeDataBranch).mockReturnValue(DATA_DIR);
 	vi.mocked(pruneCharts).mockReturnValue([]);
 });
@@ -234,7 +234,6 @@ describe("publish", () => {
 				charts: [{ filename: "a.svg", svg: "<svg/>" }],
 			}),
 		});
-		vi.mocked(writeArtefact).mockReset();
 
 		expect(order).toEqual([
 			"history",

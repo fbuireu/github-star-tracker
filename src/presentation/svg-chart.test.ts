@@ -196,7 +196,7 @@ describe("renderSvgChart: star history", () => {
 	it("includes data points as circles", () => {
 		const history = makeHistory([10, 20, 30, 40, 50]);
 		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
-		const circleCount = (result.match(DATA_POINT_CIRCLE) || []).length;
+		const circleCount = [...result.matchAll(DATA_POINT_CIRCLE)].length;
 
 		expect(circleCount).toBe(5);
 	});
@@ -331,7 +331,7 @@ describe("renderSvgChart: star history", () => {
 		const stars = Array.from({ length: 50 }, (_, index) => 10 + index);
 		const history = makeHistory(stars);
 		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
-		const circleCount = (result.match(DATA_POINT_CIRCLE) || []).length;
+		const circleCount = [...result.matchAll(DATA_POINT_CIRCLE)].length;
 
 		expect(circleCount).toBe(30);
 	});
@@ -344,7 +344,7 @@ describe("renderSvgChart: star history", () => {
 
 		expect(ys[0]).toBe(baselineY);
 		expect(ys[1]).toBeLessThan(baselineY);
-		expect((result.match(DATA_POINT_CIRCLE) || []).length).toBe(3);
+		expect([...result.matchAll(DATA_POINT_CIRCLE)].length).toBe(3);
 	});
 
 	it("handles equal star counts without errors", () => {
@@ -471,7 +471,7 @@ describe("renderSvgChart: star history", () => {
 			}),
 		);
 
-		expect((result.match(DATA_POINT_CIRCLE) || []).length).toBe(3);
+		expect([...result.matchAll(DATA_POINT_CIRCLE)].length).toBe(3);
 	});
 
 	it("plots the full history when maxPoints is 0", () => {
@@ -485,7 +485,7 @@ describe("renderSvgChart: star history", () => {
 			}),
 		);
 
-		expect((result.match(DATA_POINT_CIRCLE) || []).length).toBe(40);
+		expect([...result.matchAll(DATA_POINT_CIRCLE)].length).toBe(40);
 	});
 
 	it("renders y-axis labels on the left by default", () => {

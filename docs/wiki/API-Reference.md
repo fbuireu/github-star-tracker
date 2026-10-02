@@ -43,7 +43,7 @@ Complete reference for all inputs, outputs, and data formats. Every input links 
 | `email-to` | `string` | - | Recipient email address. [Details](Configuration#email-to) |
 | `exclude-orgs` | `string` | - | Comma-separated owner names or `/regex/` patterns to exclude. [Details](Configuration#exclude-orgs) |
 | `exclude-repos` | `string` | - | Comma-separated repository names or `/regex/` patterns to exclude. [Details](Configuration#exclude-repos) |
-| `github-api-url` | `string` | - | GitHub API base URL for GHES, auto-detected on GHES runners. [Details](Configuration#github-api-url) |
+| `github-api-url` | `string` | - | GitHub API base URL for GHES, https only, auto-detected on GHES runners. [Details](Configuration#github-api-url) |
 | `include-archived` | `boolean` | `false` | Include archived repositories. [Details](Configuration#include-archived) |
 | `include-charts` | `boolean` | `true` | Generate star trend charts. [Details](Configuration#include-charts) |
 | `include-forks` | `boolean` | `false` | Include forked repositories. [Details](Configuration#include-forks) |
@@ -69,7 +69,7 @@ Complete reference for all inputs, outputs, and data formats. Every input links 
 | `visibility` | `string` | `all` | Repo visibility filter: `public`, `private`, `all` or `owned`, with an invalid value failing the run. [Details](Configuration#visibility) |
 
 > [!NOTE]
-> `smtp-port` is typed `string` where every other numeric-looking input is typed `number`. That is deliberate: it is the one input that never reaches the resolved config. The SMTP adapter reads it raw, parses it itself, warns and falls back to `587` if it is not a number, and derives the TLS mode from the result (`465` means implicit TLS, anything else STARTTLS). Quote it in your workflow: `smtp-port: '465'`.
+> `smtp-port` is typed `string` where every other numeric-looking input is typed `number`. That is deliberate: it is the one input that never reaches the resolved config. The SMTP adapter reads it raw, takes its leading integer, warns and falls back to `587` when that is not a port in `1..65535`, and derives the TLS mode from the result (`465` means implicit TLS, anything else STARTTLS). Quote it in your workflow: `smtp-port: '465'`.
 
 ---
 
@@ -214,7 +214,7 @@ type StargazerMap = Record<string, string[]>;
 
 ### CSV Report (`stars-data.csv`)
 
-Machine-readable CSV with one row per tracked repository. Fields containing commas or double quotes are escaped per RFC 4180.
+Machine-readable CSV with one row per tracked repository. Fields containing a comma, a double quote or a line break are quoted per RFC 4180, and a field starting with `=`, `+`, `-` or `@` is prefixed with `'` and quoted, so a spreadsheet does not run it as a formula.
 
 **Columns:** `repository`, `owner`, `name`, `stars`, `previous`, `delta`, `status`
 
@@ -310,7 +310,7 @@ chart_curve: monotone           # monotone | catmull-rom | cubic-bezier | rounde
 chart_show_points: true         # boolean
 chart_animation: true           # boolean
 chart_milestones: true          # boolean
-chart_custom_milestones: []     # number[] or "250, 750, 2500"
+chart_custom_milestones: []     # number[], number or "250, 750, 2500"
 chart_begin_at_zero: false      # boolean
 chart_theme: auto               # auto | light | dark
 email_theme: auto               # auto | light | dark (auto = same as chart_theme)

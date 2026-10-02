@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as core from "@actions/core";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { execute } from "./commands";
 import { cleanup, initializeDataBranch } from "./worktree";
 
@@ -41,17 +41,13 @@ const isRemoteProbe = (args: string[]): boolean => args.includes("ls-remote");
 function remoteHasBranch(): void {
 	vi.mocked(execute).mockImplementation(({ args }) => (isRemoteProbe(args) ? `abc123	refs/heads/${BRANCH}` : ""));
 }
-const isWorktreeRemove = (args: string[]): boolean => args[0] === "worktree" && args[1] === "remove";
+const isWorktreeRemove = (args: string[]): boolean => args.includes("worktree") && args.includes("remove");
 
 describe("initializeDataBranch", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 		vi.mocked(execute).mockReturnValue("");
 		vi.mocked(fs.existsSync).mockReturnValue(false);
-	});
-
-	afterEach(() => {
-		vi.restoreAllMocks();
 	});
 
 	it("derives the data directory from the branch name", () => {
@@ -121,7 +117,7 @@ describe("initializeDataBranch", () => {
 	});
 
 	it("throws an actionable error when not inside a checked-out repository", () => {
-		failGitWhen({ matches: (args) => args[0] === "rev-parse" });
+		failGitWhen({ matches: (args) => args.includes("rev-parse") });
 
 		expect(() => initializeDataBranch({ dataBranch: BRANCH })).toThrow(
 			'This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.',
@@ -170,7 +166,7 @@ describe("initializeDataBranch", () => {
 	});
 
 	it("carries on when the new orphan branch has nothing to clear", () => {
-		failGitWhen({ matches: (args) => args[0] === "rm" });
+		failGitWhen({ matches: (args) => args.includes("rm") });
 
 		expect(() => initializeDataBranch({ dataBranch: BRANCH })).not.toThrow();
 		expect(core.debug).toHaveBeenCalledWith("Nothing to remove on the new orphan branch, proceeding anyway");
@@ -186,12 +182,8 @@ describe("initializeDataBranch", () => {
 
 describe("cleanup", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 		vi.mocked(execute).mockReturnValue("");
-	});
-
-	afterEach(() => {
-		vi.restoreAllMocks();
 	});
 
 	it("removes the worktree", () => {

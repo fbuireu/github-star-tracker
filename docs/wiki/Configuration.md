@@ -244,7 +244,7 @@ GitHub API base URL for GitHub Enterprise Server (GHES) instances.
 
 When running on a GHES runner, the action automatically detects the API URL from the `GITHUB_API_URL` environment variable. Only set this input if you need to override the auto-detected value or if you are running on a github.com runner targeting a GHES instance.
 
-Whichever of the two supplies it, the value must be an absolute `http` or `https` URL. Anything else (a bare host such as `github.example.com`, another scheme) fails the run before any request is made, instead of surfacing later as a fetch error that blames the token.
+Whichever of the two supplies it, the value must be an absolute `https` URL, because every request carries the token and plain `http` would send it in clear text. Anything else (a bare host such as `github.example.com`, an `http://` URL, another scheme) fails the run before any request is made, instead of surfacing later as a fetch error that blames the token.
 
 ```yaml
 with:
@@ -394,7 +394,7 @@ Whether to add a growth-velocity section to the Markdown and HTML reports.
 | **Type** | `boolean` |
 | **Default** | `false` |
 
-When `true`, the report gains a "Growth Velocity" section: stars gained per day, percent growth, and a projection of how many days remain until the next star milestone at the current pace.
+When `true`, the report gains a "Growth Velocity" section: stars gained per day, percent growth, and how many days remain until the next star milestone at the current pace.
 
 The figures are measured period over period, comparing the latest snapshot against the newest earlier one at least 0.25 days (6 hours) back. Measuring over a recent interval keeps them tied to current momentum rather than an arbitrary all-time baseline, and skipping any pair closer together than that minimum stops a manual re-run minutes after a scheduled one from inflating the rate.
 
@@ -533,11 +533,11 @@ Custom star counts to use as milestone reference lines instead of the built-in d
 | **Type** | `string` (comma-separated integers) |
 | **Default** | - |
 
-A comma-separated list of positive star counts (e.g. `"250, 750, 2500"`) that replaces the built-in thresholds. Values are sorted and de-duplicated, non-positive and non-numeric entries are ignored, and an input with no valid numbers at all logs a warning and falls back to the built-in list. When empty, the built-in list is used.
+A comma-separated list of positive star counts (e.g. `"250, 750, 2500"`) that replaces the built-in milestones. Values are sorted and de-duplicated, non-positive and non-numeric entries are ignored, and an input with no valid numbers at all logs a warning and falls back to the built-in list. When empty, the built-in list is used.
 
 Everything else about milestone lines, including the built-in values and which of them actually get drawn, is described under [`chart-milestones`](#chart-milestones), and this input does nothing while that one is off.
 
-In a config file you can provide either a quoted comma-separated string or a YAML list:
+In a config file you can provide a quoted comma-separated string, a YAML list, or a single number (`chart_custom_milestones: 1000`):
 
 ```yaml
 chart_custom_milestones: "250, 750, 2500"

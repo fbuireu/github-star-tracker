@@ -122,7 +122,7 @@ inputs:
     default: ''
 
   github-api-url:
-    description: 'GitHub API base URL for GitHub Enterprise Server (e.g. https://github.example.com/api/v3). Auto-detected on GHES runners.'
+    description: 'GitHub API base URL for GitHub Enterprise Server, over https only (e.g. https://github.example.com/api/v3). Auto-detected on GHES runners.'
     required: false
     default: ''
 

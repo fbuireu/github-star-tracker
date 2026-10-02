@@ -4,7 +4,7 @@ import { addSnapshot, getBaselineSnapshot } from "./snapshot";
 import type { CompareAgainst, ComparisonResults, History, NotificationMode, RepoInfo, Summary } from "./types";
 
 export interface RunMeasurement {
-	baselineTimestamp: string | null;
+	baselineSnapshotTimestamp: string | null;
 	results: ComparisonResults;
 	summary: Summary;
 	updatedHistory: History;
@@ -31,18 +31,18 @@ export function measureRun({
 	notificationMode,
 	now,
 }: MeasureRunParams): RunMeasurement {
-	const baseline = getBaselineSnapshot({
+	const baselineSnapshot = getBaselineSnapshot({
 		history: storedHistory,
 		compareAgainst: comparisonWindow,
 		now,
 	});
-	const results = compareStars({ currentRepos: trackedSet, previousSnapshot: baseline });
+	const results = compareStars({ currentRepos: trackedSet, baselineSnapshot });
 	const { summary } = results;
 	const snapshot = createSnapshot({ currentRepos: trackedSet, summary, now });
 	const updatedHistory = addSnapshot({ history: storedHistory, snapshot, maxHistory });
 
 	return {
-		baselineTimestamp: baseline === null ? null : baseline.timestamp,
+		baselineSnapshotTimestamp: baselineSnapshot === null ? null : baselineSnapshot.timestamp,
 		results,
 		summary,
 		updatedHistory,

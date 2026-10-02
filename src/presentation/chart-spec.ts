@@ -47,7 +47,7 @@ interface SelectChartSnapshotsParams<T> {
 	maxPoints?: number;
 }
 
-export function selectChartSnapshots<T extends { timestamp: string }>({
+function selectChartSnapshots<T extends { timestamp: string }>({
 	snapshots,
 	range,
 	maxPoints,
@@ -153,7 +153,7 @@ export interface ChartSpec {
 	milestones: readonly ChartMilestone[];
 }
 
-interface WindowParams {
+interface SelectWindowParams {
 	history: History;
 	locale: Locale;
 	range?: ChartRange;
@@ -166,7 +166,7 @@ interface Window {
 	labels: string[];
 }
 
-function selectWindow({ history, locale, range, maxPoints, axisLabels }: WindowParams): Window {
+function selectWindow({ history, locale, range, maxPoints, axisLabels }: SelectWindowParams): Window {
 	const snapshots = selectChartSnapshots({ snapshots: history.snapshots, range, maxPoints });
 	const timestamps = snapshots.map((snapshot) => snapshot.timestamp);
 
@@ -185,11 +185,11 @@ function resolveMilestones(customMilestones?: readonly number[]): readonly numbe
 
 interface VisibleMilestonesParams {
 	series: ChartSeries[];
-	thresholds: readonly number[];
+	milestones: readonly number[];
 	locale: Locale;
 }
 
-function visibleMilestones({ series, thresholds, locale }: VisibleMilestonesParams): readonly ChartMilestone[] {
+function visibleMilestones({ series, milestones, locale }: VisibleMilestonesParams): readonly ChartMilestone[] {
 	const values = series.flatMap((entry) => entry.data.filter((value): value is number => value !== null));
 
 	if (values.length === 0) return [];
@@ -197,12 +197,12 @@ function visibleMilestones({ series, thresholds, locale }: VisibleMilestonesPara
 	const min = Math.min(...values);
 	const max = Math.max(...values);
 
-	return thresholds
+	return milestones
 		.filter((milestone) => milestone > min && milestone < max)
 		.map((value) => ({ value, label: `${formatCount({ count: value, locale })} ★` }));
 }
 
-interface StarHistorySpecParams extends WindowParams {
+interface StarHistorySpecParams extends SelectWindowParams {
 	title: string;
 	palette: ColorPalette;
 	lineColor?: string;
@@ -255,14 +255,14 @@ function starHistorySpec({
 		milestones: milestones
 			? visibleMilestones({
 					series,
-					thresholds: resolveMilestones(customMilestones),
+					milestones: resolveMilestones(customMilestones),
 					locale: window.locale,
 				})
 			: [],
 	};
 }
 
-interface PerRepoSpecParams extends WindowParams {
+interface PerRepoSpecParams extends SelectWindowParams {
 	repoFullName: string;
 	title: string;
 	palette: ColorPalette;
@@ -292,7 +292,7 @@ function perRepoSpec({ repoFullName, title, palette, lineColor, ...window }: Per
 	};
 }
 
-interface ComparisonSpecParams extends WindowParams {
+interface ComparisonSpecParams extends SelectWindowParams {
 	repoNames: string[];
 	title: string;
 }
@@ -323,7 +323,7 @@ function comparisonSpec({ repoNames, title, ...window }: ComparisonSpecParams): 
 	};
 }
 
-interface ProjectionSpecParams extends Omit<WindowParams, "axisLabels"> {
+interface ForecastChartSpecParams extends Omit<SelectWindowParams, "axisLabels"> {
 	forecasts: ForecastResult[];
 	observed: (snapshots: Snapshot[]) => number[];
 	title: string;
@@ -331,7 +331,7 @@ interface ProjectionSpecParams extends Omit<WindowParams, "axisLabels"> {
 	lineColor?: string;
 }
 
-interface ForecastSpecParams extends Omit<ProjectionSpecParams, "forecasts" | "observed"> {
+interface ForecastSpecParams extends Omit<ForecastChartSpecParams, "forecasts" | "observed"> {
 	forecastData: ForecastData;
 }
 
@@ -340,7 +340,7 @@ interface PerRepoForecastSpecParams extends ForecastSpecParams {
 }
 
 function forecastSpec({ forecastData, ...rest }: ForecastSpecParams): ChartSpec | null {
-	return projectionSpec({
+	return forecastChartSpec({
 		...rest,
 		forecasts: forecastData.aggregate.forecasts,
 		observed: (snapshots) => snapshots.map((snapshot) => snapshot.totalStars),
@@ -348,21 +348,21 @@ function forecastSpec({ forecastData, ...rest }: ForecastSpecParams): ChartSpec 
 }
 
 function perRepoForecastSpec({ forecastData, repoFullName, ...rest }: PerRepoForecastSpecParams): ChartSpec | null {
-	return projectionSpec({
+	return forecastChartSpec({
 		...rest,
 		forecasts: forecastData.repos.find((repo) => repo.repoFullName === repoFullName)?.forecasts ?? [],
 		observed: (snapshots) => repoStarSeries({ snapshots, repoFullName }),
 	});
 }
 
-function projectionSpec({
+function forecastChartSpec({
 	forecasts,
 	observed,
 	title,
 	palette,
 	lineColor,
 	...window
-}: ProjectionSpecParams): ChartSpec | null {
+}: ForecastChartSpecParams): ChartSpec | null {
 	if (window.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || forecasts.length === 0) return null;
 
 	const t = getTranslations(window.locale);
@@ -425,7 +425,7 @@ interface ChartRequestBase {
 	title?: string;
 }
 
-export interface StarHistoryChartRequest extends ChartRequestBase {
+interface StarHistoryChartRequest extends ChartRequestBase {
 	kind: typeof ChartKind.STAR_HISTORY;
 	lineColor?: string;
 	milestones?: boolean;
@@ -433,24 +433,24 @@ export interface StarHistoryChartRequest extends ChartRequestBase {
 	trendLine?: boolean;
 }
 
-export interface PerRepoChartRequest extends ChartRequestBase {
+interface PerRepoChartRequest extends ChartRequestBase {
 	kind: typeof ChartKind.PER_REPO;
 	repoFullName: string;
 	lineColor?: string;
 }
 
-export interface ComparisonChartRequest extends ChartRequestBase {
+interface ComparisonChartRequest extends ChartRequestBase {
 	kind: typeof ChartKind.COMPARISON;
 	repoNames: string[];
 }
 
-export interface ForecastChartRequest extends ChartRequestBase {
+interface ForecastChartRequest extends ChartRequestBase {
 	kind: typeof ChartKind.FORECAST;
 	forecastData: ForecastData;
 	lineColor?: string;
 }
 
-export interface PerRepoForecastChartRequest extends ChartRequestBase {
+interface PerRepoForecastChartRequest extends ChartRequestBase {
 	kind: typeof ChartKind.PER_REPO_FORECAST;
 	forecastData: ForecastData;
 	repoFullName: string;

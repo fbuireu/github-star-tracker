@@ -1,10 +1,8 @@
 import * as core from "@actions/core";
-import type { Config } from "@config/types";
-import { Visibility } from "@config/types";
 import { makeConfig } from "@shared/tests";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchRepos } from "./client";
-import { getRepos, mapRepos } from "./filters";
+import { getRepos } from "./filters";
 import type { GitHubRepo, Octokit } from "./types";
 
 vi.mock("@actions/core", () => ({
@@ -40,28 +38,7 @@ function makeRepo(overrides: Partial<GitHubRepo> = {}): GitHubRepo {
 	};
 }
 
-const defaultConfig: Config = makeConfig({ includeCharts: false, notificationThreshold: 0 });
-
-describe("mapRepos", () => {
-	it("maps raw GitHub API repos to clean objects", () => {
-		const repos = [
-			makeRepo({ name: "my-repo", full_name: "octo-org/my-repo", owner: { login: "octo-org" }, stargazers_count: 42 }),
-		];
-		const mapped = mapRepos(repos);
-
-		expect(mapped).toEqual([
-			{
-				owner: "octo-org",
-				name: "my-repo",
-				fullName: "octo-org/my-repo",
-				private: false,
-				archived: false,
-				fork: false,
-				stars: 42,
-			},
-		]);
-	});
-});
+const defaultConfig = makeConfig();
 
 describe("fetchRepos", () => {
 	it("fetches all repositories from GitHub API", async () => {
@@ -84,7 +61,7 @@ describe("fetchRepos", () => {
 		expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledWith({
 			per_page: 100,
 			sort: "full_name",
-			visibility: Visibility.ALL,
+			visibility: "all",
 			page: 1,
 		});
 	});
@@ -136,12 +113,10 @@ describe("fetchRepos", () => {
 				},
 			},
 		};
-		const config = { ...defaultConfig, visibility: Visibility.PUBLIC };
-
-		await fetchRepos({ octokit: createMockOctokit(mockOctokit), config });
+		await fetchRepos({ octokit: createMockOctokit(mockOctokit), config: makeConfig({ visibility: "public" }) });
 
 		expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledWith(
-			expect.objectContaining({ visibility: Visibility.PUBLIC }),
+			expect.objectContaining({ visibility: "public" }),
 		);
 	});
 
@@ -153,12 +128,10 @@ describe("fetchRepos", () => {
 				},
 			},
 		};
-		const config = { ...defaultConfig, visibility: Visibility.PRIVATE };
-
-		await fetchRepos({ octokit: createMockOctokit(mockOctokit), config });
+		await fetchRepos({ octokit: createMockOctokit(mockOctokit), config: makeConfig({ visibility: "private" }) });
 
 		expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledWith(
-			expect.objectContaining({ visibility: Visibility.PRIVATE }),
+			expect.objectContaining({ visibility: "private" }),
 		);
 	});
 
@@ -170,12 +143,10 @@ describe("fetchRepos", () => {
 				},
 			},
 		};
-		const config = { ...defaultConfig, visibility: Visibility.OWNED };
-
-		await fetchRepos({ octokit: createMockOctokit(mockOctokit), config });
+		await fetchRepos({ octokit: createMockOctokit(mockOctokit), config: makeConfig({ visibility: "owned" }) });
 
 		expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledWith(
-			expect.objectContaining({ visibility: Visibility.ALL, affiliation: "owner" }),
+			expect.objectContaining({ visibility: "all", affiliation: "owner" }),
 		);
 	});
 
@@ -222,6 +193,40 @@ describe("fetchRepos", () => {
 			"Failed to fetch repositories from GitHub API: Error. Verify that your github-token has the correct permissions.",
 		);
 	});
+
+	it("refuses a page that is not a list instead of blaming the token", async () => {
+		const mockOctokit: MockOctokit = {
+			rest: {
+				repos: {
+					listForAuthenticatedUser: vi.fn().mockResolvedValue({ data: { message: "Moved Permanently" } }),
+				},
+			},
+		};
+
+		await expect(fetchRepos({ octokit: createMockOctokit(mockOctokit), config: defaultConfig })).rejects.toThrow(
+			"GitHub returned a repository list this action cannot read: the value (expected array, found an object).",
+		);
+	});
+
+	it("stops at a page that is not a list rather than asking for the next one", async () => {
+		const htmlPage = "<!DOCTYPE html>".padEnd(100, " ");
+		const mockOctokit: MockOctokit = {
+			rest: {
+				repos: {
+					listForAuthenticatedUser: vi
+						.fn()
+						.mockResolvedValueOnce({ data: htmlPage })
+						.mockResolvedValueOnce({ data: htmlPage })
+						.mockResolvedValue({ data: [] }),
+				},
+			},
+		};
+
+		await expect(fetchRepos({ octokit: createMockOctokit(mockOctokit), config: defaultConfig })).rejects.toThrow(
+			'GitHub returned a repository list this action cannot read: the value (expected array, found "<!DOCTYPE html>',
+		);
+		expect(mockOctokit.rest.repos.listForAuthenticatedUser).toHaveBeenCalledTimes(1);
+	});
 });
 
 describe("getRepos", () => {
@@ -234,6 +239,32 @@ describe("getRepos", () => {
 			rest: { repos: { listForAuthenticatedUser: vi.fn().mockResolvedValue({ data: repos }) } },
 		});
 	}
+
+	it("maps raw GitHub API repos to clean objects", async () => {
+		const mapped = await getRepos({
+			octokit: octokitReturning([
+				makeRepo({
+					name: "my-repo",
+					full_name: "octo-org/my-repo",
+					owner: { login: "octo-org" },
+					stargazers_count: 42,
+				}),
+			]),
+			config: defaultConfig,
+		});
+
+		expect(mapped).toEqual([
+			{
+				owner: "octo-org",
+				name: "my-repo",
+				fullName: "octo-org/my-repo",
+				private: false,
+				archived: false,
+				fork: false,
+				stars: 42,
+			},
+		]);
+	});
 
 	it("reports every pattern the tracked set could not read", async () => {
 		await getRepos({

@@ -4,28 +4,25 @@ The only place that reads GitHub Action inputs for tracking behaviour and the on
 repo's `star-tracker.yml`. It produces a fully-populated `Config` (every field always present, never
 `undefined`) plus the `Visibility` and `Chart*` enums other layers reference. It does **not** read the SMTP
 inputs (`@infrastructure/notification` does), does **not** read `github-token` / `github-api-url`
-(`@application/tracker` does), and does **not** validate value *ranges*.
+(`@application/tracker` does), and caps no value: a number is checked for its sign at most.
 
-`loadConfig()` takes no arguments and reads the ambient inputs on purpose, and
-[ADR 0018](../../docs/adr/0018-loadconfig-reads-the-ambient-action-inputs.md) records why: parameterising it
-deletes a block of test lines, most of them the same repeated mock, and forces the orchestrator to relearn every input
-name, which is exactly the coupling
-[ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md) removed. Do not re-propose it.
+`loadConfig()` takes no arguments and reads the ambient inputs; read
+[ADR 0018](../../docs/adr/0018-loadconfig-reads-the-ambient-action-inputs.md) before giving it parameters.
 
 [`types.ts`](./types.ts) holds `Config` and the enums, [`defaults.ts`](./defaults.ts) holds `DEFAULTS`,
 [`parsers.ts`](./parsers.ts) holds pure coercions used only here, with its own colocated [`parsers.test.ts`](./parsers.test.ts), and [`loader.ts`](./loader.ts) is
-the resolver. Every parser is reached through `loader.ts`'s field table in production, so none is exported
-*only* for a test; `parsers.test.ts` does exercise them directly, which is why they are exported at all.
+the resolver.
 
 The validating parsers are `zod/mini` schemas behind plain functions: each one is
-`Schema.safeParse(value).data`, so a value the schema rejects is `undefined` and the caller's fallback runs
-([ADR 0023](../../docs/adr/0023-untrusted-input-is-validated-with-zod-mini.md)). They take `unknown`, which is
-what lets one parser serve both the input string and the raw YAML value. The list parsers (`parseList`,
-`parseNumberList`, `toStringList`) stay hand-written: they split and de-duplicate rather than validate, and a
-schema would only wrap the same code in a `transform`. `loader.ts` uses schemas for the three values it
-checks itself: `VisibilitySchema`, `DataBranchSchema` (git's ref rules as one `refine`) and the enum schema
-each `enumField` row builds once. None of the three transforms and each message is written here, so they are
-checked with `z.validate`, never `safeParse`: the value that passes is the value that was given.
+`<Concept>Schema.safeParse(value).data`, so a value the schema rejects is `undefined` and the caller's fallback
+runs ([ADR 0023](../../docs/adr/0023-untrusted-input-is-validated-with-zod-mini.md)). They take `unknown`, which
+lets one parser serve both the input string and the raw YAML value. The list parsers (`parseList`,
+`parseNumberList`, `toStringList`) split and de-duplicate rather than validate, and are hand-written. `loader.ts`
+checks four values itself with `z.validate`: the file's top level (`ConfigFileSchema`), `VisibilitySchema`,
+`DataBranchSchema` (git's ref rules as one `refine`) and the enum schema each `enumField` row builds once. None of
+them transforms and each message is written here, so the value that passes is the value that was given.
+`CustomMilestonesFileSchema` is the one schema it parses with, turning a YAML list or number into the text
+`parseNumberList` reads.
 
 ## The field table
 
@@ -36,26 +33,21 @@ means adding a row, not the same edit repeated in place after place.
 
 The row types are the vocabulary: `boolField`, `positiveField`, `nonNegativeField`, `listField` and
 `enumField(allowed)`. The rows that pass `namesFallback: true` to `scalarField` (`chart-line-color`,
-`chart-line-width`) are what makes their warning name the fallback rather than say "Ignoring it." That used
-to be a combinator of its own, byte-identical to `scalarField` but for the one template literal.
+`chart-line-width`) are what makes their warning name the fallback rather than say "Ignoring it."
 
 Some keys are deliberately outside the table, and each is a documented exception: `visibility` throws
 instead of warning, `dataBranch` runs an extra validator, `sendOnNoChanges` never reads the config file and
-never warns, and `chartCustomMilestones` has its own precedence (see below). Anything else belongs in the
-table.
+never warns, and `chartCustomMilestones` has its own precedence (see below).
 
 ## Invariants & rules
 
 - **Precedence, per key: action input, then config-file value, then `DEFAULTS`.** Never reversed. Enum keys
   use `input || fileValue`, so an empty-string input falls through; everything else uses `??` on the *parsed*
   result, so a value that parses to `false` or `0` still beats the file.
-- Each input is parsed once. The fold decides the value and whether to warn from the same result, so no
-  key calls its parser twice.
 - A config-file value of the wrong kind is ignored rather than crashing the parser: `min_stars: true` falls
-  back to the default. Nothing casts the YAML: `loadConfigFile` returns `unknown` values, and each parser or
-  schema decides what it accepts. Two values used to crash here with a `TypeError` instead, and now do not: a
-  bare number for `chart_custom_milestones` (`1000` is read as `[1000]`) and a non-string `data_branch`
-  (which throws its own "quote it" error, below).
+  back to the default. Nothing casts the YAML: `loadConfigFile` returns `unknown` values and each parser or
+  schema decides what it accepts, so a bare number for `chart_custom_milestones` reads as a list (`1000` is
+  `[1000]`) and a non-string `data_branch` throws its own "quote it" error (below).
 - `emailTheme` is the one key whose default is another key. It resolves through `enumField` like every
   other enum row, but `ChartTheme.AUTO` is not a value it keeps: `auto` collapses to the already-resolved
   `chartTheme` before the `Config` is built, so `Config.emailTheme` is what the email should actually use and
@@ -66,12 +58,10 @@ table.
   independently, so reordering the rows changes nothing. What does matter is that the `emailTheme:` line
   sits **after** `...tabled` in the literal: above the spread, the un-collapsed `auto` from `tabled` would
   win back.
-- **Only these throw**: an unknown `visibility`, and an invalid `data-branch`. Everything else (a bad
-  enum, bool, number or colour, and malformed YAML) warns and falls back. A missing config file is `info`,
-  not a warning.
-- `visibility` is resolved with `z.enum(Object.values(Visibility))`, not an object index, so
-  `visibility: toString` is rejected instead of resolving off `Object.prototype`, and so is a non-string
-  `visibility: 5`.
+- **Only these throw**: an unknown `visibility` (a non-string one from the file included), an invalid
+  `data-branch`, and a config file that exists but cannot be read. Everything else falls back: a bad input other
+  than `send-on-no-changes`, a bad enum from either source and malformed YAML warn, and any other bad
+  config-file value is silent (see *Gotchas*). A missing config file is `info`, not a warning.
 - `data-branch` validation rejects `''`, `'@'`, whitespace, `~ ^ : ? * [ \`, control characters, the
   sequences `..` `//` `/.` `@{`, a leading `-` `.` `/`, and a trailing `/` `.` `.lock`. It accepts
   `data/star-tracker`, `_star-data`, `stars@v2`, `v1.2.3`, `UPPER_case-1`. A config-file value that is not a
@@ -87,7 +77,8 @@ table.
   `min-stars`, `chart-max-points` and `smart-sampling-threshold` use `parseNonNegativeNumber` (`>= 0`), which
   is what keeps `chart-max-points: 0` alive as a meaningful value, full history at weekly resolution, while
   still rejecting negatives. Rejecting `max-history: 0` matters downstream: `addSnapshot` trims with
-  `.slice(-maxHistory)`, and `slice(-0)` would keep the entire array.
+  `.slice(-maxHistory)`, and `slice(-0)` would keep the entire array. `notification-threshold` enforces no
+  sign: `parseNotificationThreshold` keeps a negative integer.
 - `chart-line-width` is the only decimal field and requires finite **and > 0**.
   `notification-threshold` matches `'auto'` **exactly**: no trim, no case-fold, so `'Auto'` is rejected.
 - Lists: `parseList` returns `undefined` (not `[]`) for empty input so the file value can still win, while
@@ -101,15 +92,13 @@ table.
   adding a `Config` field automatically makes it file-readable.
 - **`sendOnNoChanges` is the one key that cannot come from the config file.** Input-only, parsed with a bare
   boolean parser, and an invalid value is silently ignored with no warning.
-- If `readOnly` is true and the threshold is anything other than `0`, `loadConfig` warns: the baseline lives on
-  a branch a read-only run never updates.
+- If `readOnly` is true and the threshold is anything other than `0`, `loadConfig` warns: the Notification
+  Baseline lives on the Data Branch, which a read-only run never updates.
 
 ## action.yml cross-check
 
 [`docs/docs-consistency.test.ts`](../../docs/docs-consistency.test.ts) reads the real [`action.yml`](../../action.yml) too, and asserts the **prose**: every overridable
-input states its real `DEFAULTS` value as `(default X)` and carries `(overrides config file)`. Those two
-strings had drifted: the `chart-*` and `velocity-metrics` inputs were file-readable while saying
-nothing about it, which reads as "input only".
+input states its real `DEFAULTS` value as `(default X)` and carries `(overrides config file)`.
 
 [`action-inputs.test.ts`](./action-inputs.test.ts) reads the real `action.yml` and asserts every `Config` key except `sendOnNoChanges`
 has a kebab-case input whose `default` is **empty**, and that only `config-path`, `send-on-no-changes` and
@@ -123,8 +112,8 @@ uses, so the test cannot disagree with the loader about what a key is called. It
 block: every key, alphabetical, each described. That list is the only executable check on the output
 contract *from the manifest side*; [`tracker.test.ts`](../application/tracker.test.ts) closes the loop from the code side by comparing the
 names `setOutputs` actually emits against `action.yml`. Between them the contract is checked in both
-directions, where the manifest list alone was a copy of `action.yml` compared with `action.yml` and would not
-have noticed an output going missing from `setOutputs`. What each output *means* is
+directions; the manifest list alone compares a copy of `action.yml` with `action.yml` and cannot notice an
+output going missing from `setOutputs`. What each output *means* is
 [`src/application/`](../application/AGENTS.md)'s to document; this folder only checks that the manifest and
 the code agree on the names.
 
@@ -138,13 +127,14 @@ not implement:
 - `chart-custom-milestones` says it "Requires chart-milestones to be enabled". Nothing enforces that; the two
   resolve independently, so custom milestones combined with `chart-milestones: false` silently do nothing.
 
-Some literals are duplicated between the manifest and code, so changing `action.yml` alone has no effect:
-`smtp-port`'s `"587"` (`DEFAULT_SMTP_PORT` in `@infrastructure/notification/email`), `config-path`'s
-`'star-tracker.yml'` (`DEFAULT_CONFIG_PATH` in `loader.ts`) and `send-on-no-changes`'s `'false'`
-(`DEFAULTS.sendOnNoChanges`). Every one of those pairs is pinned by `action-inputs.test.ts`.
-`send-on-no-changes` is the asymmetric one: because the manifest always supplies a non-empty `'false'`, `DEFAULTS.sendOnNoChanges` is
-reached **only** through an unparseable input, so a drift there shows up as an invalid value behaving
-differently from an absent one rather than as a changed default.
+Some literals are written twice, once in the manifest and once in code: `smtp-port`'s `"587"`
+(`DEFAULT_SMTP_PORT` in `@infrastructure/notification/email`), `config-path`'s `'star-tracker.yml'`
+(`DEFAULT_CONFIG_PATH` in `loader.ts`) and `send-on-no-changes`'s `'false'` (`DEFAULTS.sendOnNoChanges`).
+The manifest's copy is the live one, because the runner supplies it whenever a workflow leaves the input
+unset, and the code's copy is the fallback when the input arrives empty. Every one of those pairs is pinned by
+`action-inputs.test.ts`, so change both copies together. `send-on-no-changes` is the asymmetric one:
+`DEFAULTS.sendOnNoChanges` is reached **only** through an empty or unparseable input, so a drift there shows
+up as an invalid value behaving differently from an absent one rather than as a changed default.
 
 ## Gotchas
 
@@ -159,9 +149,9 @@ differently from an absent one rather than as a changed default.
   `#`-starts-a-comment half of this trap but not the numeric half.
 - `enumField` takes `input || fileValue`, so an empty string means "not set" and returns the fallback
   **without** warning. Only a non-empty, non-matching value warns, a non-string file value included.
-- A YAML list is not a boolean. `include_forks: [yes]` used to read as `true`, because the file parser
-  stringified whatever it got; `parseFileBool` now accepts a boolean, a string or a number and nothing else.
+- A YAML list is not a boolean: `parseFileBool` accepts a boolean, a string or a number and nothing else, so
+  `include_forks: [yes]` falls back to the default without a warning.
 - **Warning wording is asserted verbatim**, including the Oxford comma
   (`'Invalid locale "fr". Must be "en", "es", "ca", or "it". Falling back to "en"'`). The generic parser
   message deliberately does *not* name a fallback, because the config file may still supply one.
-- [`loader.test.ts`](./loader.test.ts) is the real specification for this folder; it is by far the largest test in the tree.
+- [`loader.test.ts`](./loader.test.ts) is the real specification for this folder.

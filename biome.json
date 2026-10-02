@@ -25,6 +25,9 @@
 		"includes": ["**", "!**/*.d.ts*"],
 		"rules": {
 			"preset": "recommended",
+			"style": {
+				"noEnum": "error"
+			},
 			"suspicious": {
 				"noConsole": "error"
 			}

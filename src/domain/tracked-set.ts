@@ -41,6 +41,11 @@ function matchesPattern({ name, patterns, invalidPatterns }: MatchesPatternParam
 	});
 }
 
+interface MatchesParams {
+	name: string;
+	patterns: string[];
+}
+
 interface ResolveTrackedSetParams {
 	repos: RepoInfo[];
 	filters: TrackedSetFilters;
@@ -48,8 +53,7 @@ interface ResolveTrackedSetParams {
 
 export function resolveTrackedSet({ repos, filters }: ResolveTrackedSetParams): TrackedSet {
 	const invalidPatterns: string[] = [];
-	const matches = ({ name, patterns }: { name: string; patterns: string[] }): boolean =>
-		matchesPattern({ name, patterns, invalidPatterns });
+	const matches = ({ name, patterns }: MatchesParams): boolean => matchesPattern({ name, patterns, invalidPatterns });
 
 	let candidates = repos;
 	let afterOnlyOrgs: number | null = null;

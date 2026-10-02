@@ -87,5 +87,5 @@ rather than the enums alone.
 - `chartLineWidth` now always reaches `chartImageUrl`, so the email chart always emits `borderWidth`. That
   was already true in production, since the tracker always passed it, but `html.test.ts` had a case asserting
   its absence, which only an incomplete params object could produce.
-- Where this bites is recorded in [`src/presentation/AGENTS.md`](../../src/presentation/AGENTS.md) and
-  [`src/application/AGENTS.md`](../../src/application/AGENTS.md).
+- Where this bites is recorded in the *Application* rules of [`CODING_STANDARDS.md`](../../CODING_STANDARDS.md) and in
+  [`src/presentation/AGENTS.md`](../../src/presentation/AGENTS.md).

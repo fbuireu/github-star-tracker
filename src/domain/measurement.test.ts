@@ -14,20 +14,20 @@ const BASE = {
 const EMPTY_HISTORY: History = { snapshots: [] };
 
 describe("measureRun", () => {
-	it("measures a first run against no baseline", () => {
+	it("measures a first run against no Baseline Snapshot", () => {
 		const measurement = measureRun({
 			...BASE,
 			trackedSet: [makeRepoInfo({ name: "repo-a", stars: 10 }), makeRepoInfo({ name: "repo-b", stars: 5 })],
 			storedHistory: EMPTY_HISTORY,
 		});
 
-		expect(measurement.baselineTimestamp).toBeNull();
+		expect(measurement.baselineSnapshotTimestamp).toBeNull();
 		expect(measurement.summary.totalStars).toBe(15);
 		expect(measurement.summary.totalDelta).toBe(15);
 		expect(measurement.results.repos.every((repo) => repo.isNew)).toBe(true);
 	});
 
-	it("compares against the baseline the comparison window selects, not the newest snapshot", () => {
+	it("compares against the Baseline Snapshot the comparison window selects, not the newest snapshot", () => {
 		const storedHistory = makeMultiRepoHistory({
 			snapshots: [{ "user/repo-a": 10 }, { "user/repo-a": 40 }, { "user/repo-a": 90 }],
 		});
@@ -47,9 +47,9 @@ describe("measureRun", () => {
 			now: new Date(storedHistory.snapshots[2].timestamp),
 		});
 
-		expect(lastRun.baselineTimestamp).toBe(storedHistory.snapshots[2].timestamp);
+		expect(lastRun.baselineSnapshotTimestamp).toBe(storedHistory.snapshots[2].timestamp);
 		expect(lastRun.summary.totalDelta).toBe(10);
-		expect(monthly.baselineTimestamp).toBe(storedHistory.snapshots[0].timestamp);
+		expect(monthly.baselineSnapshotTimestamp).toBe(storedHistory.snapshots[0].timestamp);
 		expect(monthly.summary.totalDelta).toBe(90);
 	});
 
@@ -131,7 +131,7 @@ describe("measureRun", () => {
 		expect(measurement.updatedHistory.snapshots).toHaveLength(2);
 	});
 
-	it("measures the notification threshold against the pre-append baseline, so it accumulates", () => {
+	it("measures the notification threshold against the Notification Baseline, so it accumulates", () => {
 		const storedHistory: History = {
 			...makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 100 }] }),
 			starsAtLastNotification: 100,

@@ -13,7 +13,7 @@ export function shouldSample({ stars, smartSampling, threshold }: ShouldSamplePa
 	return smartSampling && stars > threshold;
 }
 
-export function reachablePages(totalStars: number): number {
+function reachablePages(totalStars: number): number {
 	return Math.min(MAX_REACHABLE_PAGE, Math.max(1, Math.ceil(totalStars / STARGAZER_PAGE_SIZE)));
 }
 

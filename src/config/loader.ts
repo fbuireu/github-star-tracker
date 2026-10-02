@@ -96,22 +96,22 @@ function formatFallback(fallback: unknown): string {
 	return typeof fallback === "string" ? `"${fallback}"` : String(fallback);
 }
 
-interface FieldContext {
+interface FieldResolverParams {
 	input: string;
 	inputName: string;
 	fileValue: unknown;
 	fallback: unknown;
 }
 
-type FieldResolver<T> = (context: FieldContext) => T | undefined;
+type FieldResolver<T> = (params: FieldResolverParams) => T | undefined;
 
-interface FieldSource<T> {
+interface ScalarFieldParams<T> {
 	fromInput: (value: string) => T | undefined;
 	fromFile: (value: unknown) => T | undefined;
 	namesFallback?: boolean;
 }
 
-function scalarField<T>({ fromInput, fromFile, namesFallback = false }: FieldSource<T>): FieldResolver<T> {
+function scalarField<T>({ fromInput, fromFile, namesFallback = false }: ScalarFieldParams<T>): FieldResolver<T> {
 	return ({ input, inputName, fileValue, fallback }) => {
 		const parsed = fromInput(input);
 
@@ -128,14 +128,14 @@ function scalarField<T>({ fromInput, fromFile, namesFallback = false }: FieldSou
 }
 
 function enumField<const T extends string>(allowed: readonly T[]): FieldResolver<T> {
-	const schema = z.enum(allowed);
+	const ChoiceSchema = z.enum(allowed);
 
 	return ({ input, inputName, fileValue, fallback }) => {
 		const value = input || fileValue;
 
 		if (!value) return fallback as T;
 
-		if (z.validate(schema, value)) return value;
+		if (z.validate(ChoiceSchema, value)) return value;
 
 		core.warning(
 			`Invalid ${inputName} "${String(value)}". Must be ${formatChoices(allowed)}. Falling back to "${String(fallback)}"`,
@@ -240,7 +240,7 @@ function parseConfigYaml({ content, configPath }: ParseConfigYamlParams): unknow
 	}
 }
 
-export function loadConfigFile(configPath: string): FileConfig {
+function loadConfigFile(configPath: string): FileConfig {
 	const fullPath = path.resolve(configPath);
 
 	if (!fs.existsSync(fullPath)) {

@@ -2,21 +2,23 @@ import type { ComparisonResults } from "@domain/types";
 import { EscapeDialect, escapeFor } from "./escaping";
 
 const CSV_HEADER = "repository,owner,name,stars,previous,delta,status";
-export const NEW_LINE = "\n";
+const NEW_LINE = "\n";
 
 const escapeCsvField = escapeFor(EscapeDialect.CSV);
 
-const REPO_STATUS = {
-	new: "new",
-	removed: "removed",
-	active: "active",
+const RepoStatus = {
+	NEW: "new",
+	REMOVED: "removed",
+	ACTIVE: "active",
 } as const;
 
-function repoStatus(repo: { isNew: boolean; isRemoved: boolean }): string {
-	if (repo.isNew) return REPO_STATUS.new;
-	if (repo.isRemoved) return REPO_STATUS.removed;
+type RepoStatus = (typeof RepoStatus)[keyof typeof RepoStatus];
 
-	return REPO_STATUS.active;
+function repoStatus(repo: { isNew: boolean; isRemoved: boolean }): RepoStatus {
+	if (repo.isNew) return RepoStatus.NEW;
+	if (repo.isRemoved) return RepoStatus.REMOVED;
+
+	return RepoStatus.ACTIVE;
 }
 
 export function generateCsvReport({ repos }: ComparisonResults): string {

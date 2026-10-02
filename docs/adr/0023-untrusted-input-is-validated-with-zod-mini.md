@@ -57,10 +57,12 @@ trusted, and nothing imports `zod` itself.** The schemas live beside the code th
   one message per guard; `StargazerFileSchema` and `LoginListSchema` for `stargazers.json`, which repairs.
 - `@infrastructure/github`: `GitHubRepoSchema` and `GitHubStargazerRowSchema` in `types.ts`, from which
   `GitHubRepo` is inferred; `describeFetchError` reads `status` and `message` through a schema.
+- `@infrastructure/git/commands`: `GitFailureSchema`, through which `execute` reads `stderr` and `message` off
+  a failed git command.
 - `@infrastructure/notification/email`: `PortSchema` for `smtp-port` and `RecipientListSchema` for
   nodemailer's rejected list.
 - `@config`: the validating parsers in `parsers.ts`, and `VisibilitySchema`, `DataBranchSchema`, the
-  per-row enum schema and `ConfigFileSchema` in `loader.ts`.
+  per-row enum schema, `ConfigFileSchema` and `CustomMilestonesFileSchema` in `loader.ts`.
 - `@application/tracker`: `ApiUrlSchema` for `github-api-url` / `GITHUB_API_URL`.
 - `@shared/errors`: `errorMessage`, plus `describeIssue`, which renders an issue's path and found value the
   same way for every caller that shows one.
@@ -78,8 +80,8 @@ de-duplicate rather than validate.
 ## Consequences
 
 - The bundle grows by the `zod/mini` row above on every release. Importing `zod` instead of `zod/mini`
-  anywhere, even once, pulls in the classic build and costs the difference between the two rows. Nothing
-  enforces that except review and this record.
+  anywhere, even once, pulls in the classic build and costs the difference between the two rows.
+  `pnpm test:docs` rejects any other import of `zod`, and any import of it in a pure layer.
 - A malformed Stored History now fails the Run at any depth, not only at its top level. That is ADR 0021's
   accepted cost applied further down: a hand-edited file blocks every later Run until it is fixed, and the
   message names the exact path to fix.

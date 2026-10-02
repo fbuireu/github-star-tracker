@@ -2,73 +2,40 @@
 
 The single use case: `trackStars()` in [`src/application/tracker.ts`](./tracker.ts), the only export and the only thing
 [`src/index.ts`](../index.ts) imports. It wires config, GitHub I/O, domain computation, rendering and persistence into one
-ordered run and owns sequencing, the worktree lifecycle, the output contract and top-level error handling.
-No business logic (`@domain/*`), no rendering (`@presentation/*`), no direct fs or git calls
-(`@infrastructure/*`). The only action *inputs* it reads first-hand are `github-token` and `github-api-url`,
-via `core.getInput`, to build the client with `github.getOctokit`. It also writes the Action log and the
-outputs, which no other layer does.
+ordered run and owns sequencing, the output contract and top-level error handling. It reads `github-token` and
+`github-api-url` itself, through `core.getInput`, to build the client with `github.getOctokit`. It sets the outputs
+and the failed status, which no other layer does; `@config` and `@infrastructure` write to the Action log as well.
 
 The run, step by step, is the end-to-end table in [`../../ARCHITECTURE.md`](../../ARCHITECTURE.md) rather
 than here, and what follows is what that table cannot express.
 
 ## Invariants & rules
 
-- **`trackStars` never rejects.** Every failure becomes `core.setFailed`, prefixed literally
-  `Star Tracker failed: ` (asserted verbatim in [`tracker.test.ts`](./tracker.test.ts)), plus `core.debug(stack)` when there is one.
-- The worktree lifecycle is not this layer's job any more. `withDataBranch` owns it: it opens the
+- The top-level `catch` turns every error that reaches it into `core.setFailed`, prefixed literally
+  `Star Tracker failed: ` (asserted verbatim in [`tracker.test.ts`](./tracker.test.ts)), plus `core.debug(stack)` when
+  there is one.
+- The worktree lifecycle is not this layer's job. `withDataBranch` owns it: it opens the
   worktree, hands the body a `DataBranch` and removes the worktree in a `finally`, so a throw inside the body
   still reaches the outer catch with the worktree gone. `dataDir` is never visible here.
 - The empty-repos branch returns before `withDataBranch`, so no worktree is created and no email is
   attempted.
-- All measurement is one call. `measureRun` produces the baseline timestamp, the comparison results, the
-  Summary, the appended History, the dropped-snapshot count and `thresholdReached`
-  ([ADR 0013](../../docs/adr/0013-a-run-is-measured-in-one-place.md)). Do not reach past it into
-  `compareStars`, `addSnapshot` or `shouldNotify`; the ordering rules they carry live behind that interface
-  on purpose.
-- Email failures are non-fatal by design: they warn, never `setFailed`. Everything else inside the body
-  (git, fs, octokit) is fatal. `sendEmail`'s `boolean` return is also honoured, so an empty `email-to`
-  (which returns `false` without throwing) counts as *not* delivered.
-- `starsAtLastNotification` advances only on delivery. A configured-and-failed send leaves the baseline
-  alone so the accumulated change is not lost, while an unconfigured transport advances it because the
-  `should-notify` output *is* the notification
+- `starsAtLastNotification`, the Notification Baseline, advances only on delivery. A configured-and-failed
+  send leaves it alone so the accumulated change is not lost, while an unconfigured transport advances it
+  because the `should-notify` output *is* the notification
   ([ADR 0011](../../docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md)).
-- The due-notification predicate has one owner. `notificationIsDue({ changed, thresholdReached })` in
-  `@domain/notification` gates the send here and is what `settleNotification` computes internally, so the
-  rule cannot be changed in one place and left stale in the other.
-- This layer reports what the transport did; it does not decide what that means. It sets one
-  `Delivery` (`NOT_ATTEMPTED`, `SENT` or `FAILED`) and hands it to `settleNotification` in
-  `@domain/notification`, which returns `shouldNotify`, `notificationSent` and `historyToPersist` together.
-  The three booleans that used to be mutated across the `try/catch` are gone, and so is the bug they caused:
-  conflating "an email left the runner" with "the accumulated threshold was consumed" once made a successful
-  courtesy send report `notification-sent: false`. Both outputs come off the one outcome now.
 - **A `sendEmail` that resolves `false` is a `FAILED` delivery, not an unattempted one.** That is the empty
-  `email-to` case: the transport was configured and did not deliver, so the baseline must not advance.
-- Rendering is one call. `renderRun` in `@presentation/run` returns the markdown, HTML, CSV, badge and
-  chart files together, so this layer never calls a renderer directly and never assembles report params.
-  It passes `chartHistories` and the **stored** History under separate names, and `renderRun` derives the
-  chart history from `chartHistories`, which is what retired the old hazard of handing the reports two
-  interchangeable-looking `History` values, where swapping them made Velocity an average over a chart bucket.
-  What gets persisted is always the stored History.
-- **This layer relays no chart options.** The renderers read `config` themselves
-  ([ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md)), so a new one costs
-  nothing here.
-- Chart histories are resolved once, by one module. `resolveChartHistories` returns `.aggregate`,
-  `.forRepo(name)` and `.reconstructedForRepo(name)`; this layer reads `.aggregate` for the Forecast and the
-  Reports, passes `.reconstructedForRepo` to `computeForecast` as its `historyForRepo` hook (never `.forRepo`,
-  for the reason [`../domain/AGENTS.md`](../domain/AGENTS.md) gives), and hands the whole thing to
-  `buildChartFiles`. It creates the instant itself, so the global chart and every per-repo chart end on
-  the same moment by construction rather than by the shell remembering to share a `Date`.
-- **`topRepoNames` is not computed here.** It is `topRepositories({ repos: results.repos, limit:
-  config.topRepos })` from `@domain/comparison`, the same call `@presentation/report-model` makes for the
-  Report. Why that single owner matters is in [`../domain/AGENTS.md`](../domain/AGENTS.md).
-- Read-only runs do everything except the push. They still read, compute, render, write into the
-  worktree, set every output and send the email, and the worktree is then discarded unpushed. The guard now
-  lives inside `withDataBranch`, which receives `readOnly` and decides; this layer passes the flag and never
-  branches on it.
+  `email-to` case, which returns `false` without throwing: the transport was configured and did not deliver, so
+  the Notification Baseline must not advance.
+- `renderRun` takes `chartHistories` and the **stored** History under separate names, and derives the chart
+  history from the first and hands Velocity the second. What gets persisted is always the stored History.
+- Chart histories are resolved once, by `resolveChartHistories`, which returns `.aggregate`, `.forRepo(name)` and
+  `.reconstructedForRepo(name)`. This layer reads `.aggregate` for the Forecast, passes `.reconstructedForRepo` to
+  `computeForecast` as its `historyForRepo` hook (never `.forRepo`, for the reason
+  [`../domain/AGENTS.md`](../domain/AGENTS.md) gives), and hands the whole thing to `renderRun`.
 - `github-api-url` takes precedence over the `GITHUB_API_URL` env var; when both are empty `getOctokit` is
   called with `undefined` options, not `{ baseUrl: '' }`. A non-empty value must pass `ApiUrlSchema`, an
-  absolute `http`/`https` URL, or `resolveApiUrl` throws before Octokit is built. Without it a bare host
-  surfaced as a failed repository fetch whose remediation blamed the token.
+  absolute URL written with `https://`, or `resolveApiUrl` throws before Octokit is built, naming the input
+  rather than failing later as a repository fetch whose hint blames the token.
 
 ## Outputs
 
@@ -90,11 +57,9 @@ surface that lists them must be. The report values pass through as-is; the rest 
 | `stars-changed` | the matching `Summary` field |
 | `total-stars` | the matching `Summary` field |
 
-There is one `setOutputs`, not two. The empty-repos path calls it with `renderEmptyRun(config)` and a
-zeroed `Summary`, so the keys cannot drift between the two paths. That render also emits a real CSV
-header rather than `''`, because a consumer parsing `report-csv` used to get a header on one path and an
-empty string on the other, and its message comes from `report.noRepositories` in the locale bundle like
-every other user-facing string.
+The empty-repos path calls `setOutputs` with `renderEmptyRun(config)` and `EMPTY_SUMMARY`. That render also emits a
+real CSV header, so a consumer parsing `report-csv` gets one on both paths, and its message comes from
+`report.noRepositories` in the locale bundle like every other user-facing string.
 
 `new-stargazers` is `0` whenever `track-stargazers` is off, even though stargazers may still have been
 fetched for chart reconstruction: the diff and the write are gated on `trackStargazers` alone, while the
@@ -103,11 +68,13 @@ fetch is gated on `includeCharts || trackStargazers`.
 ## Gotchas
 
 - **`setOutputs` sets outputs and nothing else; the caller writes the HTML report, before `publish`.**
-  `tracker.test.ts` pins that order. It used to run *inside* `setOutputs`, which put a filesystem write
-  after `branch.publish`: a failing write then ended a run that had already committed, pushed and emailed,
-  with `setFailed` and most outputs unset, and a re-run would append a second Snapshot for the same
-  observation. Where `writeHtmlReport` puts the file, and why that location is outside the worktree, is in
-  [`../infrastructure/AGENTS.md`](../infrastructure/AGENTS.md).
+  `tracker.test.ts` pins that order. A write after `branch.publish` that failed would end a Run that had
+  already committed, pushed and emailed, with `setFailed` and most outputs unset, and a re-run would append a
+  second Snapshot for the same observation. Where `writeHtmlReport` puts the file, and why that location is
+  outside the worktree, is in [`../infrastructure/AGENTS.md`](../infrastructure/AGENTS.md).
+- `ApiUrlSchema` pairs `z.url({ protocol: /^https$/ })` with a `z.regex` on the `https://` prefix, because zod
+  insists on the `//` only when the protocol pattern is its own `^https?$`: the protocol check alone accepts
+  `https:/ghes.corp.com`, which the URL parser reads as the host `ghes.corp.com`. `tracker.test.ts` pins that row.
 - `getEmailConfig` reads the SMTP inputs itself, inside `@infrastructure/notification/email`; the tracker
   never reads them. A missing `smtp-host` returns `null` and silently skips email.
 - `withDataBranch` throws when the data branch is absent from the remote **and** the run is read-only. That
@@ -116,17 +83,11 @@ fetch is gated on `includeCharts || trackStargazers`.
   than written when it is computed, because `add -A` is what stages the writes and it runs inside `publish`.
   Splitting the call would put a write after the commit.
 - The `else if (emailConfig)` branch names the actual reason: `notify` needs both `summary.changed` and
-  `thresholdReached`, so it logs `'No stars changed since the baseline, skipping email'` when nothing moved
-  and `'Notification threshold not reached, skipping email'` otherwise. Both strings are pinned verbatim by
-  `tracker.test.ts`, so change the wording and the test together or not at all.
-- `tracker.test.ts` mocks most of the tree but deliberately **not** `@presentation/run`,
-  `@presentation/charts` or `@domain/star-history`, so `renderRun`, `buildChartFiles` and `buildStarHistory`
-  execute for real and the renderer mocks still apply underneath. Mocking `@presentation/run` instead
-  would cut those mocks and also stop `buildChartFiles` running, which is what the chart-request assertions
-  pinning #148 and the per-repo timelines depend on, so the mocks stay as they are on purpose.
+  `thresholdReached`, so it logs `'No stars changed since the Baseline Snapshot, skipping email'` when nothing
+  moved and `'Notification threshold not reached, skipping email'` otherwise. Both strings are pinned verbatim
+  by `tracker.test.ts`, so change the wording and the test together or not at all.
 - `tracker.test.ts` mocks `@presentation/svg-chart` down to its single `renderSvgChart`, so "which chart was
   drawn" is read off the `request.kind` of each call. The local `chartRequests(kind)` and `mockCharts({
-  [kind]: svg })` helpers exist for exactly that. There is no per-kind mock to assert on any more.
+  [kind]: svg })` helpers exist for exactly that.
 - `tracker.test.ts` fakes the `DataBranch` rather than the filesystem: assertions about what was persisted
-  read `branch.publish.mock.calls[0][0]`, not `writeHistory`. Anything about *how* the worktree is written
-  belongs in [`data-branch.test.ts`](../infrastructure/persistence/data-branch.test.ts).
+  read `branch.publish.mock.calls[0][0]`, not `writeHistory`.

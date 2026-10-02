@@ -73,6 +73,17 @@ describe("execute", () => {
 
 		expect(() => execute({ args: ["fetch"] })).toThrow('Git command failed: "git fetch"\nUnknown error');
 	});
+
+	it.each([
+		{ label: "a string", thrown: "fatal: not a git repository" },
+		{ label: "undefined", thrown: undefined },
+	])("throws error with Unknown error when the throw is $label, which carries no stderr or message", ({ thrown }) => {
+		vi.mocked(execFileSync).mockImplementation(() => {
+			throw thrown;
+		});
+
+		expect(() => execute({ args: ["gc"] })).toThrow('Git command failed: "git gc"\nUnknown error');
+	});
 });
 
 describe("authenticatedArgs", () => {

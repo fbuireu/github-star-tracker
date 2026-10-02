@@ -2,7 +2,7 @@ import type { ComparisonResults, RepoInfo, RepoResult, Snapshot, Summary } from 
 
 interface CompareStarsParams {
 	currentRepos: RepoInfo[];
-	previousSnapshot: Snapshot | null;
+	baselineSnapshot: Snapshot | null;
 }
 
 export const EMPTY_SUMMARY: Summary = {
@@ -14,9 +14,9 @@ export const EMPTY_SUMMARY: Summary = {
 	changed: false,
 };
 
-export function compareStars({ currentRepos, previousSnapshot }: CompareStarsParams): ComparisonResults {
+export function compareStars({ currentRepos, baselineSnapshot }: CompareStarsParams): ComparisonResults {
 	const previousStars = new Map<string, number>();
-	for (const repo of previousSnapshot?.repos ?? []) {
+	for (const repo of baselineSnapshot?.repos ?? []) {
 		previousStars.set(repo.fullName, repo.stars);
 	}
 
@@ -41,7 +41,7 @@ export function compareStars({ currentRepos, previousSnapshot }: CompareStarsPar
 		});
 	}
 
-	for (const repo of previousSnapshot?.repos ?? []) {
+	for (const repo of baselineSnapshot?.repos ?? []) {
 		if (currentNames.has(repo.fullName)) continue;
 
 		const [owner, name] = repo.fullName.split("/");
@@ -60,7 +60,7 @@ export function compareStars({ currentRepos, previousSnapshot }: CompareStarsPar
 
 	const totalStars = repoResults.filter((repo) => !repo.isRemoved).reduce((sum, repo) => sum + repo.current, 0);
 
-	const totalPrevious = previousSnapshot?.totalStars ?? 0;
+	const totalPrevious = baselineSnapshot?.totalStars ?? 0;
 
 	const gained = repoResults.filter((repo) => repo.delta > 0).reduce((sum, repo) => sum + repo.delta, 0);
 

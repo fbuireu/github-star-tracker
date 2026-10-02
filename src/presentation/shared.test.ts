@@ -39,7 +39,7 @@ describe("prepareReportData", () => {
 	it("filters out removed repos from activeRepos", () => {
 		const { activeRepos } = prepareReportData({
 			results: makeResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			locale: "en",
 		});
 
@@ -50,7 +50,7 @@ describe("prepareReportData", () => {
 	it("identifies new repos", () => {
 		const { newRepos } = prepareReportData({
 			results: makeResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			locale: "en",
 		});
 
@@ -61,7 +61,7 @@ describe("prepareReportData", () => {
 	it("identifies removed repos", () => {
 		const { removedRepos } = prepareReportData({
 			results: makeResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			locale: "en",
 		});
 
@@ -72,7 +72,7 @@ describe("prepareReportData", () => {
 	it("sorts active repos by current stars descending", () => {
 		const { sorted } = prepareReportData({
 			results: makeResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			locale: "en",
 		});
 
@@ -82,7 +82,7 @@ describe("prepareReportData", () => {
 	it("formats the run date as YYYY-MM-DD and keeps the full stamp", () => {
 		const { now, generatedAt } = prepareReportData({
 			results: makeResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			locale: "en",
 			now: new Date("2026-06-15T12:00:00Z"),
 		});
@@ -91,34 +91,34 @@ describe("prepareReportData", () => {
 		expect(generatedAt).toBe("2026-06-15T12:00:00.000Z");
 	});
 
-	it("formats previous timestamp as date only", () => {
-		const { prev } = prepareReportData({
+	it("formats the Baseline Snapshot timestamp as a date only", () => {
+		const { baselineSnapshotDate } = prepareReportData({
 			results: makeResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			locale: "en",
 		});
 
-		expect(prev).toBe("2026-01-01");
+		expect(baselineSnapshotDate).toBe("2026-01-01");
 	});
 
-	it("uses first run label when previousTimestamp is null", () => {
-		const { prev, isFirstRun } = prepareReportData({
+	it("uses first run label when there is no Baseline Snapshot", () => {
+		const { baselineSnapshotDate, isFirstRun } = prepareReportData({
 			results: makeResults(),
-			previousTimestamp: null,
+			baselineSnapshotTimestamp: null,
 			locale: "en",
 		});
 
-		expect(prev).toBe("first run");
+		expect(baselineSnapshotDate).toBe("first run");
 		expect(isFirstRun).toBe(true);
 	});
 
 	it("uses localized first run label", () => {
-		const { prev } = prepareReportData({
+		const { baselineSnapshotDate } = prepareReportData({
 			results: makeResults(),
-			previousTimestamp: null,
+			baselineSnapshotTimestamp: null,
 			locale: "es",
 		});
 
-		expect(prev).toBe("primera ejecución");
+		expect(baselineSnapshotDate).toBe("primera ejecución");
 	});
 });

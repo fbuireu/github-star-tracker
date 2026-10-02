@@ -34,6 +34,11 @@ interface ResolveChartHistoriesParams {
 	now?: Date;
 }
 
+interface ReconstructParams {
+	subset: SnapshotRepo[];
+	stargazers: RepoStargazers[];
+}
+
 export function resolveChartHistories({
 	config,
 	storedHistory,
@@ -41,7 +46,7 @@ export function resolveChartHistories({
 	repoStargazers,
 	now = new Date(),
 }: ResolveChartHistoriesParams): ChartHistories {
-	const reconstruct = ({ subset, stargazers }: { subset: SnapshotRepo[]; stargazers: RepoStargazers[] }): History =>
+	const reconstruct = ({ subset, stargazers }: ReconstructParams): History =>
 		config.includeCharts
 			? buildStarHistory({
 					repoStargazers: stargazers,

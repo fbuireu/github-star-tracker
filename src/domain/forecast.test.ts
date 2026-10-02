@@ -1,7 +1,7 @@
-import type { History, SnapshotRepo } from "@domain/types";
 import { describe, expect, it } from "vitest";
 import type { ForecastData } from "./forecast";
 import { computeForecast, ForecastMethod, ForecastSource } from "./forecast";
+import type { History, SnapshotRepo } from "./types";
 
 function expectForecast(result: ForecastData | null): ForecastData {
 	expect(result).not.toBeNull();
@@ -78,30 +78,61 @@ describe("computeForecast", () => {
 		expect(result.repos[0].forecasts.map((forecast) => forecast.points[0].predicted)).toEqual([65, 65]);
 	});
 
-	it("reads a repository missing from a snapshot as zero there", () => {
+	it("fits a repository only to the Snapshots that hold it, never to a zero where it is missing", () => {
+		const holding = (stars: number): SnapshotRepo[] => [
+			{ fullName: "user/repo-a", name: "repo-a", owner: "user", stars },
+		];
 		const history: History = {
 			snapshots: [
-				{
-					timestamp: "2026-01-01",
-					totalStars: 100,
-					repos: [{ fullName: "user/repo-a", name: "repo-a", owner: "user", stars: 50 }],
-				},
-				{
-					timestamp: "2026-01-08",
-					totalStars: 110,
-					repos: [],
-				},
-				{
-					timestamp: "2026-01-15",
-					totalStars: 120,
-					repos: [{ fullName: "user/repo-a", name: "repo-a", owner: "user", stars: 60 }],
-				},
+				{ timestamp: "2026-01-01T00:00:00Z", totalStars: 100, repos: holding(50) },
+				{ timestamp: "2026-01-08T00:00:00Z", totalStars: 110, repos: [] },
+				{ timestamp: "2026-01-15T00:00:00Z", totalStars: 120, repos: holding(64) },
+				{ timestamp: "2026-01-22T00:00:00Z", totalStars: 130, repos: holding(71) },
 			],
 		};
 
 		const result = expectForecast(computeForecast({ history, topRepoNames: ["user/repo-a"] }));
 
-		expect(result.repos[0].forecasts.map((forecast) => forecast.points[0].predicted)).toEqual([65, 83]);
+		expect(result.repos[0].forecasts.map((forecast) => forecast.points[0].predicted)).toEqual([78, 78]);
+	});
+
+	it("fits a repository the Stored History met late from its first Snapshot, not from the zeros before it joined (#148)", () => {
+		const late = (stars: number): SnapshotRepo[] => [{ fullName: "user/late", name: "late", owner: "user", stars }];
+		const history: History = {
+			snapshots: [
+				{ timestamp: "2026-01-01T00:00:00Z", totalStars: 500, repos: [] },
+				{ timestamp: "2026-01-08T00:00:00Z", totalStars: 500, repos: [] },
+				{ timestamp: "2026-01-15T00:00:00Z", totalStars: 500, repos: [] },
+				{ timestamp: "2026-01-22T00:00:00Z", totalStars: 600, repos: late(100) },
+				{ timestamp: "2026-01-29T00:00:00Z", totalStars: 610, repos: late(110) },
+				{ timestamp: "2026-02-05T00:00:00Z", totalStars: 620, repos: late(120) },
+			],
+		};
+
+		const result = expectForecast(computeForecast({ history, topRepoNames: ["user/late"] }));
+
+		expect(result.repos).toHaveLength(1);
+		for (const forecast of result.repos[0].forecasts) {
+			expect(forecast.points.map((point) => point.predicted)).toEqual([130, 140, 150, 160]);
+		}
+	});
+
+	it.each([
+		{ label: "two", heldBy: 2 },
+		{ label: "none", heldBy: 0 },
+	])("leaves out a repository that $label of the Snapshots hold, fewer than a Forecast needs", ({ heldBy }) => {
+		const history: History = {
+			snapshots: Array.from({ length: 4 }, (_, index) => ({
+				timestamp: new Date(Date.UTC(2026, 0, 1 + index * 7)).toISOString(),
+				totalStars: 100 + index,
+				repos: index >= 4 - heldBy ? [{ fullName: "user/young", name: "young", owner: "user", stars: 10 + index }] : [],
+			})),
+		};
+
+		const result = expectForecast(computeForecast({ history, topRepoNames: ["user/young"] }));
+
+		expect(result.aggregate.forecasts).toHaveLength(2);
+		expect(result.repos).toEqual([]);
 	});
 
 	it("projects calendar weeks regardless of snapshot spacing (#143)", () => {

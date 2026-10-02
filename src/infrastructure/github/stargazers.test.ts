@@ -263,18 +263,22 @@ describe("fetchAllStargazers", () => {
 	});
 
 	it.each([
-		[
-			"a row with no user",
-			[{ starred_at: "2026-01-15T00:00:00Z", user: null }],
-			"[0].user (expected object, found null)",
-		],
-		[
-			"a user with no login",
-			[{ starred_at: "2026-01-15T00:00:00Z", user: { avatar_url: "a", html_url: "h" } }],
-			"[0].user.login (expected string, found nothing)",
-		],
-		["a page that is not a list", { message: "nope" }, "the value (expected array, found an object)"],
-	])("fails the repo with a readable reason on %s", async (_label, data, location) => {
+		{
+			label: "a row with no user",
+			data: [{ starred_at: "2026-01-15T00:00:00Z", user: null }],
+			location: "[0].user (expected object, found null)",
+		},
+		{
+			label: "a user with no login",
+			data: [{ starred_at: "2026-01-15T00:00:00Z", user: { avatar_url: "a", html_url: "h" } }],
+			location: "[0].user.login (expected string, found nothing)",
+		},
+		{
+			label: "a page that is not a list",
+			data: { message: "nope" },
+			location: "the value (expected array, found an object)",
+		},
+	])("fails the repo with a readable reason on $label", async ({ data, location }) => {
 		const octokit = {
 			request: vi.fn().mockResolvedValue({ data }),
 		};

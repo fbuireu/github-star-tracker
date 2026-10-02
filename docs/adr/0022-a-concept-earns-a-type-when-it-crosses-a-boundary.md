@@ -47,14 +47,14 @@ instead of being re-raised every six months.
    bug. Protect it the cheapest way that turns it into a compile error or a loud failure, and say in the
    commit message that it is a guard, so the next reader does not mistake the test for a reproduction.
 2. **Does anyone read it?** Modelling a concept nothing consumes invents a type whose only reader is its own
-   test. This tree already deleted four such exports and says so in
-   [`src/domain/AGENTS.md`](../../src/domain/AGENTS.md).
+   test. This tree already deleted four such exports, the ones named above, and `pnpm test:docs` now fails on
+   a runtime export with no production reader.
 3. **Does it cross a boundary?** A concept that leaves `@domain`, reaches an action output, is written to the
    Data Branch, or is spelled twice in two dialects has earned a real type. One that lives inside a single
    function has not.
 
-**A "no" to every one of them means writing the rule rather than coding it**: a bullet in the folder's `AGENTS.md`, a
-sentence in [CONTEXT.md](../../CONTEXT.md), an assertion in
+**A "no" to every one of them means writing the rule rather than coding it**: a rule in
+[`CODING_STANDARDS.md`](../../CODING_STANDARDS.md), a bullet in the folder's `AGENTS.md`, an assertion in
 [`docs-consistency.test.ts`](../docs-consistency.test.ts), or an ADR. A divergence that is *named* is
 finished work rather than a debt, and the maintenance contract in [AGENTS.md](../../AGENTS.md) is what keeps
 the name true.
@@ -89,13 +89,14 @@ does not cross a layer, is not persisted, and no Snapshot timestamp can collide 
 So no `FirstRun` value object; `prepareReportData` returns the boolean beside the string it already derives
 from the same input, and the illegal state stops being representable.
 
-**Rejected: a `Timestamp` type for `starredAt`.** It is compared with `localeCompare` in `diffStargazers`
-and parsed with `toEpochMs` in `buildStarHistory`, so the same primitive is read two ways. Question 3 says
-yes, and a branded type would still have to be unwrapped at both readers. The rule is already named where a
-reader meets it: the stargazer-diffing section of `src/domain/AGENTS.md` states that the sort is correct
-only while every value is a same-format ISO string, and the `github/` section of
-[`src/infrastructure/AGENTS.md`](../../src/infrastructure/AGENTS.md) states that the layer never parses or
-normalizes it. A written rule beats a type that crosses every layer.
+**Rejected: a `Timestamp` type for `starredAt`.** It is compared with `localeCompare` in `diffStargazers`,
+parsed with `toEpochMs` in `buildStarHistory` and checked with `Date.parse` in
+`warnWhenHistoryIsUnreconstructable`, so the same primitive is read three ways. Question 3 says yes, and a
+branded type would still have to be unwrapped at every reader. The rule is already named where a reader
+meets it: the stargazer-diffing section of `src/domain/AGENTS.md` states that the sort is correct only while
+every value is a same-format ISO string, and [`CODING_STANDARDS.md`](../../CODING_STANDARDS.md) has
+`@infrastructure` pass it through as GitHub's raw ISO string, never normalized. A written rule beats a type
+that crosses every layer.
 
 **Rejected: a `RepoFullName` type.** `fullName` is a `Map` key in `compareStars`, split on `/` for a removed
 repository's owner, split again for the comparison chart's short labels, interpolated into GitHub URLs by
@@ -135,6 +136,6 @@ is, and named here so it is not re-raised as an oversight.
   for the repositories the feature exists for. When the argument is not conclusive, treat it as reachable.
 - It does not license leaving primitives untyped by default. Every question has to fail. A concept
   that reaches an action output or the Data Branch has already answered the boundary question.
-- **Where it bites:** the *Conventions* section of [AGENTS.md](../../AGENTS.md) points here, and each
-  rejected case above is also named in the folder guide that owns it, so a reader meets the rule before they
-  meet this file.
+- **Where it bites:** the *Types* section of [`CODING_STANDARDS.md`](../../CODING_STANDARDS.md) points here, and
+  each rejected case above is also named in the folder guide that owns it, so a reader meets the rule before
+  they meet this file.

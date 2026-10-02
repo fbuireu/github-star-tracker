@@ -11,7 +11,7 @@ export function makeConfig(overrides: Partial<Config> = {}): Config {
 	return { ...DEFAULTS, ...overrides };
 }
 
-export interface MakeRepoInfoParams {
+interface MakeRepoInfoParams {
 	name: string;
 	stars?: number;
 	overrides?: Partial<RepoInfo>;
@@ -62,7 +62,7 @@ export function makeStargazerSeries({
 	);
 }
 
-export interface MakeSnapshotParams {
+interface MakeSnapshotParams {
 	timestamp: string;
 	totalStars: number;
 	repos?: SnapshotRepo[];
@@ -72,7 +72,7 @@ export function makeSnapshot({ timestamp, totalStars, repos = [] }: MakeSnapshot
 	return { timestamp, totalStars, repos };
 }
 
-export interface MakeHistoryParams {
+interface MakeHistoryParams {
 	starCounts: number[];
 	startMs?: number;
 	stepDays?: number;
@@ -90,7 +90,7 @@ export function makeHistory({
 	};
 }
 
-export interface MakeMultiRepoSnapshotParams {
+interface MakeMultiRepoSnapshotParams {
 	timestamp: string;
 	repoStars: Record<string, number>;
 }
@@ -110,7 +110,7 @@ export function makeMultiRepoSnapshot({ timestamp, repoStars }: MakeMultiRepoSna
 	};
 }
 
-export interface MakeMultiRepoHistoryParams {
+interface MakeMultiRepoHistoryParams {
 	snapshots: Record<string, number>[];
 	startMs?: number;
 	stepDays?: number;
@@ -128,7 +128,7 @@ export function makeMultiRepoHistory({
 	};
 }
 
-export interface MakeRepoResultParams {
+interface MakeRepoResultParams {
 	name: string;
 	overrides?: Partial<RepoResult>;
 }

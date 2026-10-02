@@ -77,7 +77,7 @@ describe("computeVelocity", () => {
 		expect(result?.growthPercent).toBe(100);
 	});
 
-	it("measures growth over the latest period, not the all-time baseline", () => {
+	it("measures growth over the latest period, not since the first Snapshot", () => {
 		const history = makeHistory([
 			{ day: 0, totalStars: 1 },
 			{ day: 100, totalStars: 40_000 },
@@ -115,7 +115,7 @@ describe("computeVelocity", () => {
 		expect(result?.daysToNextMilestone).toBe(10);
 	});
 
-	it("omits the projection when there is no growth", () => {
+	it("omits the next Milestone when there is no growth", () => {
 		const history = makeHistory([
 			{ day: 0, totalStars: 400 },
 			{ day: 10, totalStars: 400 },
@@ -127,7 +127,7 @@ describe("computeVelocity", () => {
 		expect(result?.daysToNextMilestone).toBeNull();
 	});
 
-	it("omits growth percent when the baseline is zero", () => {
+	it("omits growth percent when the Rate Interval starts at zero Stars", () => {
 		const history = makeHistory([
 			{ day: 0, totalStars: 0 },
 			{ day: 10, totalStars: 50 },

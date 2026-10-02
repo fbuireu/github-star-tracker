@@ -12,7 +12,7 @@ import type { ChartHistories, ColorPalette } from "./types";
 export interface ReportParams {
 	config: Config;
 	results: ComparisonResults;
-	previousTimestamp: string | null;
+	baselineSnapshotTimestamp: string | null;
 	history?: History | null;
 	velocityHistory?: History | null;
 	stargazerDiff?: StargazerDiffResult | null;
@@ -53,7 +53,7 @@ const THEME_CONFIG: Record<ChartTheme, { palette: ColorPalette; colorScheme: str
 	[ChartTheme.DARK]: { palette: DARK_PALETTE, colorScheme: ChartTheme.DARK },
 };
 
-export function resolvePalette(theme: ChartTheme = ChartTheme.AUTO): ColorPalette {
+export function resolvePalette(theme: ChartTheme): ColorPalette {
 	return THEME_CONFIG[theme].palette;
 }
 
@@ -67,21 +67,21 @@ export interface ReportData {
 	removedRepos: RepoResult[];
 	sorted: RepoResult[];
 	now: string;
-	prev: string;
+	baselineSnapshotDate: string;
 	isFirstRun: boolean;
 	generatedAt: string;
 }
 
-export interface PrepareReportDataParams {
+interface PrepareReportDataParams {
 	results: ComparisonResults;
-	previousTimestamp: string | null;
+	baselineSnapshotTimestamp: string | null;
 	locale: Locale;
 	now?: Date;
 }
 
 export function prepareReportData({
 	results,
-	previousTimestamp,
+	baselineSnapshotTimestamp,
 	locale,
 	now = new Date(),
 }: PrepareReportDataParams): ReportData {
@@ -95,8 +95,8 @@ export function prepareReportData({
 		removedRepos: repos.filter((repo) => repo.isRemoved),
 		sorted: rankByStars(repos),
 		now: generatedAt.split("T")[0],
-		prev: previousTimestamp ? previousTimestamp.split("T")[0] : t.report.firstRun,
-		isFirstRun: previousTimestamp === null,
+		baselineSnapshotDate: baselineSnapshotTimestamp ? baselineSnapshotTimestamp.split("T")[0] : t.report.firstRun,
+		isFirstRun: baselineSnapshotTimestamp === null,
 		generatedAt,
 	};
 }

@@ -20,7 +20,7 @@ import { renderEmptyRun, renderRun } from "@presentation/run";
 import { errorMessage } from "@shared/errors";
 import * as z from "zod/mini";
 
-const ApiUrlSchema = z.url({ protocol: /^https?$/ });
+const ApiUrlSchema = z.url({ protocol: /^https$/ }).check(z.regex(/^https:\/\//i));
 
 function resolveApiUrl(): string {
 	const apiUrl = core.getInput("github-api-url") || process.env.GITHUB_API_URL || "";
@@ -28,7 +28,7 @@ function resolveApiUrl(): string {
 	if (apiUrl === "" || z.validate(ApiUrlSchema, apiUrl)) return apiUrl;
 
 	throw new Error(
-		`Invalid github-api-url "${apiUrl}" (read from the input, or from GITHUB_API_URL when the input is empty). It must be an absolute http(s) URL, such as https://github.example.com/api/v3.`,
+		`Invalid github-api-url "${apiUrl}" (read from the input, or from GITHUB_API_URL when the input is empty). Every request carries the token, and plain http would send it in clear text, so set an absolute https URL, such as https://github.example.com/api/v3.`,
 	);
 }
 
@@ -73,10 +73,9 @@ export async function trackStars(): Promise<void> {
 					notificationThreshold: config.notificationThreshold,
 					notificationMode: config.notificationMode,
 				});
-				const { results, summary, updatedHistory } = measurement;
-				const previousTimestamp = measurement.baselineTimestamp;
+				const { results, summary, updatedHistory, baselineSnapshotTimestamp } = measurement;
 
-				core.info(`Comparing star counts (baseline: ${previousTimestamp ?? "first run"})...`);
+				core.info(`Comparing star counts (Baseline Snapshot: ${baselineSnapshotTimestamp ?? "first run"})...`);
 				core.info(`Total: ${summary.totalStars} stars (${deltaIndicator(summary.totalDelta)})`);
 
 				if (measurement.droppedSnapshots > 0) {
@@ -126,7 +125,7 @@ export async function trackStars(): Promise<void> {
 				const rendered = renderRun({
 					config,
 					results,
-					previousTimestamp,
+					baselineSnapshotTimestamp,
 					chartHistories,
 					storedHistory: updatedHistory,
 					stargazerDiff,
@@ -157,7 +156,7 @@ export async function trackStars(): Promise<void> {
 					core.info(
 						summary.changed
 							? "Notification threshold not reached, skipping email"
-							: "No stars changed since the baseline, skipping email",
+							: "No stars changed since the Baseline Snapshot, skipping email",
 					);
 				}
 

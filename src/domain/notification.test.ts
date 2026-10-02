@@ -1,11 +1,16 @@
 import { makeMultiRepoHistory } from "@shared/tests";
 import { describe, expect, it } from "vitest";
-import { Delivery, recordNotification, settleNotification, shouldNotify } from "./notification";
+import { Delivery, settleNotification, shouldNotify } from "./notification";
 import type { History } from "./types";
 import { NotificationMode } from "./types";
 
+interface FiresAtParams {
+	totalStars: number;
+	gained: number;
+}
+
 describe("shouldNotify with an 'auto' threshold", () => {
-	function firesAt({ totalStars, gained }: { totalStars: number; gained: number }): boolean {
+	function firesAt({ totalStars, gained }: FiresAtParams): boolean {
 		return shouldNotify({
 			totalStars,
 			starsAtLastNotification: totalStars - gained,
@@ -150,27 +155,6 @@ describe("shouldNotify", () => {
 	});
 });
 
-describe("recordNotification", () => {
-	it("advances the notification baseline to the delivered total", () => {
-		const history: History = {
-			...makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 100 }] }),
-			starsAtLastNotification: 50,
-		};
-
-		expect(recordNotification({ history, totalStars: 100 }).starsAtLastNotification).toBe(100);
-	});
-
-	it("returns a new history so the undelivered one is still persistable", () => {
-		const history: History = makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 100 }] });
-
-		const advanced = recordNotification({ history, totalStars: 100 });
-
-		expect(advanced).not.toBe(history);
-		expect(history.starsAtLastNotification).toBeUndefined();
-		expect(advanced.snapshots).toBe(history.snapshots);
-	});
-});
-
 describe("settleNotification", () => {
 	const history: History = makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 100 }] });
 	const settle = (overrides: Partial<Parameters<typeof settleNotification>[0]> = {}) =>
@@ -195,15 +179,29 @@ describe("settleNotification", () => {
 		expect(settle({ delivery: Delivery.FAILED }).notificationSent).toBe(false);
 	});
 
-	it("advances the baseline when an unconfigured transport makes should-notify the notification", () => {
+	it("advances the Notification Baseline when an unconfigured transport makes should-notify the notification", () => {
 		expect(settle().historyToPersist.starsAtLastNotification).toBe(100);
 	});
 
-	it("advances the baseline on a delivered notification", () => {
+	it("advances the Notification Baseline on a delivered notification", () => {
 		expect(settle({ delivery: Delivery.SENT }).historyToPersist.starsAtLastNotification).toBe(100);
 	});
 
-	it("leaves the baseline alone when a configured send failed, so the change still accrues", () => {
+	it("moves an earlier Notification Baseline to the delivered total", () => {
+		const notified: History = { ...history, starsAtLastNotification: 50 };
+
+		expect(settle({ history: notified, delivery: Delivery.SENT }).historyToPersist.starsAtLastNotification).toBe(100);
+	});
+
+	it("returns a new History when it advances, so the one it was handed stays persistable", () => {
+		const advanced = settle({ delivery: Delivery.SENT }).historyToPersist;
+
+		expect(advanced).not.toBe(history);
+		expect(history.starsAtLastNotification).toBeUndefined();
+		expect(advanced.snapshots).toBe(history.snapshots);
+	});
+
+	it("leaves the Notification Baseline alone when a configured send failed, so the change still accrues", () => {
 		const outcome = settle({ delivery: Delivery.FAILED });
 
 		expect(outcome.historyToPersist).toBe(history);

@@ -3,11 +3,11 @@ import * as core from "@actions/core";
 import { CompareAgainst, NotificationMode } from "@domain/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULTS } from "./defaults";
-import { loadConfig, loadConfigFile } from "./loader";
+import { loadConfig } from "./loader";
 import { ChartCurve, Visibility } from "./types";
 
 vi.mock("@actions/core", () => ({
-	getInput: vi.fn().mockReturnValue(""),
+	getInput: vi.fn(),
 	info: vi.fn(),
 	warning: vi.fn(),
 }));
@@ -17,8 +17,8 @@ vi.mock("node:fs", async (importOriginal) => {
 
 	return {
 		...actual,
-		existsSync: vi.fn().mockReturnValue(false),
-		readFileSync: vi.fn().mockReturnValue(""),
+		existsSync: vi.fn(),
+		readFileSync: vi.fn(),
 	};
 });
 
@@ -26,16 +26,17 @@ function mockInputs(inputs: Record<string, string>): void {
 	vi.mocked(core.getInput).mockImplementation((name: string) => inputs[name] ?? "");
 }
 
-describe("loadConfigFile", () => {
+describe("the config file", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 		vi.mocked(core.getInput).mockReturnValue("");
 		vi.mocked(fs.existsSync).mockReturnValue(false);
 		vi.mocked(fs.readFileSync).mockReturnValue("");
 	});
 
-	it("returns empty object when file does not exist", () => {
-		expect(loadConfigFile("star-tracker.yml")).toEqual({});
+	it("uses the defaults, and says so, when the file does not exist", () => {
+		expect(loadConfig()).toEqual(DEFAULTS);
+		expect(core.info).toHaveBeenCalledWith("No config file found at star-tracker.yml, using defaults");
 	});
 
 	it("parses YAML config file correctly", () => {
@@ -50,7 +51,7 @@ describe("loadConfigFile", () => {
         min_stars: 5
     `);
 
-		const config = loadConfigFile("star-tracker.yml");
+		const config = loadConfig();
 
 		expect(config.visibility).toBe(Visibility.PRIVATE);
 		expect(config.includeArchived).toBe(true);
@@ -63,7 +64,7 @@ describe("loadConfigFile", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue("include-charts: false\nmin-stars: 7");
 
-		const config = loadConfigFile("star-tracker.yml");
+		const config = loadConfig();
 
 		expect(config.includeCharts).toBe(false);
 		expect(config.minStars).toBe(7);
@@ -73,7 +74,7 @@ describe("loadConfigFile", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue("min_stars: 5\nmin-stars: 99");
 
-		const config = loadConfigFile("star-tracker.yml");
+		const config = loadConfig();
 
 		expect(config.minStars).toBe(5);
 	});
@@ -81,37 +82,37 @@ describe("loadConfigFile", () => {
 	it("handles empty YAML file", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue("");
-		expect(loadConfigFile("star-tracker.yml")).toEqual({});
+		expect(loadConfig()).toEqual(DEFAULTS);
 	});
 
 	it("handles a whitespace-only YAML file", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue("   \n  \n");
-		expect(loadConfigFile("star-tracker.yml")).toEqual({});
+		expect(loadConfig()).toEqual(DEFAULTS);
 	});
 
 	it.each([
-		["a list", "- visibility\n- private"],
-		["a scalar", "private"],
-	])("ignores a config file whose top level is %s", (_label, contents) => {
+		{ label: "a list", contents: "- visibility\n- private" },
+		{ label: "a scalar", contents: "private" },
+	])("ignores a config file whose top level is $label", ({ contents }) => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue(contents);
 
-		expect(loadConfigFile("star-tracker.yml")).toEqual({});
+		expect(loadConfig()).toEqual(DEFAULTS);
 	});
 
-	it("returns empty object and warns on malformed YAML", () => {
+	it("uses the defaults and warns on malformed YAML", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue('visibility: "public"\n  bad: : :');
 
-		expect(loadConfigFile("star-tracker.yml")).toEqual({});
+		expect(loadConfig()).toEqual(DEFAULTS);
 		expect(core.warning).toHaveBeenCalledWith(expect.stringContaining("Failed to parse config file"));
 	});
 });
 
 describe("loadConfig", () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
+		vi.resetAllMocks();
 		vi.mocked(core.getInput).mockReturnValue("");
 		vi.mocked(fs.existsSync).mockReturnValue(false);
 		vi.mocked(fs.readFileSync).mockReturnValue("");
@@ -160,10 +161,10 @@ describe("loadConfig", () => {
 	});
 
 	it.each([
-		["a number", "data_branch: 2026", "2026"],
-		["a boolean", "data_branch: true", "true"],
-		["a list", "data_branch:\n- stars", '["stars"]'],
-	])("throws a readable error on a data_branch that is %s", (_label, contents, shown) => {
+		{ label: "a number", contents: "data_branch: 2026", shown: "2026" },
+		{ label: "a boolean", contents: "data_branch: true", shown: "true" },
+		{ label: "a list", contents: "data_branch:\n- stars", shown: '["stars"]' },
+	])("throws a readable error on a data_branch that is $label", ({ contents, shown }) => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		vi.mocked(fs.readFileSync).mockReturnValue(contents);
 

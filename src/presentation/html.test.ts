@@ -3,10 +3,10 @@ import type { Config } from "@config/types";
 import { ChartTheme } from "@config/types";
 import type { ForecastData } from "@domain/forecast";
 import { ForecastMethod, ForecastSource } from "@domain/forecast";
-import { DOWN_ARROW, UP_ARROW } from "@domain/formatting";
+import { trendIcon } from "@domain/formatting";
 import type { StargazerDiffResult } from "@domain/stargazers";
 import type { History } from "@domain/types";
-import { makeComparisonResults, makeConfig, makeHistory, makeMultiRepoHistory } from "@shared/tests";
+import { makeComparisonResults, makeConfig, makeHistory, makeMultiRepoHistory, makeRepoResult } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import { COLORS, DARK_PALETTE, LIGHT_PALETTE } from "./constants";
 import { generateHtmlReport } from "./html";
@@ -24,11 +24,11 @@ function deltaCell({ color, delta }: DeltaCellParams): RegExp {
 	return new RegExp(`color:${color};font-weight:600;">\\s*${delta.replace("+", "\\+")}\\s*</td>`);
 }
 
-interface RenderHtml extends Partial<Omit<ReportParams, "config">> {
+interface RenderHtmlParams extends Partial<Omit<ReportParams, "config">> {
 	config?: Partial<Config>;
 }
 
-function renderHtml({ config, ...overrides }: RenderHtml = {}): string {
+function renderHtml({ config, ...overrides }: RenderHtmlParams = {}): string {
 	const resolved = makeConfig(config);
 
 	return generateHtmlReport({
@@ -36,7 +36,7 @@ function renderHtml({ config, ...overrides }: RenderHtml = {}): string {
 		model: buildReportModel({
 			config: resolved,
 			results: makeComparisonResults(),
-			previousTimestamp: "2026-01-01T00:00:00Z",
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: overrides.history
 				? {
 						aggregate: overrides.history,
@@ -65,7 +65,7 @@ describe("generateHtmlReport", () => {
 		expect(html).not.toContain("Growth Velocity");
 	});
 
-	it("renders velocity with only the daily rate when growth and projection are unavailable", () => {
+	it("renders velocity with only the daily rate when growth and the next Milestone are unavailable", () => {
 		const flatHistory = makeHistory({ starCounts: [0, 0], stepDays: 10 });
 
 		const html = renderHtml({ velocityHistory: flatHistory, config: { velocityMetrics: true } });
@@ -160,8 +160,8 @@ describe("generateHtmlReport", () => {
 		const html = renderHtml();
 
 		expect(html).toContain(">Trend</th>");
-		expect(html).toContain(UP_ARROW);
-		expect(html).toContain(DOWN_ARROW);
+		expect(html).toContain(trendIcon(1));
+		expect(html).toContain(trendIcon(-1));
 	});
 
 	it("lists new repositories with their Star Count", () => {
@@ -583,5 +583,38 @@ describe("generateHtmlReport", () => {
 		const html = renderHtml();
 
 		expect(html).toContain(`background-color:${COLORS.white}`);
+	});
+
+	it("escapes every GitHub-sourced string it prints", () => {
+		const fullName = "user/repo<b>";
+		const forecasts = [{ method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 1, predicted: 20 }] }];
+
+		const html = renderHtml({
+			results: makeComparisonResults({
+				repos: [
+					makeRepoResult({ name: "repo<b>", overrides: { current: 15, previous: 10, delta: 5 } }),
+					makeRepoResult({ name: "gone<b>", overrides: { current: 0, previous: 3, delta: -3, isRemoved: true } }),
+				],
+			}),
+			history: makeMultiRepoHistory({ snapshots: [{ [fullName]: 10 }, { [fullName]: 15 }], stepDays: 1 }),
+			stargazerDiff: {
+				entries: [
+					{
+						repoFullName: fullName,
+						newStargazers: [{ login: "<b>", avatarUrl: "<b>", profileUrl: "<b>", starredAt: "<b>" }],
+					},
+				],
+				totalNew: 1,
+				sampledRepos: [fullName],
+			},
+			forecastData: {
+				aggregate: { forecasts },
+				repos: [{ repoFullName: fullName, source: ForecastSource.OWN, forecasts }],
+			},
+			config: { includeCharts: true },
+		});
+
+		expect(html).toContain("user/repo&lt;b&gt;");
+		expect(html).not.toContain("<b>");
 	});
 });

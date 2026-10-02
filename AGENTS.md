@@ -1,73 +1,33 @@
 # AGENTS.md
 
 Agent-facing guide for **github-star-tracker**, a GitHub Action that tracks star counts across a token
-owner's repositories. See [CONTEXT.md](./CONTEXT.md) for the domain glossary (snapshot, baseline, data
-branch, sampled repo, read-only run…); do not duplicate it here. [ARCHITECTURE.md](./ARCHITECTURE.md) is
-the big picture: layer map, end-to-end run, the data branch, build and release.
+owner's repositories. [CONTEXT.md](./CONTEXT.md) is the domain glossary and [ARCHITECTURE.md](./ARCHITECTURE.md)
+the big picture: layer map, end-to-end Run, the Data Branch, build and release.
+
+Reviewing a diff: [CODING_STANDARDS.md](./CODING_STANDARDS.md).
 
 ## What this is
 
-A JavaScript action (TypeScript sources bundled by esbuild into [`dist/index.js`](./dist/index.js), `runs.using: node24` per
-[`action.yml`](./action.yml)). On each run it lists the token owner's repositories, compares their star counts against a
-snapshot stored on a dedicated data branch, and commits a markdown report, JSON/CSV data, a badge and
-animated SVG charts back to that branch. It exposes a set of action outputs and can send an HTML digest over
-SMTP. There is exactly one use case: `trackStars()`.
-
-## Stack
-
-- TypeScript with `verbatimModuleSyntax` and `isolatedModules`: type-only imports must be written
-  `import type { … }` or `import { type X }`, or the build breaks. `resolveJsonModule` is on, which is how
-  `src/i18n/*.json` is imported and type-checked.
-- Runtime deps, all bundled: `@actions/core`, `@actions/github`, `@octokit/plugin-retry`, `js-yaml`,
-  `nodemailer`, `zod`. `node_modules` is not shipped. `zod` is imported only as `zod/mini`, never as `zod`
-  ([ADR 0023](./docs/adr/0023-untrusted-input-is-validated-with-zod-mini.md)).
-- esbuild (`platform: node`, `target: node24`, `format: cjs`), Vitest (v8 coverage), Biome (lint + format),
-  semantic-release + commitlint, husky + lint-staged.
+A JavaScript action. [`src/index.ts`](./src/index.ts) calls `trackStars()` in
+[`src/application/tracker.ts`](./src/application/tracker.ts), the one use case, at module load; esbuild bundles it
+into the committed [`dist/index.js`](./dist/index.js), which [`action.yml`](./action.yml) runs.
 
 ## Versions
 
-This section says where each runtime is pinned, never what the pin says. A version number written here is a
-claim a bot can invalidate on its own, and every way of defending one costs more than it returns: asserting
-it against the manifest fails every dependency pull request on a line the bot cannot edit, quoting it
-without asserting it rots, and having Renovate's `customManagers` rewrite the prose alongside the manifest,
-which this repository did for a while, works and is still regexes over prose with a trap in it for whoever
-adds the next pin. Read the file instead.
+This section names where each runtime is pinned and never what the pin says: read the file named beside each one.
 
 - Node (`engines.node`, and [`.nvmrc`](./.nvmrc), which every job in [`ci.yml`](./.github/workflows/ci.yml) installs from via `node-version-file`)
-- pnpm (`packageManager`): always use pnpm, never npm/yarn
+- pnpm (`packageManager`): every install and every script goes through pnpm
 
-Both are exact pins, not ranges. The rules in
-[`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts) assert the shape a bump cannot change:
-each runtime is named here, never quoted, pinned exactly, pinned once, and re-pinned in no workflow. Run
-`pnpm test:docs` for the list. The one number the guides do state, the shipped runtime below, comes out of
-`action.yml` rather than being written down twice.
-
-Nothing compared `.nvmrc` with `engines.node` until that rule existed, so the two places this repository
-declares Node could drift without anyone noticing. A workflow that pinned it by hand would add a third place
-to look. Every sibling repository carries the same set.
-
-Those rules hold the pins to each other, so one more rule reads this section itself: a bullet here must not
-quote a version, or it could go stale while everything else still passed. Only the line that opens a bullet
-is checked, because the prose beneath it narrates the arrangement this section used to carry, and that
-history is why the decision exists. The exact-pin rule is what keeps the others meaningful: a range would
-make "the version `engines.node` declares" ambiguous. None of them reads a digit out of prose, so a Renovate
-bump moves through them untouched.
-
-The same reasoning covers every other document. A tool named beside a version states what its manifest
-already states, and the manifest is the only copy Renovate keeps current, so `docs/docs-consistency.test.ts`
-rejects such a pairing in any markdown file. Which names it polices is read from the manifests: the runtimes,
-plus each versioned dependency `package.json` actually declares, so a dependency added tomorrow is policed the
-day it lands and one this repository never declared is not. Two exemptions: the ADRs, because a decision is
-dated and quotes the versions it decided on, and the shipped runtime below, which is not a dependency.
+Each runtime is pinned once and exactly: `.nvmrc` and `engines.node` agree, no workflow pins either again, and no
+document outside the ADRs and `CHANGELOG.md` names a runtime, or a framework `package.json` declares, beside a
+version, the shipped runtime below excepted. `pnpm test:docs` asserts all of it.
 
 `engines.node` is the development pin; the shipped runtime is `node24` (`action.yml` `runs.using`, and
-[`esbuild.config.ts`](./esbuild.config.ts) `target`). Those are different numbers on purpose, and the gap is
-a trap: `@types/node` tracks the *development* version, and esbuild's `target` lowers syntax without
-shimming runtime APIs, so a `node:*` API that landed after 24.x type-checks, bundles, passes `pnpm verify`
-and then throws `TypeError: … is not a function` on a GitHub runner. It fails in a user's workflow rather
-than in CI, because `dist/` is committed and nothing here executes the bundle. Today the tree only reaches
-for `node:fs`, `node:path` and `node:child_process.execFileSync`, all long-standing. Check a new `node:` API against Node 24, not
-against `engines.node`.
+[`esbuild.config.ts`](./esbuild.config.ts) `target`). `@types/node` tracks the development version and esbuild's
+`target` lowers syntax without shimming runtime APIs, so a `node:*` API that landed after 24.x type-checks, bundles,
+passes `pnpm verify` and then throws `TypeError: … is not a function` on a GitHub runner, where nothing here runs the
+bundle first. Check a new `node:` API against Node 24, not against `engines.node`.
 
 ## Commands
 
@@ -76,10 +36,10 @@ pnpm build            # tsx esbuild.config.ts -> dist/index.js
 pnpm lint             # biome lint, the root command the variants pass paths to
 pnpm lint:all         # lint .
 pnpm lint:all:fix     # lint:all --fix
-pnpm lint:changed     # lint --write, over what biome sees as changed; see the gotcha
+pnpm lint:changed     # lint --write, over what biome sees as changed; see below
 pnpm format           # biome check --write, the root command lint-staged appends files to
 pnpm format:all       # format .
-pnpm format:changed   # format, over the same; see the gotcha
+pnpm format:changed   # format, over the same; see below
 pnpm format:check     # biome check, no writes; what verify runs
 pnpm typecheck        # tsc --noEmit
 pnpm test:ut          # vitest run
@@ -94,39 +54,22 @@ pnpm verify:changed   # verify:static && test:ut:changed; what pre-push runs
 
 Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run src/domain/forecast.test.ts`.
 
-A `:changed` variant names a literal base, and computing one is what it must not do. A `package.json`
-script runs under `cmd` on Windows, where `$(...)` is not substituted but passed through as literal argv, so
-a script that resolved the branch's push target broke every push from a Windows checkout. `test:ut:changed`
-therefore takes `origin/main` outright. On a branch that is wider than the push needs and never narrower, so
-it errs safe.
+`test:ut:changed` picks tests through the import graph, which no Markdown file is in, so after a change to the docs
+alone run `pnpm test:docs`.
 
-Biome's `--changed` selects nothing on `main`, and that is left alone. It diffs against
-`vcs.defaultBranch`, which is `main`, so standing on `main` there is nothing to compare and
-`pnpm format:changed` answers *Checked 0 files* however much has changed. Setting `defaultBranch` to a
-revision expression works (`@{push}` resolves) and is worse: on a branch with no upstream it silently checks
-nothing and exits zero. Reach for `format:all` instead, which reads this tree in under a second.
+Biome's `--changed` diffs against `vcs.defaultBranch`, which is `main`, so on `main` `pnpm format:changed` answers
+*Checked 0 files* however much has changed. Reach for `format:all` there.
 
-The hooks: `pre-commit` runs lint-staged, `commit-msg` runs commitlint, `pre-push` runs `verify:changed`.
-The hook deliberately does not run `verify`, because the coverage floor and a changed-only run cannot both
-hold: `vitest.config.mts` sets `coverage.include` over all of `src`, which is what makes v8 report a file no
-test loaded as zero, so any subset run drags the global average under the threshold and fails on a clean
-tree. Coverage is therefore a CI concern, and nothing is lost by that: `ci.yml` runs the full `pnpm verify`
-on the pushed sha and the `release` job needs it, so a push whose coverage dropped cuts no release. What the
-hook buys is that the slow whole-repo run stops standing between you and a push, which is the point at which
-people start reaching for `--no-verify`, and a hook nobody runs protects nothing.
+The hooks: `pre-commit` runs lint-staged, `commit-msg` runs commitlint, `pre-push` runs `verify:changed`, and CI runs
+the full `pnpm verify`; [ARCHITECTURE.md](./ARCHITECTURE.md) says why the hook stops short of it. `pre-push`
+rebuilds the bundle, so a push can leave `dist/` dirty: commit that result rather than discarding it.
 
 ## Structure & aliases
 
-`src/` is a mini-DDD tree: one entry point plus its layers, each with an alias and an explicit set of
-things it may depend on ([ADR 0004](./docs/adr/0004-layered-source-structure.md)). One folder is not a layer
-at all, `assets/`, which holds the brand files the README embeds. DDD is applied here where it pays rather
-than by the book. What carries the design is the ubiquitous language of [`CONTEXT.md`](./CONTEXT.md) and the
-layer boundaries; the tactical catalogue is taken where it fits. ADR 0004 weighs aggregates, the Repository
-pattern, domain events and a service layer one at a time, and
-[ADR 0022](./docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md) decides value objects per
-concept. `index.ts` imports `trackStars` from `@application/tracker` and calls it at module load; nothing
-else may import `@application/*`. The full dependency graph, including the forbidden arrows, is the layer
-map in [ARCHITECTURE.md](./ARCHITECTURE.md).
+`src/` is one entry point plus its layers, each with an alias and an explicit set of things it may depend on
+([ADR 0004](./docs/adr/0004-layered-source-structure.md)). The full dependency graph, forbidden arrows included, is
+the layer table in [ARCHITECTURE.md](./ARCHITECTURE.md), which `pnpm test:docs` reads as the import contract.
+`assets/` is not a layer: it holds the brand files the README embeds.
 
 | Layer | Alias | Owns |
 | --- | --- | --- |
@@ -135,14 +78,9 @@ map in [ARCHITECTURE.md](./ARCHITECTURE.md).
 | `config/` | `@config/*` | Action inputs + `star-tracker.yml` -> a typed `Config` |
 | `domain/` | `@domain/*` | Pure business logic and types |
 | `i18n/` | `@i18n` | Locale bundles, `getTranslations`, `interpolate` |
-| `infrastructure/` | `@infrastructure/*` | All I/O: octokit, `git` CLI, `fs`, nodemailer |
+| `infrastructure/` | `@infrastructure/*` | The Run's outbound side effects: octokit, the `git` CLI, the files it writes, nodemailer |
 | `presentation/` | `@presentation/*` | Pure rendering: data in, markdown/HTML/SVG/CSV string out |
-| `shared/` | `@shared/*` | Cross-cutting code owning no layer: `errorMessage`, and the test factories |
-
-Tests are colocated next to the file they cover, as `src/**/*.test.ts`. The test files covering no module are:
-[`src/config/action-inputs.test.ts`](./src/config/action-inputs.test.ts), which asserts against `action.yml` rather than against a module, and
-[`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts), the docs guard described below, which lives with the documents it checks
-instead of under `src/`.
+| `shared/` | `@shared/*` | Cross-cutting code owning no layer: `errorMessage`, the schema-issue wording, and the test factories |
 
 Aliases are declared **once**, in [`tsconfig.json`](./tsconfig.json) `compilerOptions.paths`. `esbuild.config.ts` derives its
 `alias` map from that object at build time and [`vitest.config.mts`](./vitest.config.mts) sets `resolve.tsconfigPaths: true`, so a
@@ -154,147 +92,72 @@ Nested guides: read the one for the layer you are touching; they carry the detai
 
 | Folder | Covers |
 | --- | --- |
-| [`src/application/`](./src/application/AGENTS.md) | Run sequence, the output contract, failure policy |
+| [`src/application/`](./src/application/AGENTS.md) | The Run's wiring, the output contract |
 | [`src/assets/`](./src/assets/AGENTS.md) | The mark, why it needs no light/dark pair, and why the README heading stays |
 | [`src/config/`](./src/config/AGENTS.md) | Input + YAML precedence, what throws vs warns, parser vocabularies |
 | [`src/domain/`](./src/domain/AGENTS.md) | Comparison semantics, snapshots, forecast/velocity maths, star-history |
 | [`src/i18n/`](./src/i18n/AGENTS.md) | Bundles, placeholder rules, adding a locale |
 | [`src/infrastructure/`](./src/infrastructure/AGENTS.md) | The adapters: octokit, git worktree, persistence, SMTP |
-| [`src/presentation/`](./src/presentation/AGENTS.md) | Renderers, the chart set, escaping and injection rules |
-| [`src/shared/`](./src/shared/AGENTS.md) | `errorMessage`, the fixture factories, and why this folder stays almost empty |
+| [`src/presentation/`](./src/presentation/AGENTS.md) | Renderers, the chart set, the report model |
+| [`src/shared/`](./src/shared/AGENTS.md) | `errors.ts` and the fixture factories |
 
 ## Conventions
 
-- **Cross-layer imports use the alias; same-layer imports stay relative.** `@domain/snapshot` from
-  `presentation`, `./snapshot` from inside `domain`. Mixed forms of the same module break Biome's import
-  sorting and duplicate it in the bundle. "Same layer" means all of [`src/infrastructure`](./src/infrastructure), not one adapter.
-- **One argument is positional; two or more are one object, typed `<FunctionName>Params`.**
-  `coveredStars(totalStars)`, `describeFetchError(error)`; `makeRepoInfo({ name, stars }): MakeRepoInfoParams`,
-  `repoStargazers({ fullName, dates, sampled }): RepoStargazersParams`. The interface is named after the
-  function, not after the concept, so a reader landing on the type knows what takes it. A comparator handed
-  to `sort` is the exception: it is called back positionally, so `alphabetically` keeps its two arguments.
-  `docs/docs-consistency.test.ts` asserts the rule over the whole of `src`, with no exemption. The fixture
-  factories in [`src/shared/tests`](./src/shared/tests) and the co-located test helpers used to be excused,
-  and that is where the rule had drifted furthest. A fixture is the code a reader copies from.
-- **No explanatory comments in `.ts` files**, without exception; the tree contains none. These `AGENTS.md`
-  files carry the explanation instead. If something needs explaining it goes in the folder's *Invariants* or
-  *Gotchas* section, not above the line.
-- **`domain`, `presentation` and `i18n` must stay pure.** No `@actions/*`, no `node:*`, no network, no fs, and
-  no clock beyond an injectable `now`. Rendering returns strings; writing files is `application`'s job. The
-  impure layers each own a different side effect: `config` reads the action inputs and the YAML file
-  (`node:fs`), `infrastructure` owns everything outbound, and `application` writes the Action log and the
-  outputs. `infrastructure` is the only layer that reaches the network, not the only one that does I/O.
-- **A primitive earns a type only when it crosses a boundary.** Ask, in order: is the illegal state
-  reachable, does anything read it, does it leave the layer. If the answer is no every time, write the rule
-  down instead, in the folder's guide, in `CONTEXT.md` or in `docs/docs-consistency.test.ts`. A divergence
-  you have named and explained is finished work, not a debt.
-  [ADR 0022](./docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md) carries the criterion and
-  the worked cases from this tree, including the ones it decided **not** to model. Say in the commit message
-  which answer applied. "This is a guard" is what tells the next reader that the test builds an unreachable
-  state on purpose.
-- **Conventional commits** (commitlint + husky). semantic-release owns versioning. Do NOT add a
-  Co-Authored-By / Claude trailer to commits or PRs.
+- **One argument is positional; two or more are one object**, typed `<FunctionName>Params`.
+- **`domain`, `presentation` and `i18n` must stay pure**: no `node:*`, no `@actions/*`, no network, and no clock
+  beyond an injectable `now`.
+- **No comments** in hand-written source, doc comments and suppressions included. The reason for a line goes in the
+  commit message, the pull request, an ADR or [CODING_STANDARDS.md](./CODING_STANDARDS.md).
+- `pnpm test:docs` fails on a breach of any of the three.
+- **Data from outside the action goes through a `zod/mini` schema**, never a cast, and `zod` is imported only as
+  `import * as z from "zod/mini"`, which `pnpm test:docs` checks too
+  ([ADR 0023](./docs/adr/0023-untrusted-input-is-validated-with-zod-mini.md)).
+- **Conventional commits** (commitlint + husky). semantic-release owns versioning and reads the type as the version
+  bump, per the table in [CONTRIBUTING.md](./.github/CONTRIBUTING.md), so the type states what the change does for a
+  user. Do NOT add a Co-Authored-By / Claude trailer to commits or PRs.
 
 ## Maintenance contract
 
-These documents are not generated. A change that skips them leaves the tree describing code that no longer
-exists, so update the docs **in the same commit** as the code: a follow-up commit is a promise to fix it
-later, which is not the same as fixing it.
+These documents are not generated. When you change code, update the docs **in the same commit**: a follow-up commit
+is a promise, not a fix.
 
-`docs/docs-consistency.test.ts` makes the mechanical half of that contract executable. It reads every
-document and asserts the checkable claims against the repo: no dead markdown links, no citation of a source
-or test file that does not exist, no sample chart in [`docs/examples/README.md`](./docs/examples/README.md) without its SVG, every `action.yml`
-input and output named on the surfaces that list them **and listed alphabetically** there, the translation-key table in
-`docs/wiki/Internationalization-(i18n).md` matching [`src/i18n/en.json`](./src/i18n/en.json) section for section and key for key,
-every documented `stars-data.json` example showing the `version` the writer actually stamps,
-every cross-layer import in `src` allowed by the *May import* column of the layer table in `ARCHITECTURE.md`
-(with same-layer imports relative, the pure layers free of `node:*` / `@actions/*` / `@octokit/*` /
-`nodemailer` / `js-yaml`, and every test file that reaches past its own layer named rather than exempted),
-the Node and pnpm pins above matching `package.json` and `.nvmrc`, every overridable `action.yml` input stating its real
-default in prose and saying the config file can override it,
-and the ADR set held to its template (sequential
-numbering, `NNNN-kebab-title.md` filenames, the `# N. Title` / date / status / *Context* / *Decision* /
-*Consequences* shape, a row in the [`ARCHITECTURE.md`](./ARCHITECTURE.md) index, and, the one that rots quietly, a link from
-some document **other** than that index, since an ADR only the index points at will not be read). It runs
-with `pnpm test:ut`, so in CI on every PR. A failure means the docs and the code disagree; fix whichever is
-wrong. What it cannot check is prose or rationale, and that part is still on you. Keep its assertions
-**aggregated**, one failing list per rule, rather than `it.each` per document.
+`pnpm test:docs` runs [`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts), which holds every document
+to the claims it can check against the repository. A failure means the docs and the code disagree; fix whichever is
+wrong. What it cannot check is prose or rationale, and that part is still on you.
 
 | If you change | Update |
 | --- | --- |
-| What a domain word means, or introduce a new one | [`CONTEXT.md`](./CONTEXT.md), the glossary: vocabulary only |
+| What a domain word means, or introduce a new one | [`CONTEXT.md`](./CONTEXT.md): the glossary, vocabulary only |
+| A rule about how code is written | [`CODING_STANDARDS.md`](./CODING_STANDARDS.md) |
 | A behaviour a doc states as an invariant or a gotcha | that bullet, or delete it if it stopped being true |
-| A layer's rules, or the files a concept is made of | that layer's nested `AGENTS.md` (table above) |
-| A default, an input name, or an output | `action.yml`, [`docs/wiki/Configuration.md`](./docs/wiki/Configuration.md), [`docs/wiki/API-Reference.md`](./docs/wiki/API-Reference.md), the README table, [`docs/wiki/Viewing-Reports.md`](./docs/wiki/Viewing-Reports.md), and the *Outputs* section of [`src/application/AGENTS.md`](./src/application/AGENTS.md), always **alphabetically** and never appended at the end (`github-token` stays pinned first) |
-| A package script, a path alias, or a layer boundary | the *Commands* / *Structure & aliases* sections here |
-| The run order, the layer map, or the build pipeline | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
+| What a layer does, or the files a concept is made of | that layer's nested `AGENTS.md` (table above) |
+| A default, an input name, or an output | `action.yml`, [`docs/wiki/Configuration.md`](./docs/wiki/Configuration.md), [`docs/wiki/API-Reference.md`](./docs/wiki/API-Reference.md), the README table, [`docs/wiki/Viewing-Reports.md`](./docs/wiki/Viewing-Reports.md), the *Outputs* section of [`src/application/AGENTS.md`](./src/application/AGENTS.md) and the outputs line of [`ARCHITECTURE.md`](./ARCHITECTURE.md), always **alphabetically** and never appended at the end (`github-token` stays pinned first) |
+| A package script or a path alias | the *Commands* / *Structure & aliases* sections here |
+| A layer boundary, the run order, or the build pipeline | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
 | A decision an ADR records | that ADR: amend it, or supersede it with a new one and say so in both `## Status` blocks |
 
-Propose an ADR in [`docs/adr/`](./docs/adr/) when a decision is **hard to reverse**, **surprising without
-context** and **the result of a real trade-off**. All of them, or it is not an ADR. Copy
-[ADR 0000](./docs/adr/0000-adr-template.md), the template, number it one above the highest existing file,
-add it to the index in `ARCHITECTURE.md`, and link it from wherever it bites: a gotcha here, a nested
-guide, a wiki page. Both the template shape and the incoming contextual link are asserted.
-
-Two traps worth naming, both of which have already happened here: deleting a resolved entry from a "known
-inconsistencies" list is part of the fix rather than tidying to do afterwards, and a `file.ts:123` citation
-rots silently the moment anything above it moves, so name the symbol instead.
+A new ADR starts as a copy of [ADR 0000](./docs/adr/0000-adr-template.md), the template, which says when a decision
+earns one and where to link it from.
 
 ## Gotchas
 
-- `dist/index.js` is committed and is what `action.yml` (`runs.main`) executes, because GitHub runs a JS
-  action straight from the repository with no install step ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)).
-  What keeps a released version's bundle honest is the `release` job in `ci.yml`, which runs `pnpm build` in
-  its own checkout right before `semantic-release` commits `dist/` as a release asset, and no pull-request
-  check does any of that. Between releases `main` can still carry a bundle behind its sources, since a
-  `refactor` or `chore` commit cuts no release, so commit your rebuild alongside the source.
-- **A merge landing while `Semantic Release` runs joins that release instead of breaking it.**
-  `@semantic-release/git` commits the version bump, the changelog and `dist/` on the branch the job holds and
-  pushes `HEAD:main`, and `actions/checkout` pins the run's own sha, so a commit that reached `main` in the
-  meantime used to make that push a non-fast-forward: the job failed after `Check` had passed, no tag was
-  written, and a re-run stood down on *The local branch main is behind the remote one*. The job now
-  fast-forwards onto `origin/main` before it builds and releases, so `dist/` and the version both cover every
-  commit on `main` at that moment, the ones that landed mid-run included, and the run those commits queued
-  finds nothing left to publish. The cost: `Check` ran on the absorbed commits in
-  their pull request rather than in the run that released them. Two cases still stand the job down, and both heal
-  on their own: `main` rewritten under the run, where the sha is no ancestor of the head and the step leaves
-  the checkout alone, and a merge landing in the seconds between the fast-forward and the push. Neither
-  writes a tag, so the run the newer head queued computes the release over everything since the last one
-  and cuts it.
-- **Defaults live in [`src/config/defaults.ts`](./src/config/defaults.ts), not in `action.yml`.** Overridable inputs deliberately carry
+- `dist/index.js` is committed and is what `action.yml` (`runs.main`) executes, because GitHub runs a JS action
+  straight from the repository with no install step ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)).
+  The `release` job rebuilds it before `semantic-release` commits it, and no pull-request check does, so a `refactor`
+  or `chore` commit, which cuts no release, leaves `main`'s bundle behind its sources. Commit your rebuild alongside
+  the source.
+- **Defaults live in [`src/config/defaults.ts`](./src/config/defaults.ts), not in `action.yml`.** Overridable inputs carry
   an empty `default:` so the config file can win ([ADR 0020](./docs/adr/0020-overridable-inputs-declare-an-empty-default.md));
   `src/config/action-inputs.test.ts` reads the real `action.yml` and fails if you add one, and
   [`src/config/`](./src/config/AGENTS.md) names the handful of inputs that do carry a default, and why.
-- Coverage is global at 85% for lines/functions/branches/statements. Excluded: [`src/index.ts`](./src/index.ts),
-  `src/**/{types,defaults,constants}.ts`, `src/**/*.test.ts`, `src/shared/tests/**`. Changing a constant
-  therefore produces no coverage signal, but many tests assert the resulting literals, so expect failures far
-  from the edit.
-- One test file can cover two modules. Exactly one such pair is sanctioned and
-  [`src/infrastructure/`](./src/infrastructure/AGENTS.md) names it; `src/config/action-inputs.test.ts` covers
-  the manifest rather than a module. [`client.ts`](./src/infrastructure/github/client.ts) is the sole module with no colocated test, so anything else
-  missing one is drift, not a convention.
-- The release config teaches its parsers the `!` grammar, and a bare config silently drops every breaking
-  change. `@semantic-release/commit-analyzer` falls back to `conventional-changelog-angular`, whose
-  `headerPattern` is `/^(\w*)(?:\((.*)\))?: (.*)$/`: it wants the colon straight after the scope, so
-  `feat(x)!: …` does not match, the commit is analysed with no type at all and the analyser answers *no
-  release*. The job still ends green and publishes nothing, which is the failure mode that matters. Nothing
-  warns you either: `@commitlint/config-conventional` accepts the `!` the spec defines, so the pull-request
-  title check passes and only the release quietly does nothing. The fix is `parserOpts` on **both** parsing
-  plugins, the analyser and the notes generator, adding `!?` to the header pattern and a
-  `breakingHeaderPattern`. The `preset` route looks tidier and does not work here, because
-  `conventional-changelog-conventionalcommits@10` needs `conventional-changelog-writer@9` while
-  `@semantic-release/release-notes-generator` pins `^8.0.0`, so the notes step dies on *Missing helper*, and
-  pinning an older preset does not help either: the analyser resolves a preset by name from its own directory
-  first, where pnpm's hidden `node_modules/.pnpm/node_modules` hoist exposes whichever copy commitlint
-  installed. `docs/docs-consistency.test.ts` asserts the two plugins carry the same `parserOpts`. Note that
-  `!` then means major on **any** type, exactly as a `BREAKING CHANGE:` footer already did.
-- **Biome allows no suppressions.** Fix the root cause instead of `biome-ignore`. 120-col, tabs, LF,
-  double quotes: Biome's defaults bar the line width, and the same config every sibling repo runs;
-  [`.gitattributes`](./.gitattributes) pins `* text=auto eol=lf`. `noConsole` is an error with no allowlist: no `console`
-  at any level, report through `@actions/core`.
-
-## Build & release
-
-`esbuild.config.ts`, run via `tsx`, bundles `src/index.ts` into the committed `dist/index.js` with a
-sourcemap. Everything else (the husky hooks, semantic-release, and every workflow) is in
-[ARCHITECTURE.md](./ARCHITECTURE.md).
+- Coverage excludes [`src/index.ts`](./src/index.ts), `src/**/{types,defaults,constants}.ts`, `src/**/*.test.ts` and
+  `src/shared/tests/**`. Changing a constant therefore produces no coverage signal, but many tests assert the
+  resulting literals, so expect failures far from the edit.
+- `minimumReleaseAge` in [`pnpm-workspace.yaml`](./pnpm-workspace.yaml) counts minutes, not days. When a security
+  fix is younger than that, Renovate adds it to `minimumReleaseAgeExclude` with a `# Renovate security update:`
+  comment above it; that line is Renovate's, as `pnpm-lock.yaml` is pnpm's, and the YAML check in `pnpm test:docs`
+  lets it through.
+- The release config teaches both commit-parsing plugins the `!` grammar through `parserOpts`. Without it a
+  `feat(x)!:` commit is analysed with no type, the job ends green and nothing is released. `pnpm test:docs` asserts
+  that both plugins carry the same `parserOpts`, and [ARCHITECTURE.md](./ARCHITECTURE.md) says why the `preset` route
+  does not work here.

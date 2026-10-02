@@ -143,12 +143,14 @@ To contribute a new language:
 4. Add the import in [`src/i18n/index.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/index.ts)
 5. Add the locale and its Intl code to `LOCALE_MAP` in `src/i18n/index.ts` (`LOCALES` and the `Locale` type derive from it, so there is no second list to maintain)
 6. Register the imported bundle in the `TRANSLATIONS` map in `src/i18n/index.ts`
-7. Run `pnpm verify` to check everything passes
+7. Add the code to the two lists the tests spell out: the `LOCALES` order in [`src/i18n/index.test.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/index.test.ts) and the *Invalid locale* warning in [`src/config/loader.test.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/config/loader.test.ts)
+8. Run `pnpm verify` to check everything passes
 
 [`src/i18n/types.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/types.ts) needs **no** change. `resolveJsonModule` is on, so the new `.json` bundle is type-checked
 against the existing `Translations` interface at compile time: a missing or mistyped key is a build error.
-Note that *extra* keys are silently accepted, because an imported module is not a fresh object literal and
-gets no excess-property check, which is why `pnpm typecheck` is the check that matters here.
+*Extra* keys pass the type check, because an imported module is not a fresh object literal and gets no
+excess-property check; `src/i18n/index.test.ts` fails on them instead, since it holds every bundle to exactly the
+keys of `en.json`.
 
 These documentation edits belong in the same commit, none of them derived from the code:
 

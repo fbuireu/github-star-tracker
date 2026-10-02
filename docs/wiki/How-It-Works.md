@@ -376,12 +376,12 @@ The methods are computed in parallel:
 | **Linear Regression** | Least-squares fit of stars over elapsed days, across the whole series | Resilient to noise, captures long-term trends |
 | **Weighted Moving Average** | Per-day growth rates between consecutive points, recent intervals weighted higher | Responsive to acceleration/deceleration |
 
-Both methods anchor their projection on the latest observed total (they answer "starting from today's count, where does this trend land in N weeks?") and clamp predictions to `Math.max(0, Math.round(value))`.
+Both methods anchor their forecast on the latest observed total (they answer "starting from today's count, where does this trend land in N weeks?") and clamp predictions to `Math.max(0, Math.round(value))`.
 
 Forecasts are computed for:
 
 - **Aggregate** (total stars across all repos)
-- **Per top repo** (top N by star count, configurable via `top-repos`)
+- **Per top repo** (top N by star count, configurable via `top-repos`), fitted to that repo's own reconstructed history when it has at least 3 points, and otherwise to the points of the aggregate series that include the repo. A repo that fewer than 3 points include gets no forecast table of its own, rather than one fitted to zeros from before it was tracked.
 
 ---
 
@@ -453,7 +453,7 @@ Self-contained HTML with inline CSS for email compatibility. Uses QuickChart.io 
 
 **File:** [`src/presentation/csv.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/csv.ts) > `generateCsvReport()`
 
-Machine-readable CSV with one row per tracked repository. Columns: `repository`, `owner`, `name`, `stars`, `previous`, `delta`, `status`. Fields containing commas or double quotes are escaped per RFC 4180.
+Machine-readable CSV with one row per tracked repository. Columns: `repository`, `owner`, `name`, `stars`, `previous`, `delta`, `status`. Fields containing a comma, a double quote or a line break are quoted per RFC 4180, and a field starting with `=`, `+`, `-` or `@` is prefixed with `'` and quoted, so a spreadsheet does not run it as a formula.
 
 - `status` is `active`, `new` (first time seen), or `removed` (no longer matched by filters)
 - `previous` is empty for new repos
@@ -667,7 +667,7 @@ src/
 │   ├── comparison.ts                 # compareStars(), createSnapshot(), rankByStars(), topRepositories()
 │   ├── snapshot.ts                   # getBaselineSnapshot(), addSnapshot(), repoStarSeries()
 │   ├── formatting.ts                 # formatCount(), deltaIndicator(), trendIcon(), formatDate(), buildAxisLabels()
-│   ├── notification.ts               # shouldNotify(), settleNotification(), recordNotification()
+│   ├── notification.ts               # shouldNotify(), notificationIsDue(), settleNotification()
 │   ├── tracked-set.ts                # resolveTrackedSet() - which repositories a Run measures
 │   ├── sampling.ts                   # shouldSample(), sampledPages(), coveredStars()
 │   ├── growth.ts                     # calendarDays(), latestRateInterval(), weightedDailyRate(), fitTrend()
@@ -702,7 +702,7 @@ src/
     ├── markdown.ts                   # generateMarkdownReport()
     ├── html.ts                       # generateHtmlReport()
     ├── csv.ts                        # generateCsvReport()
-    ├── chart-spec.ts                 # ChartRequest, buildChartSpec(), selectChartSnapshots() - what a chart contains
+    ├── chart-spec.ts                 # ChartRequest, buildChartSpec() - what a chart contains
     ├── chart.ts                      # chartImageUrl() (QuickChart for HTML emails)
     ├── svg-chart.ts                  # renderSvgChart() (animated SVGs for data branch)
     ├── charts.ts                     # resolveChartHistories(), buildChartFiles() - which charts a run produces

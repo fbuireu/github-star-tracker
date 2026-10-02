@@ -42,16 +42,16 @@ interface RecordNotificationParams {
 	totalStars: number;
 }
 
-export function recordNotification({ history, totalStars }: RecordNotificationParams): History {
+function recordNotification({ history, totalStars }: RecordNotificationParams): History {
 	return { ...history, starsAtLastNotification: totalStars };
 }
 
-interface NotificationDueParams {
+interface NotificationIsDueParams {
 	changed: boolean;
 	thresholdReached: boolean;
 }
 
-export function notificationIsDue({ changed, thresholdReached }: NotificationDueParams): boolean {
+export function notificationIsDue({ changed, thresholdReached }: NotificationIsDueParams): boolean {
 	return changed && thresholdReached;
 }
 
@@ -77,11 +77,11 @@ export function settleNotification({
 	totalStars,
 }: SettleNotificationParams): NotificationOutcome {
 	const shouldNotify = notificationIsDue({ changed, thresholdReached });
-	const baselineAdvances = shouldNotify && delivery !== Delivery.FAILED;
+	const notificationBaselineAdvances = shouldNotify && delivery !== Delivery.FAILED;
 
 	return {
 		shouldNotify,
 		notificationSent: delivery === Delivery.SENT,
-		historyToPersist: baselineAdvances ? recordNotification({ history, totalStars }) : history,
+		historyToPersist: notificationBaselineAdvances ? recordNotification({ history, totalStars }) : history,
 	};
 }

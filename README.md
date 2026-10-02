@@ -173,7 +173,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `email-to`               | -                     | Recipient address                                             |
 | `exclude-orgs`           | -                     | Owners to exclude (exact name or `/regex/`)                   |
 | `exclude-repos`          | -                     | Repos to exclude (exact name or `/regex/`)                    |
-| `github-api-url`         | -                     | GitHub API base URL (for GHES). Auto-detected on GHES runners |
+| `github-api-url`         | -                     | GitHub API base URL (for GHES), https only. Auto-detected on GHES runners |
 | `include-archived`       | `false`               | Include archived repos                                        |
 | `include-charts`         | `true`                | Generate star trend charts                                    |
 | `include-forks`          | `false`               | Include forked repos                                          |

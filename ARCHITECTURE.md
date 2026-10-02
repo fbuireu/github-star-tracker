@@ -3,8 +3,8 @@
 How the action is built, for contributors. What it does and how to configure it is the
 [README](./README.md) and the user guides in [docs/wiki/](./docs/wiki/), in particular
 [How It Works](../../wiki/How-It-Works) and [Technical Stack](../../wiki/Technical-Stack); this
-document does not restate them. Conventions and the maintenance contract are [AGENTS.md](./AGENTS.md), the
-domain vocabulary is [CONTEXT.md](./CONTEXT.md).
+document does not restate them. The maintenance contract is [AGENTS.md](./AGENTS.md), how code is written is
+[CODING_STANDARDS.md](./CODING_STANDARDS.md), and the domain vocabulary is [CONTEXT.md](./CONTEXT.md).
 
 ## 1. Layer map
 
@@ -56,11 +56,10 @@ flowchart TD
 Every arrow is an import a layer is allowed to make; anything not drawn is forbidden. **Gold is the
 functional core**: no I/O, no network, no filesystem, and no clock beyond an injectable `now`. **Red is the
 imperative shell**, and each red layer owns a different side effect: `@config` reads the action inputs and one
-YAML file, `@infrastructure` owns everything outbound (REST, `git`, the filesystem, SMTP), `@application`
-writes the Action log and the outputs, and [`src/index.ts`](./src/index.ts) starts the run. `@config` reading `node:fs` is the
-detail most easily missed, and the rule it illustrates is stated once in
-[AGENTS.md](./AGENTS.md#conventions): `@infrastructure` is the only layer that reaches the network, not the
-only one that performs I/O.
+YAML file, `@infrastructure` owns everything outbound (REST, `git`, the files the Run writes, SMTP), `@application`
+sets the outputs and the failed status, and [`src/index.ts`](./src/index.ts) starts the run; every shell layer writes to
+the Action log. `@config` reading `node:fs` is the detail most easily missed: `@infrastructure` is the only layer
+that reaches the network, not the only one that performs I/O.
 
 | Layer | Alias | Responsibility | May import | Must not import |
 | --- | --- | --- | --- | --- |
@@ -70,7 +69,7 @@ only one that performs I/O.
 | config | `@config/*` | Action inputs + `star-tracker.yml` -> a fully-populated `Config` | `@domain/types`, `@i18n`, `@shared/errors`, `@actions/core`, `js-yaml`, `zod/mini`, `node:fs/path` | application, infrastructure, presentation |
 | domain | `@domain/*` | Pure business core: the Tracked Set, comparison, snapshots, forecast, velocity, stargazer diffing and sampling, star-history reconstruction, formatting | `@i18n` only | everything else, incl. `@actions/*`, octokit, `node:fs` |
 | i18n | `@i18n` | Translation bundles, `getTranslations`, `interpolate` | nothing (true leaf) | everything |
-| infrastructure | `@infrastructure/*` | All I/O: octokit REST, `git` CLI, `fs`, nodemailer | config, domain (types, constants, and the pure deciders in `tracked-set` / `sampling`), i18n, `@shared/errors`, `node:*`, `@actions/*`, `nodemailer`, `zod/mini` | application, presentation |
+| infrastructure | `@infrastructure/*` | The Run's outbound side effects: octokit REST, the `git` CLI, the files the Run writes, nodemailer | config, domain (types, constants, and the pure deciders in `tracked-set` / `sampling`), i18n, `@shared/errors`, `node:*`, `@actions/*`, `nodemailer`, `zod/mini` | application, presentation |
 | presentation | `@presentation/*` | Pure rendering: data in, string out (markdown/HTML/SVG/CSV/badge) | `@config/types`, domain, i18n | infrastructure, `@actions/*`, `node:fs`, any network |
 | shared | `@shared/*` | Cross-cutting non-layer code: `errors.ts`, plus the `shared/tests` fixture factories | `@config/defaults` (value import), `@config/types` and `@domain/*` (type-only), `zod/mini` | application, infrastructure, presentation |
 
@@ -78,9 +77,9 @@ This table is the **normative statement of the layer boundaries**, and `docs/doc
 it as data: the *May import* column of each row is parsed for the layer names it mentions, and every
 cross-layer import in `src/**/*.ts` must appear there. A layer may always import itself, and it must do so
 relatively, so a cross-layer relative path is its own failure. The pure layers carry a further rule the table
-states in prose and the test states as a list: no `node:*`, no `@actions/*`, no `@octokit/*`, no `nodemailer`
-and no `js-yaml` under `domain/`, `presentation/` or `i18n/`. The diagram draws what the table states. If the
-table forbids an import, no amount of convenience makes it allowed.
+states in prose and the test states as a list: no `node:*`, no `@actions/*`, no `@octokit/*`, no `nodemailer`,
+no `js-yaml` and no `zod` under `domain/`, `presentation/` or `i18n/`. The diagram draws what the table states.
+If the table forbids an import, no amount of convenience makes it allowed.
 
 A colocated test may import whatever its own layer may, plus anything under `@shared`: the fixture factories
 in `shared/tests` have no consumer outside a `*.test.ts`, and `shared/errors` is already named by every row
@@ -92,9 +91,9 @@ two values it compares really do live in two layers, and copying the constant in
 arrow would put the same number in two places, which is what the assertion exists to catch. Another crossing
 like it needs a line in `TEST_LAYER_CROSSINGS` and a paragraph here saying why.
 
-The conventions those boundaries sit inside (aliases, named params, no comments, purity) are stated once in
-[AGENTS.md](./AGENTS.md#conventions), what each layer guarantees is in that layer's own `AGENTS.md`, linked
-in [§6](#6-where-things-live), and the decision to layer the tree this way is
+How code is written inside those boundaries is [CODING_STANDARDS.md](./CODING_STANDARDS.md), which opens with what
+`pnpm test:docs` and the other tools enforce of it; what each layer does is in that layer's own `AGENTS.md`,
+linked in [§6](#6-where-things-live), and the decision to layer the tree this way is
 [ADR 0004](./docs/adr/0004-layered-source-structure.md).
 
 ## 2. A run, end to end
@@ -105,28 +104,28 @@ carries no comments, so there are no step markers in the source to match them ag
 | # | Call | Layer | Notes |
 | --- | --- | --- | --- |
 | 1 | `trackStars()` from `src/index.ts` | entry | Un-awaited; `trackStars` never rejects |
-| 2 | `loadConfig()` | config | Precedence: action input -> config file -> `DEFAULTS`. Only unknown `visibility` and an invalid `data-branch` throw |
-| 3 | `core.getInput('github-token' / 'github-api-url')`, `github.getOctokit(token, baseUrl?, retry)` | application | The only place an Octokit instance is built; `@octokit/plugin-retry` attached here. The input wins over the `GITHUB_API_URL` env var, which is how GHES runners are auto-detected; with both empty, `getOctokit` receives `undefined` rather than an empty `baseUrl`. A non-empty value that is not an absolute `http(s)` URL throws before Octokit is built |
+| 2 | `loadConfig()` | config | Precedence: action input -> config file -> `DEFAULTS`. Only an unknown `visibility`, an invalid `data-branch` and a config file that exists but cannot be read throw |
+| 3 | `core.getInput('github-token' / 'github-api-url')`, `github.getOctokit(token, baseUrl?, retry)` | application | The only place an Octokit instance is built; `@octokit/plugin-retry` attached here. The input wins over the `GITHUB_API_URL` env var, which is how GHES runners are auto-detected; with both empty, `getOctokit` receives `undefined` rather than an empty `baseUrl`. A non-empty value that is not an absolute `https` URL throws before Octokit is built, so the token never travels in clear text |
 | 4 | `getRepos({ octokit, config })` | infrastructure/github | Paginates and maps, then narrows via `resolveTrackedSet` (`@domain/tracked-set`) and logs the counts it reports; result sorted by `full_name`. Fetch failure is fatal, and so is a repository row that does not match `GitHubRepoSchema` |
 | 5 | empty result -> `renderEmptyRun`, `writeHtmlReport`, `setOutputs()` over an empty Summary, then `return` | application | Returns **before** `withDataBranch`, so no worktree, no commit, no email. The HTML report is still written, so a downstream step can rely on `report-html-path` on every run |
-| 6 | `withDataBranch({ dataBranch, readOnly, token, run })` | infrastructure/persistence | Opens the worktree via `initializeDataBranch`, hands the body a `DataBranch`, and runs `cleanup` in `finally`. `dataDir` never escapes the module |
-| 7 | `branch.readHistory()` | infrastructure/persistence | Normalizes an absent `snapshots` to `[]` while everything else survives. Invalid JSON, JSON that is not an object, a `snapshots` key that is not an array, an unreadable format version, and a snapshot, repo entry or `starsAtLastNotification` of the wrong shape all throw rather than resetting ([ADR 0021](./docs/adr/0021-an-unreadable-stored-history-fails-the-run.md)) |
-| 8 | `measureRun({ trackedSet, storedHistory, comparisonWindow, maxHistory, notificationThreshold, notificationMode })` | domain/measurement | The whole measurement in one call: resolves the Baseline, compares, snapshots, appends, and decides whether the threshold was reached. See [ADR 0013](./docs/adr/0013-a-run-is-measured-in-one-place.md) |
+| 6 | `withDataBranch({ dataBranch, readOnly, token, run })` | infrastructure/persistence | Opens the worktree via `initializeDataBranch`, hands the body a `DataBranch`, and runs `cleanup` in `finally`. `dataDir` never leaves `@infrastructure` |
+| 7 | `branch.readHistory()` | infrastructure/persistence | Normalizes an absent `snapshots` to `[]` while everything else survives. Invalid JSON, JSON that is not an object, a `snapshots` key that is not an array, an unreadable format version, and a Snapshot, one of its repository entries or a `starsAtLastNotification` of the wrong shape all throw rather than resetting ([ADR 0021](./docs/adr/0021-an-unreadable-stored-history-fails-the-run.md)) |
+| 8 | `measureRun({ trackedSet, storedHistory, comparisonWindow, maxHistory, notificationThreshold, notificationMode })` | domain/measurement | The whole measurement in one call: resolves the Baseline Snapshot, compares, snapshots, appends, and decides whether the threshold was reached. See [ADR 0013](./docs/adr/0013-a-run-is-measured-in-one-place.md) |
 | 9 | `measurement.droppedSnapshots > 0` -> prune warning | application | The domain reports the count; only the shell can log it |
 | 10 | `fetchAllStargazers({ octokit, repos, config })` | infrastructure/github | Only when `includeCharts \|\| trackStargazers`. Per-repo failures degrade to `core.warning` |
 | 11 | `branch.readStargazers()` -> `diffStargazers` -> `buildStargazerMap(...)` | persistence + domain | Only when `trackStargazers`. The map is handed to `publish`, not written here |
 | 12 | `topRepositories({ repos: results.repos, limit: config.topRepos })` | domain/comparison | The single definition of Top Repositories; `@presentation/report-model` calls the same function for the Report |
 | 13 | `resolveChartHistories({ config, storedHistory: updatedHistory, repos, repoStargazers })` | presentation/charts | Owns both scopes and the instant: reconstructs via `@domain/star-history` (capped at 365 buckets) and resolves each result against the stored history, where reconstruction wins at >= 2 snapshots. Its accessors are `.aggregate` for the Tracked Set, `.forRepo(name)` for one Repository *with* the stored-history fallback, and `.reconstructedForRepo(name)` for the reconstruction alone, returning `null` rather than falling back |
-| 14 | `computeForecast({ history, topRepoNames, historyForRepo })` | domain/forecast | `null` below 3 snapshots; always 2 methods x 4 weekly points. `historyForRepo` is `.reconstructedForRepo`, deliberately *not* `.forRepo`: a fabricated fallback ramp would be projected as if it were real growth |
-| 15 | `renderRun({ config, results, previousTimestamp, chartHistories, storedHistory, stargazerDiff, forecastData })` | presentation | The layer's single entry point: markdown, HTML, CSV, badge and every chart file in one `RenderedRun`. It builds the `ReportModel` once, derives the chart history from `chartHistories` and the Top Repositories from that model, so no caller can hand the reports the wrong `History` or chart a different set than it links ([ADR 0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md)) |
+| 14 | `computeForecast({ history, topRepoNames, historyForRepo })` | domain/forecast | `null` below 3 snapshots; always 2 methods x 4 weekly points. Each Top Repository is fitted only to the Snapshots that hold it, of its own reconstruction or else of the aggregate, and gets no Forecast when fewer than 3 do. `historyForRepo` is `.reconstructedForRepo`, deliberately *not* `.forRepo`, whose Stored History fallback would be reported as the repository's own reconstruction |
+| 15 | `renderRun({ config, results, baselineSnapshotTimestamp, chartHistories, storedHistory, stargazerDiff, forecastData })` | presentation | The layer's single entry point: markdown, HTML, CSV, badge and every chart file in one `RenderedRun`. It derives the chart history from `chartHistories`, takes the Top Repositories from `topRepositories`, draws the Charts and then builds the `ReportModel` once with the set it drew, so no caller can hand the Reports the wrong `History` or link a Chart no Run wrote ([ADR 0016](./docs/adr/0016-the-report-renderers-read-config-themselves.md)) |
 | 16 | `notificationIsDue({ changed, thresholdReached })` | domain/notification | Gates the send. The same predicate is what `settleNotification` computes internally, so the rule cannot go stale in one place and not the other |
 | 17 | `getEmailConfig(locale)` + `sendEmail({ emailConfig, subject, htmlBody })` | infrastructure/notification | Sent when `emailConfig && (notify \|\| sendOnNoChanges)`. The outcome becomes one `Delivery`: `SENT`, `FAILED` (a throw, or a `false` return) or `NOT_ATTEMPTED`. **Runs before persistence**, see [ADR 0011](./docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md) |
-| 18 | `settleNotification({ changed, thresholdReached, delivery, history, totalStars })` | domain/notification | Returns `shouldNotify`, `notificationSent` and `historyToPersist` as one outcome; calls `recordNotification` only when the baseline may advance |
+| 18 | `settleNotification({ changed, thresholdReached, delivery, history, totalStars })` | domain/notification | Returns `shouldNotify`, `notificationSent` and `historyToPersist` as one outcome; calls `recordNotification` only when the Notification Baseline may advance |
 | 19 | `writeHtmlReport({ htmlReport })` | infrastructure/persistence | Writes to `RUNNER_TEMP`, falling back to the working directory, so the file is off the Data Branch and outlives the run. Deliberately **before** `publish`: a failing write must not end a run that has already committed and pushed |
 | 20 | `branch.publish({ history, stargazerMap, report, badge, csv, charts, commitMessage })` | infrastructure/persistence | Writes every data-branch artefact, prunes the `charts/*.svg` this run did not produce, then commits and pushes, unless `readOnly`, where the write happens and the push does not |
 | 21 | `setOutputs(...)` | application | Every output, exactly matching the `outputs:` block of [`action.yml`](./action.yml) |
 
-Failure policy: everything is wrapped in one `try/catch` that ends in `core.setFailed('Star Tracker failed: <msg>')` plus `core.debug(stack)`. Email is the only inner failure that is deliberately non-fatal.
+Failure policy: everything is wrapped in one `try/catch` that ends in `core.setFailed('Star Tracker failed: <msg>')` plus `core.debug(stack)`. Two inner failures are deliberately non-fatal: a failed email warns, and one repository's failed Stargazer fetch becomes a `core.warning` while the Run continues with partial data.
 
 ## 3. The data branch
 
@@ -170,17 +169,18 @@ The action outputs, alphabetically as `action.yml` declares them: `lost-stars`, 
 
 ## 5. Build & release
 
-The scripts, Biome settings and git hooks are listed once in [AGENTS.md](./AGENTS.md#commands); this section covers what happens to the bundle and the release, which lives nowhere else.
+The scripts and git hooks are listed once in [AGENTS.md](./AGENTS.md#commands) and Biome's settings are [`biome.json`](./biome.json); this section covers why the hooks stop where they do and what happens to the bundle and the release, which lives nowhere else.
 
 - **Bundling.** [`esbuild.config.ts`](./esbuild.config.ts) (run via `tsx`) bundles `src/index.ts` into [`dist/index.js`](./dist/index.js), `platform: node`, `target: node24`, `format: cjs`, `sourcemap: true`, with the alias map derived from [`tsconfig.json`](./tsconfig.json). `dist/` is **committed** because GitHub runs a JS action straight from the repository at the referenced ref: there is no install step, so the bundle must be in the tree ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)).
+- **Hooks.** `pre-push` runs `verify:changed` rather than `verify`, because the coverage floor and a changed-only run cannot both hold: `vitest.config.mts` sets `coverage.include` over all of `src`, which makes v8 report a file no test loaded as zero, so any subset run drags the global average under the threshold and fails on a clean tree. Coverage is a CI concern: `ci.yml` runs the full `pnpm verify` on the pushed sha and the `release` job needs it, so a push whose coverage dropped cuts no release, and the slow whole-repository run stays out of the way of a push.
 - **Node version.** The pins move together and only some of them are asserted: `engines.node` and `packageManager` in [`package.json`](./package.json), plus [`.nvmrc`](./.nvmrc), which is what every job in [`ci.yml`](./.github/workflows/ci.yml) actually installs through `node-version-file`. `docs/docs-consistency.test.ts` asserts that `.nvmrc` and `engines.node` agree, so moving one without the other fails the build.
-- **Release.** [`.releaserc.json`](./.releaserc.json): semantic-release on `main` with commit-analyzer, release-notes-generator, changelog, npm (`npmPublish: false`), git (commits `package.json`, [`CHANGELOG.md`](./CHANGELOG.md) and `dist/`, the three a release rewrites) and github plugins. The `release` job in `ci.yml` needs `check`, which is `pnpm verify` on the same sha, and rebuilds the bundle in its own checkout before it runs. The git plugin's release commit, `chore(release): <version> [skip ci]`, is the one commit on `main` that commitlint never checks (the hook runs on a branch, the pull-request check reads the title), and its `[skip ci]` is load-bearing: without it, that push would start the run that cuts the next release. `docs/docs-consistency.test.ts` asserts that message. It also keeps `pnpm-lock.yaml` off the plugin's `assets`: pnpm's lockfile does not record the importer's own version, so the npm plugin's bump never touches it, and listing a file a release cannot change misstates what a release does.
+- **Release.** [`.releaserc.json`](./.releaserc.json): semantic-release on `main` with commit-analyzer, release-notes-generator, changelog, npm (`npmPublish: false`), git (commits `package.json`, [`CHANGELOG.md`](./CHANGELOG.md) and `dist/`, the three a release rewrites) and github plugins. The `release` job in `ci.yml` needs `check`, which is `pnpm verify` on the same sha, and rebuilds the bundle in its own checkout before it runs. The git plugin's release commit, `chore(release): <version> [skip ci]`, is the one commit on `main` that commitlint never checks (the hook runs on a branch, the pull-request check reads the title), and its `[skip ci]` is load-bearing: without it, that push would start the run that cuts the next release. `pnpm-lock.yaml` stays off the plugin's `assets`, because pnpm's lockfile does not record the importer's own version, so the npm plugin's bump never touches it. `docs/docs-consistency.test.ts` asserts both. Both commit-parsing plugins, the analyser and the notes generator, carry `parserOpts` that add `!?` to the header pattern and a `breakingHeaderPattern`. Without them `@semantic-release/commit-analyzer` falls back to `conventional-changelog-angular`, whose `headerPattern` wants the colon straight after the scope, so a `feat(x)!:` commit is analysed with no type and the job ends green with nothing released, while `@commitlint/config-conventional` accepts the `!` and the title check passes. The `preset` route does not work here: `conventional-changelog-conventionalcommits` needs a newer `conventional-changelog-writer` than `@semantic-release/release-notes-generator` accepts, and the analyser resolves a preset by name from its own directory first, where pnpm's hoist exposes whichever copy commitlint installed. With `parserOpts`, `!` means major on any type, as a `BREAKING CHANGE:` footer does.
 
 [`.github/workflows/`](./.github/workflows):
 
 | Workflow | Purpose |
 | --- | --- |
-| `ci.yml` | On push/PR to `main`: a `Check` job that installs and runs `pnpm verify` (`verify:static`, which ends in `pnpm build`, then the coverage run), then the Codecov upload, which runs even when `check` fails so threshold failures still report; on a push to `main` a `release` job then needs `check`, rebuilds the bundle in its own checkout, runs `semantic-release` and moves the major-version tag. The release used to live in a `release.yml` of its own that re-ran `verify`, so every push to `main` verified twice, and it answered `workflow_dispatch`, which let a dispatch cut a release; both are gone with the file. `ci.yml` used to close with a staleness check that failed any pull request touching bundled sources without touching `dist/`. That check is gone too: the release job rebuilds the bundle immediately before `semantic-release` commits it, meaning a published version can never carry a bundle built from other sources and the check never stood between a stale `dist/` and a user ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)). A `release-tags` ruleset forbids deleting or moving any `v*` tag; the *Update major version tag* step still moves it, deriving the major from the newest `v[0-9]*` tag rather than naming one, because it pushes with the owner's `PAT`, which passes the admin bypass |
+| `ci.yml` | On push/PR to `main`: a `Check` job that installs and runs `pnpm verify` (`verify:static`, which ends in `pnpm build`, then the coverage run), then the Codecov upload, which runs even when `check` fails so threshold failures still report. On a push to `main` a `release` job then needs `check`, fast-forwards onto `origin/main`, rebuilds the bundle in its own checkout, runs `semantic-release` and moves the major-version tag; nothing else cuts a release. A merge that lands while the job runs joins that release, because the fast-forward takes in every commit on `main` at that moment and the run those commits queued finds nothing left to publish; `main` rewritten under the run, or a merge in the seconds between the fast-forward and the push, stands the job down without a tag, and the run the newer head queued cuts the release. No pull-request check compares `dist/` with its sources: the release job rebuilds the bundle immediately before `semantic-release` commits it, so a published version never carries a bundle built from other sources ([ADR 0003](./docs/adr/0003-commit-the-bundled-dist-directory.md)). A `release-tags` ruleset forbids deleting or moving any `v*` tag; the *Update major version tag* step still moves it, deriving the major from the newest `v[0-9]*` tag rather than naming one, because it pushes with the owner's `PAT`, which passes the admin bypass |
 | [`zizmor.yml`](./.github/workflows/zizmor.yml) | zizmor static analysis of the workflow files themselves |
 | [`dependency-review.yml`](./.github/workflows/dependency-review.yml) | Fails a PR that introduces a dependency with a known vulnerability |
 | [`commit-message.yml`](./.github/workflows/commit-message.yml) | Runs commitlint on the **pull request title**. `main` takes squash merges and the repository is set to `PR_TITLE`, so that title, not the branch's commits, is the message that lands and the one semantic-release reads. The `commit-msg` hook validates commits the squash then discards, so this is the only guard on the string that ships |
@@ -190,8 +190,9 @@ The scripts, Biome settings and git hooks are listed once in [AGENTS.md](./AGENT
 ## 6. Where things live
 
 One kind of document per question. [CONTEXT.md](./CONTEXT.md) is the domain glossary: what the words
-**mean**. The `AGENTS.md` files, one at the root and one per layer, are **structure**.
-[docs/adr/](./docs/adr/) is **why**:
+**mean**. The `AGENTS.md` files, one at the root and one per layer, are **structure**: what an implementation
+needs while working. [CODING_STANDARDS.md](./CODING_STANDARDS.md) is **how code is written**, the file a review
+holds a diff to. [docs/adr/](./docs/adr/) is **why**:
 
 | ADR | Decision |
 | --- | --- |
@@ -220,13 +221,14 @@ One kind of document per question. [CONTEXT.md](./CONTEXT.md) is the domain glos
 | [0023](./docs/adr/0023-untrusted-input-is-validated-with-zod-mini.md) | Untrusted input is validated with `zod/mini` schemas |
 
 Every one of them follows [0000, the template](./docs/adr/0000-adr-template.md), and a new ADR starts by
-copying that file. The shape the docs test asserts is spelled out in
+copying that file. `pnpm test:docs` holds every ADR to the template's shape and fails on one that no document
+but this index links to; what to update for a change is
 [AGENTS.md's maintenance contract](./AGENTS.md#maintenance-contract).
 
 The per-layer guides and what each covers are the table in [AGENTS.md](./AGENTS.md#structure--aliases).
 That file is loaded into every agent session, so the list lives there and is not repeated here. Root
-[`AGENTS.md`](./AGENTS.md) itself is a document of its own: commands, alias wiring, conventions and the
-maintenance contract.
+[`AGENTS.md`](./AGENTS.md) itself is a document of its own: commands, alias wiring, the conventions an
+implementation trips on, the maintenance contract and the gotchas that span layers.
 
 One guide per layer, no deeper: the `infrastructure/` adapters and `shared/tests` are sections inside their parent's guide rather than files of their own, because a guide in a subdirectory only reaches the agent once it reads a file in that exact folder.
 
@@ -236,13 +238,35 @@ One guide per layer, no deeper: the `infrastructure/` adapters and `shared/tests
 | --- | --- |
 | **Add an action input** | `action.yml` (declare it, `default: ''` so the config file can win, and state the real default in the description prose, see [ADR 0020](./docs/adr/0020-overridable-inputs-declare-an-empty-default.md)); [`src/config/types.ts`](./src/config/types.ts) (`Config` field); [`src/config/defaults.ts`](./src/config/defaults.ts) (`DEFAULTS` entry, which also makes the snake_case/kebab-case config-file key work automatically); [`src/config/loader.ts`](./src/config/loader.ts) (**one row in `FIELD_SOURCES`**, naming the input parser and the file parser; the action input name is derived from the key); consume it in the relevant layer; update [`src/config/action-inputs.test.ts`](./src/config/action-inputs.test.ts) and `README.md`/`docs/wiki`. |
 | **Add a locale** | Add the JSON bundle under [`src/i18n/`](./src/i18n); add it to `LOCALE_MAP` and to the `TRANSLATIONS: Record<Locale, Translations>` map (a missing key is a type error, an extra key is not). `LOCALES` is derived from `LOCALE_MAP` with `Object.keys`, so it needs no edit. Extend the `locale` description in `action.yml` and every document that lists the locales, which the wiki's [Internationalization](<./docs/wiki/Internationalization-(i18n).md#adding-a-new-locale>) page names. |
-| **Add a report format** | New pure renderer in [`src/presentation/`](./src/presentation) (data in, string out, no I/O) reading `buildReportModel` rather than re-deriving sections, plus a colocated test; one field on `RenderedRun` and one line in `renderRun` ([`run.ts`](./src/presentation/run.ts)); an `Artefact` entry and filename in `@infrastructure/persistence/storage`, plus a field on `PublishedArtefacts`; add an output to `action.yml` and `setOutputs` if it should be exposed. |
-| **Add a chart option** | Input plumbing as above; thread it through the `style` object in [`src/presentation/charts.ts`](./src/presentation/charts.ts). If it changes **what** is plotted it belongs on the matching `ChartRequest` variant or on `ChartSpec` in [`src/presentation/chart-spec.ts`](./src/presentation/chart-spec.ts) and both adapters read it; if it only changes **how**, implement it in [`src/presentation/svg-chart.ts`](./src/presentation/svg-chart.ts) (all SVG primitives live behind the private `renderSvg`) and mirror it in [`src/presentation/chart.ts`](./src/presentation/chart.ts) if email charts should honour it ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)); add a sample SVG under `docs/examples/`. |
+| **Add a report format** | New pure renderer in [`src/presentation/`](./src/presentation) (data in, string out, no I/O) reading `buildReportModel` rather than re-deriving sections, plus a colocated test; one field on `RenderedRun` and one line in `renderRun` ([`run.ts`](./src/presentation/run.ts)); an `Artefact` entry and filename in `@infrastructure/persistence/storage`, plus a field on `PublishedArtefacts` and a `writeArtefact` line in `publish` ([`data-branch.ts`](./src/infrastructure/persistence/data-branch.ts)); add an output to `action.yml` and `setOutputs` if it should be exposed. |
+| **Add a chart option** | Input plumbing as above; thread it through the `style` object in [`src/presentation/charts.ts`](./src/presentation/charts.ts) and, when the email honours it too, through `emailChartStyle` in [`src/presentation/shared.ts`](./src/presentation/shared.ts), with a row in the shared-option table of [`run.test.ts`](./src/presentation/run.test.ts). If it changes **what** is plotted it belongs on the matching `ChartRequest` variant or on `ChartSpec` in [`src/presentation/chart-spec.ts`](./src/presentation/chart-spec.ts) and both adapters read it; if it only changes **how**, implement it in [`src/presentation/svg-chart.ts`](./src/presentation/svg-chart.ts) (all SVG primitives live behind the private `renderSvg`) and mirror it in [`src/presentation/chart.ts`](./src/presentation/chart.ts) if email charts should honour it ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)); add a sample SVG under `docs/examples/`. |
 | **Add a chart kind** | One variant on `ChartRequest` and one `case` in `buildChartSpec` (`src/presentation/chart-spec.ts`), plus the spec builder itself. Neither adapter changes, because `renderSvgChart` and `chartImageUrl` take any request. Then emit it from `buildChartFiles` (`charts.ts`) and/or `html.ts`, and add a filename to `CHART_FILES`. |
 
 ## 8. Known inconsistencies
 
-None outstanding.
+Each entry names what the code does against a written rule or decision, and the evidence.
+
+- **Chart text outside the bundles.** The per-repository Chart title (`` `${repoFullName} Star History` ``) and the
+  `'Stars'` series label are English literals in `buildChartSpec`, the two exceptions
+  [ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md) records. The per-repository
+  Forecast title, the repository name put before `forecast.sectionTitle`, is a third it does not record.
+- **Report text outside one key.** `html.ts` builds "Total Stars" out of two bundle keys, and `markdown.ts` writes the
+  Star History image's alt text as an English literal although `report.starHistory` exists.
+- **`markdown.ts` decides two sections.** It drops the repository table when `model.sorted` is empty and the Summary
+  when `summary.totalDelta` is 0, so a Run whose only movement is a rename shows a Summary in the HTML Report and
+  none in the markdown one; `buildReportModel` is meant to decide both.
+- **Rules asserted twice.** `chart.test.ts` and `svg-chart.test.ts` assert Chart content `chart-spec.test.ts` owns;
+  `html.test.ts` and `markdown.test.ts` assert section rules `report-model.test.ts` owns; `tracker.test.ts` repeats
+  dialect parity from `run.test.ts` and chart fallbacks from `charts.test.ts` beyond the #148 pin; and
+  `stargazers.test.ts` repeats Smart Sampling arithmetic `sampling.test.ts` owns.
+- **One rule, several writers.** Whether a History holds enough Snapshots to draw is spelled out in `chart-spec.ts`,
+  `charts.ts` and `report-model.ts` rather than owned once, and so is the ISO date of a timestamp, in `shared.ts`,
+  `html.ts` and `markdown.ts`.
+- **Failure text.** The repository guard in `initializeDataBranch` turns every failure of
+  `git rev-parse --is-inside-work-tree` into the checkout instruction rather than only "not a git repository".
+- **Email Charts.** A `chart-line-color` written in 3-, 4- or 8-digit hex breaks or recolours the email fill, which
+  appends an alpha to the colour, and the email's y-axis ticks are formatted by Chart.js outside the Run's Locale,
+  a difference [ADR 0010](./docs/adr/0010-quickchart-renders-the-email-charts.md) does not list.
 
 When one is found, record it here with the evidence that proves it, and delete the entry in the commit that
 fixes it. A stale entry sends the next reader hunting a problem that no longer exists.

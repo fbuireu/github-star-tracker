@@ -28,7 +28,16 @@ function repoChartHeading({ repo, t }: RepoChartHeadingParams): string {
 
 export function generateMarkdownReport({ model, config }: RenderReportParams): string {
 	const t = getTranslations(config.locale);
-	const { summary, sorted, newRepos, removedRepos, now, prev, chartHistory, forecast: forecastData } = model;
+	const {
+		summary,
+		sorted,
+		newRepos,
+		removedRepos,
+		now,
+		baselineSnapshotDate,
+		chartHistory,
+		forecast: forecastData,
+	} = model;
 
 	const header = [
 		`# ${t.report.title}`,
@@ -39,14 +48,14 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 
 	const comparison = model.isFirstRun
 		? []
-		: [`> ${interpolate({ template: t.report.comparedTo, params: { date: prev } })}`, ""];
+		: [`> ${interpolate({ template: t.report.comparedTo, params: { date: baselineSnapshotDate } })}`, ""];
 
 	const hasComparisonChart = model.showComparisonChart;
 
 	const individualRepoCharts = model.perRepoCharts.flatMap((repo) => [
 		`#### ${repoChartHeading({ repo, t })}`,
 		"",
-		`![${escapeMarkdown(repo.fullName)}](./charts/${perRepoChartFile(repo.fullName)})`,
+		`![${escapeMarkdown(repo.fullName)}](./charts/${escapeMarkdown(perRepoChartFile(repo.fullName))})`,
 		"",
 	]);
 
@@ -139,7 +148,7 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 			? [
 					interpolate({
 						template: t.stargazers.sampledNote,
-						params: { repos: stargazers.sampledRepos.join(", ") },
+						params: { repos: stargazers.sampledRepos.map(escapeMarkdown).join(", ") },
 					}),
 					"",
 				]
@@ -162,7 +171,7 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 						"",
 						...entry.newStargazers.map(
 							(stargazer) =>
-								`- <img src="${escapeMarkup(stargazer.avatarUrl)}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${escapeMarkdown(stargazer.login)}](${escapeMarkdown(stargazer.profileUrl)}): ${interpolate({ template: t.stargazers.starredOn, params: { date: stargazer.starredAt.split("T")[0] } })}`,
+								`- <img src="${escapeMarkup(stargazer.avatarUrl)}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${escapeMarkdown(stargazer.login)}](${escapeMarkdown(stargazer.profileUrl)}): ${interpolate({ template: t.stargazers.starredOn, params: { date: escapeMarkdown(stargazer.starredAt.split("T")[0]) } })}`,
 						),
 						"",
 						"</details>",
@@ -186,9 +195,9 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 				...(velocity.growthPercent !== null
 					? [`- **${t.velocity.growth}:** ${formatSignedPercent(velocity.growthPercent)}`]
 					: []),
-				...(velocity.projection
+				...(velocity.nextMilestone
 					? [
-							`- ${interpolate({ template: t.velocity.projection, params: { days: velocity.projection.days, milestone: velocity.projection.milestone } })}`,
+							`- ${interpolate({ template: t.velocity.projection, params: { days: velocity.nextMilestone.days, milestone: velocity.nextMilestone.milestone } })}`,
 						]
 					: []),
 			]
@@ -216,14 +225,14 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 								`<summary>${escapeMarkup(repo.repoFullName)}</summary>`,
 								"",
 								renderForecastTable({
-									title: repo.repoFullName,
+									title: escapeMarkdown(repo.repoFullName),
 									forecasts: repo.forecasts,
 									t,
 								}),
 								"",
 								...(repo.chartHistory !== null
 									? [
-											`![${escapeMarkdown(repo.repoFullName)}](./charts/${perRepoForecastChartFile(repo.repoFullName)})`,
+											`![${escapeMarkdown(repo.repoFullName)}](./charts/${escapeMarkdown(perRepoForecastChartFile(repo.repoFullName))})`,
 											"",
 										]
 									: []),

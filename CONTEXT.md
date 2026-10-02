@@ -25,7 +25,7 @@ A Repository present in the current observation but absent from the Baseline Sna
 _Avoid_: added repo, first-seen repo, fresh repo
 
 **Removed Repository**:
-A Repository present in the Baseline Snapshot but absent from the current observation. Its Stars count as lost even though it is no longer part of the Tracked Set total. Absence is the only signal there is, so a deletion, a rename and a repository an edited filter dropped all arrive the same way.
+A Repository present in the Baseline Snapshot but absent from the current observation. Absence is the only signal there is, so a deletion, a rename and a repository an edited filter dropped all arrive the same way.
 _Avoid_: deleted repo, dropped repo, missing repo
 
 **Top Repositories**:
@@ -69,7 +69,7 @@ A star timeline rebuilt from when each Stargazer starred, covering the period be
 _Avoid_: real history, true history, starred-at history
 
 **Comparison Window**:
-The reach the current observation is compared over: the immediately preceding Run, or the oldest observation within a stated age. It picks which Snapshot becomes the Baseline Snapshot, and so decides what "changed" means for a Run.
+The reach the current observation is compared over: the immediately preceding Run, or the newest observation at least a stated age old. It picks which Snapshot becomes the Baseline Snapshot, and so decides what "changed" means for a Run.
 _Avoid_: interval, period, range, lookback, timeframe
 
 **Baseline Snapshot**:
@@ -81,14 +81,14 @@ The change in a Star Count between the Baseline Snapshot and the current observa
 _Avoid_: diff, change, difference, growth, movement, variance
 
 **Summary**:
-The aggregate figures for one Run: current total, previous total, net change, Stars gained, Stars lost, and whether anything moved at all. It describes the Run, not any single Repository.
+The aggregate figures of one Run: its totals, what it gained and lost, and whether anything moved at all. It describes the Run, not any single Repository.
 _Avoid_: report, overview, totals, stats
 
 **Run Measurement**:
-Everything one Run works out from a single observation and the Stored History: which Snapshot was the Baseline Snapshot, what each Repository's Delta was, the Summary, the Stored History with this Run appended, and whether the Notification Threshold was cleared.
+Everything one Run works out from a single observation and the Stored History, from its Baseline Snapshot to whether the Notification Threshold was cleared, before anything is rendered or notified.
 _Avoid_: calculation, analysis, computation, result set
 
-## Growth and Projection
+## Growth and Forecast
 
 **Velocity**:
 The rate at which the Tracked Set is accumulating Stars, expressed per day and as a percentage of the previous total.
@@ -103,7 +103,7 @@ A round Star Count treated as a landmark worth reaching or marking.
 _Avoid_: threshold, target, goal, checkpoint, tier
 
 **Forecast**:
-A projection of future Star Counts extrapolated from observed growth. It assumes the recent past continues and anticipates nothing.
+Future Star Counts extrapolated from observed growth. It assumes the recent past continues and anticipates nothing.
 _Avoid_: prediction, estimate, projection, outlook
 
 **Forecast Method**:
@@ -139,7 +139,7 @@ _Avoid_: fetched stars, counted stars, sampled stars
 ## Outputs
 
 **Artefact**:
-One published file a Run produces: the Report, a Chart, the Badge, the CSV, the Stored History itself. Spelled with an *e* throughout, matching the code.
+One published file a Run produces: the Report, a Chart, the Badge, the CSV, the Stored History itself.
 _Avoid_: artifact, asset, output file, deliverable
 
 **Data Branch**:
@@ -187,5 +187,5 @@ A Run that observes, reports and notifies in full but deliberately records nothi
 _Avoid_: dry run, preview run, passive run, no-op run
 
 **Locale**:
-The language a Report, Chart and Notification are rendered in. It affects wording and date presentation only, never what is measured.
+The language a Report, Chart, Badge and Notification are rendered in. It affects wording, dates and number formatting, never what is measured.
 _Avoid_: translation, region

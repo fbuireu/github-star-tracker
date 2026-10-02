@@ -5,10 +5,10 @@ import { ForecastMethod, ForecastSource } from "@domain/forecast";
 import { formatCount } from "@domain/formatting";
 import type { History } from "@domain/types";
 import type { Locale } from "@i18n";
-import { makeHistory, makeMultiRepoHistory } from "@shared/tests";
+import { makeHistory, makeMultiRepoHistory, makeSnapshot } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import type { ChartRequest, ChartSpec } from "./chart-spec";
-import { AxisLabels, buildChartSpec, ChartKind, SeriesDash, SeriesWeight, selectChartSnapshots } from "./chart-spec";
+import { AxisLabels, buildChartSpec, ChartKind, SeriesDash, SeriesWeight } from "./chart-spec";
 import { CHART_COMPARISON_COLORS, LIGHT_PALETTE, TREND_WINDOW } from "./constants";
 
 const forecastData: ForecastData = {
@@ -33,7 +33,7 @@ const forecastData: ForecastData = {
 	repos: [],
 };
 
-interface SpecOf {
+interface SpecOfParams {
 	request: ChartRequest;
 	axisLabels?: AxisLabels;
 	range?: ChartRange;
@@ -41,7 +41,13 @@ interface SpecOf {
 	locale?: Locale;
 }
 
-function specOf({ request, axisLabels = AxisLabels.THINNED, range, maxPoints, locale = "en" }: SpecOf): ChartSpec {
+function specOf({
+	request,
+	axisLabels = AxisLabels.THINNED,
+	range,
+	maxPoints,
+	locale = "en",
+}: SpecOfParams): ChartSpec {
 	const spec = buildChartSpec({
 		request,
 		locale,
@@ -325,7 +331,7 @@ describe("buildChartSpec", () => {
 			expect(spec.labels.slice(-2)).toEqual(["Week 1", "Week 2"]);
 		});
 
-		it("plots one repository's own series and its own projections when asked for it", () => {
+		it("plots one repository's own series and its own Forecast when asked for it", () => {
 			const perRepo: ForecastData = {
 				...forecastData,
 				repos: [
@@ -394,6 +400,8 @@ describe("buildChartSpec", () => {
 
 	describe("windowing", () => {
 		const history = makeHistory({ starCounts: [10, 20, 30, 40, 50] });
+		const spread = makeHistory({ starCounts: [10, 20, 30], stepDays: 20 });
+		const unreadable = makeSnapshot({ timestamp: "not-a-date", totalStars: 35 });
 
 		it("thins x-axis labels to years for a multi-year history, or dates them in full", () => {
 			const multiYear = makeHistory({ starCounts: [10, 20, 30], stepDays: 400 });
@@ -431,80 +439,64 @@ describe("buildChartSpec", () => {
 
 			expect(spec.series[0].data).toEqual([70, 100]);
 		});
-	});
-});
 
-describe("selectChartSnapshots", () => {
-	const snapshots = [
-		{ timestamp: "2026-01-01T00:00:00Z" },
-		{ timestamp: "2026-02-01T00:00:00Z" },
-		{ timestamp: "2026-03-01T00:00:00Z" },
-	];
+		it("keeps every snapshot when the range is unbounded", () => {
+			const spec = specOf({
+				request: {
+					kind: ChartKind.STAR_HISTORY,
+					history: makeHistory({ starCounts: [10, 20, 30, 40, 50], stepDays: 10 }),
+				},
+				range: ChartRange.ALL,
+			});
 
-	it("keeps every snapshot when the range is unbounded", () => {
-		expect(selectChartSnapshots({ snapshots, range: ChartRange.ALL })).toHaveLength(3);
-	});
-
-	it("drops snapshots outside the range window", () => {
-		const windowed = selectChartSnapshots({ snapshots, range: ChartRange.D30 });
-
-		expect(windowed).toEqual([{ timestamp: "2026-02-01T00:00:00Z" }, snapshots[2]]);
-	});
-
-	it("downsamples across the window instead of keeping only the tail", () => {
-		expect(selectChartSnapshots({ snapshots, maxPoints: 2 })).toEqual([snapshots[0], snapshots[2]]);
-	});
-
-	it("spans the whole window at evenly spaced points, keeping both endpoints", () => {
-		const dense = Array.from({ length: 100 }, (_, index) => ({
-			timestamp: new Date(Date.UTC(2026, 0, 1) + index * 86_400_000).toISOString(),
-		}));
-
-		const picked = selectChartSnapshots({ snapshots: dense, maxPoints: 5 });
-
-		expect(picked).toHaveLength(5);
-		expect(picked[0]).toBe(dense[0]);
-		expect(picked.at(-1)).toBe(dense.at(-1));
-	});
-
-	it("keeps chart-range meaningful once the window exceeds maxPoints", () => {
-		const dense = Array.from({ length: 400 }, (_, index) => ({
-			timestamp: new Date(Date.UTC(2025, 0, 1) + index * 86_400_000).toISOString(),
-		}));
-
-		const year = selectChartSnapshots({ snapshots: dense, range: ChartRange.Y1, maxPoints: 30 });
-		const everything = selectChartSnapshots({
-			snapshots: dense,
-			range: ChartRange.ALL,
-			maxPoints: 30,
+			expect(spec.series[0].data).toEqual([10, 20, 30, 40, 50]);
 		});
 
-		expect(year[0]).not.toBe(everything[0]);
-	});
+		it("spans the whole window at evenly spaced points, keeping both endpoints", () => {
+			const dense = makeHistory({ starCounts: Array.from({ length: 100 }, (_, index) => index), stepDays: 1 });
+			const { data } = specOf({ request: { kind: ChartKind.STAR_HISTORY, history: dense }, maxPoints: 5 }).series[0];
 
-	it("returns only the newest entry when maxPoints is 1", () => {
-		expect(selectChartSnapshots({ snapshots, maxPoints: 1 })).toEqual([snapshots[2]]);
-	});
+			expect(data).toHaveLength(5);
+			expect(data[0]).toBe(0);
+			expect(data.at(-1)).toBe(99);
+		});
 
-	it("copies rather than aliases when maxPoints is 0", () => {
-		const result = selectChartSnapshots({ snapshots, maxPoints: 0 });
+		it("keeps chart-range meaningful once the window exceeds maxPoints", () => {
+			const dense = makeHistory({ starCounts: Array.from({ length: 400 }, (_, index) => index), stepDays: 1 });
+			const firstPlotted = (range: ChartRange): number | null =>
+				specOf({ request: { kind: ChartKind.STAR_HISTORY, history: dense }, range, maxPoints: 30 }).series[0].data[0];
 
-		expect(result).toEqual(snapshots);
-		expect(result).not.toBe(snapshots);
-	});
+			expect(firstPlotted(ChartRange.Y1)).not.toBe(firstPlotted(ChartRange.ALL));
+		});
 
-	it("skips a snapshot whose timestamp cannot be parsed", () => {
-		const withCorrupt = [{ timestamp: "not-a-date" }, ...snapshots];
+		it("plots only the newest snapshot when maxPoints is 1", () => {
+			const spec = specOf({ request: { kind: ChartKind.STAR_HISTORY, history }, maxPoints: 1 });
 
-		expect(selectChartSnapshots({ snapshots: withCorrupt, range: ChartRange.D30 })).toEqual([
-			snapshots[1],
-			snapshots[2],
-		]);
-	});
+			expect(spec.series[0].data).toEqual([50]);
+		});
 
-	it("leaves the series unfiltered when the newest timestamp is unparseable", () => {
-		const trailingCorrupt = [...snapshots, { timestamp: "not-a-date" }];
+		it("plots every snapshot when maxPoints is 0", () => {
+			const spec = specOf({ request: { kind: ChartKind.STAR_HISTORY, history }, maxPoints: 0 });
 
-		expect(selectChartSnapshots({ snapshots: trailingCorrupt, range: ChartRange.D30 })).toEqual(trailingCorrupt);
+			expect(spec.series[0].data).toEqual([10, 20, 30, 40, 50]);
+		});
+
+		it("skips a snapshot whose timestamp cannot be parsed", () => {
+			const spec = specOf({
+				request: { kind: ChartKind.STAR_HISTORY, history: { snapshots: [unreadable, ...spread.snapshots] } },
+				range: ChartRange.D30,
+			});
+
+			expect(spec.series[0].data).toEqual([20, 30]);
+		});
+
+		it("leaves the series unfiltered when the newest timestamp is unparseable", () => {
+			const spec = specOf({
+				request: { kind: ChartKind.STAR_HISTORY, history: { snapshots: [...spread.snapshots, unreadable] } },
+				range: ChartRange.D30,
+			});
+
+			expect(spec.series[0].data).toEqual([10, 20, 30, 35]);
+		});
 	});
 });

@@ -2,7 +2,7 @@ import ca from "./ca.json";
 import en from "./en.json";
 import es from "./es.json";
 import it from "./it.json";
-import type { InterpolateParams, Translations } from "./types";
+import type { Translations } from "./types";
 
 export const LOCALE_MAP = {
 	en: "en-US",
@@ -21,6 +21,11 @@ const TRANSLATIONS: Record<Locale, Translations> = { en, es, ca, it };
 const PLACEHOLDER_PATTERN = /\{(\w+)\}/g;
 const FALLBACK_LANG = TRANSLATIONS.en;
 
+interface InterpolateParams {
+	template: string;
+	params: Record<string, string | number>;
+}
+
 export function interpolate({ template, params }: InterpolateParams): string {
 	return template.replaceAll(PLACEHOLDER_PATTERN, (match, key) =>
 		Object.hasOwn(params, key) ? String(params[key]) : match,
@@ -28,5 +33,5 @@ export function interpolate({ template, params }: InterpolateParams): string {
 }
 
 export function getTranslations(locale: Locale): Translations {
-	return TRANSLATIONS[locale] || FALLBACK_LANG;
+	return Object.hasOwn(TRANSLATIONS, locale) ? TRANSLATIONS[locale] : FALLBACK_LANG;
 }
