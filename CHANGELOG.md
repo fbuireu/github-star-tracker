@@ -1,3 +1,10 @@
+## [1.28.2](https://github.com/fbuireu/github-star-tracker/compare/v1.28.1...v1.28.2) (2026-10-02)
+
+
+### Bug Fixes
+
+* write down the coding standards and fix what reviewing against them found ([016ad0c](https://github.com/fbuireu/github-star-tracker/commit/016ad0cbd19a83ffcc62b42cde1df9c0476ba989))
+
 ## [1.28.1](https://github.com/fbuireu/github-star-tracker/compare/v1.28.0...v1.28.1) (2026-10-01)
 
 
