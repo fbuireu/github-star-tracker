@@ -11,7 +11,7 @@ something a smell would flag, the case is listed under *Deliberate overrides of 
 
 No rule below restates these, and a diff that breaks one fails CI:
 
-- Biome ([`biome.json`](./biome.json)): formatting, import order and lint, `noConsole` and `style/noEnum` included.
+- Biome ([`biome.json`](./biome.json)): formatting, import order and lint, `noConsole` included.
 - `pnpm typecheck`: type-only imports (`verbatimModuleSyntax`), and a tabled `Config` key without its
   `FIELD_SOURCES` row (the `TabledKey` mapped type in `src/config/loader.ts`).
 - The test suite: empty defaults on overridable inputs (`action-inputs.test.ts`), every bundle carrying exactly
