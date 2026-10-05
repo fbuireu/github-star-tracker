@@ -4,12 +4,12 @@ import type { ForecastData } from "@domain/forecast";
 import { ForecastMethod, ForecastSource } from "@domain/forecast";
 import { deltaIndicator } from "@domain/formatting";
 import type { StargazerDiffResult } from "@domain/stargazers";
-import { getTranslations } from "@i18n";
+import { getTranslations, LOCALES, type Locale } from "@i18n";
 import { makeComparisonResults, makeConfig, makeMultiRepoHistory, makeRepoResult } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import type { ChartHistories } from "./charts";
 import { generateCsvReport } from "./csv";
-import { renderEmptyRun, renderRun } from "./run";
+import { type RenderedRun, renderEmptyRun, renderRun } from "./run";
 
 const STORED = makeMultiRepoHistory({
 	snapshots: [
@@ -290,6 +290,69 @@ describe("the two Report dialects stay in step", () => {
 		},
 	);
 
+	const MOVEMENTS = [
+		{
+			name: "a first run",
+			results: makeComparisonResults({
+				repos: [
+					makeRepoResult({ name: "repo-a", overrides: { current: 60, previous: null, isNew: true } }),
+					makeRepoResult({ name: "repo-b", overrides: { current: 40, previous: null, isNew: true } }),
+				],
+				summary: { totalStars: 100, totalPrevious: 0, totalDelta: 0, newStars: 0, lostStars: 0, changed: true },
+			}),
+			baselineSnapshotTimestamp: null,
+		},
+		{
+			name: "a Run where nothing moved",
+			results: makeComparisonResults({
+				repos: [makeRepoResult({ name: "repo-a", overrides: { current: 60, previous: 60 } })],
+				summary: { totalStars: 60, totalPrevious: 60, totalDelta: 0, newStars: 0, lostStars: 0, changed: false },
+			}),
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
+		},
+		{
+			name: "a Run whose only movement is a rename",
+			results: makeComparisonResults({
+				repos: [
+					makeRepoResult({ name: "kept", overrides: { current: 60, previous: 60 } }),
+					makeRepoResult({ name: "fresh", overrides: { current: 7, previous: null, isNew: true } }),
+					makeRepoResult({ name: "gone", overrides: { current: 0, previous: 7, delta: -7, isRemoved: true } }),
+				],
+				summary: { totalStars: 67, totalPrevious: 67, totalDelta: 0, newStars: 0, lostStars: 7, changed: true },
+			}),
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
+		},
+		{
+			name: "a Run with no repositories",
+			results: makeComparisonResults({
+				repos: [],
+				summary: { totalStars: 0, totalPrevious: 0, totalDelta: 0, newStars: 0, lostStars: 0, changed: false },
+			}),
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
+		},
+	];
+	const ALWAYS_PRESENT = [
+		{ name: "repository table", marker: t.report.trend },
+		{ name: "Summary", marker: t.report.starsLost },
+	];
+
+	it.each(MOVEMENTS.flatMap((movement) => ALWAYS_PRESENT.map((section) => ({ movement, section }))))(
+		"prints the $section.name in both Reports for $movement.name",
+		({ movement, section }) => {
+			const rendered = renderRun({
+				config: makeConfig({ includeCharts: false }),
+				results: movement.results,
+				baselineSnapshotTimestamp: movement.baselineSnapshotTimestamp,
+				chartHistories: chartHistories(),
+				storedHistory: STORED,
+				forecastData: null,
+			});
+
+			expect(rendered.markdown).toContain(section.marker);
+			expect(rendered.html).toContain(section.marker);
+		},
+	);
+
 	it("omits every optional section from both when the model says it is absent", () => {
 		const rendered = renderRun({
 			config: makeConfig({ includeCharts: false }),
@@ -309,6 +372,105 @@ describe("the two Report dialects stay in step", () => {
 			expect(rendered.markdown).not.toContain(heading);
 			expect(rendered.html).not.toContain(heading);
 		}
+	});
+});
+
+describe("a run speaks its locale throughout", () => {
+	const PRODUCT_NAME = "GitHub Star Tracker";
+	const MIN_FRAGMENT_LENGTH = 3;
+	const forecasts = [
+		{ method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 1, predicted: 70 }] },
+		{ method: ForecastMethod.WEIGHTED_MOVING_AVERAGE, points: [{ weekOffset: 1, predicted: 68 }] },
+	];
+	const forecastData: ForecastData = {
+		aggregate: { forecasts },
+		repos: [{ repoFullName: "user/repo-a", source: ForecastSource.OWN, forecasts }],
+	};
+	const stargazerDiff: StargazerDiffResult = {
+		totalNew: 1,
+		entries: [
+			{
+				repoFullName: "user/repo-a",
+				newStargazers: [{ login: "ada", avatarUrl: "", profileUrl: "", starredAt: "2026-01-02T00:00:00Z" }],
+			},
+		],
+		sampledRepos: ["user/huge"],
+	};
+	const results = makeComparisonResults({
+		repos: [
+			makeRepoResult({ name: "repo-a", overrides: { current: 60, delta: 10 } }),
+			makeRepoResult({ name: "repo-b", overrides: { current: 40, delta: -3 } }),
+			makeRepoResult({ name: "fresh", overrides: { current: 7, previous: null, isNew: true } }),
+			makeRepoResult({ name: "gone", overrides: { current: 0, previous: 3, delta: -3, isRemoved: true } }),
+		],
+	});
+
+	const flatten = (bundle: object): Record<string, string> =>
+		Object.fromEntries(
+			Object.entries(bundle).flatMap(([key, value]) =>
+				typeof value === "object" && value !== null
+					? Object.entries(flatten(value)).map(([leaf, text]) => [`${key}.${leaf}`, text])
+					: [[key, String(value)]],
+			),
+		);
+
+	const englishOnlyText = (locale: Locale): string[] => {
+		const translated = flatten(getTranslations(locale));
+
+		return Object.entries(flatten(getTranslations("en")))
+			.filter(([path, text]) => translated[path] !== text)
+			.flatMap(([, text]) => text.split(/\{\w+\}/))
+			.map((fragment) => fragment.trim())
+			.filter((fragment) => fragment.length >= MIN_FRAGMENT_LENGTH);
+	};
+
+	const escaped = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+	interface LeaksAnyParams {
+		text: string;
+		fragments: string[];
+	}
+
+	const leaksAny = ({ text, fragments }: LeaksAnyParams): string[] =>
+		fragments.filter((fragment) =>
+			new RegExp(`(?<![\\p{L}\\p{N}])${escaped(fragment)}(?![\\p{L}\\p{N}])`, "u").test(text),
+		);
+
+	const everythingRendered = (rendered: RenderedRun): string =>
+		[
+			rendered.markdown,
+			rendered.html,
+			rendered.badge,
+			rendered.emailSubject,
+			...rendered.charts.map((chart) => chart.svg),
+			...[...rendered.html.matchAll(/quickchart\.io\/chart\?[^"]+/g)].map((match) => decodeURIComponent(match[0])),
+		]
+			.join("\n")
+			.replaceAll(PRODUCT_NAME, "");
+
+	it("finds an English phrase standing on its own and ignores one inside a longer word", () => {
+		expect(leaksAny({ text: "a Star History b", fragments: ["Star History", "Method"] })).toEqual(["Star History"]);
+		expect(leaksAny({ text: "Totale Stelle", fragments: ["Total"] })).toEqual([]);
+	});
+
+	it.each(LOCALES.filter((locale) => locale !== "en"))("prints no English text in the %s run", (locale) => {
+		const rendered = renderRun({
+			config: makeConfig({ includeCharts: true, topRepos: 2, velocityMetrics: true, chartTrendLine: true, locale }),
+			results,
+			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
+			chartHistories: chartHistories(),
+			storedHistory: STORED,
+			stargazerDiff,
+			forecastData,
+			now: NOW,
+		});
+		const text = everythingRendered(rendered);
+		const fragments = englishOnlyText(locale);
+
+		expect(fragments.length).toBeGreaterThan(0);
+		expect(text).toContain(getTranslations(locale).report.starTrend);
+		expect(rendered.charts.map((chart) => chart.filename)).toContain("forecast-user-repo-a.svg");
+		expect(leaksAny({ text, fragments })).toEqual([]);
 	});
 });
 

@@ -10,7 +10,7 @@ const DASH = "\u2796";
 const COMPACT_MAX_FRACTION_DIGITS = 1;
 const compactFormatters = new Map<string, Intl.NumberFormat>();
 
-function intlCode(locale: Locale): string {
+export function intlCode(locale: Locale): string {
 	return LOCALE_MAP[locale] || LOCALE_MAP.en;
 }
 
@@ -53,6 +53,10 @@ export function trendIcon(delta: number): string {
 	if (delta > 0) return UP_ARROW;
 	if (delta < 0) return DOWN_ARROW;
 	return DASH;
+}
+
+export function isoDate(timestamp: string): string {
+	return timestamp.split("T")[0];
 }
 
 interface FormatDateParams {

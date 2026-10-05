@@ -18,6 +18,13 @@ vi.mock("@actions/core", () => ({
 
 const BRANCH = "star-tracker-data";
 const DATA_DIR = `.${BRANCH}`;
+const CHECKOUT_INSTRUCTION =
+	'This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.';
+const NOT_A_REPOSITORY = "fatal: not a git repository (or any of the parent directories): .git";
+const DUBIOUS_OWNERSHIP = "fatal: detected dubious ownership in repository at '/github/workspace'";
+const GIT_REPOSITORY_PROBE_FAILURE = (detail: string): string =>
+	`Git command failed: "git rev-parse --is-inside-work-tree"\n${detail}`;
+const isRepositoryProbe = (args: string[]): boolean => args.includes("rev-parse");
 
 function ranGit(...args: string[]): boolean {
 	return vi.mocked(execute).mock.calls.some(([params]) => JSON.stringify(params.args) === JSON.stringify(args));
@@ -117,11 +124,24 @@ describe("initializeDataBranch", () => {
 	});
 
 	it("throws an actionable error when not inside a checked-out repository", () => {
-		failGitWhen({ matches: (args) => args.includes("rev-parse") });
+		failGitWhen({ matches: isRepositoryProbe, error: new Error(GIT_REPOSITORY_PROBE_FAILURE(NOT_A_REPOSITORY)) });
 
-		expect(() => initializeDataBranch({ dataBranch: BRANCH })).toThrow(
-			'This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.',
-		);
+		expect(() => initializeDataBranch({ dataBranch: BRANCH })).toThrow(CHECKOUT_INSTRUCTION);
+		expect(ranGit("config", "user.name", "github-actions[bot]")).toBe(false);
+	});
+
+	it.each([
+		{ label: "a checkout git refuses as unsafe", detail: DUBIOUS_OWNERSHIP },
+		{ label: "a git that is not installed", detail: "spawnSync git ENOENT" },
+		{ label: "a git that exits without a reason", detail: "Unknown error" },
+	])("rethrows $label with git's own text instead of the checkout instruction", ({ detail }) => {
+		const failure = GIT_REPOSITORY_PROBE_FAILURE(detail);
+
+		failGitWhen({ matches: isRepositoryProbe, error: new Error(failure) });
+
+		expect(() => initializeDataBranch({ dataBranch: BRANCH })).toThrow(failure);
+		expect(() => initializeDataBranch({ dataBranch: BRANCH })).not.toThrow(CHECKOUT_INSTRUCTION);
+		expect(ranGit("config", "user.name", "github-actions[bot]")).toBe(false);
 	});
 
 	it("removes a stale worktree left on disk", () => {

@@ -68,6 +68,7 @@ export const CHART = {
 	height: 400,
 	maxDataPoints: 30,
 	maxComparison: 10,
+	chartJsVersion: 4,
 } as const;
 
 export const CHART_TENSION = {

@@ -1846,6 +1846,65 @@ describe("the presentation layer escapes and compacts in one place each", () => 
 	});
 });
 
+interface SingleOwner {
+	rule: string;
+	pattern: RegExp;
+	owners: string[];
+}
+
+const SINGLE_OWNERS: SingleOwner[] = [
+	{
+		rule: "whether a History holds enough Snapshots to draw",
+		pattern: /\bMIN_SNAPSHOTS_FOR_CHART\b/,
+		owners: ["src/presentation/chart-spec.ts", "src/presentation/constants.ts"],
+	},
+	{
+		rule: "whether a History holds enough Snapshots to fit a Forecast",
+		pattern: /\bMIN_SNAPSHOTS_FOR_FORECAST\b/,
+		owners: ["src/domain/constants.ts", "src/domain/forecast.ts"],
+	},
+	{
+		rule: "the ISO date of a timestamp",
+		pattern: /\.split\("T"\)/,
+		owners: ["src/domain/formatting.ts"],
+	},
+];
+
+describe("a rule with one owner is written nowhere else", () => {
+	it("keeps the Snapshot minimums and the cut of an ISO date in the modules that own them, so no second copy drifts", () => {
+		const misplaced = SINGLE_OWNERS.flatMap(({ rule, pattern, owners }) => {
+			const holders = PRODUCTION_FILES.filter((file) => pattern.test(read(file)));
+
+			return [
+				...holders.filter((file) => !owners.includes(file)).map((file) => `${file}: restates ${rule}`),
+				...owners.filter((file) => !holders.includes(file)).map((file) => `${file}: no longer holds ${rule}`),
+			];
+		});
+
+		expect(SINGLE_OWNERS.length).toBeGreaterThan(0);
+		expect(SINGLE_OWNERS.filter(({ owners }) => owners.length === 0)).toEqual([]);
+		expect(SINGLE_OWNERS.map(({ pattern }) => pattern.test('stargazer.starredAt.split("T")[0]'))).toEqual([
+			false,
+			false,
+			true,
+		]);
+		expect(misplaced).toEqual([]);
+	});
+});
+
+const KNOWN_INCONSISTENCIES_HEADING = /^#{1,6}\s+(?:\d+\.\s+)?Known inconsistencies\b/im;
+
+describe("the guides keep no list of known breaches", () => {
+	it("fix a breach in the change that finds it, so no document holds a claim that nothing keeps true", () => {
+		const listing = DOCS.filter((doc) => KNOWN_INCONSISTENCIES_HEADING.test(read(doc)));
+
+		expect(KNOWN_INCONSISTENCIES_HEADING.test("## 8. Known inconsistencies\n\n- an entry\n")).toBe(true);
+		expect(KNOWN_INCONSISTENCIES_HEADING.test("a breach is not a known inconsistencies list")).toBe(false);
+		expect(DOCS.length).toBeGreaterThan(0);
+		expect(listing).toEqual([]);
+	});
+});
+
 const WIKI_DIRECTORY = "docs/wiki";
 const WIKI_LINK_PATTERN = /\]\(<?([^)>\s]+)|\b(?:src|href)="([^"]+)"/g;
 const EXTERNAL_TARGET_PATTERN = /^(?:[a-z]+:|#)/i;

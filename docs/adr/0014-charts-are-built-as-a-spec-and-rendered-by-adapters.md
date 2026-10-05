@@ -8,6 +8,13 @@ Accepted. Narrows the "the two renderers are independent" consequence of
 [ADR 0006](./0006-hand-rendered-svg-charts.md) and
 [ADR 0010](./0010-quickchart-renders-the-email-charts.md): a Chart's content is now decided once for both.
 
+> **Amended after this decision.** The exceptions the consequences below recorded are gone. The per-repository
+> titles read `report.repoChartTitle` and `forecast.repoChartTitle`, which carry the repository as `{name}`, and the
+> star-history and per-repository series are labelled `report.stars`, so every string a Chart carries is a bundle
+> key. The `< 2 snapshots` guard this ADR counted eight times is now written once, as `isPlottable` in
+> `chart-spec.ts`, which `buildChartSpec` asks at its top and `charts.ts` and `report-model.ts` ask as well, so all
+> of them give the same answer.
+
 ## Context
 
 The same Chart is rendered twice by design: hand-written SVG for the Data Branch
@@ -69,13 +76,11 @@ a dash array or a point radius. Each adapter maps them through its own table.
   because leaving the label to the adapters is what let `chart.ts` format with a hardcoded `en-US` while
   `svg-chart.ts` used the run's Locale. Anything a reader reads is decided here; only how it is drawn is the
   adapter's.
-- That rule is not yet fully honoured, and the exceptions are in [`chart-spec.ts`](../../src/presentation/chart-spec.ts) itself. The `PER_REPO`
-  case of `buildChartSpec` falls back to an English title built inline from the repository's full name and
-  the words "Star History" rather than reading the Locale bundle, so a per-repository chart is titled in English whatever
-  `locale` is set to; the star-history and forecast kinds do read the bundle. Both `starHistorySpec` and
-  `perRepoSpec` also name their primary series `'Stars'` as a literal. Neither leaks to the adapters, so the
-  SVG and the email agree with each other, which is what this decision guarantees. They are simply agreed on
-  untranslated text, and a locale bug here is fixed in the spec, not in a renderer.
+- That rule has no exception. Every default title in [`chart-spec.ts`](../../src/presentation/chart-spec.ts) is a bundle key, the
+  per-repository ones with the repository as a `{name}` placeholder so a translation orders its words freely, and the
+  primary series is labelled from the bundle too. A locale bug in a Chart's text is fixed in the spec, not in a
+  renderer, and [`run.test.ts`](../../src/presentation/run.test.ts) renders a Run in each non-English Locale and
+  fails on an English phrase that slipped past the bundle.
 - A new chart kind is a `ChartRequest` variant plus a `case` in `buildChartSpec`, not two parallel
   implementations, and neither adapter is touched. A new *style* option is one field on `ChartSpec` and one
   line in each adapter; a new *content* option is one field on the request variant.

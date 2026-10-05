@@ -25744,6 +25744,7 @@ var ca_default = {
   report: {
     title: "Informe de Seguiment d'Estrelles",
     total: "Total",
+    totalStars: "Estrelles Totals",
     change: "Canvi",
     comparedTo: "Comparat amb instant\xE0nia del {date}",
     firstRun: "primera execuci\xF3",
@@ -25765,6 +25766,7 @@ var ca_default = {
     byRepository: "Per Repositori",
     individualRepoCharts: "Gr\xE0fics per Repositori",
     repoChartHeading: "{name}: {count} \u2605 ({delta})",
+    repoChartTitle: "Historial d'Estrelles: {name}",
     trendLine: "Tend\xE8ncia",
     badges: {
       new: "NOU"
@@ -25806,6 +25808,7 @@ var ca_default = {
     weightedMovingAverage: "Mitjana M\xF2bil Ponderada",
     aggregate: "Previsi\xF3 Agregada",
     byRepository: "Per Repositori",
+    repoChartTitle: "Previsi\xF3 de Creixement: {name}",
     insufficientData: "Dades insuficients per a la previsi\xF3 (calen almenys 3 snapshots)",
     method: "M\xE8tode",
     predicted: "Previst"
@@ -25820,6 +25823,7 @@ var en_default = {
   report: {
     title: "Star Tracker Report",
     total: "Total",
+    totalStars: "Total Stars",
     change: "Change",
     comparedTo: "Compared to snapshot from {date}",
     firstRun: "first run",
@@ -25841,6 +25845,7 @@ var en_default = {
     byRepository: "By Repository",
     individualRepoCharts: "Individual Repository Charts",
     repoChartHeading: "{name}: {count} \u2605 ({delta})",
+    repoChartTitle: "{name} Star History",
     trendLine: "Trend",
     badges: {
       new: "NEW"
@@ -25882,6 +25887,7 @@ var en_default = {
     weightedMovingAverage: "Weighted Moving Average",
     aggregate: "Aggregate Forecast",
     byRepository: "By Repository",
+    repoChartTitle: "{name} Growth Forecast",
     insufficientData: "Not enough data for forecast (need at least 3 snapshots)",
     method: "Method",
     predicted: "Predicted"
@@ -25896,6 +25902,7 @@ var es_default = {
   report: {
     title: "Informe de Seguimiento de Estrellas",
     total: "Total",
+    totalStars: "Estrellas Totales",
     change: "Cambio",
     comparedTo: "Comparado con instant\xE1nea del {date}",
     firstRun: "primera ejecuci\xF3n",
@@ -25917,6 +25924,7 @@ var es_default = {
     byRepository: "Por Repositorio",
     individualRepoCharts: "Gr\xE1ficos por Repositorio",
     repoChartHeading: "{name}: {count} \u2605 ({delta})",
+    repoChartTitle: "Historial de Estrellas: {name}",
     trendLine: "Tendencia",
     badges: {
       new: "NUEVO"
@@ -25958,6 +25966,7 @@ var es_default = {
     weightedMovingAverage: "Media M\xF3vil Ponderada",
     aggregate: "Previsi\xF3n Agregada",
     byRepository: "Por Repositorio",
+    repoChartTitle: "Previsi\xF3n de Crecimiento: {name}",
     insufficientData: "Datos insuficientes para la previsi\xF3n (se necesitan al menos 3 snapshots)",
     method: "M\xE9todo",
     predicted: "Previsto"
@@ -25972,6 +25981,7 @@ var it_default = {
   report: {
     title: "Report Tracciamento Stelle",
     total: "Totale",
+    totalStars: "Stelle Totali",
     change: "Variazione",
     comparedTo: "Confrontato con snapshot del {date}",
     firstRun: "prima esecuzione",
@@ -25993,6 +26003,7 @@ var it_default = {
     byRepository: "Per Repository",
     individualRepoCharts: "Grafici per Repository",
     repoChartHeading: "{name}: {count} \u2605 ({delta})",
+    repoChartTitle: "Storia delle Stelle: {name}",
     trendLine: "Tendenza",
     badges: {
       new: "NUOVO"
@@ -26034,6 +26045,7 @@ var it_default = {
     weightedMovingAverage: "Media Mobile Ponderata",
     aggregate: "Previsione Aggregata",
     byRepository: "Per Repository",
+    repoChartTitle: "Previsione di Crescita: {name}",
     insufficientData: "Dati insufficienti per la previsione (servono almeno 3 snapshot)",
     method: "Metodo",
     predicted: "Previsto"
@@ -31739,6 +31751,9 @@ function snapshotsHolding({ history, repoFullName }) {
     snapshots: history.snapshots.filter((snapshot) => snapshot.repos.some((repo) => repo.fullName === repoFullName))
   };
 }
+function holdsEnoughToForecast(history) {
+  return history.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST;
+}
 function clampPrediction(value) {
   return Math.max(0, Math.round(value));
 }
@@ -31765,7 +31780,7 @@ function forecastFromSeries(points) {
   ];
 }
 function computeForecast({ history, topRepoNames, historyForRepo }) {
-  if (history.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) {
+  if (!holdsEnoughToForecast(history)) {
     return null;
   }
   const toSeries = ({ values, days }) => values.map((value, index) => ({ day: days[index], value }));
@@ -31773,9 +31788,9 @@ function computeForecast({ history, topRepoNames, historyForRepo }) {
   const aggregateForecasts = forecastFromSeries(toSeries({ values: totalValues, days: calendarDays(history) }));
   const repos = topRepoNames.flatMap((repoFullName) => {
     const candidate = historyForRepo?.(repoFullName);
-    const ownHistory = candidate && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST ? candidate : null;
+    const ownHistory = candidate && holdsEnoughToForecast(candidate) ? candidate : null;
     const fitted = snapshotsHolding({ history: ownHistory ?? history, repoFullName });
-    if (fitted.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) return [];
+    if (!holdsEnoughToForecast(fitted)) return [];
     const values = repoStarSeries({ snapshots: fitted.snapshots, repoFullName });
     return [
       {
@@ -31823,6 +31838,9 @@ function trendIcon(delta) {
   if (delta > 0) return UP_ARROW;
   if (delta < 0) return DOWN_ARROW;
   return DASH;
+}
+function isoDate(timestamp) {
+  return timestamp.split("T")[0];
 }
 function formatDate({ timestamp, locale }) {
   const epochMs = toEpochMs(timestamp);
@@ -44054,10 +44072,12 @@ function authenticatedArgs({ token, args }) {
 }
 
 // src/infrastructure/git/worktree.ts
+var NOT_A_REPOSITORY_PATTERN = /not a git repository/i;
 function ensureGitRepository() {
   try {
     execute({ args: ["rev-parse", "--is-inside-work-tree"] });
-  } catch {
+  } catch (error3) {
+    if (!NOT_A_REPOSITORY_PATTERN.test(errorMessage(error3))) throw error3;
     throw new Error(
       'This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.'
     );
@@ -44534,7 +44554,8 @@ var CHART = {
   width: 800,
   height: 400,
   maxDataPoints: 30,
-  maxComparison: 10
+  maxComparison: 10,
+  chartJsVersion: 4
 };
 var CHART_TENSION = {
   smooth: 0.6,
@@ -44610,6 +44631,9 @@ var CHART_FILES = {
 };
 
 // src/presentation/chart-spec.ts
+function isPlottable(history) {
+  return history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
+}
 var CHART_RANGE_DAYS = {
   [ChartRange.D30]: 30,
   [ChartRange.D90]: 90,
@@ -44707,13 +44731,12 @@ function starHistorySpec({
   trendLine = false,
   ...window2
 }) {
-  if (window2.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) return null;
   const t = getTranslations(window2.locale);
   const { snapshots, labels } = selectWindow(window2);
   const data = snapshots.map((snapshot) => snapshot.totalStars);
   const series = [
     {
-      label: "Stars",
+      label: t.report.stars,
       data,
       color: lineColor ?? palette.accent,
       fill: true,
@@ -44744,13 +44767,13 @@ function starHistorySpec({
   };
 }
 function perRepoSpec({ repoFullName, title, palette, lineColor, ...window2 }) {
-  if (window2.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) return null;
+  const t = getTranslations(window2.locale);
   const { snapshots, labels } = selectWindow(window2);
   return {
     labels,
     series: [
       {
-        label: "Stars",
+        label: t.report.stars,
         data: repoStarSeries({ snapshots, repoFullName }),
         color: lineColor ?? palette.accent,
         fill: true,
@@ -44764,9 +44787,7 @@ function perRepoSpec({ repoFullName, title, palette, lineColor, ...window2 }) {
   };
 }
 function comparisonSpec({ repoNames, title, ...window2 }) {
-  if (window2.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
-    return null;
-  }
+  if (repoNames.length === 0) return null;
   const { snapshots, labels } = selectWindow(window2);
   const capped = repoNames.slice(0, CHART.maxComparison);
   const owners = new Set(capped.map((name2) => name2.split("/")[0]));
@@ -44808,7 +44829,7 @@ function forecastChartSpec({
   lineColor,
   ...window2
 }) {
-  if (window2.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || forecasts.length === 0) return null;
+  if (forecasts.length === 0) return null;
   const t = getTranslations(window2.locale);
   const { snapshots, labels: historicalLabels } = selectWindow({
     ...window2,
@@ -44867,6 +44888,7 @@ function buildChartSpec({
   range,
   maxPoints
 }) {
+  if (!isPlottable(request2.history)) return null;
   const t = getTranslations(locale);
   const window2 = { history: request2.history, locale, range, maxPoints, axisLabels };
   switch (request2.kind) {
@@ -44884,7 +44906,7 @@ function buildChartSpec({
       return perRepoSpec({
         ...window2,
         repoFullName: request2.repoFullName,
-        title: request2.title ?? `${request2.repoFullName} Star History`,
+        title: request2.title ?? interpolate({ template: t.report.repoChartTitle, params: { name: request2.repoFullName } }),
         palette,
         lineColor: request2.lineColor
       });
@@ -44907,7 +44929,7 @@ function buildChartSpec({
         ...window2,
         forecastData: request2.forecastData,
         repoFullName: request2.repoFullName,
-        title: request2.title ?? `${request2.repoFullName} ${t.forecast.sectionTitle}`,
+        title: request2.title ?? interpolate({ template: t.forecast.repoChartTitle, params: { name: request2.repoFullName } }),
         palette,
         lineColor: request2.lineColor
       });
@@ -44950,8 +44972,8 @@ function prepareReportData({
     newRepos: repos.filter((repo) => repo.isNew),
     removedRepos: repos.filter((repo) => repo.isRemoved),
     sorted: rankByStars(repos),
-    now: generatedAt.split("T")[0],
-    baselineSnapshotDate: baselineSnapshotTimestamp ? baselineSnapshotTimestamp.split("T")[0] : t.report.firstRun,
+    now: isoDate(generatedAt),
+    baselineSnapshotDate: baselineSnapshotTimestamp ? isoDate(baselineSnapshotTimestamp) : t.report.firstRun,
     isFirstRun: baselineSnapshotTimestamp === null,
     generatedAt
   };
@@ -45446,7 +45468,7 @@ function renderSvgChart({ request: request2, locale, maxPoints, range, ...style 
 
 // src/presentation/charts.ts
 function resolveChartHistory({ candidate, fallback }) {
-  return candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : fallback;
+  return isPlottable(candidate) ? candidate : fallback;
 }
 function resolveChartHistories({
   config: config2,
@@ -45470,7 +45492,7 @@ function resolveChartHistories({
       subset: [repo],
       stargazers: repoStargazers.filter((entry) => entry.repoFullName === repoFullName)
     }) : null;
-    const resolved = candidate !== null && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART ? candidate : null;
+    const resolved = candidate !== null && isPlottable(candidate) ? candidate : null;
     reconstructions.set(repoFullName, resolved);
     return resolved;
   };
@@ -45490,7 +45512,7 @@ function buildChartFiles({
   topRepoNames
 }) {
   const history = chartHistories.aggregate;
-  if (!config2.includeCharts || history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) {
+  if (!config2.includeCharts || !isPlottable(history)) {
     return [];
   }
   const style = {
@@ -45632,8 +45654,13 @@ function generateCsvReport({ repos }) {
 }
 
 // src/presentation/chart.ts
+var BYTE_MAX = 255;
+var HEX_RADIX = 16;
+var HEX_BYTE_DIGITS = 2;
+var RGB_DIGITS = 6;
+var SHORTHAND_MAX_DIGITS = 4;
 var CHART_STYLE = {
-  translucentAlpha: "33",
+  translucentAlpha: 51,
   titleFontSize: CHART_CHROME.titleFontSize,
   legendFontSize: 11,
   legendHiddenFontSize: 12,
@@ -45644,6 +45671,13 @@ var CHART_STYLE = {
   linearRegressionDash: [8, 4],
   weightedMovingAverageDash: [4, 4]
 };
+function translucent(color) {
+  const digits = color.slice(1);
+  const expanded = digits.length <= SHORTHAND_MAX_DIGITS ? [...digits].map((digit) => digit + digit).join("") : digits;
+  const ownAlpha = expanded.length > RGB_DIGITS ? Number.parseInt(expanded.slice(RGB_DIGITS), HEX_RADIX) : BYTE_MAX;
+  const alpha = Math.round(ownAlpha * CHART_STYLE.translucentAlpha / BYTE_MAX);
+  return `#${expanded.slice(0, RGB_DIGITS)}${alpha.toString(HEX_RADIX).padStart(HEX_BYTE_DIGITS, "0")}`;
+}
 var CURVE_PROPS = {
   [ChartCurve.CATMULL_ROM]: { tension: CHART_TENSION.smooth },
   [ChartCurve.CUBIC_BEZIER]: { tension: CHART_TENSION.smooth },
@@ -45677,7 +45711,7 @@ function buildMilestoneAnnotations({ milestones, palette }) {
         display: true,
         content: milestone.label,
         position: "start",
-        backgroundColor: `${palette.neutral}${CHART_STYLE.translucentAlpha}`,
+        backgroundColor: translucent(palette.neutral),
         color: palette.neutral,
         font: { size: CHART_STYLE.milestoneFontSize }
       }
@@ -45689,12 +45723,14 @@ function buildChartOptions({
   title,
   showLegend,
   beginAtZero,
+  locale,
   palette,
   annotation
 }) {
   return {
     responsive: true,
     maintainAspectRatio: false,
+    locale: intlCode(locale),
     plugins: {
       legend: {
         display: showLegend,
@@ -45730,7 +45766,7 @@ function buildChartOptions({
 function buildChartUrl({ config: config2, palette }) {
   const encodedConfig = encodeURIComponent(JSON.stringify(config2));
   const backgroundColor = encodeURIComponent(palette.white);
-  return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&backgroundColor=${backgroundColor}&c=${encodedConfig}`;
+  return `https://quickchart.io/chart?v=${CHART.chartJsVersion}&w=${CHART.width}&h=${CHART.height}&backgroundColor=${backgroundColor}&c=${encodedConfig}`;
 }
 var DASH_PATTERNS = {
   [SeriesDash.NONE]: null,
@@ -45756,7 +45792,7 @@ function toDataset({ series, curveProps, showPoints, lineWidth }) {
     label: series.label,
     data: series.data,
     borderColor: series.color,
-    backgroundColor: series.dash === SeriesDash.NONE ? `${series.color}${CHART_STYLE.translucentAlpha}` : "transparent",
+    backgroundColor: series.dash === SeriesDash.NONE ? translucent(series.color) : "transparent",
     fill: series.fill,
     ...curveProps,
     pointRadius: series.weight === SeriesWeight.HIDDEN ? CHART_POINT.hidden : pointRadiusFor({ showPoints, radius: point.radius }),
@@ -45795,6 +45831,7 @@ function chartImageUrl({
       title: spec.title,
       showLegend: spec.showLegend,
       beginAtZero,
+      locale,
       palette,
       annotation
     }),
@@ -45807,13 +45844,14 @@ function buildChartConfig({
   title,
   showLegend,
   beginAtZero,
+  locale,
   palette,
   annotation
 }) {
   return {
     type: "line",
     data: { labels, datasets },
-    options: buildChartOptions({ title, showLegend, beginAtZero, palette, annotation })
+    options: buildChartOptions({ title, showLegend, beginAtZero, locale, palette, annotation })
   };
 }
 
@@ -45907,7 +45945,7 @@ function buildReportModel(params) {
     locale,
     now
   });
-  const hasChartHistory = includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
+  const hasChartHistory = includeCharts && history !== null && isPlottable(history);
   const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
   const topRepos = toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount });
   const chartHistory = hasChartHistory ? history : null;
@@ -46062,7 +46100,7 @@ function generateHtmlReport({ model, config: config2 }) {
           <div style="display:flex;align-items:center;margin:4px 0;">
             <img src="${escapeHtml(stargazer.avatarUrl)}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
             <a href="${escapeHtml(stargazer.profileUrl)}" style="color:${palette.link};text-decoration:none;font-weight:600;">${escapeHtml(stargazer.login)}</a>
-            <span style="color:${palette.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: escapeHtml(stargazer.starredAt.split("T")[0]) } })}</span>
+            <span style="color:${palette.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: escapeHtml(isoDate(stargazer.starredAt)) } })}</span>
           </div>`
     ).join("")}
         </div>`
@@ -46119,7 +46157,7 @@ function generateHtmlReport({ model, config: config2 }) {
   <div style="display:flex;justify-content:space-around;padding:20px 0;text-align:center;">
     <div>
       <div style="font-size:28px;font-weight:700;">${summary2.totalStars}</div>
-      <div style="color:${palette.neutral};font-size:12px;">${t.report.total} ${t.report.stars}</div>
+      <div style="color:${palette.neutral};font-size:12px;">${t.report.totalStars}</div>
     </div>
     <div>
       <div style="font-size:28px;font-weight:700;color:${deltaColor({ delta: summary2.totalDelta, palette })};">${deltaIndicator(summary2.totalDelta)}</div>
@@ -46234,7 +46272,7 @@ function generateMarkdownReport({ model, config: config2 }) {
   const chartSection = chartHistory !== null ? [
     `## ${SECTION_ICON.starTrend} ${t.report.starTrend}`,
     "",
-    `![Star History](./charts/${CHART_FILES.starHistory})`,
+    `![${t.report.starHistory}](./charts/${CHART_FILES.starHistory})`,
     "",
     ...hasComparisonChart ? [
       `### ${t.report.byRepository}`,
@@ -46251,7 +46289,7 @@ function generateMarkdownReport({ model, config: config2 }) {
       ""
     ] : []
   ] : [];
-  const repoTable = sorted.length > 0 ? [
+  const repoTable = [
     `## ${t.report.repositories}`,
     "",
     `| ${t.report.repositories} | ${t.report.stars} | ${t.report.change} | ${t.report.trend} |`,
@@ -46261,7 +46299,7 @@ function generateMarkdownReport({ model, config: config2 }) {
       return `| [${escapeMarkdown(repo.fullName)}](https://github.com/${escapeMarkdown(repo.fullName)})${badge} | ${repo.current} | ${deltaIndicator(repo.delta)} | ${trendIcon(repo.delta)} |`;
     }),
     ""
-  ] : [];
+  ];
   const newSection = newRepos.length > 0 ? [
     `## ${t.report.newRepositories}`,
     "",
@@ -46281,7 +46319,7 @@ function generateMarkdownReport({ model, config: config2 }) {
     ),
     ""
   ] : [];
-  const summarySection = summary2.totalDelta === 0 ? [] : [
+  const summarySection = [
     `## ${t.report.summary}`,
     "",
     `- **${t.report.starsGained}:** ${summary2.newStars}`,
@@ -46311,7 +46349,7 @@ function generateMarkdownReport({ model, config: config2 }) {
       `<summary>${escapeMarkup(entry.repoFullName)} (${interpolate({ template: t.stargazers.stargazerCount, params: { count: entry.newStargazers.length } })})</summary>`,
       "",
       ...entry.newStargazers.map(
-        (stargazer) => `- <img src="${escapeMarkup(stargazer.avatarUrl)}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${escapeMarkdown(stargazer.login)}](${escapeMarkdown(stargazer.profileUrl)}): ${interpolate({ template: t.stargazers.starredOn, params: { date: escapeMarkdown(stargazer.starredAt.split("T")[0]) } })}`
+        (stargazer) => `- <img src="${escapeMarkup(stargazer.avatarUrl)}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${escapeMarkdown(stargazer.login)}](${escapeMarkdown(stargazer.profileUrl)}): ${interpolate({ template: t.stargazers.starredOn, params: { date: escapeMarkdown(isoDate(stargazer.starredAt)) } })}`
       ),
       "",
       "</details>",

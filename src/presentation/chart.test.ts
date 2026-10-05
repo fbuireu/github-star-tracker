@@ -1,15 +1,44 @@
 import { ChartCurve } from "@config/types";
+import type { ForecastData } from "@domain/forecast";
 import { ForecastMethod } from "@domain/forecast";
 import type { History } from "@domain/types";
+import { LOCALE_MAP, LOCALES } from "@i18n";
 import { makeMultiRepoHistory } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import { chartImageUrl } from "./chart";
-import { ChartKind } from "./chart-spec";
-import { CHART_TENSION } from "./constants";
+import type { ChartRequest } from "./chart-spec";
+import { AxisLabels, buildChartSpec, ChartKind } from "./chart-spec";
+import { CHART_TENSION, LIGHT_PALETTE } from "./constants";
 
 const CHART_CONFIG_PARAM = "&c=";
 const CHART_HEIGHT = "&h=";
 const CHART_WIDTH = "w=";
+
+const forecastData: ForecastData = {
+	aggregate: {
+		forecasts: [
+			{
+				method: ForecastMethod.LINEAR_REGRESSION,
+				points: [
+					{ weekOffset: 1, predicted: 170 },
+					{ weekOffset: 2, predicted: 195 },
+					{ weekOffset: 3, predicted: 220 },
+					{ weekOffset: 4, predicted: 245 },
+				],
+			},
+			{
+				method: ForecastMethod.WEIGHTED_MOVING_AVERAGE,
+				points: [
+					{ weekOffset: 1, predicted: 165 },
+					{ weekOffset: 2, predicted: 180 },
+					{ weekOffset: 3, predicted: 195 },
+					{ weekOffset: 4, predicted: 210 },
+				],
+			},
+		],
+	},
+	repos: [],
+};
 
 const mockHistory: History = makeMultiRepoHistory({
 	snapshots: [
@@ -33,6 +62,15 @@ describe("chart", () => {
 			expect(url).toContain(CHART_CONFIG_PARAM);
 		});
 
+		it("asks QuickChart for Chart.js 4, the version its config is written for, since its default 2.9.4 reads neither plugins.title, plugins.legend nor scales.x", () => {
+			const url = chartImageUrl({
+				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory, title: "Test Chart" },
+				locale: "en",
+			});
+
+			expect(new URL(url ?? "").searchParams.get("v")).toBe("4");
+		});
+
 		it("returns null when the spec has too little history to plot", () => {
 			const singleSnapshot: History = {
 				snapshots: [mockHistory.snapshots[0]],
@@ -45,40 +83,7 @@ describe("chart", () => {
 			expect(url).toBeNull();
 		});
 
-		it("includes correct data points in chart config", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
-				locale: "en",
-			});
-
-			expect(url).not.toBeNull();
-
-			if (url) {
-				const decodedUrl = decodeURIComponent(url);
-
-				expect(decodedUrl).toContain('"data":[100,120,150]');
-				expect(decodedUrl).toContain('"label":"Stars"');
-			}
-		});
-
-		it("formats dates correctly", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
-				locale: "en",
-			});
-
-			expect(url).not.toBeNull();
-
-			if (url) {
-				const decodedUrl = decodeURIComponent(url);
-
-				expect(decodedUrl).toContain("Jan 1");
-				expect(decodedUrl).toContain("Jan 8");
-				expect(decodedUrl).toContain("Jan 15");
-			}
-		});
-
-		it("caps the email chart at 30 points spread across the whole history", () => {
+		it("caps the email chart at 30 points, because it never passes maxPoints on", () => {
 			const largeHistory: History = {
 				snapshots: Array.from({ length: 50 }, (_, index) => ({
 					timestamp: new Date(Date.UTC(2026, 0, index + 1)).toISOString(),
@@ -99,160 +104,12 @@ describe("chart", () => {
 
 				expect(config.data.labels).toHaveLength(30);
 				expect(config.data.datasets[0].data).toHaveLength(30);
-				expect(config.data.datasets[0].data[0]).toBe(100);
-				expect(config.data.datasets[0].data.at(-1)).toBe(590);
-			}
-		});
-	});
-
-	describe("chartImageUrl: per repo", () => {
-		it("generates chart for specific repository", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.PER_REPO, history: mockHistory, repoFullName: "user/repo-a" },
-				locale: "en",
-			});
-
-			expect(url).not.toBeNull();
-
-			if (url) {
-				const decodedUrl = decodeURIComponent(url);
-
-				expect(decodedUrl).toContain('"data":[50,70,90]');
-			}
-		});
-
-		it("uses custom title when provided", () => {
-			const url = chartImageUrl({
-				request: {
-					kind: ChartKind.PER_REPO,
-					history: mockHistory,
-					repoFullName: "user/repo-a",
-					title: "Custom Title",
-				},
-				locale: "en",
-			});
-
-			expect(url).not.toBeNull();
-
-			if (url) {
-				const decodedUrl = decodeURIComponent(url);
-
-				expect(decodedUrl).toContain("Custom Title");
-			}
-		});
-
-		it("renders a flat zero series for a repository absent from every snapshot", () => {
-			const url = chartImageUrl({
-				request: {
-					kind: ChartKind.PER_REPO,
-					history: mockHistory,
-					repoFullName: "user/non-existent",
-				},
-				locale: "en",
-			});
-
-			expect(url).not.toBeNull();
-
-			if (url) {
-				const decodedUrl = decodeURIComponent(url);
-
-				expect(decodedUrl).toContain('"data":[0,0,0]');
-			}
-		});
-	});
-
-	describe("chartImageUrl: comparison", () => {
-		it("generates comparison chart for multiple repositories", () => {
-			const url = chartImageUrl({
-				request: {
-					kind: ChartKind.COMPARISON,
-					history: mockHistory,
-					repoNames: ["user/repo-a", "user/repo-b"],
-				},
-				locale: "en",
-			});
-
-			expect(url).not.toBeNull();
-
-			if (url) {
-				const decodedUrl = decodeURIComponent(url);
-
-				expect(decodedUrl).toContain('"label":"repo-a"');
-				expect(decodedUrl).toContain('"label":"repo-b"');
-				expect(decodedUrl).toContain('"data":[50,70,90]');
-				expect(decodedUrl).toContain('"data":[50,50,60]');
-			}
-		});
-
-		it("uses custom title when provided", () => {
-			const url = chartImageUrl({
-				request: {
-					kind: ChartKind.COMPARISON,
-					history: mockHistory,
-					repoNames: ["user/repo-a"],
-					title: "My Comparison",
-				},
-				locale: "en",
-			});
-
-			expect(url).not.toBeNull();
-
-			if (url) {
-				const decodedUrl = decodeURIComponent(url);
-
-				expect(decodedUrl).toContain("My Comparison");
-			}
-		});
-
-		it("enables legend for multiple repositories", () => {
-			const url = chartImageUrl({
-				request: {
-					kind: ChartKind.COMPARISON,
-					history: mockHistory,
-					repoNames: ["user/repo-a", "user/repo-b"],
-				},
-				locale: "en",
-			});
-
-			expect(url).not.toBeNull();
-
-			if (url) {
-				const decodedUrl = decodeURIComponent(url);
-				const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
-
-				expect(config.options.plugins.legend.display).toBe(true);
 			}
 		});
 	});
 
 	describe("chartImageUrl: forecast", () => {
-		const forecastData = {
-			aggregate: {
-				forecasts: [
-					{
-						method: ForecastMethod.LINEAR_REGRESSION,
-						points: [
-							{ weekOffset: 1, predicted: 170 },
-							{ weekOffset: 2, predicted: 195 },
-							{ weekOffset: 3, predicted: 220 },
-							{ weekOffset: 4, predicted: 245 },
-						],
-					},
-					{
-						method: ForecastMethod.WEIGHTED_MOVING_AVERAGE,
-						points: [
-							{ weekOffset: 1, predicted: 165 },
-							{ weekOffset: 2, predicted: 180 },
-							{ weekOffset: 3, predicted: 195 },
-							{ weekOffset: 4, predicted: 210 },
-						],
-					},
-				],
-			},
-			repos: [],
-		};
-
-		it("generates forecast chart with dashed lines", () => {
+		it("draws each forecast projection with the dash pattern of its method", () => {
 			const url = chartImageUrl({
 				request: { kind: ChartKind.FORECAST, history: mockHistory, forecastData },
 				locale: "en",
@@ -264,60 +121,79 @@ describe("chart", () => {
 				const decodedUrl = decodeURIComponent(url);
 				const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
 
-				expect(config.data.datasets).toHaveLength(3);
 				expect(config.data.datasets[0].borderDash).toBeUndefined();
 				expect(config.data.datasets[1].borderDash).toEqual([8, 4]);
 				expect(config.data.datasets[2].borderDash).toEqual([4, 4]);
 			}
 		});
+	});
 
-		it("enables legend", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.FORECAST, history: mockHistory, forecastData },
-				locale: "en",
-			});
+	describe("the spec it draws", () => {
+		const REQUESTS: ChartRequest[] = [
+			{ kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			{ kind: ChartKind.COMPARISON, history: mockHistory, repoNames: ["user/repo-a", "user/repo-b"] },
+			{ kind: ChartKind.FORECAST, history: mockHistory, forecastData },
+		];
 
-			expect(url).not.toBeNull();
+		it.each(LOCALES.flatMap((locale) => REQUESTS.map((request) => ({ locale, request }))))(
+			"draws the labels, series, title and legend setting of the $request.kind spec in $locale",
+			({ locale, request }) => {
+				const spec = buildChartSpec({ request, locale, palette: LIGHT_PALETTE, axisLabels: AxisLabels.DATES });
+				const url = chartImageUrl({ request, locale });
 
-			if (url) {
-				const decodedUrl = decodeURIComponent(url);
-				const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
+				expect(spec).not.toBeNull();
+				expect(url).not.toBeNull();
 
-				expect(config.options.plugins.legend.display).toBe(true);
-			}
-		});
+				if (url && spec) {
+					const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
+
+					expect(config.data.labels).toEqual(spec.labels);
+					expect(
+						config.data.datasets.map(({ label, data, borderColor, fill }: Record<string, unknown>) => ({
+							label,
+							data,
+							color: borderColor,
+							fill,
+						})),
+					).toEqual(spec.series.map(({ label, data, color, fill }) => ({ label, data, color, fill })));
+					expect(config.options.plugins.title.text).toBe(spec.title);
+					expect(config.options.plugins.legend.display).toBe(spec.showLegend);
+				}
+			},
+		);
 	});
 
 	describe("milestone annotations", () => {
-		it("includes milestone annotations in aggregate chart", () => {
-			const largeHistory: History = {
-				snapshots: [
-					{
-						timestamp: "2025-01-01T00:00:00.000Z",
-						totalStars: 80,
-						repos: [],
-					},
-					{
-						timestamp: "2025-01-08T00:00:00.000Z",
-						totalStars: 120,
-						repos: [],
-					},
-				],
+		it("draws one annotation per Milestone the spec carries, labelled as the spec labels it", () => {
+			const request: ChartRequest = {
+				kind: ChartKind.STAR_HISTORY,
+				history: {
+					snapshots: [
+						{ timestamp: "2025-01-01T00:00:00.000Z", totalStars: 80, repos: [] },
+						{ timestamp: "2025-01-08T00:00:00.000Z", totalStars: 620, repos: [] },
+					],
+				},
 			};
+			const spec = buildChartSpec({ request, locale: "en", palette: LIGHT_PALETTE, axisLabels: AxisLabels.DATES });
+			const url = chartImageUrl({ request, locale: "en" });
 
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: largeHistory },
-				locale: "en",
-			});
-
+			expect(spec?.milestones.length).toBeGreaterThan(1);
 			expect(url).not.toBeNull();
 
-			if (url) {
-				const decodedUrl = decodeURIComponent(url);
-				const config = JSON.parse(decodedUrl.split(CHART_CONFIG_PARAM)[1]);
+			if (url && spec) {
+				const { annotations } = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]).options.plugins
+					.annotation;
 
-				expect(config.options.plugins.annotation).toBeDefined();
-				expect(config.options.plugins.annotation.annotations).toHaveProperty("milestone100");
+				expect(Object.keys(annotations)).toEqual(spec.milestones.map((milestone) => `milestone${milestone.value}`));
+				expect(Object.values<{ yMin: number; yMax: number; label: { content: string } }>(annotations)).toEqual(
+					spec.milestones.map((milestone) =>
+						expect.objectContaining({
+							yMin: milestone.value,
+							yMax: milestone.value,
+							label: expect.objectContaining({ content: milestone.label }),
+						}),
+					),
+				);
 			}
 		});
 
@@ -446,62 +322,8 @@ describe("chart", () => {
 		});
 	});
 
-	describe("range", () => {
-		const weeklyHistory: History = {
-			snapshots: Array.from({ length: 40 }, (_, index) => ({
-				timestamp: new Date(Date.UTC(2026, 0, 1 + index * 7)).toISOString(),
-				totalStars: 100 + index * 10,
-				repos: [],
-			})),
-		};
-		const dataLength = (url: string): number =>
-			JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]).data.datasets[0].data.length;
-
-		it("plots the full history by default", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: weeklyHistory },
-				locale: "en",
-			});
-
-			expect(url).not.toBeNull();
-			if (url) expect(dataLength(url)).toBe(30);
-		});
-
-		it("limits the plotted history to the selected time window", () => {
-			const all = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: weeklyHistory },
-				locale: "en",
-			});
-			const recent = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: weeklyHistory },
-				locale: "en",
-				range: "90d",
-			});
-
-			expect(all).not.toBeNull();
-			expect(recent).not.toBeNull();
-			if (all && recent) {
-				expect(dataLength(recent)).toBeLessThan(dataLength(all));
-				expect(dataLength(recent)).toBeLessThanOrEqual(14);
-			}
-		});
-	});
-
 	describe("trendLine", () => {
-		const datasetCount = (url: string): number =>
-			JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]).data.datasets.length;
-
-		it("does not overlay a trend dataset by default", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
-				locale: "en",
-			});
-
-			expect(url).not.toBeNull();
-			if (url) expect(datasetCount(url)).toBe(1);
-		});
-
-		it("overlays a dashed moving-average dataset when enabled", () => {
+		it("draws the trend series with its own dash pattern", () => {
 			const url = chartImageUrl({
 				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory, trendLine: true },
 				locale: "en",
@@ -511,9 +333,7 @@ describe("chart", () => {
 			if (url) {
 				const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
 
-				expect(config.data.datasets).toHaveLength(2);
 				expect(config.data.datasets[1].borderDash).toEqual([6, 4]);
-				expect(config.data.datasets[1].fill).toBe(false);
 			}
 		});
 	});
@@ -542,6 +362,45 @@ describe("chart", () => {
 				const config = JSON.parse(decodeURIComponent(url).split(CHART_CONFIG_PARAM)[1]);
 				expect(config.options.scales.y.ticks.color).toBe("#8b949e");
 			}
+		});
+	});
+
+	describe("fill", () => {
+		const datasetFor = (lineColor: string): { borderColor: string; backgroundColor: string } => {
+			const url = chartImageUrl({
+				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory, lineColor },
+				locale: "en",
+			});
+
+			expect(url).not.toBeNull();
+
+			return JSON.parse(decodeURIComponent(url ?? "").split(CHART_CONFIG_PARAM)[1]).data.datasets[0];
+		};
+
+		it.each([
+			{ label: "6-digit hex", lineColor: "#dfb317", fill: "#dfb31733" },
+			{ label: "3-digit hex", lineColor: "#fa0", fill: "#ffaa0033" },
+			{ label: "4-digit hex, scaling the fill by its own alpha", lineColor: "#fa08", fill: "#ffaa001b" },
+			{ label: "8-digit hex, scaling the fill by its own alpha", lineColor: "#6b63ffcc", fill: "#6b63ff29" },
+		])("draws a line in $label over a translucent fill of the same colour", ({ lineColor, fill }) => {
+			const dataset = datasetFor(lineColor);
+
+			expect(dataset.backgroundColor).toBe(fill);
+			expect(dataset.borderColor).toBe(lineColor);
+		});
+	});
+
+	describe("locale", () => {
+		it.each(LOCALES)("hands Chart.js the Intl code of the %s run, so the Y-axis ticks follow it", (locale) => {
+			const url = chartImageUrl({
+				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+				locale,
+			});
+
+			expect(url).not.toBeNull();
+			expect(JSON.parse(decodeURIComponent(url ?? "").split(CHART_CONFIG_PARAM)[1]).options.locale).toBe(
+				LOCALE_MAP[locale],
+			);
 		});
 	});
 

@@ -237,7 +237,8 @@ The failures that start here both fail the run:
 
 - No repository is checked out. The action needs the worktree machinery, so it converts git's own message
   into `This action must run inside a checked-out repository. Add an "actions/checkout" step before this
-  action in your workflow.`
+  action in your workflow.` Any other failure of that check, such as a git that is not installed or a checkout
+  git refuses as unsafe, keeps git's own text.
 - The branch does not exist **and** the run is read-only. A read-only run may never bring the data branch
   into existence, so it stops rather than creating one and leaving it unpushed. Point `data-branch` at the
   branch your tracking workflow maintains, or drop `read-only` for one run so it can be created.

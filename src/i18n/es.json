@@ -5,6 +5,7 @@
 	"report": {
 		"title": "Informe de Seguimiento de Estrellas",
 		"total": "Total",
+		"totalStars": "Estrellas Totales",
 		"change": "Cambio",
 		"comparedTo": "Comparado con instantánea del {date}",
 		"firstRun": "primera ejecución",
@@ -26,6 +27,7 @@
 		"byRepository": "Por Repositorio",
 		"individualRepoCharts": "Gráficos por Repositorio",
 		"repoChartHeading": "{name}: {count} ★ ({delta})",
+		"repoChartTitle": "Historial de Estrellas: {name}",
 		"trendLine": "Tendencia",
 		"badges": {
 			"new": "NUEVO"
@@ -67,6 +69,7 @@
 		"weightedMovingAverage": "Media Móvil Ponderada",
 		"aggregate": "Previsión Agregada",
 		"byRepository": "Por Repositorio",
+		"repoChartTitle": "Previsión de Crecimiento: {name}",
 		"insufficientData": "Datos insuficientes para la previsión (se necesitan al menos 3 snapshots)",
 		"method": "Método",
 		"predicted": "Previsto"

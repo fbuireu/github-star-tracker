@@ -60,6 +60,10 @@ function snapshotsHolding({ history, repoFullName }: SnapshotsHoldingParams): Hi
 	};
 }
 
+function holdsEnoughToForecast(history: History): boolean {
+	return history.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST;
+}
+
 function clampPrediction(value: number): number {
 	return Math.max(0, Math.round(value));
 }
@@ -90,7 +94,7 @@ function forecastFromSeries(points: SeriesPoint[]): ForecastResult[] {
 }
 
 export function computeForecast({ history, topRepoNames, historyForRepo }: ComputeForecastParams): ForecastData | null {
-	if (history.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) {
+	if (!holdsEnoughToForecast(history)) {
 		return null;
 	}
 
@@ -101,10 +105,10 @@ export function computeForecast({ history, topRepoNames, historyForRepo }: Compu
 	const aggregateForecasts = forecastFromSeries(toSeries({ values: totalValues, days: calendarDays(history) }));
 	const repos: RepoForecast[] = topRepoNames.flatMap((repoFullName) => {
 		const candidate = historyForRepo?.(repoFullName);
-		const ownHistory = candidate && candidate.snapshots.length >= MIN_SNAPSHOTS_FOR_FORECAST ? candidate : null;
+		const ownHistory = candidate && holdsEnoughToForecast(candidate) ? candidate : null;
 		const fitted = snapshotsHolding({ history: ownHistory ?? history, repoFullName });
 
-		if (fitted.snapshots.length < MIN_SNAPSHOTS_FOR_FORECAST) return [];
+		if (!holdsEnoughToForecast(fitted)) return [];
 
 		const values = repoStarSeries({ snapshots: fitted.snapshots, repoFullName });
 

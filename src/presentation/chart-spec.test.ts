@@ -2,14 +2,14 @@ import { ChartRange } from "@config/types";
 import { STAR_MILESTONES } from "@domain/constants";
 import type { ForecastData } from "@domain/forecast";
 import { ForecastMethod, ForecastSource } from "@domain/forecast";
-import { formatCount } from "@domain/formatting";
+import { formatCount, formatDate } from "@domain/formatting";
 import type { History } from "@domain/types";
-import type { Locale } from "@i18n";
+import { LOCALES, type Locale } from "@i18n";
 import { makeHistory, makeMultiRepoHistory, makeSnapshot } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import type { ChartRequest, ChartSpec } from "./chart-spec";
-import { AxisLabels, buildChartSpec, ChartKind, SeriesDash, SeriesWeight } from "./chart-spec";
-import { CHART_COMPARISON_COLORS, LIGHT_PALETTE, TREND_WINDOW } from "./constants";
+import { AxisLabels, buildChartSpec, ChartKind, isPlottable, SeriesDash, SeriesWeight } from "./chart-spec";
+import { CHART, CHART_COMPARISON_COLORS, LIGHT_PALETTE, MIN_SNAPSHOTS_FOR_CHART, TREND_WINDOW } from "./constants";
 
 const forecastData: ForecastData = {
 	aggregate: {
@@ -31,6 +31,17 @@ const forecastData: ForecastData = {
 		],
 	},
 	repos: [],
+};
+
+const ownForecast: ForecastData = {
+	...forecastData,
+	repos: [
+		{
+			repoFullName: "user/repo-a",
+			source: ForecastSource.OWN,
+			forecasts: forecastData.aggregate.forecasts,
+		},
+	],
 };
 
 interface SpecOfParams {
@@ -73,6 +84,21 @@ const multiRepo = makeMultiRepoHistory({
 		{ "user/repo-a": 70, "user/repo-b": 35 },
 		{ "user/repo-a": 90, "user/repo-b": 40 },
 	],
+});
+
+describe("isPlottable", () => {
+	const historyOf = (snapshots: number): History =>
+		makeHistory({ starCounts: Array.from({ length: snapshots }, () => 10) });
+
+	it("holds a History of at least MIN_SNAPSHOTS_FOR_CHART Snapshots", () => {
+		expect(isPlottable(historyOf(MIN_SNAPSHOTS_FOR_CHART - 1))).toBe(false);
+		expect(isPlottable(historyOf(MIN_SNAPSHOTS_FOR_CHART))).toBe(true);
+		expect(isPlottable(historyOf(MIN_SNAPSHOTS_FOR_CHART + 1))).toBe(true);
+	});
+
+	it("holds an empty History unplottable", () => {
+		expect(isPlottable({ snapshots: [] })).toBe(false);
+	});
 });
 
 describe("buildChartSpec", () => {
@@ -126,16 +152,7 @@ describe("buildChartSpec", () => {
 					request: {
 						kind: ChartKind.PER_REPO_FORECAST,
 						history: multiRepo,
-						forecastData: {
-							...forecastData,
-							repos: [
-								{
-									repoFullName: "user/repo-a",
-									source: ForecastSource.OWN,
-									forecasts: forecastData.aggregate.forecasts,
-								},
-							],
-						},
+						forecastData: ownForecast,
 						repoFullName: "user/repo-a",
 					},
 				}).title,
@@ -150,12 +167,80 @@ describe("buildChartSpec", () => {
 			]);
 		});
 
-		it("lets an explicit title win", () => {
-			const spec = specOf({
-				request: { kind: ChartKind.STAR_HISTORY, history: makeHistory({ starCounts: [10, 20] }), title: "Mine" },
-			});
+		const LOCALIZED_TEXT: { locale: Locale; perRepo: string; perRepoForecast: string; stars: string }[] = [
+			{
+				locale: "en",
+				perRepo: "user/repo-a Star History",
+				perRepoForecast: "user/repo-a Growth Forecast",
+				stars: "Stars",
+			},
+			{
+				locale: "es",
+				perRepo: "Historial de Estrellas: user/repo-a",
+				perRepoForecast: "Previsión de Crecimiento: user/repo-a",
+				stars: "Estrellas",
+			},
+			{
+				locale: "ca",
+				perRepo: "Historial d'Estrelles: user/repo-a",
+				perRepoForecast: "Previsió de Creixement: user/repo-a",
+				stars: "Estrelles",
+			},
+			{
+				locale: "it",
+				perRepo: "Storia delle Stelle: user/repo-a",
+				perRepoForecast: "Previsione di Crescita: user/repo-a",
+				stars: "Stelle",
+			},
+		];
 
-			expect(spec.title).toBe("Mine");
+		it.each(LOCALIZED_TEXT)(
+			"titles the per-repository Charts and labels the Star Count series in $locale",
+			({ locale, perRepo, perRepoForecast, stars }) => {
+				const history = makeHistory({ starCounts: [10, 20, 30] });
+				const perRepoSpec = specOf({
+					request: { kind: ChartKind.PER_REPO, history: multiRepo, repoFullName: "user/repo-a" },
+					locale,
+				});
+				const perRepoForecastSpec = specOf({
+					request: {
+						kind: ChartKind.PER_REPO_FORECAST,
+						history: multiRepo,
+						forecastData: ownForecast,
+						repoFullName: "user/repo-a",
+					},
+					locale,
+				});
+				const starHistorySpec = specOf({ request: { kind: ChartKind.STAR_HISTORY, history }, locale });
+
+				expect(perRepoSpec.title).toBe(perRepo);
+				expect(perRepoForecastSpec.title).toBe(perRepoForecast);
+				expect(perRepoSpec.series[0].label).toBe(stars);
+				expect(starHistorySpec.series[0].label).toBe(stars);
+			},
+		);
+
+		it("states the expected text for every locale the bundles ship", () => {
+			expect(LOCALIZED_TEXT.map(({ locale }) => locale)).toEqual(LOCALES);
+		});
+
+		it("lets an explicit title win, whatever the kind", () => {
+			const history = makeHistory({ starCounts: [10, 20, 30] });
+			const requests: ChartRequest[] = [
+				{ kind: ChartKind.STAR_HISTORY, history, title: "Mine" },
+				{ kind: ChartKind.PER_REPO, history: multiRepo, repoFullName: "user/repo-a", title: "Mine" },
+				{ kind: ChartKind.COMPARISON, history: multiRepo, repoNames: ["user/repo-a"], title: "Mine" },
+				{ kind: ChartKind.FORECAST, history, forecastData, title: "Mine" },
+				{
+					kind: ChartKind.PER_REPO_FORECAST,
+					history: multiRepo,
+					forecastData: ownForecast,
+					repoFullName: "user/repo-a",
+					title: "Mine",
+				},
+			];
+
+			expect(requests.map((request) => specOf({ request }).title)).toEqual(requests.map(() => "Mine"));
 		});
 	});
 
@@ -188,6 +273,17 @@ describe("buildChartSpec", () => {
 			expect(spec.series[0].color).toBe("#6f42c1");
 		});
 
+		it("draws a Milestone past ten thousand Stars as readily as a small one", () => {
+			const spec = specOf({
+				request: { kind: ChartKind.STAR_HISTORY, history: makeHistory({ starCounts: [12_000, 60_000, 120_000] }) },
+			});
+
+			expect(spec.milestones).toEqual([
+				{ value: 50_000, label: "50K ★" },
+				{ value: 100_000, label: "100K ★" },
+			]);
+		});
+
 		it("adds a trailing-average trend series that carries no emphasis", () => {
 			const values = [10, 20, 30, 40];
 			const spec = specOf({
@@ -205,7 +301,7 @@ describe("buildChartSpec", () => {
 			expect(values.length).toBeLessThanOrEqual(TREND_WINDOW);
 		});
 
-		it("resolves milestones: custom beats built-in, empty falls back, off is none", () => {
+		it("resolves milestones: custom beats built-in, empty falls back, off is none even beside a custom list", () => {
 			const history = makeHistory({ starCounts: [10, 600] });
 			const resolved = [
 				milestoneValues(specOf({ request: { kind: ChartKind.STAR_HISTORY, history } })),
@@ -216,9 +312,14 @@ describe("buildChartSpec", () => {
 				),
 				milestoneValues(specOf({ request: { kind: ChartKind.STAR_HISTORY, history, customMilestones: [] } })),
 				milestoneValues(specOf({ request: { kind: ChartKind.STAR_HISTORY, history, milestones: false } })),
+				milestoneValues(
+					specOf({
+						request: { kind: ChartKind.STAR_HISTORY, history, milestones: false, customMilestones: [90, 110] },
+					}),
+				),
 			];
 
-			expect(resolved).toEqual([[50, 100, 500], [90, 110], [50, 100, 500], []]);
+			expect(resolved).toEqual([[50, 100, 500], [90, 110], [50, 100, 500], [], []]);
 			expect(STAR_MILESTONES).toContain(500);
 		});
 
@@ -260,6 +361,14 @@ describe("buildChartSpec", () => {
 			expect(spec.showLegend).toBe(false);
 		});
 
+		it("honours an explicit line colour", () => {
+			const spec = specOf({
+				request: { kind: ChartKind.PER_REPO, history: multiRepo, repoFullName: "user/repo-a", lineColor: "#6f42c1" },
+			});
+
+			expect(spec.series[0].color).toBe("#6f42c1");
+		});
+
 		it("yields a flat zero series for a repository absent from every snapshot", () => {
 			const spec = specOf({
 				request: { kind: ChartKind.PER_REPO, history: multiRepo, repoFullName: "user/ghost" },
@@ -295,6 +404,17 @@ describe("buildChartSpec", () => {
 			expect(mixedOwners.series.map((series) => series.label)).toEqual(["alice/repo-a", "bob/repo-b"]);
 		});
 
+		it("plots each repository's own series", () => {
+			const spec = specOf({
+				request: { kind: ChartKind.COMPARISON, history: multiRepo, repoNames: ["user/repo-a", "user/repo-b"] },
+			});
+
+			expect(spec.series.map((series) => series.data)).toEqual([
+				[50, 70, 90],
+				[30, 35, 40],
+			]);
+		});
+
 		it("caps the set at ten and assigns colours by position", () => {
 			const repoNames = Array.from({ length: 12 }, (_, index) => `user/repo-${index}`);
 			const spec = specOf({
@@ -322,6 +442,42 @@ describe("buildChartSpec", () => {
 			expect(spec.series[0].data).toEqual([100, 120, 150, null, null]);
 			expect(spec.series[1].data).toEqual([null, null, 150, 160, 170]);
 			expect(spec.series[2].data).toEqual([null, null, 150, 155, 158]);
+		});
+
+		it("names its series and colours the forecasts apart from the observed line", () => {
+			const spec = specOf({ request: { kind: ChartKind.FORECAST, history, forecastData } });
+
+			expect(spec.series.map((series) => series.label)).toEqual([
+				"Star History",
+				"Linear Regression",
+				"Weighted Moving Average",
+			]);
+			expect(spec.series.map((series) => series.color)).toEqual([
+				LIGHT_PALETTE.accent,
+				LIGHT_PALETTE.positive,
+				LIGHT_PALETTE.negative,
+			]);
+			expect(spec.showLegend).toBe(true);
+		});
+
+		it("applies an explicit line colour to the observed series only", () => {
+			const colours = [
+				specOf({ request: { kind: ChartKind.FORECAST, history, forecastData, lineColor: "#6f42c1" } }),
+				specOf({
+					request: {
+						kind: ChartKind.PER_REPO_FORECAST,
+						history: multiRepo,
+						forecastData: ownForecast,
+						repoFullName: "user/repo-a",
+						lineColor: "#6f42c1",
+					},
+				}),
+			].map((spec) => spec.series.map((series) => series.color));
+
+			expect(colours).toEqual([
+				["#6f42c1", LIGHT_PALETTE.positive, LIGHT_PALETTE.negative],
+				["#6f42c1", LIGHT_PALETTE.positive, LIGHT_PALETTE.negative],
+			]);
 		});
 
 		it("appends a week label per forecast point", () => {
@@ -467,6 +623,32 @@ describe("buildChartSpec", () => {
 				specOf({ request: { kind: ChartKind.STAR_HISTORY, history: dense }, range, maxPoints: 30 }).series[0].data[0];
 
 			expect(firstPlotted(ChartRange.Y1)).not.toBe(firstPlotted(ChartRange.ALL));
+		});
+
+		it("plots at most CHART.maxDataPoints snapshots when no limit is given", () => {
+			const dense = makeHistory({ starCounts: Array.from({ length: CHART.maxDataPoints + 20 }, (_, index) => index) });
+			const { data } = specOf({ request: { kind: ChartKind.STAR_HISTORY, history: dense } }).series[0];
+
+			expect(data).toHaveLength(CHART.maxDataPoints);
+			expect(data[0]).toBe(0);
+			expect(data.at(-1)).toBe(CHART.maxDataPoints + 19);
+		});
+
+		it("dates its x-axis in the requested locale", () => {
+			const history: History = {
+				snapshots: [
+					makeSnapshot({ timestamp: "2026-03-15T00:00:00Z", totalStars: 10 }),
+					makeSnapshot({ timestamp: "2026-06-20T00:00:00Z", totalStars: 20 }),
+				],
+			};
+			const request = { kind: ChartKind.STAR_HISTORY, history } as const;
+
+			expect(specOf({ request, locale: "en" }).labels).toEqual(["Mar 15", "Jun 20"]);
+			expect(specOf({ request, locale: "es" }).labels).toEqual([
+				formatDate({ timestamp: "2026-03-15T00:00:00Z", locale: "es" }),
+				formatDate({ timestamp: "2026-06-20T00:00:00Z", locale: "es" }),
+			]);
+			expect(specOf({ request, locale: "es" }).labels).not.toEqual(specOf({ request, locale: "en" }).labels);
 		});
 
 		it("plots only the newest snapshot when maxPoints is 1", () => {

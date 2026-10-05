@@ -85,8 +85,8 @@ The narrowing rules live in `@domain/tracked-set` and read domain vocabulary (`r
 - `@domain/sampling` plans the fetch: `shouldSample`, `sampledPages` (which pages to read) and `coveredStars`
   (how many Stars those pages account for). This folder fetches the pages it is handed and reports what came
   back. [`sampling.test.ts`](../domain/sampling.test.ts) asserts that arithmetic on plain numbers, and
-  `stargazers.test.ts` repeats the spread, the small-repository fallback, the ceiling and the one-page budget
-  through a fake octokit, so a change to it fails both files.
+  `stargazers.test.ts` asserts only that the fetch reads the pages `sampledPages` plans, so a change to the
+  arithmetic fails one file.
 - A *full* fetch cut short, mid-pagination or at the ceiling, reports `stargazers.length` as its `coveredStars`;
   only the sampled path goes through `@domain`'s `coveredStars`.
 - `sampled` is decided *before* the request, so it stays `true` on failure. The threshold comparison is
@@ -270,8 +270,9 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
 - Stale charts are pruned, but not by the writer. `writeChart` only writes; `pruneCharts({ dataDir, keep })`
   deletes the `charts/*.svg` files the current run did not produce, and `publish` calls it immediately after
   the write loop, which is what stops a repo dropping out of `top-repos` from stranding its chart forever.
-- The action **requires an `actions/checkout` step**; the repo guard converts any failure of
-  `git rev-parse --is-inside-work-tree`, git's opaque "not a git repository" among them, into that
-  instruction. Do not swallow it.
+- The action **requires an `actions/checkout` step**; the repo guard converts git's "not a git repository" from
+  `git rev-parse --is-inside-work-tree` into that instruction and rethrows every other failure of the command with
+  git's own text, because a checkout git refuses as unsafe (`detected dubious ownership`) or a git that is not
+  installed is not a missing `actions/checkout`. Do not swallow either.
 - `.<dataBranch>` is a hidden directory inside the primary checkout for the duration of the run. Linters,
   upload-artifact globs and other actions will see it until `cleanup`.

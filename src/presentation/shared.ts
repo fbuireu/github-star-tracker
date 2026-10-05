@@ -2,6 +2,7 @@ import { type ChartCurve, type ChartRange, ChartTheme, type Config } from "@conf
 import { rankByStars } from "@domain/comparison";
 import { FORECAST_WEEKS } from "@domain/constants";
 import { type ForecastData, ForecastMethod } from "@domain/forecast";
+import { isoDate } from "@domain/formatting";
 import type { StargazerDiffResult } from "@domain/stargazers";
 import type { ComparisonResults, History, RepoResult } from "@domain/types";
 import { getTranslations, interpolate, type Locale, type Translations } from "@i18n";
@@ -94,8 +95,8 @@ export function prepareReportData({
 		newRepos: repos.filter((repo) => repo.isNew),
 		removedRepos: repos.filter((repo) => repo.isRemoved),
 		sorted: rankByStars(repos),
-		now: generatedAt.split("T")[0],
-		baselineSnapshotDate: baselineSnapshotTimestamp ? baselineSnapshotTimestamp.split("T")[0] : t.report.firstRun,
+		now: isoDate(generatedAt),
+		baselineSnapshotDate: baselineSnapshotTimestamp ? isoDate(baselineSnapshotTimestamp) : t.report.firstRun,
 		isFirstRun: baselineSnapshotTimestamp === null,
 		generatedAt,
 	};

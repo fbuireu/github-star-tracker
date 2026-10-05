@@ -3,8 +3,8 @@ import type { ForecastData } from "@domain/forecast";
 import { ForecastMethod } from "@domain/forecast";
 import type { History, Snapshot } from "@domain/types";
 import { describe, expect, it } from "vitest";
-import { ChartKind } from "./chart-spec";
-import { CHART, CHART_COMPARISON_COLORS, COLORS, DARK_PALETTE, LIGHT_PALETTE, SVG_CHART } from "./constants";
+import { AxisLabels, buildChartSpec, ChartKind } from "./chart-spec";
+import { CHART, COLORS, DARK_PALETTE, LIGHT_PALETTE, SVG_CHART } from "./constants";
 import { renderSvgChart } from "./svg-chart";
 
 const PLOT_TOP_Y = SVG_CHART.margin.top;
@@ -119,14 +119,17 @@ describe("renderSvgChart: star history", () => {
 		expect(result).toContain("</svg>");
 	});
 
-	it("includes title", () => {
+	it("draws the title it is handed, escaped for XML", () => {
 		const history = makeHistory([10, 20]);
-		const result = renderSvgChart({
-			request: { kind: ChartKind.STAR_HISTORY, history, title: "My Star Chart" },
-			locale: "en",
-		});
+		const result = expectSvg(
+			renderSvgChart({
+				request: { kind: ChartKind.STAR_HISTORY, history, title: "A & B <Stars>" },
+				locale: "en",
+			}),
+		);
 
-		expect(result).toContain("My Star Chart");
+		expect(result).toContain("A &amp; B &lt;Stars&gt;");
+		expect(result).not.toContain("<Stars>");
 	});
 
 	it("uses a prefers-color-scheme media query for the auto theme", () => {
@@ -201,34 +204,6 @@ describe("renderSvgChart: star history", () => {
 		expect(circleCount).toBe(5);
 	});
 
-	it("overlays a dashed trend line when trendLine is enabled", () => {
-		const history = makeHistory([10, 20, 30, 40, 50]);
-		const plain = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
-		const withTrend = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.STAR_HISTORY, history, trendLine: true },
-				locale: "en",
-			}),
-		);
-
-		expect(plain).not.toContain('stroke-dasharray="8,4"');
-		expect(withTrend).toContain('stroke-dasharray="8,4"');
-	});
-
-	it("draws the trend line with the dark neutral when theme is dark", () => {
-		const history = makeHistory([10, 20, 30, 40, 50]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.STAR_HISTORY, history, trendLine: true },
-				locale: "en",
-				theme: ChartTheme.DARK,
-			}),
-		);
-
-		expect(result).toContain(DARK_PALETTE.neutral);
-		expect(result).not.toContain(`stroke="${LIGHT_PALETTE.neutral}"`);
-	});
-
 	it("omits data point circles when showPoints is disabled", () => {
 		const history = makeHistory([10, 20, 30, 40, 50]);
 		const result = expectSvg(
@@ -256,21 +231,17 @@ describe("renderSvgChart: star history", () => {
 		expect(esResult).toContain("mar");
 	});
 
-	it("includes milestone lines when data range crosses thresholds", () => {
-		const history = makeHistory([80, 120, 150]);
-		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
+	it("draws each Milestone of the spec as a labelled dashed line", () => {
+		const request = { kind: ChartKind.STAR_HISTORY, history: makeHistory([80, 620, 700]) } as const;
+		const spec = buildChartSpec({ request, locale: "en", palette: LIGHT_PALETTE, axisLabels: AxisLabels.THINNED });
+		const result = expectSvg(renderSvgChart({ request, locale: "en" }));
+		const milestones = spec?.milestones ?? [];
 
-		expect(result).toContain("100 ★");
-		expect(result).toContain('stroke-dasharray="6,6"');
-	});
-
-	it("still draws milestones for repos above the ten-thousand mark", () => {
-		const history = makeHistory([12_000, 60_000, 120_000]);
-		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
-
-		expect(result).toContain("50K ★");
-		expect(result).toContain("100K ★");
-		expect(result).toContain('stroke-dasharray="6,6"');
+		expect(milestones.length).toBeGreaterThan(1);
+		for (const { label } of milestones) {
+			expect(result).toContain(`>${label}</text>`);
+		}
+		expect(result.match(/stroke-dasharray="6,6"/g)).toHaveLength(milestones.length);
 	});
 
 	it("floors the Y-axis at zero when beginAtZero is enabled", () => {
@@ -288,52 +259,12 @@ describe("renderSvgChart: star history", () => {
 		expect(fromZero).toContain(">0</text>");
 	});
 
-	it("omits milestone lines when milestones are disabled", () => {
-		const history = makeHistory([80, 120, 150]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.STAR_HISTORY, history, milestones: false },
-				locale: "en",
-			}),
-		);
-
-		expect(result).not.toContain("100 ★");
-		expect(result).not.toContain('stroke-dasharray="6,6"');
-	});
-
-	it("omits custom milestone lines when milestones are disabled", () => {
-		const history = makeHistory([80, 120, 150]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: {
-					kind: ChartKind.STAR_HISTORY,
-					history,
-					milestones: false,
-					customMilestones: [90, 110],
-				},
-				locale: "en",
-			}),
-		);
-
-		expect(result).not.toContain("90 ★");
-		expect(result).not.toContain('stroke-dasharray="6,6"');
-	});
-
 	it("formats large axis values compactly so labels do not overflow", () => {
 		const history = makeHistory([10_000, 30_000, 50_000]);
 		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
 
 		expect(result).toMatch(THOUSANDS_AXIS_LABEL);
 		expect(result).not.toContain("50,000");
-	});
-
-	it("limits to 30 data points for large histories", () => {
-		const stars = Array.from({ length: 50 }, (_, index) => 10 + index);
-		const history = makeHistory(stars);
-		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
-		const circleCount = [...result.matchAll(DATA_POINT_CIRCLE)].length;
-
-		expect(circleCount).toBe(30);
 	});
 
 	it("anchors the line to the baseline so it starts from zero, not mid-air", () => {
@@ -409,19 +340,6 @@ describe("renderSvgChart: star history", () => {
 		expect(result).toContain(`fill="${COLORS.accent}"`);
 	});
 
-	it("applies a custom line color", () => {
-		const history = makeHistory([10, 20, 30]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.STAR_HISTORY, history, lineColor: "#6f42c1" },
-				locale: "en",
-			}),
-		);
-
-		expect(result).toContain('stroke="#6f42c1"');
-		expect(result).not.toContain(COLORS.accent);
-	});
-
 	it("applies a custom line width to data lines", () => {
 		const history = makeHistory([10, 20, 30]);
 		const result = expectSvg(
@@ -435,12 +353,11 @@ describe("renderSvgChart: star history", () => {
 		expect(result).toContain('stroke-width="5"');
 	});
 
-	it("uses default accent color and width when no overrides given", () => {
+	it("uses the default line width when none is given", () => {
 		const history = makeHistory([10, 20, 30]);
 		const result = expectSvg(renderSvgChart({ request: { kind: ChartKind.STAR_HISTORY, history }, locale: "en" }));
 
-		expect(result).toContain(`stroke="${COLORS.accent}"`);
-		expect(result).toContain('stroke-width="2.5"');
+		expect(result).toContain(`stroke-width="${SVG_CHART.lineWidth}"`);
 	});
 
 	it("does not let the smoothed line overshoot below the axis on valleys", () => {
@@ -472,20 +389,6 @@ describe("renderSvgChart: star history", () => {
 		);
 
 		expect([...result.matchAll(DATA_POINT_CIRCLE)].length).toBe(3);
-	});
-
-	it("plots the full history when maxPoints is 0", () => {
-		const stars = Array.from({ length: 40 }, (_, index) => 10 + index);
-		const history = makeHistory(stars);
-		const result = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.STAR_HISTORY, history },
-				locale: "en",
-				maxPoints: 0,
-			}),
-		);
-
-		expect([...result.matchAll(DATA_POINT_CIRCLE)].length).toBe(40);
 	});
 
 	it("renders y-axis labels on the left by default", () => {
@@ -684,40 +587,6 @@ describe("renderSvgChart: per repo", () => {
 		expect(result).toContain("<svg");
 		expect(result).toContain("</svg>");
 	});
-
-	it("uses custom title when provided", () => {
-		const history = makeMultiRepoHistory([{ repoStars: { "user/repo-a": 10 } }, { repoStars: { "user/repo-a": 20 } }]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: {
-					kind: ChartKind.PER_REPO,
-					history,
-					repoFullName: "user/repo-a",
-					title: "Custom Title",
-				},
-				locale: "en",
-			}),
-		);
-
-		expect(result).toContain("Custom Title");
-	});
-
-	it("applies a custom line color", () => {
-		const history = makeMultiRepoHistory([{ repoStars: { "user/repo-a": 10 } }, { repoStars: { "user/repo-a": 20 } }]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: {
-					kind: ChartKind.PER_REPO,
-					history,
-					repoFullName: "user/repo-a",
-					lineColor: "#6f42c1",
-				},
-				locale: "en",
-			}),
-		);
-
-		expect(result).toContain('stroke="#6f42c1"');
-	});
 });
 
 describe("renderSvgChart: comparison", () => {
@@ -737,56 +606,7 @@ describe("renderSvgChart: comparison", () => {
 		expect(result).toContain('class="legend"');
 	});
 
-	it("uses comparison colors", () => {
-		const history = makeMultiRepoHistory([
-			{ repoStars: { "user/repo-a": 10, "user/repo-b": 5 } },
-			{ repoStars: { "user/repo-a": 15, "user/repo-b": 8 } },
-		]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.COMPARISON, history, repoNames: ["user/repo-a", "user/repo-b"] },
-				locale: "en",
-			}),
-		);
-
-		expect(result).toContain(CHART_COMPARISON_COLORS[0]);
-		expect(result).toContain(CHART_COMPARISON_COLORS[1]);
-	});
-
-	it("uses full names when multiple owners", () => {
-		const history = makeMultiRepoHistory([
-			{ repoStars: { "alice/repo-a": 10, "bob/repo-b": 5 } },
-			{ repoStars: { "alice/repo-a": 15, "bob/repo-b": 8 } },
-		]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.COMPARISON, history, repoNames: ["alice/repo-a", "bob/repo-b"] },
-				locale: "en",
-			}),
-		);
-
-		expect(result).toContain("alice/repo-a");
-		expect(result).toContain("bob/repo-b");
-	});
-
-	it("includes title", () => {
-		const history = makeMultiRepoHistory([{ repoStars: { "user/repo-a": 10 } }, { repoStars: { "user/repo-a": 20 } }]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: {
-					kind: ChartKind.COMPARISON,
-					history,
-					repoNames: ["user/repo-a"],
-					title: "My Comparison",
-				},
-				locale: "en",
-			}),
-		);
-
-		expect(result).toContain("My Comparison");
-	});
-
-	it("keeps the comparison palette and applies a custom line width", () => {
+	it("applies a custom line width to every comparison line", () => {
 		const history = makeMultiRepoHistory([
 			{ repoStars: { "user/repo-a": 10, "user/repo-b": 5 } },
 			{ repoStars: { "user/repo-a": 15, "user/repo-b": 8 } },
@@ -799,9 +619,7 @@ describe("renderSvgChart: comparison", () => {
 			}),
 		);
 
-		expect(result).toContain(CHART_COMPARISON_COLORS[0]);
-		expect(result).toContain(CHART_COMPARISON_COLORS[1]);
-		expect(result).toContain('stroke-width="5"');
+		expect(result.match(/stroke-width="5"/g)).toHaveLength(2);
 	});
 });
 
@@ -871,32 +689,16 @@ describe("renderSvgChart: forecast", () => {
 		expect(result).toContain('stroke-dasharray="8,4"');
 	});
 
-	it("uses correct colors for 3 datasets", () => {
-		const history = makeHistory([10, 20, 30]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.FORECAST, history, forecastData },
-				locale: "en",
-			}),
-		);
+	it("draws the label of every series of the spec in the legend", () => {
+		const request = { kind: ChartKind.FORECAST, history: makeHistory([10, 20, 30]), forecastData } as const;
+		const spec = buildChartSpec({ request, locale: "en", palette: LIGHT_PALETTE, axisLabels: AxisLabels.THINNED });
+		const result = expectSvg(renderSvgChart({ request, locale: "en" }));
+		const series = spec?.series ?? [];
 
-		expect(result).toContain(COLORS.accent);
-		expect(result).toContain(COLORS.positive);
-		expect(result).toContain(COLORS.negative);
-	});
-
-	it("includes forecast labels in legend", () => {
-		const history = makeHistory([10, 20, 30]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.FORECAST, history, forecastData },
-				locale: "en",
-			}),
-		);
-
-		expect(result).toContain("Star History");
-		expect(result).toContain("Linear Regression");
-		expect(result).toContain("Weighted Moving Average");
+		expect(series).toHaveLength(3);
+		for (const { label } of series) {
+			expect(result).toContain(`>${label}</text>`);
+		}
 	});
 
 	it("generates valid XML attributes in legend for dashed datasets", () => {
@@ -909,68 +711,5 @@ describe("renderSvgChart: forecast", () => {
 		);
 
 		expect(result).not.toMatch(CONSECUTIVE_XML_ATTRIBUTES);
-	});
-
-	it("includes week labels", () => {
-		const history = makeHistory([10, 20, 30]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.FORECAST, history, forecastData },
-				locale: "en",
-			}),
-		);
-
-		expect(result).toContain("Week 1");
-	});
-
-	it("uses custom title when provided", () => {
-		const history = makeHistory([10, 20, 30]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.FORECAST, history, forecastData, title: "Custom Forecast" },
-				locale: "en",
-			}),
-		);
-
-		expect(result).toContain("Custom Forecast");
-	});
-
-	it("respects locale", () => {
-		const history: History = {
-			snapshots: [
-				makeSnapshot({ timestamp: "2026-03-15T00:00:00Z", totalStars: 10 }),
-				makeSnapshot({ timestamp: "2026-06-20T00:00:00Z", totalStars: 20 }),
-			],
-		};
-
-		const enResult = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.FORECAST, history, forecastData },
-				locale: "en",
-			}),
-		);
-		const esResult = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.FORECAST, history, forecastData },
-				locale: "es",
-			}),
-		);
-
-		expect(enResult).toContain("Mar");
-		expect(esResult).toContain("mar");
-	});
-
-	it("applies custom color to the historical series only, keeping trend colors", () => {
-		const history = makeHistory([10, 20, 30]);
-		const result = expectSvg(
-			renderSvgChart({
-				request: { kind: ChartKind.FORECAST, history, forecastData, lineColor: "#6f42c1" },
-				locale: "en",
-			}),
-		);
-
-		expect(result).toContain("#6f42c1");
-		expect(result).toContain(COLORS.positive);
-		expect(result).toContain(COLORS.negative);
 	});
 });

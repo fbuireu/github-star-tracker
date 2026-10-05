@@ -3,6 +3,7 @@ import type { ForecastData } from "@domain/forecast";
 import { ForecastMethod, ForecastSource } from "@domain/forecast";
 import type { StargazerDiffResult } from "@domain/stargazers";
 import type { History } from "@domain/types";
+import { LOCALES, type Locale } from "@i18n";
 import { makeComparisonResults, makeConfig, makeHistory, makeMultiRepoHistory, makeRepoResult } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import { generateMarkdownReport } from "./markdown";
@@ -60,33 +61,6 @@ describe("generateMarkdownReport", () => {
 		expect(report).toContain("**Growth:** +100%");
 	});
 
-	it("omits the velocity section by default", () => {
-		const report = renderMarkdown({ velocityHistory });
-
-		expect(report).not.toContain("Growth Velocity");
-	});
-
-	it("computes velocity from the tracked history, not the chart history", () => {
-		const chartHistory = makeHistory({ starCounts: [100, 5_000], stepDays: 100 });
-
-		const report = renderMarkdown({
-			history: chartHistory,
-			velocityHistory,
-			config: { velocityMetrics: true },
-		});
-
-		expect(report).toContain("**Stars per day:** 10");
-		expect(report).not.toContain("**Stars per day:** 49");
-	});
-
-	it("omits velocity when only a chart history is available", () => {
-		const chartHistory = makeHistory({ starCounts: [100, 200], stepDays: 10 });
-
-		const report = renderMarkdown({ history: chartHistory, config: { velocityMetrics: true } });
-
-		expect(report).not.toContain("Growth Velocity");
-	});
-
 	it("renders velocity with only the daily rate when growth and the next Milestone are unavailable", () => {
 		const flatHistory = makeHistory({ starCounts: [0, 0], stepDays: 10 });
 
@@ -98,18 +72,6 @@ describe("generateMarkdownReport", () => {
 		expect(report).toContain("Growth Velocity");
 		expect(report).toContain("Stars per day");
 		expect(report).not.toContain("**Growth:**");
-	});
-
-	it("shows negative growth without a plus sign", () => {
-		const decliningHistory = makeHistory({ starCounts: [200, 150], stepDays: 10 });
-
-		const report = renderMarkdown({
-			velocityHistory: decliningHistory,
-			config: { velocityMetrics: true },
-		});
-
-		expect(report).toContain("-25%");
-		expect(report).not.toContain("+-25%");
 	});
 
 	it("nests velocity under the forecast section when both are present", () => {
@@ -145,6 +107,45 @@ describe("generateMarkdownReport", () => {
 	it("notes the Baseline Snapshot's date, and omits the note on a first run, which has none", () => {
 		expect(renderMarkdown()).toContain("> Compared to snapshot from 2026-01-01");
 		expect(renderMarkdown({ baselineSnapshotTimestamp: null })).not.toContain("Compared to snapshot from");
+	});
+
+	it("prints the Summary of a Run that moved, with its gains, its losses and its signed net change", () => {
+		const report = renderMarkdown();
+
+		expect(report).toContain("\n## Summary\n");
+		expect(report).toContain("- **Stars gained:** 5");
+		expect(report).toContain("- **Stars lost:** 2");
+		expect(report).toContain("- **Net change:** +3");
+	});
+
+	it("prints the Summary of a Run whose gains and losses cancel, so a rename still shows what it lost", () => {
+		const results = makeComparisonResults({
+			repos: [
+				makeRepoResult({ name: "kept", overrides: { current: 60, previous: 60, delta: 0 } }),
+				makeRepoResult({ name: "fresh", overrides: { current: 7, previous: null, isNew: true } }),
+				makeRepoResult({ name: "gone", overrides: { current: 0, previous: 7, delta: -7, isRemoved: true } }),
+			],
+			summary: { totalStars: 67, totalPrevious: 67, totalDelta: 0, newStars: 0, lostStars: 7, changed: true },
+		});
+
+		const report = renderMarkdown({ results });
+
+		expect(report).toContain("\n## Summary\n");
+		expect(report).toContain("- **Stars gained:** 0");
+		expect(report).toContain("- **Stars lost:** 7");
+		expect(report).toContain("- **Net change:** 0");
+	});
+
+	it("keeps the repository table when no repository is active", () => {
+		const report = renderMarkdown({
+			results: makeComparisonResults({
+				repos: [],
+				summary: { totalStars: 0, totalPrevious: 0, totalDelta: 0, newStars: 0, lostStars: 0, changed: false },
+			}),
+		});
+
+		expect(report).toContain("\n## Repositories\n");
+		expect(report).toContain("| Repositories | Stars | Change | Trend |");
 	});
 
 	it("shows NEW badge for new repos", () => {
@@ -188,6 +189,28 @@ describe("generateMarkdownReport", () => {
 
 		expect(report).toContain("Star Trend");
 		expect(report).toContain("![Star History](./charts/star-history.svg)");
+	});
+
+	const STAR_HISTORY_CAPTIONS: { locale: Locale; caption: string }[] = [
+		{ locale: "en", caption: "Star History" },
+		{ locale: "es", caption: "Historial de Estrellas" },
+		{ locale: "ca", caption: "Historial d'Estrelles" },
+		{ locale: "it", caption: "Storia delle Stelle" },
+	];
+
+	it.each(STAR_HISTORY_CAPTIONS)(
+		"captions the star history image from the bundle in $locale",
+		({ locale, caption }) => {
+			const history = makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 20 }, { "user/repo-a": 23 }], stepDays: 1 });
+
+			const report = renderMarkdown({ history, config: { includeCharts: true, locale } });
+
+			expect(report).toContain(`![${caption}](./charts/star-history.svg)`);
+		},
+	);
+
+	it("states the star history caption for every locale the bundles ship", () => {
+		expect(STAR_HISTORY_CAPTIONS.map(({ locale }) => locale)).toEqual(LOCALES);
 	});
 
 	it("includes comparison chart in markdown", () => {
@@ -277,12 +300,6 @@ describe("generateMarkdownReport", () => {
 
 		expect(report).toContain("New Stargazers");
 		expect(report).toContain("No new stargazers since last run");
-	});
-
-	it("excludes stargazer section when stargazerDiff is null", () => {
-		const report = renderMarkdown({ stargazerDiff: null });
-
-		expect(report).not.toContain("New Stargazers");
 	});
 
 	it("renders the sampled note alongside new stargazers", () => {
@@ -417,47 +434,6 @@ describe("generateMarkdownReport", () => {
 		expect(drawn).toContain("![user/repo-a](./charts/forecast-user-repo-a.svg)");
 		expect(undrawn).not.toContain("forecast-user-repo-a.svg");
 		expect(undrawn).toContain("By Repository");
-	});
-
-	it("renders a translated label for every forecast method", () => {
-		const forecastData: ForecastData = {
-			aggregate: {
-				forecasts: [
-					{
-						method: ForecastMethod.LINEAR_REGRESSION,
-						points: [
-							{ weekOffset: 1, predicted: 25 },
-							{ weekOffset: 2, predicted: 27 },
-							{ weekOffset: 3, predicted: 29 },
-							{ weekOffset: 4, predicted: 31 },
-						],
-					},
-					{
-						method: ForecastMethod.WEIGHTED_MOVING_AVERAGE,
-						points: [
-							{ weekOffset: 1, predicted: 24 },
-							{ weekOffset: 2, predicted: 26 },
-							{ weekOffset: 3, predicted: 28 },
-							{ weekOffset: 4, predicted: 30 },
-						],
-					},
-				],
-			},
-			repos: [],
-		};
-
-		const report = renderMarkdown({ forecastData });
-
-		expect(report).toContain("Linear Regression");
-		expect(report).toContain("Weighted Moving Average");
-		expect(report).not.toContain(ForecastMethod.LINEAR_REGRESSION);
-		expect(report).not.toContain(ForecastMethod.WEIGHTED_MOVING_AVERAGE);
-	});
-
-	it("excludes forecast section when forecastData is null", () => {
-		const report = renderMarkdown({ forecastData: null });
-
-		expect(report).not.toContain("Growth Forecast");
 	});
 
 	it("escapes every GitHub-sourced string it prints", () => {

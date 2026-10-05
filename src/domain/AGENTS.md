@@ -183,6 +183,9 @@ every value is a same-format ISO string.
   the caller must.
 - `formatDate` returns an **empty string** for an unparseable timestamp, matching `buildAxisLabels`, whose
   contract is "an empty label is a tick that must not render". Callers must not assume a non-empty date.
+- `isoDate(timestamp)` cuts a timestamp at its first `T` and is the one place a Report's date is cut: a value without
+  a `T` comes back whole, so a malformed `starredAt` prints as it arrived. `intlCode(locale)` is the Intl code every
+  formatter resolves a `Locale` to, and the one the email chart hands Chart.js as `options.locale`.
 - `buildAxisLabels` always returns an array the same length as its input, and keeps `lastYear` as closure
   state across the `.map`; it only works because `map` runs in order on sorted input.
 - `buildStarHistory` emits just two edges when even the earliest `starred_at` is at or after `now`, silently

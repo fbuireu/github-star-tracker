@@ -241,32 +241,3 @@ One guide per layer, no deeper: the `infrastructure/` adapters and `shared/tests
 | **Add a report format** | New pure renderer in [`src/presentation/`](./src/presentation) (data in, string out, no I/O) reading `buildReportModel` rather than re-deriving sections, plus a colocated test; one field on `RenderedRun` and one line in `renderRun` ([`run.ts`](./src/presentation/run.ts)); an `Artefact` entry and filename in `@infrastructure/persistence/storage`, plus a field on `PublishedArtefacts` and a `writeArtefact` line in `publish` ([`data-branch.ts`](./src/infrastructure/persistence/data-branch.ts)); add an output to `action.yml` and `setOutputs` if it should be exposed. |
 | **Add a chart option** | Input plumbing as above; thread it through the `style` object in [`src/presentation/charts.ts`](./src/presentation/charts.ts) and, when the email honours it too, through `emailChartStyle` in [`src/presentation/shared.ts`](./src/presentation/shared.ts), with a row in the shared-option table of [`run.test.ts`](./src/presentation/run.test.ts). If it changes **what** is plotted it belongs on the matching `ChartRequest` variant or on `ChartSpec` in [`src/presentation/chart-spec.ts`](./src/presentation/chart-spec.ts) and both adapters read it; if it only changes **how**, implement it in [`src/presentation/svg-chart.ts`](./src/presentation/svg-chart.ts) (all SVG primitives live behind the private `renderSvg`) and mirror it in [`src/presentation/chart.ts`](./src/presentation/chart.ts) if email charts should honour it ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)); add a sample SVG under `docs/examples/`. |
 | **Add a chart kind** | One variant on `ChartRequest` and one `case` in `buildChartSpec` (`src/presentation/chart-spec.ts`), plus the spec builder itself. Neither adapter changes, because `renderSvgChart` and `chartImageUrl` take any request. Then emit it from `buildChartFiles` (`charts.ts`) and/or `html.ts`, and add a filename to `CHART_FILES`. |
-
-## 8. Known inconsistencies
-
-Each entry names what the code does against a written rule or decision, and the evidence.
-
-- **Chart text outside the bundles.** The per-repository Chart title (`` `${repoFullName} Star History` ``) and the
-  `'Stars'` series label are English literals in `buildChartSpec`, the two exceptions
-  [ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md) records. The per-repository
-  Forecast title, the repository name put before `forecast.sectionTitle`, is a third it does not record.
-- **Report text outside one key.** `html.ts` builds "Total Stars" out of two bundle keys, and `markdown.ts` writes the
-  Star History image's alt text as an English literal although `report.starHistory` exists.
-- **`markdown.ts` decides two sections.** It drops the repository table when `model.sorted` is empty and the Summary
-  when `summary.totalDelta` is 0, so a Run whose only movement is a rename shows a Summary in the HTML Report and
-  none in the markdown one; `buildReportModel` is meant to decide both.
-- **Rules asserted twice.** `chart.test.ts` and `svg-chart.test.ts` assert Chart content `chart-spec.test.ts` owns;
-  `html.test.ts` and `markdown.test.ts` assert section rules `report-model.test.ts` owns; `tracker.test.ts` repeats
-  dialect parity from `run.test.ts` and chart fallbacks from `charts.test.ts` beyond the #148 pin; and
-  `stargazers.test.ts` repeats Smart Sampling arithmetic `sampling.test.ts` owns.
-- **One rule, several writers.** Whether a History holds enough Snapshots to draw is spelled out in `chart-spec.ts`,
-  `charts.ts` and `report-model.ts` rather than owned once, and so is the ISO date of a timestamp, in `shared.ts`,
-  `html.ts` and `markdown.ts`.
-- **Failure text.** The repository guard in `initializeDataBranch` turns every failure of
-  `git rev-parse --is-inside-work-tree` into the checkout instruction rather than only "not a git repository".
-- **Email Charts.** A `chart-line-color` written in 3-, 4- or 8-digit hex breaks or recolours the email fill, which
-  appends an alpha to the colour, and the email's y-axis ticks are formatted by Chart.js outside the Run's Locale,
-  a difference [ADR 0010](./docs/adr/0010-quickchart-renders-the-email-charts.md) does not list.
-
-When one is found, record it here with the evidence that proves it, and delete the entry in the commit that
-fixes it. A stale entry sends the next reader hunting a problem that no longer exists.

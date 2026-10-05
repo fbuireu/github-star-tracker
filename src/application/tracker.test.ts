@@ -45,7 +45,10 @@ vi.mock("@domain/forecast", async (importOriginal) => ({
 	computeForecast: vi.fn(),
 }));
 vi.mock("@domain/stargazers", () => ({ diffStargazers: vi.fn(), buildStargazerMap: vi.fn() }));
-vi.mock("@domain/formatting", () => ({ deltaIndicator: vi.fn() }));
+vi.mock("@domain/formatting", async (importOriginal) => ({
+	...(await importOriginal<typeof import("@domain/formatting")>()),
+	deltaIndicator: vi.fn(),
+}));
 vi.mock("@infrastructure/github/filters", () => ({ getRepos: vi.fn() }));
 vi.mock("@infrastructure/github/stargazers", () => ({ fetchAllStargazers: vi.fn() }));
 vi.mock("@infrastructure/persistence/data-branch", () => ({ withDataBranch: vi.fn() }));
@@ -379,45 +382,6 @@ describe("trackStars", () => {
 			);
 			expect(publishedChart("star-history.svg")?.svg).toBe("<svg>chart</svg>");
 		});
-		it("draws each per-repo chart on its own timeline, not the shared global one", async () => {
-			vi.mocked(getRepos).mockResolvedValue([
-				makeRepoInfo({ name: "old", stars: 100, overrides: { owner: "u", fullName: "u/old" } }),
-				makeRepoInfo({ name: "new", stars: 30, overrides: { owner: "u", fullName: "u/new" } }),
-			]);
-			mockMeasurement({
-				results: {
-					repos: [
-						makeRepoResult({ name: "old", overrides: { fullName: "u/old", owner: "u", current: 100 } }),
-						makeRepoResult({ name: "new", overrides: { fullName: "u/new", owner: "u", current: 30 } }),
-					],
-					summary: defaultSummary,
-				},
-			});
-			vi.mocked(fetchAllStargazers).mockResolvedValue([
-				{
-					repoFullName: "u/old",
-					stargazers: makeStargazerSeries({
-						count: 100,
-						startMs: Date.UTC(2025, 0, 1),
-						stepDays: 5,
-					}),
-				},
-				{
-					repoFullName: "u/new",
-					stargazers: makeStargazerSeries({ count: 30, startMs: Date.UTC(2026, 4, 25) }),
-				},
-			]);
-			const perRepo: Record<string, { snapshots: { timestamp: string; totalStars: number }[] }> = {};
-			vi.mocked(renderSvgChart).mockImplementation(({ request }) => {
-				if (request.kind === ChartKind.PER_REPO) perRepo[request.repoFullName] = request.history;
-				return "<svg/>";
-			});
-			await trackStars();
-			const series = perRepo["u/new"].snapshots.map((snapshot) => snapshot.totalStars);
-			expect(perRepo["u/new"].snapshots[0].timestamp.startsWith("2026-05")).toBe(true);
-			expect(series[0]).toBeGreaterThan(0);
-			expect(series.at(-1)).toBe(30);
-		});
 		it("falls back to stored snapshots for a repo whose stargazers were unreachable (#148)", async () => {
 			vi.mocked(getRepos).mockResolvedValue([
 				makeRepoInfo({ name: "reachable", stars: 100, overrides: { owner: "u", fullName: "u/reachable" } }),
@@ -464,24 +428,6 @@ describe("trackStars", () => {
 			await trackStars();
 			expect(perRepo["u/restricted"]).toBe(storedSnapshots);
 			expect(perRepo["u/reachable"]).not.toBe(storedSnapshots);
-		});
-		it("skips SVG chart when includeCharts is false", async () => {
-			vi.mocked(loadConfig).mockReturnValue({ ...defaultConfig, includeCharts: false });
-			const historyWithSnapshots = {
-				snapshots: [
-					{ timestamp: "2026-01-01T00:00:00Z", totalStars: 80, repos: [] },
-					{ timestamp: "2026-01-02T00:00:00Z", totalStars: 100, repos: [] },
-				],
-			};
-			mockMeasurement({ updatedHistory: historyWithSnapshots });
-			await trackStars();
-			expect(renderSvgChart).not.toHaveBeenCalled();
-			expect(published().charts).toHaveLength(0);
-		});
-		it("skips SVG chart when history has fewer than 2 snapshots", async () => {
-			await trackStars();
-			expect(renderSvgChart).not.toHaveBeenCalled();
-			expect(published().charts).toHaveLength(0);
 		});
 		it("skips writeChart when the star-history chart comes back null", async () => {
 			const historyWithSnapshots = {
@@ -538,20 +484,10 @@ describe("trackStars", () => {
 				[ChartKind.FORECAST]: "<svg>fc</svg>",
 			});
 			await trackStars();
-			expect(chartRequests(ChartKind.PER_REPO)).toContainEqual(
-				expect.objectContaining({ repoFullName: "user/repo-a" }),
-			);
 			expect(publishedChart("user-repo-a.svg")?.svg).toBe("<svg>repo</svg>");
 			expect(publishedChart("comparison.svg")?.svg).toBe("<svg>cmp</svg>");
 			expect(chartRequests(ChartKind.FORECAST)).toContainEqual(expect.objectContaining({ forecastData }));
 			expect(publishedChart("forecast.svg")?.svg).toBe("<svg>fc</svg>");
-		});
-		it("excludes removed repos from the chart set", async () => {
-			mockCharts({ [ChartKind.PER_REPO]: "<svg>repo</svg>" });
-			await trackStars();
-			expect(chartRequests(ChartKind.PER_REPO)).not.toContainEqual(
-				expect.objectContaining({ repoFullName: "user/repo-c" }),
-			);
 		});
 		it("skips writing charts that come back null", async () => {
 			await trackStars();
@@ -559,11 +495,6 @@ describe("trackStars", () => {
 			expect(chartRequests(ChartKind.COMPARISON).length).toBeGreaterThan(0);
 			expect(chartRequests(ChartKind.FORECAST).length).toBeGreaterThan(0);
 			expect(publishedChart("forecast.svg")).toBeUndefined();
-		});
-		it("skips the forecast chart when no forecast data is available", async () => {
-			vi.mocked(computeForecast).mockReturnValue(null);
-			await trackStars();
-			expect(chartRequests(ChartKind.FORECAST)).toHaveLength(0);
 		});
 	});
 	describe("github enterprise (GHES)", () => {
@@ -642,7 +573,7 @@ describe("trackStars", () => {
 		});
 	});
 	describe("data flow", () => {
-		it("hands both report renderers the same params, config included", async () => {
+		it("hands both report renderers the config the Run was loaded with", async () => {
 			const config = {
 				...defaultConfig,
 				chartTheme: ChartTheme.LIGHT,
@@ -655,7 +586,7 @@ describe("trackStars", () => {
 			const htmlParams = vi.mocked(generateHtmlReport).mock.calls[0][0];
 
 			expect(markdownParams.config).toBe(config);
-			expect(htmlParams).toBe(markdownParams);
+			expect(htmlParams.config).toBe(config);
 		});
 		it("hands the tracked set and the stored history to the measurement", async () => {
 			await trackStars();

@@ -5,6 +5,7 @@
 	"report": {
 		"title": "Report Tracciamento Stelle",
 		"total": "Totale",
+		"totalStars": "Stelle Totali",
 		"change": "Variazione",
 		"comparedTo": "Confrontato con snapshot del {date}",
 		"firstRun": "prima esecuzione",
@@ -26,6 +27,7 @@
 		"byRepository": "Per Repository",
 		"individualRepoCharts": "Grafici per Repository",
 		"repoChartHeading": "{name}: {count} ★ ({delta})",
+		"repoChartTitle": "Storia delle Stelle: {name}",
 		"trendLine": "Tendenza",
 		"badges": {
 			"new": "NUOVO"
@@ -67,6 +69,7 @@
 		"weightedMovingAverage": "Media Mobile Ponderata",
 		"aggregate": "Previsione Aggregata",
 		"byRepository": "Per Repository",
+		"repoChartTitle": "Previsione di Crescita: {name}",
 		"insufficientData": "Dati insufficienti per la previsione (servono almeno 3 snapshot)",
 		"method": "Metodo",
 		"predicted": "Previsto"

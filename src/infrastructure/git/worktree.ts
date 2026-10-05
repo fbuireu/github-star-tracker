@@ -1,12 +1,17 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as core from "@actions/core";
+import { errorMessage } from "@shared/errors";
 import { authenticatedArgs, execute } from "./commands";
+
+const NOT_A_REPOSITORY_PATTERN = /not a git repository/i;
 
 function ensureGitRepository(): void {
 	try {
 		execute({ args: ["rev-parse", "--is-inside-work-tree"] });
-	} catch {
+	} catch (error) {
+		if (!NOT_A_REPOSITORY_PATTERN.test(errorMessage(error))) throw error;
+
 		throw new Error(
 			'This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.',
 		);

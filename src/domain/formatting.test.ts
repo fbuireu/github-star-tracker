@@ -1,5 +1,37 @@
+import { LOCALES, type Locale } from "@i18n";
 import { describe, expect, it } from "vitest";
-import { buildAxisLabels, deltaIndicator, formatCount, formatDate, formatSignedPercent, trendIcon } from "./formatting";
+import {
+	buildAxisLabels,
+	deltaIndicator,
+	formatCount,
+	formatDate,
+	formatSignedPercent,
+	intlCode,
+	isoDate,
+	trendIcon,
+} from "./formatting";
+
+describe("isoDate", () => {
+	it("keeps the date of an ISO timestamp", () => {
+		expect(isoDate("2026-01-15T10:00:00Z")).toBe("2026-01-15");
+		expect(isoDate("2026-01-15T10:00:00.123+02:00")).toBe("2026-01-15");
+	});
+
+	it("returns a value that has no time part unchanged", () => {
+		expect(isoDate("2026-01-15")).toBe("2026-01-15");
+		expect(isoDate("")).toBe("");
+	});
+});
+
+describe("intlCode", () => {
+	it("names the Intl code each Locale formats with, in the order the bundles are listed", () => {
+		expect(LOCALES.map((locale) => intlCode(locale))).toEqual(["en-US", "es-ES", "ca-ES", "it-IT"]);
+	});
+
+	it("falls back to the English code for a value outside the union", () => {
+		expect(intlCode("fr" as Locale)).toBe("en-US");
+	});
+});
 
 describe("formatCount", () => {
 	it("formats small numbers as-is", () => {

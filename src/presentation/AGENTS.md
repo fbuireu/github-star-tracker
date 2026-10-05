@@ -17,8 +17,10 @@ email path goes through QuickChart because mail clients will not display inline 
   options). `buildChartSpec({ request, locale,
   palette, axisLabels, range, maxPoints })` maps one onto a `ChartSpec`: labels, an ordered list of series
   with a resolved colour, the title, whether to show a legend, and **the Milestones to draw, already
-  resolved, already filtered to the visible ones and already labelled**. It returns `null` when there is too
-  little history. The spec builders behind it are module-private
+  resolved, already filtered to the visible ones and already labelled**. It returns `null` when `isPlottable`
+  says the History is too short to draw, the one answer to that question: [`charts.ts`](./charts.ts) and
+  [`report-model.ts`](./report-model.ts) ask it too instead of counting Snapshots. The spec builders behind it are
+  module-private
   ([ADR 0014](../../docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
 - **The two forecast kinds mirror the two star-history kinds.** `FORECAST` is to `PER_REPO_FORECAST` what
   `STAR_HISTORY` is to `PER_REPO`: the aggregate plots `forecastData.aggregate` over `snapshot.totalStars`,
@@ -35,10 +37,12 @@ email path goes through QuickChart because mail clients will not display inline 
 - **A `ChartMilestone` carries its own `label`.** The text is formatted once, in `visibleMilestones`, with
   `formatCount` and the requested Locale, and both adapters draw the string they are handed. The one number an
   adapter formats is a y-axis tick, because each adapter picks its own ticks: `svg-chart.ts` formats the values
-  `niceAxisSteps` picks with `formatCount`, and Chart.js formats the email's.
+  `niceAxisSteps` picks with `formatCount`, and Chart.js formats the email's, in the Run's Locale because
+  `chartImageUrl` sets `options.locale` to the Intl code `intlCode` returns. The email prints the tick in full
+  (`12,000`) where the SVG compacts it (`12K`).
 - **[`charts.ts`](./charts.ts) orchestrates.** `buildChartFiles` reads `Config`, builds the shared style object once, binds
   it into a local `renderChart(request)`, and returns `{ filename, svg }[]`. It renders nothing itself and
-  returns `[]` when charts are off or the history has fewer than 2 snapshots.
+  returns `[]` when charts are off or the aggregate History is not `isPlottable`.
 - **A per-repo Forecast Chart is drawn only for a repository the Forecast fitted to its own history.**
   `buildChartFiles` walks `forecastData.repos`, keeps the ones whose `source` is `ForecastSource.OWN`, and
   plots each over `chartHistories.reconstructedForRepo(name)`: the very History `@domain/forecast` fitted, so
@@ -64,11 +68,16 @@ email path goes through QuickChart because mail clients will not display inline 
   the drawing.
 - **[`chart.ts`](./chart.ts) is the email path.** `chartImageUrl({ request, locale, ...style })` is its only chart export,
   producing `quickchart.io` URLs consumed by [`html.ts`](./html.ts). It is a parallel, lower-fidelity rendering of the
-  *same* spec, never an input to the SVG files.
+  *same* spec, never an input to the SVG files. A series' fill is its colour at a translucent alpha, written by
+  `translucent` from any of the four hex forms `chart-line-color` accepts (`#rgb`, `#rgba`, `#rrggbb`,
+  `#rrggbbaa`), scaling the alpha a colour already carries; the line itself keeps the colour as configured. Every
+  URL names Chart.js 4 (`v=` from `CHART.chartJsVersion`), the version the config is written for: QuickChart's
+  default, 2.9.4, ignores `plugins.title`, `plugins.legend` and `scales.x`.
 
-Default titles come from `buildChartSpec`, and three of them are one bundle key each. The per-repo default is
-composed in English (`` `${repoFullName} Star History` ``), and the per-repo Forecast default puts the repository
-name before the translated `forecast.sectionTitle`, an order no bundle can change.
+Default titles come from `buildChartSpec`, each of them one bundle key: `report.starHistory`,
+`report.topRepositories` and `forecast.sectionTitle`, and for one repository `report.repoChartTitle` and
+`forecast.repoChartTitle`, whose `{name}` a translation puts where its language wants it. The star-history and
+per-repo series are labelled `report.stars`.
 
 `CHART_CHROME` ([`constants.ts`](./constants.ts)) holds the title and milestone font sizes, the milestone stroke width
 and its dash pattern, which `SVG_CHART` and `chart.ts`'s `CHART_STYLE` both read; the SVG side turns the dash array
@@ -151,8 +160,10 @@ are private to `chart-spec.ts`, their only consumer.
 ## The report model
 
 `buildReportModel` (`src/presentation/report-model.ts`) decides which sections a Report has and what is in them;
-`markdown.ts` and `html.ts` are dialects over it, except for the two sections `markdown.ts` decides itself
-(*Invariants & rules*). [`report-model.test.ts`](./report-model.test.ts) is its spec.
+`markdown.ts` and `html.ts` are dialects over it, and neither decides whether a section exists.
+[`report-model.test.ts`](./report-model.test.ts) is its spec. The repository table and the Summary are on every
+Report, a quiet Run and a Run with no active repository included, so the model carries them without a condition and
+no dialect adds one.
 
 - The model resolves `chartHistory` (the history *only* when it is plottable, so the dialects narrow on
   `!== null`), `showComparisonChart`, `topRepos`, `isFirstRun`, the Velocity figures and the
@@ -237,9 +248,9 @@ are private to `chart-spec.ts`, their only consumer.
   Removed Repositories, both head the per-repo charts with `report.repoChartHeading` and both label the
   per-repo Forecast tables with `forecast.byRepository`. Markup and section *placement* differ: `html.ts`
   puts New and Removed after the charts, and renders the stat boxes where the markdown has a Summary
-  section. A section present in one Report and absent from the other is a bug, which `markdown.ts` has in two
-  places, both decided in the dialect: it drops the repository table when `model.sorted` is empty and the
-  Summary when `summary.totalDelta` is 0, while `html.ts` always renders its table and its stat boxes.
+  section. A section present in one Report and absent from the other is a bug: [`run.test.ts`](./run.test.ts)
+  renders the repository table and the Summary through both for a first run, a Run where nothing moved, a Run whose
+  only movement is a rename (its net change is 0, its Stars lost are not) and a Run with no repositories.
 - **`markdown.ts` section order is fixed**: header, comparison note, charts, repo table, new, removed,
   summary, stargazers, forecast, velocity, footer. Velocity nests as an `h3` inside the forecast section when
   a forecast exists, otherwise it is a top-level `h2`; both levels are asserted.
@@ -285,8 +296,8 @@ needs once at module load (`const escapeHtml = escapeFor(EscapeDialect.MARKUP);`
   and one for a repository in no Snapshot is a flat zero line rather than `null`, which the
   [`chart-spec.test.ts`](./chart-spec.test.ts) case "yields a flat zero series for a repository absent from every snapshot" pins.
 - `charts.ts` has a colocated [`charts.test.ts`](./charts.test.ts) covering which files a run produces, the per-repo
-  reconstruction fallback and the theme and line colour it projects. [`tracker.test.ts`](../application/tracker.test.ts) also runs it
-  unmocked, so a break there shows up twice.
+  reconstruction fallback and the theme and line colour it projects. [`tracker.test.ts`](../application/tracker.test.ts) runs it
+  unmocked for the #148 pin alone.
 - Each map dialect's pattern (`MARKUP`, `XML`, `MARKDOWN`) is built once from its map, by `replacerFor` in
   `escaping.ts`, with the `g` flag, and used with `replaceAll`, which resets `lastIndex`; `.exec` or `.test` on
   it would carry `lastIndex` from one call into the next.

@@ -200,7 +200,9 @@ Star Tracker failed: Git command failed: "git <args>"
 above. The second line is git's own message and is the part worth reading.
 
 **Fix:** depends entirely on that message. Missing `permissions: contents: write`, a protected branch rule
-on the data branch and a detached or shallow checkout are the usual causes.
+on the data branch and a detached or shallow checkout are the usual causes. A checkout owned by another user,
+typical in a container job, fails the first command with `detected dubious ownership`; run the
+`git config --global --add safe.directory` command git prints before the action.
 
 ---
 

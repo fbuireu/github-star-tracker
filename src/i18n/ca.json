@@ -5,6 +5,7 @@
 	"report": {
 		"title": "Informe de Seguiment d'Estrelles",
 		"total": "Total",
+		"totalStars": "Estrelles Totals",
 		"change": "Canvi",
 		"comparedTo": "Comparat amb instantània del {date}",
 		"firstRun": "primera execució",
@@ -26,6 +27,7 @@
 		"byRepository": "Per Repositori",
 		"individualRepoCharts": "Gràfics per Repositori",
 		"repoChartHeading": "{name}: {count} ★ ({delta})",
+		"repoChartTitle": "Historial d'Estrelles: {name}",
 		"trendLine": "Tendència",
 		"badges": {
 			"new": "NOU"
@@ -67,6 +69,7 @@
 		"weightedMovingAverage": "Mitjana Mòbil Ponderada",
 		"aggregate": "Previsió Agregada",
 		"byRepository": "Per Repositori",
+		"repoChartTitle": "Previsió de Creixement: {name}",
 		"insufficientData": "Dades insuficients per a la previsió (calen almenys 3 snapshots)",
 		"method": "Mètode",
 		"predicted": "Previst"

@@ -6,6 +6,7 @@ import { ForecastMethod, ForecastSource } from "@domain/forecast";
 import { trendIcon } from "@domain/formatting";
 import type { StargazerDiffResult } from "@domain/stargazers";
 import type { History } from "@domain/types";
+import { LOCALES, type Locale } from "@i18n";
 import { makeComparisonResults, makeConfig, makeHistory, makeMultiRepoHistory, makeRepoResult } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import { COLORS, DARK_PALETTE, LIGHT_PALETTE } from "./constants";
@@ -59,12 +60,6 @@ describe("generateHtmlReport", () => {
 		expect(html).toContain("<li><strong>Stars per day:</strong> 10</li>");
 	});
 
-	it("omits the velocity section by default", () => {
-		const html = renderHtml({ velocityHistory });
-
-		expect(html).not.toContain("Growth Velocity");
-	});
-
 	it("renders velocity with only the daily rate when growth and the next Milestone are unavailable", () => {
 		const flatHistory = makeHistory({ starCounts: [0, 0], stepDays: 10 });
 
@@ -75,7 +70,7 @@ describe("generateHtmlReport", () => {
 		expect(html).not.toContain("Growth:</strong>");
 	});
 
-	it("shows negative growth without a plus sign", () => {
+	it("colours shrinking growth with the negative colour", () => {
 		const decliningHistory = makeHistory({ starCounts: [200, 150], stepDays: 10 });
 
 		const html = renderHtml({
@@ -83,8 +78,7 @@ describe("generateHtmlReport", () => {
 			config: { velocityMetrics: true },
 		});
 
-		expect(html).toContain("-25%");
-		expect(html).not.toContain("+-25%");
+		expect(html).toContain(`<span style="color:${COLORS.negative};">-25%</span>`);
 	});
 
 	it("nests velocity under the forecast section when both are present", () => {
@@ -154,6 +148,23 @@ describe("generateHtmlReport", () => {
 		expect(html).toContain(">23</div>");
 		expect(html).toContain("Total Stars");
 		expect(html).toContain("Net change");
+	});
+
+	const TOTAL_LABELS: { locale: Locale; label: string }[] = [
+		{ locale: "en", label: "Total Stars" },
+		{ locale: "es", label: "Estrellas Totales" },
+		{ locale: "ca", label: "Estrelles Totals" },
+		{ locale: "it", label: "Stelle Totali" },
+	];
+
+	it.each(TOTAL_LABELS)("labels the total as one phrase of the bundle in $locale", ({ locale, label }) => {
+		const html = renderHtml({ config: { locale } });
+
+		expect(html).toContain(`>${label}</div>`);
+	});
+
+	it("states the total's label for every locale the bundles ship", () => {
+		expect(TOTAL_LABELS.map(({ locale }) => locale)).toEqual(LOCALES);
 	});
 
 	it("gives the repository table a trend column", () => {
@@ -310,23 +321,6 @@ describe("generateHtmlReport", () => {
 		expect(plain.every((config) => config.includes(`"borderWidth":${DEFAULTS.chartLineWidth}`))).toBe(true);
 	});
 
-	it("does not include charts when includeCharts is false", () => {
-		const history = makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 20 }, { "user/repo-a": 23 }], stepDays: 1 });
-
-		const html = renderHtml({ history, config: { includeCharts: false } });
-
-		expect(html).not.toContain("Star Trend");
-		expect(html).not.toContain("quickchart.io");
-	});
-
-	it("does not include charts when history has only one snapshot", () => {
-		const history = makeMultiRepoHistory({ snapshots: [{ "user/repo-a": 20 }] });
-
-		const html = renderHtml({ history, config: { includeCharts: true } });
-
-		expect(html).not.toContain("Star Trend");
-	});
-
 	it("includes stargazer section with avatars", () => {
 		const stargazerDiff: StargazerDiffResult = {
 			entries: [
@@ -401,12 +395,6 @@ describe("generateHtmlReport", () => {
 
 		expect(html).toContain("New Stargazers");
 		expect(html).toContain("sampled repositories: user/huge, user/big");
-	});
-
-	it("excludes stargazer section when stargazerDiff is null", () => {
-		const html = renderHtml({ stargazerDiff: null });
-
-		expect(html).not.toContain("New Stargazers");
 	});
 
 	it("includes forecast section with tables", () => {
@@ -536,47 +524,6 @@ describe("generateHtmlReport", () => {
 		expect(titlesIn(drawn).some((config) => config.includes("user/repo-a Growth Forecast"))).toBe(true);
 		expect(titlesIn(undrawn).some((config) => config.includes("user/repo-a Growth Forecast"))).toBe(false);
 		expect(undrawn).toContain("By Repository");
-	});
-
-	it("renders a translated label for every forecast method", () => {
-		const forecastData: ForecastData = {
-			aggregate: {
-				forecasts: [
-					{
-						method: ForecastMethod.LINEAR_REGRESSION,
-						points: [
-							{ weekOffset: 1, predicted: 25 },
-							{ weekOffset: 2, predicted: 27 },
-							{ weekOffset: 3, predicted: 29 },
-							{ weekOffset: 4, predicted: 31 },
-						],
-					},
-					{
-						method: ForecastMethod.WEIGHTED_MOVING_AVERAGE,
-						points: [
-							{ weekOffset: 1, predicted: 24 },
-							{ weekOffset: 2, predicted: 26 },
-							{ weekOffset: 3, predicted: 28 },
-							{ weekOffset: 4, predicted: 30 },
-						],
-					},
-				],
-			},
-			repos: [],
-		};
-
-		const html = renderHtml({ forecastData });
-
-		expect(html).toContain("Linear Regression");
-		expect(html).toContain("Weighted Moving Average");
-		expect(html).not.toContain(ForecastMethod.LINEAR_REGRESSION);
-		expect(html).not.toContain(ForecastMethod.WEIGHTED_MOVING_AVERAGE);
-	});
-
-	it("excludes forecast section when forecastData is null", () => {
-		const html = renderHtml({ forecastData: null });
-
-		expect(html).not.toContain("Growth Forecast");
 	});
 
 	it("includes explicit background-color on body", () => {

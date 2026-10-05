@@ -1,5 +1,5 @@
 import type { ForecastResult } from "@domain/forecast";
-import { deltaIndicator, formatSignedPercent, trendIcon } from "@domain/formatting";
+import { deltaIndicator, formatSignedPercent, isoDate, trendIcon } from "@domain/formatting";
 import { getTranslations, interpolate, type Translations } from "@i18n";
 import { chartImageUrl } from "./chart";
 import type { ChartRequest } from "./chart-spec";
@@ -184,7 +184,7 @@ export function generateHtmlReport({ model, config }: RenderReportParams): strin
           <div style="display:flex;align-items:center;margin:4px 0;">
             <img src="${escapeHtml(stargazer.avatarUrl)}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
             <a href="${escapeHtml(stargazer.profileUrl)}" style="color:${palette.link};text-decoration:none;font-weight:600;">${escapeHtml(stargazer.login)}</a>
-            <span style="color:${palette.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: escapeHtml(stargazer.starredAt.split("T")[0]) } })}</span>
+            <span style="color:${palette.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: escapeHtml(isoDate(stargazer.starredAt)) } })}</span>
           </div>`,
 						)
 						.join("")}
@@ -283,7 +283,7 @@ export function generateHtmlReport({ model, config }: RenderReportParams): strin
   <div style="display:flex;justify-content:space-around;padding:20px 0;text-align:center;">
     <div>
       <div style="font-size:28px;font-weight:700;">${summary.totalStars}</div>
-      <div style="color:${palette.neutral};font-size:12px;">${t.report.total} ${t.report.stars}</div>
+      <div style="color:${palette.neutral};font-size:12px;">${t.report.totalStars}</div>
     </div>
     <div>
       <div style="font-size:28px;font-weight:700;color:${deltaColor({ delta: summary.totalDelta, palette })};">${deltaIndicator(summary.totalDelta)}</div>

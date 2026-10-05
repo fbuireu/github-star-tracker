@@ -1,4 +1,5 @@
 import { ChartCurve, type ChartRange, type ChartTheme } from "@config/types";
+import { intlCode } from "@domain/formatting";
 import type { Locale } from "@i18n";
 import type { ChartMilestone, ChartRequest, ChartSeries } from "./chart-spec";
 import { AxisLabels, buildChartSpec, SeriesDash, SeriesWeight } from "./chart-spec";
@@ -6,8 +7,14 @@ import { CHART, CHART_CHROME, CHART_DEFAULTS, CHART_POINT, CHART_TENSION } from 
 import { resolvePalette } from "./shared";
 import type { ColorPalette } from "./types";
 
+const BYTE_MAX = 0xff;
+const HEX_RADIX = 16;
+const HEX_BYTE_DIGITS = 2;
+const RGB_DIGITS = 6;
+const SHORTHAND_MAX_DIGITS = 4;
+
 const CHART_STYLE = {
-	translucentAlpha: "33",
+	translucentAlpha: 0x33,
 	titleFontSize: CHART_CHROME.titleFontSize,
 	legendFontSize: 11,
 	legendHiddenFontSize: 12,
@@ -18,6 +25,15 @@ const CHART_STYLE = {
 	linearRegressionDash: [8, 4],
 	weightedMovingAverageDash: [4, 4],
 };
+
+function translucent(color: string): string {
+	const digits = color.slice(1);
+	const expanded = digits.length <= SHORTHAND_MAX_DIGITS ? [...digits].map((digit) => digit + digit).join("") : digits;
+	const ownAlpha = expanded.length > RGB_DIGITS ? Number.parseInt(expanded.slice(RGB_DIGITS), HEX_RADIX) : BYTE_MAX;
+	const alpha = Math.round((ownAlpha * CHART_STYLE.translucentAlpha) / BYTE_MAX);
+
+	return `#${expanded.slice(0, RGB_DIGITS)}${alpha.toString(HEX_RADIX).padStart(HEX_BYTE_DIGITS, "0")}`;
+}
 
 interface CurveProps {
 	tension: number;
@@ -102,6 +118,7 @@ interface AnnotationPlugin {
 interface ChartOptions {
 	responsive: boolean;
 	maintainAspectRatio: boolean;
+	locale: string;
 	plugins: {
 		legend: {
 			display: boolean;
@@ -154,7 +171,7 @@ function buildMilestoneAnnotations({ milestones, palette }: BuildMilestoneAnnota
 				display: true,
 				content: milestone.label,
 				position: "start",
-				backgroundColor: `${palette.neutral}${CHART_STYLE.translucentAlpha}`,
+				backgroundColor: translucent(palette.neutral),
 				color: palette.neutral,
 				font: { size: CHART_STYLE.milestoneFontSize },
 			},
@@ -168,6 +185,7 @@ interface BuildChartOptionsParams {
 	title: string;
 	showLegend: boolean;
 	beginAtZero: boolean;
+	locale: Locale;
 	palette: ColorPalette;
 	annotation?: AnnotationPlugin | null;
 }
@@ -176,12 +194,14 @@ function buildChartOptions({
 	title,
 	showLegend,
 	beginAtZero,
+	locale,
 	palette,
 	annotation,
 }: BuildChartOptionsParams): ChartOptions {
 	return {
 		responsive: true,
 		maintainAspectRatio: false,
+		locale: intlCode(locale),
 		plugins: {
 			legend: {
 				display: showLegend,
@@ -224,7 +244,7 @@ function buildChartUrl({ config, palette }: BuildChartUrlParams): string {
 	const encodedConfig = encodeURIComponent(JSON.stringify(config));
 	const backgroundColor = encodeURIComponent(palette.white);
 
-	return `https://quickchart.io/chart?w=${CHART.width}&h=${CHART.height}&backgroundColor=${backgroundColor}&c=${encodedConfig}`;
+	return `https://quickchart.io/chart?v=${CHART.chartJsVersion}&w=${CHART.width}&h=${CHART.height}&backgroundColor=${backgroundColor}&c=${encodedConfig}`;
 }
 
 const DASH_PATTERNS: Record<SeriesDash, number[] | null> = {
@@ -261,7 +281,7 @@ function toDataset({ series, curveProps, showPoints, lineWidth }: ToDatasetParam
 		label: series.label,
 		data: series.data,
 		borderColor: series.color,
-		backgroundColor: series.dash === SeriesDash.NONE ? `${series.color}${CHART_STYLE.translucentAlpha}` : "transparent",
+		backgroundColor: series.dash === SeriesDash.NONE ? translucent(series.color) : "transparent",
 		fill: series.fill,
 		...curveProps,
 		pointRadius:
@@ -317,6 +337,7 @@ export function chartImageUrl({
 			title: spec.title,
 			showLegend: spec.showLegend,
 			beginAtZero,
+			locale,
 			palette,
 			annotation,
 		}),
@@ -330,6 +351,7 @@ interface BuildChartConfigParams {
 	title: string;
 	showLegend: boolean;
 	beginAtZero: boolean;
+	locale: Locale;
 	palette: ColorPalette;
 	annotation?: AnnotationPlugin | null;
 }
@@ -340,12 +362,13 @@ function buildChartConfig({
 	title,
 	showLegend,
 	beginAtZero,
+	locale,
 	palette,
 	annotation,
 }: BuildChartConfigParams): ChartConfig {
 	return {
 		type: "line",
 		data: { labels, datasets },
-		options: buildChartOptions({ title, showLegend, beginAtZero, palette, annotation }),
+		options: buildChartOptions({ title, showLegend, beginAtZero, locale, palette, annotation }),
 	};
 }

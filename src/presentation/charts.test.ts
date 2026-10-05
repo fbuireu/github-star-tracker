@@ -262,6 +262,31 @@ describe("resolveChartHistories", () => {
 		expect(resolved.reconstructedForRepo("user/ghost")).toBeNull();
 	});
 
+	it("starts a young repository's History at its own first Star, not at the aggregate's", () => {
+		const resolved = histories({
+			repos: [
+				{ fullName: "u/old", name: "old", owner: "u", stars: 100 },
+				{ fullName: "u/new", name: "new", owner: "u", stars: 30 },
+			],
+			repoStargazers: [
+				{
+					repoFullName: "u/old",
+					stargazers: makeStargazerSeries({ count: 100, startMs: Date.UTC(2025, 0, 1), stepDays: 1 }),
+				},
+				{
+					repoFullName: "u/new",
+					stargazers: makeStargazerSeries({ count: 30, startMs: Date.UTC(2026, 1, 10), stepDays: 0.5 }),
+				},
+			],
+		});
+		const own = resolved.forRepo("u/new").snapshots;
+
+		expect(own[0].timestamp.startsWith("2026-02")).toBe(true);
+		expect(own[0].totalStars).toBeGreaterThan(0);
+		expect(own.at(-1)?.totalStars).toBe(30);
+		expect(resolved.aggregate.snapshots[0].timestamp < own[0].timestamp).toBe(true);
+	});
+
 	it("reconstructs each repository from its own stargazers, on the same instant", () => {
 		const resolved = histories({
 			repoStargazers: [

@@ -5,6 +5,7 @@ export interface Translations {
 	report: {
 		title: string;
 		total: string;
+		totalStars: string;
 		change: string;
 		comparedTo: string;
 		firstRun: string;
@@ -26,6 +27,7 @@ export interface Translations {
 		byRepository: string;
 		individualRepoCharts: string;
 		repoChartHeading: string;
+		repoChartTitle: string;
 		trendLine: string;
 		badges: {
 			new: string;
@@ -67,6 +69,7 @@ export interface Translations {
 		weightedMovingAverage: string;
 		aggregate: string;
 		byRepository: string;
+		repoChartTitle: string;
 		insufficientData: string;
 		method: string;
 		predicted: string;

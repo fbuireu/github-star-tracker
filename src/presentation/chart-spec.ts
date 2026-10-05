@@ -10,6 +10,10 @@ import { CHART, CHART_COMPARISON_COLORS, MIN_SNAPSHOTS_FOR_CHART, TREND_WINDOW }
 
 import type { ColorPalette } from "./types";
 
+export function isPlottable(history: History): boolean {
+	return history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
+}
+
 const CHART_RANGE_DAYS: Record<ChartRange, number> = {
 	[ChartRange.D30]: 30,
 	[ChartRange.D90]: 90,
@@ -219,15 +223,13 @@ function starHistorySpec({
 	customMilestones,
 	trendLine = false,
 	...window
-}: StarHistorySpecParams): ChartSpec | null {
-	if (window.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) return null;
-
+}: StarHistorySpecParams): ChartSpec {
 	const t = getTranslations(window.locale);
 	const { snapshots, labels } = selectWindow(window);
 	const data = snapshots.map((snapshot) => snapshot.totalStars);
 	const series: ChartSeries[] = [
 		{
-			label: "Stars",
+			label: t.report.stars,
 			data,
 			color: lineColor ?? palette.accent,
 			fill: true,
@@ -269,16 +271,15 @@ interface PerRepoSpecParams extends SelectWindowParams {
 	lineColor?: string;
 }
 
-function perRepoSpec({ repoFullName, title, palette, lineColor, ...window }: PerRepoSpecParams): ChartSpec | null {
-	if (window.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART) return null;
-
+function perRepoSpec({ repoFullName, title, palette, lineColor, ...window }: PerRepoSpecParams): ChartSpec {
+	const t = getTranslations(window.locale);
 	const { snapshots, labels } = selectWindow(window);
 
 	return {
 		labels,
 		series: [
 			{
-				label: "Stars",
+				label: t.report.stars,
 				data: repoStarSeries({ snapshots, repoFullName }),
 				color: lineColor ?? palette.accent,
 				fill: true,
@@ -298,9 +299,7 @@ interface ComparisonSpecParams extends SelectWindowParams {
 }
 
 function comparisonSpec({ repoNames, title, ...window }: ComparisonSpecParams): ChartSpec | null {
-	if (window.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || repoNames.length === 0) {
-		return null;
-	}
+	if (repoNames.length === 0) return null;
 
 	const { snapshots, labels } = selectWindow(window);
 	const capped = repoNames.slice(0, CHART.maxComparison);
@@ -363,7 +362,7 @@ function forecastChartSpec({
 	lineColor,
 	...window
 }: ForecastChartSpecParams): ChartSpec | null {
-	if (window.history.snapshots.length < MIN_SNAPSHOTS_FOR_CHART || forecasts.length === 0) return null;
+	if (forecasts.length === 0) return null;
 
 	const t = getTranslations(window.locale);
 	const { snapshots, labels: historicalLabels } = selectWindow({
@@ -481,6 +480,8 @@ export function buildChartSpec({
 	range,
 	maxPoints,
 }: BuildChartSpecParams): ChartSpec | null {
+	if (!isPlottable(request.history)) return null;
+
 	const t = getTranslations(locale);
 	const window = { history: request.history, locale, range, maxPoints, axisLabels };
 
@@ -499,7 +500,8 @@ export function buildChartSpec({
 			return perRepoSpec({
 				...window,
 				repoFullName: request.repoFullName,
-				title: request.title ?? `${request.repoFullName} Star History`,
+				title:
+					request.title ?? interpolate({ template: t.report.repoChartTitle, params: { name: request.repoFullName } }),
 				palette,
 				lineColor: request.lineColor,
 			});
@@ -522,7 +524,8 @@ export function buildChartSpec({
 				...window,
 				forecastData: request.forecastData,
 				repoFullName: request.repoFullName,
-				title: request.title ?? `${request.repoFullName} ${t.forecast.sectionTitle}`,
+				title:
+					request.title ?? interpolate({ template: t.forecast.repoChartTitle, params: { name: request.repoFullName } }),
 				palette,
 				lineColor: request.lineColor,
 			});

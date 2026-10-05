@@ -164,6 +164,19 @@ describe("buildReportModel", () => {
 			expect(modelOf({ velocityHistory, config: { velocityMetrics: true } }).velocity).not.toBeNull();
 		});
 
+		it("measures Velocity from the stored history, never from the chart history", () => {
+			const chartHistory = makeHistory({ starCounts: [100, 5_000], stepDays: 100 });
+
+			const model = modelOf({
+				history: chartHistory,
+				velocityHistory,
+				config: { includeCharts: true, velocityMetrics: true },
+			});
+
+			expect(model.chartHistory).toBe(chartHistory);
+			expect(model.velocity?.starsPerDay).toBe(14.29);
+		});
+
 		it("resolves the next Milestone to a single present-or-absent value", () => {
 			const growing = modelOf({ velocityHistory, config: { velocityMetrics: true } });
 			const flat = modelOf({

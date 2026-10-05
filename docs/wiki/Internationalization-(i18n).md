@@ -41,7 +41,7 @@ locale: es
 | **HTML email** | Same as Markdown, plus subject line |
 | **SVG badge** | Label text (`Total Stars` / `Estrellas Totales` / ...) |
 | **Charts, both kinds** | Chart titles, axis date labels (locale-aware `Date.toLocaleDateString`) and milestone labels |
-| **Charts, SVG only** | The compact Y-axis counts (`1.2K`). The email charts let Chart.js draw its own ticks instead |
+| **Charts, SVG only** | The compact Y-axis counts (`12K`). The email charts let Chart.js draw its own ticks instead, as full numbers in the same locale (`12,000` in `en`, `12.000` in `es`) |
 | **Badge number** | The star count is compacted in the report locale, so `1,200` reads `1.2K` in `en` and `1,2 mil` in `es` |
 | **Forecast tables** | Method names, week labels, section titles |
 | **Stargazer section** | Section title, count text, "starred on" dates |
@@ -86,13 +86,13 @@ Each JSON file implements the `Translations` interface with these sections:
 | Section | Keys | Description |
 |---|---|---|
 | `badge` | `totalStars` | Badge label text |
-| `report` | `title`, `total`, `change`, `comparedTo`, `firstRun`, `noRepositories`, `repositories`, `stars`, `starsCount`, `trend`, `newRepositories`, `removedRepositories`, `removedRepoText`, `summary`, `starsGained`, `starsLost`, `netChange`, `starTrend`, `starHistory`, `topRepositories`, `byRepository`, `individualRepoCharts`, `repoChartHeading`, `trendLine`, `badges.new` | Report sections and labels |
+| `report` | `title`, `total`, `totalStars`, `change`, `comparedTo`, `firstRun`, `noRepositories`, `repositories`, `stars`, `starsCount`, `trend`, `newRepositories`, `removedRepositories`, `removedRepoText`, `summary`, `starsGained`, `starsLost`, `netChange`, `starTrend`, `starHistory`, `topRepositories`, `byRepository`, `individualRepoCharts`, `repoChartHeading`, `repoChartTitle`, `trendLine`, `badges.new` | Report sections and labels |
 | `email` | `subject`, `subjectLine`, `defaultFrom` | Email content |
 | `trends` | `up`, `down`, `stable` | Trend direction labels |
 | `velocity` | `sectionTitle`, `starsPerDay`, `growth`, `projection` | Growth velocity section |
 | `footer` | `generated`, `madeBy` | Report footer |
 | `stargazers` | `sectionTitle`, `newStargazers`, `starredOn`, `noNewStargazers`, `stargazerCount`, `sampledNote` | Stargazer section |
-| `forecast` | `sectionTitle`, `predictedStars`, `week`, `linearRegression`, `weightedMovingAverage`, `aggregate`, `byRepository`, `insufficientData`, `method`, `predicted` | Forecast tables |
+| `forecast` | `sectionTitle`, `predictedStars`, `week`, `linearRegression`, `weightedMovingAverage`, `aggregate`, `byRepository`, `repoChartTitle`, `insufficientData`, `method`, `predicted` | Forecast tables and the per-repository Forecast Chart title |
 
 ### Interpolation
 

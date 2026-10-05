@@ -15,7 +15,8 @@ No rule below restates these, and a diff that breaks one fails CI:
 - `pnpm typecheck`: type-only imports (`verbatimModuleSyntax`), and a tabled `Config` key without its
   `FIELD_SOURCES` row (the `TabledKey` mapped type in `src/config/loader.ts`).
 - The test suite: empty defaults on overridable inputs (`action-inputs.test.ts`), every bundle carrying exactly
-  the keys of `en.json` (`src/i18n/index.test.ts`), and the coverage floor (`vitest.config.mts`).
+  the keys of `en.json` (`src/i18n/index.test.ts`), no phrase of the English bundle in a Run rendered in another
+  Locale (`src/presentation/run.test.ts`), and the coverage floor (`vitest.config.mts`).
 - commitlint: the commit format, on the commit and on the pull request title.
 - `pnpm test:docs` ([`docs/docs-consistency.test.ts`](./docs/docs-consistency.test.ts)), which holds every document
   to the claims it can check and holds the source to these:
@@ -54,8 +55,11 @@ No rule below restates these, and a diff that breaks one fails CI:
   - an escape entity written only in `src/presentation/escaping.ts`, each renderer binding its escaper once at
     module load, and `formatCount` called in `@presentation` only by `badge.ts`, `chart-spec.ts` and
     `svg-chart.ts`, so the Reports print raw Star Counts;
+  - a rule that names its one owner read nowhere else: the Snapshots a Chart needs (`MIN_SNAPSHOTS_FOR_CHART`), the
+    Snapshots a Forecast needs (`MIN_SNAPSHOTS_FOR_FORECAST`) and the ISO date of a timestamp (`isoDate`);
   - the inputs and outputs listed alphabetically, `github-token` first, on every surface that lists them, and a
     wiki page reaching a repository file by an absolute URL;
+  - no guide keeping a list of known inconsistencies;
   - every Mermaid diagram held to the `layout: dagre` it was drawn with, so a renderer that defaults to ELK cannot
     redraw it;
   - every `uses:` of another repository pinned to a full commit SHA with its version or branch in a trailing
@@ -136,8 +140,10 @@ No rule below restates these, and a diff that breaks one fails CI:
 - **hard**: Every fetch-failure message is built by `describeFetchError` in `src/infrastructure/github/errors.ts`, so
   the shape of that text changes in one place.
 - **hard**: A handler that replaces a failure's text does so only for the failure it understands and rethrows the rest
-  untouched, as `commitAndPush` does with `PUSH_REJECTED_PATTERN`, because the original message is the useful part of
-  any other failure; a wrapper that adds context keeps the original detail (`describeFetchError`).
+  untouched, as `commitAndPush` does with `PUSH_REJECTED_PATTERN` and `initializeDataBranch` with
+  `NOT_A_REPOSITORY_PATTERN`, because the original message is the useful part of any other failure (a checkout git
+  refuses as unsafe is not a missing `actions/checkout`); a wrapper that adds context keeps the original detail
+  (`describeFetchError`).
 - **judgement**: An error raised for a condition the user can fix names the file or input and ends with the action that
   fixes it ("Fix or delete the file on that branch and re-run.").
 - **judgement**: A best-effort git step (removing a stale worktree, emptying an orphan branch, `cleanup`) swallows its
@@ -170,6 +176,8 @@ No rule below restates these, and a diff that breaks one fails CI:
   fewer than `MIN_SNAPSHOTS_FOR_FORECAST` of them hold gets none, because `repoStarSeries` reads a Snapshot
   without the repository as `0`, and a fit over the Snapshots from before it joined the Tracked Set extrapolates
   the `0 → total` ramp issue #148 guards against.
+- **hard**: `holdsEnoughToForecast` in `src/domain/forecast.ts` is the one place `MIN_SNAPSHOTS_FOR_FORECAST` is read,
+  so the aggregate, a repository's own History and the Snapshots that hold it are held to one minimum.
 - **judgement**: A figure derived from a rule reads the rule's result, as `droppedSnapshots` is counted from the
   History `addSnapshot` returned, so the count cannot disagree with the array it describes.
 - **judgement**: Arithmetic that decides what the shell fetches lives here and returns plain data (the Tracked Set
@@ -238,11 +246,21 @@ No rule below restates these, and a diff that breaks one fails CI:
   `chart.ts` draw the `ChartSpec` they are handed, so the two renderers cannot drift on content. A new chart kind is
   one `ChartRequest` variant and one `case` in `buildChartSpec`
   ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
+- **hard**: Whether a History holds enough Snapshots to draw is `isPlottable` in `src/presentation/chart-spec.ts`, and
+  `buildChartSpec`, `charts.ts` and `report-model.ts` all ask it rather than count Snapshots, so a Chart, its file and
+  its link in a Report cannot disagree about whether there is a Chart.
 - **hard**: The spec speaks in emphasis (`SeriesDash`, `SeriesWeight`) and carries no SVG attribute, Chart.js option
   name, dash array or point radius, because the moment one leaks in the other adapter has to work around it.
 - **hard**: Text a reader reads is formatted in the spec, in the Run's Locale, so the Notification and the Data Branch
   show the same label; an adapter draws the string it is handed. A y-axis tick, whose values each adapter picks
-  itself, is the one number the adapter formats.
+  itself, is the one number the adapter formats, and it formats it in the Run's Locale: `svg-chart.ts` compacts it with
+  `formatCount`, and `chart.ts` hands Chart.js the Locale's Intl code (`options.locale`).
+- **hard**: The email adapter writes a series' translucent fill with `translucent`, which reads every hex form
+  `parseHexColor` lets `chart-line-color` through (`#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`) and scales the alpha a
+  colour already carries, because appending two digits to the colour turns a 3-digit one into an invalid colour and a
+  4-digit one into a different colour.
+- **hard**: A Report prints the date of a timestamp through `isoDate` in `@domain/formatting`, whether it dates the Run,
+  the Baseline Snapshot or a Stargazer, so no dialect spells the cut itself.
 - **hard**: Charts carry no charting library: the SVG is drawn by `svg-chart.ts` with its own stylesheet, which is
   what makes it theme-aware ([ADR 0006](./docs/adr/0006-hand-rendered-svg-charts.md)), and the email chart is a
   QuickChart URL because mail clients do not display inline SVG
@@ -293,8 +311,8 @@ No rule below restates these, and a diff that breaks one fails CI:
 ## i18n
 
 - **hard**: Text that reaches a Report, Chart, Badge or Notification is a bundle key, and a sentence is one key with
-  `{placeholders}`, so a translation can order its words freely. The per-repository chart title and the `'Stars'`
-  series label in `chart-spec.ts` are the recorded exceptions
+  `{placeholders}`, so a translation can order its words freely: the per-repository Chart titles carry the repository
+  as `{name}`, and the Total Stars label is one key rather than two words of the bundle
   ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
 - **hard**: `interpolate` leaves escaping to `@presentation`, because `html.ts` passes full markup as footer params
   and escaping here would double-escape every Report.
@@ -376,8 +394,9 @@ No rule below restates these, and a diff that breaks one fails CI:
 - **hard**: Write a guide in the present tense, holding what an implementer needs while working; the reason for a
   line goes in the commit message, the pull request, an ADR or a rule here, and history ("used to", "was",
   "until …") stays in git, because a guide is loaded into every session that works in its folder.
-- **hard**: Delete a gotcha, or an entry under *Known inconsistencies* in [ARCHITECTURE.md](./ARCHITECTURE.md), in the
-  change that resolves it, because a stale entry is a false claim about the tree.
+- **hard**: Delete a gotcha in the change that resolves it, because a stale entry is a false claim about the tree.
+- **hard**: Fix a breach in the change that finds it, or report it on the pull request with the rule it breaks; no
+  guide keeps a list of known inconsistencies, because an entry is a claim about the code that nothing keeps true.
 - **judgement**: An ADR is proposed only for a decision that is hard to reverse, surprising without context and the
   result of a real trade-off, and is linked from where it bites.
 

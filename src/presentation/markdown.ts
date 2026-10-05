@@ -1,5 +1,5 @@
 import type { ForecastResult } from "@domain/forecast";
-import { deltaIndicator, formatSignedPercent, trendIcon } from "@domain/formatting";
+import { deltaIndicator, formatSignedPercent, isoDate, trendIcon } from "@domain/formatting";
 import { getTranslations, interpolate, type Translations } from "@i18n";
 import { CHART_FILES, SECTION_ICON } from "./constants";
 import { EscapeDialect, escapeFor } from "./escaping";
@@ -64,7 +64,7 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 			? [
 					`## ${SECTION_ICON.starTrend} ${t.report.starTrend}`,
 					"",
-					`![Star History](./charts/${CHART_FILES.starHistory})`,
+					`![${t.report.starHistory}](./charts/${CHART_FILES.starHistory})`,
 					"",
 					...(hasComparisonChart
 						? [
@@ -87,20 +87,17 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 				]
 			: [];
 
-	const repoTable =
-		sorted.length > 0
-			? [
-					`## ${t.report.repositories}`,
-					"",
-					`| ${t.report.repositories} | ${t.report.stars} | ${t.report.change} | ${t.report.trend} |`,
-					"|:-----------|------:|-------:|:-----:|",
-					...sorted.map((repo) => {
-						const badge = repo.isNew ? ` \`${t.report.badges.new}\`` : "";
-						return `| [${escapeMarkdown(repo.fullName)}](https://github.com/${escapeMarkdown(repo.fullName)})${badge} | ${repo.current} | ${deltaIndicator(repo.delta)} | ${trendIcon(repo.delta)} |`;
-					}),
-					"",
-				]
-			: [];
+	const repoTable = [
+		`## ${t.report.repositories}`,
+		"",
+		`| ${t.report.repositories} | ${t.report.stars} | ${t.report.change} | ${t.report.trend} |`,
+		"|:-----------|------:|-------:|:-----:|",
+		...sorted.map((repo) => {
+			const badge = repo.isNew ? ` \`${t.report.badges.new}\`` : "";
+			return `| [${escapeMarkdown(repo.fullName)}](https://github.com/${escapeMarkdown(repo.fullName)})${badge} | ${repo.current} | ${deltaIndicator(repo.delta)} | ${trendIcon(repo.delta)} |`;
+		}),
+		"",
+	];
 
 	const newSection =
 		newRepos.length > 0
@@ -130,17 +127,14 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 				]
 			: [];
 
-	const summarySection =
-		summary.totalDelta === 0
-			? []
-			: [
-					`## ${t.report.summary}`,
-					"",
-					`- **${t.report.starsGained}:** ${summary.newStars}`,
-					`- **${t.report.starsLost}:** ${summary.lostStars}`,
-					`- **${t.report.netChange}:** ${deltaIndicator(summary.totalDelta)}`,
-					"",
-				];
+	const summarySection = [
+		`## ${t.report.summary}`,
+		"",
+		`- **${t.report.starsGained}:** ${summary.newStars}`,
+		`- **${t.report.starsLost}:** ${summary.lostStars}`,
+		`- **${t.report.netChange}:** ${deltaIndicator(summary.totalDelta)}`,
+		"",
+	];
 
 	const stargazers = model.stargazers;
 	const sampledNote =
@@ -171,7 +165,7 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 						"",
 						...entry.newStargazers.map(
 							(stargazer) =>
-								`- <img src="${escapeMarkup(stargazer.avatarUrl)}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${escapeMarkdown(stargazer.login)}](${escapeMarkdown(stargazer.profileUrl)}): ${interpolate({ template: t.stargazers.starredOn, params: { date: escapeMarkdown(stargazer.starredAt.split("T")[0]) } })}`,
+								`- <img src="${escapeMarkup(stargazer.avatarUrl)}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${escapeMarkdown(stargazer.login)}](${escapeMarkdown(stargazer.profileUrl)}): ${interpolate({ template: t.stargazers.starredOn, params: { date: escapeMarkdown(isoDate(stargazer.starredAt)) } })}`,
 						),
 						"",
 						"</details>",

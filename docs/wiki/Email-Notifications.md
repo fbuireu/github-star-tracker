@@ -442,6 +442,7 @@ When `include-charts: true`, the HTML email includes chart images via QuickChart
 - QuickChart cannot draw every [`chart-curve`](Configuration#chart-curve) natively, so some curves are approximated; **[Star Trend Charts](Star-Trend-Charts#curve-fidelity)** lists which
 - If QuickChart.io is unreachable, charts appear as broken images; report text is unaffected
 - A PNG carries its background as pixels, so the email charts cannot follow the reader's `prefers-color-scheme` the way the SVG charts do. Use [`email-theme`](Configuration#email-theme) to pick the palette baked into them
+- The Y-axis numbers are written in full (`12,000`) in your [`locale`](Configuration#locale), where the SVG charts compact them (`12K`); [ADR 0010](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0010-quickchart-renders-the-email-charts.md) lists every difference
 
 ---
 

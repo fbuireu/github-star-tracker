@@ -4,7 +4,7 @@ import type { StargazerDiffEntry } from "@domain/stargazers";
 import type { History, RepoResult, Summary } from "@domain/types";
 import { computeVelocity, type VelocityMetrics } from "@domain/velocity";
 import type { Translations } from "@i18n";
-import { MIN_SNAPSHOTS_FOR_CHART } from "./constants";
+import { isPlottable } from "./chart-spec";
 import type { ReportParams } from "./shared";
 import {
 	buildForecastWeekHeaders,
@@ -126,7 +126,7 @@ export function buildReportModel(params: ReportParams): ReportModel {
 		locale,
 		now,
 	});
-	const hasChartHistory = includeCharts && history !== null && history.snapshots.length >= MIN_SNAPSHOTS_FOR_CHART;
+	const hasChartHistory = includeCharts && history !== null && isPlottable(history);
 	const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
 
 	const topRepos = toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount });

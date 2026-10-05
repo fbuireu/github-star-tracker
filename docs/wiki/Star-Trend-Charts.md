@@ -244,7 +244,7 @@ accent-coloured value, legible on either background.
 
 ### Localization
 
-Date labels and chart titles are localized based on your `locale` setting:
+Date labels, chart titles (the per-repository ones included) and series labels are localized based on your `locale` setting:
 
 ```yaml
 with:
