@@ -51,7 +51,7 @@ export async function trackStars(): Promise<void> {
 			setOutputs({
 				summary: EMPTY_SUMMARY,
 				rendered: empty,
-				htmlReportPath: writeHtmlReport({ htmlReport: empty.html }),
+				htmlReportPath: writeHtmlReport(empty.html),
 				newStargazers: 0,
 			});
 			return;
@@ -168,7 +168,7 @@ export async function trackStars(): Promise<void> {
 					totalStars: summary.totalStars,
 				});
 
-				const htmlReportPath = writeHtmlReport({ htmlReport: rendered.html });
+				const htmlReportPath = writeHtmlReport(rendered.html);
 
 				branch.publish({
 					history: notification.historyToPersist,

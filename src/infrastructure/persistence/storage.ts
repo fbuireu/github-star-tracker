@@ -204,11 +204,7 @@ export function writeStargazers({ dataDir, stargazerMap }: WriteStargazersParams
 	writeJsonFile({ filePath: path.join(dataDir, DATA_FILES.stargazers), data: stargazerMap });
 }
 
-interface WriteHtmlReportParams {
-	htmlReport: string;
-}
-
-export function writeHtmlReport({ htmlReport }: WriteHtmlReportParams): string {
+export function writeHtmlReport(htmlReport: string): string {
 	const outputDir = process.env.RUNNER_TEMP || process.cwd();
 	const filePath = path.join(outputDir, DATA_FILES.htmlReport);
 

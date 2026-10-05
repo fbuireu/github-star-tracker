@@ -127,7 +127,7 @@ export function buildReportModel(params: ReportParams): ReportModel {
 		now,
 	});
 	const hasChartHistory = includeCharts && history !== null && isPlottable(history);
-	const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
+	const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity(velocityHistory) : null;
 
 	const topRepos = toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount });
 	const chartHistory = hasChartHistory ? history : null;

@@ -25,9 +25,10 @@ No rule below restates these, and a diff that breaks one fails CI:
   - which layer may import which, cross-layer imports through the alias and same-layer imports relative, tests
     included, and the pure layers free of the shell's packages (the layer table in
     [ARCHITECTURE.md](./ARCHITECTURE.md));
-  - no function with two or more positional parameters; a destructured parameter typed `<FunctionName>Params`, a
-    type several functions share (`RenderReportParams`, `ReportParams`) or the record it unpacks, never an inline
-    type; and no other `*Params` type exported;
+  - one argument passed positionally and two or more as one object: no function with two or more positional
+    parameters, and no `*Params` type or inline parameter type with a single field of its own; a destructured
+    parameter typed `<FunctionName>Params`, a type several functions share (`RenderReportParams`, `ReportParams`)
+    or the record it unpacks, never an inline type; and no other `*Params` type exported;
   - a production reader for every runtime export, bar the values `action-inputs.test.ts` compares against
     `action.yml`;
   - a colocated test for every module but `types.ts`, `defaults.ts`, `constants.ts`, `src/index.ts` and

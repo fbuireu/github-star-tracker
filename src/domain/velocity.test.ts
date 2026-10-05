@@ -22,7 +22,7 @@ describe("computeVelocity", () => {
 			],
 		};
 
-		expect(computeVelocity({ history })).toBeNull();
+		expect(computeVelocity(history)).toBeNull();
 	});
 
 	it("falls back to the newest snapshot far enough back instead of the adjacent one", () => {
@@ -35,7 +35,7 @@ describe("computeVelocity", () => {
 			],
 		};
 
-		const velocity = computeVelocity({ history });
+		const velocity = computeVelocity(history);
 
 		expect(velocity?.starsPerDay).toBeCloseTo(10.56, 2);
 	});
@@ -48,12 +48,12 @@ describe("computeVelocity", () => {
 			],
 		};
 
-		expect(computeVelocity({ history })).toBeNull();
+		expect(computeVelocity(history)).toBeNull();
 	});
 
 	it("returns null with fewer than two snapshots", () => {
-		expect(computeVelocity({ history: { snapshots: [] } })).toBeNull();
-		expect(computeVelocity({ history: makeHistory([{ day: 0, totalStars: 100 }]) })).toBeNull();
+		expect(computeVelocity({ snapshots: [] })).toBeNull();
+		expect(computeVelocity(makeHistory([{ day: 0, totalStars: 100 }]))).toBeNull();
 	});
 
 	it("returns null when no time has elapsed", () => {
@@ -62,7 +62,7 @@ describe("computeVelocity", () => {
 			{ day: 0, totalStars: 120 },
 		]);
 
-		expect(computeVelocity({ history })).toBeNull();
+		expect(computeVelocity(history)).toBeNull();
 	});
 
 	it("computes stars per day and growth percent", () => {
@@ -71,7 +71,7 @@ describe("computeVelocity", () => {
 			{ day: 10, totalStars: 200 },
 		]);
 
-		const result = computeVelocity({ history });
+		const result = computeVelocity(history);
 
 		expect(result?.starsPerDay).toBe(10);
 		expect(result?.growthPercent).toBe(100);
@@ -84,7 +84,7 @@ describe("computeVelocity", () => {
 			{ day: 107, totalStars: 40_500 },
 		]);
 
-		const result = computeVelocity({ history });
+		const result = computeVelocity(history);
 
 		expect(result?.starsPerDay).toBeCloseTo(71.43, 2);
 		expect(result?.growthPercent).toBeCloseTo(1.3, 1);
@@ -97,7 +97,7 @@ describe("computeVelocity", () => {
 			{ day: 15, totalStars: 1_100 },
 		]);
 
-		const result = computeVelocity({ history });
+		const result = computeVelocity(history);
 
 		expect(result?.starsPerDay).toBe(10);
 		expect(result?.growthPercent).toBe(10);
@@ -109,7 +109,7 @@ describe("computeVelocity", () => {
 			{ day: 10, totalStars: 450 },
 		]);
 
-		const result = computeVelocity({ history });
+		const result = computeVelocity(history);
 
 		expect(result?.nextMilestone).toBe(500);
 		expect(result?.daysToNextMilestone).toBe(10);
@@ -121,7 +121,7 @@ describe("computeVelocity", () => {
 			{ day: 10, totalStars: 400 },
 		]);
 
-		const result = computeVelocity({ history });
+		const result = computeVelocity(history);
 
 		expect(result?.starsPerDay).toBe(0);
 		expect(result?.daysToNextMilestone).toBeNull();
@@ -133,7 +133,7 @@ describe("computeVelocity", () => {
 			{ day: 10, totalStars: 50 },
 		]);
 
-		const result = computeVelocity({ history });
+		const result = computeVelocity(history);
 
 		expect(result?.growthPercent).toBeNull();
 	});
@@ -147,6 +147,6 @@ describe("computeVelocity", () => {
 			],
 		};
 
-		expect(computeVelocity({ history })).toBeNull();
+		expect(computeVelocity(history)).toBeNull();
 	});
 });

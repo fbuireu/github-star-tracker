@@ -30,11 +30,7 @@ function nextMilestoneAbove(value: number): number | null {
 	return STAR_MILESTONES.find((milestone) => milestone > value) ?? null;
 }
 
-interface ComputeVelocityParams {
-	history: History;
-}
-
-export function computeVelocity({ history }: ComputeVelocityParams): VelocityMetrics | null {
+export function computeVelocity(history: History): VelocityMetrics | null {
 	const snapshots = history.snapshots;
 	if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
 

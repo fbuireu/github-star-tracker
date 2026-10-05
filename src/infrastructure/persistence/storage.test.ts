@@ -283,7 +283,7 @@ describe("writeHtmlReport", () => {
 		vi.stubEnv("RUNNER_TEMP", "/runner/tmp");
 		const htmlReport = "<p>Report</p>";
 
-		const filePath = writeHtmlReport({ htmlReport });
+		const filePath = writeHtmlReport(htmlReport);
 
 		const expectedPath = path.join("/runner/tmp", "star-tracker-report.html");
 		expect(filePath).toBe(expectedPath);
@@ -294,7 +294,7 @@ describe("writeHtmlReport", () => {
 		vi.stubEnv("RUNNER_TEMP", undefined);
 		const htmlReport = "<p>Report</p>";
 
-		const filePath = writeHtmlReport({ htmlReport });
+		const filePath = writeHtmlReport(htmlReport);
 
 		expect(filePath).toBe(path.join(process.cwd(), "star-tracker-report.html"));
 	});
@@ -417,11 +417,7 @@ describe("commitAndPush", () => {
 		return vi.mocked(execute).mock.calls.some(([params]) => JSON.stringify(params.args) === JSON.stringify(args));
 	}
 
-	interface StageChangesParams {
-		pushError?: Error;
-	}
-
-	function stageChanges({ pushError }: StageChangesParams = {}): void {
+	function stageChanges(pushError?: Error): void {
 		vi.mocked(execute).mockImplementation(({ args }) => {
 			if (args.includes("diff")) throw new Error("Changes detected");
 			if (pushError && args.includes("push")) throw pushError;
@@ -457,17 +453,13 @@ describe("commitAndPush", () => {
 	});
 
 	it("explains a rejected push instead of surfacing git’s raw text", () => {
-		stageChanges({
-			pushError: new Error('Git command failed: "git push"\n ! [rejected] HEAD -> star-tracker-data (fetch first)'),
-		});
+		stageChanges(new Error('Git command failed: "git push"\n ! [rejected] HEAD -> star-tracker-data (fetch first)'));
 
 		expect(() => commitAndPush(push)).toThrow(/Another run pushed to "star-tracker-data" while this one was working/);
 	});
 
 	it("lets any other push failure through untouched", () => {
-		stageChanges({
-			pushError: new Error('Git command failed: "git push"\nfatal: Authentication failed'),
-		});
+		stageChanges(new Error('Git command failed: "git push"\nfatal: Authentication failed'));
 
 		expect(() => commitAndPush(push)).toThrow(/Authentication failed/);
 	});

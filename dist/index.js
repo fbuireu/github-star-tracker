@@ -44256,7 +44256,7 @@ function readStargazers(dataDir) {
 function writeStargazers({ dataDir, stargazerMap }) {
   writeJsonFile({ filePath: path5.join(dataDir, DATA_FILES.stargazers), data: stargazerMap });
 }
-function writeHtmlReport({ htmlReport }) {
+function writeHtmlReport(htmlReport) {
   const outputDir = process.env.RUNNER_TEMP || process.cwd();
   const filePath = path5.join(outputDir, DATA_FILES.htmlReport);
   fs8.writeFileSync(filePath, htmlReport);
@@ -45867,7 +45867,7 @@ function roundTo({ value, decimals }) {
 function nextMilestoneAbove(value) {
   return STAR_MILESTONES.find((milestone) => milestone > value) ?? null;
 }
-function computeVelocity({ history }) {
+function computeVelocity(history) {
   const snapshots = history.snapshots;
   if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
   const last = snapshots[snapshots.length - 1];
@@ -45946,7 +45946,7 @@ function buildReportModel(params) {
     now
   });
   const hasChartHistory = includeCharts && history !== null && isPlottable(history);
-  const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity({ history: velocityHistory }) : null;
+  const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity(velocityHistory) : null;
   const topRepos = toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount });
   const chartHistory = hasChartHistory ? history : null;
   const perRepoCharts = chartHistory !== null && chartHistories !== null ? topRepos.filter((repo) => isDrawn(perRepoChartFile(repo.fullName))).map((repo) => ({ ...repo, history: chartHistories.forRepo(repo.fullName) })) : [];
@@ -46526,7 +46526,7 @@ async function trackStars() {
       setOutputs({
         summary: EMPTY_SUMMARY,
         rendered: empty,
-        htmlReportPath: writeHtmlReport({ htmlReport: empty.html }),
+        htmlReportPath: writeHtmlReport(empty.html),
         newStargazers: 0
       });
       return;
@@ -46623,7 +46623,7 @@ async function trackStars() {
           history: updatedHistory,
           totalStars: summary2.totalStars
         });
-        const htmlReportPath = writeHtmlReport({ htmlReport: rendered.html });
+        const htmlReportPath = writeHtmlReport(rendered.html);
         branch.publish({
           history: notification.historyToPersist,
           stargazerMap,

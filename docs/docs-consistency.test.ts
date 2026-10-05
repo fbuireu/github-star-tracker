@@ -1347,6 +1347,48 @@ const INLINE_TYPE = "{";
 
 const paramsTypeFor = (name: string): string => `${name[0].toUpperCase()}${name.slice(1)}Params`;
 
+const PARAMS_DECLARATION_PATTERN =
+	/(?:interface\s+(\w+Params)\b(?:\s*<[^>{]*>)?(\s+extends\s+[^{]+)?\s*\{|type\s+(\w+Params)\b(?:\s*<[^>=]*>)?\s*=\s*\{)/g;
+const INLINE_SINGLE_FIELD_PATTERN =
+	/[(]\s*\{\s*\w+\s*(?:=\s*[^}]+)?\}\s*:\s*\{\s*(?:readonly\s+)?\w+\??\s*:[^;{}]*;?\s*\}\s*[)]/;
+const TYPE_OPENERS = "{([<";
+const TYPE_CLOSERS = "})]>";
+const FIELD_SEPARATORS = ";,\n";
+const ARROW = "=>";
+
+interface BracedBodyFromParams {
+	source: string;
+	open: number;
+}
+
+const bracedBodyFrom = ({ source, open }: BracedBodyFromParams): string => {
+	let depth = 0;
+	for (let index = open; index < source.length; index += 1) {
+		if (source[index] === "{") depth += 1;
+		if (source[index] === "}") {
+			depth -= 1;
+			if (depth === 0) return source.slice(open + 1, index);
+		}
+	}
+	return "";
+};
+
+const fieldsOf = (body: string): string[] => {
+	const fields: string[] = [];
+	let depth = 0;
+	let current = "";
+	for (const token of body.split(ARROW).join("\u0000")) {
+		if (TYPE_OPENERS.includes(token)) depth += 1;
+		if (TYPE_CLOSERS.includes(token)) depth -= 1;
+		if (FIELD_SEPARATORS.includes(token) && depth === 0) {
+			if (current.trim()) fields.push(current.trim().replaceAll("\u0000", ARROW));
+			current = "";
+		} else current += token;
+	}
+	if (current.trim()) fields.push(current.trim().replaceAll("\u0000", ARROW));
+	return fields;
+};
+
 describe("a parameter object is named for the function that takes it", () => {
 	it("types a destructured parameter <FunctionName>Params, a type several functions share, or the record it unpacks", () => {
 		const destructuring = SOURCE_FILES.flatMap((file) =>
@@ -1378,6 +1420,33 @@ describe("a parameter object is named for the function that takes it", () => {
 
 		expect(exportedParams.length).toBeGreaterThan(0);
 		expect(unshared).toEqual([]);
+	});
+
+	it("gives no *Params type and no inline parameter type a single field, since one argument travels positionally", () => {
+		const declarations = TYPESCRIPT_FILES.flatMap((file) => {
+			const source = read(file);
+			return [...source.matchAll(PARAMS_DECLARATION_PATTERN)].map((match) => ({
+				file,
+				name: match[1] ?? match[3],
+				extended: match[2] !== undefined,
+				fields: fieldsOf(bracedBodyFrom({ source, open: (match.index ?? 0) + match[0].length - 1 })),
+			}));
+		});
+		const single = [
+			...declarations
+				.filter(({ extended, fields }) => !extended && fields.length < 2)
+				.map(({ file, name }) => `${file}: ${name}`),
+			...TYPESCRIPT_FILES.filter((file) => INLINE_SINGLE_FIELD_PATTERN.test(read(file))).map(
+				(file) => `${file}: an inline type`,
+			),
+		];
+
+		expect(declarations.length).toBeGreaterThan(0);
+		expect(fieldsOf("check: (value: string) => boolean;\n\terror?: Error;")).toEqual([
+			"check: (value: string) => boolean",
+			"error?: Error",
+		]);
+		expect(single).toEqual([]);
 	});
 });
 
