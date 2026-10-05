@@ -1,3 +1,10 @@
+## [1.28.3](https://github.com/fbuireu/github-star-tracker/compare/v1.28.2...v1.28.3) (2026-10-05)
+
+
+### Bug Fixes
+
+* close every known inconsistency and pin the Chart.js version email charts are written for ([328796c](https://github.com/fbuireu/github-star-tracker/commit/328796cd37db9130763494f14b4dc666c4038f24))
+
 ## [1.28.2](https://github.com/fbuireu/github-star-tracker/compare/v1.28.1...v1.28.2) (2026-10-02)
 
 
