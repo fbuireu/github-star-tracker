@@ -25777,11 +25777,6 @@ var ca_default = {
     subjectLine: "{subject}: {totalStars} ({delta})",
     defaultFrom: "Seguiment d'Estrelles GitHub"
   },
-  trends: {
-    up: "pujant",
-    down: "baixant",
-    stable: "estable"
-  },
   velocity: {
     sectionTitle: "Velocitat de creixement",
     starsPerDay: "Estrelles per dia",
@@ -25802,16 +25797,13 @@ var ca_default = {
   },
   forecast: {
     sectionTitle: "Previsi\xF3 de Creixement",
-    predictedStars: "Estrelles Previstes",
     week: "Setmana {n}",
     linearRegression: "Regressi\xF3 Lineal",
     weightedMovingAverage: "Mitjana M\xF2bil Ponderada",
     aggregate: "Previsi\xF3 Agregada",
     byRepository: "Per Repositori",
     repoChartTitle: "Previsi\xF3 de Creixement: {name}",
-    insufficientData: "Dades insuficients per a la previsi\xF3 (calen almenys 3 snapshots)",
-    method: "M\xE8tode",
-    predicted: "Previst"
+    method: "M\xE8tode"
   }
 };
 
@@ -25856,11 +25848,6 @@ var en_default = {
     subjectLine: "{subject}: {totalStars} ({delta})",
     defaultFrom: "GitHub Star Tracker"
   },
-  trends: {
-    up: "up",
-    down: "down",
-    stable: "stable"
-  },
   velocity: {
     sectionTitle: "Growth Velocity",
     starsPerDay: "Stars per day",
@@ -25881,16 +25868,13 @@ var en_default = {
   },
   forecast: {
     sectionTitle: "Growth Forecast",
-    predictedStars: "Predicted Stars",
     week: "Week {n}",
     linearRegression: "Linear Regression",
     weightedMovingAverage: "Weighted Moving Average",
     aggregate: "Aggregate Forecast",
     byRepository: "By Repository",
     repoChartTitle: "{name} Growth Forecast",
-    insufficientData: "Not enough data for forecast (need at least 3 snapshots)",
-    method: "Method",
-    predicted: "Predicted"
+    method: "Method"
   }
 };
 
@@ -25935,11 +25919,6 @@ var es_default = {
     subjectLine: "{subject}: {totalStars} ({delta})",
     defaultFrom: "Seguimiento de Estrellas GitHub"
   },
-  trends: {
-    up: "subiendo",
-    down: "bajando",
-    stable: "estable"
-  },
   velocity: {
     sectionTitle: "Velocidad de crecimiento",
     starsPerDay: "Estrellas por d\xEDa",
@@ -25960,16 +25939,13 @@ var es_default = {
   },
   forecast: {
     sectionTitle: "Previsi\xF3n de Crecimiento",
-    predictedStars: "Estrellas Previstas",
     week: "Semana {n}",
     linearRegression: "Regresi\xF3n Lineal",
     weightedMovingAverage: "Media M\xF3vil Ponderada",
     aggregate: "Previsi\xF3n Agregada",
     byRepository: "Por Repositorio",
     repoChartTitle: "Previsi\xF3n de Crecimiento: {name}",
-    insufficientData: "Datos insuficientes para la previsi\xF3n (se necesitan al menos 3 snapshots)",
-    method: "M\xE9todo",
-    predicted: "Previsto"
+    method: "M\xE9todo"
   }
 };
 
@@ -26014,11 +25990,6 @@ var it_default = {
     subjectLine: "{subject}: {totalStars} ({delta})",
     defaultFrom: "Tracciamento Stelle GitHub"
   },
-  trends: {
-    up: "in aumento",
-    down: "in diminuzione",
-    stable: "stabile"
-  },
   velocity: {
     sectionTitle: "Velocit\xE0 di crescita",
     starsPerDay: "Stelle al giorno",
@@ -26039,16 +26010,13 @@ var it_default = {
   },
   forecast: {
     sectionTitle: "Previsione di Crescita",
-    predictedStars: "Stelle Previste",
     week: "Settimana {n}",
     linearRegression: "Regressione Lineare",
     weightedMovingAverage: "Media Mobile Ponderata",
     aggregate: "Previsione Aggregata",
     byRepository: "Per Repository",
     repoChartTitle: "Previsione di Crescita: {name}",
-    insufficientData: "Dati insufficienti per la previsione (servono almeno 3 snapshot)",
-    method: "Metodo",
-    predicted: "Previsto"
+    method: "Metodo"
   }
 };
 

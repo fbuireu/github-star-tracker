@@ -88,11 +88,10 @@ Each JSON file implements the `Translations` interface with these sections:
 | `badge` | `totalStars` | Badge label text |
 | `report` | `title`, `total`, `totalStars`, `change`, `comparedTo`, `firstRun`, `noRepositories`, `repositories`, `stars`, `starsCount`, `trend`, `newRepositories`, `removedRepositories`, `removedRepoText`, `summary`, `starsGained`, `starsLost`, `netChange`, `starTrend`, `starHistory`, `topRepositories`, `byRepository`, `individualRepoCharts`, `repoChartHeading`, `repoChartTitle`, `trendLine`, `badges.new` | Report sections and labels |
 | `email` | `subject`, `subjectLine`, `defaultFrom` | Email content |
-| `trends` | `up`, `down`, `stable` | Trend direction labels |
 | `velocity` | `sectionTitle`, `starsPerDay`, `growth`, `projection` | Growth velocity section |
 | `footer` | `generated`, `madeBy` | Report footer |
 | `stargazers` | `sectionTitle`, `newStargazers`, `starredOn`, `noNewStargazers`, `stargazerCount`, `sampledNote` | Stargazer section |
-| `forecast` | `sectionTitle`, `predictedStars`, `week`, `linearRegression`, `weightedMovingAverage`, `aggregate`, `byRepository`, `repoChartTitle`, `insufficientData`, `method`, `predicted` | Forecast tables and the per-repository Forecast Chart title |
+| `forecast` | `sectionTitle`, `week`, `linearRegression`, `weightedMovingAverage`, `aggregate`, `byRepository`, `repoChartTitle`, `method` | Forecast tables and the per-repository Forecast Chart title |
 
 ### Interpolation
 

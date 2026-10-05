@@ -38,11 +38,6 @@ export interface Translations {
 		subjectLine: string;
 		defaultFrom: string;
 	};
-	trends: {
-		up: string;
-		down: string;
-		stable: string;
-	};
 	velocity: {
 		sectionTitle: string;
 		starsPerDay: string;
@@ -63,15 +58,12 @@ export interface Translations {
 	};
 	forecast: {
 		sectionTitle: string;
-		predictedStars: string;
 		week: string;
 		linearRegression: string;
 		weightedMovingAverage: string;
 		aggregate: string;
 		byRepository: string;
 		repoChartTitle: string;
-		insufficientData: string;
 		method: string;
-		predicted: string;
 	};
 }

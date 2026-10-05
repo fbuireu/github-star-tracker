@@ -895,6 +895,47 @@ describe("the i18n key table matches the bundles", () => {
 	});
 });
 
+interface BundleKeyReadParams {
+	code: string;
+	path: string;
+}
+
+const leafPathsOf = (bundle: Record<string, unknown>, prefix = ""): string[] =>
+	Object.entries(bundle).flatMap(([key, value]) =>
+		value !== null && typeof value === "object"
+			? leafPathsOf(value as Record<string, unknown>, `${prefix}${key}.`)
+			: [`${prefix}${key}`],
+	);
+
+const isBundleKeyRead = ({ code, path }: BundleKeyReadParams): boolean => {
+	const [section, ...rest] = path.split(".");
+	const byName = new RegExp(`\\b${section}\\.${rest.join("\\.")}\\b`);
+	const byIndex = new RegExp(`\\b${section}\\[`);
+
+	return byName.test(code) || (byIndex.test(code) && code.includes(`"${rest.at(-1)}"`));
+};
+
+describe("every bundle key has a reader", () => {
+	it("reads every key of en.json in production code, by name or through its section's index, since an unread key is still translated in every bundle", () => {
+		const bundle = JSON.parse(read("src/i18n/en.json")) as Record<string, unknown>;
+		const code = PRODUCTION_FILES.filter((file) => !file.startsWith("src/i18n/"))
+			.map(read)
+			.join("\n");
+		const paths = leafPathsOf(bundle);
+
+		expect(leafPathsOf({ a: { b: "x", c: { d: "y" } } })).toEqual(["a.b", "a.c.d"]);
+		expect(isBundleKeyRead({ code: "t.report.trend", path: "report.trend" })).toBe(true);
+		expect(isBundleKeyRead({ code: "t.report.trendLine", path: "report.trend" })).toBe(false);
+		expect(isBundleKeyRead({ code: "t.report.badges.new", path: "report.badges.new" })).toBe(true);
+		expect(isBundleKeyRead({ code: 't.forecast[LABELS[m]]; const L = "aggregate";', path: "forecast.aggregate" })).toBe(
+			true,
+		);
+		expect(isBundleKeyRead({ code: 'const L = "aggregate";', path: "forecast.aggregate" })).toBe(false);
+		expect(paths.length).toBeGreaterThan(0);
+		expect(paths.filter((path) => !isBundleKeyRead({ code, path }))).toEqual([]);
+	});
+});
+
 describe("the documented data-branch format matches the writer", () => {
 	it("shows the version stars-data.json is actually stamped with", () => {
 		const stamped = read(STORAGE_MODULE).match(DATA_FORMAT_VERSION_PATTERN)?.[1];

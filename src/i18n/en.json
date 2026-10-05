@@ -38,11 +38,6 @@
 		"subjectLine": "{subject}: {totalStars} ({delta})",
 		"defaultFrom": "GitHub Star Tracker"
 	},
-	"trends": {
-		"up": "up",
-		"down": "down",
-		"stable": "stable"
-	},
 	"velocity": {
 		"sectionTitle": "Growth Velocity",
 		"starsPerDay": "Stars per day",
@@ -63,15 +58,12 @@
 	},
 	"forecast": {
 		"sectionTitle": "Growth Forecast",
-		"predictedStars": "Predicted Stars",
 		"week": "Week {n}",
 		"linearRegression": "Linear Regression",
 		"weightedMovingAverage": "Weighted Moving Average",
 		"aggregate": "Aggregate Forecast",
 		"byRepository": "By Repository",
 		"repoChartTitle": "{name} Growth Forecast",
-		"insufficientData": "Not enough data for forecast (need at least 3 snapshots)",
-		"method": "Method",
-		"predicted": "Predicted"
+		"method": "Method"
 	}
 }

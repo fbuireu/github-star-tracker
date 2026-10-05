@@ -38,11 +38,6 @@
 		"subjectLine": "{subject}: {totalStars} ({delta})",
 		"defaultFrom": "Tracciamento Stelle GitHub"
 	},
-	"trends": {
-		"up": "in aumento",
-		"down": "in diminuzione",
-		"stable": "stabile"
-	},
 	"velocity": {
 		"sectionTitle": "Velocità di crescita",
 		"starsPerDay": "Stelle al giorno",
@@ -63,15 +58,12 @@
 	},
 	"forecast": {
 		"sectionTitle": "Previsione di Crescita",
-		"predictedStars": "Stelle Previste",
 		"week": "Settimana {n}",
 		"linearRegression": "Regressione Lineare",
 		"weightedMovingAverage": "Media Mobile Ponderata",
 		"aggregate": "Previsione Aggregata",
 		"byRepository": "Per Repository",
 		"repoChartTitle": "Previsione di Crescita: {name}",
-		"insufficientData": "Dati insufficienti per la previsione (servono almeno 3 snapshot)",
-		"method": "Metodo",
-		"predicted": "Previsto"
+		"method": "Metodo"
 	}
 }

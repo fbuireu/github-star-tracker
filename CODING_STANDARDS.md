@@ -30,7 +30,7 @@ No rule below restates these, and a diff that breaks one fails CI:
     parameter typed `<FunctionName>Params`, a type several functions share (`RenderReportParams`, `ReportParams`)
     or the record it unpacks, never an inline type; and no other `*Params` type exported;
   - a production reader for every runtime export, bar the values `action-inputs.test.ts` compares against
-    `action.yml`;
+    `action.yml`, and for every key of `en.json`, read by name or through its section's index;
   - a colocated test for every module but `types.ts`, `defaults.ts`, `constants.ts`, `src/index.ts` and
     `src/shared/tests`, with `filters.test.ts` covering `client.ts`; the fixture factories imported by tests only,
     and free of assertions, mocks and setup;
@@ -315,6 +315,9 @@ No rule below restates these, and a diff that breaks one fails CI:
   `{placeholders}`, so a translation can order its words freely: the per-repository Chart titles carry the repository
   as `{name}`, and the Total Stars label is one key rather than two words of the bundle
   ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
+- **hard**: A bundle key lives only while code reads it: the change that stops reading one deletes it from every
+  bundle, `Translations` and the i18n page, because an unread key is still translated and reviewed in every Locale
+  and reads as a section of the Report that no Run renders.
 - **hard**: `interpolate` leaves escaping to `@presentation`, because `html.ts` passes full markup as footer params
   and escaping here would double-escape every Report.
 - **hard**: The object `getTranslations` returns is read-only to its callers, because every caller shares the same
