@@ -11,7 +11,7 @@ email path goes through QuickChart because mail clients will not display inline 
 ([ADR 0010](../../docs/adr/0010-quickchart-renders-the-email-charts.md)).
 
 - **[`chart-spec.ts`](./chart-spec.ts) decides what a Chart is**, and names which one is wanted. A `ChartRequest` is a
-  discriminated union over the `ChartKind`s [CONTEXT.md](../../CONTEXT.md) lists (star history, per repo, comparison,
+  discriminated union over the `ChartKind`s [GLOSSARY.md](../../GLOSSARY.md) lists (star history, per repo, comparison,
   forecast, per-repo forecast), carrying the `history` to plot, an optional `title` and only that kind's own
   inputs (`repoFullName`, `repoNames`, `forecastData`, `lineColor`, the star-history Milestone and trend
   options). `buildChartSpec({ request, locale,

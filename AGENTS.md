@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Agent-facing guide for **github-star-tracker**, a GitHub Action that tracks star counts across a token
-owner's repositories. [CONTEXT.md](./CONTEXT.md) is the domain glossary and [ARCHITECTURE.md](./ARCHITECTURE.md)
+owner's repositories. [GLOSSARY.md](./GLOSSARY.md) is the domain glossary and [ARCHITECTURE.md](./ARCHITECTURE.md)
 the big picture: layer map, end-to-end Run, the Data Branch, build and release.
 
 Reviewing a diff: [CODING_STANDARDS.md](./CODING_STANDARDS.md).
@@ -127,7 +127,7 @@ wrong. What it cannot check is prose or rationale, and that part is still on you
 
 | If you change | Update |
 | --- | --- |
-| What a domain word means, or introduce a new one | [`CONTEXT.md`](./CONTEXT.md): the glossary, vocabulary only |
+| What a domain word means, or introduce a new one | [`GLOSSARY.md`](./GLOSSARY.md): the glossary, vocabulary only |
 | A rule about how code is written | [`CODING_STANDARDS.md`](./CODING_STANDARDS.md) |
 | A behaviour a doc states as an invariant or a gotcha | that bullet, or delete it if it stopped being true |
 | What a layer does, or the files a concept is made of | that layer's nested `AGENTS.md` (table above) |

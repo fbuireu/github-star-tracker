@@ -1,6 +1,6 @@
 # Coding standards
 
-What a review checks a diff against. The words are the ones [CONTEXT.md](./CONTEXT.md) defines, the reasons are in
+What a review checks a diff against. The words are the ones [GLOSSARY.md](./GLOSSARY.md) defines, the reasons are in
 [docs/adr/](./docs/adr/), and what an implementer needs while working is in the `AGENTS.md` guides.
 
 **hard** marks a rule whose breach is a defect: report it with the rule. **judgement** marks a call the reviewer
@@ -75,7 +75,7 @@ No rule below restates these, and a diff that breaks one fails CI:
 
 ## All layers
 
-- **hard**: Code and prose use the CONTEXT.md term for each concept, `Artefact` rather than `artifact`, because one
+- **hard**: Code and prose use the GLOSSARY.md term for each concept, `Artefact` rather than `artifact`, because one
   word per concept keeps the arithmetic, a Chart title and a log line meaning the same thing
   ([ADR 0004](./docs/adr/0004-layered-source-structure.md)). A retired term in an identifier is a defect.
 - **judgement**: Name a parameter object after the function that takes it, `<FunctionName>Params`, so a reader
@@ -390,7 +390,7 @@ No rule below restates these, and a diff that breaks one fails CI:
 
 ## Docs
 
-- **hard**: Keep `CONTEXT.md` to vocabulary: the term, one or two sentences on what it is, and the words it displaces,
+- **hard**: Keep `GLOSSARY.md` to vocabulary: the term, one or two sentences on what it is, and the words it displaces,
   never how it is built, because mechanism belongs to the folder guide or an ADR.
 - **hard**: State a rule once: a rule about how code is written here, a coupling or a gotcha in the guide of the
   folder it bites, a decision in an ADR, as *Where things live* in [ARCHITECTURE.md](./ARCHITECTURE.md) maps them;

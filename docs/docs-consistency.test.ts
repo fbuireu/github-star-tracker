@@ -76,7 +76,7 @@ function walk({ dir, keep }: WalkParams): string[] {
 const isMarkdown = (filename: string): boolean => filename.endsWith(".md");
 
 const DOCS = [
-	...["AGENTS.md", "ARCHITECTURE.md", "CODING_STANDARDS.md", "CONTEXT.md", "README.md"].filter((doc) =>
+	...["AGENTS.md", "ARCHITECTURE.md", "CODING_STANDARDS.md", "GLOSSARY.md", "README.md"].filter((doc) =>
 		fs.existsSync(doc),
 	),
 	...walk({ dir: ".github", keep: isMarkdown }),
@@ -822,7 +822,7 @@ describe("the guides quote the constants the code declares", () => {
 	});
 });
 
-const GLOSSARY = "CONTEXT.md";
+const GLOSSARY = "GLOSSARY.md";
 const GLOSSARY_TERM_PATTERN = /^\*\*(.+?)\*\*:/gm;
 const NON_LETTER_PATTERN = /[^a-z]/gi;
 

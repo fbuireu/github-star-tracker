@@ -43,7 +43,7 @@ done, and it is precisely the part that did *not* drift. What drifted was everyt
 `@presentation/chart-spec` decides **what** a Chart is; the two renderers decide **how** it looks.
 
 A `ChartRequest` names *which* Chart is wanted: a discriminated union over the `ChartKind`s
-[CONTEXT.md](../../CONTEXT.md) already lists, each variant carrying only its own inputs. `buildChartSpec`
+[GLOSSARY.md](../../GLOSSARY.md) already lists, each variant carrying only its own inputs. `buildChartSpec`
 maps one onto a `ChartSpec` (axis labels, an ordered list of series with a resolved colour, and the
 Milestones to draw, each already filtered to the visible ones and carrying both its `value` and its rendered
 `label`), or onto `null` when there is too little history to plot. `starHistorySpec`, `perRepoSpec`,

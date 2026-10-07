@@ -17,7 +17,7 @@ body:
         - README
         - AGENTS.md and ARCHITECTURE.md guides
         - CODING_STANDARDS.md
-        - CONTEXT.md glossary
+        - GLOSSARY.md glossary
         - An ADR
         - The wiki
         - CONTRIBUTING

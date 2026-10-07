@@ -30,7 +30,7 @@ Purity is the half of the rule that is not a matter of direction: `domain`, `pre
 
 Domain-Driven Design applied where it pays, not by the book. The ideas that carry the design are adopted in full:
 
-- **One ubiquitous language**, recorded in the root [`CONTEXT.md`](../../CONTEXT.md) and used by every layer. Snapshot, Baseline Snapshot, Delta, Tracked Set and Delivery mean the same thing in `domain`, in a chart title and in a log line, and the glossary lists the synonyms each word displaces so a near-miss cannot drift in.
+- **One ubiquitous language**, recorded in the root [`GLOSSARY.md`](../../GLOSSARY.md) and used by every layer. Snapshot, Baseline Snapshot, Delta, Tracked Set and Delivery mean the same thing in `domain`, in a chart title and in a log line, and the glossary lists the synonyms each word displaces so a near-miss cannot drift in.
 - **A domain layer with no infrastructure in it**, which is the boundary set out above.
 
 The rest of the tactical catalogue is taken where it fits and left where it does not, one pattern at a time rather than as a package:

@@ -4,7 +4,7 @@ How the action is built, for contributors. What it does and how to configure it 
 [README](./README.md) and the user guides in [docs/wiki/](./docs/wiki/), in particular
 [How It Works](../../wiki/How-It-Works) and [Technical Stack](../../wiki/Technical-Stack); this
 document does not restate them. The maintenance contract is [AGENTS.md](./AGENTS.md), how code is written is
-[CODING_STANDARDS.md](./CODING_STANDARDS.md), and the domain vocabulary is [CONTEXT.md](./CONTEXT.md).
+[CODING_STANDARDS.md](./CODING_STANDARDS.md), and the domain vocabulary is [GLOSSARY.md](./GLOSSARY.md).
 
 ## 1. Layer map
 
@@ -13,7 +13,7 @@ there for a reason: these are *layers* sharing one vocabulary, not DDD bounded c
 their own. How much of the method is taken, and where it deliberately stops, is
 [ADR 0004](./docs/adr/0004-layered-source-structure.md); the one question that cannot be answered once for
 the whole tree, when a primitive earns a type of its own, is
-[ADR 0022](./docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md). The domain vocabulary itself lives in [CONTEXT.md](./CONTEXT.md).
+[ADR 0022](./docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md). The domain vocabulary itself lives in [GLOSSARY.md](./GLOSSARY.md).
 
 ```mermaid
 ---
@@ -189,7 +189,7 @@ The scripts and git hooks are listed once in [AGENTS.md](./AGENTS.md#commands) a
 
 ## 6. Where things live
 
-One kind of document per question. [CONTEXT.md](./CONTEXT.md) is the domain glossary: what the words
+One kind of document per question. [GLOSSARY.md](./GLOSSARY.md) is the domain glossary: what the words
 **mean**. The `AGENTS.md` files, one at the root and one per layer, are **structure**: what an implementation
 needs while working. [CODING_STANDARDS.md](./CODING_STANDARDS.md) is **how code is written**, the file a review
 holds a diff to. [docs/adr/](./docs/adr/) is **why**:
