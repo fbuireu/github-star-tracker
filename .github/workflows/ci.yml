@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  check:
-    name: Check
+  verify:
+    name: Verify
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -36,7 +36,7 @@ jobs:
 
   release:
     name: Semantic Release
-    needs: [check]
+    needs: [verify]
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -84,3 +84,14 @@ jobs:
           git tag -fa "$MAJOR_VERSION" "${LATEST_TAG}^{}" -m "Update $MAJOR_VERSION to $LATEST_TAG"
 
           git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GH_REPO}.git" "$MAJOR_VERSION" --force
+
+  check:
+    name: Check
+    needs: [verify, release]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Fail if any job above did not succeed
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: exit 1
