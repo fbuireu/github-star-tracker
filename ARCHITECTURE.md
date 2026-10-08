@@ -184,7 +184,7 @@ The scripts and git hooks are listed once in [AGENTS.md](./AGENTS.md#commands) a
 | [`zizmor.yml`](./.github/workflows/zizmor.yml) | zizmor static analysis of the workflow files themselves |
 | [`dependency-review.yml`](./.github/workflows/dependency-review.yml) | Fails a PR that introduces a dependency with a known vulnerability |
 | [`commit-message.yml`](./.github/workflows/commit-message.yml) | Runs commitlint on the **pull request title**. `main` takes squash merges and the repository is set to `PR_TITLE`, so that title, not the branch's commits, is the message that lands and the one semantic-release reads. The `commit-msg` hook validates commits the squash then discards, so this is the only guard on the string that ships |
-| [`dependabot-auto-merge.yml`](./.github/workflows/dependabot-auto-merge.yml) | Auto-approves and squash-merges Dependabot patch/minor/dev/indirect updates |
+| [`dependabot-auto-merge.yml`](./.github/workflows/dependabot-auto-merge.yml) | Auto-approves and squash-merges Dependabot patch/minor updates, and dev/indirect ones short of a major; a major is commented on and labelled instead |
 | [`sync-wiki.yml`](./.github/workflows/sync-wiki.yml) | Publishes [`docs/wiki/`](./docs/wiki) to the repository's GitHub Wiki with `rsync --delete`, so the wiki is generated and direct edits to it are overwritten |
 
 ## 6. Where things live

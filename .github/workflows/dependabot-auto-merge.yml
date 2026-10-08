@@ -23,7 +23,9 @@ jobs:
           UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
           DEP_TYPE: ${{ steps.metadata.outputs.dependency-type }}
         run: |
-          if [[ "$UPDATE_TYPE" == "version-update:semver-patch" ]] || \
+          if [[ "$UPDATE_TYPE" == "version-update:semver-major" ]]; then
+            echo "should-merge=false" >> $GITHUB_OUTPUT
+          elif [[ "$UPDATE_TYPE" == "version-update:semver-patch" ]] || \
              [[ "$UPDATE_TYPE" == "version-update:semver-minor" ]] || \
              [[ "$DEP_TYPE" == "indirect" ]] || \
              [[ "$DEP_TYPE" == "direct:development" ]]; then
