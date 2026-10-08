@@ -11,6 +11,7 @@ export default defineConfig({
 		testTimeout: 20_000,
 		coverage: {
 			provider: "v8",
+			reporter: ["text", "lcov"],
 			include: ["src/**/*.ts"],
 			exclude: ["src/index.ts", "src/**/{types,defaults,constants}.ts", "src/**/*.test.ts", "src/shared/tests/**"],
 			thresholds: {
