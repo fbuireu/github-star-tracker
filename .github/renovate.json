@@ -20,6 +20,7 @@
 		"labels": ["security", "vulnerability"]
 	},
 	"osvVulnerabilityAlerts": true,
+	"semanticCommits": "enabled",
 	"packageRules": [
 		{
 			"matchUpdateTypes": ["pin", "pinDigest", "digest"],
@@ -43,6 +44,10 @@
 			"matchUpdateTypes": ["major"],
 			"addLabels": ["major-update"],
 			"automerge": false
+		},
+		{
+			"matchManagers": ["github-actions"],
+			"addLabels": ["ci"]
 		},
 		{
 			"matchDepNames": ["node"],
