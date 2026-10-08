@@ -49,13 +49,13 @@ pnpm test:ut:changed  # test:ut --changed origin/main
 pnpm test:docs        # the docs contract alone
 pnpm verify:static    # format:check && typecheck && build: everything verify does but the suite
 pnpm verify           # verify:static && test:ut:coverage; what CI runs
-pnpm verify:changed   # verify:static && test:ut:changed; what pre-push runs
+pnpm verify:changed   # verify:static && test:ut:changed && test:docs; what pre-push runs
 ```
 
 Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run src/domain/forecast.test.ts`.
 
-`test:ut:changed` picks tests through the import graph, which no Markdown file is in, so after a change to the docs
-alone run `pnpm test:docs`.
+`test:ut:changed` picks tests through the import graph, which no Markdown file is in, which is why `verify:changed`
+ends with `test:docs`.
 
 Biome's `--changed` diffs against `vcs.defaultBranch`, which is `main`, so on `main` `pnpm format:changed` answers
 *Checked 0 files* however much has changed. Reach for `format:all` there.

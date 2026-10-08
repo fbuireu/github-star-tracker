@@ -50,7 +50,7 @@
 		"test:docs": "pnpm test:ut docs/docs-consistency.test.ts",
 		"verify:static": "pnpm format:check && pnpm typecheck && pnpm build",
 		"verify": "pnpm verify:static && pnpm test:ut:coverage",
-		"verify:changed": "pnpm verify:static && pnpm test:ut:changed"
+		"verify:changed": "pnpm verify:static && pnpm test:ut:changed && pnpm test:docs"
 	},
 	"dependencies": {
 		"@actions/core": "3.0.1",
