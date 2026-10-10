@@ -1,3 +1,10 @@
+## [1.28.4](https://github.com/fbuireu/github-star-tracker/compare/v1.28.3...v1.28.4) (2026-10-10)
+
+
+### Bug Fixes
+
+* write the Spanish, Catalan and Italian bundles in their own conventions ([4ac555d](https://github.com/fbuireu/github-star-tracker/commit/4ac555de02418648f7f9323e29ca693653efad7d))
+
 ## [1.28.3](https://github.com/fbuireu/github-star-tracker/compare/v1.28.2...v1.28.3) (2026-10-05)
 
 
