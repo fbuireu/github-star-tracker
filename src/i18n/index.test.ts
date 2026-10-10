@@ -55,19 +55,19 @@ describe("getTranslations", () => {
 	it("returns Spanish translations for es locale", () => {
 		const t = getTranslations("es");
 
-		expect(t.report.title).toBe("Informe de Seguimiento de Estrellas");
+		expect(t.report.title).toBe("Informe de seguimiento de estrellas");
 	});
 
 	it("returns Catalan translations for ca locale", () => {
 		const t = getTranslations("ca");
 
-		expect(t.report.title).toBe("Informe de Seguiment d'Estrelles");
+		expect(t.report.title).toBe("Informe de seguiment d'estrelles");
 	});
 
 	it("returns Italian translations for it locale", () => {
 		const t = getTranslations("it");
 
-		expect(t.report.title).toBe("Report Tracciamento Stelle");
+		expect(t.report.title).toBe("Report di monitoraggio delle stelle");
 	});
 });
 

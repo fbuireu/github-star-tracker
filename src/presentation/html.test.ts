@@ -152,9 +152,9 @@ describe("generateHtmlReport", () => {
 
 	const TOTAL_LABELS: { locale: Locale; label: string }[] = [
 		{ locale: "en", label: "Total Stars" },
-		{ locale: "es", label: "Estrellas Totales" },
-		{ locale: "ca", label: "Estrelles Totals" },
-		{ locale: "it", label: "Stelle Totali" },
+		{ locale: "es", label: "Estrellas totales" },
+		{ locale: "ca", label: "Estrelles totals" },
+		{ locale: "it", label: "Stelle totali" },
 	];
 
 	it.each(TOTAL_LABELS)("labels the total as one phrase of the bundle in $locale", ({ locale, label }) => {

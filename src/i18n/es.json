@@ -1,48 +1,48 @@
 {
 	"badge": {
-		"totalStars": "Estrellas Totales"
+		"totalStars": "Estrellas totales"
 	},
 	"report": {
-		"title": "Informe de Seguimiento de Estrellas",
+		"title": "Informe de seguimiento de estrellas",
 		"total": "Total",
-		"totalStars": "Estrellas Totales",
+		"totalStars": "Estrellas totales",
 		"change": "Cambio",
-		"comparedTo": "Comparado con instantánea del {date}",
+		"comparedTo": "Comparado con la instantánea del {date}",
 		"firstRun": "primera ejecución",
 		"noRepositories": "Ningún repositorio coincide con los filtros configurados",
 		"repositories": "Repositorios",
 		"stars": "Estrellas",
 		"starsCount": "{count} estrellas",
 		"trend": "Tendencia",
-		"newRepositories": "Nuevos Repositorios",
-		"removedRepositories": "Repositorios Eliminados",
+		"newRepositories": "Repositorios nuevos",
+		"removedRepositories": "Repositorios eliminados",
 		"removedRepoText": "{name}: tenía {count} estrellas",
 		"summary": "Resumen",
 		"starsGained": "Estrellas ganadas",
 		"starsLost": "Estrellas perdidas",
 		"netChange": "Cambio neto",
-		"starTrend": "Tendencia de Estrellas",
-		"starHistory": "Historial de Estrellas",
-		"topRepositories": "Repositorios Principales",
-		"byRepository": "Por Repositorio",
-		"individualRepoCharts": "Gráficos por Repositorio",
+		"starTrend": "Tendencia de estrellas",
+		"starHistory": "Historial de estrellas",
+		"topRepositories": "Repositorios principales",
+		"byRepository": "Por repositorio",
+		"individualRepoCharts": "Gráficos por repositorio",
 		"repoChartHeading": "{name}: {count} ★ ({delta})",
-		"repoChartTitle": "Historial de Estrellas: {name}",
+		"repoChartTitle": "Historial de estrellas de {name}",
 		"trendLine": "Tendencia",
 		"badges": {
 			"new": "NUEVO"
 		}
 	},
 	"email": {
-		"subject": "Informe de Seguimiento de Estrellas en GitHub",
+		"subject": "Informe de seguimiento de estrellas en GitHub",
 		"subjectLine": "{subject}: {totalStars} ({delta})",
-		"defaultFrom": "Seguimiento de Estrellas GitHub"
+		"defaultFrom": "Seguimiento de estrellas de GitHub"
 	},
 	"velocity": {
 		"sectionTitle": "Velocidad de crecimiento",
 		"starsPerDay": "Estrellas por día",
 		"growth": "Crecimiento",
-		"projection": "~{days} días para {milestone} ★"
+		"projection": "~{days} días hasta {milestone} ★"
 	},
 	"footer": {
 		"generated": "Generado por {project} el {date}",
@@ -51,19 +51,19 @@
 	"stargazers": {
 		"sectionTitle": "Nuevos Stargazers",
 		"newStargazers": "{count} nuevos stargazers desde la última ejecución",
-		"starredOn": "marcó estrella el {date}",
+		"starredOn": "le dio una estrella el {date}",
 		"noNewStargazers": "Sin nuevos stargazers desde la última ejecución",
 		"stargazerCount": "{count} nuevos",
 		"sampledNote": "Las listas exactas de nuevos stargazers no están disponibles para los repositorios muestreados: {repos}"
 	},
 	"forecast": {
-		"sectionTitle": "Previsión de Crecimiento",
+		"sectionTitle": "Previsión de crecimiento",
 		"week": "Semana {n}",
-		"linearRegression": "Regresión Lineal",
-		"weightedMovingAverage": "Media Móvil Ponderada",
-		"aggregate": "Previsión Agregada",
-		"byRepository": "Por Repositorio",
-		"repoChartTitle": "Previsión de Crecimiento: {name}",
+		"linearRegression": "Regresión lineal",
+		"weightedMovingAverage": "Media móvil ponderada",
+		"aggregate": "Previsión agregada",
+		"byRepository": "Por repositorio",
+		"repoChartTitle": "Previsión de crecimiento de {name}",
 		"method": "Método"
 	}
 }

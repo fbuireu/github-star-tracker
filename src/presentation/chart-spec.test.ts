@@ -176,20 +176,20 @@ describe("buildChartSpec", () => {
 			},
 			{
 				locale: "es",
-				perRepo: "Historial de Estrellas: user/repo-a",
-				perRepoForecast: "Previsión de Crecimiento: user/repo-a",
+				perRepo: "Historial de estrellas de user/repo-a",
+				perRepoForecast: "Previsión de crecimiento de user/repo-a",
 				stars: "Estrellas",
 			},
 			{
 				locale: "ca",
-				perRepo: "Historial d'Estrelles: user/repo-a",
-				perRepoForecast: "Previsió de Creixement: user/repo-a",
+				perRepo: "Historial d'estrelles de user/repo-a",
+				perRepoForecast: "Previsió de creixement de user/repo-a",
 				stars: "Estrelles",
 			},
 			{
 				locale: "it",
-				perRepo: "Storia delle Stelle: user/repo-a",
-				perRepoForecast: "Previsione di Crescita: user/repo-a",
+				perRepo: "Storico delle stelle di user/repo-a",
+				perRepoForecast: "Previsione di crescita di user/repo-a",
 				stars: "Stelle",
 			},
 		];

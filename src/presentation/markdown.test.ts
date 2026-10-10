@@ -193,9 +193,9 @@ describe("generateMarkdownReport", () => {
 
 	const STAR_HISTORY_CAPTIONS: { locale: Locale; caption: string }[] = [
 		{ locale: "en", caption: "Star History" },
-		{ locale: "es", caption: "Historial de Estrellas" },
-		{ locale: "ca", caption: "Historial d'Estrelles" },
-		{ locale: "it", caption: "Storia delle Stelle" },
+		{ locale: "es", caption: "Historial de estrellas" },
+		{ locale: "ca", caption: "Historial d'estrelles" },
+		{ locale: "it", caption: "Storico delle stelle" },
 	];
 
 	it.each(STAR_HISTORY_CAPTIONS)(

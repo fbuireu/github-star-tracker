@@ -7,9 +7,9 @@ GitHub Star Tracker supports multiple languages for all user-facing content: rep
 | Code | Language | Example Badge |
 |---|---|---|
 | `en` | English (default) | `Total Stars` |
-| `es` | Spanish | `Estrellas Totales` |
-| `ca` | Catalan | `Estrelles Totals` |
-| `it` | Italian | `Stelle Totali` |
+| `es` | Spanish | `Estrellas totales` |
+| `ca` | Catalan | `Estrelles totals` |
+| `it` | Italian | `Stelle totali` |
 
 ---
 
@@ -39,7 +39,7 @@ locale: es
 |---|---|
 | **Markdown report** | Section titles, summary labels, trend indicators, footer |
 | **HTML email** | Same as Markdown, plus subject line |
-| **SVG badge** | Label text (`Total Stars` / `Estrellas Totales` / ...) |
+| **SVG badge** | Label text (`Total Stars` / `Estrellas totales` / ...) |
 | **Charts, both kinds** | Chart titles, axis date labels (locale-aware `Date.toLocaleDateString`) and milestone labels |
 | **Charts, SVG only** | The compact Y-axis counts (`12K`). The email charts let Chart.js draw its own ticks instead, as full numbers in the same locale (`12,000` in `en`, `12.000` in `es`) |
 | **Badge number** | The star count is compacted in the report locale, so `1,200` reads `1.2K` in `en` and `1,2 mil` in `es` |
@@ -52,9 +52,9 @@ locale: es
 | Locale | Example Subject |
 |---|---|
 | `en` | `GitHub Star Tracker Report: 523 (+15)` |
-| `es` | `Informe de Seguimiento de Estrellas en GitHub: 523 (+15)` |
-| `ca` | `Informe de Seguiment d'Estrelles a GitHub: 523 (+15)` |
-| `it` | `Report Tracciamento Stelle GitHub: 523 (+15)` |
+| `es` | `Informe de seguimiento de estrellas en GitHub: 523 (+15)` |
+| `ca` | `Informe de seguiment d'estrelles a GitHub: 523 (+15)` |
+| `it` | `Report di monitoraggio delle stelle su GitHub: 523 (+15)` |
 
 The shape is `email.subjectLine` (`{subject}: {totalStars} ({delta})`, identical in every bundle)
 interpolated over `email.subject`. This is the only place the subject is written out; do not restate it

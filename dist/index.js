@@ -25739,49 +25739,49 @@ var NotificationMode = {
 // src/i18n/ca.json
 var ca_default = {
   badge: {
-    totalStars: "Estrelles Totals"
+    totalStars: "Estrelles totals"
   },
   report: {
-    title: "Informe de Seguiment d'Estrelles",
+    title: "Informe de seguiment d'estrelles",
     total: "Total",
-    totalStars: "Estrelles Totals",
+    totalStars: "Estrelles totals",
     change: "Canvi",
-    comparedTo: "Comparat amb instant\xE0nia del {date}",
+    comparedTo: "Comparat amb la instant\xE0nia del {date}",
     firstRun: "primera execuci\xF3",
-    noRepositories: "Cap repositori coincideix amb els filtres configurats",
+    noRepositories: "Cap repositori no coincideix amb els filtres configurats",
     repositories: "Repositoris",
     stars: "Estrelles",
     starsCount: "{count} estrelles",
     trend: "Tend\xE8ncia",
-    newRepositories: "Nous Repositoris",
-    removedRepositories: "Repositoris Eliminats",
+    newRepositories: "Repositoris nous",
+    removedRepositories: "Repositoris eliminats",
     removedRepoText: "{name}: tenia {count} estrelles",
     summary: "Resum",
     starsGained: "Estrelles guanyades",
     starsLost: "Estrelles perdudes",
     netChange: "Canvi net",
-    starTrend: "Tend\xE8ncia d'Estrelles",
-    starHistory: "Historial d'Estrelles",
-    topRepositories: "Repositoris Principals",
-    byRepository: "Per Repositori",
-    individualRepoCharts: "Gr\xE0fics per Repositori",
+    starTrend: "Tend\xE8ncia d'estrelles",
+    starHistory: "Historial d'estrelles",
+    topRepositories: "Repositoris principals",
+    byRepository: "Per repositori",
+    individualRepoCharts: "Gr\xE0fics per repositori",
     repoChartHeading: "{name}: {count} \u2605 ({delta})",
-    repoChartTitle: "Historial d'Estrelles: {name}",
+    repoChartTitle: "Historial d'estrelles de {name}",
     trendLine: "Tend\xE8ncia",
     badges: {
       new: "NOU"
     }
   },
   email: {
-    subject: "Informe de Seguiment d'Estrelles a GitHub",
+    subject: "Informe de seguiment d'estrelles a GitHub",
     subjectLine: "{subject}: {totalStars} ({delta})",
-    defaultFrom: "Seguiment d'Estrelles GitHub"
+    defaultFrom: "Seguiment d'estrelles de GitHub"
   },
   velocity: {
     sectionTitle: "Velocitat de creixement",
     starsPerDay: "Estrelles per dia",
     growth: "Creixement",
-    projection: "~{days} dies per a {milestone} \u2605"
+    projection: "~{days} dies fins a {milestone} \u2605"
   },
   footer: {
     generated: "Generat per {project} el {date}",
@@ -25790,19 +25790,19 @@ var ca_default = {
   stargazers: {
     sectionTitle: "Nous Stargazers",
     newStargazers: "{count} nous stargazers des de la darrera execuci\xF3",
-    starredOn: "va marcar estrella el {date}",
+    starredOn: "va donar una estrella el {date}",
     noNewStargazers: "Sense nous stargazers des de la darrera execuci\xF3",
     stargazerCount: "{count} nous",
     sampledNote: "Les llistes exactes de nous stargazers no estan disponibles per als repositoris mostrejats: {repos}"
   },
   forecast: {
-    sectionTitle: "Previsi\xF3 de Creixement",
+    sectionTitle: "Previsi\xF3 de creixement",
     week: "Setmana {n}",
-    linearRegression: "Regressi\xF3 Lineal",
-    weightedMovingAverage: "Mitjana M\xF2bil Ponderada",
-    aggregate: "Previsi\xF3 Agregada",
-    byRepository: "Per Repositori",
-    repoChartTitle: "Previsi\xF3 de Creixement: {name}",
+    linearRegression: "Regressi\xF3 lineal",
+    weightedMovingAverage: "Mitjana m\xF2bil ponderada",
+    aggregate: "Previsi\xF3 agregada",
+    byRepository: "Per repositori",
+    repoChartTitle: "Previsi\xF3 de creixement de {name}",
     method: "M\xE8tode"
   }
 };
@@ -25881,49 +25881,49 @@ var en_default = {
 // src/i18n/es.json
 var es_default = {
   badge: {
-    totalStars: "Estrellas Totales"
+    totalStars: "Estrellas totales"
   },
   report: {
-    title: "Informe de Seguimiento de Estrellas",
+    title: "Informe de seguimiento de estrellas",
     total: "Total",
-    totalStars: "Estrellas Totales",
+    totalStars: "Estrellas totales",
     change: "Cambio",
-    comparedTo: "Comparado con instant\xE1nea del {date}",
+    comparedTo: "Comparado con la instant\xE1nea del {date}",
     firstRun: "primera ejecuci\xF3n",
     noRepositories: "Ning\xFAn repositorio coincide con los filtros configurados",
     repositories: "Repositorios",
     stars: "Estrellas",
     starsCount: "{count} estrellas",
     trend: "Tendencia",
-    newRepositories: "Nuevos Repositorios",
-    removedRepositories: "Repositorios Eliminados",
+    newRepositories: "Repositorios nuevos",
+    removedRepositories: "Repositorios eliminados",
     removedRepoText: "{name}: ten\xEDa {count} estrellas",
     summary: "Resumen",
     starsGained: "Estrellas ganadas",
     starsLost: "Estrellas perdidas",
     netChange: "Cambio neto",
-    starTrend: "Tendencia de Estrellas",
-    starHistory: "Historial de Estrellas",
-    topRepositories: "Repositorios Principales",
-    byRepository: "Por Repositorio",
-    individualRepoCharts: "Gr\xE1ficos por Repositorio",
+    starTrend: "Tendencia de estrellas",
+    starHistory: "Historial de estrellas",
+    topRepositories: "Repositorios principales",
+    byRepository: "Por repositorio",
+    individualRepoCharts: "Gr\xE1ficos por repositorio",
     repoChartHeading: "{name}: {count} \u2605 ({delta})",
-    repoChartTitle: "Historial de Estrellas: {name}",
+    repoChartTitle: "Historial de estrellas de {name}",
     trendLine: "Tendencia",
     badges: {
       new: "NUEVO"
     }
   },
   email: {
-    subject: "Informe de Seguimiento de Estrellas en GitHub",
+    subject: "Informe de seguimiento de estrellas en GitHub",
     subjectLine: "{subject}: {totalStars} ({delta})",
-    defaultFrom: "Seguimiento de Estrellas GitHub"
+    defaultFrom: "Seguimiento de estrellas de GitHub"
   },
   velocity: {
     sectionTitle: "Velocidad de crecimiento",
     starsPerDay: "Estrellas por d\xEDa",
     growth: "Crecimiento",
-    projection: "~{days} d\xEDas para {milestone} \u2605"
+    projection: "~{days} d\xEDas hasta {milestone} \u2605"
   },
   footer: {
     generated: "Generado por {project} el {date}",
@@ -25932,19 +25932,19 @@ var es_default = {
   stargazers: {
     sectionTitle: "Nuevos Stargazers",
     newStargazers: "{count} nuevos stargazers desde la \xFAltima ejecuci\xF3n",
-    starredOn: "marc\xF3 estrella el {date}",
+    starredOn: "le dio una estrella el {date}",
     noNewStargazers: "Sin nuevos stargazers desde la \xFAltima ejecuci\xF3n",
     stargazerCount: "{count} nuevos",
     sampledNote: "Las listas exactas de nuevos stargazers no est\xE1n disponibles para los repositorios muestreados: {repos}"
   },
   forecast: {
-    sectionTitle: "Previsi\xF3n de Crecimiento",
+    sectionTitle: "Previsi\xF3n de crecimiento",
     week: "Semana {n}",
-    linearRegression: "Regresi\xF3n Lineal",
-    weightedMovingAverage: "Media M\xF3vil Ponderada",
-    aggregate: "Previsi\xF3n Agregada",
-    byRepository: "Por Repositorio",
-    repoChartTitle: "Previsi\xF3n de Crecimiento: {name}",
+    linearRegression: "Regresi\xF3n lineal",
+    weightedMovingAverage: "Media m\xF3vil ponderada",
+    aggregate: "Previsi\xF3n agregada",
+    byRepository: "Por repositorio",
+    repoChartTitle: "Previsi\xF3n de crecimiento de {name}",
     method: "M\xE9todo"
   }
 };
@@ -25952,70 +25952,70 @@ var es_default = {
 // src/i18n/it.json
 var it_default = {
   badge: {
-    totalStars: "Stelle Totali"
+    totalStars: "Stelle totali"
   },
   report: {
-    title: "Report Tracciamento Stelle",
+    title: "Report di monitoraggio delle stelle",
     total: "Totale",
-    totalStars: "Stelle Totali",
+    totalStars: "Stelle totali",
     change: "Variazione",
-    comparedTo: "Confrontato con snapshot del {date}",
+    comparedTo: "Confronto con lo snapshot del {date}",
     firstRun: "prima esecuzione",
     noRepositories: "Nessun repository corrisponde ai filtri configurati",
     repositories: "Repository",
     stars: "Stelle",
     starsCount: "{count} stelle",
     trend: "Tendenza",
-    newRepositories: "Nuovi Repository",
-    removedRepositories: "Repository Rimossi",
+    newRepositories: "Nuovi repository",
+    removedRepositories: "Repository rimossi",
     removedRepoText: "{name}: aveva {count} stelle",
     summary: "Riepilogo",
     starsGained: "Stelle guadagnate",
     starsLost: "Stelle perse",
     netChange: "Variazione netta",
-    starTrend: "Andamento Stelle",
-    starHistory: "Storia delle Stelle",
-    topRepositories: "Repository Principali",
-    byRepository: "Per Repository",
-    individualRepoCharts: "Grafici per Repository",
+    starTrend: "Andamento delle stelle",
+    starHistory: "Storico delle stelle",
+    topRepositories: "Repository principali",
+    byRepository: "Per repository",
+    individualRepoCharts: "Grafici per repository",
     repoChartHeading: "{name}: {count} \u2605 ({delta})",
-    repoChartTitle: "Storia delle Stelle: {name}",
+    repoChartTitle: "Storico delle stelle di {name}",
     trendLine: "Tendenza",
     badges: {
       new: "NUOVO"
     }
   },
   email: {
-    subject: "Report Tracciamento Stelle GitHub",
+    subject: "Report di monitoraggio delle stelle su GitHub",
     subjectLine: "{subject}: {totalStars} ({delta})",
-    defaultFrom: "Tracciamento Stelle GitHub"
+    defaultFrom: "Monitoraggio stelle GitHub"
   },
   velocity: {
     sectionTitle: "Velocit\xE0 di crescita",
     starsPerDay: "Stelle al giorno",
     growth: "Crescita",
-    projection: "~{days} giorni a {milestone} \u2605"
+    projection: "~{days} giorni per arrivare a {milestone} \u2605"
   },
   footer: {
     generated: "Generato da {project} il {date}",
-    madeBy: "Realizzato con \u{1F918} da {author}"
+    madeBy: "Fatto con \u{1F918} da {author}"
   },
   stargazers: {
-    sectionTitle: "Nuovi Stargazer",
+    sectionTitle: "Nuovi stargazer",
     newStargazers: "{count} nuovi stargazer dall'ultima esecuzione",
-    starredOn: "ha messo la stella il {date}",
+    starredOn: "ha aggiunto una stella il {date}",
     noNewStargazers: "Nessun nuovo stargazer dall'ultima esecuzione",
     stargazerCount: "{count} nuovi",
     sampledNote: "Gli elenchi esatti dei nuovi stargazer non sono disponibili per i repository campionati: {repos}"
   },
   forecast: {
-    sectionTitle: "Previsione di Crescita",
+    sectionTitle: "Previsione di crescita",
     week: "Settimana {n}",
-    linearRegression: "Regressione Lineare",
-    weightedMovingAverage: "Media Mobile Ponderata",
-    aggregate: "Previsione Aggregata",
-    byRepository: "Per Repository",
-    repoChartTitle: "Previsione di Crescita: {name}",
+    linearRegression: "Regressione lineare",
+    weightedMovingAverage: "Media mobile ponderata",
+    aggregate: "Previsione aggregata",
+    byRepository: "Per repository",
+    repoChartTitle: "Previsione di crescita di {name}",
     method: "Metodo"
   }
 };
