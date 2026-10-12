@@ -159,5 +159,6 @@ earns one and where to link it from.
   lets it through.
 - The release config teaches both commit-parsing plugins the `!` grammar through `parserOpts`. Without it a
   `feat(x)!:` commit is analysed with no type, the job ends green and nothing is released. `pnpm test:docs` asserts
-  that both plugins carry the same `parserOpts`, and [ARCHITECTURE.md](./ARCHITECTURE.md) says why the `preset` route
-  does not work here.
+  that both plugins carry the same `parserOpts`, as part of holding the file to the configuration the sibling
+  repositories share, and [ARCHITECTURE.md](./ARCHITECTURE.md) says what differs between them and why the `preset`
+  route does not work here.

@@ -61,6 +61,11 @@ No rule below restates these, and a diff that breaks one fails CI:
   - the inputs and outputs listed alphabetically, `github-token` first, on every surface that lists them, and a
     wiki page reaching a repository file by an absolute URL;
   - no guide keeping a list of known inconsistencies;
+  - every `.releaserc.json` the release configuration the sibling repositories share, with no key or plugin beyond
+    what the repository's shape adds and laid out as Biome lays it out, its release commit
+    `chore(<scope>): release ${nextRelease.version} [skip ci]` scoped to the package it releases, and every plugin
+    it names, and `semantic-release`, declared at one version in the `package.json` that runs it, beside no other
+    release package, and the release commit let past commitlint by its `ignores`, whatever its notes say;
   - every Mermaid diagram held to the `layout: dagre` it was drawn with, so a renderer that defaults to ELK cannot
     redraw it;
   - every `uses:` of another repository pinned to a full commit SHA with its version or branch in a trailing
@@ -425,9 +430,13 @@ No rule below restates these, and a diff that breaks one fails CI:
   `SnapshotRepo` in `@domain/types`, because a schema cannot live in a pure layer and the domain type is not
   inferred from one; `readHistory` returning `History` catches a field the schema lacks, never a key the type lacks
   ([ADR 0023](./docs/adr/0023-untrusted-input-is-validated-with-zod-mini.md)).
-- **Duplicated Code**: the stated-version helpers (`VERSIONED_DEPENDENCIES` through `declaredIn`) and the
-  release-config helpers (`BREAKING_PARSER_OPTS` through `parserOptsOf`) in `docs/docs-consistency.test.ts` are byte
-  for byte the same in biancafiore, contribKit and github-star-tracker, so a change to one is made in all three.
+- **Duplicated Code**: the stated-version helpers (`VERSIONED_DEPENDENCIES` through `declaredIn`) in
+  `docs/docs-consistency.test.ts` are byte for byte the same in biancafiore, contribKit and github-star-tracker, so a
+  change to one is made in all three.
+- **Duplicated Code**: the release-configuration rule (`BREAKING_PARSER_OPTS` through the `describe` that holds
+  every release configuration to the shared one) in `docs/docs-consistency.test.ts` is byte for byte the same in
+  biancafiore, contribKit, forever-pto and github-star-tracker, so a change to it is made in all four; only the
+  shapes declared above it, which name each repository's files, differ.
 - **Repeated Switches**: each chart adapter maps `SeriesDash` (and the email adapter `SeriesWeight`) through its own
   table and keeps its own series dash patterns, because those are dialect facts
   ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).

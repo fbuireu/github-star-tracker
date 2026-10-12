@@ -177,8 +177,8 @@ Changed inputs, outputs or defaults are reflected in [`action.yml`](../action.ym
 3. CI runs `pnpm verify` on the pushed sha, so a pull request cannot merge while it is red.
 4. After merge to `main`, the `release` job rebuilds the bundle and semantic-release versions, publishes and
    commits `package.json`, [`CHANGELOG.md`](../CHANGELOG.md) and `dist/` back as
-   `chore(release): <version> [skip ci]`; a final step moves the floating `v1` tag, which is what consumers
-   reference. There is no manual release step.
+   `chore(github-star-tracker): release <version> [skip ci]`; a final step moves the floating `v1` tag, which is
+   what consumers reference. There is no manual release step.
 
 ## Use of AI
 

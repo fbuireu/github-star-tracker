@@ -1128,19 +1128,8 @@ describe("stated versions, since a manifest is the only copy a bot keeps current
 	});
 });
 
-const BREAKING_PARSER_OPTS = {
-	headerPattern: "^(\\w*)(?:\\((.*)\\))?!?: (.*)$",
-	breakingHeaderPattern: "^(\\w*)(?:\\((.*)\\))?!: (.*)$",
-};
-const COMMIT_PARSING_PLUGINS = ["@semantic-release/commit-analyzer", "@semantic-release/release-notes-generator"];
 const RELEASE_CONFIG_PATTERN = /^\.releaserc(\.\w+)?$|^release\.config\./;
 const SKIPPED_TREE_DIRECTORIES = new Set(["node_modules", ".git", "dist", "coverage"]);
-
-type ReleasePlugin = string | [string, Record<string, unknown>?];
-
-interface ReleaseConfig {
-	plugins: ReleasePlugin[];
-}
 
 const releaseConfigs = (dir: string): string[] =>
 	fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -1149,61 +1138,229 @@ const releaseConfigs = (dir: string): string[] =>
 		return RELEASE_CONFIG_PATTERN.test(entry.name) ? [full] : [];
 	});
 
-interface ParserOptsOfParams {
+const RELEASE_CONFIG_FILES = releaseConfigs(".").map(toPosix);
+const RELEASES: ReleaseShape[] = [
+	{
+		config: ".releaserc.json",
+		manifest: "package.json",
+		scope: JSON.parse(read("package.json")).name,
+		extraAssets: ["dist/"],
+	},
+];
+const releaseText = read;
+
+const BREAKING_PARSER_OPTS = {
+	headerPattern: "^(\\w*)(?:\\((.*)\\))?!?: (.*)$",
+	breakingHeaderPattern: "^(\\w*)(?:\\((.*)\\))?!: (.*)$",
+};
+const RELEASE_PACKAGE_PATTERN = /^(semantic-release(-[\w-]+)?|@semantic-release\/[\w-]+)$/;
+const RELEASE_COMMAND = "<the package's own command>";
+
+type ReleasePlugin = string | [string, Record<string, unknown>?];
+
+interface ReleaseConfig {
+	extends?: string;
+	branches: string[];
+	tagFormat?: string;
 	plugins: ReleasePlugin[];
-	name: string;
 }
 
-const parserOptsOf = ({ plugins, name }: ParserOptsOfParams): unknown => {
-	const entry = plugins.find((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) === name);
+interface ReleaseShape {
+	config: string;
+	manifest: string;
+	scope: string;
+	tagFormat?: string;
+	extraAssets?: string[];
+	versionFile?: string;
+}
 
-	return Array.isArray(entry) ? entry[1]?.parserOpts : undefined;
+interface ReleaseManifest {
+	dependencies?: Record<string, string>;
+	devDependencies?: Record<string, string>;
+}
+
+interface DeclaredReleasePackage {
+	manifest: string;
+	name: string;
+	version: string;
+}
+
+interface FormatReleaseParams {
+	value: unknown;
+	depth: number;
+}
+
+const releaseCommitMessage = (scope: string): string =>
+	`chore(${scope}): release \${nextRelease.version} [skip ci]\n\n\${nextRelease.notes}`;
+
+const sharedReleaseConfig = (shape: ReleaseShape): ReleaseConfig => ({
+	...(shape.tagFormat === undefined ? {} : { extends: "semantic-release-monorepo" }),
+	branches: ["main"],
+	...(shape.tagFormat === undefined ? {} : { tagFormat: shape.tagFormat }),
+	plugins: [
+		["@semantic-release/commit-analyzer", { parserOpts: BREAKING_PARSER_OPTS }],
+		["@semantic-release/release-notes-generator", { parserOpts: BREAKING_PARSER_OPTS }],
+		"@semantic-release/changelog",
+		shape.versionFile === undefined
+			? ["@semantic-release/npm", { npmPublish: false }]
+			: ["@semantic-release/exec", { prepareCmd: RELEASE_COMMAND, successCmd: RELEASE_COMMAND }],
+		[
+			"@semantic-release/git",
+			{
+				assets: [shape.versionFile ?? "package.json", "CHANGELOG.md", ...(shape.extraAssets ?? [])],
+				message: releaseCommitMessage(shape.scope),
+			},
+		],
+		"@semantic-release/github",
+	],
+});
+
+const releaseConfigOf = (shape: ReleaseShape): ReleaseConfig => JSON.parse(releaseText(shape.config)) as ReleaseConfig;
+
+const releasePluginName = (plugin: ReleasePlugin): string => (Array.isArray(plugin) ? plugin[0] : plugin);
+
+const releasePackagesOf = (shape: ReleaseShape): string[] => {
+	const config = releaseConfigOf(shape);
+
+	return [...(config.extends === undefined ? [] : [config.extends]), ...config.plugins.map(releasePluginName)];
 };
 
-describe("the release config parses the commit grammar commitlint accepts", () => {
-	const configs = releaseConfigs(".");
+const declaredReleasePackages = (manifest: string): DeclaredReleasePackage[] => {
+	const { dependencies, devDependencies } = JSON.parse(releaseText(manifest)) as ReleaseManifest;
 
-	it("teaches every plugin that parses a commit message the same header grammar", () => {
-		const wrong = configs.flatMap((file) => {
-			const { plugins } = JSON.parse(read(file)) as ReleaseConfig;
+	return Object.entries({ ...dependencies, ...devDependencies })
+		.filter(([name]) => RELEASE_PACKAGE_PATTERN.test(name))
+		.map(([name, version]) => ({ manifest, name, version }));
+};
 
-			return COMMIT_PARSING_PLUGINS.filter(
-				(name) => JSON.stringify(parserOptsOf({ plugins, name })) !== JSON.stringify(BREAKING_PARSER_OPTS),
-			).map((name) => `${file}: ${name}`);
-		});
+const withCommandsElided = (config: ReleaseConfig): ReleaseConfig => ({
+	...config,
+	plugins: config.plugins.map((plugin) =>
+		Array.isArray(plugin) && plugin[0] === "@semantic-release/exec"
+			? [plugin[0], Object.fromEntries(Object.keys(plugin[1] ?? {}).map((key) => [key, RELEASE_COMMAND]))]
+			: plugin,
+	),
+});
 
-		expect(configs.length).toBeGreaterThan(0);
+const releaseEntries = (config: ReleaseConfig): string[] => [
+	...Object.entries(config)
+		.filter(([key]) => key !== "plugins")
+		.map(([key, value]) => `${key} ${JSON.stringify(value)}`),
+	...config.plugins.map((plugin) => `plugin ${JSON.stringify(plugin)}`),
+];
+
+const releaseDifferences = (shape: ReleaseShape): string[] => {
+	const actual = withCommandsElided(releaseConfigOf(shape));
+	const expected = sharedReleaseConfig(shape);
+	const stray = releaseEntries(actual).filter((entry) => !releaseEntries(expected).includes(entry));
+	const missing = releaseEntries(expected).filter((entry) => !releaseEntries(actual).includes(entry));
+	const reordered = stray.length + missing.length === 0 && JSON.stringify(actual) !== JSON.stringify(expected);
+
+	return [
+		...stray.map((entry) => `${shape.config}: carries ${entry}`),
+		...missing.map((entry) => `${shape.config}: lacks ${entry}`),
+		...(reordered ? [`${shape.config}: orders its keys or plugins differently`] : []),
+	];
+};
+
+const formatRelease = ({ value, depth }: FormatReleaseParams): string => {
+	const indent = "\t".repeat(depth);
+	const nested = (item: unknown): string => formatRelease({ value: item, depth: depth + 1 });
+
+	if (Array.isArray(value) && value.every((item) => typeof item !== "object" || item === null)) {
+		return `[${value.map((item) => JSON.stringify(item)).join(", ")}]`;
+	}
+
+	if (Array.isArray(value)) {
+		return `[\n${value.map((item) => `${indent}\t${nested(item)}`).join(",\n")}\n${indent}]`;
+	}
+
+	if (typeof value === "object" && value !== null) {
+		const lines = Object.entries(value).map(([key, item]) => `${indent}\t${JSON.stringify(key)}: ${nested(item)}`);
+
+		return `{\n${lines.join(",\n")}\n${indent}}`;
+	}
+
+	return JSON.stringify(value);
+};
+
+describe("every release configuration is the shared one, bar what the repository's shape demands", () => {
+	it("finds each release configuration the repository has, and a shape declared for each", () => {
+		expect(RELEASES.length).toBeGreaterThan(0);
+		expect([...RELEASE_CONFIG_FILES].sort()).toEqual(RELEASES.map((shape) => shape.config).sort());
+	});
+
+	it("declares every package a release configuration names, and semantic-release, in the package.json that runs it, at one version, and no other release package", () => {
+		const manifests = [...new Set(RELEASES.map((shape) => shape.manifest))];
+		const declared = manifests.flatMap(declaredReleasePackages);
+		const named = manifests.flatMap((manifest) =>
+			[
+				...new Set([
+					"semantic-release",
+					...RELEASES.filter((shape) => shape.manifest === manifest).flatMap(releasePackagesOf),
+				]),
+			].map((name) => ({ manifest, name })),
+		);
+		const isNamed = (entry: DeclaredReleasePackage): boolean =>
+			named.some((other) => other.manifest === entry.manifest && other.name === entry.name);
+		const wrong = [
+			...named
+				.filter((entry) => !declared.some((other) => other.manifest === entry.manifest && other.name === entry.name))
+				.map((entry) => `${entry.manifest}: ${entry.name} is named and not declared`),
+			...declared
+				.filter((entry) => !isNamed(entry))
+				.map((entry) => `${entry.manifest}: ${entry.name} is declared and named by no release configuration`),
+			...[...new Set(declared.map((entry) => entry.name))]
+				.filter(
+					(name) => new Set(declared.filter((entry) => entry.name === name).map((entry) => entry.version)).size > 1,
+				)
+				.map((name) => `${name} is declared at more than one version`),
+		];
+
+		expect(named.length).toBeGreaterThan(RELEASES.length);
 		expect(wrong).toEqual([]);
 	});
 
-	it("commits the release, which commitlint never sees, under the release scope and [skip ci] so it starts no run", () => {
-		const wrong = configs.flatMap((file) => {
-			const { plugins } = JSON.parse(read(file)) as ReleaseConfig;
-			const entry = plugins.find((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) === "@semantic-release/git");
-			const message = Array.isArray(entry) ? String(entry[1]?.message) : "";
+	it("commits each release as chore(<scope>): release <version> [skip ci], scoped to the package it releases, so its push starts no run", () => {
+		const wrong = RELEASES.flatMap((shape) => {
+			const git = releaseConfigOf(shape).plugins.find(
+				(plugin) => releasePluginName(plugin) === "@semantic-release/git",
+			);
+			const message = Array.isArray(git) ? git[1]?.message : undefined;
 
-			return message.startsWith(`chore(release): \${nextRelease.version}`) && message.includes("[skip ci]")
-				? []
-				: [`${file}: ${message}`];
+			return message === releaseCommitMessage(shape.scope) ? [] : [`${shape.config}: ${String(message)}`];
 		});
 
 		expect(wrong).toEqual([]);
 	});
 
-	it("commits only the files a release rewrites, and a version bump never touches the lockfile", () => {
-		const committed = configs.flatMap((file) => {
-			const { plugins } = JSON.parse(read(file)) as ReleaseConfig;
-			const entry = plugins.find((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) === "@semantic-release/git");
-			const assets = Array.isArray(entry) ? ((entry[1]?.assets as string[]) ?? []) : [];
+	it("lets every release commit past commitlint whatever its notes say, since semantic-release writes them and the release job runs the commit-msg hook", async () => {
+		const { default: commitlint } = await import("../commitlint.config");
+		const ignored = (commit: string) => (commitlint.ignores ?? []).some((ignore) => ignore(commit));
+		const breakingNote = `* ${"a breaking change the release notes spell out at length ".repeat(3)}`;
 
-			return assets.map((asset) => ({ file, asset }));
+		expect(
+			RELEASES.filter(
+				(shape) =>
+					!ignored(`chore(${shape.scope}): release 1.2.3 [skip ci]\n\n### BREAKING CHANGES\n\n${breakingNote}`),
+			).map((shape) => shape.config),
+		).toEqual([]);
+		expect(ignored("chore(release): tidy the release notes")).toBe(false);
+		expect(ignored("feat: release 1.2.3 [skip ci]")).toBe(false);
+	});
+
+	it("holds each release configuration to the shared core, plus only the keys and plugins its shape adds", () => {
+		expect(RELEASES.flatMap(releaseDifferences)).toEqual([]);
+	});
+
+	it("lays each release configuration out as Biome lays out the shared core: tabs, one key or plugin to a line, and an array of plain values on one line", () => {
+		const wrong = RELEASES.map((shape) => shape.config).filter((config) => {
+			const text = releaseText(config);
+
+			return text !== `${formatRelease({ value: JSON.parse(text), depth: 0 })}\n`;
 		});
-		const lockfiles = committed
-			.filter(({ asset }) => asset.includes("lock"))
-			.map(({ file, asset }) => `${file}: ${asset}`);
 
-		expect(committed.length).toBeGreaterThan(0);
-		expect(lockfiles).toEqual([]);
+		expect(wrong).toEqual([]);
 	});
 });
 
