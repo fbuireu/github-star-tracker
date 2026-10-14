@@ -10,6 +10,10 @@ vi.mock("@actions/core", () => ({
 	setSecret: vi.fn(),
 }));
 
+interface GitFailure extends Error {
+	stderr?: string;
+}
+
 describe("execute", () => {
 	beforeEach(() => {
 		vi.mocked(execFileSync).mockReset();
@@ -46,7 +50,7 @@ describe("execute", () => {
 	});
 
 	it("throws error with stderr when command fails", () => {
-		const error = new Error("exec failed") as Error & { stderr?: string };
+		const error: GitFailure = new Error("exec failed");
 
 		error.stderr = "  fatal: not a repo  ";
 

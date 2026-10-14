@@ -2236,6 +2236,117 @@ describe("CODING_STANDARDS.md gives every rule an id a finding can cite", () => 
 	});
 });
 
+describe("every object shape is an interface, so extends reports a field two shapes disagree on", () => {
+	const TYPESCRIPT_SOURCE = /\.(?:ts|tsx|mts|cts|astro)$/;
+	const isTypeScriptSource = (path: string) => TYPESCRIPT_SOURCE.test(path) && !path.endsWith(".d.ts");
+	const OPENERS = new Set(["(", "[", "{", "<"]);
+	const CLOSERS = new Set([")", "]", "}", ">"]);
+	const QUOTES = new Set(['"', "'", "`"]);
+	const PRIMITIVE = /^(?:string|number|bigint|boolean|symbol)$/;
+	const WRAPPER = /^(?:Readonly|Partial|Required)<([\s\S]*)>$/;
+	const ALIAS_HEAD = /^[\t ]*(?:export\s+)?(?:declare\s+)?type\s+(\w+)\b/gm;
+	interface Scan {
+		end: number;
+		cuts: number[];
+	}
+	interface ScanParams {
+		text: string;
+		start: number;
+		stops: ReadonlySet<string>;
+		cutAt?: string;
+	}
+	const scan = ({ text, start, stops, cutAt }: ScanParams): Scan => {
+		const cuts: number[] = [];
+		let depth = 0;
+		for (let index = start; index < text.length; index++) {
+			const char = text[index];
+			if (QUOTES.has(char)) {
+				const close = text.indexOf(char, index + 1);
+				index = close === -1 ? text.length : close;
+				continue;
+			}
+			if (char === "=" && text[index + 1] === ">") {
+				index++;
+				continue;
+			}
+			if (depth === 0 && stops.has(char)) return { end: index, cuts };
+			if (OPENERS.has(char)) depth++;
+			else if (CLOSERS.has(char)) depth--;
+			else if (depth === 0 && char === cutAt) cuts.push(index);
+		}
+		return { end: text.length, cuts };
+	};
+	const CLOSER_OF: Readonly<Record<string, string>> = { "(": ")", "{": "}" };
+	const MAPPED = /^\{\s*(?:[+-]?readonly\s+)?\[\s*\w+\s+in\b/;
+	const closesAtEnd = (member: string) =>
+		scan({ text: member, start: 1, stops: new Set([CLOSER_OF[member[0]] ?? ""]) }).end === member.length - 1;
+	const unwrap = (member: string): string =>
+		member.startsWith("(") && closesAtEnd(member) ? unwrap(member.slice(1, -1).trim()) : member;
+	const isLiteral = (member: string) => member.startsWith("{") && closesAtEnd(member) && !MAPPED.test(member);
+	interface MembersOfParams {
+		type: string;
+		separator: "&" | "|";
+	}
+	const membersOf = ({ type, separator }: MembersOfParams) => {
+		const body = type.trim().startsWith(separator) ? type.trim().slice(1) : type.trim();
+		const { cuts } = scan({ text: body, start: 0, stops: new Set(), cutAt: separator });
+		return [-1, ...cuts].map((cut, index) => unwrap(body.slice(cut + 1, cuts[index] ?? body.length).trim()));
+	};
+	const aliasesIn = (source: string) =>
+		[...source.matchAll(ALIAS_HEAD)].flatMap((head) => {
+			let index = (head.index ?? 0) + head[0].length;
+			while (source[index]?.trim() === "") index++;
+			if (source[index] === "<") index = scan({ text: source, start: index + 1, stops: new Set([">"]) }).end + 1;
+			while (source[index]?.trim() === "") index++;
+			if (source[index] !== "=") return [];
+			const { end } = scan({ text: source, start: index + 1, stops: new Set([";"]) });
+			return [{ name: head[1], type: unwrap(source.slice(index + 1, end).trim()) }];
+		});
+	const declaresShape = (type: string) => {
+		if (membersOf({ type, separator: "|" }).length > 1) return false;
+		const members = membersOf({ type, separator: "&" });
+		if (members.length === 1) return isLiteral(WRAPPER.exec(members[0])?.[1]?.trim() ?? "");
+		return members.some(isLiteral) && !members.some((member) => PRIMITIVE.test(member));
+	};
+	const breachesIn = (source: string) =>
+		aliasesIn(source)
+			.filter(({ type }) => declaresShape(type))
+			.map(({ name }) => name);
+	const SOURCES = TYPESCRIPT_FILES.filter(isTypeScriptSource);
+
+	it("keeps an object literal out of every type alias but a union's member or a primitive's brand, so the shape is an interface that extends the rest", () => {
+		const breaching = [
+			"type A = B & { a: string };",
+			'export type A<T extends X = Y> = Omit<B, "c"> & {\n\ta: (value: T) => Promise<void>;\n};',
+			"type A = { a: string } & B & C;",
+			"type A = { a: string } & ({ b: 1 } | { c: 2 });",
+			"type A = Readonly<{ a: string }>;",
+			'type A = B & { k: "a;b" };',
+			"type A = (B & { a: string });",
+		];
+		const allowed = [
+			"type A = string & { readonly brand: true };",
+			"type A = { a: 1 } | { b: 2 };",
+			"type A = B & C;",
+			"type A = B & ({ b: 1 } | { c: 2 });",
+			"type A = (B & { a: 1 }) | C;",
+			"type A = `a;b` | C;",
+			"type A = Readonly<B>;",
+			"type A = Record<string, { a: string }>;",
+			"type A = { [K in keyof B]: B[K] };",
+			"type A = B & { [K in keyof C]: C[K] };",
+			"type A = Readonly<{ readonly [K in keyof B]: B[K] }>;",
+			'import {\n\ttype A,\n\ttype B,\n} from "x";',
+		];
+		expect(breaching.flatMap(breachesIn)).toEqual(breaching.map(() => "A"));
+		expect(allowed.flatMap(breachesIn)).toEqual([]);
+		expect(aliasesIn(allowed.at(-1) ?? "")).toEqual([]);
+		const aliases = SOURCES.flatMap((path) => aliasesIn(read(path)));
+		expect(aliases.length).toBeGreaterThan(25);
+		expect(SOURCES.flatMap((path) => breachesIn(read(path)).map((name) => `${path}: ${name}`))).toEqual([]);
+	});
+});
+
 const WIKI_DIRECTORY = "docs/wiki";
 const WIKI_LINK_PATTERN = /\]\(<?([^)>\s]+)|\b(?:src|href)="([^"]+)"/g;
 const EXTERNAL_TARGET_PATTERN = /^(?:[a-z]+:|#)/i;

@@ -16,7 +16,8 @@ body in the commit that lands its check. The process around a change (commit typ
 
 No rule below restates these, and a diff that breaks one fails CI:
 
-- Biome ([`biome.json`](./biome.json)): formatting, import order and lint, `noConsole` included.
+- Biome ([`biome.json`](./biome.json)): formatting, import order and lint, `noConsole` included, and every object shape
+  declared an `interface`, never a `type` alias of an object literal (`useConsistentTypeDefinitions`).
 - `pnpm typecheck`: type-only imports (`verbatimModuleSyntax`), and a tabled `Config` key without its
   `FIELD_SOURCES` row (the `TabledKey` mapped type in `src/config/loader.ts`).
 - The test suite: empty defaults on overridable inputs (`action-inputs.test.ts`), every bundle carrying exactly
@@ -70,6 +71,11 @@ No rule below restates these, and a diff that breaks one fails CI:
   - no guide keeping a list of known inconsistencies, since an entry is a claim about the code that nothing keeps true;
   - this file: every rule between this list and the smell overrides opening with its id and its **hard** or
     **judgement** label, no id carried by two rules, and every id in a section drawn from one letter;
+  - no object literal in a type alias but as a member of its union or beside the primitive it brands, nor one wrapped in
+    `Readonly`, `Partial` or `Required`, so a shape built on others is an `interface` that `extends` them: `extends`
+    reports a field the shapes disagree on where it is declared, where `&` folds it into `never` in silence, and the
+    compiler caches an interface's relations by name and names it in an error, where it recomputes an intersection and
+    spells it out;
   - every `.releaserc.json` the release configuration the sibling repositories share, with no key or plugin beyond
     what the repository's shape adds and laid out as Biome lays it out, its release commit
     `chore(<scope>): release ${nextRelease.version} [skip ci]` scoped to the package it releases, and every plugin
@@ -136,6 +142,13 @@ No rule below restates these, and a diff that breaks one fails CI:
   ([ADR 0022](./docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md)).
 - `M3` **judgement**: A finding closed by a written rule stays closed until one of the answers changes, because the
   rejected cases in ADR 0022 were weighed on purpose.
+- `M4` **hard**: Compose object shapes declared elsewhere as `interface X extends A, B`, never `type X = A & B`, which
+  no check tells from an intersection with a union, because that takes the types. Keep `&` for a member an interface
+  cannot extend (a union, a type parameter, a conditional type), and `type` for what an interface cannot say: a union, a
+  mapped or conditional type, an alias of a primitive, a tuple or a function, and a computed type on its own (`z.infer`,
+  `Pick`, `(typeof X)[keyof typeof X]`).
+- `M5` **hard**: Give an interface a name no other interface in its scope carries, because two declarations of one name
+  merge in silence; merging is for a declaration file that augments a global or a vendor's module on purpose.
 
 ## Errors
 
@@ -442,6 +455,9 @@ No rule below restates these, and a diff that breaks one fails CI:
 - **Duplicated Code**: the id rule (the `describe` that gives every rule of this file an id a finding can cite) in
   `docs/docs-consistency.test.ts` is the same in biancafiore, contribKit, forever-pto and github-star-tracker, so a
   change to it is made in all four; only the floor its census holds and the call that reads this file differ.
+- **Duplicated Code**: the shape rule (the `describe` that keeps every object shape an interface) in
+  `docs/docs-consistency.test.ts` is the same in biancafiore, contribKit, forever-pto and github-star-tracker, so a
+  change to it is made in all four; only the floor its census holds and the files it reads differ.
 - **Repeated Switches**: each chart adapter maps `SeriesDash` (and the email adapter `SeriesWeight`) through its own
   table and keeps its own series dash patterns, because those are dialect facts
   ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
