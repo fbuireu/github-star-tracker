@@ -148,7 +148,8 @@ No rule below restates these, and a diff that breaks one fails CI:
   mapped or conditional type, an alias of a primitive, a tuple or a function, and a computed type on its own (`z.infer`,
   `Pick`, `(typeof X)[keyof typeof X]`).
 - `M5` **hard**: Give an interface a name no other interface in its scope carries, because two declarations of one name
-  merge in silence; merging is for a declaration file that augments a global or a vendor's module on purpose.
+  merge in silence; merging is for an augmentation of a global or a vendor's module made on purpose, in a declaration
+  file or a `declare global` or `declare module` block.
 
 ## Errors
 
