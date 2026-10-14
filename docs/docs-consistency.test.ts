@@ -2172,6 +2172,70 @@ describe("the guides keep no list of known breaches", () => {
 	});
 });
 
+describe("CODING_STANDARDS.md gives every rule an id a finding can cite", () => {
+	const STANDARDS = "CODING_STANDARDS.md";
+	const UNNUMBERED_SECTIONS = new Set(["Tooling already enforces", "Deliberate overrides of the smell baseline"]);
+	const RULE = /^- `([A-Z])(\d+)` \*\*(?:hard|judgement)\*\*(?:, \*check pending\*)?: \S/;
+	const SECTION = /^## (.+)$/;
+
+	const rulesOf = (markdown: string) => {
+		const rules: { section: string; line: string }[] = [];
+		let section = "";
+		for (const line of markdown.split("\n")) {
+			section = SECTION.exec(line)?.[1] ?? section;
+			if (line.startsWith("- ") && section !== "" && !UNNUMBERED_SECTIONS.has(section)) rules.push({ section, line });
+		}
+		return rules;
+	};
+
+	const sample =
+		"# Coding standards\n\n- an intro bullet\n\n## Tooling already enforces\n\n- Biome\n\n## Naming\n\n- `N1` **hard**: Name it.\n  - a nested note\n- **judgement**: Weigh it.\n\n## Deliberate overrides of the smell baseline\n\n- **Duplicated Code**: kept.\n";
+	const rules = rulesOf(read(STANDARDS));
+
+	it("opens every rule between the tooling list and the smell overrides with an id and its label, so a review cites one rule", () => {
+		expect(rulesOf(sample).map(({ line }) => line)).toEqual([
+			"- `N1` **hard**: Name it.",
+			"- **judgement**: Weigh it.",
+		]);
+		expect(
+			[
+				"- `N1` **hard**: Name it.",
+				"- `A3` **hard**, *check pending*: Write it.",
+				"- `T12` **judgement**: Assert it.",
+			].every((line) => RULE.test(line)),
+		).toBe(true);
+		expect(
+			["- **hard**: Name it.", "- `N1` hard: Name it.", "- `n1` **hard**: Name it.", "- `N1` **must**: Name it."].some(
+				(line) => RULE.test(line),
+			),
+		).toBe(false);
+		expect(rules.length).toBeGreaterThan(85);
+		expect(rules.filter(({ line }) => !RULE.test(line)).map(({ line }) => line)).toEqual([]);
+	});
+
+	it("never gives two rules one id, and draws every id in a section from one letter, so an id names one rule for good", () => {
+		const idOf = (line: string) => RULE.exec(line)?.slice(1, 3).join("") ?? line;
+		const repeated = (ids: string[]) => ids.filter((id, index) => ids.indexOf(id) !== index);
+		const mixedSections = (entries: { section: string; line: string }[]) =>
+			[...new Set(entries.map(({ section }) => section))].filter(
+				(section) =>
+					new Set(entries.filter((entry) => entry.section === section).map(({ line }) => RULE.exec(line)?.[1])).size >
+					1,
+			);
+
+		expect(repeated(["N1", "N2", "N1"])).toEqual(["N1"]);
+		expect(
+			mixedSections([
+				{ section: "Naming", line: "- `N1` **hard**: a." },
+				{ section: "Naming", line: "- `M2` **hard**: b." },
+			]),
+		).toEqual(["Naming"]);
+		expect(rules.length).toBeGreaterThan(85);
+		expect(repeated(rules.map(({ line }) => idOf(line)))).toEqual([]);
+		expect(mixedSections(rules)).toEqual([]);
+	});
+});
+
 const WIKI_DIRECTORY = "docs/wiki";
 const WIKI_LINK_PATTERN = /\]\(<?([^)>\s]+)|\b(?:src|href)="([^"]+)"/g;
 const EXTERNAL_TARGET_PATTERN = /^(?:[a-z]+:|#)/i;
