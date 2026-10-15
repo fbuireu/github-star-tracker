@@ -25,7 +25,7 @@ There are different Node versions in play, deliberately:
 
 The gap is a trap worth knowing about before you contribute. esbuild's `target` lowers syntax but does not shim runtime APIs, so a `node:` API added after 24.x will type-check, bundle and pass the full local check, then throw on a runner. Check new `node:` usage against Node 24, not against `engines.node`.
 
-`tsconfig.json` targets ES2022 with `moduleResolution: bundler`, plus `isolatedModules` and `verbatimModuleSyntax`, so every file transpiles standalone and import elision stays explicit. Strict type-checking is on by default in the pinned TypeScript version, so the config no longer declares it.
+`tsconfig.json` targets ES2025, in `target` and `lib`, because that is the edition the Node 24 runtime implements whole, with `moduleResolution: bundler`, plus `isolatedModules` and `verbatimModuleSyntax`, so every file transpiles standalone and import elision stays explicit. Strict type-checking is on by default in the pinned TypeScript version, so the config no longer declares it.
 
 ---
 

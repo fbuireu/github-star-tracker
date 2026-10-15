@@ -1,9 +1,9 @@
 {
 	"compilerOptions": {
-		"target": "ES2022",
+		"target": "ES2025",
 		"module": "ES2022",
 		"moduleResolution": "bundler",
-		"lib": ["ES2022"],
+		"lib": ["ES2025"],
 		"isolatedModules": true,
 		"verbatimModuleSyntax": true,
 		"skipLibCheck": true,

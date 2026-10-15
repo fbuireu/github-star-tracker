@@ -27,7 +27,9 @@ version, the shipped runtime below excepted. `pnpm test:docs` asserts all of it.
 [`esbuild.config.ts`](./esbuild.config.ts) `target`). `@types/node` tracks the development version and esbuild's
 `target` lowers syntax without shimming runtime APIs, so a `node:*` API that landed after 24.x type-checks, bundles,
 passes `pnpm verify` and then throws `TypeError: … is not a function` on a GitHub runner, where nothing here runs the
-bundle first. Check a new `node:` API against Node 24, not against `engines.node`.
+bundle first. Check a new `node:` API against Node 24, not against `engines.node`. The language's own built-ins are held
+to that runtime by `tsconfig.json`'s `lib`, `ES2025`, the edition Node 24 implements whole: `ESNext` would type a
+built-in Node 24 lacks, with the same outcome on a runner, so `lib` moves only with `runs.using`.
 
 ## Commands
 
