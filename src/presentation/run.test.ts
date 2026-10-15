@@ -34,7 +34,7 @@ function chartHistories(aggregate = RECONSTRUCTED): ChartHistories {
 
 const NOW = new Date("2026-03-04T12:00:00.000Z");
 
-function render(config = makeConfig({ includeCharts: true, topRepos: 2 })) {
+function render(config = makeConfig({ includeCharts: true, topRepos: 2 })): RenderedRun {
 	return renderRun({
 		config,
 		results: makeComparisonResults(),

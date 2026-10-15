@@ -19,7 +19,7 @@ const jobSummary = (titleOf: (testModules: readonly TestModule[]) => string): Re
 
 const DOCS_CONTRACT = "docs/docs-consistency.test.ts";
 
-const suitesRun = (testModules: readonly TestModule[]) => {
+const suitesRun = (testModules: readonly TestModule[]): string => {
 	const suites = new Set<string>(
 		testModules.map((module) => (module.moduleId.endsWith(DOCS_CONTRACT) ? "docs contract" : "unit")),
 	);

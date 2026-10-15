@@ -31210,7 +31210,10 @@ var YAML_FALSE = ["false", "no", "off", "n", "0"];
 var INTEGER_PATTERN = /^[+-]?\d+$/;
 var HEX_COLOR_PATTERN = /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 var TrimmedStringSchema = string2().check(_trim());
-function booleanVocabulary({ truthy, falsy }) {
+function booleanVocabulary({
+  truthy,
+  falsy
+}) {
   return pipe(
     _enum([...truthy, ...falsy]),
     transform((word) => truthy.includes(word))

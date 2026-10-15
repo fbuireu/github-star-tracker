@@ -19,3 +19,5 @@ export const GitHubStargazerRowSchema = z.object({
 	user: z.object({ login: z.string(), avatar_url: z.string(), html_url: z.string() }),
 	starred_at: z.catch(z.string(), ""),
 });
+
+export type GitHubStargazerRow = z.infer<typeof GitHubStargazerRowSchema>;

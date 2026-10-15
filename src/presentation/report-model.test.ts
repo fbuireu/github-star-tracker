@@ -6,7 +6,7 @@ import type { StargazerDiffResult } from "@domain/stargazers";
 import { getTranslations } from "@i18n";
 import { makeComparisonResults, makeConfig, makeHistory, makeRepoResult } from "@shared/tests";
 import { describe, expect, it } from "vitest";
-import { buildForecastTable, buildReportModel, StargazerOutcome } from "./report-model";
+import { buildForecastTable, buildReportModel, type ReportModel, StargazerOutcome } from "./report-model";
 import type { ReportParams } from "./shared";
 
 const forecastData: ForecastData = {
@@ -26,7 +26,7 @@ interface ModelOfParams extends Partial<Omit<ReportParams, "config">> {
 	config?: Partial<Config>;
 }
 
-function modelOf({ config, ...overrides }: ModelOfParams = {}) {
+function modelOf({ config, ...overrides }: ModelOfParams = {}): ReportModel {
 	return buildReportModel({
 		config: makeConfig(config),
 		results: makeComparisonResults(),

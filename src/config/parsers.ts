@@ -12,7 +12,10 @@ interface BooleanVocabularyParams {
 	falsy: readonly string[];
 }
 
-function booleanVocabulary({ truthy, falsy }: BooleanVocabularyParams) {
+function booleanVocabulary({
+	truthy,
+	falsy,
+}: BooleanVocabularyParams): z.ZodMiniPipe<z.ZodMiniEnum<Record<string, string>>, z.ZodMiniTransform<boolean, string>> {
 	return z.pipe(
 		z.enum([...truthy, ...falsy]),
 		z.transform((word) => truthy.includes(word)),

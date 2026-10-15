@@ -116,7 +116,7 @@ function mockMeasurement(overrides: Partial<Measurement> = {}): Measurement {
 	vi.mocked(measureRun).mockReturnValue(measurement);
 	return measurement;
 }
-function setupDefaults() {
+function setupDefaults(): void {
 	vi.mocked(core.getInput).mockImplementation((name: string) => {
 		if (name === "github-token") return "fake-token";
 		return "";

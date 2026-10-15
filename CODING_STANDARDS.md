@@ -151,6 +151,10 @@ No rule below restates these, and a diff that breaks one fails CI:
 - `M5` **hard**: Give an interface a name no other interface in its scope carries, because two declarations of one name
   merge in silence; merging is for an augmentation of a global or a vendor's module made on purpose, in a declaration
   file or a `declare global` or `declare module` block.
+- `M6` **hard**: Declare the return type of every function declared at a module's top level, exported or not, so a
+  reader learns what it hands back without reading its body and a wrong return fails in the function rather than at its
+  callers; a component that returns JSX, a nested function and a callback infer theirs. Type every parameter but a
+  callback's, which takes its type from where it is passed.
 
 ## Errors
 

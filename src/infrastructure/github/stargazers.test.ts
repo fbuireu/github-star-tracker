@@ -4,7 +4,7 @@ import { MAX_REACHABLE_PAGE, STARGAZER_PAGE_SIZE, sampledPages } from "@domain/s
 import { makeConfig, makeRepoInfo } from "@shared/tests";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchAllStargazers } from "./stargazers";
-import type { Octokit } from "./types";
+import type { GitHubStargazerRow, Octokit } from "./types";
 
 vi.mock("@actions/core", () => ({
 	warning: vi.fn(),
@@ -22,7 +22,10 @@ interface MakeStargazerResponseParams {
 	date?: string;
 }
 
-function makeStargazerResponse({ login, date = "2026-01-15T00:00:00Z" }: MakeStargazerResponseParams) {
+function makeStargazerResponse({
+	login,
+	date = "2026-01-15T00:00:00Z",
+}: MakeStargazerResponseParams): GitHubStargazerRow {
 	return {
 		user: {
 			login,

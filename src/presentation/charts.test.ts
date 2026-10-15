@@ -6,7 +6,7 @@ import type { RepoStargazers } from "@domain/stargazers";
 import type { History, SnapshotRepo } from "@domain/types";
 import { makeConfig, makeMultiRepoHistory, makeStargazerSeries } from "@shared/tests";
 import { describe, expect, it } from "vitest";
-import type { ChartHistories } from "./charts";
+import type { ChartFile, ChartHistories } from "./charts";
 import { buildChartFiles, resolveChartHistories } from "./charts";
 
 const NOW = new Date("2026-03-01T00:00:00Z");
@@ -59,7 +59,7 @@ interface BuildParams extends HistoriesParams {
 	chartHistories?: ChartHistories;
 }
 
-function build({ forecastData = null, topRepoNames, chartHistories, ...rest }: BuildParams = {}) {
+function build({ forecastData = null, topRepoNames, chartHistories, ...rest }: BuildParams = {}): ChartFile[] {
 	const config = rest.config ?? makeConfig({ includeCharts: true, topRepos: 2 });
 
 	return buildChartFiles({
