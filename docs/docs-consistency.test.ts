@@ -1272,7 +1272,9 @@ const formatRelease = ({ value, depth }: FormatReleaseParams): string => {
 	}
 
 	if (Array.isArray(value)) {
-		return `[\n${value.map((item) => `${indent}\t${nested(item)}`).join(",\n")}\n${indent}]`;
+		const items = value.map((item) => `${indent}\t${nested(item)}`);
+
+		return `[\n${items.join(",\n")}\n${indent}]`;
 	}
 
 	if (typeof value === "object" && value !== null) {
@@ -1287,7 +1289,9 @@ const formatRelease = ({ value, depth }: FormatReleaseParams): string => {
 describe("every release configuration is the shared one, bar what the repository's shape demands", () => {
 	it("finds each release configuration the repository has, and a shape declared for each", () => {
 		expect(RELEASES.length).toBeGreaterThan(0);
-		expect([...RELEASE_CONFIG_FILES].sort()).toEqual(RELEASES.map((shape) => shape.config).sort());
+		expect([...RELEASE_CONFIG_FILES].sort((a, b) => a.localeCompare(b))).toEqual(
+			RELEASES.map((shape) => shape.config).sort((a, b) => a.localeCompare(b)),
+		);
 	});
 
 	it("declares every package a release configuration names, and semantic-release, in the package.json that runs it, at one version, and no other release package", () => {
