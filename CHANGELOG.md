@@ -1,3 +1,10 @@
+## [1.28.6](https://github.com/fbuireu/github-star-tracker/compare/v1.28.5...v1.28.6) (2026-10-15)
+
+
+### Bug Fixes
+
+* **deps:** update dependency zod to v4.6.6 ([#206](https://github.com/fbuireu/github-star-tracker/issues/206)) ([30e7020](https://github.com/fbuireu/github-star-tracker/commit/30e70203ff2303d726eac07c7017e5a8e66ff5a7))
+
 ## [1.28.5](https://github.com/fbuireu/github-star-tracker/compare/v1.28.4...v1.28.5) (2026-10-15)
 
 
