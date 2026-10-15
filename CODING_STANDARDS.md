@@ -16,8 +16,9 @@ body in the commit that lands its check. The process around a change (commit typ
 
 No rule below restates these, and a diff that breaks one fails CI:
 
-- Biome ([`biome.json`](./biome.json)): formatting, import order and lint, `noConsole` included, and every object shape
-  declared an `interface`, never a `type` alias of an object literal (`useConsistentTypeDefinitions`).
+- Biome ([`biome.json`](./biome.json)): formatting, import order and lint, `noConsole` included, every object shape
+  declared an `interface`, never a `type` alias of an object literal (`useConsistentTypeDefinitions`), and every element
+  read from an array's end through `.at()` (`useAtIndex`).
 - `pnpm typecheck`: type-only imports (`verbatimModuleSyntax`), and a tabled `Config` key without its
   `FIELD_SOURCES` row (the `TabledKey` mapped type in `src/config/loader.ts`).
 - The test suite: empty defaults on overridable inputs (`action-inputs.test.ts`), every bundle carrying exactly

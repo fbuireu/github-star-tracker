@@ -31,9 +31,10 @@ function filterSnapshotsByRange<T extends { timestamp: string }>({
 	range = ChartRange.ALL,
 }: FilterSnapshotsByRangeParams<T>): T[] {
 	const days = CHART_RANGE_DAYS[range];
-	if (!Number.isFinite(days) || snapshots.length === 0) return snapshots;
+	const last = snapshots.at(-1);
+	if (!Number.isFinite(days) || last === undefined) return snapshots;
 
-	const lastTimestamp = toEpochMs(snapshots[snapshots.length - 1].timestamp);
+	const lastTimestamp = toEpochMs(last.timestamp);
 	if (lastTimestamp === null) return snapshots;
 
 	const cutoff = lastTimestamp - days * MS_PER_DAY;

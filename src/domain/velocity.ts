@@ -34,8 +34,8 @@ export function computeVelocity(history: History): VelocityMetrics | null {
 	const snapshots = history.snapshots;
 	if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
 
-	const last = snapshots[snapshots.length - 1];
-	if (toEpochMs(last.timestamp) === null) return null;
+	const last = snapshots.at(-1);
+	if (last === undefined || toEpochMs(last.timestamp) === null) return null;
 
 	const points: SeriesPoint[] = [];
 

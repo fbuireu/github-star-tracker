@@ -33,9 +33,8 @@ export function calendarDays(history: History): number[] {
 }
 
 export function latestRateInterval(points: SeriesPoint[]): RateInterval | null {
-	if (points.length < MIN_POINTS_FOR_RATE) return null;
-
-	const to = points[points.length - 1];
+	const to = points.at(-1);
+	if (to === undefined || points.length < MIN_POINTS_FOR_RATE) return null;
 
 	for (let index = points.length - 2; index >= 0; index--) {
 		const days = to.day - points[index].day;

@@ -184,10 +184,9 @@ function roundedStepPath({ points, radius }: RoundedStepPathParams): string {
 		path += ` L${entryX},${entryY} Q${vertex.x},${vertex.y} ${exitX},${exitY}`;
 	}
 
-	const last = points[points.length - 1];
-	path += ` L${last.x},${last.y}`;
+	const last = points.at(-1);
 
-	return path;
+	return last === undefined ? path : `${path} L${last.x},${last.y}`;
 }
 
 const CURVE_PATHS: Record<ChartCurve, (params: CurvePathParams) => string> = {
