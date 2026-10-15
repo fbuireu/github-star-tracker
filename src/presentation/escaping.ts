@@ -42,12 +42,7 @@ const CSV_FORMULA_TRIGGERS = ["=", "+", "-", "@"];
 const CSV_FORMULA_GUARD = "'";
 
 function replacerFor(escapes: EscapeMap): (text: string) => string {
-	const pattern = new RegExp(
-		`[${Object.keys(escapes)
-			.join("")
-			.replace(/[\]\\^-]/g, "\\$&")}]`,
-		"g",
-	);
+	const pattern = new RegExp(`[${RegExp.escape(Object.keys(escapes).join(""))}]`, "g");
 
 	return (text: string) => text.replaceAll(pattern, (char) => escapes[char]);
 }

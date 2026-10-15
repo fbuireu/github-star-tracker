@@ -36,15 +36,9 @@ export function latestRateInterval(points: SeriesPoint[]): RateInterval | null {
 	const to = points.at(-1);
 	if (to === undefined || points.length < MIN_POINTS_FOR_RATE) return null;
 
-	for (let index = points.length - 2; index >= 0; index--) {
-		const days = to.day - points[index].day;
+	const from = points.slice(0, -1).findLast((point) => to.day - point.day >= MIN_RATE_INTERVAL_DAYS);
 
-		if (days < MIN_RATE_INTERVAL_DAYS) continue;
-
-		return { from: points[index], to, days };
-	}
-
-	return null;
+	return from === undefined ? null : { from, to, days: to.day - from.day };
 }
 
 export function weightedDailyRate(points: SeriesPoint[]): number {

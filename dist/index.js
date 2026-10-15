@@ -31620,14 +31620,10 @@ function calendarDays(history) {
   return times.map((timeMs) => (timeMs - first) / MS_PER_DAY);
 }
 function latestRateInterval(points) {
-  if (points.length < MIN_POINTS_FOR_RATE) return null;
-  const to = points[points.length - 1];
-  for (let index = points.length - 2; index >= 0; index--) {
-    const days = to.day - points[index].day;
-    if (days < MIN_RATE_INTERVAL_DAYS) continue;
-    return { from: points[index], to, days };
-  }
-  return null;
+  const to = points.at(-1);
+  if (to === void 0 || points.length < MIN_POINTS_FOR_RATE) return null;
+  const from = points.slice(0, -1).findLast((point) => to.day - point.day >= MIN_RATE_INTERVAL_DAYS);
+  return from === void 0 ? null : { from, to, days: to.day - from.day };
 }
 function weightedDailyRate(points) {
   if (points.length < MIN_POINTS_FOR_RATE) return 0;
@@ -31676,10 +31672,7 @@ var COMPARE_WINDOW_DAYS = {
 };
 var COMPARE_WINDOW_TOLERANCE_MS = 6 * 60 * 60 * 1e3;
 function getLastSnapshot(history) {
-  for (let index = history.snapshots.length - 1; index >= 0; index--) {
-    if (toEpochMs(history.snapshots[index].timestamp) !== null) return history.snapshots[index];
-  }
-  return null;
+  return history.snapshots.findLast((snapshot) => toEpochMs(snapshot.timestamp) !== null) ?? null;
 }
 function getBaselineSnapshot({
   history,
@@ -44613,8 +44606,9 @@ function filterSnapshotsByRange({
   range = ChartRange.ALL
 }) {
   const days = CHART_RANGE_DAYS[range];
-  if (!Number.isFinite(days) || snapshots.length === 0) return snapshots;
-  const lastTimestamp = toEpochMs(snapshots[snapshots.length - 1].timestamp);
+  const last = snapshots.at(-1);
+  if (!Number.isFinite(days) || last === void 0) return snapshots;
+  const lastTimestamp = toEpochMs(last.timestamp);
   if (lastTimestamp === null) return snapshots;
   const cutoff = lastTimestamp - days * MS_PER_DAY;
   return snapshots.filter((snapshot) => {
@@ -45005,10 +44999,7 @@ var CSV_NEW_LINE = "\n";
 var CSV_FORMULA_TRIGGERS = ["=", "+", "-", "@"];
 var CSV_FORMULA_GUARD = "'";
 function replacerFor(escapes) {
-  const pattern = new RegExp(
-    `[${Object.keys(escapes).join("").replace(/[\]\\^-]/g, "\\$&")}]`,
-    "g"
-  );
+  const pattern = new RegExp(`[${RegExp.escape(Object.keys(escapes).join(""))}]`, "g");
   return (text) => text.replaceAll(pattern, (char) => escapes[char]);
 }
 function escapeCsvField(field) {
@@ -45154,9 +45145,8 @@ function roundedStepPath({ points, radius }) {
     const exitY = vertex.y + (after.y - vertex.y) / lengthAfter * radiusAfter;
     path6 += ` L${entryX},${entryY} Q${vertex.x},${vertex.y} ${exitX},${exitY}`;
   }
-  const last = points[points.length - 1];
-  path6 += ` L${last.x},${last.y}`;
-  return path6;
+  const last = points.at(-1);
+  return last === void 0 ? path6 : `${path6} L${last.x},${last.y}`;
 }
 var CURVE_PATHS = {
   [ChartCurve.CATMULL_ROM]: catmullRomPath,
@@ -45838,8 +45828,8 @@ function nextMilestoneAbove(value) {
 function computeVelocity(history) {
   const snapshots = history.snapshots;
   if (snapshots.length < MIN_SNAPSHOTS_FOR_VELOCITY) return null;
-  const last = snapshots[snapshots.length - 1];
-  if (toEpochMs(last.timestamp) === null) return null;
+  const last = snapshots.at(-1);
+  if (last === void 0 || toEpochMs(last.timestamp) === null) return null;
   const points = [];
   for (const snapshot of snapshots) {
     const timeMs = toEpochMs(snapshot.timestamp);

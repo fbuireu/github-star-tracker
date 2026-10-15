@@ -424,8 +424,6 @@ describe("a run speaks its locale throughout", () => {
 			.filter((fragment) => fragment.length >= MIN_FRAGMENT_LENGTH);
 	};
 
-	const escaped = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
 	interface LeaksAnyParams {
 		text: string;
 		fragments: string[];
@@ -433,7 +431,7 @@ describe("a run speaks its locale throughout", () => {
 
 	const leaksAny = ({ text, fragments }: LeaksAnyParams): string[] =>
 		fragments.filter((fragment) =>
-			new RegExp(`(?<![\\p{L}\\p{N}])${escaped(fragment)}(?![\\p{L}\\p{N}])`, "u").test(text),
+			new RegExp(`(?<![\\p{L}\\p{N}])${RegExp.escape(fragment)}(?![\\p{L}\\p{N}])`, "u").test(text),
 		);
 
 	const everythingRendered = (rendered: RenderedRun): string =>

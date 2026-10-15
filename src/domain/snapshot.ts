@@ -11,11 +11,7 @@ const COMPARE_WINDOW_DAYS: Record<Exclude<CompareAgainst, typeof CompareAgainst.
 const COMPARE_WINDOW_TOLERANCE_MS = 6 * 60 * 60 * 1000;
 
 function getLastSnapshot(history: History): Snapshot | null {
-	for (let index = history.snapshots.length - 1; index >= 0; index--) {
-		if (toEpochMs(history.snapshots[index].timestamp) !== null) return history.snapshots[index];
-	}
-
-	return null;
+	return history.snapshots.findLast((snapshot) => toEpochMs(snapshot.timestamp) !== null) ?? null;
 }
 
 interface GetBaselineSnapshotParams {
