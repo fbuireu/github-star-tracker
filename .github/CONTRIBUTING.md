@@ -83,11 +83,11 @@ pnpm verify             # format check, typecheck, build and coverage: what CI r
 
 Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run src/domain/forecast.test.ts`.
 
-Husky runs lint-staged on `pre-commit`, commitlint on `commit-msg` and `pnpm verify:changed` on `pre-push`.
-The hook runs the changed-only variant rather than `verify` because the coverage floor and a subset run
-cannot both hold; CI runs the full `pnpm verify` on the pushed sha, so a push whose coverage dropped still
-fails its check. [ARCHITECTURE.md](../ARCHITECTURE.md) explains the trade. Because `pre-push` rebuilds the bundle, a
-push can leave `dist/` dirty; commit that result rather than discarding it.
+Husky runs lint-staged on `pre-commit`, commitlint on `commit-msg` and `pnpm verify:changed` on `pre-push`. The hook
+runs the changed-only variant rather than `verify` because the coverage floor and a subset run cannot both hold; CI runs
+every check of `pnpm verify` on the pushed sha, as parallel steps, so a push whose coverage dropped still fails its
+check. [ARCHITECTURE.md](../ARCHITECTURE.md) explains the trade. Because `pre-push` rebuilds the bundle, a push can
+leave `dist/` dirty; commit that result rather than discarding it.
 
 The bundle. `action.yml` runs `dist/index.js` directly, with no install step, so the bundle is committed
 ([ADR 0003](../docs/adr/0003-commit-the-bundled-dist-directory.md)). Run `pnpm build` and commit the
@@ -174,7 +174,8 @@ Changed inputs, outputs or defaults are reflected in [`action.yml`](../action.ym
 
 1. Fork, branch from `main`, make the change.
 2. Run the checks above; rebuild and commit `dist/`; fill in the pull request template, GIF included.
-3. CI runs `pnpm verify` on the pushed sha, so a pull request cannot merge while it is red.
+3. CI runs the checks of `pnpm verify` on the pushed sha, as parallel steps, so a pull request cannot merge while it is
+   red.
 4. After merge to `main`, the `release` job rebuilds the bundle and semantic-release versions, publishes and
    commits `package.json`, [`CHANGELOG.md`](../CHANGELOG.md) and `dist/` back as
    `chore(github-star-tracker): release <version> [skip ci]`; a final step moves the floating `v1` tag, which is

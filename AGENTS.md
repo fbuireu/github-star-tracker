@@ -63,8 +63,8 @@ Biome's `--changed` diffs against `vcs.defaultBranch`, which is `main`, so on `m
 *Checked 0 files* however much has changed. Reach for `format:all` there.
 
 The hooks: `pre-commit` runs lint-staged, `commit-msg` runs commitlint, `pre-push` runs `verify:changed`, and CI runs
-the full `pnpm verify`; [ARCHITECTURE.md](./ARCHITECTURE.md) says why the hook stops short of it. `pre-push`
-rebuilds the bundle, so a push can leave `dist/` dirty: commit that result rather than discarding it.
+every check of `pnpm verify`, as parallel steps; [ARCHITECTURE.md](./ARCHITECTURE.md) says why the hook stops short of
+it. `pre-push` rebuilds the bundle, so a push can leave `dist/` dirty: commit that result rather than discarding it.
 
 ## Structure & aliases
 
