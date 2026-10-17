@@ -194,6 +194,50 @@ per-run figures measured against the comparison baseline and reset every run by 
 The send happens **before** the baseline is persisted, deliberately: it trades a possible duplicate email
 for never losing accumulated change ([ADR 0011](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md)).
 
+#### How the Notification Baseline moves
+
+Every run takes the stored value through the same cycle. It reads it, decides whether a Notification is due, lets the
+transport's outcome advance or hold it, and only then finds out whether the result is saved at all:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  layout: dagre
+---
+stateDiagram-v2
+    state "Stored in stars-data.json" as Stored
+    state "Accumulated change measured against it" as Measured
+    state due <<choice>>
+    state delivery <<choice>>
+    state "Advanced to the current total" as Advanced
+    state "Held at its old value" as Held
+    state saved <<choice>>
+    state "Thrown away with the worktree" as Discarded
+
+    [*] --> Stored: fresh data branch, absent and read as 0
+    Stored --> Measured: a Run reads the data branch
+    Measured --> due
+    due --> Held: not due, nothing changed or the threshold not reached
+    due --> delivery: due
+    delivery --> Advanced: the email was sent
+    delivery --> Advanced: no smtp-host, the should-notify output is the notification
+    delivery --> Held: the send failed, or email-to is empty
+    Advanced --> saved
+    Held --> saved
+    saved --> Stored: a writing run pushes it
+    saved --> Discarded: a read-only run, or a refused push
+    Discarded --> Stored: the branch keeps the value it had
+```
+
+- **"Not due" holds the baseline whatever the transport did.** A `send-on-no-changes` email on an unchanged run is a
+  courtesy, not a Notification, so it moves nothing even when it is delivered.
+- **The baseline only ever moves on a writing run that pushes.** A read-only run computes the same outcome and throws
+  it away, which is why a threshold cannot work there. A run whose push is refused throws it away too, after its email
+  went out, so the next run measures from the old value and may email again.
+- **A fresh data branch starts the cycle at `0`.** The first accumulated change is your whole total, so the first
+  Notification is due as soon as that total reaches the threshold.
+
 #### Notification Mode
 
 `notification-mode` chooses how that accumulated change is measured:
@@ -241,7 +285,7 @@ Both inputs drive the built-in email and the `should-notify` output, so the same
 Notes:
 
 - `notification-threshold: '0'` still means "notify on every run that has changes", in both modes. `should-notify` also requires that something actually changed.
-- Whether raising the threshold fires an email straight away depends on whether a notification has ever fired on the data branch. If none has, `starsAtLastNotification` is absent and treated as `0`, so the first run fires once immediately and then settles into the threshold rhythm. If you have been running with the default `notification-threshold: '0'`, every changed run has already been notifying, so `starsAtLastNotification` is stored at your current total - raising the threshold does **not** fire immediately, and the next email waits for the full threshold to accumulate from that total.
+- Whether raising the threshold fires an email straight away depends on whether a notification has ever fired on the data branch. If none has, `starsAtLastNotification` is absent and treated as `0`, so the accumulated change is your whole total: the first run fires as soon as that total reaches the threshold, which on most accounts means immediately, and then settles into the threshold rhythm. If you have been running with the default `notification-threshold: '0'`, every changed run has already been notifying, so `starsAtLastNotification` is stored at your current total - raising the threshold does **not** fire immediately, and the next email waits for the full threshold to accumulate from that total.
 - In `net` mode a large **loss** of stars also reaches the threshold, because the absolute change is what is measured. Use `gains` if you only want to hear about growth.
 
 See **[Configuration > notification-threshold](Configuration#notification-threshold)** for details on adaptive thresholds.

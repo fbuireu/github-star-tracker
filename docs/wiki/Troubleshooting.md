@@ -4,7 +4,9 @@ Solutions for common issues with GitHub Star Tracker.
 
 > [!NOTE]
 > Anything that fails the run arrives in the log as `Star Tracker failed: <message>`, so the useful half is
-> always what follows the colon. Search this page for that half.
+> always what follows the colon. Search this page for that half. [How It Works](How-It-Works#execution-flow) tags,
+> phase by phase, everything that fails a run, only thins it, or only warns, and what a run that failed has already
+> done by then.
 
 ## Authentication
 

@@ -140,6 +140,11 @@ jobs:
 - **Manual run:** Actions > Track Stars > Run workflow
 - **View report:** Check the `star-tracker-data` branch in your repository
 
+The first run creates that branch and has nothing to compare against, so every repository arrives as new with a delta
+of zero and `stars-changed` is `true`. With email configured and the default `notification-threshold`, the first email
+goes out listing all of them, and with `track-stargazers` on every existing stargazer is reported as new too. Later
+runs report only what changed. [How It Works](../../wiki/How-It-Works#a-first-run) has the detail.
+
 ---
 
 ## Configuration
@@ -261,60 +266,81 @@ config:
   layout: dagre
 ---
 flowchart TD
-    trigger(["Workflow Trigger"])
-    config["Parse configuration"]
-    fetch["Query GitHub REST API (repositories endpoint)"]
-    filter["Apply filter criteria"]
-    init["Initialize orphan branch"]
-    read["Deserialize previous state snapshot"]
-    compare["Compute delta metrics"]
-    stargazers["Fetch stargazers (starred_at)"]
-    history["Build real star history"]
-    forecast["Compute growth forecast"]
-    md["Markdown report"]
-    json["JSON dataset"]
-    csv["CSV report"]
-    svg["SVG badge"]
-    html["HTML digest"]
-    charts["SVG charts"]
-    commit["Git commit & push (data branch)"]
-    setout["Export action outputs"]
-    email{"SMTP set up, and due to send?"}
-    send["Dispatch notification"]
+    trigger(["Workflow trigger"])
+    config["Load the configuration: inputs, then star-tracker.yml, then defaults"]
+    client["Build the GitHub client from github-token and github-api-url"]
+    fetch["List repositories, GET /user/repos, paginated"]
+    filter["Resolve the Tracked Set from the filters"]
+    empty["Empty report and HTML report, every output zeroed"]
+    probe{"Data branch on the remote?"}
+    attach["Fetch it, add a worktree"]
+    orphan["Create it as an orphan branch with an empty commit"]
+    read["Read stars-data.json"]
+    measure["Measure the Run: Baseline Snapshot, deltas, new Snapshot, threshold"]
+    wantStargazers{"include-charts or track-stargazers?"}
+    stargazers["Fetch stargazers with starred_at, one repository at a time"]
+    wantDiff{"track-stargazers?"}
+    diff["Diff against stargazers.json"]
+    reconstruct["Reconstruct the star history, compute the forecast"]
+    render["Render Markdown, HTML, CSV, badge and SVG charts"]
+    due{"SMTP set, and a Notification due or send-on-no-changes?"}
+    send["Send the email"]
+    settle["Advance or hold the Notification Baseline"]
+    htmlReport["Write the HTML report to RUNNER_TEMP"]
+    publish["Write every artefact into the worktree, prune old charts"]
+    readOnly{"read-only?"}
+    push["Commit and push the data branch"]
+    outputs["Set every output"]
+    green(["Run ends green"])
+    red(["Run fails: Star Tracker failed"])
 
-    trigger --> config --> fetch --> filter
-    filter -->|no repositories matched| setout
-    filter --> init --> read --> compare
-    compare --> stargazers --> history --> forecast
-    forecast --> md & json & csv & svg & html & charts
-    md & json & csv & svg & html & charts --> email
-    email -->|Yes| send --> commit
-    email -->|No| commit
-    commit --> setout
+    trigger --> config --> client --> fetch --> filter
+    filter -->|no repositories matched| empty --> green
+    filter --> probe
+    probe -->|yes| attach --> read
+    probe -->|"no, writing run"| orphan --> read
+    read --> measure --> wantStargazers
+    wantStargazers -->|yes| stargazers --> wantDiff
+    wantStargazers -->|no| reconstruct
+    wantDiff -->|yes| diff --> reconstruct
+    wantDiff -->|no| reconstruct
+    reconstruct --> render --> due
+    due -->|yes| send --> settle
+    due -->|no| settle
+    settle --> htmlReport --> publish --> readOnly
+    readOnly -->|no| push --> outputs
+    readOnly -->|yes| outputs
+    outputs --> green
 
-    style trigger stroke:#1565c0,stroke-width:3px
-    style config stroke:#e65100,stroke-width:3px
-    style fetch stroke:#e65100,stroke-width:3px
-    style filter stroke:#e65100,stroke-width:3px
-    style init stroke:#7b1fa2,stroke-width:3px
-    style read stroke:#7b1fa2,stroke-width:3px
-    style compare stroke:#7b1fa2,stroke-width:3px
-    style stargazers stroke:#7b1fa2,stroke-width:3px
-    style history stroke:#7b1fa2,stroke-width:3px
-    style forecast stroke:#7b1fa2,stroke-width:3px
-    style md stroke:#2e7d32,stroke-width:3px
-    style json stroke:#2e7d32,stroke-width:3px
-    style csv stroke:#2e7d32,stroke-width:3px
-    style svg stroke:#2e7d32,stroke-width:3px
-    style html stroke:#2e7d32,stroke-width:3px
-    style charts stroke:#2e7d32,stroke-width:3px
-    style commit stroke:#c2185b,stroke-width:3px
-    style setout stroke:#c2185b,stroke-width:3px
-    style email stroke:#c2185b,stroke-width:3px
-    style send stroke:#c2185b,stroke-width:3px
+    config -.->|"bad visibility or data-branch, unreadable file"| red
+    client -.->|"no token, or an API URL that is not https"| red
+    fetch -.->|"any failed request, a 403 rate limit included"| red
+    probe -.->|"no checkout, a failed probe, or absent on a read-only run"| red
+    read -.->|unreadable history| red
+    diff -.->|"stargazers.json is not JSON"| red
+    push -.->|"push refused, after the email"| red
+
+    classDef start stroke:#1565c0,stroke-width:3px
+    classDef setup stroke:#e65100,stroke-width:3px
+    classDef measuring stroke:#7b1fa2,stroke-width:3px
+    classDef rendering stroke:#2e7d32,stroke-width:3px
+    classDef delivering stroke:#c2185b,stroke-width:3px
+    classDef fatal stroke:#d73a49,stroke-width:3px,stroke-dasharray:6 4
+    class trigger,green start
+    class config,client,fetch,filter,empty setup
+    class probe,attach,orphan,read,measure,wantStargazers,stargazers,wantDiff,diff,reconstruct measuring
+    class render rendering
+    class due,send,settle,htmlReport,publish,readOnly,push,outputs delivering
+    class red fatal
 ```
 
-[How It Works](../../wiki/How-It-Works): The full execution pipeline, phase by phase. **[Architecture](../../wiki/Architecture):** the DDD<sub>(ish)</sub> layering, one ubiquitous language and a pure core, and how much of the tactical catalogue is taken
+The dashed edges end a run red, and nothing after them runs: no later step, and no output is set. Everything else that
+can go wrong only thins the run, and it still ends green: a repository whose stargazers cannot be read loses its
+reconstructed chart and its new-stargazer diff, and a failed email holds the Notification Baseline for the next run.
+Note where the email sits. It goes out before the data branch is pushed, so a refused push ends red a run that has
+already emailed you.
+
+[How It Works](../../wiki/How-It-Works): The full execution pipeline, phase by phase, with what is fatal, degraded or only a warning in each phase. **[Architecture](../../wiki/Architecture):** the DDD<sub>(ish)</sub> layering, one ubiquitous language and a pure core, and how much of the tactical catalogue is taken
 
 ### How the charts read dates
 

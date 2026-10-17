@@ -125,7 +125,7 @@ carries no comments, so there are no step markers in the source to match them ag
 | 20 | `branch.publish({ history, stargazerMap, report, badge, csv, charts, commitMessage })` | infrastructure/persistence | Writes every data-branch artefact, prunes the `charts/*.svg` this run did not produce, then commits and pushes, unless `readOnly`, where the write happens and the push does not |
 | 21 | `setOutputs(...)` | application | Every output, exactly matching the `outputs:` block of [`action.yml`](./action.yml) |
 
-Failure policy: everything is wrapped in one `try/catch` that ends in `core.setFailed('Star Tracker failed: <msg>')` plus `core.debug(stack)`. Two inner failures are deliberately non-fatal: a failed email warns, and one repository's failed Stargazer fetch becomes a `core.warning` while the Run continues with partial data.
+Failure policy: everything is wrapped in one `try/catch` that ends in `core.setFailed('Star Tracker failed: <msg>')` plus `core.debug(stack)`. Two inner failures are deliberately non-fatal: a failed email warns, and one repository's failed Stargazer fetch becomes a `core.warning` while the Run continues with partial data. Because `setOutputs` is step 21, a Run that fails anywhere sets no output, including one that fails at step 20 after step 17 has emailed. The wiki's [How It Works](../../wiki/How-It-Works) tags every user-visible failure, phase by phase, as fatal, degraded or a warning.
 
 ## 3. The data branch
 

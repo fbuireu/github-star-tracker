@@ -12,6 +12,70 @@ The Stored History is still the fallback. A repository whose stargazers cannot b
 
 ---
 
+## How a Chart Is Built
+
+Every run builds its charts from scratch, after the Run is measured and before anything is emailed or saved. One
+history feeds two renderers: the animated SVGs committed to the data branch, and the PNG images the email embeds.
+
+```mermaid
+---
+config:
+  look: handDrawn
+  layout: dagre
+---
+flowchart TD
+    enabled{"include-charts?"}
+    off(["No charts; the forecast is fitted to the Stored History"])
+    fetch["fetchAllStargazers: every tracked repository's stargazers with starred_at"]
+    resolve["resolveChartHistories"]
+    build["buildStarHistory: cumulative stars in chart-max-points buckets, ramped above the listing cap"]
+    plottable{"isPlottable: at least 2 points?"}
+    stored["Fall back to the Stored History from stars-data.json"]
+    histories["Chart histories: the aggregate, and one per repository"]
+    forecast["computeForecast: 4 weekly points, two methods"]
+    files["buildChartFiles: one ChartRequest per SVG chart"]
+    html["generateHtmlReport: one ChartRequest per email chart"]
+    svgAdapter["renderSvgChart"]
+    pngAdapter["chartImageUrl"]
+    spec["buildChartSpec: window, labels, series, colours, milestones, title"]
+    svg["SVG text with its own stylesheet"]
+    url["A Chart.js config inside a quickchart.io URL"]
+    branch(["charts/*.svg on the data branch; pruneCharts deletes what this run did not draw"])
+    email(["img tags in the email, fetched from quickchart.io when the images load"])
+
+    enabled -->|no| off
+    enabled -->|yes| fetch --> resolve --> build --> plottable
+    plottable -->|yes| histories
+    plottable -->|"no, for that history"| stored --> histories
+    histories --> forecast
+    histories & forecast --> files --> svgAdapter
+    histories & forecast --> html --> pngAdapter
+    svgAdapter -->|asks| spec
+    pngAdapter -->|asks| spec
+    svgAdapter --> svg --> branch
+    pngAdapter --> url --> email
+```
+
+What that buys, and what it costs:
+
+- **A Chart's content is decided once.** Both adapters hand their `ChartRequest` to `buildChartSpec` and only draw the
+  spec they get back, so a chart on the data branch and the same chart in the email cannot disagree about the window,
+  the series or the Milestones; only their look differs
+  ([ADR 0014](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
+- **Each history falls back on its own.** The aggregate and every repository are checked separately, so one
+  repository whose stargazers could not be read gets a chart over the Stored History while the rest keep their
+  reconstruction. A per-repo *forecast* chart is drawn only from the repository's own reconstruction, never from the
+  fallback.
+- **The email's charts leave the runner.** The QuickChart URL carries each chart's whole configuration, its title and
+  legend included, so the repository names of a private repository reach quickchart.io when a reader's mail client
+  loads the images. Set `include-charts: false` if that matters.
+- **A per-repo file is named after the repository's full name**, with the `/` turned into `-`: `octocat/hello-world`
+  draws `charts/octocat-hello-world.svg`. Renaming or transferring a repository therefore moves its chart to a new
+  file and prunes the old one, which breaks an image embedded from the old URL. Two repositories whose names collapse
+  to one stem (`a-b/c` and `a/b-c`) write the same file, and the second one drawn wins.
+
+---
+
 ## Chart Types
 
 ### 1. Star History

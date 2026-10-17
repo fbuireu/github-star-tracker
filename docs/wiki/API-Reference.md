@@ -79,7 +79,7 @@ All outputs are strings (GitHub Actions requirement). Available in subsequent wo
 
 They are set together, as the last thing a successful run does. A run that fails sets none of them, including one that
 fails after its email went out, such as a refused push of the data branch; see
-[How It Works](How-It-Works#phase-8-persistence--commit).
+[How It Works](How-It-Works#phase-9-persistence--commit).
 
 | Output | Type | Description |
 |---|---|---|
