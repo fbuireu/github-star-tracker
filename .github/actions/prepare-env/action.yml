@@ -1,12 +1,6 @@
 name: Prepare environment
 description: Sets up pnpm, Node.js and dependencies
 
-inputs:
-  registry-url:
-    description: npm registry to write into .npmrc, for a job that publishes
-    required: false
-    default: ''
-
 runs:
   using: composite
   steps:
@@ -24,7 +18,6 @@ runs:
       with:
         node-version-file: .nvmrc
         cache: pnpm
-        registry-url: ${{ inputs.registry-url }}
     - name: Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile
