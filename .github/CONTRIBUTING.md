@@ -45,7 +45,7 @@ ideas are already being talked about.
 
 Use the [documentation template](ISSUE_TEMPLATE/documentation.yml), or just open a pull request. The
 user-facing documentation is the [wiki](../docs/wiki/), edited **in this repository** and published by
-[`sync-wiki.yml`](./workflows/sync-wiki.yml) on every push touching it, so an edit made in the wiki UI is
+[`sync-wiki.yml`](./workflows/sync-wiki.yml) on every push to `main` touching it, so an edit made in the wiki UI is
 overwritten on the next sync. The agent-facing guides (`AGENTS.md` and friends) are held to the code by a
 test, so read *The docs are part of the change* below before editing one.
 
@@ -78,7 +78,7 @@ pnpm typecheck          # tsc --noEmit
 pnpm test:ut            # unit tests (vitest), the docs contract included
 pnpm test:docs          # the docs contract alone
 pnpm build              # bundle src/index.ts into dist/index.js
-pnpm verify             # format check, typecheck, build and coverage: what CI runs
+pnpm verify             # format check, typecheck, build and coverage: the checks CI runs as parallel steps
 ```
 
 Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run src/domain/forecast.test.ts`.
@@ -180,6 +180,9 @@ Changed inputs, outputs or defaults are reflected in [`action.yml`](../action.ym
    commits `package.json`, [`CHANGELOG.md`](../CHANGELOG.md) and `dist/` back as
    `chore(github-star-tracker): release <version> [skip ci]`; a final step moves the floating `v1` tag, which is
    what consumers reference. There is no manual release step.
+
+Every workflow, the four checks the `main` ruleset requires, the release job step by step and the secrets behind it
+are the wiki's [CI/CD](../docs/wiki/CI-CD.md) guide.
 
 ## Use of AI
 

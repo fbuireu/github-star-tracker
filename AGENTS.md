@@ -2,7 +2,9 @@
 
 Agent-facing guide for **github-star-tracker**, a GitHub Action that tracks star counts across a token
 owner's repositories. [GLOSSARY.md](./GLOSSARY.md) is the domain glossary and [ARCHITECTURE.md](./ARCHITECTURE.md)
-the big picture: layer map, end-to-end Run, the Data Branch, build and release.
+the big picture: layer map, end-to-end Run, the Data Branch, the bundle and the release configuration. The
+workflows, the release job, the secrets and the rulesets are the wiki's CI/CD guide,
+[`docs/wiki/CI-CD.md`](./docs/wiki/CI-CD.md).
 
 Reviewing a diff: [CODING_STANDARDS.md](./CODING_STANDARDS.md).
 
@@ -50,7 +52,7 @@ pnpm test:ut:coverage # test:ut --coverage (85% threshold, every metric)
 pnpm test:ut:changed  # test:ut --changed origin/main
 pnpm test:docs        # the docs contract alone
 pnpm verify:static    # format:check && typecheck && build: everything verify does but the suite
-pnpm verify           # verify:static && test:ut:coverage; what CI runs
+pnpm verify           # verify:static && test:ut:coverage; the checks CI runs as parallel steps
 pnpm verify:changed   # verify:static && test:ut:changed && test:docs; what pre-push runs
 ```
 
@@ -135,7 +137,8 @@ wrong. What it cannot check is prose or rationale, and that part is still on you
 | What a layer does, or the files a concept is made of | that layer's nested `AGENTS.md` (table above) |
 | A default, an input name, or an output | `action.yml`, [`docs/wiki/Configuration.md`](./docs/wiki/Configuration.md), [`docs/wiki/API-Reference.md`](./docs/wiki/API-Reference.md), the README table, [`docs/wiki/Viewing-Reports.md`](./docs/wiki/Viewing-Reports.md), the *Outputs* section of [`src/application/AGENTS.md`](./src/application/AGENTS.md) and the outputs line of [`ARCHITECTURE.md`](./ARCHITECTURE.md), always **alphabetically** and never appended at the end (`github-token` stays pinned first) |
 | A package script or a path alias | the *Commands* / *Structure & aliases* sections here |
-| A layer boundary, the run order, or the build pipeline | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
+| A layer boundary, the run order, the bundle or the release configuration | [`ARCHITECTURE.md`](./ARCHITECTURE.md) |
+| A workflow, a job, `prepare-env`, a secret, a ruleset or a required check | [`docs/wiki/CI-CD.md`](./docs/wiki/CI-CD.md), and the summary in `ARCHITECTURE.md` §5 |
 | A decision an ADR records | that ADR: amend it, or supersede it with a new one and say so in both `## Status` blocks |
 
 A new ADR starts as a copy of [ADR 0000](./docs/adr/0000-adr-template.md), the template, which says when a decision

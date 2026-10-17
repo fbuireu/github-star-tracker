@@ -34,6 +34,7 @@ GitHub Star Tracker is a GitHub Action that monitors star counts across all your
 | [Internationalization (i18n)](<Internationalization-(i18n)>) | Multi-language support (en, es, ca, it) |
 | [Known Limitations](Known-Limitations) | Technical constraints and design trade-offs |
 | [Troubleshooting](Troubleshooting) | Common issues and solutions |
+| [CI/CD](CI-CD) | For contributors: how this repository checks, releases and publishes itself |
 
 ---
 
