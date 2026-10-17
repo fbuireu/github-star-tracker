@@ -1584,7 +1584,7 @@ function aliasTarget(specifier: string): string | null {
 
 	const wildcard = Object.keys(paths).find((alias) => alias.endsWith("/*") && specifier.startsWith(alias.slice(0, -1)));
 
-	return wildcard === undefined ? null : paths[wildcard][0].replace("*", specifier.slice(wildcard.length - 1));
+	return wildcard === undefined ? null : paths[wildcard][0].replaceAll("*", specifier.slice(wildcard.length - 1));
 }
 
 interface ResolveModuleParams {
