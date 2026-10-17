@@ -161,7 +161,8 @@ commit**. A follow-up commit is a promise, not a fix.
 [`docs/docs-consistency.test.ts`](../docs/docs-consistency.test.ts) runs with the unit tests and fails the
 build when the docs and the repo disagree: a dead link, a cited file that is not in the tree, an
 `action.yml` input missing from a surface that lists them or out of alphabetical order, a documented default
-that is not the one the code declares, an ADR off its template. "The documentation set" is meant literally:
+that is not the one the code declares, an ADR off its template, a workflow or secret the
+[CI/CD guide](../docs/wiki/CI-CD.md) does not name, a Mermaid diagram not drawn `handDrawn` on `dagre`. "The documentation set" is meant literally:
 the root guides, everything under `docs/` and `.github/`, this file included. When it fails, fix whichever
 side is wrong, and never delete an assertion to get green. [AGENTS.md](../AGENTS.md) has the full table of
 what to update for a given change, and [ARCHITECTURE.md](../ARCHITECTURE.md) holds the ADR index.

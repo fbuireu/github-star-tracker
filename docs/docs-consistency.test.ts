@@ -50,9 +50,8 @@ const HISTORY_FILE_SURFACES = ["docs/wiki/API-Reference.md", "docs/wiki/Data-Man
 const I18N_PAGE = "docs/wiki/Internationalization-(i18n).md";
 const I18N_SECTION_ROW_PATTERN = /^\| `(\w+)` \| ((?:`[\w.]+`(?:, )?)+) \|/gm;
 const I18N_KEY_PATTERN = /`([\w.]+)`/g;
-const MERMAID_DIAGRAM_PATTERN = /```mermaid\n([\s\S]*?)```/g;
-const MERMAID_FRONT_MATTER_PATTERN = /^---\n([\s\S]*?)\n---\n/;
-const DAGRE_LAYOUT_PATTERN = /^\s+layout: dagre$/m;
+const FIRST_MERMAID_DIAGRAM_PATTERN = /```mermaid\n[\s\S]*?```/;
+const RUN_DIAGRAM_COPIES = ["README.md", "docs/wiki/How-It-Works.md"];
 
 const LINE_CITATION_ALLOWLIST = new Set([ADR_TEMPLATE]);
 
@@ -240,17 +239,11 @@ describe("documentation consistency", () => {
 		expect(missing).toEqual([]);
 	});
 
-	it("pins every Mermaid diagram to the layout: dagre it was drawn with, so a renderer that defaults to ELK cannot redraw it", () => {
-		const diagrams = DOCS.flatMap((doc) =>
-			[...read(doc).matchAll(MERMAID_DIAGRAM_PATTERN)].map(([, body]) => ({ doc, body })),
-		);
-		const pinned = (body: string): boolean =>
-			DAGRE_LAYOUT_PATTERN.test(MERMAID_FRONT_MATTER_PATTERN.exec(body)?.[1] ?? "");
+	it("draws the README's run diagram exactly as How It Works draws it, since a copy nothing compares drifts", () => {
+		const [readme, wiki] = RUN_DIAGRAM_COPIES.map((doc) => FIRST_MERMAID_DIAGRAM_PATTERN.exec(read(doc))?.[0] ?? "");
 
-		expect(pinned("---\nconfig:\n  look: handDrawn\n  layout: dagre\n---\nflowchart TD")).toBe(true);
-		expect(pinned("flowchart TD\n  a --> b")).toBe(false);
-		expect(diagrams.length).toBeGreaterThan(0);
-		expect(diagrams.filter(({ body }) => !pinned(body)).map(({ doc }) => doc)).toEqual([]);
+		expect(readme).not.toBe("");
+		expect(readme).toBe(wiki);
 	});
 
 	it("embeds only sample charts that exist", () => {
@@ -259,6 +252,57 @@ describe("documentation consistency", () => {
 
 		expect(embedded.length).toBeGreaterThan(0);
 		expect(missing).toEqual([]);
+	});
+});
+
+describe("the CI/CD guide names every workflow, action, secret and variable, and every diagram is hand-drawn on dagre", () => {
+	const CI_CD_GUIDES = ["docs/wiki/CI-CD.md"];
+	const MARKDOWN_DOCS = DOCS;
+	const WORKFLOW_FILES = fs.readdirSync(".github/workflows").filter((name) => /\.ya?ml$/.test(name));
+	const ACTION_NAMES = fs.existsSync(".github/actions") ? fs.readdirSync(".github/actions") : [];
+	const AUTOMATION_FILES = [
+		...WORKFLOW_FILES.map((name) => `.github/workflows/${name}`),
+		...ACTION_NAMES.map((name) => `.github/actions/${name}/action.yml`),
+	];
+	const SECRET_OR_VARIABLE = /\$\{\{[^}]*?\b(?:secrets|vars)\.([A-Za-z0-9_]+)/g;
+	const IMPLICIT_SECRETS = new Set(["GITHUB_TOKEN"]);
+	const MERMAID_FENCE = /^([ \t]*)```mermaid[^\n]*\n([\s\S]*?)^\1```/gm;
+	const FRONTMATTER = /^---\n([\s\S]*?)\n---\n/;
+	const guide = (): string => CI_CD_GUIDES.map(read).join("\n");
+
+	it("names every workflow file and composite action in the CI/CD guide", () => {
+		const text = guide();
+		expect(WORKFLOW_FILES.length).toBeGreaterThan(0);
+		expect([...WORKFLOW_FILES, ...ACTION_NAMES].filter((name) => !text.includes(name))).toEqual([]);
+	});
+
+	it("names every secret and variable a workflow or action reads in the CI/CD guide", () => {
+		const text = guide();
+		const used = new Set(
+			AUTOMATION_FILES.flatMap((path) => [...read(path).matchAll(SECRET_OR_VARIABLE)].map(([, name]) => name)),
+		);
+		expect(used.size).toBeGreaterThan(0);
+		expect([...used].filter((name) => !IMPLICIT_SECRETS.has(name) && !text.includes(`\`${name}\``))).toEqual([]);
+	});
+
+	it("describes the verify checks as the parallel steps ci.yml runs", () => {
+		expect(read(".github/workflows/ci.yml")).toMatch(/^\s*- parallel:/m);
+		expect(guide()).toMatch(/\bparallel\b/i);
+	});
+
+	it("draws every Mermaid diagram hand-drawn on the dagre layout", () => {
+		const diagrams = MARKDOWN_DOCS.flatMap((path) =>
+			[...read(path).matchAll(MERMAID_FENCE)].map(([, indent, body]) => ({
+				path,
+				front: FRONTMATTER.exec(body.replaceAll(new RegExp(`^${indent}`, "gm"), ""))?.[1] ?? "",
+			})),
+		);
+		expect(diagrams.length).toBeGreaterThan(0);
+		expect(
+			diagrams
+				.filter(({ front }) => !/^\s*look:\s*handDrawn\s*$/m.test(front) || !/^\s*layout:\s*dagre\s*$/m.test(front))
+				.map(({ path }) => path),
+		).toEqual([]);
 	});
 });
 
@@ -345,6 +389,27 @@ function describedAs(value: Config[keyof Config]): string {
 	return String(value);
 }
 
+const README_INPUT_ROW_PATTERN = /^\| `([a-z][a-z\d-]*)` +\| ([^|]*?) +\|/gm;
+const README_NO_DEFAULT = "-";
+const README_LOCALIZED_DEFAULT = "localized";
+const LOCALIZED_DEFAULT_INPUTS = new Set(["email-from"]);
+
+function readmeDefault(input: string): string {
+	const key = Object.keys(DEFAULTS).find((candidate) => toActionInputName(candidate) === input);
+
+	if (LOCALIZED_DEFAULT_INPUTS.has(input)) return README_LOCALIZED_DEFAULT;
+
+	if (key === undefined) {
+		const declared = manifest.inputs[input]?.default ?? "";
+
+		return declared === "" ? README_NO_DEFAULT : `\`${declared}\``;
+	}
+
+	const value = DEFAULTS[key as keyof Config];
+
+	return Array.isArray(value) && value.length === 0 ? README_NO_DEFAULT : `\`${describedAs(value)}\``;
+}
+
 describe("action.yml is documented", () => {
 	it("states a default in prose for every overridable input, and states the real one", () => {
 		const overridable = Object.entries(DEFAULTS).filter(([key]) => key !== "sendOnNoChanges");
@@ -372,6 +437,18 @@ describe("action.yml is documented", () => {
 
 		expect(overridable.length).toBeGreaterThan(0);
 		expect(silent).toEqual([]);
+	});
+
+	it("lists every input in the README's table with the default the code really applies", () => {
+		const rows = [...read("README.md").matchAll(README_INPUT_ROW_PATTERN)]
+			.map(([, input, stated]) => ({ input, stated }))
+			.filter(({ input }) => Object.hasOwn(manifest.inputs, input));
+		const wrong = rows
+			.filter(({ input, stated }) => stated !== readmeDefault(input))
+			.map(({ input, stated }) => `${input}: says ${stated}, is ${readmeDefault(input)}`);
+
+		expect(rows.map(({ input }) => input).sort()).toEqual(Object.keys(manifest.inputs).sort());
+		expect(wrong).toEqual([]);
 	});
 
 	it("declares outputs this test can read", () => {

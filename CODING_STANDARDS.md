@@ -82,8 +82,11 @@ No rule below restates these, and a diff that breaks one fails CI:
     `chore(<scope>): release ${nextRelease.version} [skip ci]` scoped to the package it releases, and every plugin
     it names, and `semantic-release`, declared at one version in the `package.json` that runs it, beside no other
     release package, and the release commit let past commitlint by its `ignores`, whatever its notes say;
-  - every Mermaid diagram held to the `layout: dagre` it was drawn with, so a renderer that defaults to ELK cannot
-    redraw it;
+  - every Mermaid diagram held to `look: handDrawn` and the `layout: dagre` it was drawn with, so a renderer that
+    defaults to ELK cannot redraw it, and the README's run diagram held to the one in the wiki's How It Works;
+  - every workflow, composite action, secret and variable the automation reads named in the CI/CD guide
+    (`docs/wiki/CI-CD.md`), which also describes the verify checks as the parallel steps `ci.yml` runs;
+  - the README's input table listing every input with the default the code really applies;
   - every `uses:` of another repository pinned to a full commit SHA with its version or branch in a trailing
     comment, and no comment in a YAML file (`pnpm-lock.yaml`, which pnpm writes, aside) but that one, a tool
     directive and the line Renovate writes above an entry it adds to `minimumReleaseAgeExclude`.
@@ -464,6 +467,11 @@ No rule below restates these, and a diff that breaks one fails CI:
 - **Duplicated Code**: the shape rule (the `describe` that keeps every object shape an interface) in
   `docs/docs-consistency.test.ts` is the same in biancafiore, contribKit, forever-pto and github-star-tracker, so a
   change to it is made in all four; only the floor its census holds and the files it reads differ.
+- **Duplicated Code**: the CI/CD contract (the `describe` that holds the CI/CD guide to every workflow, composite
+  action, secret and variable, and every Mermaid diagram to `handDrawn` on `dagre`) in
+  `docs/docs-consistency.test.ts` has the same titles and structure in biancafiore, contribKit, forever-pto and
+  github-star-tracker, so a change to it is made in all four; only the guides it reads and the documents it scans
+  differ.
 - **Repeated Switches**: each chart adapter maps `SeriesDash` (and the email adapter `SeriesWeight`) through its own
   table and keeps its own series dash patterns, because those are dialect facts
   ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
