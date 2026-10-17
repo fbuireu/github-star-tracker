@@ -99,5 +99,6 @@ Nodemailer talks to any SMTP provider, so nobody is locked into a transactional-
 
 - Minimal PAT scopes: `public_repo` is sufficient for public-only tracking
 - Ephemeral credential handling: the token is passed to `git` as a per-command header and registered as a secret, never logged or persisted
-- No sensitive data in outputs: star counts and repository names are already public
-- Stargazer data is opt-in, and stores only publicly available information
+- What leaves the runner: star counts and repository names reach the outputs, the data branch and the email. For a public repository those are public anyway; for a **private** one they are not, and wherever the data branch is readable, so are they
+- One outbound request besides GitHub and your SMTP server: the email's charts are [QuickChart](https://quickchart.io) image URLs carrying each chart's data, repository names in its title and legend included. They are fetched from quickchart.io when the email's images load, so tracking private repositories with email charts on sends their names there. Set `include-charts: false` if that matters ([ADR 0010](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0010-quickchart-renders-the-email-charts.md))
+- Stargazer data is opt-in, and stores only login names; since GitHub's 2026 restriction, a public data branch publishes logins that GitHub itself no longer lists publicly (see [Known Limitations](Known-Limitations#stargazer-data-privacy))

@@ -21,7 +21,7 @@ The working directory for the branch is derived from the name: a dot followed by
 
 | File | Description | When Created |
 |---|---|---|
-| [`README.md`](https://github.com/fbuireu/github-star-tracker/blob/main/README.md) | Markdown report with embedded charts | Every run |
+| `README.md` | Markdown report with embedded charts | Every run |
 | `stars-data.json` | Historical snapshot data | Every run |
 | `stars-data.csv` | Flat per-repo export (`repository,owner,name,stars,previous,delta,status`) | Every run |
 | [`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/docs/examples/stars-badge.svg) | Star count badge | Every run |
@@ -171,6 +171,25 @@ permanently unreadable it will never report a new stargazer again. Each affected
 warning in the run log. The full reasoning is
 [ADR 0012](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0012-unreadable-stargazer-lists-keep-their-previous-logins.md).
 
+A repository with **no entry** has every stargazer reported as new, because there is nothing to diff against. That
+happens more often than it sounds:
+
+| Situation | What the next run reports |
+|---|---|
+| The first run with `track-stargazers` on, whether on a fresh branch or one that ran for months without it | Every stargazer of every repository, all at once |
+| A repository newly in the Tracked Set: created, unarchived, or let in by an edited filter | Every stargazer of that repository |
+| A repository renamed or transferred | Every stargazer under its new full name, since entries are keyed by full name; the old entry stays behind |
+| `stargazers.json` edited into something the reader repairs (below) | Every stargazer of each repository whose entry was lost |
+
+How the file is read decides which damage stops the run. It is the one file on the branch the action repairs rather
+than refuses:
+
+- **Bytes that are not JSON fail the run**, with the same `... is not valid JSON` message `stars-data.json` gets.
+- **JSON that is not an object is read as empty**, silently, so every repository falls into the first row above.
+- **An entry that is not a list of logins is dropped**, silently, and its siblings survive.
+
+The file is only read and written with `track-stargazers` on.
+
 ---
 
 ## First Run Behavior
@@ -179,10 +198,16 @@ On the first **writing** run:
 
 1. The action creates the data branch as an orphan branch
 2. An initial empty commit is made
-3. All repos are recorded with `delta: 0` (no previous data to compare against)
+3. All repos are recorded as New Repositories with `delta: 0` (no previous data to compare against), which still
+   makes `stars-changed` `true`
 4. Stargazers are fetched (charts are on by default) and the Reconstructed History is built from their
    `starred_at` dates, so charts are generated on the first run
 5. Forecasts are generated on the first run too, provided that reconstruction has at least 3 points
+6. With `track-stargazers` on, every existing stargazer is reported as new
+7. With email configured, the Notification is due as soon as your star total reaches the threshold, which under the
+   default `notification-threshold: 0` means this run: the first email lists every repository as new, and its subject
+   shows the whole total as the delta, e.g. `(+523)`
+8. Everything is committed in one commit on top of the empty one
 
 The data branch is a Git worktree checked out beside your main checkout at the dot-prefixed branch name
 (`.star-tracker-data/`), so the action never runs `git checkout` on the branch your workflow is using.

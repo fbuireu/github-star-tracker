@@ -165,7 +165,7 @@ An email announcing a Run's Report. It is the announcement itself, distinct from
 _Avoid_: alert, message, ping
 
 **Notification Baseline**:
-The Star Count a Notification Threshold accumulates against: the Tracked Set's total as at the last delivered Notification. It is a total, not a Snapshot, and is a different quantity from the Baseline Snapshot.
+The Star Count a Notification Threshold accumulates against: the Tracked Set's total as at the last Run whose Notification was due and whose Delivery did not fail, which includes a due Run with no transport configured. It is a total, not a Snapshot, and is a different quantity from the Baseline Snapshot.
 _Avoid_: notification snapshot, last-sent snapshot, unqualified "baseline"
 
 **Notification Threshold**:

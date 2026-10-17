@@ -17,9 +17,10 @@ The `GITHUB_TOKEN` is scoped to the **current repository only**. GitHub Star Tra
 The action requires the user to create a PAT and store it as a repository secret (`STAR_TRACKER_TOKEN`). Both classic tokens and fine-grained tokens are supported.
 
 - Classic: `repo` (private + public) or `public_repo` (public only)
-- Fine-grained: `Repository access → All repositories` with `Metadata: Read-only` **and `Contents: Read and
-  write`**. When `actions/checkout` persisted no credential (`persist-credentials: false`) the action pushes the data
-  branch with this same token, so a metadata-only token fails at the push
+- Fine-grained: `Repository access → All repositories` with `Metadata: Read-only`. That is enough with
+  `actions/checkout`'s default, where git pushes the data branch with the workflow's own `GITHUB_TOKEN` and the
+  workflow grants `permissions: contents: write`. Only when the checkout sets `persist-credentials: false` does the
+  action push with this token, which then needs `Contents: Read and write` as well
 
 See **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)** for a step-by-step setup guide.
 
@@ -29,7 +30,12 @@ See **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)** for a step-
 
 ### Limitation
 
-When `track-stargazers` is enabled, fetching stargazers is **API-intensive**. Each repository requires `ceil(stars / 100)` API calls. A repo with 1,500 stars needs 15 API calls just for stargazers. With many high-star repos, the authenticated rate limit of **5,000 requests/hour** can be approached or exceeded.
+Whenever charts are on (`include-charts`, the default) or `track-stargazers` is enabled, fetching stargazers is **API-intensive**. A full fetch reads pages of 100 until it gets a page that is not full, so each repository costs `floor(stars / 100) + 1` API calls, capped at 400: an exactly full last page needs one more, empty, request to prove it was the last. A repo with 1,500 stars needs 16 API calls just for stargazers. With many high-star repos, the authenticated rate limit of **5,000 requests/hour** can be approached or exceeded.
+
+Hitting that limit plays out differently by endpoint. GitHub answers an exhausted rate limit with `403` or `429`, and the action's retry plugin retries a `429` but never a `403`:
+
+- **While listing repositories**, a `403` fails the run at once, with the hint `Verify that your github-token has the correct permissions.` That hint is wrong for this case: the message before it says `API rate limit exceeded`, and the fix is to wait for the reset or cut the run's cost, not to change the token.
+- **While reading one repository's stargazers**, a failure on page 1 drops that repository's stargazers for this run with a warning; on a later page the pages already read are kept and its chart ramps from there; on a sampled repository the failed page is skipped. The run stays green either way.
 
 ### Why
 
@@ -39,7 +45,7 @@ Additionally, stargazers are fetched **sequentially per repo** (not in parallel)
 
 ### Approach
 
-- Fetched by default for charts: `track-stargazers` defaults to `false`, but stargazers are now also fetched whenever charts are enabled (`include-charts: true`, the default) in order to build the Reconstructed History. So the stargazer API cost in this table applies to any run with charts on, not only when `track-stargazers` is enabled. To avoid this cost entirely, set `include-charts: false`. Use `smart-sampling` (with `smart-sampling-threshold` / `smart-sampling-pages`) to cap requests for high-star repos.
+- Fetched by default for charts: `track-stargazers` defaults to `false`, but stargazers are also fetched whenever charts are enabled (`include-charts: true`, the default) in order to build the Reconstructed History. So the stargazer API cost in this table applies to any run with charts on, not only when `track-stargazers` is enabled. To avoid this cost entirely, set `include-charts: false` and leave `track-stargazers` off. Use `smart-sampling` (with `smart-sampling-threshold` / `smart-sampling-pages`) to cap requests for high-star repos at `smart-sampling-pages` each.
 - Per-repo error tolerance: if fetching stargazers fails for one repository (e.g., due to rate limiting), the action logs a warning and continues with the remaining repos instead of aborting the entire run.
 - Separate persistence: stargazer data is stored in `stargazers.json` (repo → login array), separate from `stars-data.json`. This keeps the diff lightweight - only login strings are compared, not full user objects.
 
@@ -51,10 +57,12 @@ Additionally, stargazers are fetched **sequentially per repo** (not in parallel)
 
 | Repository stars | API calls per repo | 10 repos | 50 repos |
 |:-----------------|:-------------------|:---------|:---------|
-| 100              | 1                  | 10       | 50       |
-| 500              | 5                  | 50       | 250      |
-| 1,000            | 10                 | 100      | 500      |
-| 5,000            | 50                 | 500      | 2,500    |
+| 99               | 1                  | 10       | 50       |
+| 100              | 2                  | 20       | 100      |
+| 500              | 6                  | 60       | 300      |
+| 1,000            | 11                 | 110      | 550      |
+| 5,000            | 51                 | 510      | 2,550    |
+| 40,000 or more   | 400                | 4,000    | 20,000   |
 
 ---
 

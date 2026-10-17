@@ -19,7 +19,7 @@ Navigate to:
 https://github.com/YOUR_USER/YOUR_REPO/tree/star-tracker-data
 ```
 
-GitHub automatically renders [`README.md`](https://github.com/fbuireu/github-star-tracker/blob/main/README.md) with all charts visible.
+GitHub automatically renders the branch's `README.md`, the report, with all charts visible.
 
 > [!NOTE]
 > That `README.md` is the report, rewritten in full on every run. Editing it by hand is safe but pointless:
@@ -137,8 +137,10 @@ git clone -b star-tracker-data --single-branch \
 
 ```bash
 curl -s https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/star-tracker-data/stars-data.json \
-  | jq '.snapshots[0].totalStars'
+  | jq '.snapshots[-1].totalStars'
 ```
+
+Snapshots are appended, so `.snapshots[-1]` is the newest and `.snapshots[0]` the oldest one `max-history` still keeps.
 
 ---
 

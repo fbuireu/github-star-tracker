@@ -59,8 +59,8 @@ More granular control, required expiration, better for team environments.
    - **Resource owner:** your account
    - **Repository access:** `All repositories`
    - **Permissions > Repository permissions:**
-     - `Contents`: **Read and write**, required. The action commits the report, data, badge and charts to the data branch, and it pushes with *this* token whenever `actions/checkout` persisted no credential of its own (`persist-credentials: false`). A token without it then fails at the push
-     - `Metadata`: **Read-only**, mandatory. GitHub selects it automatically alongside `Contents`
+     - `Metadata`: **Read-only**, mandatory. It is what lists the repositories and reads their star counts, and GitHub selects it for any token that reaches a repository
+     - `Contents`: **Read and write**, only if the workflow's checkout step sets `persist-credentials: false`. With `actions/checkout`'s default, git pushes the data branch with the workflow's own `GITHUB_TOKEN` (which is why the workflow keeps `permissions: contents: write`), and this token never writes anything. With `persist-credentials: false` the checkout keeps no credential, so the action pushes with *this* token, which then needs write access to the repository the workflow runs in. A fine-grained token grants a permission on every repository it selects, so leave the default checkout alone if you want the token to stay read-only
 4. Click **"Generate token"**
 5. **Copy the token immediately.** It starts with `github_pat_`
 
@@ -89,15 +89,18 @@ Star counts, reports and badges are unaffected, so the run succeeds and the gap 
 
 **Fine-grained token permissions:** what the action is allowed to do.
 
-| Permission | What it allows |
-|---|---|
-| `Contents: Read and write` | Read repositories and push to the data branch. This is the default requirement |
-| `Contents: Read-only` | Read repositories. Enough only for a [`read-only: true`](Configuration#read-only) run, and only when the data branch already exists |
-| `Metadata: Read-only` | Mandatory companion to any repository permission; GitHub selects it for you |
+| Permission | What it allows | When the action needs it |
+|---|---|---|
+| `Metadata: Read-only` | List the repositories and read their star counts | Always; GitHub selects it for you |
+| `Contents: Read-only` | Fetch the data branch | Only when the checkout sets `persist-credentials: false`, on a [`read-only: true`](Configuration#read-only) run, which never pushes |
+| `Contents: Read and write` | Fetch and push the data branch | Only when the checkout sets `persist-credentials: false`, on a writing run |
+
+With the default checkout, git fetches and pushes the data branch with the workflow's own `GITHUB_TOKEN`, so the
+workflow's `permissions:` block is what has to grant `contents: write`, and the token itself only reads metadata.
 
 > **Minimum scope:** if you only need to track public repositories, `public_repo` (classic) is sufficient.
 >
-> **A read-only run needs less, with a catch.** With [`read-only: true`](Configuration#read-only) the action never pushes, so `Contents: Read-only` is enough for a fine-grained token. But a read-only run cannot *create* the data branch either, so the branch must already exist on the remote. On a fresh setup, do the first run with write access, or point `data-branch` at the branch another workflow already maintains.
+> **A read-only run cannot create the data branch.** With [`read-only: true`](Configuration#read-only) the action never pushes, so the workflow needs only `permissions: contents: read`. But the branch must already exist on the remote: on a fresh setup, do the first run as a writing run, or point `data-branch` at the branch another workflow already maintains.
 
 ---
 
@@ -117,7 +120,7 @@ Star counts, reports and badges are unaffected, so the run succeeds and the gap 
 | `Failed to fetch repositories from GitHub API: HTTP 401 Bad credentials. Verify that your github-token has the correct permissions.` | Token expired or revoked. The run fails outright, it does not fall back to a smaller report | Generate a new token and update the secret |
 | `Resource not accessible by integration` | Using `GITHUB_TOKEN` instead of a PAT | Create a PAT with a suitable scope |
 | `Not Found` for private repos | Token has `public_repo` but not `repo` scope | Edit the token to add `repo` scope |
-| Push rejected with `403` on a fine-grained token | Token lacks `Contents: Read and write` | Edit the token's repository permissions and re-run |
+| Push rejected with `403` | With the default checkout, the workflow lacks `permissions: contents: write`. With `persist-credentials: false`, the token lacks write access to the workflow's repository | Grant `contents: write` in the workflow, or `Contents: Read and write` on the token, and re-run |
 | Charts and stargazer sections empty on a fine-grained token | The stargazer endpoint is admin/collaborator-only | See [Fine-Grained Tokens and Stargazers](#fine-grained-tokens-and-stargazers) above |
 | `Bad credentials` after copy/paste | Extra whitespace in the secret value | Re-copy the token carefully and trim whitespace |
 

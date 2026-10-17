@@ -32,6 +32,21 @@ integration. Verify that your github-token has the correct permissions.`
 
 **Fix:** The default `GITHUB_TOKEN` cannot list repositories across your account. You must create a Personal Access Token. See **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)**.
 
+### "API rate limit exceeded", With a Permissions Hint
+
+The run fails with
+`Star Tracker failed: Failed to fetch repositories from GitHub API: HTTP 403 API rate limit exceeded for user ID ...
+Verify that your github-token has the correct permissions.`
+
+**Cause:** the token's hourly REST quota ran out before the run could list your repositories. GitHub answers that with
+a `403`, and the action's retry plugin never retries a `403` (it retries a `429`, server errors and network failures,
+three times each). The permissions hint is attached to every failed listing request, so here it points the wrong way:
+the token is fine.
+
+**Fix:** wait for the quota to reset, which the `x-ratelimit-reset` header of any API response gives, and re-run. If
+it recurs, the stargazer fetches are usually what spent it: turn on `smart-sampling`, narrow the Tracked Set, or run
+less often. [Known Limitations](Known-Limitations#stargazer-api-rate-limits) has the cost per repository.
+
 ### Token Works Locally but Fails in Actions
 
 **Cause:** The secret name in the workflow doesn't match the secret stored in the repo.
@@ -131,11 +146,19 @@ Star Tracker failed: stars-data.json on the data branch is not valid JSON (<pars
 the file on that branch and re-run.
 ```
 
-**Cause:** the stored history was hand-edited, truncated by a failed push, or merged badly.
+**Cause:** the stored history was hand-edited, truncated by a failed push, or merged badly. The same message names
+`stargazers.json` when that is the file whose bytes do not parse; it is read only with `track-stargazers` on, and
+fails the run just the same.
 
-**Fix:** correct the JSON on the data branch, or delete `stars-data.json` there to start the history over.
-The action deliberately refuses to read it as empty, because that would append a snapshot over the top of a
-record it had just discarded.
+**Fix:** correct the JSON on the data branch, or delete the file there. Deleting `stars-data.json` starts the history
+over; the action deliberately refuses to read it as empty, because that would append a snapshot over the top of a
+record it had just discarded. Deleting `stargazers.json` costs less, but its next run reports every existing
+stargazer as new.
+
+`stargazers.json` is the one file the action repairs rather than refuses, as long as it parses: a file that is not an
+object is read as empty, and an entry that is not a list of logins is dropped. That is silent, and every stargazer of
+the repositories it lost is reported as new on the next run. See
+[Data Management](Data-Management#stargazer-data).
 
 ### "... is valid JSON but not an object"
 
@@ -203,6 +226,11 @@ above. The second line is git's own message and is the part worth reading.
 on the data branch and a detached or shallow checkout are the usual causes. A checkout owned by another user,
 typical in a container job, fails the first command with `detected dubious ownership`; run the
 `git config --global --add safe.directory` command git prints before the action.
+
+When the failing command is the `push`, the run had already done everything else: the email, if one was due, went out,
+and the HTML report was written. What it did not do is record the snapshot, or set any output, since the outputs are
+set after the push. Fix the cause and re-run; the next email may repeat the last one, because the notification
+baseline it would have advanced was never pushed either.
 
 ---
 
@@ -293,7 +321,8 @@ finishes last is refused. The usual trigger is a scheduled run plus a manual **R
 happen if a run takes longer than the schedule interval.
 
 **What it means:** that run's snapshot was not recorded. Its report and email had already gone out, because
-the email is sent before the data is saved, so you may receive a digest for a run that ends red.
+the email is sent before the data is saved, so you may receive a digest for a run that ends red. Its outputs were
+never set, so a later step gated on one of them did not run.
 
 **Fix:** re-run it. The next run records the current totals and nothing is lost but that one snapshot.
 To stop it recurring, give the workflow a concurrency group so runs queue instead of overlapping:
@@ -348,12 +377,17 @@ Since v1.22.3, a single failing page no longer discards the rest of a repo's his
 ### Charts Not Updating
 
 **Possible causes:**
-- No star changes detected (the action skips the commit)
-- Workflow failed silently
+- The run failed, or did not run at all. Every writing run commits, even when no star moved, because it appends a
+  snapshot and rewrites the report, so a data branch without a fresh commit means no writing run finished
+- The workflow is a [`read-only`](Configuration#read-only) one, which never commits
+- The image is cached. `raw.githubusercontent.com` and GitHub's image proxy both cache an embedded SVG for a few
+  minutes
+- The repository was renamed or transferred. Its per-repo chart is named after its full name, so the chart moved to a
+  new file and the old one was pruned; an embed of the old URL then shows nothing
 
-**Fix:** Check the workflow run logs in **Actions** tab. If stars haven't changed, no commit is made - this is expected.
-
-> Star-history charts plot the true cumulative curve from each stargazer's `starred_at` date, not one point per run. If stars haven't changed, no new commit is made (expected).
+**Fix:** Check the workflow run logs in the **Actions** tab, then the data branch's history. A chart whose curve looks
+unchanged on a run where stars did not move is expected: star-history charts plot the cumulative curve from each
+stargazer's `starred_at` date, not one point per run.
 
 ### Broken Chart Images in README
 
@@ -524,8 +558,11 @@ steps:
 ### Workflow Runs but Nothing Happens
 
 **Possible causes:**
-- No star changes detected (expected - no commit is made)
-- All repos filtered out
+- No star moved. The run still commits a new snapshot and rewritten report, so the data branch gains a commit, but
+  `stars-changed` is `false` and no email is due
+- All repos filtered out. The run warns `No repositories matched the configured filters` and never opens the data
+  branch, so nothing is committed
+- The workflow is `read-only`, which never commits
 
 **Fix:** Check the workflow run logs. The action logs which repos are tracked and any filtering that occurred.
 

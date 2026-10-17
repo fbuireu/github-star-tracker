@@ -63,26 +63,22 @@ jobs:
           subject: '⭐ Star Update: ${{ steps.tracker.outputs.total-stars }} total (+${{ steps.tracker.outputs.new-stars }})'
           to: ${{ secrets.EMAIL_TO }}
           from: GitHub Star Tracker
-          html_body_file: ${{ steps.tracker.outputs.report-html-path }}
+          html_body: file://${{ steps.tracker.outputs.report-html-path }}
 ```
 
 > [!IMPORTANT]
-> Reports with charts and many repositories can be large. Passing `report-html` directly through `html_body` routes the whole report through a shell environment variable, which can fail with `Argument list too long` for big reports. Use the `report-html-path` output instead - the action writes the HTML to a file and exposes its path, which mailers can read directly:
+> Pass the report as a file, never as its text. Reports with charts and many repositories are large, and
+> `html_body: ${{ steps.tracker.outputs.report-html }}` puts the whole report into the mailer step's environment,
+> which fails with `Argument list too long` once it is big enough. `action-send-mail` has no separate file input:
+> its `html_body` reads a file when the value starts with `file://`. So prefix the `report-html-path` output, as every
+> example on this page does:
 >
 > ```yaml
->       - name: Send email
->         if: steps.tracker.outputs.stars-changed == 'true'
->         uses: dawidd6/action-send-mail@62a2d05b79935ad4fb90ce9079928099579c14ac # v9
->         with:
->           server_address: smtp.gmail.com
->           server_port: 587
->           username: ${{ secrets.EMAIL_FROM }}
->           password: ${{ secrets.EMAIL_PASSWORD }}
->           subject: '⭐ Star Update: ${{ steps.tracker.outputs.total-stars }} total'
->           to: ${{ secrets.EMAIL_TO }}
->           from: GitHub Star Tracker
->           html_body_file: ${{ steps.tracker.outputs.report-html-path }}
+> html_body: file://${{ steps.tracker.outputs.report-html-path }}
 > ```
+>
+> Without the prefix the mailer sends the path itself as the body. The action writes that file on every run,
+> read-only runs and runs where nothing matched included, so the step can always rely on it.
 
 ### With Notification Threshold
 
@@ -107,7 +103,7 @@ Only send email when accumulated changes reach a threshold. `should-notify` accu
     subject: '⭐ Stars changed: ${{ steps.tracker.outputs.total-stars }} total'
     to: ${{ secrets.EMAIL_TO }}
     from: GitHub Star Tracker
-    html_body_file: ${{ steps.tracker.outputs.report-html-path }}
+    html_body: file://${{ steps.tracker.outputs.report-html-path }}
 ```
 
 ---
@@ -239,7 +235,7 @@ Both inputs drive the built-in email and the `should-notify` output, so the same
     subject: '⭐ Milestone: ${{ steps.tracker.outputs.total-stars }} total stars'
     to: ${{ secrets.EMAIL_TO }}
     from: GitHub Star Tracker
-    html_body_file: ${{ steps.tracker.outputs.report-html-path }}
+    html_body: file://${{ steps.tracker.outputs.report-html-path }}
 ```
 
 Notes:
@@ -366,7 +362,7 @@ jobs:
           subject: '⭐ Weekly digest: ${{ steps.tracker.outputs.total-stars }} total (+${{ steps.tracker.outputs.new-stars }})'
           to: ${{ secrets.EMAIL_TO }}
           from: GitHub Star Tracker
-          html_body_file: ${{ steps.tracker.outputs.report-html-path }}
+          html_body: file://${{ steps.tracker.outputs.report-html-path }}
 ```
 
 What `compare-against` does to the figures in that digest, including what happens when the stored history is
@@ -477,7 +473,8 @@ The subject is always `<localized subject>: <total stars> (<delta>)`, for exampl
 | Email not received | Check spam folder; verify SMTP credentials; ensure app password for Gmail |
 | Authentication failed | Gmail requires app password (not account password); enable 2FA first |
 | Log shows `Email sent to <address> (message ID: …@localhost)` | The message ID is informational, not the recipient - the email is sent to the `email-to` address shown before it. A `@localhost` message ID means `email-from` had no email address; set `email-from` to a real address (or an `smtp-username` that is one) so it reads e.g. `…@gmail.com` |
-| Custom mailer fails with `Argument list too long` | The report is too large to pass through a shell variable; use the `report-html-path` output with your mailer's file input (e.g. `html_body_file`) instead of `report-html` |
+| Custom mailer fails with `Argument list too long` | The report is too large to pass through the step's environment. Pass the file instead of `report-html`: with `action-send-mail` that is `html_body: file://${{ steps.tracker.outputs.report-html-path }}`, and other mailers name their own file input |
+| Email arrives with a file path as its body | The `file://` prefix is missing, so `action-send-mail` sent the `report-html-path` value as text. Write `html_body: file://${{ steps.tracker.outputs.report-html-path }}` |
 | Charts missing in email | Ensure `include-charts: true`; check that tracked repos have stargazers; check if the email client blocks external images |
 | Charts have a white background in dark mode | The email charts are PNG images, so `prefers-color-scheme` cannot reach them and the mail client darkens everything around them instead. Set `email-theme: dark` (it defaults to following `chart-theme`) |
 | Multiple emails | Check for duplicate workflows; add `if: stars-changed == 'true'` condition |

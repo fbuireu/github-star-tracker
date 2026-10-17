@@ -442,7 +442,7 @@ Produces GitHub Flavored Markdown with:
 8. Forecast section (growth velocity first, then aggregate table and collapsible per-repo tables)
 9. Footer
 
-**Output:** committed as [`README.md`](https://github.com/fbuireu/github-star-tracker/blob/main/README.md) on the data branch.
+**Output:** committed as `README.md` on the data branch.
 
 ### HTML Report
 

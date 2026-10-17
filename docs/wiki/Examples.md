@@ -16,15 +16,24 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: star-tracker
+  cancel-in-progress: false
+
 jobs:
   track:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: fbuireu/github-star-tracker@v1
+      - name: Track stars
+        id: tracker
+        uses: fbuireu/github-star-tracker@v1
         with:
           github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
+
+`concurrency` queues a manual run behind a scheduled one rather than letting two writing runs overlap and the second
+one's push be refused. The shorter snippets below are steps of a workflow shaped like this one.
 
 ### Public Repositories Only
 
@@ -190,7 +199,7 @@ Email once per 500 stars gained, not once per day. `notification-threshold` accu
     subject: '⭐ Milestone reached: ${{ steps.tracker.outputs.total-stars }} stars'
     to: ${{ secrets.EMAIL_TO }}
     from: GitHub Star Tracker
-    html_body_file: ${{ steps.tracker.outputs.report-html-path }}
+    html_body: file://${{ steps.tracker.outputs.report-html-path }}
 ```
 
 Gate on `should-notify`, never on `new-stars >= 500`: the latter demands 500 stars inside one run and
@@ -218,6 +227,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: star-tracker
+  cancel-in-progress: false
+
 jobs:
   digest:
     runs-on: ubuntu-latest
@@ -242,7 +255,7 @@ jobs:
           subject: '⭐ This week: ${{ steps.tracker.outputs.total-stars }} stars (+${{ steps.tracker.outputs.new-stars }})'
           to: ${{ secrets.EMAIL_TO }}
           from: GitHub Star Tracker
-          html_body_file: ${{ steps.tracker.outputs.report-html-path }}
+          html_body: file://${{ steps.tracker.outputs.report-html-path }}
 ```
 
 ### Read-Only Digest on a Shared Data Branch

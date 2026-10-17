@@ -92,7 +92,7 @@ GitHub Star Tracker uses complementary chart systems:
 
 | System | Format | Used In | Features |
 |---|---|---|---|
-| **SVG Charts** | Animated SVG | Data branch [`README.md`](https://github.com/fbuireu/github-star-tracker/blob/main/README.md) | CSS animations, self-contained, no external deps |
+| **SVG Charts** | Animated SVG | The data branch's `README.md` | CSS animations, self-contained, no external deps |
 | **QuickChart URLs** | PNG via URL | HTML email reports | Compatible with email clients |
 
 ### Why More Than One System?

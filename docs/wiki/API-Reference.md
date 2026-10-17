@@ -77,6 +77,10 @@ Complete reference for all inputs, outputs, and data formats. Every input links 
 
 All outputs are strings (GitHub Actions requirement). Available in subsequent workflow steps via `steps.<id>.outputs.<name>`.
 
+They are set together, as the last thing a successful run does. A run that fails sets none of them, including one that
+fails after its email went out, such as a refused push of the data branch; see
+[How It Works](How-It-Works#phase-8-persistence--commit).
+
 | Output | Type | Description |
 |---|---|---|
 | `lost-stars` | `string` | Per-run. Stars lost against the `compare-against` baseline |
@@ -218,16 +222,18 @@ Machine-readable CSV with one row per tracked repository. Fields containing a co
 
 **Columns:** `repository`, `owner`, `name`, `stars`, `previous`, `delta`, `status`
 
-- `status` is `active`, `new` (first time seen), or `removed` (no longer matched by filters)
-- `previous` is empty for new repos
+- `status` is `active`, `new` (absent from the Baseline Snapshot) or `removed` (in the Baseline Snapshot, absent now:
+  deleted, renamed, transferred, or dropped by a filter)
+- A `new` row has an empty `previous` and a `delta` of `0`, because entering the Tracked Set is not growth
+- A `removed` row has `stars` of `0` and a `delta` of minus its `previous`: its whole last count is reported as lost
 
 **Example:**
 
 ```csv
 repository,owner,name,stars,previous,delta,status
 user/my-repo,user,my-repo,200,195,5,active
-user/new-project,user,new-project,3,,3,new
-user/archived,user,archived,50,55,-5,removed
+user/new-project,user,new-project,3,,0,new
+user/archived,user,archived,0,55,-55,removed
 ```
 
 ### Badge (`stars-badge.svg`)
@@ -258,7 +264,7 @@ To embed any of these, see **[Viewing Reports](Viewing-Reports#method-2-badges)*
 
 | File | Description | Always Present |
 |---|---|---|
-| [`README.md`](https://github.com/fbuireu/github-star-tracker/blob/main/README.md) | Markdown report with charts | Yes |
+| `README.md` | Markdown report with charts | Yes |
 | `stars-data.json` | Historical snapshots | Yes |
 | [`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/docs/examples/stars-badge.svg) | Star count badge | Yes |
 | `stars-data.csv` | CSV report with current star data | Yes |

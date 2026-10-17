@@ -42,9 +42,9 @@
 
 ## What You Get
 
-A writing run commits these artefacts to a dedicated data branch. Some runs commit nothing: a `read-only`
-run, which renders and reports in full but never pushes, and any run whose output is byte-for-byte what the
-branch already holds.
+Every writing run commits these artefacts to a dedicated data branch, with a new snapshot appended even when no
+star moved. The runs that commit nothing are a `read-only` run, which renders and reports in full but never
+pushes, and a run whose filters matched no repository, which never opens the branch.
 
 - **Animated SVG charts:** star history, per-repo trends, top repos comparison, and growth forecasts, with automatic dark/light mode support:
 
@@ -61,7 +61,9 @@ branch already holds.
 - **CSV & JSON data:** machine-readable exports for dashboards, spreadsheets, or downstream pipelines.
 
 The HTML report is the one thing that is *not* committed. It is written outside the data branch worktree for
-the email body, and reaches you through the `report-html` and `report-html-path` outputs instead.
+the email body, and reaches you through the `report-html` and `report-html-path` outputs instead. Its charts are
+[QuickChart](https://quickchart.io) images whose URLs carry each chart's data, repository names included, so on a
+private repository those names reach quickchart.io whenever the email's images load.
 
 ---
 
@@ -79,7 +81,7 @@ the email body, and reaches you through the `report-html` and `report-html-path`
 - **Action outputs** for workflow chaining: `lost-stars`, `new-stargazers`, `new-stars`, `notification-sent`, `report`, `report-csv`, `report-html`, `report-html-path`, `should-notify`, `stars-changed` and `total-stars`
 - **No install step:** its runtime dependencies are bundled into the committed `dist/`, so the runner clones and executes, with no `npm install` in your workflow ([ADR 0003](docs/adr/0003-commit-the-bundled-dist-directory.md))
 - **Enforced coverage:** the build gate is 85% on lines, functions, branches and statements, over an extensive unit test suite
-- **Future-proof:** unaffected by GitHub's 2026 stargazers API restrictions, since it uses your own credentials on your own repositories
+- **Built around GitHub's 2026 stargazers restriction:** star counts, reports, badges and notifications never touch the restricted endpoint, and the stargazer-based charts and tracking keep working wherever your token's user is an admin or collaborator, as the note at the top explains
 
 ---
 
@@ -88,11 +90,11 @@ the email body, and reaches you through the `report-html` and `report-html-path`
 ### 1. Create a Personal Access Token
 
 1. Go to **[GitHub Settings > Tokens](https://github.com/settings/tokens)**
-2. Generate a **classic token** with `repo` or `public_repo` scope, or a **fine-grained token** with `Contents: Read and write` on the repositories you want tracked
+2. Generate a **classic token** with `repo` or `public_repo` scope, or a **fine-grained token** with `Metadata: Read-only` on the repositories you want tracked
 3. Add it as a **repository secret** named `STAR_TRACKER_TOKEN`
 
 > [!NOTE]
-> The default `GITHUB_TOKEN` is not sufficient. See the **[PAT guide](<../../wiki/Personal-Access-Token-(PAT)>)** for details, including why a fine-grained token can leave the stargazer sections empty.
+> The default `GITHUB_TOKEN` is not sufficient to *list* your repositories, but it is what pushes the data branch: with `actions/checkout`'s default `persist-credentials: true`, git sends the workflow's own token, so the PAT only reads. It needs `Contents: Read and write` on the workflow's repository only if your checkout sets `persist-credentials: false`. See the **[PAT guide](<../../wiki/Personal-Access-Token-(PAT)>)** for details, including why a fine-grained token can leave the stargazer sections empty.
 
 ### 2. Add the Workflow
 
@@ -107,17 +109,31 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write # git pushes the data branch with this workflow's token
+
+concurrency:
+  group: star-tracker
+  cancel-in-progress: false
 
 jobs:
   track:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: fbuireu/github-star-tracker@v1
+      - name: Track stars
+        id: tracker
+        uses: fbuireu/github-star-tracker@v1
         with:
           github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
+
+- `contents: write` is what the push needs: `actions/checkout` keeps the workflow's own token in the checkout, and git
+  sends that one when the action pushes the data branch. A [`read-only`](../../wiki/Configuration#read-only) run never
+  pushes and needs only `contents: read`.
+- `concurrency` queues a manual run behind a scheduled one instead of letting them overlap. Two writing runs that
+  overlap both branch from the same data-branch commit, and the second push is refused, ending that run red after its
+  report and email have gone out.
+- `id: tracker` is what later steps read the [outputs](#configuration) through, as `steps.tracker.outputs.<name>`.
 
 ### 3. Run and View
 
@@ -131,7 +147,9 @@ jobs:
 Set options directly in the workflow or via a YAML config file. See the **[Configuration guide](../../wiki/Configuration)** for full details.
 
 ```yaml
-- uses: fbuireu/github-star-tracker@v1
+- name: Track stars
+  id: tracker
+  uses: fbuireu/github-star-tracker@v1
   with:
     github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
     visibility: 'public' # public | private | all | owned
@@ -165,7 +183,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `chart-theme`            | `auto`                | Color theme for the SVG charts: `auto` (follows `prefers-color-scheme`), `light` or `dark` |
 | `chart-trend-line`       | `false`               | Overlay a dashed moving-average trend line on the main chart |
 | `chart-y-axis-side`      | `left`                | Y-axis labels side: `left` or `right`                         |
-| `compare-against`        | `last-run`            | Snapshot used as comparison baseline: `last-run`, `24h`, `7d` or `30d`. If history is shorter than the window, the oldest stored snapshot is used and the report's date shows how far back it really goes |
+| `compare-against`        | `last-run`            | Snapshot used as comparison baseline: `last-run`, `24h`, `7d` or `30d`. A window takes the newest snapshot at least that old, with 6 hours of slack so a late scheduled run still finds its own. If history is shorter than the window, the oldest stored snapshot is used and the report's date shows how far back it really goes |
 | `config-path`            | `star-tracker.yml`    | Path to YAML config file                                      |
 | `data-branch`            | `star-tracker-data`   | Branch for tracking data                                      |
 | `email-from`             | localized             | Sender name or address; defaults to a localized sender name   |
@@ -183,7 +201,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `notification-mode`      | `net`                 | How the threshold measures that change: `net` (absolute change, so a large drop also fires) or `gains` (upward movement only) |
 | `notification-threshold` | `0`                   | `0` (every run with changes), N (accumulated change since the last notification), or `auto` (adaptive) |
 | `only-orgs`              | -                     | Only track repos under these Owners (exact name or `/regex/`) |
-| `only-repos`             | -                     | Only track these repos (exact name or `/regex/`)              |
+| `only-repos`             | -                     | Only track these repos (exact name or `/regex/`). When set, it skips the archived, fork, exclude and `min-stars` filters; only `only-orgs` still narrows first |
 | `read-only`              | `false`               | Make this a Read-Only Run: it still fetches, reports, sets outputs and emails, it just never commits or pushes. Use it for another workflow that shares a data branch with the workflow that writes it |
 | `send-on-no-changes`     | `false`               | Email even with no changes                                    |
 | `smart-sampling`         | `false`               | Sample stargazer pages for high-star repos (avoids rate limits) |
@@ -191,7 +209,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 | `smart-sampling-threshold` | `1500`              | Star count above which a repo is sampled                      |
 | `smtp-host`              | -                     | SMTP hostname (enables email)                                 |
 | `smtp-password`          | -                     | SMTP password                                                 |
-| `smtp-port`              | `587`                 | SMTP port                                                     |
+| `smtp-port`              | `587`                 | SMTP port: `465` means implicit TLS, anything else STARTTLS   |
 | `smtp-username`          | -                     | SMTP username                                                 |
 | `top-repos`              | `10`                  | Top repos in charts/forecasts                                 |
 | `track-stargazers`       | `false`               | Track individual stargazers                                   |
@@ -203,7 +221,7 @@ Set options directly in the workflow or via a YAML config file. See the **[Confi
 
 See **[`notification-threshold`](../../wiki/Configuration#notification-threshold)** for how the counter behaves on a fresh data branch, when you raise the value, and on a `read-only` run.
 
-In the YAML config file, option keys may be written with either dashes or underscores (`include-charts` and `include_charts` are both accepted), so you can copy option names straight from this table without rewriting the separators.
+Every tracking option in this table can also go in the YAML config file, with its key written with either dashes or underscores (`include-charts` and `include_charts` are both accepted). The rest are workflow-only and the file ignores them: the credentials and plumbing (`github-token`, `github-api-url`, `config-path`, every `smtp-*` input, `email-from` and `email-to`) and `send-on-no-changes`. `email-theme` is a tracking option and works in the file.
 
 </details>
 
@@ -213,7 +231,7 @@ In the YAML config file, option keys may be written with either dashes or unders
 | Output             | Description                                                        |
 | ------------------ | ----------------------------------------------------------------- |
 | `lost-stars`       | Stars lost vs. the comparison baseline. Per run, not cumulative   |
-| `new-stargazers`   | New stargazers vs. the stored stargazer list, which every writing run rewrites - not driven by `compare-against` |
+| `new-stargazers`   | New stargazers vs. the stored stargazer list, which every writing run rewrites - not driven by `compare-against`, and `0` when `track-stargazers` is off |
 | `new-stars`        | Stars gained vs. the comparison baseline. Per run, not cumulative |
 | `notification-sent` | `true` / `false` - whether an email was actually delivered. `should-notify` is the decision; this is the outcome |
 | `report`           | Full Markdown report                                              |
@@ -225,6 +243,8 @@ In the YAML config file, option keys may be written with either dashes or unders
 | `total-stars`      | Total star count                                                  |
 
 To email on every N stars, use `notification-threshold: 'N'` with `notification-mode: 'gains'` and gate the step on `if: steps.tracker.outputs.should-notify == 'true'`. Gating on `new-stars >= N` would require N stars inside a single run, which on a daily schedule almost never happens.
+
+Outputs are set at the very end of a successful run. A run that fails sets none of them, even when it fails after its email went out, as a refused push of the data branch does, so a later step gated on an output does not run.
 
 </details>
 
