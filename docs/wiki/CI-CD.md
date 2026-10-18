@@ -20,7 +20,7 @@ and why the bundle is committed at all is
 | `dependency-review.yml` | every pull request | `dependency-review` (`Dependency Review`) | Fails a pull request that adds a dependency with a known vulnerability |
 | `zizmor.yml` | push to `main`, pull requests into any branch | `zizmor` (`Run zizmor`) | Static analysis of the workflow files themselves, uploaded to code scanning as SARIF |
 | `sync-wiki.yml` | push to `main` touching `docs/wiki/**` or the workflow itself | `sync` | Publishes `docs/wiki/` to this wiki |
-| `dependabot-auto-merge.yml` | every pull request, opened or synchronized; the job runs only when the author is `dependabot[bot]` | `auto-merge` | Approves and auto-merges the safe Dependabot updates, and comments on and labels a major one |
+| `dependabot-auto-merge.yml` | every pull request, opened or synchronized; the job runs only when the author is `dependabot[bot]` | `auto-merge` | Labels each patch, minor and major Dependabot update by its type, approves and auto-merges the safe ones, and comments on a major one |
 
 One composite action backs them: `prepare-env`, which every job that installs dependencies calls
 ([below](#prepare-env)).
@@ -52,9 +52,6 @@ config:
 ---
 flowchart TD
     trigger(["push to main, or pull request into main"])
-    checkout["Checkout, persist-credentials false"]
-    prepare["prepare-env"]
-    codecov["Upload coverage to Codecov, CODECOV_TOKEN, runs unless cancelled"]
     verdict{"Verify green, and a push to main?"}
     release["release job: fast-forward, build, semantic-release, move the major tag"]
     skipped(["release skipped"])
@@ -62,18 +59,25 @@ flowchart TD
     red(["Check fails, the commit or pull request is red"])
     green(["Check passes"])
 
-    trigger --> checkout --> prepare --> fork
-    subgraph verify ["Verify job, one parallel step"]
-        fork(("fork"))
-        format["Format, pnpm format:check"]
-        typecheck["Typecheck, pnpm typecheck"]
-        build["Build, pnpm build"]
-        unit["Unit tests, pnpm test:ut:coverage"]
-        join(("join"))
-        fork --> format & typecheck & build & unit
-        format & typecheck & build & unit --> join
+    subgraph verify ["Verify job"]
+        checkout["Checkout, persist-credentials false"]
+        prepare["prepare-env"]
+        subgraph steps ["one parallel: step"]
+            fork(("fork"))
+            format["Format, pnpm format:check"]
+            typecheck["Typecheck, pnpm typecheck"]
+            build["Build, pnpm build"]
+            unit["Unit tests, pnpm test:ut:coverage"]
+            join(("join"))
+            fork --> format & typecheck & build & unit
+            format & typecheck & build & unit --> join
+        end
+        codecov["Upload coverage to Codecov, CODECOV_TOKEN, runs unless cancelled"]
+        checkout --> prepare --> fork
+        join --> codecov
     end
-    join --> codecov --> verdict
+    trigger --> checkout
+    codecov --> verdict
     verdict -->|yes| release
     verdict -->|"no: a pull request, or Verify failed"| skipped
     release --> check
@@ -190,7 +194,7 @@ flowchart TD
     review["dependency-review.yml: Dependency Review"]
     zizmor["zizmor.yml: Run zizmor, SARIF to code scanning"]
     bot{"author is dependabot[bot]?"}
-    automerge["dependabot-auto-merge.yml: approve and enable squash auto-merge, or comment on and label a major"]
+    automerge["dependabot-auto-merge.yml: label a patch, minor or major, approve and enable squash auto-merge unless a major, comment on a major"]
     gate{"Check, Lint the pull request title, Dependency Review and zizmor all green?"}
     fix(["push a fix, every check runs again"])
     merge["squash merge: the pull request title becomes the commit on main"]
