@@ -31,9 +31,11 @@ flowchart RL
     shared -.->|test fixtures only| domain
 ```
 
-Every arrow above is an import some layer really makes; anything not drawn is forbidden. The two dashed arrows are
-the fixture factories in `shared/tests`, which read `DEFAULTS` and the `Config` and domain types and are imported
-by `*.test.ts` files only.
+Every arrow above is an import a layer is allowed to make, whether or not its source makes it; anything not drawn is
+forbidden, bar the test exceptions
+[`ARCHITECTURE.md`](https://github.com/fbuireu/github-star-tracker/blob/main/ARCHITECTURE.md#1-layer-map) names. The
+two dashed arrows are the fixture factories in `shared/tests`, which read `DEFAULTS` and the `Config` and domain types
+and are imported by `*.test.ts` files only.
 
 Each layer documents what it does, and what bites while changing it, in a colocated `AGENTS.md`; the rules for how code is written anywhere in the tree are [`CODING_STANDARDS.md`](https://github.com/fbuireu/github-star-tracker/blob/main/CODING_STANDARDS.md).
 
