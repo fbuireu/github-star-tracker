@@ -68,6 +68,8 @@ flowchart TD
     client -.->|"no token, or an API URL that is not https"| red
     fetch -.->|"any failed request, a 403 rate limit included"| red
     probe -.->|"no checkout, a failed probe, or absent on a read-only run"| red
+    attach -.->|"git fetch or worktree add fails"| red
+    orphan -.->|"worktree add, checkout --orphan or the empty commit fails"| red
     read -.->|unreadable history| red
     diff -.->|"stargazers.json is not JSON"| red
     push -.->|"push refused, after the email"| red
@@ -95,7 +97,8 @@ three outcomes:
 | **Degraded** | The run carries on, and ends green, with less: one repository's stargazers, a chart's history, an email | A warning annotation naming what was lost |
 | **Warning only** | A value is ignored or replaced by a fallback, and nothing else changes | A warning annotation, or, where the tables say so, nothing at all |
 
-Whichever way a run ends, the data branch's worktree is removed in a `finally`, and that removal never fails the run.
+Once the data branch's worktree is open, it is removed in a `finally` whichever way the run ends, and that removal never
+fails the run. A failure while the branch is still being opened skips that removal ([Cleanup](#cleanup)).
 
 Two edges in the diagram are easy to miss, and they matter:
 
@@ -360,7 +363,7 @@ sequenceDiagram
         G->>O: push HEAD to the data branch
         O-->>G: refused if another run pushed first
     end
-    W->>G: finally, worktree remove --force
+    W->>G: finally, once the worktree is open, worktree remove --force
 ```
 
 Step by step:
@@ -385,7 +388,10 @@ That is why the workflow needs `permissions: contents: write`.
 
 **File:** `src/infrastructure/git/worktree.ts` > `cleanup()`
 
-Runs in a `finally` block, removing the worktree with `--force` regardless of success or failure.
+Runs in a `finally` block around the run's body, removing the worktree with `--force` whether the body succeeds or
+fails. `withDataBranch` opens the branch before that block, so a failure while opening it skips the cleanup. On the
+orphan path that can leave a registered worktree behind, which the next run's stale-worktree removal clears on a runner
+that keeps its workspace.
 
 ### What can go wrong in Phase 3
 
@@ -395,8 +401,10 @@ Runs in a `finally` block, removing the worktree with `--force` regardless of su
 | git refuses the checkout (`detected dubious ownership`), or is not installed | **Fatal** | `Git command failed: "git rev-parse --is-inside-work-tree"` with git's own text |
 | The remote probe fails (network, DNS, credentials) | **Fatal** | `Git command failed: ...` with git's own text, never a silently created branch |
 | The branch is absent and the run is read-only | **Fatal** | `Branch "<name>" does not exist on the remote and this is a read-only run, so it cannot be created. ...` |
+| The branch is on the remote, but `git fetch` or `git worktree add` fails: a network failure after the probe, or a `.<data-branch>` path git cannot reuse, such as a non-empty directory that is not a worktree, or a worktree git still has registered after its directory was deleted | **Fatal** | `Git command failed: "git worktree add ..."` (or `fetch`) with git's own text, such as `already exists` |
 | The branch is absent and the run writes | Expected on a first run | `Branch "<name>" does not exist on remote, will create it` |
-| A stale worktree, or the final one, cannot be removed | Debug log only | Nothing in the normal log; the run carries on |
+| Creating the orphan fails at `worktree add --detach`, `checkout --orphan` or the empty commit | **Fatal** | `Git command failed: ...` with git's own text |
+| A stale worktree, or the final one, cannot be removed | Debug log only | Nothing in the normal log; the run carries on, and a non-empty path left in place then fails `worktree add`, above |
 
 A read-only run may never bring the data branch into existence, so it stops rather than creating one and leaving it
 unpushed. Point `data-branch` at the branch your tracking workflow maintains, or drop `read-only` for one run so it
@@ -970,4 +978,4 @@ src/
   with the stack in the debug log. Each phase's table says which situations those are
 - **Degraded, never fatal:** one repository's failed stargazer fetch, and a failed email
 - **Outputs come last:** a run that fails sets none, even one that fails after its email went out
-- **Worktree cleanup:** runs in `finally`, and its own failure only reaches the debug log
+- **Worktree cleanup:** runs in `finally` once the worktree is open, and its own failure only reaches the debug log

@@ -229,6 +229,10 @@ on the data branch and a detached or shallow checkout are the usual causes. A ch
 typical in a container job, fails the first command with `detected dubious ownership`; run the
 `git config --global --add safe.directory` command git prints before the action.
 
+When the failing command is `git worktree add` and git says the path `already exists`, or is a missing but already
+registered worktree, something left `.<data-branch>` behind, typically on a self-hosted runner that keeps its
+workspace between runs. Delete that directory, or run `git worktree prune`, before the action.
+
 When the failing command is the `push`, the run had already done everything else: the email, if one was due, went out,
 and the HTML report was written. What it did not do is record the snapshot, or set any output, since the outputs are
 set after the push. Fix the cause and re-run; the next email may repeat the last one, because the notification

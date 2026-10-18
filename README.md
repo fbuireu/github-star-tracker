@@ -316,6 +316,8 @@ flowchart TD
     client -.->|"no token, or an API URL that is not https"| red
     fetch -.->|"any failed request, a 403 rate limit included"| red
     probe -.->|"no checkout, a failed probe, or absent on a read-only run"| red
+    attach -.->|"git fetch or worktree add fails"| red
+    orphan -.->|"worktree add, checkout --orphan or the empty commit fails"| red
     read -.->|unreadable history| red
     diff -.->|"stargazers.json is not JSON"| red
     push -.->|"push refused, after the email"| red
@@ -334,9 +336,11 @@ flowchart TD
     class red fatal
 ```
 
-The dashed edges end a run red, and nothing after them runs: no later step, and no output is set. Everything else that
-can go wrong only thins the run, and it still ends green: a repository whose stargazers cannot be read loses its
-reconstructed chart and its new-stargazer diff, and a failed email holds the Notification Baseline for the next run.
+The dashed edges end a run red, and nothing after them runs: no later step, and no output is set. Two of them come after
+a probe that succeeded: fetching the data branch and adding its worktree fails, or creating the orphan does, on a network
+error or on a leftover `.<data-branch>` path git cannot reuse. Everything else that can go wrong only thins the run, and
+it still ends green: a repository whose stargazers cannot be read loses its reconstructed chart and its new-stargazer
+diff, and a failed email holds the Notification Baseline for the next run.
 Note where the email sits. It goes out before the data branch is pushed, so a refused push ends red a run that has
 already emailed you.
 
