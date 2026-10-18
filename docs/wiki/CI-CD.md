@@ -179,6 +179,123 @@ commit through whatever its notes say.
 
 ---
 
+## Rolling back a release
+
+The action has no deploy environment to roll back. A workflow runs whatever ref its `uses:` names, and the one ref that
+moves is the major tag: *Update major version tag*, the `release` job's last step, points `v1` at each new release as
+soon as semantic-release has pushed it.
+
+Who a broken release reaches:
+
+| A workflow that uses | Runs the broken release |
+|---|---|
+| `fbuireu/github-star-tracker@v1` | From its next run after the `release` job, because `v1` moves in that same job |
+| `fbuireu/github-star-tracker@vX.Y.Z`, an earlier release | Not until its owner moves the pin, for example by merging an update Renovate or Dependabot proposes |
+| `fbuireu/github-star-tracker@<commit sha>` | Not until its owner moves the pin |
+
+`release-tags` keeps every `v*` tag where it is for anyone but an admin, so an exact tag cannot change under a workflow
+that names it. A broken major reaches no `@v1` workflow at all: the last step derives the major from the new tag, so
+`v2.0.0` would create `v2` and leave `v1` where it was.
+
+```mermaid
+---
+config:
+  look: handDrawn
+  layout: dagre
+---
+flowchart TD
+    broken(["v1 points at a broken release"])
+    format{"did it raise the stored history's format version?"}
+    urgent{"can the @v1 workflows wait for a fix to merge and release?"}
+    manual["an admin points v1 at the previous release tag and force-pushes it"]
+    hold["hold every other merge into main, Renovate and Dependabot included"]
+    fix["pull request titled fix: ..., reverting the change"]
+    merge["the four required checks pass, squash merge"]
+    release["release job: dist rebuilt, semantic-release cuts the next patch, v1 moves onto it"]
+    other["another merge lands first"]
+    repoint(["the release job points v1 back at the broken tag"])
+    done(["every @v1 workflow runs the fix"])
+
+    broken --> format
+    format -->|"yes, the release before cannot read what it wrote"| fix
+    format -->|no| urgent
+    urgent -->|yes| fix
+    urgent -->|no| manual --> hold --> fix
+    fix --> merge --> release --> done
+    hold -.->|"if it does not hold"| other --> repoint
+```
+
+### The recommended path: release a fix
+
+1. **Revert on a branch.** `git revert` the commit that brought the change in. `main` takes squash merges only, so a
+   pull request is one commit there.
+2. **Title the pull request `fix: ...`.** The title is the commit semantic-release reads, and a `fix` cuts a patch.
+   A revert title is a trap. `Revert "..."`, the title GitHub's *Revert* button writes, passes
+   `Lint the pull request title` because commitlint ignores reverts, but it, like a `revert:` title, cuts a patch only
+   when the squash commit's body, which is the pull request's description, holds git's `This reverts commit <sha>.`
+   line. Without that line the merge releases nothing. A `fix:` title needs neither.
+3. **Merge it like any pull request.** The four required checks pass, the squash merge lands, and on `main` the
+   `release` job rebuilds `dist/` from the reverted sources, semantic-release tags the next patch and the last step
+   moves `v1` onto it. Every `@v1` workflow runs the fix from its next run, with nothing done by hand.
+
+### The emergency path: move `v1` back by hand
+
+For when the `@v1` workflows cannot wait for the checks and the release. Run it from a clone, as an admin of this
+repository, naming the release before the broken one:
+
+```bash
+git fetch --tags --force origin
+git tag -fa v1 '<previous release tag>^{}' -m 'Roll v1 back to <previous release tag>'
+git push origin v1 --force
+```
+
+They are the last step's own commands, aimed at an older tag. The fetch needs `--force`, because a plain one keeps a
+stale local `v1`.
+
+- **Only an admin can do it.** The `release-tags` ruleset forbids force-pushing or deleting a `v*` tag, and the `tags`
+  ruleset the same for any tag. The admin role bypasses the first and is exempt from the second, so an admin's own
+  credentials push it, as `PAT` does in the job, and a maintainer's or a writer's push is rejected.
+- **It lasts until the `release` job next runs.** That job runs on every push to `main` whose `Verify` passed, and its
+  last step re-points `v1` at the newest `v[0-9]*` tag whether or not semantic-release released anything. Until the
+  fix is released, the newest tag is the broken one, so any other merge, Renovate's and Dependabot's auto-merges
+  included, puts `v1` back on it. Make the fix the next merge: when it releases, `v1` moves onto it and the rollback
+  needs no undoing.
+- **Leave the broken tag and its GitHub release in place.** Deleting the tag breaks every workflow pinned to it, and
+  semantic-release finds the last release from the tags on `main`, so it would count the next version from the one
+  before.
+- **It cannot undo a format change.** If the broken release raised the stored history's format version, the release
+  before it refuses a data branch the broken one has already written
+  ([ADR 0015](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0015-the-stored-history-declares-its-format-version.md)),
+  and every such run fails until `v1` moves forward again. Release a fix instead.
+
+### Trying a change before it is released
+
+There is no preview environment: a change reaches users only through a release. To run one first, point a test
+workflow, such as the one in [Getting Started](Getting-Started), at the commit:
+
+```yaml
+- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+- uses: fbuireu/github-star-tracker@<full commit sha>
+  with:
+    github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
+    data-branch: star-tracker-trial
+```
+
+- **It runs the bundle committed at that sha.** `action.yml` runs `dist/index.js` straight from the ref, with no
+  install and no build, which is why `dist/` is committed beside the source
+  ([ADR 0003](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0003-commit-the-bundled-dist-directory.md)).
+  Nothing rebuilds it before a release: `Build` in `Verify` proves the bundle builds and commits nothing, and only the
+  `release` job rebuilds what it publishes. So run `pnpm build`, commit `dist/` with the `src/` change it bundles, as
+  [`AGENTS.md`](https://github.com/fbuireu/github-star-tracker/blob/main/AGENTS.md#gotchas) asks, push the branch and
+  use that commit's full sha. A commit whose `dist/` predates its sources runs the old code.
+- **Keep the trial off your real data.** A `data-branch` of its own, as above, lets the trial create and write a
+  branch nothing else reads. `read-only: true` against your existing data branch instead runs everything, the email
+  included, and pushes nothing.
+- **A branch name works too**, as `@<branch>`, but it moves with every push, so the sha is what makes a trial
+  repeatable.
+
+---
+
 ## A pull request, start to finish
 
 ```mermaid

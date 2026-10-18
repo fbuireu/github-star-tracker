@@ -138,7 +138,7 @@ you choose is the version bump you get.
 | `feat` | minor | `feat(charts): add a comparison chart for the top repositories` |
 | `fix` | patch | `fix(email): resolve SMTP authentication with Gmail` |
 | `perf` | patch | `perf(api): halve the GitHub API calls per run` |
-| `revert` | patch | `revert: feat(charts): add a comparison chart for the top repositories` |
+| `revert` | patch, only when the body keeps git's `This reverts commit <sha>.` line; none without it | `revert: feat(charts): add a comparison chart for the top repositories` |
 | `docs`, `style`, `refactor`, `test`, `chore`, `ci`, `build` | none | `docs: add a troubleshooting page to the wiki` |
 
 Breaking changes take a `!` after the type or a `BREAKING CHANGE:` footer, and bump the major.
@@ -150,7 +150,8 @@ Pascal-case scope and caps the header at 130 characters.
 `main` takes squash merges, so the pull request title is the commit that lands. The `commit-msg` hook
 lints what you type locally, and [`commit-message.yml`](./workflows/commit-message.yml) lints the pull
 request title on every open and edit, because that title is what semantic-release parses. Title the pull
-request the way you would title a commit.
+request the way you would title a commit; its description becomes the commit's body. Undoing a broken
+release takes a `fix` title, as [Rolling back a release](../docs/wiki/CI-CD.md#rolling-back-a-release) says.
 
 Do **not** add a `Co-Authored-By` trailer for an AI assistant to a commit or a pull request.
 
