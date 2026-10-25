@@ -16,7 +16,6 @@ diverse, inclusive, and healthy community.
 
 Examples of behavior that contributes to a positive environment for our
 community include:
-
 - **Being respectful**: different viewpoints and experiences are valuable
 - **Being constructive**: focus on what is best for the community, and give
   and gracefully accept constructive feedback
@@ -27,7 +26,6 @@ community include:
   and learning from the experience
 
 Examples of unacceptable behavior include:
-
 - The use of sexualized language or imagery, and sexual attention or advances
   of any kind
 - Trolling, insulting or derogatory comments, and personal or political attacks
@@ -58,7 +56,6 @@ the person who acts on it. If your report concerns the maintainer, or you would
 rather it were not read by him, use GitHub's own
 [abuse reporting](https://github.com/contact/report-abuse) instead; GitHub Staff
 can act on conduct in this repository without going through the maintainer.
-
 - **Acknowledgment**: reports will be acknowledged within 48 hours
 - **Privacy**: the reporter's identity and the details of the report will be
   kept confidential
@@ -78,8 +75,8 @@ This Code of Conduct is adapted from the [Contributor Covenant][homepage],
 version 2.1, available at
 [https://www.contributor-covenant.org/version/2/1/code_of_conduct.html][v2.1].
 
-The adaptation is not verbatim. Version 2.1 ships a four-tier *Enforcement
-Guidelines* ladder (correction, warning, temporary ban, permanent ban); this
+The adaptation is not verbatim. Version 2.1 ships a four-tier _Enforcement
+Guidelines_ ladder (correction, warning, temporary ban, permanent ban); this
 project condenses it into the single paragraph above, because one maintainer
 applying four documented tiers is ceremony rather than protection. Nothing else
 of substance was removed, and the standards and scope above are the 2.1 text.

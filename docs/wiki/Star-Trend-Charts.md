@@ -57,14 +57,13 @@ flowchart TD
 ```
 
 What that buys, and what it costs:
-
 - **A Chart's content is decided once.** Both adapters hand their `ChartRequest` to `buildChartSpec` and only draw the
   spec they get back, so a chart on the data branch and the same chart in the email cannot disagree about the window,
   the series or the Milestones; only their look differs
   ([ADR 0014](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
 - **Each history falls back on its own.** The aggregate and every repository are checked separately, so one
   repository whose stargazers could not be read gets a chart over the Stored History while the rest keep their
-  reconstruction. A per-repo *forecast* chart is drawn only from the repository's own reconstruction, never from the
+  reconstruction. A per-repo _forecast_ chart is drawn only from the repository's own reconstruction, never from the
   fallback.
 - **The email's charts leave the runner.** The QuickChart URL carries each chart's whole configuration, its title and
   legend included, so the repository names of a private repository reach quickchart.io when a reader's mail client
@@ -83,7 +82,6 @@ What that buys, and what it costs:
 **File:** `charts/star-history.svg`
 
 Shows the **total star count** across all tracked repositories over time.
-
 - Animated line with smooth monotone cubic curves (configurable via `chart-curve`), dropped to the chart floor at the first point so the shaded area closes cleanly rather than hanging mid-air. With the default `chart-begin-at-zero: false` that floor is the lowest plotted value, not zero; set `chart-begin-at-zero: true` to make it a true zero baseline
 - CSS draw-line animation + fade-in points
 - Milestone markers at 10, 50, 100, 500, 1K, 5K, 10K, 50K, 100K, 500K, 1M stars (when in range)
@@ -102,7 +100,6 @@ Individual star history for each of the top N repositories (configurable via `to
 Each per-repo chart uses that repository's **own** Reconstructed History, starting at its first star rather than at the earliest star across all your tracked repos, so a newer repo's chart begins when it actually started getting stars instead of showing a flat line back to your oldest repo.
 
 That holds whenever the repository's own reconstruction has at least 2 points. When it does not, because its stargazers could not be read, the chart falls back to the Stored History, which spans the tracker's runs rather than the repository's life. The chart is still drawn; it just no longer means what the paragraph above says.
-
 - Same style as the star history chart
 - One chart per top repo
 - Collapsible in the Markdown report via `<details>`
@@ -114,7 +111,6 @@ That holds whenever the repository's own reconstruction has at least 2 points. W
 **File:** `charts/comparison.svg`
 
 Top N repositories overlaid on a single chart for comparison.
-
 - Multi-line chart with distinct colors per repo
 - Legend showing repo names (short names when all repos share the same owner)
 - Up to 10 repos (limited by `CHART.maxComparison`)
@@ -127,7 +123,6 @@ Top N repositories overlaid on a single chart for comparison.
 **File:** `charts/forecast.svg`
 
 Observed history plus projected growth for the next 4 weeks.
-
 - Solid line for the observed history
 - Dashed green line for linear regression forecast
 - Dashed red line for weighted moving average forecast
@@ -141,7 +136,6 @@ Observed history plus projected growth for the next 4 weeks.
 
 The same series as the forecast chart above, for a single top repository: its own observed history plus
 the linear regression and weighted moving average fitted to it.
-
 - One chart per top repository, drawn under that repository's forecast table
 - Drawn **only** when the repository has enough star history of its own to fit: at least 3 reconstructed
   points. When it does not, the action fits the repository to the points of the tracked set's history that
@@ -154,10 +148,10 @@ the linear regression and weighted moving average fitted to it.
 
 GitHub Star Tracker uses complementary chart systems:
 
-| System | Format | Used In | Features |
-|---|---|---|---|
-| **SVG Charts** | Animated SVG | The data branch's `README.md` | CSS animations, self-contained, no external deps |
-| **QuickChart URLs** | PNG via URL | HTML email reports | Compatible with email clients |
+| System              | Format       | Used In                       | Features                                         |
+| ------------------- | ------------ | ----------------------------- | ------------------------------------------------ |
+| **SVG Charts**      | Animated SVG | The data branch's `README.md` | CSS animations, self-contained, no external deps |
+| **QuickChart URLs** | PNG via URL  | HTML email reports            | Compatible with email clients                    |
 
 ### Why More Than One System?
 
@@ -197,12 +191,12 @@ with:
 
 ## Data Requirements
 
-| Chart | Minimum points in the series | Notes |
-|---|---|---|
-| Star History | 2 | |
-| Per-Repo | 2 | One chart per top N repo |
-| Comparison | 2 | Plus at least 1 repo in top N |
-| Forecast | 3 | Linear regression needs 3+ |
+| Chart        | Minimum points in the series | Notes                         |
+| ------------ | ---------------------------- | ----------------------------- |
+| Star History | 2                            |                               |
+| Per-Repo     | 2                            | One chart per top N repo      |
+| Comparison   | 2                            | Plus at least 1 repo in top N |
+| Forecast     | 3                            | Linear regression needs 3+    |
 
 Those minimums are about points in the series, not about how many stars you have. The reconstruction is
 drawn as a fixed number of evenly spaced buckets across the span, `chart-max-points` of them (30 by default,
@@ -230,18 +224,18 @@ chart falls back to the Stored History, which does need two runs before it has t
 
 **Comparison chart palette (up to 10 repos):**
 
-| Position | Color |
-|---|---|
-| 1 | `#dfb317` (gold) |
-| 2 | `#28a745` (green) |
-| 3 | `#e74c3c` (red) |
-| 4 | `#3498db` (blue) |
-| 5 | `#9b59b6` (purple) |
-| 6 | `#e67e22` (orange) |
-| 7 | `#1abc9c` (teal) |
-| 8 | `#e84393` (pink) |
-| 9 | `#795548` (brown) |
-| 10 | `#00bcd4` (cyan) |
+| Position | Color              |
+| -------- | ------------------ |
+| 1        | `#dfb317` (gold)   |
+| 2        | `#28a745` (green)  |
+| 3        | `#e74c3c` (red)    |
+| 4        | `#3498db` (blue)   |
+| 5        | `#9b59b6` (purple) |
+| 6        | `#e67e22` (orange) |
+| 7        | `#1abc9c` (teal)   |
+| 8        | `#e84393` (pink)   |
+| 9        | `#795548` (brown)  |
+| 10       | `#00bcd4` (cyan)   |
 
 This palette is fixed in both senses: `chart-line-color` does not reach it, and it does not change with `chart-theme`.
 
@@ -252,11 +246,11 @@ This palette is fixed in both senses: `chart-line-color` does not reach it, and 
 
 Some of those series are palette colours, so they move with `chart-theme`. They are fixed with respect to `chart-line-color`, not with respect to the theme:
 
-| Series | `chart-theme: light` (and `auto`) | `chart-theme: dark` |
-|---|---|---|
-| Trend line (neutral) | `#6a737d` | `#8b949e` |
-| Linear regression (positive) | `#28a745` | `#3fb950` |
-| Weighted moving average (negative) | `#d73a49` | `#f85149` |
+| Series                             | `chart-theme: light` (and `auto`) | `chart-theme: dark` |
+| ---------------------------------- | --------------------------------- | ------------------- |
+| Trend line (neutral)               | `#6a737d`                         | `#8b949e`           |
+| Linear regression (positive)       | `#28a745`                         | `#3fb950`           |
+| Weighted moving average (negative) | `#d73a49`                         | `#f85149`           |
 
 ### Dark / Light Mode
 
@@ -272,22 +266,22 @@ grid lines and axis strokes swap; series strokes are written as inline attribute
 light-palette data. Setting `chart-theme: dark` explicitly does recolour those series,
 because the palette is then chosen before rendering rather than by the reader's browser.
 
-| Element | Light | Dark |
-|---|---|---|
-| Background | `#fff` | `#0d1117` |
-| Text | `#24292e` | `#e6edf3` |
+| Element    | Light     | Dark      |
+| ---------- | --------- | --------- |
+| Background | `#fff`    | `#0d1117` |
+| Text       | `#24292e` | `#e6edf3` |
 | Muted text | `#6a737d` | `#8b949e` |
-| Grid lines | `#eee` | `#21262d` |
+| Grid lines | `#eee`    | `#21262d` |
 | Axis lines | `#6a737d` | `#8b949e` |
 
 Where the media query reaches:
 
-| Context | Follows the reader's scheme |
-|---|---|
-| GitHub README / Markdown | Yes, GitHub respects `prefers-color-scheme` in inline SVGs |
-| Browser (opening the SVG directly) | Yes |
-| HTML email | No. Gmail strips `<style>` blocks, so set [`email-theme`](Configuration#email-theme) to pick the palette instead |
-| QuickChart PNGs in email | No. The image is rasterised once, on whatever background `email-theme` resolves to |
+| Context                            | Follows the reader's scheme                                                                                      |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| GitHub README / Markdown           | Yes, GitHub respects `prefers-color-scheme` in inline SVGs                                                       |
+| Browser (opening the SVG directly) | Yes                                                                                                              |
+| HTML email                         | No. Gmail strips `<style>` blocks, so set [`email-theme`](Configuration#email-theme) to pick the palette instead |
+| QuickChart PNGs in email           | No. The image is rasterised once, on whatever background `email-theme` resolves to                               |
 
 The badge ([`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/docs/examples/stars-badge.svg)) carries no dark-mode styles at all. It uses a fixed dark label with an
 accent-coloured value, legible on either background.
@@ -312,7 +306,7 @@ Date labels, chart titles (the per-repository ones included) and series labels a
 
 ```yaml
 with:
-  locale: 'es' # Spanish date labels and titles
+  locale: "es" # Spanish date labels and titles
 ```
 
 ---
@@ -331,7 +325,7 @@ The `top-repos` input controls how many repos get individual charts and per-repo
 
 ```yaml
 with:
-  top-repos: '5' # Only top 5 repos
+  top-repos: "5" # Only top 5 repos
 ```
 
 Default is `10`.
@@ -351,23 +345,23 @@ Every `chart-*` input, with its default and full description, is in
 What belongs here is which of the **chart systems** honours each one. The SVG charts on the data branch
 are hand-rendered; the email charts are QuickChart images, and some options cannot survive that trip:
 
-| Input | SVG charts | Email charts |
-|---|---|---|
-| `chart-line-color` | Yes | Yes |
-| `chart-line-width` | Yes | Yes |
-| `chart-smoothing` | Yes | Yes |
-| `chart-curve` | Exact | Approximated, see [The Chart Systems](#the-chart-systems) |
-| `chart-show-points` | Yes | Yes |
-| `chart-milestones` | Yes | Yes |
-| `chart-custom-milestones` | Yes | Yes |
-| `chart-begin-at-zero` | Yes | Yes |
-| `chart-range` | Yes | Yes |
-| `chart-trend-line` | Yes | Yes |
-| `chart-max-points` | Yes | **No**, email is always 30 points |
-| `chart-animation` | Yes | **No**, a PNG cannot animate |
-| `chart-y-axis-side` | Yes | **No** |
-| `chart-theme` | Yes | Indirectly: the email follows `email-theme`, which defaults to `auto`, meaning "same as `chart-theme`" |
-| `email-theme` | No | Yes |
+| Input                     | SVG charts | Email charts                                                                                           |
+| ------------------------- | ---------- | ------------------------------------------------------------------------------------------------------ |
+| `chart-line-color`        | Yes        | Yes                                                                                                    |
+| `chart-line-width`        | Yes        | Yes                                                                                                    |
+| `chart-smoothing`         | Yes        | Yes                                                                                                    |
+| `chart-curve`             | Exact      | Approximated, see [The Chart Systems](#the-chart-systems)                                              |
+| `chart-show-points`       | Yes        | Yes                                                                                                    |
+| `chart-milestones`        | Yes        | Yes                                                                                                    |
+| `chart-custom-milestones` | Yes        | Yes                                                                                                    |
+| `chart-begin-at-zero`     | Yes        | Yes                                                                                                    |
+| `chart-range`             | Yes        | Yes                                                                                                    |
+| `chart-trend-line`        | Yes        | Yes                                                                                                    |
+| `chart-max-points`        | Yes        | **No**, email is always 30 points                                                                      |
+| `chart-animation`         | Yes        | **No**, a PNG cannot animate                                                                           |
+| `chart-y-axis-side`       | Yes        | **No**                                                                                                 |
+| `chart-theme`             | Yes        | Indirectly: the email follows `email-theme`, which defaults to `auto`, meaning "same as `chart-theme`" |
+| `email-theme`             | No         | Yes                                                                                                    |
 
 ```yaml
 with:
@@ -394,12 +388,12 @@ A look at how the main settings change the chart, to help you pick. For a render
 
 All the curves keep the plateaus flat except `catmull-rom`, which overshoots at the foot of a step, briefly drawing the line below the previous value.
 
-| Curve | Overshoots? | Best for |
-|---|---|---|
-| `monotone` | no | star counts, which only go up (the default) |
-| `catmull-rom` | yes | an organic look where slight overshoot is fine |
-| `cubic-bezier` | no | pronounced, symmetric easing between points |
-| `rounded-step` | no | discrete data you want to read as soft steps |
+| Curve          | Overshoots? | Best for                                       |
+| -------------- | ----------- | ---------------------------------------------- |
+| `monotone`     | no          | star counts, which only go up (the default)    |
+| `catmull-rom`  | yes         | an organic look where slight overshoot is fine |
+| `cubic-bezier` | no          | pronounced, symmetric easing between points    |
+| `rounded-step` | no          | discrete data you want to read as soft steps   |
 
 Every other option's default and effect is in [Configuration](Configuration#chart-customization), and the
 examples gallery above shows each one rendered.
@@ -408,10 +402,10 @@ examples gallery above shows each one rendered.
 
 ## Troubleshooting
 
-| Issue | Solution |
-|---|---|
+| Issue                             | Solution                                                                                                                                                     |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | No charts at all on the first run | No star in the tracked set had a readable `starred_at` date, so there was nothing to reconstruct. See [Troubleshooting](Troubleshooting#no-charts-generated) |
-| Charts render as source code | You are looking at the raw SVG file rather than the rendered data branch |
+| Charts render as source code      | You are looking at the raw SVG file rather than the rendered data branch                                                                                     |
 
 Everything else, including flat lines, missing forecasts and charts that stop updating, is in
 [Troubleshooting](Troubleshooting).

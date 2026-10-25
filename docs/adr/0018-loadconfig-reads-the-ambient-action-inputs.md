@@ -34,8 +34,7 @@ deletions either: the YAML and the input object relocate from a mock call into a
 cases that set both they merge into one nested literal that is longer than the two lines it replaces.
 
 Two things then survive that the change is supposed to remove:
-
-- **The reporter.** `core.warning` fires from five sites *inside* the resolution, and 18 sites in
+- **The reporter.** `core.warning` fires from five sites _inside_ the resolution, and 18 sites in
   `loader.test.ts` assert its wording verbatim; the Oxford comma in the enum message is pinned deliberately.
   Parameterising the I/O leaves `vi.mock('@actions/core')` exactly where it was, so the file still has a mock
   and the "no ambient dependencies" story is two-thirds true at best. Threading a `reporter` parameter
@@ -49,7 +48,7 @@ Two things then survive that the change is supposed to remove:
   `(name: string) => string` function, is `core.getInput` itself under another name, which is the dependency
   injection the "simplify arch and di" commit deliberately walked back.
 
-A narrower version exists and is the best of the options: `loadConfigFile` is already *exported*, so making it
+A narrower version exists and is the best of the options: `loadConfigFile` is already _exported_, so making it
 a parameter of `loadConfig` would let the test substitute it and retire all 27 `existsSync` lines, with no
 reporter question. It still requires `loadConfig` to take an argument, so it still lands on the caller
 problem above.
@@ -67,7 +66,6 @@ inputs" reading them ambiently is the truthful shape, not an accident.
 `@config` is the largest instance of that rule but not the only one, and the earlier framing of this ADR,
 that `@config` was the sole exception in an otherwise dependency-injected tree, was simply wrong about the
 code:
-
 - **`getEmailConfig` in [`src/infrastructure/notification/email.ts`](../../src/infrastructure/notification/email.ts) reads the ambient SMTP inputs**: `smtp-host`,
   `smtp-port`, `smtp-username`, `smtp-password`, `email-to` and `email-from`. It takes only a `Locale`, for
   the default `from` name. It owns the SMTP input group the way `loadConfig` owns the tracking one, and it
@@ -76,7 +74,7 @@ code:
 - **`trackStars` reads `github-token` and `github-api-url` ambiently** before constructing Octokit. Those two
   are not in `Config` at all.
 
-Everything downstream of an input group *does* accept its dependencies: `getRepos({ octokit, config })`,
+Everything downstream of an input group _does_ accept its dependencies: `getRepos({ octokit, config })`,
 `withDataBranch({ … })` and `sendEmail({ emailConfig, … })` are all handed what they need. The line is
 between reading an input group and consuming one, not between `@config` and the rest of the tree.
 

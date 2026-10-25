@@ -9,12 +9,11 @@ you a rejected commit.
 If you want the shape of the codebase, that is [AGENTS.md](../AGENTS.md) and the nested guides it links, and
 [ARCHITECTURE.md](../ARCHITECTURE.md) for the big picture. If you want how code here is written, and what a review
 holds a diff to, that is [CODING_STANDARDS.md](../CODING_STANDARDS.md). If you want the vocabulary, that is
-[GLOSSARY.md](../GLOSSARY.md). If you want the *why*, that is [docs/adr/](../docs/adr/).
+[GLOSSARY.md](../GLOSSARY.md). If you want the _why_, that is [docs/adr/](../docs/adr/).
 
 ## Code of Conduct
 
 By participating you are expected to uphold the [Code of Conduct](./CODE_OF_CONDUCT.md). In short:
-
 - **Be respectful**: different viewpoints and experiences are valuable
 - **Be constructive**: focus on what is best for the project
 - **Be collaborative**: work together towards common goals
@@ -47,14 +46,14 @@ Use the [documentation template](ISSUE_TEMPLATE/documentation.yml), or just open
 user-facing documentation is the [wiki](../docs/wiki/), edited **in this repository** and published by
 [`sync-wiki.yml`](./workflows/sync-wiki.yml) on every push to `main` touching it, so an edit made in the wiki UI is
 overwritten on the next sync. The agent-facing guides (`AGENTS.md` and friends) are held to the code by a
-test, so read *The docs are part of the change* below before editing one.
+test, so read _The docs are part of the change_ below before editing one.
 
 ## Getting started
 
 Both runtimes are pinned exactly and must match: Node in [`.nvmrc`](../.nvmrc), mirrored in `engines.node`,
 and pnpm in `packageManager`. Read the pin from the file; it is not written down anywhere else on purpose.
 
-Note that `engines.node` is the *development* pin. The shipped runtime is Node 24, set by `runs.using` in
+Note that `engines.node` is the _development_ pin. The shipped runtime is Node 24, set by `runs.using` in
 [`action.yml`](../action.yml) and by the esbuild `target`, so a `node:*` API newer than Node 24 will
 type-check and bundle here and then fail on a runner.
 
@@ -113,7 +112,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: $/  # Uses local action code
+      - uses: $/ # Uses local action code
         with:
           github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
 ```
@@ -133,13 +132,13 @@ reviewer checks by hand.
 Conventional Commits, enforced by commitlint on `commit-msg`. semantic-release owns versioning, so the type
 you choose is the version bump you get.
 
-| Type | Bump | Example |
-| --- | --- | --- |
-| `feat` | minor | `feat(charts): add a comparison chart for the top repositories` |
-| `fix` | patch | `fix(email): resolve SMTP authentication with Gmail` |
-| `perf` | patch | `perf(api): halve the GitHub API calls per run` |
-| `revert` | patch, only when the body keeps git's `This reverts commit <sha>.` line; none without it | `revert: feat(charts): add a comparison chart for the top repositories` |
-| `docs`, `style`, `refactor`, `test`, `chore`, `ci`, `build` | none | `docs: add a troubleshooting page to the wiki` |
+| Type                                                        | Bump                                                                                     | Example                                                                 |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `feat`                                                      | minor                                                                                    | `feat(charts): add a comparison chart for the top repositories`         |
+| `fix`                                                       | patch                                                                                    | `fix(email): resolve SMTP authentication with Gmail`                    |
+| `perf`                                                      | patch                                                                                    | `perf(api): halve the GitHub API calls per run`                         |
+| `revert`                                                    | patch, only when the body keeps git's `This reverts commit <sha>.` line; none without it | `revert: feat(charts): add a comparison chart for the top repositories` |
+| `docs`, `style`, `refactor`, `test`, `chore`, `ci`, `build` | none                                                                                     | `docs: add a troubleshooting page to the wiki`                          |
 
 Breaking changes take a `!` after the type or a `BREAKING CHANGE:` footer, and bump the major.
 
@@ -169,7 +168,7 @@ side is wrong, and never delete an assertion to get green. [AGENTS.md](../AGENTS
 what to update for a given change, and [ARCHITECTURE.md](../ARCHITECTURE.md) holds the ADR index.
 
 Changed inputs, outputs or defaults are reflected in [`action.yml`](../action.yml), the wiki, the README, the
-*Outputs* section of [`src/application/AGENTS.md`](../src/application/AGENTS.md) and the outputs line of
+_Outputs_ section of [`src/application/AGENTS.md`](../src/application/AGENTS.md) and the outputs line of
 [`ARCHITECTURE.md`](../ARCHITECTURE.md), always alphabetically.
 
 ## Pull requests
@@ -189,7 +188,6 @@ are the wiki's [CI/CD](../docs/wiki/CI-CD.md) guide.
 ## Use of AI
 
 If you use AI tools when contributing:
-
 - **Review everything it produces.** You are responsible for what you submit.
 - **Check its claims against the code.** A doc claim nobody verified is a doc claim that is wrong.
 - **Disclose significant use** in the pull request description.

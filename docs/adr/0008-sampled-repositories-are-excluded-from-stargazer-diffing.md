@@ -5,7 +5,7 @@ Date: 2026-07-26
 ## Status
 
 Accepted. Amended by [ADR 0012](./0012-unreadable-stargazer-lists-keep-their-previous-logins.md): this ADR
-originally had a Sampled Repository contribute *nothing* to the remembered set, which meant its stored logins
+originally had a Sampled Repository contribute _nothing_ to the remembered set, which meant its stored logins
 were dropped and every one of them resurfaced as new on the next unsampled Run. What happens to those stored
 logins is now 0012's decision, not this one's.
 

@@ -36,13 +36,13 @@ and was carried indirectly by the tracker's suite.
 
 Collapsing the two renderers into one was never an option; that is what ADR 0006 and ADR 0010 already
 rejected. Extracting only the small helpers (`selectChartSnapshots`, `movingAverageSeries`) had already been
-done, and it is precisely the part that did *not* drift. What drifted was everything built on top of them.
+done, and it is precisely the part that did _not_ drift. What drifted was everything built on top of them.
 
 ## Decision
 
 `@presentation/chart-spec` decides **what** a Chart is; the two renderers decide **how** it looks.
 
-A `ChartRequest` names *which* Chart is wanted: a discriminated union over the `ChartKind`s
+A `ChartRequest` names _which_ Chart is wanted: a discriminated union over the `ChartKind`s
 [GLOSSARY.md](../../GLOSSARY.md) already lists, each variant carrying only its own inputs. `buildChartSpec`
 maps one onto a `ChartSpec` (axis labels, an ordered list of series with a resolved colour, and the
 Milestones to draw, each already filtered to the visible ones and carrying both its `value` and its rendered
@@ -60,7 +60,7 @@ now costs one union variant and one `case`.
 
 The dialect-specific facts stay in the adapters, because they are genuinely not shared: the SVG path
 geometry and animation, Chart.js option names, and the two defaults that differ. Where a difference is a
-*deliberate* one it is passed into the spec rather than hidden inside a renderer. `AxisLabels` picks
+_deliberate_ one it is passed into the spec rather than hidden inside a renderer. `AxisLabels` picks
 year-thinned labels for the SVG and plain dates for the email, and `maxPoints` is passed only on the SVG
 side, which is what keeps email charts fixed at 30 points.
 
@@ -82,8 +82,8 @@ a dash array or a point radius. Each adapter maps them through its own table.
   renderer, and [`run.test.ts`](../../src/presentation/run.test.ts) renders a Run in each non-English Locale and
   fails on an English phrase that slipped past the bundle.
 - A new chart kind is a `ChartRequest` variant plus a `case` in `buildChartSpec`, not two parallel
-  implementations, and neither adapter is touched. A new *style* option is one field on `ChartSpec` and one
-  line in each adapter; a new *content* option is one field on the request variant.
+  implementations, and neither adapter is touched. A new _style_ option is one field on `ChartSpec` and one
+  line in each adapter; a new _content_ option is one field on the request variant.
 - Default titles moved into `buildChartSpec`, so the SVG and the email chart of a kind are always named
   the same thing. The SVG star-history chart used to fall back to a hardcoded English `'Star History'` while
   the email one used the locale bundle.
@@ -100,5 +100,5 @@ a dash array or a point radius. Each adapter maps them through its own table.
   its data came from.
 - `charts.ts` now has a colocated [`charts.test.ts`](../../src/presentation/charts.test.ts), so the `Config`-to-style projection and the
   per-repo history fallback are asserted directly rather than through the tracker.
-- Where this bites is recorded in the *Presentation* rules of [`CODING_STANDARDS.md`](../../CODING_STANDARDS.md) and in
+- Where this bites is recorded in the _Presentation_ rules of [`CODING_STANDARDS.md`](../../CODING_STANDARDS.md) and in
   [`src/presentation/AGENTS.md`](../../src/presentation/AGENTS.md).

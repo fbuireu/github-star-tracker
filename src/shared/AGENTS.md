@@ -21,9 +21,8 @@ for the root and the `snapshots` key read directly. Their callers are `@infrastr
 ([`src/infrastructure/`](../infrastructure/AGENTS.md)), so no adapter holds them and both word a rejected
 value alike. `zod` records the value an issue found only under `safeParse(value, { reportInput: true })`, and
 without it `describeIssue` reads `found nothing` for every issue.
-
 - [`describeFetchError`](../infrastructure/github/errors.ts) prefixes an octokit `status` and treats a blank
-  message as *absent*, so a status-only failure reads `HTTP 500` rather than `HTTP 500 Error`; `errorMessage`
+  message as _absent_, so a status-only failure reads `HTTP 500` rather than `HTTP 500 Error`; `errorMessage`
   has no status to fall back on, so a blank message becomes `String(error)`. Folding one into the other breaks
   `describeFetchError`'s tests.
 
@@ -34,7 +33,6 @@ Pure factories, all exported from [`src/shared/tests/index.ts`](./tests/index.ts
 `makeMultiRepoHistory`, `makeRepoResult` and `makeComparisonResults`. Each builds a value with sensible
 defaults so a test only spells out the fields it actually asserts on; mocking stays in the test files that
 need it.
-
 - **All timestamps are UTC ISO-8601 strings**, and `startMs` is epoch milliseconds (`Date.UTC(...)`). The
   default epoch is in 2026; tests that also build dates by hand must stay in the same era or comparisons
   silently fall outside chart and forecast windows.
@@ -47,7 +45,7 @@ need it.
 - Overrides are a shallow merge. Replacing `summary` replaces the whole object, so every field must be
   supplied, and nothing is recomputed from `repos`. Keeping the two consistent is the test's job.
 - `makeConfig` shares `DEFAULTS`' array instances. The spread is shallow, so the list fields are the
-  *same arrays* on every config the factory ever returns. It follows `Config` through `DEFAULTS`, so a new
+  _same arrays_ on every config the factory ever returns. It follows `Config` through `DEFAULTS`, so a new
   key needs no edit here.
 - **No factory sets `History.starsAtLastNotification`.** Notification-threshold tests must set it explicitly.
 - The default stargazer `login` is derived from `starredAt`, so two stargazers built for the same date collide

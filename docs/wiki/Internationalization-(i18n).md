@@ -4,12 +4,12 @@ GitHub Star Tracker supports multiple languages for all user-facing content: rep
 
 ## Supported Locales
 
-| Code | Language | Example Badge |
-|---|---|---|
-| `en` | English (default) | `Total Stars` |
-| `es` | Spanish | `Estrellas totales` |
-| `ca` | Catalan | `Estrelles totals` |
-| `it` | Italian | `Stelle totali` |
+| Code | Language          | Example Badge       |
+| ---- | ----------------- | ------------------- |
+| `en` | English (default) | `Total Stars`       |
+| `es` | Spanish           | `Estrellas totales` |
+| `ca` | Catalan           | `Estrelles totals`  |
+| `it` | Italian           | `Stelle totali`     |
 
 ---
 
@@ -21,7 +21,7 @@ GitHub Star Tracker supports multiple languages for all user-facing content: rep
 - uses: fbuireu/github-star-tracker@v1
   with:
     github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
-    locale: 'es'
+    locale: "es"
 ```
 
 ### Config File
@@ -35,26 +35,26 @@ locale: es
 
 ## What Gets Localized
 
-| Content | Examples |
-|---|---|
-| **Markdown report** | Section titles, summary labels, trend indicators, footer |
-| **HTML email** | Same as Markdown, plus subject line |
-| **SVG badge** | Label text (`Total Stars` / `Estrellas totales` / ...) |
-| **Charts, both kinds** | Chart titles, axis date labels (locale-aware `Date.toLocaleDateString`) and milestone labels |
-| **Charts, SVG only** | The compact Y-axis counts (`12K`). The email charts let Chart.js draw its own ticks instead, as full numbers in the same locale (`12,000` in `en`, `12.000` in `es`) |
-| **Badge number** | The star count is compacted in the report locale, so `1,200` reads `1.2K` in `en` and `1,2 mil` in `es` |
-| **Forecast tables** | Method names, week labels, section titles |
-| **Stargazer section** | Section title, count text, "starred on" dates |
-| **Email subject** | Auto-generated localized subject line |
+| Content                | Examples                                                                                                                                                             |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Markdown report**    | Section titles, summary labels, trend indicators, footer                                                                                                             |
+| **HTML email**         | Same as Markdown, plus subject line                                                                                                                                  |
+| **SVG badge**          | Label text (`Total Stars` / `Estrellas totales` / ...)                                                                                                               |
+| **Charts, both kinds** | Chart titles, axis date labels (locale-aware `Date.toLocaleDateString`) and milestone labels                                                                         |
+| **Charts, SVG only**   | The compact Y-axis counts (`12K`). The email charts let Chart.js draw its own ticks instead, as full numbers in the same locale (`12,000` in `en`, `12.000` in `es`) |
+| **Badge number**       | The star count is compacted in the report locale, so `1,200` reads `1.2K` in `en` and `1,2 mil` in `es`                                                              |
+| **Forecast tables**    | Method names, week labels, section titles                                                                                                                            |
+| **Stargazer section**  | Section title, count text, "starred on" dates                                                                                                                        |
+| **Email subject**      | Auto-generated localized subject line                                                                                                                                |
 
 ### Localized Email Subjects
 
-| Locale | Example Subject |
-|---|---|
-| `en` | `GitHub Star Tracker Report: 523 (+15)` |
-| `es` | `Informe de seguimiento de estrellas en GitHub: 523 (+15)` |
-| `ca` | `Informe de seguiment d'estrelles a GitHub: 523 (+15)` |
-| `it` | `Report di monitoraggio delle stelle su GitHub: 523 (+15)` |
+| Locale | Example Subject                                            |
+| ------ | ---------------------------------------------------------- |
+| `en`   | `GitHub Star Tracker Report: 523 (+15)`                    |
+| `es`   | `Informe de seguimiento de estrellas en GitHub: 523 (+15)` |
+| `ca`   | `Informe de seguiment d'estrelles a GitHub: 523 (+15)`     |
+| `it`   | `Report di monitoraggio delle stelle su GitHub: 523 (+15)` |
 
 The shape is `email.subjectLine` (`{subject}: {totalStars} ({delta})`, identical in every bundle)
 interpolated over `email.subject`. This is the only place the subject is written out; do not restate it
@@ -83,15 +83,15 @@ job ([`src/config/loader.ts`](https://github.com/fbuireu/github-star-tracker/blo
 
 Each JSON file implements the `Translations` interface with these sections:
 
-| Section | Keys | Description |
-|---|---|---|
-| `badge` | `totalStars` | Badge label text |
-| `report` | `title`, `total`, `totalStars`, `change`, `comparedTo`, `firstRun`, `noRepositories`, `repositories`, `stars`, `starsCount`, `trend`, `newRepositories`, `removedRepositories`, `removedRepoText`, `summary`, `starsGained`, `starsLost`, `netChange`, `starTrend`, `starHistory`, `topRepositories`, `byRepository`, `individualRepoCharts`, `repoChartHeading`, `repoChartTitle`, `trendLine`, `badges.new` | Report sections and labels |
-| `email` | `subject`, `subjectLine`, `defaultFrom` | Email content |
-| `velocity` | `sectionTitle`, `starsPerDay`, `growth`, `projection` | Growth velocity section |
-| `footer` | `generated`, `madeBy` | Report footer |
-| `stargazers` | `sectionTitle`, `newStargazers`, `starredOn`, `noNewStargazers`, `stargazerCount`, `sampledNote` | Stargazer section |
-| `forecast` | `sectionTitle`, `week`, `linearRegression`, `weightedMovingAverage`, `aggregate`, `byRepository`, `repoChartTitle`, `method` | Forecast tables and the per-repository Forecast Chart title |
+| Section      | Keys                                                                                                                                                                                                                                                                                                                                                                                                          | Description                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `badge`      | `totalStars`                                                                                                                                                                                                                                                                                                                                                                                                  | Badge label text                                            |
+| `report`     | `title`, `total`, `totalStars`, `change`, `comparedTo`, `firstRun`, `noRepositories`, `repositories`, `stars`, `starsCount`, `trend`, `newRepositories`, `removedRepositories`, `removedRepoText`, `summary`, `starsGained`, `starsLost`, `netChange`, `starTrend`, `starHistory`, `topRepositories`, `byRepository`, `individualRepoCharts`, `repoChartHeading`, `repoChartTitle`, `trendLine`, `badges.new` | Report sections and labels                                  |
+| `email`      | `subject`, `subjectLine`, `defaultFrom`                                                                                                                                                                                                                                                                                                                                                                       | Email content                                               |
+| `velocity`   | `sectionTitle`, `starsPerDay`, `growth`, `projection`                                                                                                                                                                                                                                                                                                                                                         | Growth velocity section                                     |
+| `footer`     | `generated`, `madeBy`                                                                                                                                                                                                                                                                                                                                                                                         | Report footer                                               |
+| `stargazers` | `sectionTitle`, `newStargazers`, `starredOn`, `noNewStargazers`, `stargazerCount`, `sampledNote`                                                                                                                                                                                                                                                                                                              | Stargazer section                                           |
+| `forecast`   | `sectionTitle`, `week`, `linearRegression`, `weightedMovingAverage`, `aggregate`, `byRepository`, `repoChartTitle`, `method`                                                                                                                                                                                                                                                                                  | Forecast tables and the per-repository Forecast Chart title |
 
 ### Interpolation
 
@@ -99,11 +99,11 @@ Templates use `{placeholder}` syntax:
 
 ```json
 {
-  "comparedTo": "Compared to snapshot from {date}",
-  "starsCount": "{count} stars",
-  "removedRepoText": "{name}: was {count} stars",
-  "projection": "~{days} days to {milestone} ★",
-  "week": "Week {n}"
+	"comparedTo": "Compared to snapshot from {date}",
+	"starsCount": "{count} stars",
+	"removedRepoText": "{name}: was {count} stars",
+	"projection": "~{days} days to {milestone} ★",
+	"week": "Week {n}"
 }
 ```
 
@@ -119,7 +119,6 @@ verbatim rather than becoming `undefined` or an empty string.
 English is fallen back to at more than one moment, and only the config-time one is ever visible.
 
 At config time, an invalid `locale` input is caught by the config loader:
-
 1. The action logs a warning: `Invalid locale "xx". Must be "en", "es", "ca", or "it". Falling back to "en"`
 2. English translations are used for the entire run
 3. The workflow does **not** fail
@@ -135,30 +134,28 @@ crashing.
 ## Adding a New Locale
 
 To contribute a new language:
-
 1. Copy [`src/i18n/en.json`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/en.json) to `src/i18n/{code}.json`
 2. Translate all values (keys stay in English)
 3. Keep `{placeholder}` tokens untranslated, spelled exactly as in `en.json`
 4. Add the import in [`src/i18n/index.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/index.ts)
 5. Add the locale and its Intl code to `LOCALE_MAP` in `src/i18n/index.ts` (`LOCALES` and the `Locale` type derive from it, so there is no second list to maintain)
 6. Register the imported bundle in the `TRANSLATIONS` map in `src/i18n/index.ts`
-7. Add the code to the two lists the tests spell out: the `LOCALES` order in [`src/i18n/index.test.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/index.test.ts) and the *Invalid locale* warning in [`src/config/loader.test.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/config/loader.test.ts)
+7. Add the code to the two lists the tests spell out: the `LOCALES` order in [`src/i18n/index.test.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/index.test.ts) and the _Invalid locale_ warning in [`src/config/loader.test.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/config/loader.test.ts)
 8. Run `pnpm verify` to check everything passes
 
 [`src/i18n/types.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/types.ts) needs **no** change. `resolveJsonModule` is on, so the new `.json` bundle is type-checked
 against the existing `Translations` interface at compile time: a missing or mistyped key is a build error.
-*Extra* keys pass the type check, because an imported module is not a fresh object literal and gets no
+_Extra_ keys pass the type check, because an imported module is not a fresh object literal and gets no
 excess-property check; `src/i18n/index.test.ts` fails on them instead, since it holds every bundle to exactly the
 keys of `en.json`.
 
 These documentation edits belong in the same commit, none of them derived from the code:
-
 - the `locale` input description in [`action.yml`](https://github.com/fbuireu/github-star-tracker/blob/main/action.yml), which hard-codes the locale names
 - the **Supported Locales** and **Localized Email Subjects** tables on this page
 - the `locale` section of [Configuration](Configuration#locale)
 - the `locale` row and the config-file key list in [API Reference](API-Reference)
-- the *Invalid Locale Warning* entry in [Troubleshooting](Troubleshooting)
-- the repository [README](https://github.com/fbuireu/github-star-tracker/blob/main/README.md): the *Multi-language* feature, the configuration example and the `locale` input row
+- the _Invalid Locale Warning_ entry in [Troubleshooting](Troubleshooting)
+- the repository [README](https://github.com/fbuireu/github-star-tracker/blob/main/README.md): the _Multi-language_ feature, the configuration example and the `locale` input row
 
 See **[Contributing](https://github.com/fbuireu/github-star-tracker/blob/main/.github/CONTRIBUTING.md)** for development setup.
 

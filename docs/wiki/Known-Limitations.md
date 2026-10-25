@@ -15,7 +15,6 @@ The `GITHUB_TOKEN` is scoped to the **current repository only**. GitHub Star Tra
 ### Approach
 
 The action requires the user to create a PAT and store it as a repository secret (`STAR_TRACKER_TOKEN`). Both classic tokens and fine-grained tokens are supported.
-
 - Classic: `repo` (private + public) or `public_repo` (public only)
 - Fine-grained: `Repository access → All repositories` with `Metadata: Read-only`. That is enough with
   `actions/checkout`'s default, where git pushes the data branch with the workflow's own `GITHUB_TOKEN` and the
@@ -33,7 +32,6 @@ See **[Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>)** for a step-
 Whenever charts are on (`include-charts`, the default) or `track-stargazers` is enabled, fetching stargazers is **API-intensive**. A full fetch reads pages of 100 until it gets a page that is not full, so each repository costs `floor(stars / 100) + 1` API calls, capped at 400: an exactly full last page needs one more, empty, request to prove it was the last. A repo with 1,500 stars needs 16 API calls just for stargazers. With many high-star repos, the authenticated rate limit of **5,000 requests/hour** can be approached or exceeded.
 
 Hitting that limit plays out differently by endpoint. GitHub answers an exhausted rate limit with `403` or `429`, and the action's retry plugin retries a `429` but never a `403`:
-
 - **While listing repositories**, a `403` fails the run at once, with the hint `Verify that your github-token has the correct permissions.` That hint is wrong for this case: the message before it says `API rate limit exceeded`, and the fix is to wait for the reset or cut the run's cost, not to change the token.
 - **While reading one repository's stargazers**, a failure on page 1 drops that repository's stargazers for this run with a warning; on a later page the pages already read are kept and its chart ramps from there; on a sampled repository the failed page is skipped. The run stays green either way.
 
@@ -56,7 +54,7 @@ Additionally, stargazers are fetched **sequentially per repo** (not in parallel)
 - Run the workflow weekly instead of daily to stay well within rate limits.
 
 | Repository stars | API calls per repo | 10 repos | 50 repos |
-|:-----------------|:-------------------|:---------|:---------|
+| :--------------- | :----------------- | :------- | :------- |
 | 99               | 1                  | 10       | 50       |
 | 100              | 2                  | 20       | 100      |
 | 500              | 6                  | 60       | 300      |
@@ -95,9 +93,8 @@ Pair high-star repositories with `smart-sampling` to keep within rate limits. Th
 GitHub [restricted](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/) the stargazers list endpoint (`GET /repos/{owner}/{repo}/stargazers`) to repository **admins and collaborators**. Anyone else receives empty responses or `403` errors, which is why third-party tools that chart stars for repositories they don't own (Star History, Starchart.cc, etc.) stop working.
 
 The restriction is evaluated on the **user's role on the repository, not on token scopes**: the endpoint accepts any scope (`x-accepted-oauth-scopes` is empty), so adding scopes to a classic token neither helps nor hurts. A classic PAT carries its owner's full role, including **implicit admin through organization ownership**, which has been verified to keep stargazers access. In practice the affected cases are:
-
 - Organization repositories where you are a member with read access only (neither admin nor direct collaborator).
-- Fine-grained PATs without an explicit grant on the repository's organization. Fine-grained tokens are granted per resource owner: a token that can *list* a public repository (and therefore track its star count) may still lack the `Metadata (read)` grant that the stargazers endpoint checks.
+- Fine-grained PATs without an explicit grant on the repository's organization. Fine-grained tokens are granted per resource owner: a token that can _list_ a public repository (and therefore track its star count) may still lack the `Metadata (read)` grant that the stargazers endpoint checks.
 
 For those repos the stargazers list comes back **`404`, `403` or empty (`200 []`)**. The empty case is silent at the API level, so the action logs a warning naming each starred repository whose list came back empty. Charts for affected repos fall back to the Stored History instead of the Reconstructed History, and stargazer tracking degrades there. Star counts and delta reports keep working everywhere, since `stargazers_count` is not part of the restriction.
 
@@ -138,7 +135,7 @@ Linear Regression fits a straight line through the whole observed series using l
 predicted(week) = lastValue + slope * week * 7
 ```
 
-The fitted line supplies the *slope* only. Both methods anchor the forecast on the **last observed
+The fitted line supplies the _slope_ only. Both methods anchor the forecast on the **last observed
 value**, never on the fitted one, so the first predicted point continues from where the curve actually is.
 
 Weighted Moving Average computes deltas between consecutive snapshots and weights recent deltas higher. It is more responsive to recent acceleration or deceleration, but more sensitive to short-term noise.
@@ -155,12 +152,12 @@ Forecasts require a minimum of **3 points** in the series they are fitted to (`M
 
 ### Interpretation guide
 
-| Scenario | LR says | WMA says | Interpretation |
-|:---------|:--------|:---------|:---------------|
-| Steady growth | +10/week | +10/week | Consistent trend, both agree |
-| Recent acceleration | +8/week | +15/week | WMA detects recent surge, LR is more conservative |
-| Recent slowdown | +12/week | +5/week | WMA detects deceleration, LR still reflects historical average |
-| Stagnation | +0/week | +0/week | No growth trend detected |
+| Scenario            | LR says  | WMA says | Interpretation                                                 |
+| :------------------ | :------- | :------- | :------------------------------------------------------------- |
+| Steady growth       | +10/week | +10/week | Consistent trend, both agree                                   |
+| Recent acceleration | +8/week  | +15/week | WMA detects recent surge, LR is more conservative              |
+| Recent slowdown     | +12/week | +5/week  | WMA detects deceleration, LR still reflects historical average |
+| Stagnation          | +0/week  | +0/week  | No growth trend detected                                       |
 
 ---
 
@@ -190,7 +187,6 @@ How the two palettes differ, and where the media query reaches at all, is in
 ### Limitation
 
 The action produces these types of charts:
-
 1. **Animated SVG charts** - generated locally, committed to the data branch. Support dark/light mode via CSS media queries. No external dependencies.
 2. **QuickChart PNG charts** - generated via [QuickChart.io](https://quickchart.io), used in HTML email reports. Static images that follow [`email-theme`](Configuration#email-theme) rather than the reader's own colour scheme, and dependent on an external service.
 
@@ -226,7 +222,7 @@ Email HTML rendering is notoriously inconsistent across clients. Outlook uses th
 ### Approach
 
 - All styles are inline: every HTML element in the report carries its own `style` attribute. No external stylesheets, no `<style>` blocks, no CSS classes.
-- Explicit background: the `<body>` carries an explicit `background-color` so it renders consistently whatever the client's own background is. It follows [`email-theme`](Configuration#email-theme), which defaults to `auto` (inherit `chart-theme`, resolving to light); set it to `dark` for a dark digest, charts included. What email *cannot* do is follow the reader's system theme, because the media query is stripped and the chart images are PNGs with the background baked in.
+- Explicit background: the `<body>` carries an explicit `background-color` so it renders consistently whatever the client's own background is. It follows [`email-theme`](Configuration#email-theme), which defaults to `auto` (inherit `chart-theme`, resolving to light); set it to `dark` for a dark digest, charts included. What email _cannot_ do is follow the reader's system theme, because the media query is stripped and the chart images are PNGs with the background baked in.
 - No `<details>` in HTML reports: collapsible sections (`<details>`/`<summary>`) are used in Markdown reports (for GitHub rendering) but excluded from HTML reports, since email clients do not support them. Per-repo stargazer lists and forecast tables are displayed flat in HTML.
 - System fonts: the font stack uses `-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif` - safe system fonts that render consistently everywhere.
 - `max-width: 600px`: The report container is capped at 600px, the standard width for email layouts.
@@ -235,12 +231,12 @@ Email HTML rendering is notoriously inconsistent across clients. Outlook uses th
 
 ### What may vary across clients
 
-| Feature | Gmail | Outlook | Apple Mail |
-|:--------|:------|:--------|:-----------|
-| Inline styles | Supported | Mostly supported | Supported |
-| External images (charts) | Blocked by default, click to load | Blocked by default | Loaded automatically |
-| `border-radius` (avatar circles) | Supported | Ignored (renders square) | Supported |
-| `flex` layout (stargazer rows) | Supported | Partially supported | Supported |
+| Feature                          | Gmail                             | Outlook                  | Apple Mail           |
+| :------------------------------- | :-------------------------------- | :----------------------- | :------------------- |
+| Inline styles                    | Supported                         | Mostly supported         | Supported            |
+| External images (charts)         | Blocked by default, click to load | Blocked by default       | Loaded automatically |
+| `border-radius` (avatar circles) | Supported                         | Ignored (renders square) | Supported            |
+| `flex` layout (stargazer rows)   | Supported                         | Partially supported      | Supported            |
 
 ---
 
@@ -261,7 +257,7 @@ Run more often if you need finer delta and notification granularity, and raise `
 ```yaml
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Every 6 hours
+    - cron: "0 */6 * * *" # Every 6 hours
 ```
 
 This does not affect the **charts**, whose resolution comes from the Reconstructed History rather than from how often the tracker ran. Running more often adds no chart detail, only API calls. How a snapshot is taken, stored and rotated is in **[Data Management](Data-Management)**.
@@ -280,7 +276,7 @@ A Snapshot keys each repository by its full name, and a run sees only the list t
 
 ### Approach
 
-- The Stars are attributed, not dropped into an aggregate. The repository keeps a row of its own: `status=removed` in the CSV, and an entry under *Removed Repositories* in the report and the email, naming the Star Count it was last seen with. What it loses is its place in `total-stars`, in the ranking, in the charts and in the Forecast, so one departure never bends the series.
+- The Stars are attributed, not dropped into an aggregate. The repository keeps a row of its own: `status=removed` in the CSV, and an entry under _Removed Repositories_ in the report and the email, naming the Star Count it was last seen with. What it loses is its place in `total-stars`, in the ranking, in the charts and in the Forecast, so one departure never bends the series.
 - The state is not sticky. Nothing is written about the repository beyond the Snapshot the next run takes; if it returns to the Tracked Set it comes back as a New Repository with a zero Delta, and the Removed entry does not recur.
 - **Do not alert on `lost-stars > 0` alone.** The [Examples](Examples) page shows a workflow that opens an issue on it; that step fires on an edited filter or a rename as readily as on a genuine unstar. Gate on a threshold, or compare `total-stars` across runs, if the difference matters to you.
 

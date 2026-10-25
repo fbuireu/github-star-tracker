@@ -9,7 +9,6 @@ Accepted
 ## Context
 
 A GitHub Action gets a fresh workspace on every run, so anything the tracker needs to remember between runs has to be written somewhere durable. Each of the obvious places fails at something this product needs:
-
 - **Workflow artifacts** expire, and have no stable URL, so a Badge or Chart could not be embedded in a README.
 - **The default branch** would mix generated data into the code history and re-trigger CI on every Run.
 - **An external database or gist** is another service to provision and another credential to manage, on top of the token the action already requires.

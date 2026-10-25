@@ -1,6 +1,6 @@
 # src/domain
 
-The pure business core: what the numbers *mean*. How a current repo list is diffed against a stored
+The pure business core: what the numbers _mean_. How a current repo list is diffed against a stored
 snapshot, which Snapshot is the Baseline Snapshot, how a star curve is reconstructed and projected, when a
 notification is due, and how numbers and dates become short strings. No I/O of any kind. It does not build
 reports (`@presentation/*`) and does not sequence anything (`@application/tracker`).
@@ -11,7 +11,7 @@ One module per concept, each with a colocated `*.test.ts`: `measurement`, `compa
 
 [`tracked-set.ts`](./tracked-set.ts) and [`sampling.ts`](./sampling.ts) are the two modules `@infrastructure` calls rather than `@application`.
 
-`resolveTrackedSet` answers *which repositories a Run measures*: it applies the `only`/`exclude` lists, the
+`resolveTrackedSet` answers _which repositories a Run measures_: it applies the `only`/`exclude` lists, the
 archived/fork/min-stars rules and the `onlyRepos` short-circuit over `RepoInfo`, and reports
 `afterOnlyOrgs`, `afterOnlyRepos` and the patterns it could not compile. `sampling.ts` plans a Stargazer
 fetch without performing one. `shouldSample` applies the strict threshold, `reachablePages` clamps to
@@ -26,14 +26,13 @@ account for, the figure [`star-history.ts`](./star-history.ts) reads to decide w
 ([ADR 0013](../../docs/adr/0013-a-run-is-measured-in-one-place.md)). It composes `getBaselineSnapshot`,
 `compareStars`, `createSnapshot`, `addSnapshot` and `shouldNotify` in the one order that is correct, and returns
 `baselineSnapshotTimestamp`, `results`, `summary`, `updatedHistory`, `droppedSnapshots` and `thresholdReached`.
-
 - `measureRun` never advances the Notification Baseline: it reports `thresholdReached` and stops there.
   `settleNotification` in [`notification.ts`](./notification.ts) is what turns that plus a `Delivery` into the History to persist,
   and it calls `recordNotification`, which returns a **new** History rather than mutating the one it was
   handed. That split is [ADR 0011](../../docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md).
 - In `settleNotification`, `shouldNotify` is `changed && thresholdReached`, the decision; `notificationSent` is
   `delivery === SENT`, a fact about the transport; and the Notification Baseline advances only when the decision
-  held *and* the delivery did not fail, which is why an unconfigured transport (`NOT_ATTEMPTED`) still advances it
+  held _and_ the delivery did not fail, which is why an unconfigured transport (`NOT_ATTEMPTED`) still advances it
   while a configured-and-failed one does not.
 - `droppedSnapshots` is a count rather than a warning. This layer is pure and cannot log; the shell raises the
   `max-history` warning from it.
@@ -57,7 +56,7 @@ account for, the figure [`star-history.ts`](./star-history.ts) reads to decide w
   whole Star Count to `lostStars`; a rename pairs it with a New Repository carrying `delta: 0`, which is why
   a run can report a large `lostStars` against `totalDelta: 0`. Dedicated cases in `comparison.test.ts` fix
   that arithmetic, including a removal of a repo with no stars, whose `delta` is `-0` and so counts as a
-  change that loses nothing. The user-facing half is *Repository Identity* in `docs/wiki/Known-Limitations.md`.
+  change that loses nothing. The user-facing half is _Repository Identity_ in `docs/wiki/Known-Limitations.md`.
 - `summary.totalPrevious` is read from `baselineSnapshot.totalStars`, not re-summed, so `totalDelta` need not
   equal `newStars - lostStars`.
 - `summary.changed` is true if any repo has a non-zero delta **or** is new/removed, so a first run with repos
@@ -71,7 +70,6 @@ account for, the figure [`star-history.ts`](./star-history.ts) reads to decide w
 
 `getBaselineSnapshot` resolves the **Comparison Window**, the `compare-against` input, to the single
 snapshot everything else is diffed against.
-
 - Every mode ignores snapshots whose timestamp does not parse, including `last-run`, which walks back to the
   newest one that does. Empty history yields `null`.
 - Windowed modes pick the **newest** snapshot at or before `now - windowDays + 6h`. That 6-hour slack exists
@@ -94,7 +92,7 @@ snapshot everything else is diffed against.
 - Every Forecast anchors on the **last observed value**, not the fitted one:
   `predicted = last.value + rate * weekOffset * 7`. Changing this changes every chart. Every prediction is
   clamped to a non-negative integer.
-- **Each Top Repository is fitted only to Snapshots that hold it: those of its own *reconstruction*, or else
+- **Each Top Repository is fitted only to Snapshots that hold it: those of its own _reconstruction_, or else
   those of the aggregate.** `historyForRepo` is the optional hook `@application` fills with
   `chartHistories.reconstructedForRepo`, which returns `null` rather than falling back. A repository that
   returns `null`, or whose own History is shorter than `MIN_SNAPSHOTS_FOR_FORECAST`, is fitted to the Snapshots
@@ -124,7 +122,7 @@ snapshot everything else is diffed against.
   than `MIN_RATE_INTERVAL_DAYS`) lives in `latestRateInterval`, which `weightedDailyRate` calls on each
   consecutive pair.
 - `calendarDays` normalizes by real calendar spacing, so the Forecast is in calendar weeks whatever the run
-  cadence. If **any** timestamp is unparseable it falls back to a synthetic weekly cadence for *all* points.
+  cadence. If **any** timestamp is unparseable it falls back to a synthetic weekly cadence for _all_ points.
   `computeVelocity` does **not** share that policy: it drops unparseable snapshots and returns `null` when
   the newest one does not parse. The two policies differ on purpose: read
   [ADR 0017](../../docs/adr/0017-velocity-and-forecast-read-unparseable-timestamps-differently.md) before
@@ -146,7 +144,6 @@ snapshot everything else is diffed against.
 
 Charts are rebuilt from raw stargazer timestamps rather than from stored snapshots on purpose
 ([ADR 0005](../../docs/adr/0005-charts-are-reconstructed-from-stargazer-timestamps.md)).
-
 - Returns `{ snapshots: [] }` when no repo has a single parseable `starred_at`.
 - Bucket count is `clamp(maxPoints, 2, 365)`; `maxPoints: 0` means full history at weekly cadence. The final
   edge is forced to exactly `end`, so the last snapshot is "now".

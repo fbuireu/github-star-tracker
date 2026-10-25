@@ -19,7 +19,6 @@ The layers are `application`, `config`, `domain`, `i18n`, `infrastructure`, `pre
 Each layer has an explicit set of layers and packages it may import, and everything else is forbidden. The normative statement of that set is the layer-map table in [`ARCHITECTURE.md`](../../ARCHITECTURE.md); the diagram beside it draws the same rules, and an import the table does not list is not allowed however convenient it looks. This ADR records that the boundaries are enumerated rather than conventional; it does not restate them, because two copies of a dependency table drift.
 
 Purity is the half of the rule that is not a matter of direction: `domain`, `presentation` and `i18n` perform no I/O at all, with no clock beyond an injectable `now`. Each impure layer owns exactly one kind of side effect and no other, bar the Action log, which every one of them writes to:
-
 - `config` reads the action inputs and one YAML file, and nothing else. That is its whole sanctioned side effect, and it is why `@config` is allowed `@actions/core` and `node:fs` when `presentation` is not.
 - `infrastructure` owns everything outbound: the GitHub REST API, the `git` CLI, the filesystem under the Data Branch worktree, and SMTP. It is the only layer that reaches the network, which is not the same as being the only layer that does I/O.
 - `application` sets the action outputs and the failed status, and sequences the run.
@@ -29,12 +28,10 @@ Purity is the half of the rule that is not a matter of direction: `domain`, `pre
 ### What the `(ish)` means
 
 Domain-Driven Design applied where it pays, not by the book. The ideas that carry the design are adopted in full:
-
 - **One ubiquitous language**, recorded in the root [`GLOSSARY.md`](../../GLOSSARY.md) and used by every layer. Snapshot, Baseline Snapshot, Delta, Tracked Set and Delivery mean the same thing in `domain`, in a chart title and in a log line, and the glossary lists the synonyms each word displaces so a near-miss cannot drift in.
 - **A domain layer with no infrastructure in it**, which is the boundary set out above.
 
 The rest of the tactical catalogue is taken where it fits and left where it does not, one pattern at a time rather than as a package:
-
 - **Bounded contexts.** None: there is one language and one use case, so a context map would have a single context in it.
 - **Aggregates and entity lifecycles.** None, because nothing has a lifecycle to guard. `Snapshot`, `RepoResult` and `History` are each built once per Run by a pure function, out of a JSON file and an HTTP payload, and never updated in place; "return a changed value as a new one" is already a rule of [`CODING_STANDARDS.md`](../../CODING_STANDARDS.md). An aggregate root buys invariant enforcement across mutation, and there is no mutation here to enforce across.
 - **Value objects.** Adopted per concept rather than by default. [ADR 0022](./0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md) holds the criterion and the worked cases, including the primitives it decided to leave alone and why.
@@ -48,5 +45,5 @@ That list is a record of what was weighed, not a policy against the patterns. A 
 
 - The arithmetic that matters (Delta, Baseline Snapshot selection, Velocity, Forecast, Reconstructed History) and every rendered artefact can be exercised directly on plain values, with no GitHub API, git or SMTP anywhere near the test. That is the whole return on the extra structure.
 - The purity of `domain` and `presentation` does real work rather than being a style choice: the moment a network call or a filesystem write appears in either, that property is gone and the tests start needing mocks.
-- The per-layer side-effect statement is what other decisions cite. [ADR 0018](./0018-loadconfig-reads-the-ambient-action-inputs.md) rests on `config`'s side effect being *defined* as reading the ambient inputs, and [ADR 0016](./0016-the-report-renderers-read-config-themselves.md) rests on `presentation` being allowed `@config/types`. Narrowing either here silently invalidates those.
+- The per-layer side-effect statement is what other decisions cite. [ADR 0018](./0018-loadconfig-reads-the-ambient-action-inputs.md) rests on `config`'s side effect being _defined_ as reading the ambient inputs, and [ADR 0016](./0016-the-report-renderers-read-config-themselves.md) rests on `presentation` being allowed `@config/types`. Narrowing either here silently invalidates those.
 - The cost is navigational. Following one feature end to end means crossing several files, and small changes touch more places than they would in a flat layout.

@@ -8,10 +8,10 @@ force-updates after every release. There is no backporting: a fix ships in the
 next patch or minor release, and pointing your workflow at `@v1` is how you get
 it.
 
-| Component | Supported |
-| --- | --- |
-| The latest v1 release, via the `v1` tag | Yes |
-| Any older v1.x tag you pinned | No, upgrade to the `v1` tag |
+| Component                               | Supported                   |
+| --------------------------------------- | --------------------------- |
+| The latest v1 release, via the `v1` tag | Yes                         |
+| Any older v1.x tag you pinned           | No, upgrade to the `v1` tag |
 
 There has never been a pre-1.0 release line, so nothing older exists to support.
 
@@ -54,7 +54,6 @@ branch. That shapes what is interesting to report.
 
 Some behaviour that looks reportable is a documented, deliberate decision.
 Please check these before reporting:
-
 - The data branch is readable by anyone who can read the repository, and
   on a public repository that is public. A git branch is the only storage
   backend the action has, which is how a stateless Action remembers anything
@@ -79,7 +78,7 @@ Please check these before reporting:
   so they are masked in the log even when git echoes the command or a workflow
   supplies the password literally.
 
-A report that one of these exposes something *beyond* its documented scope is
+A report that one of these exposes something _beyond_ its documented scope is
 very much welcome.
 
 ## Reporting a Vulnerability
@@ -101,7 +100,6 @@ Open an issue asking me to get in touch and **say nothing about the finding in
 it**: a public issue is not the place for the details.
 
 Whichever way it reaches me, include:
-
 - The type of issue (token exposure, code injection…)
 - The affected file or component, and the location of the relevant source
   code if you found it (tag, branch, commit or direct URL)

@@ -5,8 +5,8 @@ Date: 2026-08-18
 ## Status
 
 Accepted. Extends [ADR 0012](./0012-unreadable-stargazer-lists-keep-their-previous-logins.md), which kept the
-previous logins of a Repository whose Stargazer list could not be *read*; this keeps them for a Repository
-that was not *observed at all*.
+previous logins of a Repository whose Stargazer list could not be _read_; this keeps them for a Repository
+that was not _observed at all_.
 
 ## Context
 

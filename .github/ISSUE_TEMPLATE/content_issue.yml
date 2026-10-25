@@ -1,8 +1,8 @@
 name: Content Issue
 description: Report a typo, a wrong translation or a mistake in the rendered report, the email digest or the wiki
-title: '[Content]: '
-labels: ['content', 'triage']
-assignees: ['fbuireu']
+title: "[Content]: "
+labels: ["content", "triage"]
+assignees: ["fbuireu"]
 body:
   - type: markdown
     attributes:

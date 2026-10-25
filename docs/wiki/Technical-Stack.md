@@ -18,10 +18,10 @@ TypeScript, bundled by esbuild into a single committed [`dist/index.js`](https:/
 
 There are different Node versions in play, deliberately:
 
-| Number | Where it is pinned | What it governs |
-|---|---|---|
-| **Node 24** | `runs.using: 'node24'` in [`action.yml`](https://github.com/fbuireu/github-star-tracker/blob/main/action.yml), and `target: 'node24'` in [`esbuild.config.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/esbuild.config.ts) | The runtime that actually executes the action on a GitHub runner. This is the version a `node:` API has to exist in |
-| **The `engines.node` pin** | `engines.node` in [`package.json`](https://github.com/fbuireu/github-star-tracker/blob/main/package.json), mirrored in [`.nvmrc`](https://github.com/fbuireu/github-star-tracker/blob/main/.nvmrc) | The development pin: what contributors install, and what `@types/node` describes |
+| Number                     | Where it is pinned                                                                                                                                                                                                                         | What it governs                                                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| **Node 24**                | `runs.using: 'node24'` in [`action.yml`](https://github.com/fbuireu/github-star-tracker/blob/main/action.yml), and `target: 'node24'` in [`esbuild.config.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/esbuild.config.ts) | The runtime that actually executes the action on a GitHub runner. This is the version a `node:` API has to exist in |
+| **The `engines.node` pin** | `engines.node` in [`package.json`](https://github.com/fbuireu/github-star-tracker/blob/main/package.json), mirrored in [`.nvmrc`](https://github.com/fbuireu/github-star-tracker/blob/main/.nvmrc)                                         | The development pin: what contributors install, and what `@types/node` describes                                    |
 
 The gap is a trap worth knowing about before you contribute. esbuild's `target` lowers syntax but does not shim runtime APIs, so a `node:` API added after 24.x will type-check, bundle and pass the full local check, then throw on a runner. Check new `node:` usage against Node 24, not against `engines.node`.
 
@@ -31,15 +31,15 @@ The gap is a trap worth knowing about before you contribute. esbuild's `target` 
 
 ## Tooling
 
-| Tool | Purpose | Why |
-|---|---|---|
-| **Biome** | Linting + formatting | One tool replaces ESLint + Prettier, with one config and one pass over the tree |
-| **esbuild** | Bundling | Tree shaking and single-file output, fast enough to run on every `pre-push` hook without anyone noticing |
-| **Vitest** | Testing | ESM-native, and it resolves the `tsconfig.json` path aliases natively, so the test config needs no plugin and cannot drift from the build |
-| **pnpm** | Package manager | Strict dependency resolution prevents phantom dependencies from reaching the bundle |
-| **Husky** | Git hooks | Formatting and commit linting before the mistake reaches CI |
-| **semantic-release** | Versioning & releases | Version numbers derived from conventional commits, never hand-edited |
-| **commitlint** | Commit message validation | Makes the conventional-commit format the release process depends on non-optional |
+| Tool                 | Purpose                   | Why                                                                                                                                       |
+| -------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Biome**            | Linting + formatting      | One tool replaces ESLint + Prettier, with one config and one pass over the tree                                                           |
+| **esbuild**          | Bundling                  | Tree shaking and single-file output, fast enough to run on every `pre-push` hook without anyone noticing                                  |
+| **Vitest**           | Testing                   | ESM-native, and it resolves the `tsconfig.json` path aliases natively, so the test config needs no plugin and cannot drift from the build |
+| **pnpm**             | Package manager           | Strict dependency resolution prevents phantom dependencies from reaching the bundle                                                       |
+| **Husky**            | Git hooks                 | Formatting and commit linting before the mistake reaches CI                                                                               |
+| **semantic-release** | Versioning & releases     | Version numbers derived from conventional commits, never hand-edited                                                                      |
+| **commitlint**       | Commit message validation | Makes the conventional-commit format the release process depends on non-optional                                                          |
 
 ---
 
@@ -47,14 +47,14 @@ The gap is a trap worth knowing about before you contribute. esbuild's `target` 
 
 The runtime packages, all bundled into `dist/index.js`:
 
-| Package | Purpose |
-|---|---|
-| `@actions/core` | GitHub Actions I/O (inputs, outputs, logging) |
-| `@actions/github` | Octokit client for the GitHub API |
-| `@octokit/plugin-retry` | Automatic retries for transient GitHub API failures |
-| `js-yaml` | YAML config file parsing |
-| `nodemailer` | SMTP email delivery |
-| `zod` | Runtime validation of untrusted data (the stored history, GitHub responses, inputs and the config file), imported as `zod/mini` |
+| Package                 | Purpose                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `@actions/core`         | GitHub Actions I/O (inputs, outputs, logging)                                                                                   |
+| `@actions/github`       | Octokit client for the GitHub API                                                                                               |
+| `@octokit/plugin-retry` | Automatic retries for transient GitHub API failures                                                                             |
+| `js-yaml`               | YAML config file parsing                                                                                                        |
+| `nodemailer`            | SMTP email delivery                                                                                                             |
+| `zod`                   | Runtime validation of untrusted data (the stored history, GitHub responses, inputs and the config file), imported as `zod/mini` |
 
 Because the bundle carries them, the action installs nothing at run time: GitHub executes `dist/index.js` straight from the repository, and the consumer has **zero runtime dependencies** to audit or resolve.
 

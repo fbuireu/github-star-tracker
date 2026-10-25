@@ -5,17 +5,16 @@ What a review checks a diff against. The words are the ones [GLOSSARY.md](./GLOS
 
 **hard** marks a rule whose breach is a defect: report it with the rule. **judgement** marks a call the reviewer
 weighs against the diff: report it as a question. A rule here outranks the smell baseline; where it endorses
-something a smell would flag, the case is listed under *Deliberate overrides of the smell baseline* at the end.
+something a smell would flag, the case is listed under _Deliberate overrides of the smell baseline_ at the end.
 
 Every rule carries an id, and a finding cites it with this file: `CODING_STANDARDS.md A3`. An id is never reused, so a
-retired rule leaves a gap in its section's numbering. A rule marked *check pending* is mechanical, and it leaves this
+retired rule leaves a gap in its section's numbering. A rule marked _check pending_ is mechanical, and it leaves this
 body in the commit that lands its check. The process around a change (commit types, the pull request title) is
 [CONTRIBUTING.md](./.github/CONTRIBUTING.md)'s.
 
 ## Tooling already enforces
 
 No rule below restates these, and a diff that breaks one fails CI:
-
 - Biome ([`biome.json`](./biome.json)): formatting, import order and lint, `noConsole` included, every object shape
   declared an `interface`, never a `type` alias of an object literal (`useConsistentTypeDefinitions`), and every element
   read from an array's end through `.at()` (`useAtIndex`).
@@ -129,8 +128,8 @@ No rule below restates these, and a diff that breaks one fails CI:
   from it; a value is checked with `z.validate` where the answer is a yes or no, and with `safeParse` where the caller
   reads the parsed value or the issue. An input or `GITHUB_API_URL` that must parse goes through a schema too, and a
   rejected path reaches its message through `describeIssue` in `src/shared/errors.ts`. The `@domain` types `storage.ts`
-  checks are restated rather than inferred (*Deliberate overrides*), and the one `.stack` read narrows with
-  `instanceof Error` (*Errors*).
+  checks are restated rather than inferred (_Deliberate overrides_), and the one `.stack` read narrows with
+  `instanceof Error` (_Errors_).
 
 ## Types
 
@@ -333,14 +332,13 @@ No rule below restates these, and a diff that breaks one fails CI:
 - `U18` **hard**: Every GitHub-sourced or user-supplied string is escaped for the place it lands, per this table; a
   value `@config` closes to an alphabet that needs no escaping (a hex colour from `parseHexColor`) is the exception:
 
-| Lands in | Dialect |
-| --- | --- |
-| HTML, and values inside the raw HTML `markdown.ts` emits | `MARKUP` |
-| SVG text and attributes, in `svg-chart.ts` and `badge.ts` | `XML` |
-| Markdown: every GitHub-sourced string outside raw HTML (link text and targets, headings, prose, bold titles) | `MARKDOWN` |
-| A CSV field, formula prefixes included | `CSV` |
-| The QuickChart config | none: `JSON.stringify` and `encodeURIComponent` cover it |
-
+| Lands in                                                                                                     | Dialect                                                  |
+| ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| HTML, and values inside the raw HTML `markdown.ts` emits                                                     | `MARKUP`                                                 |
+| SVG text and attributes, in `svg-chart.ts` and `badge.ts`                                                    | `XML`                                                    |
+| Markdown: every GitHub-sourced string outside raw HTML (link text and targets, headings, prose, bold titles) | `MARKDOWN`                                               |
+| A CSV field, formula prefixes included                                                                       | `CSV`                                                    |
+| The QuickChart config                                                                                        | none: `JSON.stringify` and `encodeURIComponent` cover it |
 - `U19` **hard**: `svg-chart.ts` escapes the title, the x-axis labels, the legend labels, the Milestone labels and any
   user text a new attribute interpolates, because each of those can carry a repository name.
 - `U20` **hard**: `badge.ts` measures the raw label and value and escapes at interpolation, because escaping first lets
@@ -416,14 +414,14 @@ No rule below restates these, and a diff that breaks one fails CI:
 - `C1` **hard**: A `uses:` pin's SHA and the version or branch in its trailing comment move together: the SHA is what
   runs, the comment is the only thing that makes it legible, and Renovate maintains both halves.
 - `C2` **hard**: The reason for a line of YAML goes in the commit message, the pull request, an ADR or a rule here, and
-  a gotcha an implementer would otherwise trip on goes in the *Gotchas* of [AGENTS.md](./AGENTS.md).
+  a gotcha an implementer would otherwise trip on goes in the _Gotchas_ of [AGENTS.md](./AGENTS.md).
 
 ## Docs
 
 - `G1` **hard**: Keep `GLOSSARY.md` to vocabulary: the term, one or two sentences on what it is, and the words it
   displaces, never how it is built, because mechanism belongs to the folder guide or an ADR.
 - `G2` **hard**: State a rule once: a rule about how code is written here, a coupling or a gotcha in the guide of the
-  folder it bites, a decision in an ADR, as *Where things live* in [ARCHITECTURE.md](./ARCHITECTURE.md) maps them; a
+  folder it bites, a decision in an ADR, as _Where things live_ in [ARCHITECTURE.md](./ARCHITECTURE.md) maps them; a
   wiki page says where the rule lives, because `docs/wiki/` is published and nothing checks a copy.
 - `G3` **hard**: Write a guide in the present tense, holding what an implementer needs while working; the reason for a
   line goes in the commit message, the pull request, an ADR or a rule here, and history ("used to", "was", "until …")

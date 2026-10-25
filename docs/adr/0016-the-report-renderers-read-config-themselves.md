@@ -16,7 +16,7 @@ Accepted
 `@application/tracker` built a 21-field object literal and handed it to both Report renderers:
 
 ```ts
-const reportParams = { results, previousTimestamp, locale: config.locale, /* …18 more… */ };
+const reportParams = { results, previousTimestamp, locale: config.locale /* …18 more… */ };
 const markdownReport = generateMarkdownReport(reportParams);
 const htmlReport = generateHtmlReport({ ...reportParams, theme: config.emailTheme });
 ```
@@ -29,7 +29,7 @@ and the git history shows the cost plainly: `chart-show-points`, `chart-animatio
 churned source file in the repository.
 
 Two defects came out of the same shape. `ReportParams` declared ten fields and `GenerateHtmlReportParams`
-twenty-one, so the split was real at the declaration, but `reportParams` was a *variable*, which switches
+twenty-one, so the split was real at the declaration, but `reportParams` was a _variable_, which switches
 off TypeScript's excess-property check, so the markdown renderer silently accepted and discarded eleven
 chart-style fields it does not read. The whole guarantee rested on one spread on one line, and
 [`src/application/AGENTS.md`](../../src/application/AGENTS.md) had to carry a written warning naming it as the regression to watch for. It had
@@ -87,5 +87,5 @@ rather than the enums alone.
 - `chartLineWidth` now always reaches `chartImageUrl`, so the email chart always emits `borderWidth`. That
   was already true in production, since the tracker always passed it, but `html.test.ts` had a case asserting
   its absence, which only an incomplete params object could produce.
-- Where this bites is recorded in the *Application* rules of [`CODING_STANDARDS.md`](../../CODING_STANDARDS.md) and in
+- Where this bites is recorded in the _Application_ rules of [`CODING_STANDARDS.md`](../../CODING_STANDARDS.md) and in
   [`src/presentation/AGENTS.md`](../../src/presentation/AGENTS.md).

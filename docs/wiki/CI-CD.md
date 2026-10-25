@@ -1,6 +1,6 @@
 How this repository checks, releases and publishes itself: every workflow under
 [`.github/workflows/`](https://github.com/fbuireu/github-star-tracker/tree/main/.github/workflows), what starts it, what
-it needs and what you see when it fails. Nothing on this page runs in the repository where you *use* the action; for
+it needs and what you see when it fails. Nothing on this page runs in the repository where you _use_ the action; for
 that, start at [Getting Started](Getting-Started).
 
 The scripts and git hooks are listed once in
@@ -13,27 +13,27 @@ and why the bundle is committed at all is
 
 ## The workflows
 
-| Workflow | Runs on | Job (check name) | Does |
-|---|---|---|---|
-| `ci.yml` | push to `main`, pull requests into `main` | `verify` (`Verify`), `release` (`Semantic Release`), `check` (`Check`) | Runs the four checks of `pnpm verify` as parallel steps and uploads coverage, cuts the release on a push to `main`, and aggregates both into `Check` |
-| `commit-message.yml` | pull requests into `main`: opened, edited, reopened, synchronize | `commitlint` (`Lint the pull request title`) | Runs commitlint on the pull request title, which is the message the squash merge lands and semantic-release reads |
-| `dependency-review.yml` | every pull request | `dependency-review` (`Dependency Review`) | Fails a pull request that adds a dependency with a known vulnerability |
-| `zizmor.yml` | push to `main`, pull requests into any branch | `zizmor` (`Run zizmor`) | Static analysis of the workflow files themselves, uploaded to code scanning as SARIF |
-| `sync-wiki.yml` | push to `main` touching `docs/wiki/**` or the workflow itself | `sync` | Publishes `docs/wiki/` to this wiki |
-| `dependabot-auto-merge.yml` | every pull request, opened or synchronized; the job runs only when the author is `dependabot[bot]` | `auto-merge` | Labels each patch, minor and major Dependabot update by its type, approves and auto-merges the safe ones, and comments on a major one |
+| Workflow                    | Runs on                                                                                            | Job (check name)                                                       | Does                                                                                                                                                 |
+| --------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ci.yml`                    | push to `main`, pull requests into `main`                                                          | `verify` (`Verify`), `release` (`Semantic Release`), `check` (`Check`) | Runs the four checks of `pnpm verify` as parallel steps and uploads coverage, cuts the release on a push to `main`, and aggregates both into `Check` |
+| `commit-message.yml`        | pull requests into `main`: opened, edited, reopened, synchronize                                   | `commitlint` (`Lint the pull request title`)                           | Runs commitlint on the pull request title, which is the message the squash merge lands and semantic-release reads                                    |
+| `dependency-review.yml`     | every pull request                                                                                 | `dependency-review` (`Dependency Review`)                              | Fails a pull request that adds a dependency with a known vulnerability                                                                               |
+| `zizmor.yml`                | push to `main`, pull requests into any branch                                                      | `zizmor` (`Run zizmor`)                                                | Static analysis of the workflow files themselves, uploaded to code scanning as SARIF                                                                 |
+| `sync-wiki.yml`             | push to `main` touching `docs/wiki/**` or the workflow itself                                      | `sync`                                                                 | Publishes `docs/wiki/` to this wiki                                                                                                                  |
+| `dependabot-auto-merge.yml` | every pull request, opened or synchronized; the job runs only when the author is `dependabot[bot]` | `auto-merge`                                                           | Labels each patch, minor and major Dependabot update by its type, approves and auto-merges the safe ones, and comments on a major one                |
 
 One composite action backs them: `prepare-env`, which every job that installs dependencies calls
 ([below](#prepare-env)).
 
 How runs of one workflow interact:
 
-| Workflow | Concurrency group | A newer run cancels the one in progress |
-|---|---|---|
-| `ci.yml` | the workflow and the ref | On a pull request only. Pushes to `main` queue, so no release is cut short |
-| `ci.yml`, `release` job | `release` | Never |
-| `commit-message.yml` | the workflow and the ref | Yes |
-| `sync-wiki.yml` | `sync-wiki` | Yes, the newest push carries every page anyway |
-| `dependency-review.yml`, `zizmor.yml`, `dependabot-auto-merge.yml` | none | - |
+| Workflow                                                           | Concurrency group        | A newer run cancels the one in progress                                    |
+| ------------------------------------------------------------------ | ------------------------ | -------------------------------------------------------------------------- |
+| `ci.yml`                                                           | the workflow and the ref | On a pull request only. Pushes to `main` queue, so no release is cut short |
+| `ci.yml`, `release` job                                            | `release`                | Never                                                                      |
+| `commit-message.yml`                                               | the workflow and the ref | Yes                                                                        |
+| `sync-wiki.yml`                                                    | `sync-wiki`              | Yes, the newest push carries every page anyway                             |
+| `dependency-review.yml`, `zizmor.yml`, `dependabot-auto-merge.yml` | none                     | -                                                                          |
 
 The release commit ends in `[skip ci]`, so the push that lands it starts no workflow at all. That is load-bearing for
 `ci.yml`: without it, the release commit would start the run that cuts the next release.
@@ -87,7 +87,6 @@ flowchart TD
 ```
 
 What each piece guarantees:
-
 - **The four checks run as one `parallel:` step.** `Format`, `Typecheck`, `Build` and `Unit tests` start together,
   each in its own log, and the `Verify` job fails if any of them fails. Locally, `pnpm verify` chains the same four
   scripts one after another.
@@ -148,7 +147,6 @@ sequenceDiagram
 ```
 
 In order:
-
 1. **Checkout with `PAT` and full history.** semantic-release needs every tag and commit since the last release, and
    the token is the one it pushes with. `persist-credentials: false` keeps it out of the checkout's git config.
 2. **Fast-forward or stand down.** The job releases from the head of `main`, not from the commit that queued it: a merge
@@ -182,16 +180,16 @@ commit through whatever its notes say.
 ## Rolling back a release
 
 The action has no deploy environment to roll back. A workflow runs whatever ref its `uses:` names, and the one ref that
-moves is the major tag: *Update major version tag*, the `release` job's last step, points `v1` at each new release as
+moves is the major tag: _Update major version tag_, the `release` job's last step, points `v1` at each new release as
 soon as semantic-release has pushed it.
 
 Who a broken release reaches:
 
-| A workflow that uses | Runs the broken release |
-|---|---|
-| `fbuireu/github-star-tracker@v1` | From its next run after the `release` job, because `v1` moves in that same job |
+| A workflow that uses                                     | Runs the broken release                                                                             |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `fbuireu/github-star-tracker@v1`                         | From its next run after the `release` job, because `v1` moves in that same job                      |
 | `fbuireu/github-star-tracker@vX.Y.Z`, an earlier release | Not until its owner moves the pin, for example by merging an update Renovate or Dependabot proposes |
-| `fbuireu/github-star-tracker@<commit sha>` | Not until its owner moves the pin |
+| `fbuireu/github-star-tracker@<commit sha>`               | Not until its owner moves the pin                                                                   |
 
 `release-tags` keeps every `v*` tag where it is for anyone but an admin, so an exact tag cannot change under a workflow
 that names it. A broken major reaches no `@v1` workflow at all: the last step derives the major from the new tag, so
@@ -230,7 +228,7 @@ flowchart TD
 1. **Revert on a branch.** `git revert` the commit that brought the change in. `main` takes squash merges only, so a
    pull request is one commit there.
 2. **Title the pull request `fix: ...`.** The title is the commit semantic-release reads, and a `fix` cuts a patch.
-   A revert title is a trap. `Revert "..."`, the title GitHub's *Revert* button writes, passes
+   A revert title is a trap. `Revert "..."`, the title GitHub's _Revert_ button writes, passes
    `Lint the pull request title` because commitlint ignores reverts, but it, like a `revert:` title, cuts a patch only
    when the squash commit's body, which is the pull request's description, holds git's `This reverts commit <sha>.`
    line. Without that line the merge releases nothing. A `fix:` title needs neither.
@@ -251,7 +249,6 @@ git push origin v1 --force
 
 They are the last step's own commands, aimed at an older tag. The fetch needs `--force`, because a plain one keeps a
 stale local `v1`.
-
 - **Only an admin can do it.** The `release-tags` ruleset forbids force-pushing or deleting a `v*` tag, and the `tags`
   ruleset the same for any tag. The admin role bypasses the first and is exempt from the second, so an admin's own
   credentials push it, as `PAT` does in the job, and a maintainer's or a writer's push is rejected.
@@ -377,16 +374,15 @@ triggered it, so the wiki's history names whoever changed the page.
 
 ## Secrets and variables
 
-| Name | Kind | Scope | Used by | What breaks when it is missing or expired |
-|---|---|---|---|---|
-| `PAT` | Actions secret, **and** Dependabot secret | this repository | `ci.yml` `release` job: the checkout, semantic-release and the major-tag push; `sync-wiki.yml`; `dependabot-auto-merge.yml` | The `release` job fails at its checkout, so `Check` fails and `main` turns red although the code is fine; the wiki stops syncing; Dependabot pull requests are no longer approved or merged |
-| `CODECOV_TOKEN` | Actions secret | this repository | `ci.yml` `Verify` job, *Upload coverage to Codecov* | The upload fails quietly (`fail_ci_if_error: false`); CI stays green and Codecov shows nothing for that commit |
-| `GITHUB_TOKEN` | automatic, one per job | that job | every workflow, with the permissions below | - |
+| Name            | Kind                                      | Scope           | Used by                                                                                                                     | What breaks when it is missing or expired                                                                                                                                                   |
+| --------------- | ----------------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PAT`           | Actions secret, **and** Dependabot secret | this repository | `ci.yml` `release` job: the checkout, semantic-release and the major-tag push; `sync-wiki.yml`; `dependabot-auto-merge.yml` | The `release` job fails at its checkout, so `Check` fails and `main` turns red although the code is fine; the wiki stops syncing; Dependabot pull requests are no longer approved or merged |
+| `CODECOV_TOKEN` | Actions secret                            | this repository | `ci.yml` `Verify` job, _Upload coverage to Codecov_                                                                         | The upload fails quietly (`fail_ci_if_error: false`); CI stays green and Codecov shows nothing for that commit                                                                              |
+| `GITHUB_TOKEN`  | automatic, one per job                    | that job        | every workflow, with the permissions below                                                                                  | -                                                                                                                                                                                           |
 
 No workflow reads a variable (`vars.*`).
 
 What `PAT` has to be:
-
 - **A classic token with the `repo` scope** (`public_repo` reaches this public repository too). No `workflow` scope:
   nothing it pushes touches `.github/workflows/`.
 - **Owned by an account with the admin role on this repository.** The rulesets grant their bypass to that role, and
@@ -396,25 +392,24 @@ What `PAT` has to be:
   Dependabot secret named `PAT` holding the same token. Rotate both together.
 
 Where it is used, and why a token at all:
-
 1. **The `release` job's checkout and semantic-release.** It pushes the release commit and the tag past the `main`
    ruleset, creates the GitHub release and comments on what it closed.
-2. **The *Update major version tag* step.** It force-pushes `vMAJOR` past `release-tags`.
+2. **The _Update major version tag_ step.** It force-pushes `vMAJOR` past `release-tags`.
 3. **`sync-wiki.yml`.** It clones and pushes the wiki repository, which `GITHUB_TOKEN` cannot write.
 4. **`dependabot-auto-merge.yml`.** It approves the pull request and enables auto-merge. Done with `GITHUB_TOKEN`, the
    merge would start no workflow on `main`, since events that token causes start no runs, and no release would follow.
 
 `GITHUB_TOKEN` permissions, job by job:
 
-| Workflow, job | Permissions | Used for |
-|---|---|---|
-| `ci.yml`, `verify` and `check` | `contents: read` | The checkout |
-| `ci.yml`, `release` | `contents: write`, `issues: write`, `pull-requests: write` | Nothing that pushes: those calls go through `PAT` |
-| `commit-message.yml` | `contents: read` | The checkout |
-| `dependency-review.yml` | `contents: read`, `pull-requests: read` | Reading the dependency diff |
-| `zizmor.yml` | `security-events: write`, nothing at the workflow level | The SARIF upload |
-| `sync-wiki.yml` | `contents: read` | The checkout; the wiki push uses `PAT` |
-| `dependabot-auto-merge.yml` | `contents: read`, `pull-requests: write`, nothing at the workflow level | Reading Dependabot's metadata, the major-update comment and the labels |
+| Workflow, job                  | Permissions                                                             | Used for                                                               |
+| ------------------------------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `ci.yml`, `verify` and `check` | `contents: read`                                                        | The checkout                                                           |
+| `ci.yml`, `release`            | `contents: write`, `issues: write`, `pull-requests: write`              | Nothing that pushes: those calls go through `PAT`                      |
+| `commit-message.yml`           | `contents: read`                                                        | The checkout                                                           |
+| `dependency-review.yml`        | `contents: read`, `pull-requests: read`                                 | Reading the dependency diff                                            |
+| `zizmor.yml`                   | `security-events: write`, nothing at the workflow level                 | The SARIF upload                                                       |
+| `sync-wiki.yml`                | `contents: read`                                                        | The checkout; the wiki push uses `PAT`                                 |
+| `dependabot-auto-merge.yml`    | `contents: read`, `pull-requests: write`, nothing at the workflow level | Reading Dependabot's metadata, the major-update comment and the labels |
 
 ---
 
@@ -422,7 +417,6 @@ Where it is used, and why a token at all:
 
 [`.github/actions/prepare-env`](https://github.com/fbuireu/github-star-tracker/blob/main/.github/actions/prepare-env/action.yml)
 is the one composite action. It takes no inputs and runs four steps:
-
 1. **Fail if `.nvmrc` is missing**, with an `::error::` annotation, because it is what every job installs Node from.
 2. **`pnpm/action-setup`**, which installs the pnpm `packageManager` in `package.json` names.
 3. **`actions/setup-node`** with `node-version-file: .nvmrc` and `cache: pnpm`. No workflow names a Node or pnpm
@@ -431,7 +425,7 @@ is the one composite action. It takes no inputs and runs four steps:
    rewritten. Installing also runs `prepare`, which sets up the husky hooks in that checkout.
 
 `ci.yml` (both `verify` and `release`) and `commit-message.yml` call it, as `uses: $/.github/actions/prepare-env`
-rather than `./.github/actions/prepare-env`. `$/` resolves the path in the workflow's own repository, the *self*
+rather than `./.github/actions/prepare-env`. `$/` resolves the path in the workflow's own repository, the _self_
 repository, where `./` resolves it in whatever the job happens to have checked out into its workspace. The YAML test in
 the docs contract exempts both forms from SHA pinning, since both name this repository.
 
@@ -439,20 +433,20 @@ the docs contract exempts both forms from SHA pinning, since both name this repo
 
 ## Rulesets and required checks
 
-| Ruleset | Applies to | Rules | Bypass |
-|---|---|---|---|
-| `main` | the default branch | no deletion; no force-push; changes through a pull request, squash merge only, no approving review required, stale approvals dismissed on push; linear history; four required status checks | the admin role, always |
-| `release-tags` | tags matching `v*` | no deletion; no force-push, so a tag cannot be moved | the admin role, always |
-| `tags` | every tag | no deletion; no force-push | deploy keys, always; the admin role is exempt |
+| Ruleset        | Applies to         | Rules                                                                                                                                                                                       | Bypass                                        |
+| -------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `main`         | the default branch | no deletion; no force-push; changes through a pull request, squash merge only, no approving review required, stale approvals dismissed on push; linear history; four required status checks | the admin role, always                        |
+| `release-tags` | tags matching `v*` | no deletion; no force-push, so a tag cannot be moved                                                                                                                                        | the admin role, always                        |
+| `tags`         | every tag          | no deletion; no force-push                                                                                                                                                                  | deploy keys, always; the admin role is exempt |
 
 The four required checks on `main`:
 
-| Context | Comes from | Notes |
-|---|---|---|
-| `Check` | `ci.yml`, job `check` | Aggregates `verify` and `release`, see [The pipeline](#the-pipeline) |
-| `Lint the pull request title` | `commit-message.yml`, job `commitlint` | |
-| `Dependency Review` | `dependency-review.yml`, job `dependency-review` | |
-| `zizmor` | code scanning | The job is called `Run zizmor`; the required context is the code-scanning check its SARIF upload (category `zizmor`) creates. zizmor reads the `parallel:` block in `ci.yml` too, with support it marks experimental |
+| Context                       | Comes from                                       | Notes                                                                                                                                                                                                                |
+| ----------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Check`                       | `ci.yml`, job `check`                            | Aggregates `verify` and `release`, see [The pipeline](#the-pipeline)                                                                                                                                                 |
+| `Lint the pull request title` | `commit-message.yml`, job `commitlint`           |                                                                                                                                                                                                                      |
+| `Dependency Review`           | `dependency-review.yml`, job `dependency-review` |                                                                                                                                                                                                                      |
+| `zizmor`                      | code scanning                                    | The job is called `Run zizmor`; the required context is the code-scanning check its SARIF upload (category `zizmor`) creates. zizmor reads the `parallel:` block in `ci.yml` too, with support it marks experimental |
 
 The checks are not strict: a pull request need not be up to date with `main` to merge. Beyond them, the coverage floor
 and the docs contract gate through `Check`, while Codecov's own statuses are informational.
@@ -465,7 +459,6 @@ The two bots split the work rather than share it.
 
 **Renovate** ([`.github/renovate.json`](https://github.com/fbuireu/github-star-tracker/blob/main/.github/renovate.json))
 owns every version update:
-
 - npm dependencies, pinned to exact versions (`rangeStrategy: pin`); every `uses:` pinned to a commit SHA with its
   version in a trailing comment (`pinDigests`); `node` grouped and held to even majors; `pnpm` grouped.
 - Lock file maintenance, on the same schedule.
@@ -480,7 +473,6 @@ owns every version update:
 
 **Dependabot** has no `dependabot.yml` here, so it runs no version updates: it opens the security updates the
 repository's settings enable. `dependabot-auto-merge.yml` reads each one's metadata and:
-
 - approves it and enables squash auto-merge for a patch, a minor, an indirect dependency or a development dependency,
   never a major;
 - comments `Major update detected - Manual review required` on a major;
@@ -495,7 +487,7 @@ repository's settings enable. `dependabot-auto-merge.yml` reads each one's metad
 - **Pull requests from forks get no repository secrets.** `CODECOV_TOKEN` is empty there, so the upload fails quietly;
   no other check on a pull request needs a secret, so a fork's pull request passes or fails on its merits.
 - **Runs Dependabot triggers get Dependabot secrets only.** That is why `PAT` must also be a Dependabot secret. Without
-  it, `dependabot-auto-merge.yml` fails at *Approve and auto-merge*, and the update waits for a human. Renovate pushes
+  it, `dependabot-auto-merge.yml` fails at _Approve and auto-merge_, and the update waits for a human. Renovate pushes
   its branches to this repository, so its pull requests are not forks and see the Actions secrets.
 - **An expired `PAT` fails `main`, not a pull request.** Every required check runs without it, so the first sign is a
   red `Check` on `main` from a `release` job that could not check out. Generate a new token and update both secrets.

@@ -4,7 +4,7 @@ GitHub Star Tracker requires a Personal Access Token rather than the default `GI
 
 ## Why a PAT Is Required
 
-The `GITHUB_TOKEN` provided automatically by GitHub Actions is scoped to the **current repository only**. GitHub Star Tracker needs to list **all repositories owned by the authenticated user** via `GET /user/repos`, which requires broader access. That is a GitHub API restriction: the automatic token simply cannot enumerate repos outside the triggering repository. The trade-off behind requiring one anyway, and how the *kind* of token silently decides how much of the product works, is recorded in [ADR 0002](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0002-require-a-personal-access-token.md).
+The `GITHUB_TOKEN` provided automatically by GitHub Actions is scoped to the **current repository only**. GitHub Star Tracker needs to list **all repositories owned by the authenticated user** via `GET /user/repos`, which requires broader access. That is a GitHub API restriction: the automatic token simply cannot enumerate repos outside the triggering repository. The trade-off behind requiring one anyway, and how the _kind_ of token silently decides how much of the product works, is recorded in [ADR 0002](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0002-require-a-personal-access-token.md).
 
 ---
 
@@ -60,7 +60,7 @@ More granular control, required expiration, better for team environments.
    - **Repository access:** `All repositories`
    - **Permissions > Repository permissions:**
      - `Metadata`: **Read-only**, mandatory. It is what lists the repositories and reads their star counts, and GitHub selects it for any token that reaches a repository
-     - `Contents`: **Read and write**, only if the workflow's checkout step sets `persist-credentials: false`. With `actions/checkout`'s default, git pushes the data branch with the workflow's own `GITHUB_TOKEN` (which is why the workflow keeps `permissions: contents: write`), and this token never writes anything. With `persist-credentials: false` the checkout keeps no credential, so the action pushes with *this* token, which then needs write access to the repository the workflow runs in. A fine-grained token grants a permission on every repository it selects, so leave the default checkout alone if you want the token to stay read-only
+     - `Contents`: **Read and write**, only if the workflow's checkout step sets `persist-credentials: false`. With `actions/checkout`'s default, git pushes the data branch with the workflow's own `GITHUB_TOKEN` (which is why the workflow keeps `permissions: contents: write`), and this token never writes anything. With `persist-credentials: false` the checkout keeps no credential, so the action pushes with _this_ token, which then needs write access to the repository the workflow runs in. A fine-grained token grants a permission on every repository it selects, so leave the default checkout alone if you want the token to stay read-only
 4. Click **"Generate token"**
 5. **Copy the token immediately.** It starts with `github_pat_`
 
@@ -72,7 +72,7 @@ The secret and the workflow step are identical to the classic path: see [Add to 
 
 ## Fine-Grained Tokens and Stargazers
 
-A fine-grained token can track star *counts* perfectly well and still produce empty charts and stargazer sections. The stargazer endpoint answers only to repository admins and collaborators, and a fine-grained token without an explicit grant on the owning organization is neither.
+A fine-grained token can track star _counts_ perfectly well and still produce empty charts and stargazer sections. The stargazer endpoint answers only to repository admins and collaborators, and a fine-grained token without an explicit grant on the owning organization is neither.
 
 Star counts, reports and badges are unaffected, so the run succeeds and the gap is easy to miss. Use a classic token, or grant the organization explicitly. The reasoning is in [ADR 0002](https://github.com/fbuireu/github-star-tracker/blob/main/docs/adr/0002-require-a-personal-access-token.md).
 
@@ -82,18 +82,18 @@ Star counts, reports and badges are unaffected, so the run succeeds and the gap 
 
 **Classic token scopes:** what the token can reach.
 
-| Scope | Repositories it reaches |
-|---|---|
-| `repo` | All repos, private and public |
-| `public_repo` | Public repos only |
+| Scope         | Repositories it reaches       |
+| ------------- | ----------------------------- |
+| `repo`        | All repos, private and public |
+| `public_repo` | Public repos only             |
 
 **Fine-grained token permissions:** what the action is allowed to do.
 
-| Permission | What it allows | When the action needs it |
-|---|---|---|
-| `Metadata: Read-only` | List the repositories and read their star counts | Always; GitHub selects it for you |
-| `Contents: Read-only` | Fetch the data branch | Only when the checkout sets `persist-credentials: false`, on a [`read-only: true`](Configuration#read-only) run, which never pushes |
-| `Contents: Read and write` | Fetch and push the data branch | Only when the checkout sets `persist-credentials: false`, on a writing run |
+| Permission                 | What it allows                                   | When the action needs it                                                                                                            |
+| -------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `Metadata: Read-only`      | List the repositories and read their star counts | Always; GitHub selects it for you                                                                                                   |
+| `Contents: Read-only`      | Fetch the data branch                            | Only when the checkout sets `persist-credentials: false`, on a [`read-only: true`](Configuration#read-only) run, which never pushes |
+| `Contents: Read and write` | Fetch and push the data branch                   | Only when the checkout sets `persist-credentials: false`, on a writing run                                                          |
 
 With the default checkout, git fetches and pushes the data branch with the workflow's own `GITHUB_TOKEN`, so the
 workflow's `permissions:` block is what has to grant `contents: write`, and the token itself only reads metadata.
@@ -115,14 +115,14 @@ workflow's `permissions:` block is what has to grant `contents: write`, and the 
 
 ## Troubleshooting
 
-| Error | Cause | Solution |
-|---|---|---|
-| `Failed to fetch repositories from GitHub API: HTTP 401 Bad credentials. Verify that your github-token has the correct permissions.` | Token expired or revoked. The run fails outright, it does not fall back to a smaller report | Generate a new token and update the secret |
-| `Resource not accessible by integration` | Using `GITHUB_TOKEN` instead of a PAT | Create a PAT with a suitable scope |
-| `Not Found` for private repos | Token has `public_repo` but not `repo` scope | Edit the token to add `repo` scope |
-| Push rejected with `403` | With the default checkout, the workflow lacks `permissions: contents: write`. With `persist-credentials: false`, the token lacks write access to the workflow's repository | Grant `contents: write` in the workflow, or `Contents: Read and write` on the token, and re-run |
-| Charts and stargazer sections empty on a fine-grained token | The stargazer endpoint is admin/collaborator-only | See [Fine-Grained Tokens and Stargazers](#fine-grained-tokens-and-stargazers) above |
-| `Bad credentials` after copy/paste | Extra whitespace in the secret value | Re-copy the token carefully and trim whitespace |
+| Error                                                                                                                                | Cause                                                                                                                                                                      | Solution                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `Failed to fetch repositories from GitHub API: HTTP 401 Bad credentials. Verify that your github-token has the correct permissions.` | Token expired or revoked. The run fails outright, it does not fall back to a smaller report                                                                                | Generate a new token and update the secret                                                      |
+| `Resource not accessible by integration`                                                                                             | Using `GITHUB_TOKEN` instead of a PAT                                                                                                                                      | Create a PAT with a suitable scope                                                              |
+| `Not Found` for private repos                                                                                                        | Token has `public_repo` but not `repo` scope                                                                                                                               | Edit the token to add `repo` scope                                                              |
+| Push rejected with `403`                                                                                                             | With the default checkout, the workflow lacks `permissions: contents: write`. With `persist-credentials: false`, the token lacks write access to the workflow's repository | Grant `contents: write` in the workflow, or `Contents: Read and write` on the token, and re-run |
+| Charts and stargazer sections empty on a fine-grained token                                                                          | The stargazer endpoint is admin/collaborator-only                                                                                                                          | See [Fine-Grained Tokens and Stargazers](#fine-grained-tokens-and-stargazers) above             |
+| `Bad credentials` after copy/paste                                                                                                   | Extra whitespace in the secret value                                                                                                                                       | Re-copy the token carefully and trim whitespace                                                 |
 
 ---
 

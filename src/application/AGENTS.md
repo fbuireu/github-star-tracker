@@ -21,7 +21,7 @@ than here, and what follows is what that table cannot express.
   attempted.
 - `starsAtLastNotification`, the Notification Baseline, advances only on delivery. A configured-and-failed
   send leaves it alone so the accumulated change is not lost, while an unconfigured transport advances it
-  because the `should-notify` output *is* the notification
+  because the `should-notify` output _is_ the notification
   ([ADR 0011](../../docs/adr/0011-the-notification-baseline-advances-only-on-delivery.md)).
 - **A `sendEmail` that resolves `false` is a `FAILED` delivery, not an unattempted one.** That is the empty
   `email-to` case, which returns `false` without throwing: the transport was configured and did not deliver, so
@@ -43,19 +43,19 @@ Every key of the `outputs:` block of [`action.yml`](../../action.yml) exactly, l
 surface that lists them must be. The report values pass through as-is; the rest are wrapped in
 `String()`.
 
-| Key | Value |
-| --- | --- |
-| `lost-stars` | the matching `Summary` field |
-| `new-stargazers` | `stargazerDiff?.totalNew ?? 0` |
-| `new-stars` | the matching `Summary` field |
+| Key                 | Value                                                                      |
+| ------------------- | -------------------------------------------------------------------------- |
+| `lost-stars`        | the matching `Summary` field                                               |
+| `new-stargazers`    | `stargazerDiff?.totalNew ?? 0`                                             |
+| `new-stars`         | the matching `Summary` field                                               |
 | `notification-sent` | `notification.notificationSent`, meaning an email actually left the runner |
-| `report` | the rendered markdown report |
-| `report-csv` | the rendered CSV report |
-| `report-html` | the rendered HTML report |
-| `report-html-path` | return value of `writeHtmlReport`, a filesystem path |
-| `should-notify` | `notification.shouldNotify`, the *decision* |
-| `stars-changed` | the matching `Summary` field |
-| `total-stars` | the matching `Summary` field |
+| `report`            | the rendered markdown report                                               |
+| `report-csv`        | the rendered CSV report                                                    |
+| `report-html`       | the rendered HTML report                                                   |
+| `report-html-path`  | return value of `writeHtmlReport`, a filesystem path                       |
+| `should-notify`     | `notification.shouldNotify`, the _decision_                                |
+| `stars-changed`     | the matching `Summary` field                                               |
+| `total-stars`       | the matching `Summary` field                                               |
 
 The empty-repos path calls `setOutputs` with `renderEmptyRun(config)` and `EMPTY_SUMMARY`. That render also emits a
 real CSV header, so a consumer parsing `report-csv` gets one on both paths, and its message comes from

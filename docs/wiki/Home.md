@@ -17,24 +17,24 @@ GitHub Star Tracker is a GitHub Action that monitors star counts across all your
 
 ## Quick Navigation
 
-| Page | Description |
-|------|-------------|
-| [Getting Started](Getting-Started) | Token setup, first workflow, first run |
-| [How It Works](How-It-Works) | Execution flow, data pipeline, phase by phase |
-| [Architecture](Architecture) | DDD(ish) layers, how much DDD and where it stops |
-| [Technical Stack](Technical-Stack) | Why these tools and these dependencies |
-| [Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>) | Classic & fine-grained token creation |
-| [Configuration](Configuration) | All available options, file-based config, precedence |
-| [API Reference](API-Reference) | Complete inputs, outputs, and data formats |
-| [Examples](Examples) | Real-world workflows and advanced recipes |
-| [Star Trend Charts](Star-Trend-Charts) | SVG charts, QuickChart URLs, chart types |
-| [Email Notifications](Email-Notifications) | Built-in SMTP and external action setup |
-| [Viewing Reports](Viewing-Reports) | Data branch, badges, action outputs |
-| [Data Management](Data-Management) | Snapshots, history rotation, generated files |
-| [Internationalization (i18n)](<Internationalization-(i18n)>) | Multi-language support (en, es, ca, it) |
-| [Known Limitations](Known-Limitations) | Technical constraints and design trade-offs |
-| [Troubleshooting](Troubleshooting) | Common issues and solutions |
-| [CI/CD](CI-CD) | For contributors: how this repository checks, releases and publishes itself |
+| Page                                                         | Description                                                                 |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| [Getting Started](Getting-Started)                           | Token setup, first workflow, first run                                      |
+| [How It Works](How-It-Works)                                 | Execution flow, data pipeline, phase by phase                               |
+| [Architecture](Architecture)                                 | DDD(ish) layers, how much DDD and where it stops                            |
+| [Technical Stack](Technical-Stack)                           | Why these tools and these dependencies                                      |
+| [Personal Access Token (PAT)](<Personal-Access-Token-(PAT)>) | Classic & fine-grained token creation                                       |
+| [Configuration](Configuration)                               | All available options, file-based config, precedence                        |
+| [API Reference](API-Reference)                               | Complete inputs, outputs, and data formats                                  |
+| [Examples](Examples)                                         | Real-world workflows and advanced recipes                                   |
+| [Star Trend Charts](Star-Trend-Charts)                       | SVG charts, QuickChart URLs, chart types                                    |
+| [Email Notifications](Email-Notifications)                   | Built-in SMTP and external action setup                                     |
+| [Viewing Reports](Viewing-Reports)                           | Data branch, badges, action outputs                                         |
+| [Data Management](Data-Management)                           | Snapshots, history rotation, generated files                                |
+| [Internationalization (i18n)](<Internationalization-(i18n)>) | Multi-language support (en, es, ca, it)                                     |
+| [Known Limitations](Known-Limitations)                       | Technical constraints and design trade-offs                                 |
+| [Troubleshooting](Troubleshooting)                           | Common issues and solutions                                                 |
+| [CI/CD](CI-CD)                                               | For contributors: how this repository checks, releases and publishes itself |
 
 ---
 

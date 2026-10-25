@@ -130,8 +130,8 @@ token unencrypted.
 Star Tracker failed: Invalid visibility "<value>". Must be one of: public, private, all, owned
 ```
 
-**Cause:** a typo in `visibility`. It throws rather than warning because every other value changes *which
-repositories are tracked*, so a silent fallback would quietly report on the wrong set.
+**Cause:** a typo in `visibility`. It throws rather than warning because every other value changes _which
+repositories are tracked_, so a silent fallback would quietly report on the wrong set.
 
 **Fix:** use one of the values above.
 
@@ -258,7 +258,6 @@ after each filtering stage, which localises it quickly.
 ### `new-stargazers` Is 0 Although Stars Clearly Moved
 
 **Cause:** the stargazer diff skips certain kinds of repository.
-
 - A **sampled** repository (one over `smart-sampling-threshold` while `smart-sampling` is on) is never
   diffed, because absence from a sample is not evidence that someone unstarred. These are named in a note in
   the report.
@@ -365,9 +364,8 @@ on whichever one should not be the writer.
 ### Chart Is a Flat or Straight Line
 
 **Cause:** The stargazers fetch for that repository came back empty or failed, so its history cannot be reconstructed. The run log includes a warning naming the affected repository and, for failures, the API error. Common reasons:
-
 - Transient GitHub-side failures. During the [2026 stargazers restriction](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/) rollout (~July 5–13, 2026) the endpoint intermittently returned `404`s, empty lists, or `5xx` errors with an empty/plain-text body **even to repository admins**, most commonly on deep pagination of very large (40,000+ star) repos. Since v1.22.3 the run log always includes the HTTP status (`Failed to fetch stargazers for <repo>: HTTP 5xx ...`), so you can tell a real restriction (`403`/`404`) apart from a transient server error at a glance, and `5xx`/network errors are retried automatically before being reported. Verify with `curl -i -H "Authorization: Bearer <token>" -H "Accept: application/vnd.github.star+json" "https://api.github.com/repos/<owner>/<repo>/stargazers?per_page=1"`. If it returns `200` with data, just re-run the workflow: charts are reconstructed from scratch on every run.
-- The token's user is not an admin or collaborator on the repository, per the same restriction: the list comes back `404` or empty (`200 []`) silently. Note this is about the user's *role*, not token scopes (implicit admin through org ownership works with a classic PAT). Typical setups: a fine-grained PAT without a grant on the repository's organization, or org repositories where you are a member with read access only. See [Known Limitations](Known-Limitations#stargazers-api-access-restriction-2026).
+- The token's user is not an admin or collaborator on the repository, per the same restriction: the list comes back `404` or empty (`200 []`) silently. Note this is about the user's _role_, not token scopes (implicit admin through org ownership works with a classic PAT). Typical setups: a fine-grained PAT without a grant on the repository's organization, or org repositories where you are a member with read access only. See [Known Limitations](Known-Limitations#stargazers-api-access-restriction-2026).
 - Rate limiting on large repositories. A repository above 40,000 stars costs 400 API requests per run without smart sampling; a handful of large repos can exhaust the 5,000 requests/hour REST quota mid-run.
 
 Since v1.22.3, a single failing page no longer discards the rest of a repo's history: the action keeps whatever pages it could fetch, logs which ones it had to skip, and scales the chart to the real coverage. If the repo's list still comes back completely empty, the per-repo chart falls back to the Stored History, which only covers the period the action has been running.
@@ -458,8 +456,8 @@ A daily schedule with a condition like `if: steps.tracker.outputs.new-stars >= 1
   uses: fbuireu/github-star-tracker@v1
   with:
     github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
-    notification-threshold: '500'
-    notification-mode: 'gains'
+    notification-threshold: "500"
+    notification-mode: "gains"
 
 - name: Send email
   if: steps.tracker.outputs.should-notify == 'true'
@@ -590,7 +588,7 @@ steps:
 
 ```yaml
 with:
-  config-path: '.github/star-tracker.yml'
+  config-path: ".github/star-tracker.yml"
 ```
 
 Ensure the file exists at that path on the branch where the workflow runs.
@@ -615,10 +613,10 @@ See **[Configuration Precedence](Configuration#configuration-precedence)**.
 
 ```yaml
 # Correct
-exclude-repos: '/^test-.*/'
+exclude-repos: "/^test-.*/"
 
 # Incorrect - treated as literal string
-exclude-repos: '^test-.*'
+exclude-repos: "^test-.*"
 ```
 
 An unwrapped pattern is not an error; it becomes an exact name to match, and simply matches nothing.
@@ -629,7 +627,7 @@ An unwrapped pattern is not an error; it becomes an exact name to match, and sim
 Ignoring invalid pattern "/[unclosed/". Filters expect either an exact name or /pattern/flags.
 ```
 
-**Cause:** the value *was* wrapped in `/` but the body is not a regex the engine can compile. This is the
+**Cause:** the value _was_ wrapped in `/` but the body is not a regex the engine can compile. This is the
 warning to look for when a filter has no effect: it names the offending pattern, which the entry above
 cannot. Each distinct bad pattern is reported once, treated as matching nothing, and never fails the run.
 
@@ -642,7 +640,6 @@ repository name (or the owner, for the org filters).
 ## Getting Help
 
 If your issue isn't covered here:
-
 1. Check the **[workflow run logs](https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/viewing-workflow-run-history)** for detailed error messages
 2. Open an issue at **[github-star-tracker/issues](https://github.com/fbuireu/github-star-tracker/issues)**
 3. Include: workflow file, error logs, and expected vs actual behavior

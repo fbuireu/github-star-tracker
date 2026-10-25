@@ -10,7 +10,7 @@ The branch name is configurable via `data-branch`:
 
 ```yaml
 with:
-  data-branch: 'my-star-data'
+  data-branch: "my-star-data"
 ```
 
 The working directory for the branch is derived from the name: a dot followed by the branch name (e.g. `.star-tracker-data/`).
@@ -19,18 +19,18 @@ The working directory for the branch is derived from the name: a dot followed by
 
 ## Generated Files
 
-| File | Description | When Created |
-|---|---|---|
-| `README.md` | Markdown report with embedded charts | Every run |
-| `stars-data.json` | Historical snapshot data | Every run |
-| `stars-data.csv` | Flat per-repo export (`repository,owner,name,stars,previous,delta,status`) | Every run |
-| [`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/docs/examples/stars-badge.svg) | Star count badge | Every run |
-| `stargazers.json` | Stargazer login map | Only with `track-stargazers: true` |
-| `charts/star-history.svg` | Total stars chart | Charts on, once the charted series has at least 2 points |
-| `charts/comparison.svg` | Top repos comparison | Same condition, plus at least one top repository |
-| `charts/forecast.svg` | Growth forecast | Same, plus the 3 points a forecast needs |
-| `charts/{owner}-{repo}.svg` | Per-repo charts | Same condition, one per top repository |
-| `charts/forecast-{owner}-{repo}.svg` | Per-repo growth forecast | Same, and only for a top repository whose forecast was fitted to its own reconstructed history |
+| File                                                                                                        | Description                                                                | When Created                                                                                   |
+| ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `README.md`                                                                                                 | Markdown report with embedded charts                                       | Every run                                                                                      |
+| `stars-data.json`                                                                                           | Historical snapshot data                                                   | Every run                                                                                      |
+| `stars-data.csv`                                                                                            | Flat per-repo export (`repository,owner,name,stars,previous,delta,status`) | Every run                                                                                      |
+| [`stars-badge.svg`](https://github.com/fbuireu/github-star-tracker/blob/main/docs/examples/stars-badge.svg) | Star count badge                                                           | Every run                                                                                      |
+| `stargazers.json`                                                                                           | Stargazer login map                                                        | Only with `track-stargazers: true`                                                             |
+| `charts/star-history.svg`                                                                                   | Total stars chart                                                          | Charts on, once the charted series has at least 2 points                                       |
+| `charts/comparison.svg`                                                                                     | Top repos comparison                                                       | Same condition, plus at least one top repository                                               |
+| `charts/forecast.svg`                                                                                       | Growth forecast                                                            | Same, plus the 3 points a forecast needs                                                       |
+| `charts/{owner}-{repo}.svg`                                                                                 | Per-repo charts                                                            | Same condition, one per top repository                                                         |
+| `charts/forecast-{owner}-{repo}.svg`                                                                        | Per-repo growth forecast                                                   | Same, and only for a top repository whose forecast was fitted to its own reconstructed history |
 
 "The charted series" is not always the reconstruction. Charts prefer the **Reconstructed History**, built
 from each stargazer's `starred_at` date, which is why they render on the very first run. When that
@@ -50,28 +50,28 @@ Each run creates a snapshot appended to the `snapshots` array in `stars-data.jso
 
 ```json
 {
-  "version": 1,
-  "snapshots": [
-    {
-      "timestamp": "2026-02-15T00:00:00.000Z",
-      "totalStars": 523,
-      "repos": [
-        {
-          "fullName": "user/repo-a",
-          "name": "repo-a",
-          "owner": "user",
-          "stars": 300
-        },
-        {
-          "fullName": "user/repo-b",
-          "name": "repo-b",
-          "owner": "user",
-          "stars": 223
-        }
-      ]
-    }
-  ],
-  "starsAtLastNotification": 520
+	"version": 1,
+	"snapshots": [
+		{
+			"timestamp": "2026-02-15T00:00:00.000Z",
+			"totalStars": 523,
+			"repos": [
+				{
+					"fullName": "user/repo-a",
+					"name": "repo-a",
+					"owner": "user",
+					"stars": 300
+				},
+				{
+					"fullName": "user/repo-b",
+					"name": "repo-b",
+					"owner": "user",
+					"stars": 223
+				}
+			]
+		}
+	],
+	"starsAtLastNotification": 520
 }
 ```
 
@@ -88,7 +88,7 @@ Each run creates a snapshot appended to the `snapshots` array in `stars-data.jso
   `gains` only counts upward movement
 
 When the baseline advances is not simply "when an email is sent". A run that decides to notify advances
-it both when the send succeeds *and* when no SMTP transport is configured at all, because in that case the
+it both when the send succeeds _and_ when no SMTP transport is configured at all, because in that case the
 `should-notify` output is itself the notification. Only a send that was configured and **failed** holds it
 back, so the accumulated change is not lost. A run that does not decide to notify never touches it, which is
 what makes the counter keep growing across quiet runs.
@@ -97,12 +97,12 @@ what makes the counter keep growing across quiet runs.
 
 The things that make a run stop rather than continue on a guess:
 
-| If `stars-data.json` | The run |
-|---|---|
-| is not valid JSON | fails, naming the parse error, and asks you to fix or delete the file on the data branch |
-| is valid JSON but not an object (`null`, an array, a number, a string) | fails rather than reading it as an empty history and pushing over your record |
-| declares a `version` higher than this action writes | fails and asks you to upgrade the action, or to point `data-branch` at a branch this version wrote |
-| is an object whose `snapshots` key is present but not an array | fails rather than reading it as an empty history |
+| If `stars-data.json`                                                                                                                              | The run                                                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| is not valid JSON                                                                                                                                 | fails, naming the parse error, and asks you to fix or delete the file on the data branch                                                           |
+| is valid JSON but not an object (`null`, an array, a number, a string)                                                                            | fails rather than reading it as an empty history and pushing over your record                                                                      |
+| declares a `version` higher than this action writes                                                                                               | fails and asks you to upgrade the action, or to point `data-branch` at a branch this version wrote                                                 |
+| is an object whose `snapshots` key is present but not an array                                                                                    | fails rather than reading it as an empty history                                                                                                   |
 | holds a snapshot, a repository entry or a `starsAtLastNotification` of the wrong shape (a missing `repos` list, a star count written as a string) | fails and names where, for example `snapshots[3].repos[0].stars (expected number, found "7")`, rather than comparing against a baseline it misread |
 
 An **absent** `version` is fine and always will be: every data branch predating the field has none, so it is
@@ -124,18 +124,18 @@ The `version` field itself is
 The `max-history` setting (default: `52`) controls how many snapshots are retained. When the limit is exceeded, the oldest snapshots are pruned.
 
 | Schedule | `max-history: 52` covers | `max-history: 104` covers |
-|---|---|---|
-| Daily | ~7 weeks | ~15 weeks |
-| Weekly | ~1 year | ~2 years |
-| Monthly | ~4 years | ~8 years |
+| -------- | ------------------------ | ------------------------- |
+| Daily    | ~7 weeks                 | ~15 weeks                 |
+| Weekly   | ~1 year                  | ~2 years                  |
+| Monthly  | ~4 years                 | ~8 years                  |
 
 ```yaml
 with:
-  max-history: '104'  # Keep more history
+  max-history: "104" # Keep more history
 ```
 
 Lowering `max-history` throws snapshots away. When more snapshots are stored than the new limit allows,
-the run logs a warning naming how many it is about to drop and telling you to raise `max-history` *before*
+the run logs a warning naming how many it is about to drop and telling you to raise `max-history` _before_
 this run if you want to keep them. Once that run pushes, they are gone; the data branch is the only copy.
 
 ### How Pruning Works
@@ -152,8 +152,8 @@ When `track-stargazers: true`, the action maintains a separate `stargazers.json`
 
 ```json
 {
-  "user/repo-a": ["octocat", "defunkt"],
-  "user/repo-b": ["octocat"]
+	"user/repo-a": ["octocat", "defunkt"],
+	"user/repo-b": ["octocat"]
 }
 ```
 
@@ -174,16 +174,15 @@ warning in the run log. The full reasoning is
 A repository with **no entry** has every stargazer reported as new, because there is nothing to diff against. That
 happens more often than it sounds:
 
-| Situation | What the next run reports |
-|---|---|
-| The first run with `track-stargazers` on, whether on a fresh branch or one that ran for months without it | Every stargazer of every repository, all at once |
-| A repository newly in the Tracked Set: created, unarchived, or let in by an edited filter | Every stargazer of that repository |
-| A repository renamed or transferred | Every stargazer under its new full name, since entries are keyed by full name; the old entry stays behind |
-| `stargazers.json` edited into something the reader repairs (below) | Every stargazer of each repository whose entry was lost |
+| Situation                                                                                                 | What the next run reports                                                                                 |
+| --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| The first run with `track-stargazers` on, whether on a fresh branch or one that ran for months without it | Every stargazer of every repository, all at once                                                          |
+| A repository newly in the Tracked Set: created, unarchived, or let in by an edited filter                 | Every stargazer of that repository                                                                        |
+| A repository renamed or transferred                                                                       | Every stargazer under its new full name, since entries are keyed by full name; the old entry stays behind |
+| `stargazers.json` edited into something the reader repairs (below)                                        | Every stargazer of each repository whose entry was lost                                                   |
 
 How the file is read decides which damage stops the run. It is the one file on the branch the action repairs rather
 than refuses:
-
 - **Bytes that are not JSON fail the run**, with the same `... is not valid JSON` message `stars-data.json` gets.
 - **JSON that is not an object is read as empty**, silently, so every repository falls into the first row above.
 - **An entry that is not a list of logins is dropped**, silently, and its siblings survive.
@@ -195,7 +194,6 @@ The file is only read and written with `track-stargazers` on.
 ## First Run Behavior
 
 On the first **writing** run:
-
 1. The action creates the data branch as an orphan branch
 2. An initial empty commit is made
 3. All repos are recorded as New Repositories with `delta: 0` (no previous data to compare against), which still
@@ -222,7 +220,6 @@ artefact above into that worktree, sends the email and sets every output. It the
 `Read-only run: leaving <branch> untouched` and throws the worktree away without committing.
 
 Things follow from that, and they surprise people:
-
 - The branch must already exist. A read-only run refuses to create one and fails outright, so the "First
   Run Behavior" above does not apply to it. Point `data-branch` at the branch your tracking workflow
   maintains, or drop `read-only` for one run so it can be created.
@@ -254,11 +251,11 @@ Cloning the branch, downloading `stars-data.json` and querying it with `jq` are 
 ## Data Size Estimates
 
 | Repos Tracked | Approximate Size per Snapshot |
-|---|---|
-| 10 | ~1 KB |
-| 50 | ~4 KB |
-| 100 | ~8 KB |
-| 500 | ~40 KB |
+| ------------- | ----------------------------- |
+| 10            | ~1 KB                         |
+| 50            | ~4 KB                         |
+| 100           | ~8 KB                         |
+| 500           | ~40 KB                        |
 
 With `max-history: 52` and 100 repos, `stars-data.json` stays under ~500 KB.
 

@@ -14,9 +14,9 @@ recorded the result, `addSnapshot` appended it, and `shouldNotify` decided wheth
 was cleared. Each was individually testable and individually harmless. The order was not.
 
 Six rules held them together and none of them was expressible in a signature. `compareStars` had to receive
-the *Baseline Snapshot*, not the newest one. `createSnapshot` had to receive the *same* repository array
+the _Baseline Snapshot_, not the newest one. `createSnapshot` had to receive the _same_ repository array
 `compareStars` was given, or the appended Snapshot's total and its repositories disagreed. `addSnapshot` had
-to receive the *stored* History, not the updated one. `shouldNotify` had to read `starsAtLastNotification`
+to receive the _stored_ History, not the updated one. `shouldNotify` had to read `starsAtLastNotification`
 from the **pre-append** History, because that is what makes the Notification Threshold accumulate across
 Runs. And `addSnapshot` silently keeps the whole array when `maxHistory` is `0`, which is why `@config`
 rejects a non-positive `max-history` a layer away.
@@ -46,7 +46,7 @@ the baseline advances only on delivery ([ADR 0011](./0011-the-notification-basel
 and delivery happens in `@application` after the email is sent. `measureRun` therefore reports
 `thresholdReached` and never writes `starsAtLastNotification`. `recordNotification` is the separate,
 explicit step that advances it, and it returns a new History rather than mutating the one it was given. It
-lives in `@domain/notification` alongside `settleNotification`, which is what decides *whether* to call it.
+lives in `@domain/notification` alongside `settleNotification`, which is what decides _whether_ to call it.
 `measureRun` cannot import it without a cycle, and that is the right shape: measuring and notifying are two
 acts, not one.
 

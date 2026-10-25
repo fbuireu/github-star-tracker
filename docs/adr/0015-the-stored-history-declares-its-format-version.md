@@ -20,7 +20,7 @@ parse as JSON, that what they parse to is an object rather than an array or a ba
 the gap between them is where the danger sits. Malformed JSON and a non-object file are both caught and made
 fatal on purpose, because silently resetting a user's tracking record is the one failure worth being loud
 about ([ADR 0021](./0021-an-unreadable-stored-history-fails-the-run.md) is that decision). But a file written
-by a *different* version of this action would still be valid JSON, would still be an object, and would still
+by a _different_ version of this action would still be valid JSON, would still be an object, and would still
 have an array of `snapshots`. Renaming `totalStars`, or turning `repos` into a map, would make every stored
 Snapshot read as `undefined`: the Report would show wrong totals, the Charts would flatten, and nothing would
 raise a word. The tracker would confidently publish nonsense.
@@ -29,7 +29,7 @@ The alternative is to promise the shape never changes, which is roughly the posi
 default. That promise is cheap to make and impossible to keep quietly: the moment someone does change it, the
 cost lands on users as silent corruption rather than as an error. The second alternative, versioning the file
 later when the shape actually changes, does not work, because by then "no version field" is ambiguous
-between *old format* and *this format*. A version marker is only unambiguous if it exists **before** the first
+between _old format_ and _this format_. A version marker is only unambiguous if it exists **before** the first
 format change.
 
 ## Decision
@@ -69,7 +69,7 @@ history, so a shape change there can be handled by changing the filename instead
   is otherwise untouched, so the diff is a single added key rather than a rewritten file.
 - This does **not** make the format evolvable. There is still no migration path, and writing one would mean
   reading an old shape and rewriting it, which nothing does today. It makes the format's evolution
-  *detectable*, which is the prerequisite.
+  _detectable_, which is the prerequisite.
 - Where it bites is recorded in the persistence section of
   [`src/infrastructure/AGENTS.md`](../../src/infrastructure/AGENTS.md), and the field is shown in the file
   examples in [`docs/wiki/Data-Management.md`](../wiki/Data-Management.md) and

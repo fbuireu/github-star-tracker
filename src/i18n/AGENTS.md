@@ -27,10 +27,10 @@ keys) and the bundles sit beside them as `.json`, typed by the `Record<Locale, T
   to both `Date#toLocaleDateString` and `Intl.NumberFormat` in `@domain/formatting`.
 - **`report.title` must differ in every bundle**: `index.test.ts` iterates `LOCALES` and tells a bundle of its
   own from the English fallback by that title, so a translation that keeps the English one fails.
-- **Locale affects text, dates *and* compact numbers.** `formatCount` builds its `Intl.NumberFormat` from
+- **Locale affects text, dates _and_ compact numbers.** `formatCount` builds its `Intl.NumberFormat` from
   `LOCALE_MAP[locale]`, so 1,200 renders `1.2K` in `en`, `1,2 mil` in `es`, `1,2 k` in `ca` and `1,2K` in
   `it`. Only the `en` form is pinned: [`formatting.test.ts`](../domain/formatting.test.ts) asserts the English string and that the Italian
-  one merely differs from it, under the name *follows the report locale instead of always using English*.
+  one merely differs from it, under the name _follows the report locale instead of always using English_.
   The others come out of the ICU data Node ships, so a runtime bump can change them with no test
   failing; re-check them rather than trusting this line. In `es` and `ca` the separator before the suffix is
   a non-breaking space (U+00A0), not the ordinary space printed above. That reaches further than wording,
@@ -44,15 +44,15 @@ keys) and the bundles sit beside them as `.json`, typed by the `Record<Locale, T
 2. Import it in `index.ts`, add `xx: 'xx-XX'` to the locale map, and add `xx` to the `TRANSLATIONS` literal
    (shorthand, so the key must equal the import name).
 3. Add `xx` to the two locale lists the tests spell out: the `LOCALES` order in [`index.test.ts`](./index.test.ts)
-   and the *Invalid locale* warning in [`loader.test.ts`](../config/loader.test.ts).
+   and the _Invalid locale_ warning in [`loader.test.ts`](../config/loader.test.ts).
 4. Update the `locale` input description in [`action.yml`](../../action.yml) and every document that lists the
-   locales. *Adding a New Locale* in
+   locales. _Adding a New Locale_ in
    [`docs/wiki/Internationalization-(i18n).md`](<../../docs/wiki/Internationalization-(i18n).md>) names them
    all, the README's among them.
 
 `LOCALES` and `Locale` derive themselves from the locale map, so the source holds no second list. The type
 system enforces **completeness but not exactness**: a missing bundle or a missing/mistyped key is a compile
-error, while *extra* keys in a JSON file pass `pnpm typecheck`, because an imported module is not a fresh
+error, while _extra_ keys in a JSON file pass `pnpm typecheck`, because an imported module is not a fresh
 object literal and no excess-property check applies. `index.test.ts` catches them instead: its key, title
 and Intl-code checks iterate `LOCALES`, so they cover the new locale with no edit.
 

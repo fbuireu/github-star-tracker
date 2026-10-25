@@ -16,7 +16,7 @@ The reflexive way to read a file like that is `catch { return { snapshots: [] } 
 [`src/infrastructure/persistence/storage.ts`](../../src/infrastructure/persistence/storage.ts) invites it: `readJsonFile` takes a `fallback`, and both readers
 pass one. For `readStargazers` that fallback answers the question the file asks, because an empty
 `StargazerMap` is exactly what "no file yet" means and rebuilding it costs one Run. For `readHistory` the
-fallback is deliberately scoped to *absence only*: it covers the first Run, when the file does not exist, and
+fallback is deliberately scoped to _absence only_: it covers the first Run, when the file does not exist, and
 it is never reached by a file that exists and cannot be read.
 
 The difference matters because the two failures are indistinguishable from inside the Run and the outcomes
@@ -37,7 +37,6 @@ to do about it. After the parse catch they are one schema, `StoredHistorySchema`
 `describeUnreadableHistory` turns its first issue into the message for the guard that issue belongs to
 ([ADR 0023](./0023-untrusted-input-is-validated-with-zod-mini.md) is why a schema rather than hand-written
 asserts):
-
 - **The parse catch in `readJsonFile`** fires when the bytes are not JSON. It names the file and the parser's
   own error, and says to fix or delete the file on that branch and re-run.
 - **The root of the schema** fires when the bytes are valid JSON but not an object: an array, `null`, or a bare

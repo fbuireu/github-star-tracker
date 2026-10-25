@@ -9,7 +9,6 @@ There are separate chart modules rather than one library call for two reasons: t
 stays self-contained and theme-aware ([ADR 0006](../../docs/adr/0006-hand-rendered-svg-charts.md)), and the
 email path goes through QuickChart because mail clients will not display inline SVG
 ([ADR 0010](../../docs/adr/0010-quickchart-renders-the-email-charts.md)).
-
 - **[`chart-spec.ts`](./chart-spec.ts) decides what a Chart is**, and names which one is wanted. A `ChartRequest` is a
   discriminated union over the `ChartKind`s [GLOSSARY.md](../../GLOSSARY.md) lists (star history, per repo, comparison,
   forecast, per-repo forecast), carrying the `history` to plot, an optional `title` and only that kind's own
@@ -68,7 +67,7 @@ email path goes through QuickChart because mail clients will not display inline 
   the drawing.
 - **[`chart.ts`](./chart.ts) is the email path.** `chartImageUrl({ request, locale, ...style })` is its only chart export,
   producing `quickchart.io` URLs consumed by [`html.ts`](./html.ts). It is a parallel, lower-fidelity rendering of the
-  *same* spec, never an input to the SVG files. A series' fill is its colour at a translucent alpha, written by
+  _same_ spec, never an input to the SVG files. A series' fill is its colour at a translucent alpha, written by
   `translucent` from any of the four hex forms `chart-line-color` accepts (`#rgb`, `#rgba`, `#rrggbb`,
   `#rrggbbaa`), scaling the alpha a colour already carries; the line itself keeps the colour as configured. Every
   URL names Chart.js 4 (`v=` from `CHART.chartJsVersion`), the version the config is written for: QuickChart's
@@ -112,19 +111,18 @@ type `Omit`s the field so the caller cannot believe otherwise. `maxPoints` is li
 
 `renderRun` ([`src/presentation/run.ts`](./run.ts)) is what `@application` calls: one function in, one `RenderedRun` out,
 carrying markdown, html, csv, badge and the chart files.
-
 - **It builds the `ReportModel` once and hands the same one to both dialects, and there is exactly one clock
   read per render.** `now` is injectable, defaults to `new Date()` here, reaches `prepareReportData`, and
   yields both `model.now` (the `YYYY-MM-DD` the header shows) and `model.generatedAt` (the ISO stamp both
   footers show), so a Run crossing midnight dates the markdown Report and the HTML Report alike.
-- **`topRepoNames` is not a parameter, and the linked set is the *drawn* set.** `renderRun` takes the names
+- **`topRepoNames` is not a parameter, and the linked set is the _drawn_ set.** `renderRun` takes the names
   from `topRepositories`, draws the charts first, then builds the model with `drawn`, the set of filenames
   it actually got back. `model.perRepoCharts` is therefore the repositories that have a chart, and both
   dialects iterate it. Ranking alone is not enough: `renderSvgChart` returns `null` for a Top Repository whose
   `forRepo` History is too short to draw (neither its reconstruction nor the Stored History fallback reaches
   `MIN_SNAPSHOTS_FOR_CHART`), and linking by rank would point [`markdown.ts`](./markdown.ts) at an image no Run wrote.
 - **`ChartHistories` exposes two per-repo accessors, `forRepo` and `reconstructedForRepo`, and they are not
-  interchangeable.** A star-history Chart takes `forRepo`; a Forecast, its figures *and* its Chart alike, must
+  interchangeable.** A star-history Chart takes `forRepo`; a Forecast, its figures _and_ its Chart alike, must
   take `reconstructedForRepo`; [`../domain/AGENTS.md`](../domain/AGENTS.md) carries the rule and its reason.
   So the two charts a Report shows for one repository can plot different curves: the star-history one falls
   back to the Stored History when nothing could be reconstructed, the Forecast one is never drawn in that
@@ -164,11 +162,10 @@ are private to `chart-spec.ts`, their only consumer.
 [`report-model.test.ts`](./report-model.test.ts) is its spec. The repository table and the Summary are on every
 Report, a quiet Run and a Run with no active repository included, so the model carries them without a condition and
 no dialect adds one.
-
-- The model resolves `chartHistory` (the history *only* when it is plottable, so the dialects narrow on
+- The model resolves `chartHistory` (the history _only_ when it is plottable, so the dialects narrow on
   `!== null`), `showComparisonChart`, `topRepos`, `isFirstRun`, the Velocity figures and the
   Stargazer outcome.
-- `isFirstRun` comes from `prepareReportData` alongside `baselineSnapshotDate`: that is the *rendered* Baseline
+- `isFirstRun` comes from `prepareReportData` alongside `baselineSnapshotDate`: that is the _rendered_ Baseline
   Snapshot date, or the locale bundle's `report.firstRun` string when there is no Baseline Snapshot, and both are
   decided from the same `baselineSnapshotTimestamp`.
 - **`ReportModel` exposes `chartHistory` and no `hasChartHistory` field**, because the flag would be
@@ -181,7 +178,7 @@ no dialect adds one.
 - `topRepos` comes from `topRepositories` in `@domain/comparison` ([`../domain/AGENTS.md`](../domain/AGENTS.md)),
   and `prepareReportData`'s `sorted` is that same module's `rankByStars`.
 - **`topRepos` is a `TopRepo[]`, not a list of names**: each entry carries the `fullName` the chart request
-  needs *and* the Star Count and Delta the per-repo chart heading shows. `toTopRepos` takes the *membership*
+  needs _and_ the Star Count and Delta the per-repo chart heading shows. `toTopRepos` takes the _membership_
   from `topRepositories` as a Set and reads the figures off `sorted`, so there is no "repo not found" branch
   to cover, no second ranking, and no way for name and figures to drift apart. A caller that only wants
   identities maps to `fullName`, as `html.ts` does for the comparison chart's `repoNames`.
@@ -239,14 +236,14 @@ no dialect adds one.
 - **`null` splits a series into segments**, each drawn as its own path/fill/circle group. Only a segment
   starting at index 0 that is filled and not dashed is anchored to the baseline. Dashed datasets get no fill,
   no circles and no draw animation.
-- **Theme rendering is asymmetric.** `auto` emits light values *plus* a `prefers-color-scheme: dark` override
+- **Theme rendering is asymmetric.** `auto` emits light values _plus_ a `prefers-color-scheme: dark` override
   block; `light` and `dark` emit exactly one palette and **no** media query.
 - **Empty x-axis labels are ticks that must not render.** `buildAxisLabels` returns `''` for suppressed
   positions; `renderSvg` filters those out, thins the rest to a step of `ceil(count / 10)` and always keeps the
   last non-empty index, so up to 11 render.
 - **The two dialects show the same sections.** Both carry a trend column in the repo table, both list New and
   Removed Repositories, both head the per-repo charts with `report.repoChartHeading` and both label the
-  per-repo Forecast tables with `forecast.byRepository`. Markup and section *placement* differ: `html.ts`
+  per-repo Forecast tables with `forecast.byRepository`. Markup and section _placement_ differ: `html.ts`
   puts New and Removed after the charts, and renders the stat boxes where the markdown has a Summary
   section. A section present in one Report and absent from the other is a bug: [`run.test.ts`](./run.test.ts)
   renders the repository table and the Summary through both for a first run, a Run where nothing moved, a Run whose
@@ -264,21 +261,20 @@ no dialect adds one.
 Every escaper lives in [`escaping.ts`](./escaping.ts), behind `escapeFor(dialect)`, and each renderer binds the dialect it
 needs once at module load (`const escapeHtml = escapeFor(EscapeDialect.MARKUP);`).
 
-| Dialect | Escapes |
-| --- | --- |
-| `MARKUP` | `& < > " '` |
-| `XML` | `& < > "`, but not `'`, because every attribute uses double quotes |
-| `MARKDOWN` | `& < >` plus `[ ] ( ) \`` |
-| `CSV` | delimiter, quote, newline, **and** the `= + - @` formula prefix |
-
+| Dialect    | Escapes                                                            |
+| ---------- | ------------------------------------------------------------------ |
+| `MARKUP`   | `& < > " '`                                                        |
+| `XML`      | `& < > "`, but not `'`, because every attribute uses double quotes |
+| `MARKDOWN` | `& < >` plus `[] ( ) \``                                           |
+| `CSV`      | delimiter, quote, newline, **and** the `= + - @` formula prefix    |
 - `markdown.test.ts` and `html.test.ts` each have one case, "escapes every GitHub-sourced string it prints",
   that plants a marker in every GitHub-sourced field. A new field joins that fixture in both.
 
 ## Gotchas
 
 - `COLORS` is an alias for `LIGHT_PALETTE` and `badge.ts` uses it unconditionally, so **the badge is always
-  light-themed** and ignores `chart-theme`, though its number *is* localized.
-- In `ColorPalette`, `white` is the *background* colour: it is `#0d1117` in the dark palette, not white. The
+  light-themed** and ignores `chart-theme`, though its number _is_ localized.
+- In `ColorPalette`, `white` is the _background_ colour: it is `#0d1117` in the dark palette, not white. The
   Badge also draws its text in it, which holds only because the Badge stays on `LIGHT_PALETTE`.
 - **`theme` means different things to the two chart paths.** `svg-chart.ts` can honour `auto` because CSS
   travels with the SVG; `chart.ts` cannot, because `buildChartUrl` bakes `palette.white` into the QuickChart
@@ -289,7 +285,7 @@ needs once at module load (`const escapeHtml = escapeFor(EscapeDialect.MARKUP);`
 - `perRepoChartFile` replaces only the **first** `/`, so a nested-looking name would keep later slashes and
   produce an invalid filename. `perRepoForecastChartFile` shares that stem and prefixes it, so a Forecast
   Chart is `forecast-<owner>-<repo>.svg`, beside the aggregate's `forecast.svg`. The prefix is deliberate:
-  as a *suffix* it would collide with the star-history chart of any repository actually named `*-forecast`,
+  as a _suffix_ it would collide with the star-history chart of any repository actually named `*-forecast`,
   which is a common enough name; the prefix only collides with an owner named `forecast-…`.
 - `repoStarSeries` returns `0`, not `null`, for a repository missing from a Snapshot. A per-repo Chart over the
   Stored History fallback therefore plots `0` for every Snapshot before the repository joined the Tracked Set,

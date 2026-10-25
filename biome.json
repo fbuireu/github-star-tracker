@@ -1,7 +1,16 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
 	"files": {
-		"includes": ["**", "!dist", "!coverage", "!docs/examples"]
+		"includes": [
+			"**",
+			"!dist",
+			"!coverage",
+			"!docs/examples",
+			"!CHANGELOG.md",
+			"!pnpm-lock.yaml",
+			"!ARCHITECTURE.md",
+			"!docs/wiki/Configuration.md"
+		]
 	},
 	"vcs": {
 		"enabled": true,

@@ -11,8 +11,8 @@ Accepted
 DDD splits cleanly in two here, and only one half is negotiable. The **strategic** half, one ubiquitous
 language and a domain that owes nothing to its host, is what the rest rests on, and is settled in
 [ADR 0004](./0004-layered-source-structure.md). The **tactical** half, the catalogue of value objects,
-aggregates, repositories and events, is where the method asks for an abstraction *before the code has earned
-it*. Taken on faith it produces boilerplate that ends up hiding the rules it was supposed to protect: a
+aggregates, repositories and events, is where the method asks for an abstraction _before the code has earned
+it_. Taken on faith it produces boilerplate that ends up hiding the rules it was supposed to protect: a
 wrapper per primitive, a parse and an unwrap at every reader, and a rule that is now spread across a type, a
 guard and a test instead of stated once where someone will read it.
 
@@ -36,13 +36,12 @@ tactical patterns one by one with a reason for each. It leaves exactly one of th
 cannot be decided once for the whole tree: value objects. This file is that decision, taken per concept.
 
 What was missing was not an opinion. It was a written order of questions, so that two reviews of the same
-finding reach the same answer, and so that a finding which was deliberately *not* modelled leaves a trace
+finding reach the same answer, and so that a finding which was deliberately _not_ modelled leaves a trace
 instead of being re-raised every six months.
 
 ## Decision
 
 **The questions, asked in order. A concept earns a type only when the answers carry it there.**
-
 1. **Is the illegal state reachable?** A shape the type permits but no code path produces is a guard, not a
    bug. Protect it the cheapest way that turns it into a compile error or a loud failure, and say in the
    commit message that it is a guard, so the next reader does not mistake the test for a reproduction.
@@ -55,7 +54,7 @@ instead of being re-raised every six months.
 
 **A "no" to every one of them means writing the rule rather than coding it**: a rule in
 [`CODING_STANDARDS.md`](../../CODING_STANDARDS.md), a bullet in the folder's `AGENTS.md`, an assertion in
-[`docs-consistency.test.ts`](../docs-consistency.test.ts), or an ADR. A divergence that is *named* is
+[`docs-consistency.test.ts`](../docs-consistency.test.ts), or an ADR. A divergence that is _named_ is
 finished work rather than a debt, and the maintenance contract in [AGENTS.md](../../AGENTS.md) is what keeps
 the name true.
 
@@ -136,6 +135,6 @@ is, and named here so it is not re-raised as an oversight.
   for the repositories the feature exists for. When the argument is not conclusive, treat it as reachable.
 - It does not license leaving primitives untyped by default. Every question has to fail. A concept
   that reaches an action output or the Data Branch has already answered the boundary question.
-- **Where it bites:** the *Types* section of [`CODING_STANDARDS.md`](../../CODING_STANDARDS.md) points here, and
+- **Where it bites:** the _Types_ section of [`CODING_STANDARDS.md`](../../CODING_STANDARDS.md) points here, and
   each rejected case above is also named in the folder guide that owns it, so a reader meets the rule before
   they meet this file.

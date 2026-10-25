@@ -91,17 +91,16 @@ flowchart TD
 The dashed edges are the ones that end a run red. Each phase below tags everything that can go wrong in it with one of
 three outcomes:
 
-| Outcome | What happens | What you see |
-|---|---|---|
-| **Fatal** | The error reaches the single `try`/`catch` in `trackStars`, which calls `core.setFailed`. Nothing after that point runs: no later phase, and **no output is set**, because the outputs are set last | The step goes red with `Star Tracker failed: <message>`; the stack trace is in the debug log |
-| **Degraded** | The run carries on, and ends green, with less: one repository's stargazers, a chart's history, an email | A warning annotation naming what was lost |
-| **Warning only** | A value is ignored or replaced by a fallback, and nothing else changes | A warning annotation, or, where the tables say so, nothing at all |
+| Outcome          | What happens                                                                                                                                                                                        | What you see                                                                                 |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Fatal**        | The error reaches the single `try`/`catch` in `trackStars`, which calls `core.setFailed`. Nothing after that point runs: no later phase, and **no output is set**, because the outputs are set last | The step goes red with `Star Tracker failed: <message>`; the stack trace is in the debug log |
+| **Degraded**     | The run carries on, and ends green, with less: one repository's stargazers, a chart's history, an email                                                                                             | A warning annotation naming what was lost                                                    |
+| **Warning only** | A value is ignored or replaced by a fallback, and nothing else changes                                                                                                                              | A warning annotation, or, where the tables say so, nothing at all                            |
 
 Once the data branch's worktree is open, it is removed in a `finally` whichever way the run ends, and that removal never
 fails the run. A failure while the branch is still being opened skips that removal ([Cleanup](#cleanup)).
 
 Two edges in the diagram are easy to miss, and they matter:
-
 - **No repositories matched.** When every filter combined leaves nothing, the run warns
   `No repositories matched the configured filters`, renders an empty report, writes the HTML report, sets every output
   to its zeroed value and returns. It never opens the data branch, so nothing is committed and no email is attempted.
@@ -117,7 +116,6 @@ Two edges in the diagram are easy to miss, and they matter:
 
 The first writing run on a fresh data branch takes the same path as every other, with nothing to compare against.
 Everything it reports is therefore "new", and it is worth knowing what that looks like before it lands in an inbox:
-
 - **The branch is created.** The probe finds nothing on the remote, so the run creates an orphan branch with an empty
   commit, and the run's own commit lands on top of it.
 - **Every repository is a New Repository with a delta of `0`.** There is no Baseline Snapshot, so `stars-changed` is
@@ -146,7 +144,7 @@ Everything it reports is therefore "new", and it is worth knowing what that look
 A tiny bootstrap delegating to the application orchestrator:
 
 ```typescript
-import { trackStars } from '@application/tracker';
+import { trackStars } from "@application/tracker";
 trackStars();
 ```
 
@@ -171,7 +169,6 @@ Action Inputs > Config File (YAML) > Built-in Defaults
 ```
 
 **Steps:**
-
 1. File discovery: reads YAML from `config-path` input (default: `star-tracker.yml`). A missing file is fine and only
    logged
 2. YAML parsing via `js-yaml`. An empty or whitespace-only file yields the defaults; a malformed one is logged as a
@@ -233,18 +230,18 @@ velocity_metrics: false
 
 Everything here happens before a single request, so a fatal error costs nothing but the run.
 
-| Situation | Outcome | What you see |
-|---|---|---|
-| `visibility` is not `public`, `private`, `all` or `owned` | **Fatal** | `Invalid visibility "<value>". Must be one of: ...` |
-| `data-branch` breaks git's branch-name rules, or is not a string in the file | **Fatal** | `Invalid data-branch ...` |
-| The file at `config-path` exists but cannot be read (a directory, no permission) | **Fatal** | Node's own read error |
-| `github-token` is empty | **Fatal** | `Input required and not supplied: github-token` |
-| `github-api-url`, or `GITHUB_API_URL` when it is empty, is not an absolute `https` URL | **Fatal** | `Invalid github-api-url "<value>" ...` |
-| The config file is not valid YAML | Warning only | `Failed to parse config file ...`, and the whole file is ignored |
-| The config file is valid YAML but not a mapping | Warning only, silently | Nothing; the file is ignored |
-| Any other input, or an enum in the file, is invalid | Warning only | `Invalid <input> "<value>". ...`, then the next source or the default |
-| A non-enum value in the file is invalid | Warning only, silently | Nothing; the default applies |
-| `read-only` is on with a `notification-threshold` other than `0` | Warning only | A warning that the threshold cannot work on a read-only run |
+| Situation                                                                              | Outcome                | What you see                                                          |
+| -------------------------------------------------------------------------------------- | ---------------------- | --------------------------------------------------------------------- |
+| `visibility` is not `public`, `private`, `all` or `owned`                              | **Fatal**              | `Invalid visibility "<value>". Must be one of: ...`                   |
+| `data-branch` breaks git's branch-name rules, or is not a string in the file           | **Fatal**              | `Invalid data-branch ...`                                             |
+| The file at `config-path` exists but cannot be read (a directory, no permission)       | **Fatal**              | Node's own read error                                                 |
+| `github-token` is empty                                                                | **Fatal**              | `Input required and not supplied: github-token`                       |
+| `github-api-url`, or `GITHUB_API_URL` when it is empty, is not an absolute `https` URL | **Fatal**              | `Invalid github-api-url "<value>" ...`                                |
+| The config file is not valid YAML                                                      | Warning only           | `Failed to parse config file ...`, and the whole file is ignored      |
+| The config file is valid YAML but not a mapping                                        | Warning only, silently | Nothing; the file is ignored                                          |
+| Any other input, or an enum in the file, is invalid                                    | Warning only           | `Invalid <input> "<value>". ...`, then the next source or the default |
+| A non-enum value in the file is invalid                                                | Warning only, silently | Nothing; the default applies                                          |
+| `read-only` is on with a `notification-threshold` other than `0`                       | Warning only           | A warning that the threshold cannot work on a read-only run           |
 
 [Configuration](Configuration#validation) has the full rules for each input.
 
@@ -259,12 +256,12 @@ Everything here happens before a single request, so a fatal error costs nothing 
 Queries `GET /user/repos` with pagination (`100` per page), sorted by full name. The `visibility` config maps to API
 params:
 
-| Config Value | API Params |
-|---|---|
-| `public` | `visibility=public` |
-| `private` | `visibility=private` |
-| `all` | `visibility=all` |
-| `owned` | `visibility=all, affiliation=owner` |
+| Config Value | API Params                          |
+| ------------ | ----------------------------------- |
+| `public`     | `visibility=public`                 |
+| `private`    | `visibility=private`                |
+| `all`        | `visibility=all`                    |
+| `owned`      | `visibility=all, affiliation=owner` |
 
 Every request goes through `@octokit/plugin-retry`, which retries a failed request three times, unless its status is
 one it never retries: `400`, `401`, `403`, `404`, `410`, `422` and `451`. A `429`, a server error and a network failure
@@ -282,7 +279,6 @@ Transforms GitHub API objects into the domain `RepoInfo` schema, flattening `own
 **File:** [`src/domain/tracked-set.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/tracked-set.ts) > `resolveTrackedSet()`
 
 Client-side filtering pipeline, in this order:
-
 1. **Org whitelist** (`onlyOrgs`) - restricts to owners whose name matches a listed name or `/regex/`
 2. **Whitelist** (`onlyRepos`) - short-circuits everything below it, on the set step 1 already narrowed
 3. **Archived** - removes archived repos unless `includeArchived` is `true`
@@ -299,15 +295,15 @@ What survives is the **Tracked Set**. The rules are pure and return counts rathe
 
 Listing repositories is all or nothing: a run never measures part of an account.
 
-| Situation | Outcome | What you see |
-|---|---|---|
-| The token is expired, revoked or mistyped (`401`) | **Fatal** | `Failed to fetch repositories from GitHub API: HTTP 401 Bad credentials. Verify that your github-token has the correct permissions.` |
-| The token cannot list repositories, typically the workflow's own `GITHUB_TOKEN` (`403`) | **Fatal** | The same message with `HTTP 403 Resource not accessible by integration` |
-| The rate limit is exhausted (`403`) | **Fatal**, never retried | `HTTP 403 API rate limit exceeded ...`, followed by the same permissions hint, which is misleading here: the token is fine, the quota is not. See [Troubleshooting](Troubleshooting#api-rate-limit-exceeded-with-a-permissions-hint) |
-| A `429`, a server error or a network failure | Retried three times, then **Fatal** | The same message with the final status |
-| A page, or a repository row, does not have the shape the action reads | **Fatal** | `GitHub returned a repository list this action cannot read: <path> ...`, without the permissions hint |
-| A filter pattern is `/.../` but does not compile | Warning only | `Ignoring invalid pattern "..."`, and the pattern matches nothing |
-| No repository survives the filters | Green, cut short | `No repositories matched the configured filters`, then the empty path above |
+| Situation                                                                               | Outcome                             | What you see                                                                                                                                                                                                                         |
+| --------------------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| The token is expired, revoked or mistyped (`401`)                                       | **Fatal**                           | `Failed to fetch repositories from GitHub API: HTTP 401 Bad credentials. Verify that your github-token has the correct permissions.`                                                                                                 |
+| The token cannot list repositories, typically the workflow's own `GITHUB_TOKEN` (`403`) | **Fatal**                           | The same message with `HTTP 403 Resource not accessible by integration`                                                                                                                                                              |
+| The rate limit is exhausted (`403`)                                                     | **Fatal**, never retried            | `HTTP 403 API rate limit exceeded ...`, followed by the same permissions hint, which is misleading here: the token is fine, the quota is not. See [Troubleshooting](Troubleshooting#api-rate-limit-exceeded-with-a-permissions-hint) |
+| A `429`, a server error or a network failure                                            | Retried three times, then **Fatal** | The same message with the final status                                                                                                                                                                                               |
+| A page, or a repository row, does not have the shape the action reads                   | **Fatal**                           | `GitHub returned a repository list this action cannot read: <path> ...`, without the permissions hint                                                                                                                                |
+| A filter pattern is `/.../` but does not compile                                        | Warning only                        | `Ignoring invalid pattern "..."`, and the pattern matches nothing                                                                                                                                                                    |
+| No repository survives the filters                                                      | Green, cut short                    | `No repositories matched the configured filters`, then the empty path above                                                                                                                                                          |
 
 ---
 
@@ -367,11 +363,10 @@ sequenceDiagram
 ```
 
 Step by step:
-
 1. Confirm the process is inside a checked-out repository (`git rev-parse --is-inside-work-tree`)
 2. Configure Git identity (`github-actions[bot]`)
 3. Check if the data branch exists on the remote (`git ls-remote --heads`), reading **empty output** as "absent". A
-   probe that *fails* is never read that way: a network, DNS or auth failure would otherwise build an orphan and push
+   probe that _fails_ is never read that way: a network, DNS or auth failure would otherwise build an orphan and push
    it over the real branch
 4. Remove a stale worktree if one is present
 5. Refuse a read-only run when the branch does not exist
@@ -395,16 +390,16 @@ that keeps its workspace.
 
 ### What can go wrong in Phase 3
 
-| Situation | Outcome | What you see |
-|---|---|---|
-| No repository is checked out | **Fatal** | `This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.` |
-| git refuses the checkout (`detected dubious ownership`), or is not installed | **Fatal** | `Git command failed: "git rev-parse --is-inside-work-tree"` with git's own text |
-| The remote probe fails (network, DNS, credentials) | **Fatal** | `Git command failed: ...` with git's own text, never a silently created branch |
-| The branch is absent and the run is read-only | **Fatal** | `Branch "<name>" does not exist on the remote and this is a read-only run, so it cannot be created. ...` |
-| The branch is on the remote, but `git fetch` or `git worktree add` fails: a network failure after the probe, or a `.<data-branch>` path git cannot reuse, such as a non-empty directory that is not a worktree, or a worktree git still has registered after its directory was deleted | **Fatal** | `Git command failed: "git worktree add ..."` (or `fetch`) with git's own text, such as `already exists` |
-| The branch is absent and the run writes | Expected on a first run | `Branch "<name>" does not exist on remote, will create it` |
-| Creating the orphan fails at `worktree add --detach`, `checkout --orphan` or the empty commit | **Fatal** | `Git command failed: ...` with git's own text |
-| A stale worktree, or the final one, cannot be removed | Debug log only | Nothing in the normal log; the run carries on, and a non-empty path left in place then fails `worktree add`, above |
+| Situation                                                                                                                                                                                                                                                                              | Outcome                 | What you see                                                                                                                |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| No repository is checked out                                                                                                                                                                                                                                                           | **Fatal**               | `This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.` |
+| git refuses the checkout (`detected dubious ownership`), or is not installed                                                                                                                                                                                                           | **Fatal**               | `Git command failed: "git rev-parse --is-inside-work-tree"` with git's own text                                             |
+| The remote probe fails (network, DNS, credentials)                                                                                                                                                                                                                                     | **Fatal**               | `Git command failed: ...` with git's own text, never a silently created branch                                              |
+| The branch is absent and the run is read-only                                                                                                                                                                                                                                          | **Fatal**               | `Branch "<name>" does not exist on the remote and this is a read-only run, so it cannot be created. ...`                    |
+| The branch is on the remote, but `git fetch` or `git worktree add` fails: a network failure after the probe, or a `.<data-branch>` path git cannot reuse, such as a non-empty directory that is not a worktree, or a worktree git still has registered after its directory was deleted | **Fatal**               | `Git command failed: "git worktree add ..."` (or `fetch`) with git's own text, such as `already exists`                     |
+| The branch is absent and the run writes                                                                                                                                                                                                                                                | Expected on a first run | `Branch "<name>" does not exist on remote, will create it`                                                                  |
+| Creating the orphan fails at `worktree add --detach`, `checkout --orphan` or the empty commit                                                                                                                                                                                          | **Fatal**               | `Git command failed: ...` with git's own text                                                                               |
+| A stale worktree, or the final one, cannot be removed                                                                                                                                                                                                                                  | Debug log only          | Nothing in the normal log; the run carries on, and a non-empty path left in place then fails `worktree add`, above          |
 
 A read-only run may never bring the data branch into existence, so it stops rather than creating one and leaving it
 unpushed. Point `data-branch` at the branch your tracking workflow maintains, or drop `read-only` for one run so it
@@ -422,12 +417,12 @@ The first thing the run does with the worktree is read `stars-data.json`. Guards
 and each of them **fails the run** rather than continuing on a guess, because silently reading a populated data branch
 as empty would append a snapshot over the top of a discarded record:
 
-| Situation | What happens |
-|---|---|
-| The file is not valid JSON | The run stops and names the parse error, asking you to fix or delete the file on the data branch |
-| The file is valid JSON but not an object (`null`, an array, a number, a string) | The run stops rather than reading it as an empty history |
-| The file declares a `version` higher than this action writes | The run stops and asks you to upgrade the action, or to point `data-branch` at a branch this version wrote |
-| The file is an object but its `snapshots` key is not an array | The run stops rather than reading it as an empty history |
+| Situation                                                                                  | What happens                                                                                                              |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| The file is not valid JSON                                                                 | The run stops and names the parse error, asking you to fix or delete the file on the data branch                          |
+| The file is valid JSON but not an object (`null`, an array, a number, a string)            | The run stops rather than reading it as an empty history                                                                  |
+| The file declares a `version` higher than this action writes                               | The run stops and asks you to upgrade the action, or to point `data-branch` at a branch this version wrote                |
+| The file is an object but its `snapshots` key is not an array                              | The run stops rather than reading it as an empty history                                                                  |
 | A snapshot, one of its repository entries or `starsAtLastNotification` has the wrong shape | The run stops and names the path and what it found there, e.g. `snapshots[3].repos[0].stars (expected number, found "7")` |
 
 `version` is stamped as the first key of the file by the writer and stripped again on read, so it never
@@ -449,12 +444,12 @@ The sections that follow describe what it does inside.
 One snapshot of the Stored History is picked as the **baseline snapshot**. The `compare-against` input (config key
 `compare_against`) decides which one:
 
-| Value | Baseline Snapshot |
-|---|---|
-| `last-run` (default) | The most recent stored snapshot |
-| `24h` | The most recent snapshot at least 24 hours old, less a 6-hour tolerance: at least 18 hours |
-| `7d` | The most recent snapshot at least 7 days old, less the same tolerance: at least 6 days and 18 hours |
-| `30d` | The most recent snapshot at least 30 days old, less the same tolerance: at least 29 days and 18 hours |
+| Value                | Baseline Snapshot                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------------------- |
+| `last-run` (default) | The most recent stored snapshot                                                                       |
+| `24h`                | The most recent snapshot at least 24 hours old, less a 6-hour tolerance: at least 18 hours            |
+| `7d`                 | The most recent snapshot at least 7 days old, less the same tolerance: at least 6 days and 18 hours   |
+| `30d`                | The most recent snapshot at least 30 days old, less the same tolerance: at least 29 days and 18 hours |
 
 The tolerance exists so a scheduled run that starts a few minutes late does not fall just short of its own window
 and silently compare against something older than you asked for.
@@ -462,8 +457,7 @@ and silently compare against something older than you asked for.
 The current star counts are then diffed against that snapshot, so the baseline defines the `new-stars`, `lost-stars` and `stars-changed` outputs, the total delta, and the "Compared to snapshot from ..." line in the report.
 
 **Edge cases:**
-
-- **History shorter than the window:** falls back to the oldest snapshot available. The reported period is then *shorter* than the one requested, and the report's "Compared to" date shows exactly how far back it really goes
+- **History shorter than the window:** falls back to the oldest snapshot available. The reported period is then _shorter_ than the one requested, and the report's "Compared to" date shows exactly how far back it really goes
 - **First run:** there is no history, therefore no baseline (see the `compareStars()` edge cases below)
 
 The time windows make a genuine daily, weekly or monthly digest possible even when the tracker runs more frequently than that.
@@ -472,11 +466,11 @@ The baseline choice only changes what the current run is compared against; it ne
 
 Those do not share one series, though, and the difference is worth knowing:
 
-| Section | Series it reads |
-|---|---|
-| Charts | the Reconstructed History, falling back to the Stored History when the reconstruction has fewer than 2 points |
-| Forecast | the same aggregate Reconstructed History the charts use |
-| Velocity | the **Stored History**, always |
+| Section  | Series it reads                                                                                               |
+| -------- | ------------------------------------------------------------------------------------------------------------- |
+| Charts   | the Reconstructed History, falling back to the Stored History when the reconstruction has fewer than 2 points |
+| Forecast | the same aggregate Reconstructed History the charts use                                                       |
+| Velocity | the **Stored History**, always                                                                                |
 
 `renderRun` passes the two under separate names for that reason. Velocity is a rate over real elapsed time
 between two runs, so it needs snapshots the tracker actually took; feeding it the reconstruction would make
@@ -487,14 +481,12 @@ it an average over a chart bucket whose width follows `chart-max-points`.
 **File:** [`src/domain/comparison.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/comparison.ts) > `compareStars()`
 
 Pure function computing the diff between current repos and the selected baseline snapshot:
-
 1. Index the baseline state into a hash map
 2. Compute per-repo deltas (current - baseline)
 3. Detect new repos (`isNew`) and removed repos (`isRemoved`)
 4. Aggregate summary: `totalStars`, `totalDelta`, `newStars`, `lostStars`, `changed`
 
 **Edge cases:**
-
 - First run: there is no baseline, so every repo is `isNew: true` with `previous: null` and `delta: 0`. New
   repos never inflate `newStars`, but they do make `summary.changed` true
 - Repo renamed or transferred: appears as removed + new, and its whole count is reported as lost
@@ -503,7 +495,6 @@ Pure function computing the diff between current repos and the selected baseline
 ### Snapshot Management
 
 **File:** `src/domain/snapshot.ts`
-
 - The `compare-against: last-run` baseline is the most recent snapshot that parses, resolved inside
   `getBaselineSnapshot` (the walk-back is module-private)
 - `addSnapshot({ history, snapshot, maxHistory })` returns a new `History` with the snapshot appended and old entries pruned beyond `maxHistory`
@@ -512,11 +503,11 @@ Both are pure functions returning new objects (no mutation). `addSnapshot()` run
 
 ### What can go wrong in Phase 4
 
-| Situation | Outcome | What you see |
-|---|---|---|
-| `stars-data.json` fails any guard in the table above | **Fatal** | `stars-data.json on the data branch ...`, naming what is wrong and how to fix it |
-| More snapshots are stored than `max-history` now allows | Warning only | `max-history is N but M snapshots are stored, so this run drops the oldest K. ...`; once this run pushes, they are gone |
-| A snapshot's `timestamp` does not parse | Warning only, silently | It is skipped when picking the baseline, and the next snapshot that parses is used |
+| Situation                                               | Outcome                | What you see                                                                                                            |
+| ------------------------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `stars-data.json` fails any guard in the table above    | **Fatal**              | `stars-data.json on the data branch ...`, naming what is wrong and how to fix it                                        |
+| More snapshots are stored than `max-history` now allows | Warning only           | `max-history is N but M snapshots are stored, so this run drops the oldest K. ...`; once this run pushes, they are gone |
+| A snapshot's `timestamp` does not parse                 | Warning only, silently | It is skipped when picking the baseline, and the next snapshot that parses is used                                      |
 
 ---
 
@@ -525,7 +516,6 @@ Both are pure functions returning new objects (no mutation). `addSnapshot()` run
 **Files:** [`src/infrastructure/github/stargazers.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/infrastructure/github/stargazers.ts), [`src/domain/stargazers.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/stargazers.ts)
 
 Stargazers are fetched whenever charts are enabled (`include-charts: true`, the default) **OR** `track-stargazers: true`, because the Reconstructed History behind the charts needs each star's `starred_at` date. With both off, this phase is skipped entirely.
-
 1. **Fetch:** queries `GET /repos/{owner}/{repo}/stargazers` with the `star+json` media type to get `starred_at`
    timestamps. Paginated at 100 per page, one repository after another, never in parallel, because parallel requests
    trip GitHub's secondary rate limit. A full fetch stops at the first page that is not full, or at page 400, the
@@ -546,7 +536,6 @@ rather than overwritten.
 
 The diff compares against the logins stored under the repository's **full name**. A repository with no entry there
 has nothing to be compared with, so every one of its stargazers is reported as new:
-
 - **The first run with `track-stargazers` on**, whether the data branch is fresh or has run for months without it.
   Every stargazer of every repository is new at once.
 - **A repository that joins the Tracked Set**: created, unarchived, or let in by an edited filter.
@@ -561,17 +550,17 @@ Each of these settles on the following run, once the entry exists.
 
 One repository's stargazers never fail the run: a failure costs that repository's history and diff, not the run.
 
-| Situation | Outcome | What you see |
-|---|---|---|
-| The first page fails: `403` or `404` for a token whose user is not an admin or collaborator, a `403` rate limit, or a `429` or server error that survived three retries | Degraded | `Failed to fetch stargazers for <repo>: HTTP <status> ...`; its chart falls back to the Stored History and the diff skips it |
-| The list comes back empty for a repository that has stars | Degraded | `Stargazers for <repo> came back empty even though it has N stars ...`, with the same consequences |
-| A later page fails | Degraded | `Stopped fetching stargazers for <repo> at page N ...; keeping the M fetched so far`; its chart is drawn from those and ramped to the true total, and the diff skips it |
-| A full fetch reaches page 400 | Degraded | `... hit GitHub's pagination ceiling ...`; the oldest 40,000 are charted and ramped, and the diff skips it |
-| Some pages of a sampled repository fail | Degraded | `Skipped N/M sampled stargazer pages for <repo> ...`; the rest are charted |
-| No stargazer carries a usable `starred_at` | Degraded | `Stargazers for <repo> came back without usable starred_at dates ...` |
-| A page has a shape the action cannot read (a `null` user) | Degraded | The same warning as a failed request, naming the path |
-| `stargazers.json` is not valid JSON | **Fatal** | `stargazers.json on the data branch is not valid JSON (...). Fix or delete the file on that branch and re-run.` |
-| `stargazers.json` parses but is not an object, or an entry is not a list of logins | Warning only, silently | It is repaired: read as empty, or the entry dropped, and those repositories' stargazers are all reported as new |
+| Situation                                                                                                                                                               | Outcome                | What you see                                                                                                                                                            |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The first page fails: `403` or `404` for a token whose user is not an admin or collaborator, a `403` rate limit, or a `429` or server error that survived three retries | Degraded               | `Failed to fetch stargazers for <repo>: HTTP <status> ...`; its chart falls back to the Stored History and the diff skips it                                            |
+| The list comes back empty for a repository that has stars                                                                                                               | Degraded               | `Stargazers for <repo> came back empty even though it has N stars ...`, with the same consequences                                                                      |
+| A later page fails                                                                                                                                                      | Degraded               | `Stopped fetching stargazers for <repo> at page N ...; keeping the M fetched so far`; its chart is drawn from those and ramped to the true total, and the diff skips it |
+| A full fetch reaches page 400                                                                                                                                           | Degraded               | `... hit GitHub's pagination ceiling ...`; the oldest 40,000 are charted and ramped, and the diff skips it                                                              |
+| Some pages of a sampled repository fail                                                                                                                                 | Degraded               | `Skipped N/M sampled stargazer pages for <repo> ...`; the rest are charted                                                                                              |
+| No stargazer carries a usable `starred_at`                                                                                                                              | Degraded               | `Stargazers for <repo> came back without usable starred_at dates ...`                                                                                                   |
+| A page has a shape the action cannot read (a `null` user)                                                                                                               | Degraded               | The same warning as a failed request, naming the path                                                                                                                   |
+| `stargazers.json` is not valid JSON                                                                                                                                     | **Fatal**              | `stargazers.json on the data branch is not valid JSON (...). Fix or delete the file on that branch and re-run.`                                                         |
+| `stargazers.json` parses but is not an object, or an entry is not a list of logins                                                                                      | Warning only, silently | It is repaired: read as empty, or the entry dropped, and those repositories' stargazers are all reported as new                                                         |
 
 ---
 
@@ -600,15 +589,14 @@ Both methods are **time-aware**: they use each point's real timestamp to derive 
 
 The methods are computed in parallel:
 
-| Method | Description | Strength |
-|---|---|---|
-| **Linear Regression** | Least-squares fit of stars over elapsed days, across the whole series | Resilient to noise, captures long-term trends |
-| **Weighted Moving Average** | Per-day growth rates between consecutive points, recent intervals weighted higher | Responsive to acceleration/deceleration |
+| Method                      | Description                                                                       | Strength                                      |
+| --------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------- |
+| **Linear Regression**       | Least-squares fit of stars over elapsed days, across the whole series             | Resilient to noise, captures long-term trends |
+| **Weighted Moving Average** | Per-day growth rates between consecutive points, recent intervals weighted higher | Responsive to acceleration/deceleration       |
 
 Both methods anchor their forecast on the latest observed total (they answer "starting from today's count, where does this trend land in N weeks?") and clamp predictions to `Math.max(0, Math.round(value))`.
 
 Forecasts are computed for:
-
 - **Aggregate** (total stars across all repos)
 - **Per top repo** (top N by star count, configurable via `top-repos`), fitted to that repo's own reconstructed history when it has at least 3 points, and otherwise to the points of the aggregate series that include the repo. A repo that fewer than 3 points include gets no forecast table of its own, rather than one fitted to zeros from before it was tracked.
 
@@ -626,10 +614,10 @@ It reads the newest snapshot and the newest earlier snapshot at least **0.25 day
 (`MIN_RATE_INTERVAL_DAYS`), skipping anything closer so a manual re-run minutes after a scheduled one cannot
 inflate the rate. It is a recent-period rate, never an all-time average.
 
-| Figure | How it is derived |
-|---|---|
-| Stars per day | stars gained over that pair, divided by the elapsed days, rounded to 2 decimals |
-| Growth percent | the same gain as a percentage of the earlier total, rounded to 1 decimal. `null` when that earlier total is `0`, since there is nothing to be a percentage of |
+| Figure                 | How it is derived                                                                                                                                                            |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stars per day          | stars gained over that pair, divided by the elapsed days, rounded to 2 decimals                                                                                              |
+| Growth percent         | the same gain as a percentage of the earlier total, rounded to 1 decimal. `null` when that earlier total is `0`, since there is nothing to be a percentage of                |
 | Days to next milestone | `ceil((next milestone - current total) / stars per day)`, using the already-rounded rate. `null` when the rate is not positive, and `null` at or above the largest milestone |
 
 The section returns nothing at all when there are fewer than two snapshots, when the newest timestamp does
@@ -659,7 +647,6 @@ Decides which sections a report has and what is in them: filters active/new/remo
 **File:** [`src/presentation/markdown.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/markdown.ts) > `generateMarkdownReport()`
 
 Produces GitHub Flavored Markdown with:
-
 1. Header (total stars, delta, date)
 2. Comparison note to the baseline snapshot ("Compared to snapshot from ...", dated per `compare-against`)
 3. Chart sections (SVG references: `./charts/star-history.svg`, etc.)
@@ -683,7 +670,6 @@ Self-contained HTML with inline CSS for email compatibility. Uses QuickChart.io 
 **File:** [`src/presentation/csv.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/csv.ts) > `generateCsvReport()`
 
 Machine-readable CSV with one row per tracked repository. Columns: `repository`, `owner`, `name`, `stars`, `previous`, `delta`, `status`. Fields containing a comma, a double quote or a line break are quoted per RFC 4180, and a field starting with `=`, `+`, `-` or `@` is prefixed with `'` and quoted, so a spreadsheet does not run it as a formula.
-
 - `status` is `active`, `new` (absent from the Baseline Snapshot), or `removed` (in it, absent now)
 - `previous` is empty and `delta` is `0` for new repos; a removed repo has `stars` of `0` and a `delta` of minus its `previous`
 
@@ -695,12 +681,12 @@ Available as both a file on the data branch (`stars-data.csv`) and an action out
 
 Generates self-contained animated SVG charts committed to `charts/` on the data branch:
 
-| Chart | File | Description |
-|---|---|---|
-| Star History | `charts/star-history.svg` | Total stars over time with milestone markers |
-| Per-Repo | `charts/{owner}-{repo}.svg` | Individual repo history |
-| Comparison | `charts/comparison.svg` | Top N repos overlaid |
-| Forecast | `charts/forecast.svg` | Historical + projected trends (dashed lines) |
+| Chart             | File                                 | Description                                   |
+| ----------------- | ------------------------------------ | --------------------------------------------- |
+| Star History      | `charts/star-history.svg`            | Total stars over time with milestone markers  |
+| Per-Repo          | `charts/{owner}-{repo}.svg`          | Individual repo history                       |
+| Comparison        | `charts/comparison.svg`              | Top N repos overlaid                          |
+| Forecast          | `charts/forecast.svg`                | Historical + projected trends (dashed lines)  |
 | Per-Repo Forecast | `charts/forecast-{owner}-{repo}.svg` | One repo's history + its own projected trends |
 
 Features: smooth curves (`monotone` by default, several shapes available), CSS draw-line animation, fade-in point markers, nice Y-axis steps, locale-aware date labels, legend (for multi-series).
@@ -737,23 +723,23 @@ from the old baseline and notifies again
 
 Controls when notifications fire. A notification always requires that something actually changed:
 
-| Threshold Value | Behavior |
-|---|---|
-| `0` (default) | Notify on every run with changes |
-| `N` (number) | Notify when accumulated change since last notification >= N |
-| `auto` | Adaptive: 1 (<= 50 stars), 5 (<= 200), 10 (<= 500), 20 (> 500) |
+| Threshold Value | Behavior                                                       |
+| --------------- | -------------------------------------------------------------- |
+| `0` (default)   | Notify on every run with changes                               |
+| `N` (number)    | Notify when accumulated change since last notification >= N    |
+| `auto`          | Adaptive: 1 (<= 50 stars), 5 (<= 200), 10 (<= 500), 20 (> 500) |
 
 `starsAtLastNotification` is persisted in `stars-data.json`, and the accumulated change is measured against
 that stored value rather than against the previous run: the counter does **not** reset on runs that do not
 notify, it keeps accumulating until it trips.
 
-Whether a run advances it depends on the decision *and* on what the transport did. The outcomes:
+Whether a run advances it depends on the decision _and_ on what the transport did. The outcomes:
 
-| The run decided to notify, and the send was | Baseline |
-|---|---|
-| Successful | advances to the current total |
-| Never attempted, because no SMTP is configured at all | advances to the current total, because the `should-notify` output *is* the notification here |
-| Attempted and failed, including an `smtp-host` with an empty `email-to` | held back, so the accumulated change is not lost |
+| The run decided to notify, and the send was                             | Baseline                                                                                     |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Successful                                                              | advances to the current total                                                                |
+| Never attempted, because no SMTP is configured at all                   | advances to the current total, because the `should-notify` output _is_ the notification here |
+| Attempted and failed, including an `smtp-host` with an empty `email-to` | held back, so the accumulated change is not lost                                             |
 
 Only an attempted-and-failed send holds it. A run that decides **not** to notify never touches it, whatever the
 transport, and a run that saves nothing (a read-only run, or one whose push is refused) leaves the stored value where
@@ -762,10 +748,10 @@ whole cycle.
 
 The `notification-mode` input (config key `notification_mode`) decides how that accumulated change is measured:
 
-| Mode | Behavior |
-|---|---|
-| `net` (default) | The absolute change in total stars since the last notification. Gains and losses across repos cancel out, and a large **drop** also reaches the threshold |
-| `gains` | Only upward movement counts. The threshold is reached when the total has risen by at least N since the last notification; a drop never triggers a notification. |
+| Mode            | Behavior                                                                                                                                                        |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `net` (default) | The absolute change in total stars since the last notification. Gains and losses across repos cancel out, and a large **drop** also reaches the threshold       |
+| `gains`         | Only upward movement counts. The threshold is reached when the total has risen by at least N since the last notification; a drop never triggers a notification. |
 
 `notification-threshold: '0'` still means "notify on every run with changes", regardless of mode.
 
@@ -776,7 +762,6 @@ and then settles; raising the threshold on a branch that has been notifying fire
 ### Email
 
 **File:** [`src/infrastructure/notification/email.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/infrastructure/notification/email.ts)
-
 - `getEmailConfig()` reads SMTP inputs; returns `null` if `smtp-host` is not set
 - The email is attempted when SMTP is configured and the Notification is due, or `send-on-no-changes` is on
 - `sendEmail()` uses `nodemailer` with auto-detected `secure` mode (port 465 = SSL, else STARTTLS)
@@ -787,13 +772,13 @@ and then settles; raising the threshold on a branch that has been notifying fire
 
 Email never fails a run: every outcome below ends green, and only decides whether the baseline moves.
 
-| Situation | Outcome | What you see |
-|---|---|---|
-| The SMTP send throws (connection, auth, TLS) | Degraded | `Failed to send email: <reason>`; `notification-sent` is `false` and the baseline is held |
-| `smtp-host` is set but `email-to` is empty | Degraded | `SMTP configured but no email-to address provided, skipping email`; counted as a failed delivery, so the baseline is held |
-| The server refuses some recipients | Warning only | `Email rejected for: <addresses>`; still counted as sent, so the baseline advances |
-| `smtp-port` is not a port | Warning only | `Invalid smtp-port "<value>". Falling back to 587.`, which also switches the transport to STARTTLS |
-| SMTP is configured but nothing is due | Info | `Notification threshold not reached, skipping email` or `No stars changed since the Baseline Snapshot, skipping email` |
+| Situation                                    | Outcome      | What you see                                                                                                              |
+| -------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| The SMTP send throws (connection, auth, TLS) | Degraded     | `Failed to send email: <reason>`; `notification-sent` is `false` and the baseline is held                                 |
+| `smtp-host` is set but `email-to` is empty   | Degraded     | `SMTP configured but no email-to address provided, skipping email`; counted as a failed delivery, so the baseline is held |
+| The server refuses some recipients           | Warning only | `Email rejected for: <addresses>`; still counted as sent, so the baseline advances                                        |
+| `smtp-port` is not a port                    | Warning only | `Invalid smtp-port "<value>". Falling back to 587.`, which also switches the transport to STARTTLS                        |
+| SMTP is configured but nothing is due        | Info         | `Notification threshold not reached, skipping email` or `No stars changed since the Baseline Snapshot, skipping email`    |
 
 ---
 
@@ -808,14 +793,14 @@ everything.
 
 Then `publish()` writes the data branch, in this order:
 
-| Function | File Written |
-|---|---|
-| `writeHistory()` | `stars-data.json` |
-| `writeArtefact()` (`REPORT`) | `README.md` |
-| `writeArtefact()` (`BADGE`) | `stars-badge.svg` |
-| `writeArtefact()` (`CSV`) | `stars-data.csv` |
-| `writeStargazers()` | `stargazers.json`, only with `track-stargazers` on |
-| `writeChart()` | `charts/{filename}`, one call per chart |
+| Function                     | File Written                                       |
+| ---------------------------- | -------------------------------------------------- |
+| `writeHistory()`             | `stars-data.json`                                  |
+| `writeArtefact()` (`REPORT`) | `README.md`                                        |
+| `writeArtefact()` (`BADGE`)  | `stars-badge.svg`                                  |
+| `writeArtefact()` (`CSV`)    | `stars-data.csv`                                   |
+| `writeStargazers()`          | `stargazers.json`, only with `track-stargazers` on |
+| `writeChart()`               | `charts/{filename}`, one call per chart            |
 
 All of those writes happen in one `publish()` call, followed by chart pruning and then the commit. Anything written
 after the commit would not be staged.
@@ -836,7 +821,6 @@ On a read-only run this step is skipped entirely: everything above has already b
 worktree, the run logs `Read-only run: leaving <branch> untouched`, and the worktree is discarded unpushed.
 
 Otherwise:
-
 1. `git add -A`
 2. `git diff --cached --quiet` (skip if no changes)
 3. `git commit -m "Update star data: 1523 total (+15)"`
@@ -847,7 +831,7 @@ with its own time, so there is always something to commit, even when no star mov
 per writing run.
 
 A rejected push is the one git failure that gets its own message. The worktree is pinned to
-`origin/<data-branch>` when the run starts and never re-fetched, so two overlapping *writing* runs branch
+`origin/<data-branch>` when the run starts and never re-fetched, so two overlapping _writing_ runs branch
 from the same commit and the second push is refused as non-fast-forward. The run then fails with an
 explanation naming `concurrency` and `read-only` as the two fixes. Every other push failure keeps git's own wording,
 because that detail is the useful part.
@@ -860,7 +844,6 @@ and the worktree is thrown away at the end. That is what lets another workflow (
 a data branch with the workflow that maintains it without the two racing to write.
 
 Consequences follow from nothing being written:
-
 - The branch must already exist. A read-only run refuses to create it (see Phase 3).
 - `starsAtLastNotification` never advances, so a `notification-threshold` other than `0` cannot work on a
   read-only run: it would either fire every time or never. `loadConfig` warns when both are set.
@@ -870,11 +853,11 @@ Consequences follow from nothing being written:
 Everything here happens **after the email went out**, and before any output is set. A fatal error in this phase
 therefore ends a run red that has already notified you, sets no output, and records nothing.
 
-| Situation | Outcome | What you see |
-|---|---|---|
-| Another writing run pushed first | **Fatal** | `Another run pushed to "<branch>" while this one was working, so this run's snapshot was not recorded; its report and any email have already gone out. ...` |
-| The push is refused for any other reason: no `contents: write`, a protected data branch | **Fatal** | `Git command failed: "git ... push ..."` with git's own text |
-| The HTML report cannot be written | **Fatal** | Node's own write error, before anything is pushed |
+| Situation                                                                               | Outcome   | What you see                                                                                                                                                |
+| --------------------------------------------------------------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Another writing run pushed first                                                        | **Fatal** | `Another run pushed to "<branch>" while this one was working, so this run's snapshot was not recorded; its report and any email have already gone out. ...` |
+| The push is refused for any other reason: no `contents: write`, a protected data branch | **Fatal** | `Git command failed: "git ... push ..."` with git's own text                                                                                                |
+| The HTML report cannot be written                                                       | **Fatal** | Node's own write error, before anything is pushed                                                                                                           |
 
 Re-running records the snapshot. Because the Notification Baseline the failed run would have advanced was not pushed
 either, the next run measures from the old one and may send an email much like the last.
@@ -888,19 +871,19 @@ either, the next run measures from the old one and may send an email much like t
 Set once, as the run's last step, whether the run is read-only or not. The empty path sets them too, to zeroed values;
 a run that fails anywhere sets none.
 
-| Output | Description |
-|---|---|
-| `report` | Full Markdown report |
-| `report-html` | HTML report (for email) |
-| `report-html-path` | Filesystem path the HTML report was written to, outside the data branch |
-| `report-csv` | CSV report (for data pipelines) |
-| `total-stars` | Total star count |
-| `stars-changed` | Per-run: whether any counts changed against the baseline (`true`/`false`) |
-| `new-stars` | Per-run: stars gained since the comparison baseline |
-| `lost-stars` | Per-run: stars lost since the comparison baseline |
-| `should-notify` | Cumulative: whether the notification threshold was reached since the last notification fired |
+| Output              | Description                                                                                                                                                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `report`            | Full Markdown report                                                                                                                                                                                                    |
+| `report-html`       | HTML report (for email)                                                                                                                                                                                                 |
+| `report-html-path`  | Filesystem path the HTML report was written to, outside the data branch                                                                                                                                                 |
+| `report-csv`        | CSV report (for data pipelines)                                                                                                                                                                                         |
+| `total-stars`       | Total star count                                                                                                                                                                                                        |
+| `stars-changed`     | Per-run: whether any counts changed against the baseline (`true`/`false`)                                                                                                                                               |
+| `new-stars`         | Per-run: stars gained since the comparison baseline                                                                                                                                                                     |
+| `lost-stars`        | Per-run: stars lost since the comparison baseline                                                                                                                                                                       |
+| `should-notify`     | Cumulative: whether the notification threshold was reached since the last notification fired                                                                                                                            |
 | `notification-sent` | Whether an email actually left the runner. Distinct from `should-notify`: a courtesy send under `send-on-no-changes` sets this without the threshold being reached, and a configured send that failed leaves it `false` |
-| `new-stargazers` | New stargazers detected by diffing against the stored `stargazers.json`, which every writing run rewrites - not affected by `compare-against` (0 if tracking disabled) |
+| `new-stargazers`    | New stargazers detected by diffing against the stored `stargazers.json`, which every writing run rewrites - not affected by `compare-against` (0 if tracking disabled)                                                  |
 
 Per-run vs cumulative. `new-stars`, `lost-stars` and `stars-changed` are per-run figures measured against the baseline selected in Phase 4. They are not cumulative across runs and carry no memory of whether an email was ever sent - with a daily cron and `compare-against: last-run` they mean "gains in the last 24 hours". `should-notify` is the cumulative one: it is driven by `notification-threshold` plus `notification-mode` against `starsAtLastNotification`, and its counter only resets when the threshold trips ([the full rule](Configuration#notification-threshold)).
 

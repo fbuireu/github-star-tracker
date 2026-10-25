@@ -42,7 +42,7 @@ never warns, and `chartCustomMilestones` has its own precedence (see below).
 ## Invariants & rules
 
 - **Precedence, per key: action input, then config-file value, then `DEFAULTS`.** Never reversed. Enum keys
-  use `input || fileValue`, so an empty-string input falls through; everything else uses `??` on the *parsed*
+  use `input || fileValue`, so an empty-string input falls through; everything else uses `??` on the _parsed_
   result, so a value that parses to `false` or `0` still beats the file.
 - A config-file value of the wrong kind is ignored rather than crashing the parser: `min_stars: true` falls
   back to the default. Nothing casts the YAML: `loadConfigFile` returns `unknown` values and each parser or
@@ -61,7 +61,7 @@ never warns, and `chartCustomMilestones` has its own precedence (see below).
 - **Only these throw**: an unknown `visibility` (a non-string one from the file included), an invalid
   `data-branch`, and a config file that exists but cannot be read. Everything else falls back: a bad input other
   than `send-on-no-changes`, a bad enum from either source and malformed YAML warn, and any other bad
-  config-file value is silent (see *Gotchas*). A missing config file is `info`, not a warning.
+  config-file value is silent (see _Gotchas_). A missing config file is `info`, not a warning.
 - `data-branch` validation rejects `''`, `'@'`, whitespace, `~ ^ : ? * [ \`, control characters, the
   sequences `..` `//` `/.` `@{`, a leading `-` `.` `/`, and a trailing `/` `.` `.lock`. It accepts
   `data/star-tracker`, `_star-data`, `stars@v2`, `v1.2.3`, `UPPER_case-1`. A config-file value that is not a
@@ -84,7 +84,7 @@ never warns, and `chartCustomMilestones` has its own precedence (see below).
 - Lists: `parseList` returns `undefined` (not `[]`) for empty input so the file value can still win, while
   `toStringList` **preserves an empty array**, so `only_repos: []` in the file yields `[]` rather than falling
   back to `DEFAULTS`.
-- `chart-custom-milestones` has special-cased precedence: a non-empty *input* wins outright, even when it
+- `chart-custom-milestones` has special-cased precedence: a non-empty _input_ wins outright, even when it
   parses to `[]`, and the file value is not consulted. It keeps finite values `> 0`, de-duplicates and sorts
   ascending, and uses `parseInt` per segment, so `'2500abc'` yields 2500 unlike the strict number parser.
 - Config-file keys are derived mechanically from `Object.keys(DEFAULTS)`. Both `snake_case` and
@@ -110,18 +110,17 @@ precedence trap rather than a lint rule, and why those inputs are safe exception
 It derives the input name with **`toActionInputName`, exported from `loader.ts`**, the same function the fold
 uses, so the test cannot disagree with the loader about what a key is called. It also pins the `outputs:`
 block: every key, alphabetical, each described. That list is the only executable check on the output
-contract *from the manifest side*; [`tracker.test.ts`](../application/tracker.test.ts) closes the loop from the code side by comparing the
+contract _from the manifest side_; [`tracker.test.ts`](../application/tracker.test.ts) closes the loop from the code side by comparing the
 names `setOutputs` actually emits against `action.yml`. Between them the contract is checked in both
 directions; the manifest list alone compares a copy of `action.yml` with `action.yml` and cannot notice an
-output going missing from `setOutputs`. What each output *means* is
+output going missing from `setOutputs`. What each output _means_ is
 [`src/application/`](../application/AGENTS.md)'s to document; this folder only checks that the manifest and
 the code agree on the names.
 
-Real defaults therefore live in `defaults.ts` and are only *described* in the `action.yml` prose. Every
+Real defaults therefore live in `defaults.ts` and are only _described_ in the `action.yml` prose. Every
 overridable input does state its default in that prose today, so check `defaults.ts` before trusting a
 description rather than assuming one is missing. Some of those descriptions promise behaviour this folder does
 not implement:
-
 - `chart-max-points` says "capped at 365". That clamp is **not** applied here: `loadConfig` passes the raw
   integer through, and `MAX_HISTORY_BUCKETS` in `@domain/star-history` does the capping.
 - `chart-custom-milestones` says it "Requires chart-milestones to be enabled". Nothing enforces that; the two
@@ -153,5 +152,5 @@ up as an invalid value behaving differently from an absent one rather than as a 
   `include_forks: [yes]` falls back to the default without a warning.
 - **Warning wording is asserted verbatim**, including the Oxford comma
   (`'Invalid locale "fr". Must be "en", "es", "ca", or "it". Falling back to "en"'`). The generic parser
-  message deliberately does *not* name a fallback, because the config file may still supply one.
+  message deliberately does _not_ name a fallback, because the config file may still supply one.
 - [`loader.test.ts`](./loader.test.ts) is the real specification for this folder.

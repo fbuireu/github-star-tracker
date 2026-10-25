@@ -3,15 +3,15 @@
 The layer that owns the Run's outbound side effects: the GitHub REST API, the `git` CLI, every file the Run
 writes and SMTP. The Action log and the outputs are not among them: every shell layer logs, and
 `@application` sets the outputs. It is the only layer that reaches the network, which is not the same as being
-the only one that performs I/O. Adapters only, no framework. None of them decide *when* work happens:
+the only one that performs I/O. Adapters only, no framework. None of them decide _when_ work happens:
 `@application/tracker` is the composition root and their only consumer.
 
-| Folder | Owns | Side effects |
-| --- | --- | --- |
-| `github/` | Repo discovery, filtering, stargazer pagination | Network (octokit) |
-| `git/` | `git` CLI wrapper and the data-branch worktree lifecycle | `child_process`, fs |
-| `persistence/` | The Data Branch lifecycle, filenames, reads/writes, commit & push | fs, `git` (via `../git/*`) |
-| `notification/` | SMTP config from action inputs, sending the digest | `@actions/core` inputs, SMTP |
+| Folder          | Owns                                                              | Side effects                 |
+| --------------- | ----------------------------------------------------------------- | ---------------------------- |
+| `github/`       | Repo discovery, filtering, stargazer pagination                   | Network (octokit)            |
+| `git/`          | `git` CLI wrapper and the data-branch worktree lifecycle          | `child_process`, fs          |
+| `persistence/`  | The Data Branch lifecycle, filenames, reads/writes, commit & push | fs, `git` (via `../git/*`)   |
+| `notification/` | SMTP config from action inputs, sending the digest                | `@actions/core` inputs, SMTP |
 
 `persistence` is the one adapter that imports another: [`persistence/storage.ts`](./persistence/storage.ts) imports
 `../git/commands` and [`persistence/data-branch.ts`](./persistence/data-branch.ts) imports `../git/worktree`.
@@ -37,7 +37,6 @@ The narrowing rules live in `@domain/tracked-set` and read domain vocabulary (`r
 [`tracked-set.test.ts`](../domain/tracked-set.test.ts) asserts them. `resolveTrackedSet` returns `afterOnlyOrgs`,
 `afterOnlyRepos` and `invalidPatterns` as **numbers and strings**; `getRepos` turns them into `core.info` and
 `core.warning` lines.
-
 - **The `accept: application/vnd.github.star+json` header is what returns the dates**, and it is set per
   request, not on the client. Without it GitHub returns bare user objects, with no `user` wrapper and **no
   `starred_at`**, so every page fails `GitHubStargazerRowSchema`, every repository's fetch fails with a warning,
@@ -87,9 +86,9 @@ The narrowing rules live in `@domain/tracked-set` and read domain vocabulary (`r
   back. [`sampling.test.ts`](../domain/sampling.test.ts) asserts that arithmetic on plain numbers, and
   `stargazers.test.ts` asserts only that the fetch reads the pages `sampledPages` plans, so a change to the
   arithmetic fails one file.
-- A *full* fetch cut short, mid-pagination or at the ceiling, reports `stargazers.length` as its `coveredStars`;
+- A _full_ fetch cut short, mid-pagination or at the ceiling, reports `stargazers.length` as its `coveredStars`;
   only the sampled path goes through `@domain`'s `coveredStars`.
-- `sampled` is decided *before* the request, so it stays `true` on failure. The threshold comparison is
+- `sampled` is decided _before_ the request, so it stays `true` on failure. The threshold comparison is
   strict: 1500 stars with threshold 1500 is not sampled. A sampled repo loses new-stargazer detection
   downstream ([ADR 0008](../../docs/adr/0008-sampled-repositories-are-excluded-from-stargazer-diffing.md)).
 - `MAX_REACHABLE_PAGE` is 400 because GitHub only pages through a repo's oldest 40,000 stargazers. It is
@@ -115,32 +114,32 @@ The narrowing rules live in `@domain/tracked-set` and read domain vocabulary (`r
 - **`dataDir` is derived, never hardcoded**: `` `.${dataBranch}` ``. Code that needs the directory must use
   the value **returned** by `initializeDataBranch`. Why a branch at all is
   [ADR 0001](../../docs/adr/0001-star-data-lives-on-a-dedicated-data-branch.md).
-- Subcommands that must run *in* the worktree get `cwd: path.resolve(dataDir)`. `dataDir` is relative, and
+- Subcommands that must run _in_ the worktree get `cwd: path.resolve(dataDir)`. `dataDir` is relative, and
   every path built on it resolves against the process cwd, which is where `worktree add` created the worktree.
 - `initializeDataBranch` runs its steps in this order deliberately: repo guard, commit identity, remote
   probe, stale-worktree removal, read-only guard, then create-orphan or fetch+add. Identity and cleanup
   therefore run even on a read-only run and even on a run about to throw.
 - Branch absence is empty output, never a thrown probe. `ls-remote --heads` exits 0 with no output when
-  nothing matches; `--exit-code` is what turns that into a failure, so it is deliberately *not* passed. A
+  nothing matches; `--exit-code` is what turns that into a failure, so it is deliberately _not_ passed. A
   failing probe propagates git's own text: read as absence, a network, DNS or auth failure would build an
   orphan and push it over the real branch.
-- **Every remote command carries the token, as a *fallback*, not an override.** `authenticatedArgs`
+- **Every remote command carries the token, as a _fallback_, not an override.** `authenticatedArgs`
   ([`git/commands.ts`](./git/commands.ts)) adds it to `ls-remote`, `fetch` and the push. On a repository
   checked out with `persist-credentials: false`, which OpenSSF and zizmor recommend and this repo's own
   checkout steps use, `actions/checkout` persists nothing, and the token is the only credential git has.
 - It does not win against `actions/checkout`, and it is not meant to. `actions/checkout` persists its
   credential under the **URL-scoped** `http.https://github.com/.extraheader`, ours is the **bare**
   `http.extraheader`, and when both match **only the URL-scoped one is sent**. Git accumulates multiple values
-  of the *same* key (two bare, or two URL-scoped, really do send two headers) but a URL-scoped entry replaces
+  of the _same_ key (two bare, or two URL-scoped, really do send two headers) but a URL-scoped entry replaces
   the bare list rather than adding to it. So with the default `persist-credentials: true` the run
   authenticates with checkout's token, and `github-token` is what git uses only when checkout persisted
-  nothing. A leading `-c http.extraheader=` does not clear checkout's entry: an empty *bare* value cannot
-  reset a *URL-scoped* list. Only `-c http.https://github.com/.extraheader=` does, and hardcoding that host
+  nothing. A leading `-c http.extraheader=` does not clear checkout's entry: an empty _bare_ value cannot
+  reset a _URL-scoped_ list. Only `-c http.https://github.com/.extraheader=` does, and hardcoding that host
   would break GitHub Enterprise, so the fallback shape is deliberate. Trace what git sends
   (`GIT_TRACE_CURL`) before adding a reset; reasoning from the config file gets this wrong.
 - `core.setSecret` is not optional here, because `execute` puts the whole argv into its error message.
 - Branch missing + read-only throws, before any worktree exists. A read-only run may never bring the
-  data branch into existence. Branch missing + writable gives an *orphan* branch, so data history shares no
+  data branch into existence. Branch missing + writable gives an _orphan_ branch, so data history shares no
   ancestry with code history; it is local-only until the first push.
 - Branch present means `worktree add` from `origin/<branch>`, leaving HEAD detached, which is exactly why
   `commitAndPush` pushes the refspec `HEAD:<dataBranch>` and not a branch name. Do not "fix" either half
@@ -157,7 +156,6 @@ The one other export consumed from outside this folder is `writeHtmlReport`, whi
 **off** the Data Branch: it takes no `dataDir` and targets `RUNNER_TEMP`, falling back to `process.cwd()`
 when that is unset, so the report survives `cleanup`, exists on read-only runs and on runs where nothing
 matched, and never lands in a commit. On a local run that fallback puts it in the checkout root.
-
 - `initializeDataBranch` returns `dataDir`, `withDataBranch` closes over it and hands it back to `cleanup`, and
   every read and write derives its path from that closure.
 - `publish` is one call, and the order inside it matters: history, report, badge, CSV, the Stargazer map
@@ -217,7 +215,7 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
 - `writeChart` is the only function that creates a directory (`charts/`); every other writer assumes the
   worktree provides `dataDir`.
 - `commitAndPush` is a no-op when nothing changed. It runs `add -A`, then `diff --cached --quiet`; a
-  *successful* exit means no staged changes, so the commit path is the `catch` branch. Do not "fix" that
+  _successful_ exit means no staged changes, so the commit path is the `catch` branch. Do not "fix" that
   inverted-looking try/catch.
 - A rejected push is translated, every other push failure is not. The worktree is pinned to
   `origin/<dataBranch>` at Run start and never re-fetched, so two overlapping writing Runs both branch from
@@ -235,14 +233,14 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
 
 ## notification/
 
-- `smtp-host` is the only mandatory switch. An empty host returns `null` *before* reading any other input,
+- `smtp-host` is the only mandatory switch. An empty host returns `null` _before_ reading any other input,
   and `null` is the caller's master on/off switch.
 - `secure` is derived purely from the port (`port === 465`). There is no `smtp-secure` input.
 - The port is validated. `resolvePort` runs `PortSchema`, which reads the input's leading integer
   (`Number.parseInt`, so `"465 "` and `"465abc"` are `465`) and requires it in `1..MAX_TCP_PORT`. An empty input
   is `587` without a warning; anything else, a non-numeric string included, warns and falls back to `587`. `NaN`
   never reaches nodemailer.
-- Auth is all-or-nothing: `auth` is set only when username *and* password are both truthy, otherwise
+- Auth is all-or-nothing: `auth` is set only when username _and_ password are both truthy, otherwise
   literally `undefined` (a test asserts the value, not an absent key).
 - From-address resolution, in order: a `from` containing `@` is used verbatim; otherwise a `username`
   containing `@` becomes `` `${from} <${username}>` ``; otherwise the bare `from` as a display name.

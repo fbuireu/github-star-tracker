@@ -26,7 +26,7 @@ name: Track Stars
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Daily at midnight UTC
+    - cron: "0 0 * * *" # Daily at midnight UTC
   workflow_dispatch: # Allow manual triggers
 
 permissions:
@@ -73,7 +73,6 @@ Give the first run time. With `include-charts` on (the default) the action walks
 ### Verify It Worked
 
 After the first run:
-
 1. Go to your repository's branch selector and look for `star-tracker-data`
 2. Navigate to `https://github.com/YOUR_USER/YOUR_REPO/tree/star-tracker-data`
 3. You should see:

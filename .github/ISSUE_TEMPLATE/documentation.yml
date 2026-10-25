@@ -1,8 +1,8 @@
 name: Documentation Request
 description: Report a gap, a mistake or an improvement in the documentation
-title: '[Docs]: '
-labels: ['documentation', 'triage']
-assignees: ['fbuireu']
+title: "[Docs]: "
+labels: ["documentation", "triage"]
+assignees: ["fbuireu"]
 body:
   - type: markdown
     attributes:

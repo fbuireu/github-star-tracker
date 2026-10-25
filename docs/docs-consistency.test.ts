@@ -17,7 +17,7 @@ const SVG_LINK_PATTERN = /\]\(([\w.-]+\.svg)\)/g;
 const OUTPUT_KEY_PATTERN = /^ {2}([a-z][a-z-]*):$/gm;
 const LINE_CITATION_PATTERN = /`[\w/.-]+\.ts:\d+/g;
 const SCRIPT_PATTERN = /^pnpm ([a-z][a-z0-9:._-]*)/gm;
-const LAYER_ROW_PATTERN = /^\| `([\w-]+)\/` \| `(@[a-z\d]+)(?:\/\*)?` \|/gm;
+const LAYER_ROW_PATTERN = /^\| `([\w-]+)\/` +\| `(@[a-z\d]+)(?:\/\*)?` +\|/gm;
 const GUIDE = "AGENTS.md";
 const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
 const VERSIONS_SECTION = /^## Versions$([\s\S]*?)^## /m;
@@ -48,7 +48,7 @@ const DATA_FORMAT_VERSION_PATTERN = /const DATA_FORMAT_VERSION = (\d+);/;
 const DOCUMENTED_VERSION_PATTERN = /"version": (\d+)/g;
 const HISTORY_FILE_SURFACES = ["docs/wiki/API-Reference.md", "docs/wiki/Data-Management.md"];
 const I18N_PAGE = "docs/wiki/Internationalization-(i18n).md";
-const I18N_SECTION_ROW_PATTERN = /^\| `(\w+)` \| ((?:`[\w.]+`(?:, )?)+) \|/gm;
+const I18N_SECTION_ROW_PATTERN = /^\| `(\w+)` +\| ((?:`[\w.]+`(?:, )?)+) +\|/gm;
 const I18N_KEY_PATTERN = /`([\w.]+)`/g;
 const FIRST_MERMAID_DIAGRAM_PATTERN = /```mermaid\n[\s\S]*?```/;
 const RUN_DIAGRAM_COPIES = ["README.md", "docs/wiki/How-It-Works.md"];
@@ -122,7 +122,7 @@ interface LayerRow {
 
 function readLayerTable(): LayerRow[] {
 	const lines = read(LAYER_TABLE_DOC).split("\n");
-	const start = lines.indexOf(LAYER_TABLE_HEADER);
+	const start = lines.findIndex((line) => line.replace(/ +/g, " ") === LAYER_TABLE_HEADER);
 
 	expect(start, `${LAYER_TABLE_DOC} no longer holds the layer table`).toBeGreaterThan(-1);
 

@@ -17,5 +17,5 @@ The project is licensed AGPL-3.0-only, chosen over the permissive norm precisely
 ## Consequences
 
 - Anyone who redistributes a modified version, or offers one as a hosted service over a network, must release their complete corresponding source under the same terms. Derivative works cannot be relicensed under more permissive terms, and combining this code into a proprietary product is not possible.
-- Consumers merely *running* the action in their own workflows are unaffected: using it in CI is not distribution and triggers no obligation.
+- Consumers merely _running_ the action in their own workflows are unaffected: using it in CI is not distribution and triggers no obligation.
 - The cost is contribution reach. Some employers restrict staff from contributing to AGPL projects, and some ecosystems and vendors avoid AGPL dependencies by policy.
