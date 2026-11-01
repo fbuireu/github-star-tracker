@@ -1,3 +1,10 @@
+## [1.28.9](https://github.com/fbuireu/github-star-tracker/compare/v1.28.8...v1.28.9) (2026-11-01)
+
+
+### Bug Fixes
+
+* **deps:** update dependency nodemailer to v10.2.1 ([#211](https://github.com/fbuireu/github-star-tracker/issues/211)) ([c852d24](https://github.com/fbuireu/github-star-tracker/commit/c852d24fc514da53e4480297b1882e1e2c7f518a))
+
 ## [1.28.8](https://github.com/fbuireu/github-star-tracker/compare/v1.28.7...v1.28.8) (2026-10-24)
 
 

@@ -26139,7 +26139,7 @@ function getTranslations(locale) {
   return Object.hasOwn(TRANSLATIONS, locale) ? TRANSLATIONS[locale] : FALLBACK_LANG;
 }
 
-// node_modules/.pnpm/zod@4.6.6/node_modules/zod/v4/core/util.js
+// node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js
 var util_exports = {};
 __export(util_exports, {
   BIGINT_FORMAT_RANGES: () => BIGINT_FORMAT_RANGES,
@@ -26995,7 +26995,7 @@ function constantCatch(value) {
   return fn;
 }
 
-// node_modules/.pnpm/zod@4.6.6/node_modules/zod/v4/core/core.js
+// node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/core.js
 var _a;
 var _zodDesc = { value: void 0, enumerable: false };
 var _E = "captureStackTrace" in Error ? Error : null;
@@ -27113,7 +27113,7 @@ function config(newConfig) {
   return globalConfig;
 }
 
-// node_modules/.pnpm/zod@4.6.6/node_modules/zod/v4/core/errors.js
+// node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/errors.js
 function _getMessage() {
   const internals = this._zod;
   internals.message ?? (internals.message = JSON.stringify(internals.def, jsonStringifyReplacer, 2));
@@ -27158,7 +27158,7 @@ var $ZodRealError = $constructor("$ZodError", initializer, void 0, {
   Parent: Error
 });
 
-// node_modules/.pnpm/zod@4.6.6/node_modules/zod/v4/core/parse.js
+// node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/parse.js
 var _parse = (_Err) => {
   const fn = (schema, value, _ctx, _params) => {
     const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
@@ -27256,13 +27256,13 @@ function validateFallback(schema, value, _ctx) {
   return result.issues.length === 0;
 }
 
-// node_modules/.pnpm/zod@4.6.6/node_modules/zod/v4/core/regexes.js
+// node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js
 var httpProtocol = /^https?$/;
 var anyString = /^[\s\S]{0,}$/;
 var number = /^-?\d+(?:\.\d+)?$/;
 var boolean = /^(?:true|false)$/i;
 
-// node_modules/.pnpm/zod@4.6.6/node_modules/zod/v4/core/checks.js
+// node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/checks.js
 var $ZodCheck = /* @__PURE__ */ $constructor("$ZodCheck", (inst, def) => {
   var _a2;
   inst._zod ?? (inst._zod = {});
@@ -27427,14 +27427,14 @@ var $ZodCheckOverwrite = /* @__PURE__ */ $constructor("$ZodCheckOverwrite", (ins
   };
 });
 
-// node_modules/.pnpm/zod@4.6.6/node_modules/zod/v4/core/versions.js
+// node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/versions.js
 var version = {
   major: 4,
   minor: 6,
-  patch: 6
+  patch: 7
 };
 
-// node_modules/.pnpm/zod@4.6.6/node_modules/zod/v4/core/schemas.js
+// node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/schemas.js
 var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
   var _a2;
   inst ?? (inst = {});
@@ -28411,7 +28411,7 @@ function handleRefineResult(result, payload, input, inst) {
   }
 }
 
-// node_modules/.pnpm/zod@4.6.6/node_modules/zod/v4/core/api.js
+// node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/api.js
 function snapshotChecks(def) {
   if (def.checks)
     def.checks = [...def.checks];
@@ -28528,7 +28528,7 @@ function _refine(Class2, fn, _params) {
   return schema;
 }
 
-// node_modules/.pnpm/zod@4.6.6/node_modules/zod/v4/mini/schemas.js
+// node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/mini/schemas.js
 var ZodMiniType = /* @__PURE__ */ $constructor("ZodMiniType", (inst, def) => {
   if (!inst._zod)
     throw new Error("Uninitialized schema in ZodMiniType.");
@@ -28806,7 +28806,7 @@ function describeIssue(issue3) {
   return `${formatIssuePath(issue3.path) || "the value"} (${expected}found ${describeFound(issue3.input)})`;
 }
 
-// node_modules/.pnpm/js-yaml@5.4.3/node_modules/js-yaml/dist/js-yaml.mjs
+// node_modules/.pnpm/js-yaml@5.5.0/node_modules/js-yaml/dist/js-yaml.mjs
 var NOT_RESOLVED = /* @__PURE__ */ Symbol("NOT_RESOLVED");
 function defineScalarTag(tagName, options) {
   return {
@@ -29463,7 +29463,6 @@ var Schema = class Schema2 {
         case "mapping":
           if (tag.matchByTagPrefix) prefix.mapping.push(tag);
           else exact.mapping[tag.tagName] = tag;
-          break;
       }
     }
     const implicitScalarAnyFirstChar = implicitScalarTags.filter((tag) => tag.implicitFirstChars === null);
@@ -29973,16 +29972,17 @@ function getBlockValue(input, start, end, indent, chomping, folded) {
     }
     const content = line.slice(textIndent);
     const first = content.charCodeAt(0);
-    if (folded) if (first === 32 || first === 9) {
-      atMoreIndented = true;
-      result += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
-    } else if (atMoreIndented) {
-      atMoreIndented = false;
-      result += "\n".repeat(emptyLines + 1);
-    } else if (emptyLines === 0) {
-      if (didReadContent) result += " ";
-    } else result += "\n".repeat(emptyLines);
-    else result += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
+    if (folded) {
+      if (first === 32 || first === 9) {
+        atMoreIndented = true;
+        result += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
+      } else if (atMoreIndented) {
+        atMoreIndented = false;
+        result += "\n".repeat(emptyLines + 1);
+      } else if (emptyLines === 0) {
+        if (didReadContent) result += " ";
+      } else result += "\n".repeat(emptyLines);
+    } else result += "\n".repeat(didReadContent ? 1 + emptyLines : emptyLines);
     result += content;
     didReadContent = true;
     emptyLines = 0;
@@ -30014,12 +30014,39 @@ var DEFAULT_TAG_HANDLERS = Object.assign(/* @__PURE__ */ Object.create(null), {
   "!": "!",
   "!!": "tag:yaml.org,2002:"
 });
+var TAG_SUFFIX_CHARS = "-#;/?:@&=+$_.~*'()";
+var TAG_URI_CHARS = TAG_SUFFIX_CHARS + "!,[]";
+function tagPercentDecode(source) {
+  let result = "";
+  let index = 0;
+  while (index < source.length) {
+    if (source.charCodeAt(index) !== 37) {
+      result += source[index++];
+      continue;
+    }
+    let ch = parseInt(source.slice(index + 1, index + 3), 16);
+    index += 3;
+    if (ch >= 192) {
+      let remaining = ch < 224 ? 1 : ch < 240 ? 2 : 3;
+      ch &= (1 << 6 - remaining) - 1;
+      while (remaining-- > 0) {
+        ch = ch << 6 | parseInt(source.slice(index + 1, index + 3), 16) & 63;
+        index += 3;
+      }
+    }
+    if (ch < 65536) result += String.fromCharCode(ch);
+    else {
+      ch -= 65536;
+      result += String.fromCharCode(55296 | ch >> 10, 56320 | ch & 1023);
+    }
+  }
+  return result;
+}
 function tagNameFull(rawTag, tagHandlers) {
-  if (rawTag.startsWith("!<") && rawTag.endsWith(">")) return decodeURIComponent(rawTag.slice(2, -1));
+  if (rawTag.startsWith("!<") && rawTag.endsWith(">")) return tagPercentDecode(rawTag.slice(2, -1));
   const handleEnd = rawTag.indexOf("!", 1);
   const handle = handleEnd === -1 ? "!" : rawTag.slice(0, handleEnd + 1);
-  const prefix = tagHandlers?.[handle] ?? DEFAULT_TAG_HANDLERS[handle] ?? handle;
-  return decodeURIComponent(prefix) + decodeURIComponent(rawTag.slice(handle.length));
+  return tagPercentDecode(tagHandlers?.[handle] ?? DEFAULT_TAG_HANDLERS[handle] ?? handle) + tagPercentDecode(rawTag.slice(handle.length));
 }
 var NO_RANGE$2 = -1;
 var MERGE_TAG_NAME = "tag:yaml.org,2002:merge";
@@ -30482,7 +30509,11 @@ function skipUntilLineEnd(state) {
   while (ch !== 0 && !isEol(ch)) ch = state.input.charCodeAt(++state.position);
 }
 function checkPrintable(state, start, end) {
-  if (PATTERN_NON_PRINTABLE.test(state.input.slice(start, end))) throwError(state, "the stream contains non-printable characters");
+  const match = PATTERN_NON_PRINTABLE.exec(state.input.slice(start, end));
+  if (match !== null) {
+    state.position = start + match.index + match[0].length - 1;
+    throwError(state, "the stream contains non-printable characters");
+  }
 }
 function readTagProperty(state, props, inFlow) {
   if (state.input.charCodeAt(state.position) !== 33) return false;
@@ -30509,12 +30540,14 @@ function readTagProperty(state, props, inFlow) {
     state.position++;
   } else {
     while (ch !== 0 && !isWsOrEol(ch) && !(inFlow && isFlowIndicator(ch))) {
-      if (ch === 33) if (!isNamed) {
-        tagHandle = state.input.slice(suffixStart - 1, state.position + 1);
-        if (!PATTERN_TAG_HANDLE.test(tagHandle)) throwError(state, "named tag handle cannot contain such characters");
-        isNamed = true;
-        suffixStart = state.position + 1;
-      } else throwError(state, "tag suffix cannot contain exclamation marks");
+      if (ch === 33) {
+        if (!isNamed) {
+          tagHandle = state.input.slice(suffixStart - 1, state.position + 1);
+          if (!PATTERN_TAG_HANDLE.test(tagHandle)) throwError(state, "named tag handle cannot contain such characters");
+          isNamed = true;
+          suffixStart = state.position + 1;
+        } else throwError(state, "tag suffix cannot contain exclamation marks");
+      }
       ch = state.input.charCodeAt(++state.position);
     }
     tagName = state.input.slice(suffixStart, state.position);
@@ -30698,7 +30731,7 @@ function readBlockScalar(state, parentIndent, props) {
 function canStartPlainScalar(state, nodeContext) {
   const ch = state.input.charCodeAt(state.position);
   const inFlow = nodeContext === CONTEXT_FLOW_IN;
-  if (ch === 0 || isWsOrEol(ch) || ch === 35 || ch === 38 || ch === 42 || ch === 33 || ch === 124 || ch === 62 || ch === 39 || ch === 34 || ch === 37 || ch === 64 || ch === 96 || inFlow && isFlowIndicator(ch)) return false;
+  if (ch === 0 || isWsOrEol(ch) || ch === 35 || ch === 38 || ch === 42 || ch === 33 || ch === 124 || ch === 62 || ch === 39 || ch === 34 || ch === 37 || ch === 64 || ch === 96 || isFlowIndicator(ch)) return false;
   if (ch === 63 || ch === 45) {
     const following = state.input.charCodeAt(state.position + 1);
     if (isWsOrEolOrEnd(following) || inFlow && isFlowIndicator(following)) return false;
@@ -30970,19 +31003,20 @@ function parseNode(state, parentIndent, nodeContext, allowToSeek, allowCompact, 
   if (indentStatus === 1 || nodeContext === CONTEXT_BLOCK_OUT) {
     const flowIndent = nodeContext === CONTEXT_FLOW_IN || nodeContext === CONTEXT_FLOW_OUT ? parentIndent : parentIndent + 1;
     const blockIndent = state.position - state.lineStart;
-    if (indentStatus === 1) if (allowBlockCollections && (readBlockSequence(state, blockIndent, props) || readBlockMapping(state, blockIndent, flowIndent, props)) || readFlowCollection(state, flowIndent, props)) hasContent = true;
-    else {
-      const ch = state.input.charCodeAt(state.position);
-      if (propertyStart !== null && allowPropertyMapping && allowBlockStyles && !allowBlockCollections && ch !== 124 && ch !== 62) {
-        const fallbackState = snapshotState(state);
-        const propertyIndent = propertyStart.position - propertyStart.lineStart;
-        restoreState(state, propertyStart);
-        if (readBlockMapping(state, propertyIndent, flowIndent, emptyProperties()) && state.events[fallbackState.eventsLength]?.type === EVENT_ID.MAPPING) hasContent = true;
-        else restoreState(state, fallbackState);
+    if (indentStatus === 1) {
+      if (allowBlockCollections && (readBlockSequence(state, blockIndent, props) || readBlockMapping(state, blockIndent, flowIndent, props)) || readFlowCollection(state, flowIndent, props)) hasContent = true;
+      else {
+        const ch = state.input.charCodeAt(state.position);
+        if (propertyStart !== null && allowPropertyMapping && allowBlockStyles && !allowBlockCollections && ch !== 124 && ch !== 62) {
+          const fallbackState = snapshotState(state);
+          const propertyIndent = propertyStart.position - propertyStart.lineStart;
+          restoreState(state, propertyStart);
+          if (readBlockMapping(state, propertyIndent, flowIndent, emptyProperties()) && state.events[fallbackState.eventsLength]?.type === EVENT_ID.MAPPING) hasContent = true;
+          else restoreState(state, fallbackState);
+        }
+        if (!hasContent && (allowBlockScalars && readBlockScalar(state, flowIndent, props) || readSingleQuotedScalar(state, flowIndent, props) || readDoubleQuotedScalar(state, flowIndent, props) || readAlias(state, props) || readPlainScalar(state, flowIndent, nodeContext, props))) hasContent = true;
       }
-      if (!hasContent && (allowBlockScalars && readBlockScalar(state, flowIndent, props) || readSingleQuotedScalar(state, flowIndent, props) || readDoubleQuotedScalar(state, flowIndent, props) || readAlias(state, props) || readPlainScalar(state, flowIndent, nodeContext, props))) hasContent = true;
-    }
-    else if (indentStatus === 0) hasContent = allowBlockCollections && readBlockSequence(state, blockIndent, props);
+    } else if (indentStatus === 0) hasContent = allowBlockCollections && readBlockSequence(state, blockIndent, props);
   }
   allowBlockScalars = allowBlockScalars && !hasContent;
   if (!hasContent && (props.anchorStart !== NO_RANGE$1 || props.tagStart !== NO_RANGE$1 || allowBlockScalars)) {
@@ -32388,14 +32422,14 @@ async function fetchSampledStargazers({
   };
 }
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/mailer/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/mailer/index.js
 var import_node_events = require("node:events");
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/shared/url.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/shared/url.js
 var import_node_net = __toESM(require("node:net"), 1);
 var import_node_url = __toESM(require("node:url"), 1);
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/punycode/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/punycode/index.js
 var maxInt = 2147483647;
 var base = 36;
 var tMin = 1;
@@ -32607,7 +32641,7 @@ var toASCII = function(input) {
   });
 };
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/shared/url.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/shared/url.js
 var SLASHLESS_AUTHORITY = /^([a-zA-Z][a-zA-Z0-9+.-]*:)(?!\/\/)([\s\S]+)$/;
 function stripSurroundingWhitespace(input) {
   let start = 0;
@@ -32738,17 +32772,17 @@ var resolve2 = (from, to) => {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/shared/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/shared/index.js
 var import_node_util = __toESM(require("node:util"), 1);
 var import_node_fs = __toESM(require("node:fs"), 1);
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/fetch/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/fetch/index.js
 var import_node_http = __toESM(require("node:http"), 1);
 var import_node_https = __toESM(require("node:https"), 1);
 var import_node_zlib = __toESM(require("node:zlib"), 1);
 var import_node_stream = require("node:stream");
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/fetch/cookies.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/fetch/cookies.js
 var import_node_net2 = __toESM(require("node:net"), 1);
 var SESSION_TIMEOUT = 1800;
 var Cookies = class {
@@ -32960,15 +32994,15 @@ var Cookies = class {
 };
 var cookies_default = Cookies;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/package-info.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/package-info.js
 var name = "nodemailer";
-var version2 = "10.1.4";
+var version2 = "10.2.1";
 var homepage = "https://nodemailer.com/";
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/fetch/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/fetch/index.js
 var import_node_net3 = __toESM(require("node:net"), 1);
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/errors.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/errors.js
 var ECONNECTION = "ECONNECTION";
 var ETIMEDOUT = "ETIMEDOUT";
 var ESOCKET = "ESOCKET";
@@ -32987,9 +33021,10 @@ var EFILEACCESS = "EFILEACCESS";
 var EURLACCESS = "EURLACCESS";
 var EFETCH = "EFETCH";
 var isTransientError = (err) => err.responseCode === 421 || err.code === ECONNECTION || err.code === ESOCKET || err.code === ETIMEDOUT;
+var isPermanentResponseCode = (responseCode) => responseCode >= 500 && responseCode < 600 && responseCode !== 503;
 var ERR_ACCESS_DENIED = "ERR_ACCESS_DENIED";
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/shared/objects.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/shared/objects.js
 var isProtoKey = (key) => key === "__proto__";
 var copyOwnKeys = (target, source, skip) => {
   Object.keys(source || {}).forEach((key) => {
@@ -33001,7 +33036,7 @@ var copyOwnKeys = (target, source, skip) => {
   return target;
 };
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/fetch/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/fetch/index.js
 var MAX_REDIRECTS = 5;
 var DEFAULT_TIMEOUT = 60 * 1e3;
 var DEFAULT_MAX_TIME = 2 * 60 * 1e3;
@@ -33306,7 +33341,7 @@ nmfetch.DEFAULT_TIMEOUT = DEFAULT_TIMEOUT;
 nmfetch.DEFAULT_MAX_TIME = DEFAULT_MAX_TIME;
 var fetch_default = nmfetch;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/shared/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/shared/index.js
 var import_node_dns = __toESM(require("node:dns"), 1);
 var import_node_net4 = __toESM(require("node:net"), 1);
 var import_node_os = __toESM(require("node:os"), 1);
@@ -33880,7 +33915,7 @@ function createDefaultLogger(levels) {
   return logger;
 }
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/mime-funcs/mime-types.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/mime-funcs/mime-types.js
 var import_node_path = __toESM(require("node:path"), 1);
 var defaultMimeType = "application/octet-stream";
 var defaultExtension = "bin";
@@ -34979,10 +35014,7 @@ var extensions = /* @__PURE__ */ new Map([
   ["bdm", "application/vnd.syncml.dm+wbxml"],
   ["bed", "application/vnd.realvnc.bed"],
   ["bh2", "application/vnd.fujitsu.oasysprs"],
-  [
-    "bin",
-    ["application/octet-stream", "application/mac-binary", "application/macbinary", "application/x-macbinary", "application/x-binary"]
-  ],
+  ["bin", ["application/octet-stream", "application/mac-binary", "application/macbinary", "application/x-macbinary", "application/x-binary"]],
   ["bm", "image/bmp"],
   ["bmi", "application/vnd.bmi"],
   ["bmp", ["image/bmp", "image/x-windows-bmp"]],
@@ -35027,10 +35059,7 @@ var extensions = /* @__PURE__ */ new Map([
   ["cii", "application/vnd.anser-web-certificate-issue-initiation"],
   ["cil", "application/vnd.ms-artgalry"],
   ["cla", "application/vnd.claymore"],
-  [
-    "class",
-    ["application/octet-stream", "application/java", "application/java-byte-code", "application/java-vm", "application/x-java-class"]
-  ],
+  ["class", ["application/octet-stream", "application/java", "application/java-byte-code", "application/java-vm", "application/x-java-class"]],
   ["clkk", "application/vnd.crick.clicker.keyboard"],
   ["clkp", "application/vnd.crick.clicker.palette"],
   ["clkt", "application/vnd.crick.clicker.template"],
@@ -35635,10 +35664,7 @@ var extensions = /* @__PURE__ */ new Map([
   ["sbml", "application/sbml+xml"],
   ["sc", "application/vnd.ibm.secure-container"],
   ["scd", "application/x-msschedule"],
-  [
-    "scm",
-    ["application/vnd.lotus-screencam", "video/x-scm", "text/x-script.guile", "application/x-lotusscreencam", "text/x-script.scheme"]
-  ],
+  ["scm", ["application/vnd.lotus-screencam", "video/x-scm", "text/x-script.guile", "application/x-lotusscreencam", "text/x-script.scheme"]],
   ["scq", "application/scvp-cv-request"],
   ["scs", "application/scvp-cv-response"],
   ["sct", "text/scriptlet"],
@@ -35977,13 +36003,13 @@ function detectExtension(mimeType) {
   }
 }
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/mime-node/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/mime-node/index.js
 var import_node_crypto = __toESM(require("node:crypto"), 1);
 var import_node_fs2 = __toESM(require("node:fs"), 1);
 var import_node_stream8 = require("node:stream");
 var import_node_url2 = __toESM(require("node:url"), 1);
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/base64/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/base64/index.js
 var import_node_stream3 = require("node:stream");
 function encode3(buffer) {
   if (typeof buffer === "string") {
@@ -36079,7 +36105,7 @@ var Encoder = class extends import_node_stream3.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/qp/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/qp/index.js
 var import_node_stream4 = require("node:stream");
 var MIN_LINE_LENGTH = 4;
 var QP_RANGES = [
@@ -36283,10 +36309,13 @@ var Encoder2 = class extends import_node_stream4.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/mime-funcs/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/mime-funcs/index.js
 function isPlainText(value, isParam) {
   const re = isParam ? /[\x00-\x1f\x7f"\u0080-\uFFFF]/ : /[\x00-\x08\x0b\x0c\x0e-\x1f\u0080-\uFFFF]/;
   return typeof value === "string" && !re.test(value);
+}
+function isPlainParamValue(value) {
+  return isPlainText(value, true) && !value.includes("=?");
 }
 function quoteString(value) {
   return '"' + (value || "").toString().replace(/["\\]/g, "\\$&") + '"';
@@ -36383,7 +36412,7 @@ function buildHeaderValue(structured) {
   Object.keys(structured.params || {}).forEach((key) => {
     const value2 = structured.params[key];
     const param = key.replace(/[\x00-\x1f\x7f]/g, "");
-    if (!isPlainText(value2, true) || value2.length >= 75) {
+    if (!isPlainParamValue(value2) || value2.length >= 75) {
       buildHeaderParam(param, value2, 50).forEach((encodedParam) => {
         if (!/[\s"\\;:/=(),<>@[\]?]|^[-']|'$/.test(encodedParam.value) || encodedParam.key.substr(-1) === "*") {
           paramsArray.push(encodedParam.key + "=" + encodedParam.value);
@@ -36408,7 +36437,7 @@ function buildHeaderParam(key, data, maxLength) {
   let startPos = 0;
   let i, len;
   maxLength = maxLength || 50;
-  if (isPlainText(data, true)) {
+  if (isPlainParamValue(data)) {
     if (encodedStr.length <= maxLength) {
       return [
         {
@@ -36500,14 +36529,29 @@ function buildHeaderParam(key, data, maxLength) {
   }));
 }
 var TOKEN = /^[^\x00-\x20\x7f()<>@,;:\\"/[\]?=]+$/;
+function _findCommentEnd(str, start) {
+  let depth = 0;
+  for (let i = start, len = str.length; i < len; i++) {
+    const c = str.charAt(i);
+    if (c === "\\") {
+      i++;
+    } else if (c === "(") {
+      depth++;
+    } else if (c === ")" && --depth === 0) {
+      return i;
+    }
+  }
+  return -1;
+}
 function _isParamName(name2) {
   return !!name2 && !isProtoKey(name2);
 }
-function parseHeaderValue(str) {
+function parseHeaderValue(str, options) {
   const response = {
     value: "",
     params: {}
   };
+  let stripComments = !!options?.stripComments;
   const setParam = (name2, value2) => {
     name2 = name2.toLowerCase();
     if (_isParamName(name2) && !Object.prototype.hasOwnProperty.call(response.params, name2)) {
@@ -36552,6 +36596,17 @@ function parseHeaderValue(str) {
   };
   for (let i = 0, len = str.length; i < len; i++) {
     chr = str.charAt(i);
+    if (stripComments && chr === "(" && !quote && !quoteClosed && !(stage === "value" && key !== false && !pendingSpace)) {
+      let end = _findCommentEnd(str, i);
+      if (end < 0 && str.indexOf(";", i) < 0) {
+        end = len - 1;
+      }
+      if (end >= 0) {
+        i = end;
+        continue;
+      }
+      stripComments = false;
+    }
     if (stage === "key") {
       if (chr === "=") {
         key = takeValue().trim();
@@ -36735,7 +36790,69 @@ function safeEncodeURIComponent(str) {
   return str.replace(/[\x00-\x1F *'()<>@,;:\\"[\]?=\u007F-\uFFFF]/g, (chr) => encodeURICharComponent(chr));
 }
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/addressparser/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/addressparser/index.js
+var TOKEN_OPERATOR = 1;
+var TOKEN_NO_BREAK = 2;
+var TOKEN_DIRTY = 4;
+var TOKEN_ESCAPES = 8;
+var TOKEN_STARTS_ESCAPED = 16;
+var TokenList = class {
+  constructor(str) {
+    this.str = str;
+    this.slots = new Int32Array(48);
+    this.length = 0;
+    this.cleaned = /* @__PURE__ */ new Map();
+  }
+  /**
+   * Appends a token
+   *
+   * @param kind Kind and flags of the token
+   * @param start Offset of its first character
+   * @param end Offset just past its last character
+   * @return Index of the token
+   */
+  push(kind, start, end) {
+    if ((this.length + 1) * 3 > this.slots.length) {
+      const grown = new Int32Array(this.slots.length * 2);
+      grown.set(this.slots);
+      this.slots = grown;
+    }
+    const at = this.length * 3;
+    this.slots[at] = kind;
+    this.slots[at + 1] = start;
+    this.slots[at + 2] = end;
+    return this.length++;
+  }
+  /**
+   * The character of an operator token, an empty string for a text run
+   */
+  operatorAt(index) {
+    const at = index * 3;
+    return this.slots[at] & TOKEN_OPERATOR ? this.str.charAt(this.slots[at + 1]) : "";
+  }
+  /**
+   * Whether a token is an operator
+   */
+  isOperator(index) {
+    return (this.slots[index * 3] & TOKEN_OPERATOR) !== 0;
+  }
+  /**
+   * Whether the next character continues the run of a token without whitespace in between
+   */
+  noBreak(index) {
+    return (this.slots[index * 3] & TOKEN_NO_BREAK) !== 0;
+  }
+  /**
+   * Value of a token
+   */
+  value(index) {
+    const cleaned = this.cleaned.get(index);
+    if (cleaned !== void 0) {
+      return cleaned;
+    }
+    return this.str.slice(this.slots[index * 3 + 1], this.slots[index * 3 + 2]);
+  }
+};
 var DOMAIN_LITERAL_TAIL = /@(\[[^[\]\\]*\])$/;
 function _domainAt(address) {
   const literal2 = address.charAt(address.length - 1) === "]" ? DOMAIN_LITERAL_TAIL.exec(address) : null;
@@ -36968,37 +37085,30 @@ function _stripAddressComments(address) {
   }
   return { address: result.trim(), comments: comments.filter((text) => text) };
 }
-function _handleAddress(tokens, depth) {
-  let isGroup = false;
+function _collectAddressParts(tokens, from, to) {
   let state = "text";
-  const addresses = [];
   const data = {
     address: [],
     comment: [],
-    group: [],
     text: [],
     textWasQuoted: [],
     quotedLocalAt: []
   };
   let insideQuotes = false;
   let lastTextPureQuoted = false;
-  const lastChars = { address: "", comment: "", group: "", text: "" };
-  for (let i = 0, len = tokens.length; i < len; i++) {
-    const token = tokens[i];
-    const prevToken = i ? tokens[i - 1] : null;
-    if (token.type === "operator") {
-      switch (token.value) {
+  const lastChars = { address: "", comment: "", text: "" };
+  for (let i = from; i < to; i++) {
+    const value = tokens.value(i);
+    const prevOperator = i > from ? tokens.operatorAt(i - 1) : "";
+    const prevNoBreak = i > from && tokens.noBreak(i - 1);
+    if (tokens.isOperator(i)) {
+      switch (value) {
         case "<":
           state = "address";
           insideQuotes = false;
           break;
         case "(":
           state = "comment";
-          insideQuotes = false;
-          break;
-        case ":":
-          state = "group";
-          isGroup = true;
           insideQuotes = false;
           break;
         case '"':
@@ -37010,32 +37120,29 @@ function _handleAddress(tokens, depth) {
           insideQuotes = false;
           break;
       }
-    } else if (token.value) {
-      const prevPrevToken = i > 1 ? tokens[i - 2] : null;
-      const opensAfterEmptyQuotedString = prevToken?.type === "operator" && prevToken.value === '"' && !!prevToken.noBreak && prevPrevToken?.type === "operator" && prevPrevToken.value === '"';
+    } else {
+      const opensAfterEmptyQuotedString = prevOperator === '"' && prevNoBreak && i > from + 1 && tokens.operatorAt(i - 2) === '"';
       const parts = data[state];
-      const joins = prevToken && prevToken.noBreak && parts.length && (prevToken.value !== ")" || lastChars[state] === "@" || token.value.charAt(0) === "@");
+      const joins = prevNoBreak && parts.length && (prevOperator !== ")" || lastChars[state] === "@" || value.charAt(0) === "@");
       if (joins) {
         const last = data[state].length - 1;
         if (state === "text" && !insideQuotes) {
-          if (lastTextPureQuoted && token.value.charAt(0) === "@") {
+          if (lastTextPureQuoted && value.charAt(0) === "@") {
             data.quotedLocalAt[last] = data.text[last].length;
           }
           lastTextPureQuoted = false;
         }
-        data[state][last] += token.value;
-        if (token.value) {
-          lastChars[state] = token.value.charAt(token.value.length - 1);
-        }
+        data[state][last] += value;
+        lastChars[state] = value.charAt(value.length - 1);
         if (state === "text" && insideQuotes) {
           data.textWasQuoted[last] = true;
         }
       } else {
-        data[state].push(token.value);
-        lastChars[state] = token.value.charAt(token.value.length - 1);
+        data[state].push(value);
+        lastChars[state] = value.charAt(value.length - 1);
         if (state === "text") {
           data.textWasQuoted.push(insideQuotes || opensAfterEmptyQuotedString);
-          data.quotedLocalAt.push(opensAfterEmptyQuotedString && token.value.charAt(0) === "@" ? 0 : -1);
+          data.quotedLocalAt.push(opensAfterEmptyQuotedString && value.charAt(0) === "@" ? 0 : -1);
           lastTextPureQuoted = insideQuotes;
         }
       }
@@ -37047,127 +37154,119 @@ function _handleAddress(tokens, depth) {
     data.comment = [];
     textFromComment = true;
   }
-  if (isGroup) {
-    data.text = data.text.join(" ");
-    let groupMembers = [];
-    if (data.group.length) {
-      const parsedGroup = _parseAddressList(data.group.join(","), depth + 1);
-      parsedGroup.forEach((member) => {
-        if (member.group) {
-          groupMembers = groupMembers.concat(member.group);
-        } else {
-          groupMembers.push(member);
-        }
-      });
+  return { data, textFromComment };
+}
+function _groupName(tokens, from, to) {
+  return _collectAddressParts(tokens, from, to).data.text.join(" ");
+}
+function _handleAddress(tokens, from, to) {
+  const collected = _collectAddressParts(tokens, from, to);
+  const data = collected.data;
+  let textFromComment = collected.textFromComment;
+  const addressComments = [];
+  const addressParts = [];
+  for (const part of data.address) {
+    const stripped = _stripAddressComments(part);
+    for (const comment of stripped.comments) {
+      addressComments.push(comment);
     }
-    addresses.push({
-      name: data.text || "",
-      group: groupMembers
-    });
-  } else {
-    const addressComments = [];
-    const addressParts = [];
-    for (const part of data.address) {
-      const stripped = _stripAddressComments(part);
-      for (const comment of stripped.comments) {
-        addressComments.push(comment);
-      }
-      if (stripped.address) {
-        addressParts.push(stripped.address);
+    if (stripped.address) {
+      addressParts.push(stripped.address);
+    }
+  }
+  data.address = addressParts;
+  if (!data.address.length && data.text.length && !textFromComment) {
+    const candidates = data.text.map((part) => _collapseAtSpacing(part));
+    for (let i = 0; i < data.text.length; i++) {
+      const local = data.quotedLocalAt[i];
+      const quotedLocal = data.textWasQuoted[i] && local >= 0 && QUOTED_LOCAL_DOMAIN.test(data.text[i].slice(local)) ? _quoteLocalPart(data.text[i]) : "";
+      if (quotedLocal || !data.textWasQuoted[i] && _isAddrSpec(candidates[i])) {
+        data.address = [quotedLocal || candidates[i]];
+        data.text.splice(i, 1);
+        data.textWasQuoted.splice(i, 1);
+        data.quotedLocalAt.splice(i, 1);
+        break;
       }
     }
-    data.address = addressParts;
-    if (!data.address.length && data.text.length && !textFromComment) {
-      const candidates = data.text.map((part) => _collapseAtSpacing(part));
+    if (!data.address.length) {
+      let extracted = false;
       for (let i = 0; i < data.text.length; i++) {
-        const local = data.quotedLocalAt[i];
-        const quotedLocal = data.textWasQuoted[i] && local >= 0 && QUOTED_LOCAL_DOMAIN.test(data.text[i].slice(local)) ? _quoteLocalPart(data.text[i]) : "";
-        if (quotedLocal || !data.textWasQuoted[i] && _isAddrSpec(candidates[i])) {
-          data.address = [quotedLocal || candidates[i]];
-          data.text.splice(i, 1);
-          data.textWasQuoted.splice(i, 1);
-          data.quotedLocalAt.splice(i, 1);
-          break;
-        }
-      }
-      if (!data.address.length) {
-        let extracted = false;
-        for (let i = 0; i < data.text.length; i++) {
-          if (!data.textWasQuoted[i]) {
-            const part = candidates[i];
-            let remainder = data.text[i];
-            const at = _looseAddressStart(part);
-            if (at >= 0) {
-              LOOSE_TEXT_ADDR.lastIndex = at;
-              const match = LOOSE_TEXT_ADDR.exec(part);
-              if (match) {
-                data.address = [match[0].trim()];
-                extracted = true;
-                remainder = part.slice(0, at) + " " + part.slice(at + match[0].length);
-              }
+        if (!data.textWasQuoted[i]) {
+          const part = candidates[i];
+          let remainder = data.text[i];
+          const at = _looseAddressStart(part);
+          if (at >= 0) {
+            LOOSE_TEXT_ADDR.lastIndex = at;
+            const match = LOOSE_TEXT_ADDR.exec(part);
+            if (match) {
+              data.address = [match[0].trim()];
+              extracted = true;
+              remainder = part.slice(0, at) + " " + part.slice(at + match[0].length);
             }
-            data.text[i] = remainder.trim();
-            if (extracted) {
-              break;
-            }
+          }
+          data.text[i] = remainder.trim();
+          if (extracted) {
+            break;
           }
         }
       }
     }
-    if (!data.text.length && data.comment.length) {
-      data.text = data.comment;
-      data.comment = [];
-    }
-    if (data.address.length > 1) {
-      data.text = data.text.concat(data.address.splice(1));
-    }
-    const addressFromQuotedText = !data.address.length && data.textWasQuoted.some((wasQuoted) => wasQuoted);
-    data.text = data.text.join(" ");
-    data.address = data.address.join(" ");
-    if (addressFromQuotedText && data.text.indexOf("@") >= 0) {
-      data.address = _quoteLocalPart(_joinAtSpacing(data.text, _domainAt(data.text)));
-      data.text = "";
-    }
-    _recoverAddrSpec(data);
-    if (!data.text && addressComments.length) {
-      data.text = addressComments.join(" ");
-      textFromComment = true;
-    }
-    const address = {
-      address: data.address || (textFromComment ? "" : data.text) || "",
-      name: data.text || data.address || ""
-    };
-    if (address.address === address.name) {
-      if (/@/.test(address.address || "")) {
-        address.name = "";
-      } else {
-        address.address = "";
-      }
-    }
-    addresses.push(address);
   }
-  return addresses;
+  if (!data.text.length && data.comment.length) {
+    data.text = data.comment;
+    data.comment = [];
+  }
+  if (data.address.length > 1) {
+    data.text = data.text.concat(data.address.splice(1));
+  }
+  const addressFromQuotedText = !data.address.length && data.textWasQuoted.some((wasQuoted) => wasQuoted);
+  data.text = data.text.join(" ");
+  data.address = data.address.join(" ");
+  if (addressFromQuotedText && data.text.indexOf("@") >= 0) {
+    data.address = _quoteLocalPart(_joinAtSpacing(data.text, _domainAt(data.text)));
+    data.text = "";
+  }
+  _recoverAddrSpec(data);
+  if (!data.text && addressComments.length) {
+    data.text = addressComments.join(" ");
+    textFromComment = true;
+  }
+  const address = {
+    address: data.address || (textFromComment ? "" : data.text) || "",
+    name: data.text || data.address || ""
+  };
+  if (address.address === address.name) {
+    if (/@/.test(address.address || "")) {
+      address.name = "";
+    } else {
+      address.address = "";
+    }
+  }
+  return address;
 }
 var Tokenizer = class {
   constructor(str) {
     this.str = (str || "").toString();
     this.operatorCurrent = "";
     this.operatorExpecting = "";
-    this.node = null;
+    this.node = -1;
     this.escaped = false;
     this.inDomainLiteral = false;
     this.afterAt = false;
+    this.inGroup = false;
     this.innerQuoted = false;
     this.innerComment = 0;
     this.innerLiteral = false;
     this.innerEscaped = false;
-    this.list = [];
+    this.list = new TokenList(this.str);
     this.operators = {
       '"': '"',
       "(": ")",
       "<": ">",
       ",": "",
-      ":": ";",
+      // A group is read in the same pass as the rest of the list, so its ':' only marks
+      // where the name ends and its members are tokenized like any other address
+      ":": "",
       // Semicolons are not a legal delimiter per the RFC2822 grammar other
       // than for terminating a group, but they are also not valid for any
       // other use in this context.  Given that some mail clients have
@@ -37183,27 +37282,92 @@ var Tokenizer = class {
    * @return An array of operator|text tokens
    */
   tokenize() {
-    const list = [];
-    for (let i = 0, len = this.str.length; i < len; i++) {
-      const chr = this.str.charAt(i);
-      const nextChr = i < len - 1 ? this.str.charAt(i + 1) : null;
-      this.checkChar(chr, nextChr);
+    const str = this.str;
+    const len = str.length;
+    for (let i = 0; i < len; i++) {
+      this.checkChar(str.charAt(i), i);
     }
-    this.list.forEach((node) => {
-      node.value = (node.value || "").toString().trim();
-      if (node.value) {
-        list.push(node);
+    this._closeText(len);
+    const list = this.list;
+    const slots = list.slots;
+    let kept = 0;
+    for (let i = 0, count = list.length; i < count; i++) {
+      const kind = slots[i * 3];
+      let start = slots[i * 3 + 1];
+      let end = slots[i * 3 + 2];
+      if (kind & TOKEN_DIRTY) {
+        const value = this._cleanValue(start, end, kind).trim();
+        if (!value) {
+          continue;
+        }
+        list.cleaned.set(kept, value);
+      } else if (!(kind & TOKEN_OPERATOR)) {
+        while (start < end && _isSpaceCode(str.charCodeAt(start))) {
+          start++;
+        }
+        while (end > start && _isSpaceCode(str.charCodeAt(end - 1))) {
+          end--;
+        }
+        if (start === end) {
+          continue;
+        }
       }
-    });
+      slots[kept * 3] = kind;
+      slots[kept * 3 + 1] = start;
+      slots[kept * 3 + 2] = end;
+      kept++;
+    }
+    list.length = kept;
     return list;
+  }
+  /**
+   * Ends the text run being collected, if there is one
+   *
+   * @param end Offset just past its last character
+   */
+  _closeText(end) {
+    if (this.node >= 0) {
+      this.list.slots[this.node * 3 + 2] = end;
+      this.node = -1;
+    }
+  }
+  /**
+   * Rebuilds the value of a text run that is no plain slice of the field, applying the
+   * rules checkChar collects characters by: an escaping backslash is dropped, a line break
+   * reads as a space and any other control character is left out
+   *
+   * @param start Offset of the first character of the run
+   * @param end Offset just past its last character
+   * @param kind Kind and flags of the run
+   * @return Value of the run
+   */
+  _cleanValue(start, end, kind) {
+    const str = this.str;
+    const escapes = (kind & TOKEN_ESCAPES) !== 0;
+    let escaped = (kind & TOKEN_STARTS_ESCAPED) !== 0;
+    let value = "";
+    for (let i = start; i < end; i++) {
+      const chr = str.charAt(i);
+      if (escapes && !escaped && chr === "\\") {
+        escaped = true;
+        continue;
+      }
+      escaped = false;
+      if (chr === "\n") {
+        value += " ";
+      } else if (chr.charCodeAt(0) >= 33 || chr === " " || chr === "	") {
+        value += chr;
+      }
+    }
+    return value;
   }
   /**
    * Checks if a character is an operator or text and acts accordingly
    *
    * @param chr Character from the address field
-   * @param nextChr Character following chr, null at the end of the field
+   * @param i Offset of the character in the field
    */
-  checkChar(chr, nextChr) {
+  checkChar(chr, i) {
     if (!this.escaped && !this.operatorExpecting) {
       if (!this.inDomainLiteral && chr === "[" && this.afterAt) {
         this.inDomainLiteral = true;
@@ -37212,8 +37376,13 @@ var Tokenizer = class {
       }
     }
     let nested = false;
-    if (this.operatorExpecting === ">" || this.operatorExpecting === ";") {
+    if (this.operatorExpecting === ">") {
       nested = this._trackInner(chr);
+      if (!nested && chr === ";" && this.inGroup) {
+        this._closeText(i);
+        this.operatorExpecting = "";
+        this._resetInner();
+      }
     } else if (this.operatorExpecting === ")" && !this.escaped) {
       if (chr === "(") {
         this.innerComment++;
@@ -37224,15 +37393,9 @@ var Tokenizer = class {
     }
     if (this.escaped) {
     } else if (chr === this.operatorExpecting && !nested) {
-      this.node = {
-        type: "operator",
-        value: chr
-      };
-      if (nextChr && ![" ", "	", "\r", "\n", ",", ";"].includes(nextChr)) {
-        this.node.noBreak = true;
-      }
-      this.list.push(this.node);
-      this.node = null;
+      const nextChr = this.str.charAt(i + 1);
+      this._closeText(i);
+      this.list.push(nextChr && ![" ", "	", "\r", "\n", ",", ";"].includes(nextChr) ? TOKEN_OPERATOR | TOKEN_NO_BREAK : TOKEN_OPERATOR, i, i + 1);
       if (chr !== ")") {
         this.afterAt = false;
       }
@@ -37241,12 +37404,13 @@ var Tokenizer = class {
       this._resetInner();
       return;
     } else if (!this.operatorExpecting && !(this.inDomainLiteral && chr === ":") && chr in this.operators) {
-      this.node = {
-        type: "operator",
-        value: chr
-      };
-      this.list.push(this.node);
-      this.node = null;
+      this._closeText(i);
+      this.list.push(TOKEN_OPERATOR, i, i + 1);
+      if (chr === ":") {
+        this.inGroup = true;
+      } else if (chr === ";") {
+        this.inGroup = false;
+      }
       if (chr !== "(") {
         this.afterAt = false;
       }
@@ -37256,34 +37420,33 @@ var Tokenizer = class {
       return;
     } else if (['"', "'", ")"].includes(this.operatorExpecting) && chr === "\\") {
       this.escaped = true;
+      if (this.node >= 0) {
+        this.list.slots[this.node * 3] |= TOKEN_DIRTY;
+      }
       return;
     }
-    if (!this.node) {
-      this.node = {
-        type: "text",
-        value: ""
-      };
-      this.list.push(this.node);
+    if (this.node < 0) {
+      this.node = this.list.push((this.operatorExpecting === '"' || this.operatorExpecting === ")" ? TOKEN_ESCAPES : 0) | (this.escaped ? TOKEN_STARTS_ESCAPED : 0), i, i);
     }
     if (chr === "\n") {
       chr = " ";
+      this.list.slots[this.node * 3] |= TOKEN_DIRTY;
     }
-    if (chr.charCodeAt(0) >= 33 || [" ", "	"].includes(chr)) {
-      this.node.value += chr;
+    if (chr.charCodeAt(0) >= 33 || chr === " " || chr === "	") {
       if (!this.operatorExpecting && chr !== " " && chr !== "	") {
         this.afterAt = chr === "@";
       }
+    } else {
+      this.list.slots[this.node * 3] |= TOKEN_DIRTY;
     }
     this.escaped = false;
   }
   /**
-   * Tracks the quoted strings, comments and domain literals inside an angle-addr or a
-   * group, which the closer of either must not be read from. A backslash escapes the next
-   * character inside a quoted string and a comment. A domain literal is only tracked in an
-   * angle-addr, where it opens right after an "@" and ends at the "]". dtext holds the list
-   * separators as well, and inside the brackets they never split the list anyway. In a group
-   * they do, so a literal is not tracked there and an unclosed "[" can not swallow the
-   * recipients after it.
+   * Tracks the quoted strings, comments and domain literals inside an angle-addr, which its
+   * closer must not be read from. A backslash escapes the next character inside a quoted
+   * string and a comment. A domain literal opens right after an "@" and ends at the "]".
+   * dtext holds the list separators as well, and inside the brackets they never split the
+   * list anyway.
    *
    * @param chr Character from the address field
    * @return true while the character sits inside one of them, the one that closes it included
@@ -37325,7 +37488,7 @@ var Tokenizer = class {
       this.innerComment = 1;
       return true;
     }
-    if (chr === "[" && this.afterAt && this.operatorExpecting === ">") {
+    if (chr === "[" && this.afterAt) {
       this.innerLiteral = true;
       return true;
     }
@@ -37344,50 +37507,57 @@ var Tokenizer = class {
     this.innerEscaped = false;
   }
 };
-var MAX_NESTED_GROUP_DEPTH = 10;
-function _parseAddressList(str, depth) {
-  if (depth > MAX_NESTED_GROUP_DEPTH) {
-    return [];
-  }
-  const tokenizer = new Tokenizer(str);
-  const tokens = tokenizer.tokenize();
-  const addresses = [];
-  let address = [];
-  const parsedAddresses = [];
-  tokens.forEach((token) => {
-    if (token.type === "operator" && (token.value === "," || token.value === ";")) {
-      if (address.length) {
-        addresses.push(address);
-      }
-      address = [];
-    } else {
-      address.push(token);
-    }
-  });
-  if (address.length) {
-    addresses.push(address);
-  }
-  addresses.forEach((addr) => {
-    const handled = _handleAddress(addr, depth);
-    for (let i = 0; i < handled.length; i++) {
-      parsedAddresses.push(handled[i]);
-    }
-  });
-  const mergedAddresses = [];
-  for (let i = parsedAddresses.length - 1; i >= 0; i--) {
-    const current = parsedAddresses[i];
-    const next = mergedAddresses.length ? mergedAddresses[mergedAddresses.length - 1] : null;
+function _mergeNameFragments(list) {
+  const merged = [];
+  for (let i = list.length - 1; i >= 0; i--) {
+    const current = list[i];
+    const next = merged.length ? merged[merged.length - 1] : null;
     if (next && current.address === "" && current.name && !current.group && next.address && next.name) {
       next.name = current.name + ", " + next.name;
     } else {
-      mergedAddresses.push(current);
+      merged.push(current);
     }
   }
-  mergedAddresses.reverse();
-  return mergedAddresses;
+  return merged.reverse();
+}
+function _parseAddressList(str) {
+  const tokens = new Tokenizer(str).tokenize();
+  const parsedAddresses = [];
+  let group = null;
+  let members2 = [];
+  let from = 0;
+  for (let i = 0, len = tokens.length; i <= len; i++) {
+    const operator = i < len ? tokens.operatorAt(i) : "";
+    if (i < len && operator !== "," && operator !== ";" && operator !== ":") {
+      continue;
+    }
+    if (operator === ":") {
+      if (!group) {
+        group = { name: _groupName(tokens, from, i), group: [] };
+        members2 = [];
+      }
+      from = i + 1;
+      continue;
+    }
+    if (i > from) {
+      const address = _handleAddress(tokens, from, i);
+      if (group) {
+        members2.push(address);
+      } else {
+        parsedAddresses.push(address);
+      }
+    }
+    from = i + 1;
+    if (group && (operator === ";" || i === len)) {
+      group.group = _mergeNameFragments(members2);
+      parsedAddresses.push(group);
+      group = null;
+    }
+  }
+  return _mergeNameFragments(parsedAddresses);
 }
 function addressparser(str, options) {
-  const parsedAddresses = _parseAddressList(str, 0);
+  const parsedAddresses = _parseAddressList(str);
   if (options?.flatten) {
     const flatAddresses = [];
     const walkAddressList = (list) => {
@@ -37405,7 +37575,7 @@ function addressparser(str, options) {
 }
 var addressparser_default = addressparser;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/mime-node/last-newline.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/mime-node/last-newline.js
 var import_node_stream5 = require("node:stream");
 var LastNewline = class extends import_node_stream5.Transform {
   constructor() {
@@ -37434,7 +37604,7 @@ var LastNewline = class extends import_node_stream5.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/mime-node/le-windows.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/mime-node/le-windows.js
 var import_node_stream6 = require("node:stream");
 var LeWindows = class extends import_node_stream6.Transform {
   constructor(options) {
@@ -37471,7 +37641,7 @@ var LeWindows = class extends import_node_stream6.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/mime-node/le-unix.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/mime-node/le-unix.js
 var import_node_stream7 = require("node:stream");
 var LeUnix = class extends import_node_stream7.Transform {
   constructor(options) {
@@ -37501,7 +37671,7 @@ var LeUnix = class extends import_node_stream7.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/mime-node/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/mime-node/index.js
 var FORMATTED_HEADERS = ["From", "Sender", "To", "Cc", "Bcc", "Reply-To", "Date", "References"];
 var ATEXT = "[A-Za-z0-9!#$%&'*+\\-/=?^_`{|}~\\x80-\\uFFFF]";
 var DOT_ATOM = new RegExp("^" + ATEXT + "+(?:\\." + ATEXT + "+)*$");
@@ -37904,15 +38074,18 @@ var MimeNode = class _MimeNode {
         return;
       }
       switch (header.key) {
+        // The comments of a MIME header are not part of its value and are dropped, so a
+        // caller supplied 'boundary=b (comment)' is the boundary b it names, and the
+        // header goes out without the comment
         case "Content-Disposition":
-          structured = parseHeaderValue(value);
+          structured = parseHeaderValue(value, { stripComments: true });
           if (this.filename) {
             structured.params.filename = this.filename;
           }
           value = buildHeaderValue(structured);
           break;
         case "Content-Type":
-          structured = parseHeaderValue(value);
+          structured = parseHeaderValue(value, { stripComments: true });
           structured.value = (structured.value || "").toString().replace(/[\x00-\x1f\x7f]/g, "");
           this._handleContentType(structured);
           if (structured.value.match(/^text\/plain\b/) && typeof this.content === "string" && /[\u0080-\uFFFF]/.test(this.content)) {
@@ -37940,7 +38113,7 @@ var MimeNode = class _MimeNode {
           }
           break;
       }
-      value = this._encodeHeaderValue(key, value);
+      value = this.encodeHeaderValue(key, value);
       if (!(value || "").toString().trim()) {
         return;
       }
@@ -38491,13 +38664,19 @@ var MimeNode = class _MimeNode {
     return _stripBoundaryControls(this.rootNode.boundaryPrefix + "-" + this.rootNode.baseBoundary) + "-Part_" + this._nodeId;
   }
   /**
-   * Encodes a header value for use in the generated rfc2822 email.
+   * Encodes a header value the way this node encodes it in the generated message:
+   * address headers are punycoded and mime encoded, message id headers get their
+   * angle brackets, a Date object is formatted and any other value is mime encoded
+   * when it holds non-ascii or control characters (using the node's `textEncoding`).
    *
-   * @param key Header key
+   * The result is a single unfolded line without the key. Fold it before writing it
+   * into a message, `key + ': ' + value` folded at 76 characters is what the node does.
+   *
+   * @param key Header key, case insensitive
    * @param value Header value
-   * @internal
+   * @returns Encoded header value
    */
-  _encodeHeaderValue(key, value) {
+  encodeHeaderValue(key, value) {
     key = this._normalizeHeaderKey(key);
     switch (key) {
       // Structured headers
@@ -38550,6 +38729,27 @@ var MimeNode = class _MimeNode {
         value = (value || "").toString().replace(/\r?\n|\r/g, " ");
         return this._encodeHeaderText(value);
     }
+  }
+  /**
+   * Encodes a header value without a node at hand. Same as the instance method of a
+   * node created with the given options.
+   *
+   * @param key Header key, case insensitive
+   * @param value Header value
+   * @param [options] Encoding options
+   * @param [options.textEncoding] either 'Q' (the default) or 'B'
+   * @returns Encoded header value
+   */
+  static encodeHeaderValue(key, value, options) {
+    return new _MimeNode(false, { textEncoding: options?.textEncoding }).encodeHeaderValue(key, value);
+  }
+  /**
+   * Alias of encodeHeaderValue, kept for callers that used the method before it was public
+   *
+   * @internal
+   */
+  _encodeHeaderValue(key, value) {
+    return this.encodeHeaderValue(key, value);
   }
   /**
    * Rebuilds address object using punycode and other adjustments
@@ -38717,10 +38917,36 @@ var MimeNode = class _MimeNode {
 };
 var mime_node_default = MimeNode;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/mail-composer/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/mail-composer/index.js
 function isContentObject(value) {
   const content = value;
   return typeof value === "object" && !!(content.content || content.path || content.href || content.raw);
+}
+function fitsSevenBit(content) {
+  let at;
+  let length;
+  if (typeof content === "string") {
+    at = (i) => content.charCodeAt(i);
+    length = content.length;
+  } else if (Buffer.isBuffer(content)) {
+    at = (i) => content[i];
+    length = content.length;
+  } else {
+    return false;
+  }
+  let lineLength = 0;
+  for (let i = 0; i < length; i++) {
+    const c = at(i);
+    if (c === 0 || c > 127) {
+      return false;
+    }
+    if (c === 10 || c === 13) {
+      lineLength = 0;
+    } else if (++lineLength > 998) {
+      return false;
+    }
+  }
+  return true;
 }
 var MailComposer = class {
   constructor(mail) {
@@ -38790,7 +39016,7 @@ var MailComposer = class {
       if ("contentTransferEncoding" in attachment) {
         contentTransferEncoding = attachment.contentTransferEncoding;
       } else if (isMessageNode) {
-        contentTransferEncoding = "8bit";
+        contentTransferEncoding = !attachment.encoding && fitsSevenBit(attachment.content) ? "7bit" : "8bit";
       } else {
         contentTransferEncoding = "base64";
       }
@@ -39203,7 +39429,7 @@ var MailComposer = class {
 };
 var mail_composer_default = MailComposer;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/dkim/message-parser.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/dkim/message-parser.js
 var import_node_stream9 = require("node:stream");
 function _trimFieldName(str) {
   let start = 0;
@@ -39341,7 +39567,7 @@ var MessageParser = class extends import_node_stream9.Transform {
 };
 var message_parser_default = MessageParser;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/dkim/relaxed-body.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/dkim/relaxed-body.js
 var import_node_stream10 = require("node:stream");
 var import_node_crypto2 = __toESM(require("node:crypto"), 1);
 var CHAR_CR = 13;
@@ -39463,7 +39689,7 @@ var RelaxedBody = class extends import_node_stream10.Transform {
 };
 var relaxed_body_default = RelaxedBody;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/dkim/sign.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/dkim/sign.js
 var import_node_crypto3 = __toESM(require("node:crypto"), 1);
 function unsupportedHashAlgoError(hashAlgo) {
   const err = new Error('Unsupported DKIM hash algorithm "' + hashAlgo + '"');
@@ -39542,7 +39768,7 @@ function relaxedHeaderLine(line) {
   return line.substr(line.indexOf(":") + 1).replace(/\r?\n/g, "").replace(/[ \t]+/g, " ").replace(/^ | $/g, "");
 }
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/dkim/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/dkim/index.js
 var import_node_stream11 = require("node:stream");
 var import_node_fs3 = __toESM(require("node:fs"), 1);
 var import_node_path2 = __toESM(require("node:path"), 1);
@@ -39757,7 +39983,7 @@ var DKIM = class {
 };
 var dkim_default = DKIM;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/smtp-connection/http-proxy-client.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/smtp-connection/http-proxy-client.js
 var import_node_net5 = __toESM(require("node:net"), 1);
 var import_node_tls = __toESM(require("node:tls"), 1);
 var MAX_RESPONSE_HEADER_BYTES = 64 * 1024;
@@ -39889,10 +40115,10 @@ function httpProxyClient(proxyUrl, destinationPort, destinationHost, tlsOptions,
 }
 var http_proxy_client_default = httpProxyClient;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/mailer/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/mailer/index.js
 var import_node_util2 = __toESM(require("node:util"), 1);
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/mailer/mail-message.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/mailer/mail-message.js
 var hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
 var MailMessage = class {
   constructor(mailer, data) {
@@ -40071,7 +40297,7 @@ var MailMessage = class {
         value = value && value.value || value;
         if (value) {
           if (["references", "in-reply-to", "message-id", "content-id"].includes(key)) {
-            value = this.message._encodeHeaderValue(key, value);
+            value = this.message.encodeHeaderValue(key, value);
           }
           data.normalizedHeaders[key] = value;
         }
@@ -40083,10 +40309,10 @@ var MailMessage = class {
         });
       }
       if (data.references) {
-        data.normalizedHeaders.references = this.message._encodeHeaderValue("references", data.references);
+        data.normalizedHeaders.references = this.message.encodeHeaderValue("references", data.references);
       }
       if (data.inReplyTo) {
-        data.normalizedHeaders["in-reply-to"] = this.message._encodeHeaderValue("in-reply-to", data.inReplyTo);
+        data.normalizedHeaders["in-reply-to"] = this.message.encodeHeaderValue("in-reply-to", data.inReplyTo);
       }
       return callback(null, data);
     });
@@ -40166,7 +40392,7 @@ var MailMessage = class {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/mailer/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/mailer/index.js
 var import_node_net6 = __toESM(require("node:net"), 1);
 var import_node_dns2 = __toESM(require("node:dns"), 1);
 var import_node_crypto5 = __toESM(require("node:crypto"), 1);
@@ -40514,17 +40740,17 @@ var Mail = class extends import_node_events.EventEmitter {
 };
 var mailer_default = Mail;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/smtp-pool/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/smtp-pool/index.js
 var import_node_events4 = require("node:events");
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/smtp-connection/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/smtp-connection/index.js
 var import_node_events2 = require("node:events");
 var import_node_net7 = __toESM(require("node:net"), 1);
 var import_node_tls2 = __toESM(require("node:tls"), 1);
 var import_node_os2 = __toESM(require("node:os"), 1);
 var import_node_crypto6 = __toESM(require("node:crypto"), 1);
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/smtp-connection/data-stream.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/smtp-connection/data-stream.js
 var import_node_stream12 = require("node:stream");
 var INSERT_LF = Buffer.from("\n");
 var INSERT_LF_DOT = Buffer.from("\n.");
@@ -40610,8 +40836,38 @@ var DataStream = class extends import_node_stream12.Transform {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/smtp-connection/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/smtp-connection/index.js
 var import_node_stream13 = require("node:stream");
+
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/smtp-connection/server-message-id.js
+var OUTLOOK_REPLY = /^250 2\.0\.0 OK (<[^<>\s]+\.prod\.outlook\.com>)/i;
+var SES_REPLY = /^250 Ok ([0-9a-f]+(?:-[0-9a-f]+)+)$/i;
+var AWS_REGION = /^[a-z]{2}(?:-[a-z]+)+-\d+$/;
+function sesRegion(host) {
+  const labels = host.toLowerCase().replace(/\.$/, "").split(".");
+  const domain = labels.slice(-2).join(".");
+  if (domain !== "amazonaws.com" && domain !== "awsapps.com") {
+    return void 0;
+  }
+  return labels.slice(0, -2).find((label) => AWS_REGION.test(label));
+}
+function parseServerMessageId(response, host) {
+  const reply = (response || "").toString().trim();
+  const outlook = reply.match(OUTLOOK_REPLY);
+  if (outlook) {
+    return outlook[1];
+  }
+  const ses = reply.match(SES_REPLY);
+  if (ses && host) {
+    const region = sesRegion(host);
+    if (region) {
+      return "<" + ses[1].toLowerCase() + "@" + (region === "us-east-1" ? "email" : region) + ".amazonses.com>";
+    }
+  }
+  return void 0;
+}
+
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/smtp-connection/index.js
 var CONNECTION_TIMEOUT = 2 * 60 * 1e3;
 var SOCKET_TIMEOUT = 10 * 60 * 1e3;
 var GREETING_TIMEOUT = 30 * 1e3;
@@ -41170,6 +41426,14 @@ var SMTPConnection = class extends import_node_events2.EventEmitter {
         result.messageTime = Date.now() - envelopeTime;
         result.messageSize = stream.outByteCount;
         result.response = str;
+        const serverMessageId = parseServerMessageId(result.response, this.options.host);
+        if (serverMessageId) {
+          result.serverMessageId = serverMessageId;
+        }
+        const rejectedErrors = this._envelope?.rejectedErrors;
+        if (!result.rejectedErrors && rejectedErrors && rejectedErrors.length) {
+          result.rejectedErrors = rejectedErrors;
+        }
         return callback(null, result);
       });
       if (typeof message.pipe === "function") {
@@ -41363,6 +41627,7 @@ var SMTPConnection = class extends import_node_events2.EventEmitter {
     const responseCode = typeof response === "string" && Number((response.match(/^\d+/) || [])[0]) || false;
     if (responseCode) {
       err.responseCode = responseCode;
+      err.permanent = isPermanentResponseCode(responseCode);
     }
     if (command) {
       err.command = command;
@@ -42328,7 +42593,7 @@ var SMTPConnection = class extends import_node_events2.EventEmitter {
 };
 var smtp_connection_default = SMTPConnection;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/xoauth2/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/xoauth2/index.js
 var import_node_stream14 = require("node:stream");
 var import_node_crypto7 = __toESM(require("node:crypto"), 1);
 var XOAuth2 = class extends import_node_stream14.Stream {
@@ -42659,7 +42924,7 @@ var XOAuth2 = class extends import_node_stream14.Stream {
 };
 var xoauth2_default = XOAuth2;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/smtp-pool/pool-resource.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/smtp-pool/pool-resource.js
 var import_node_events3 = require("node:events");
 var PoolResource = class extends import_node_events3.EventEmitter {
   constructor(pool) {
@@ -42934,7 +43199,7 @@ var PoolResource = class extends import_node_events3.EventEmitter {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/well-known/services.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/well-known/services.js
 var services = {
   "126": {
     "description": "126 Mail (NetEase)",
@@ -43613,7 +43878,7 @@ var services = {
   }
 };
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/well-known/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/well-known/index.js
 var normalized = {};
 Object.keys(services).forEach((key) => {
   const service = services[key];
@@ -43643,7 +43908,7 @@ function wellKnown(key) {
   return normalized[key] || false;
 }
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/smtp-pool/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/smtp-pool/index.js
 var REQUEUE_BASE_DELAY = 50;
 var REQUEUE_MAX_DELAY = 2e3;
 var SMTPPool = class extends import_node_events4.EventEmitter {
@@ -43695,6 +43960,7 @@ var SMTPPool = class extends import_node_events4.EventEmitter {
     this._queue = [];
     this._connections = [];
     this._connectionCounter = 0;
+    this._pending = 0;
     this.idling = true;
     setImmediate(() => {
       if (this.idling) {
@@ -43725,10 +43991,18 @@ var SMTPPool = class extends import_node_events4.EventEmitter {
       setImmediate(() => callback(err));
       return false;
     }
+    let counted = true;
+    this._pending++;
     this._queue.push({
       mail,
       requeueAttempts: 0,
-      callback
+      callback: (err, info2) => {
+        if (counted) {
+          counted = false;
+          this._pending--;
+        }
+        callback(err, info2);
+      }
     });
     if (this.idling && this._queue.length >= this.options.maxConnections) {
       this.idling = false;
@@ -44038,6 +44312,19 @@ var SMTPPool = class extends import_node_events4.EventEmitter {
   isIdle() {
     return this.idling;
   }
+  /**
+   * Counts the messages the pool has not finished with yet: the ones waiting in the queue
+   * plus the ones a connection is transmitting right now. isIdle() only tells whether the
+   * pool can take another message, it is already true while a message is still being sent,
+   * so use this to check that nothing would be lost by closing the pool. A message that is
+   * re-queued after its connection dropped is counted until its callback runs, also while it waits to be put back on the queue, and
+   * it is no longer counted by the time its callback runs.
+   *
+   * @returns Number of queued and in-flight messages
+   */
+  pendingCount() {
+    return this._pending;
+  }
   verify(callback) {
     let promise;
     if (!callback) {
@@ -44127,7 +44414,7 @@ var SMTPPool = class extends import_node_events4.EventEmitter {
 };
 var smtp_pool_default = SMTPPool;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/smtp-transport/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/smtp-transport/index.js
 var import_node_events5 = require("node:events");
 var MESSAGE_AUTH_KEYS = ["type", "user", "pass", "accessToken", "refreshToken", "expires"];
 var SMTPTransport = class extends import_node_events5.EventEmitter {
@@ -44448,7 +44735,7 @@ var SMTPTransport = class extends import_node_events5.EventEmitter {
 };
 var smtp_transport_default = SMTPTransport;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/sendmail-transport/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/sendmail-transport/index.js
 var import_node_child_process = require("node:child_process");
 var import_node_stream15 = require("node:stream");
 var STDIN_ERROR_EXIT_WAIT = 1e3;
@@ -44612,7 +44899,7 @@ var SendmailTransport = class {
 };
 var sendmail_transport_default = SendmailTransport;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/stream-transport/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/stream-transport/index.js
 var StreamTransport = class {
   constructor(options) {
     options = options || {};
@@ -44700,7 +44987,7 @@ var StreamTransport = class {
 };
 var stream_transport_default = StreamTransport;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/json-transport/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/json-transport/index.js
 var JSONTransport = class {
   constructor(options) {
     options = options || {};
@@ -44752,7 +45039,7 @@ var JSONTransport = class {
 };
 var json_transport_default = JSONTransport;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/ses-transport/index.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/ses-transport/index.js
 var import_node_events6 = __toESM(require("node:events"), 1);
 function tagSesError(err) {
   if (err && typeof err === "object" && !err.code) {
@@ -44934,7 +45221,7 @@ var SESTransport = class extends import_node_events6.default {
 };
 var ses_transport_default = SESTransport;
 
-// node_modules/.pnpm/nodemailer@10.1.4/node_modules/nodemailer/dist/esm/nodemailer.js
+// node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/dist/esm/nodemailer.js
 var etherealApi = () => (process.env.ETHEREAL_API || "https://api.nodemailer.com").replace(/\/+$/, "");
 var etherealWeb = () => (process.env.ETHEREAL_WEB || "https://ethereal.email").replace(/\/+$/, "");
 var etherealApiKey = () => (process.env.ETHEREAL_API_KEY || "").replace(/\s*/g, "") || null;
@@ -47801,6 +48088,6 @@ content-type/dist/index.js:
   (* v8 ignore if -- @preserve *)
 
 js-yaml/dist/js-yaml.mjs:
-  (*! js-yaml 5.4.3 https://github.com/nodeca/js-yaml @license MIT *)
+  (*! js-yaml 5.5.0 https://github.com/nodeca/js-yaml @license MIT *)
 */
 //# sourceMappingURL=index.js.map
