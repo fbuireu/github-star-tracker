@@ -1148,9 +1148,8 @@ const VERSIONED_DEPENDENCIES: Record<string, string[]> = {
 	wrangler: ["wrangler", "Wrangler"],
 	zod: ["Zod", "zod"],
 };
-const escapeForRegExp = (name: string): string => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const statedVersionPattern = (names: string[]): RegExp =>
-	new RegExp(`\\b(?:${names.map(escapeForRegExp).join("|")})\\s+(?:v|@)?\\d+(?:\\.\\d+)*\\b`, "g");
+	new RegExp(`\\b(?:${names.map((name) => RegExp.escape(name)).join("|")})\\s+(?:v|@)?\\d+(?:\\.\\d+)*\\b`, "g");
 interface PolicedNamesParams {
 	readonly declared: Set<string>;
 	readonly runtimes: string[];
