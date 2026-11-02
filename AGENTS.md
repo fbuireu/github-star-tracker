@@ -35,7 +35,7 @@ built-in Node 24 lacks, with the same outcome on a runner, so `lib` moves only w
 ## Commands
 
 ```bash
-pnpm build            # tsx esbuild.config.ts -> dist/index.js
+pnpm build            # node esbuild.config.ts -> dist/index.js
 pnpm lint             # biome lint, the root command the variants pass paths to
 pnpm lint:all         # lint .
 pnpm lint:all:fix     # lint:all --fix

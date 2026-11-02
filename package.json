@@ -33,7 +33,7 @@
 	"packageManager": "pnpm@12.15.0",
 	"scripts": {
 		"prepare": "husky",
-		"build": "tsx esbuild.config.ts",
+		"build": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON esbuild.config.ts",
 		"lint": "biome lint --no-errors-on-unmatched",
 		"lint:all": "pnpm lint .",
 		"lint:all:fix": "pnpm lint:all --fix",
@@ -79,7 +79,6 @@
 		"husky": "9.1.7",
 		"lint-staged": "17.6.0",
 		"semantic-release": "25.0.9",
-		"tsx": "4.23.15",
 		"typescript": "7.0.2",
 		"vitest": "5.0.5"
 	}

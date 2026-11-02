@@ -1,6 +1,12 @@
+import * as fs from "node:fs";
 import * as path from "node:path";
 import { build } from "esbuild";
-import tsconfig from "./tsconfig.json";
+
+interface TsConfig {
+	compilerOptions: { paths: Record<string, string[]> };
+}
+
+const tsconfig: TsConfig = JSON.parse(fs.readFileSync("tsconfig.json", "utf8"));
 
 const alias = Object.fromEntries(
 	Object.entries(tsconfig.compilerOptions.paths).map(([from, [to]]) => [
