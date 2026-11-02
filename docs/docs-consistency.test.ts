@@ -1149,7 +1149,7 @@ const VERSIONED_DEPENDENCIES: Record<string, string[]> = {
 	zod: ["Zod", "zod"],
 };
 const statedVersionPattern = (names: string[]): RegExp =>
-	new RegExp(`\\b(?:${names.map((name) => RegExp.escape(name)).join("|")})\\s+(?:v|@)?\\d+(?:\\.\\d+)*\\b`, "g");
+	new RegExp(`\\b(?:${names.map(RegExp.escape).join("|")})\\s+(?:v|@)?\\d+(?:\\.\\d+)*\\b`, "g");
 interface PolicedNamesParams {
 	readonly declared: Set<string>;
 	readonly runtimes: string[];
