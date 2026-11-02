@@ -1186,7 +1186,7 @@ describe("stated versions, since a manifest is the only copy a bot keeps current
 
 	it("reads the shipped runtime from action.yml and finds it quoted where the gap is explained", () => {
 		expect(SHIPPED_RUNTIME).toMatch(/^node\d+$/);
-		expect(read("esbuild.config.ts")).toContain(`"${SHIPPED_RUNTIME}"`);
+		expect(read("esbuild.config.mts")).toContain(`"${SHIPPED_RUNTIME}"`);
 		expect(read(GUIDE)).toContain(`\`${SHIPPED_RUNTIME}\``);
 		expect(read(CONTRIBUTOR_GUIDE)).toContain(SHIPPED_MAJOR);
 	});

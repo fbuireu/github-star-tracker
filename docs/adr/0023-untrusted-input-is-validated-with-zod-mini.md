@@ -33,7 +33,7 @@ i18n engine, the chart renderer). What made it worth measuring is that a schema 
 to the reader, and the same statement produces both the check and the TypeScript type.
 
 The library is `zod` 4.6.5, and the real choice was between its two builds. Measured by building this tree's
-`dist/index.js` with `esbuild.config.ts` (not minified, gzip at level 9), against 1,695,369 bytes raw and
+`dist/index.js` with `esbuild.config.mts` (not minified, gzip at level 9), against 1,695,369 bytes raw and
 355,205 gzipped before the change:
 
 | Build      | Raw               | Gzipped          |

@@ -33,7 +33,7 @@
 	"packageManager": "pnpm@12.15.0",
 	"scripts": {
 		"prepare": "husky",
-		"build": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON esbuild.config.ts",
+		"build": "node esbuild.config.mts",
 		"lint": "biome lint --no-errors-on-unmatched",
 		"lint:all": "pnpm lint .",
 		"lint:all:fix": "pnpm lint:all --fix",

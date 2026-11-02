@@ -29,6 +29,6 @@ lives only there.
   into a page that defines another `#star`, the two definitions collide and one clip serves both.
 - esbuild has no `.svg` loader configured. The alias resolves, but an `import logo from
   '@assets/logo.svg'` fails `pnpm build` until `loader: { '.svg': 'text' }` (or `dataurl`) is added in
-  [`esbuild.config.ts`](../../esbuild.config.ts), and fails `pnpm typecheck` until a `*.svg` module declaration exists. The
+  [`esbuild.config.mts`](../../esbuild.config.mts), and fails `pnpm typecheck` until a `*.svg` module declaration exists. The
   email digest cannot inline it: Gmail and Outlook strip or refuse inline SVG, which is why the digest's
   charts are QuickChart images ([ADR 0010](../../docs/adr/0010-quickchart-renders-the-email-charts.md)).

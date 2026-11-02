@@ -25,7 +25,7 @@ document outside the ADRs and `CHANGELOG.md` names a runtime, or a framework `pa
 version, the shipped runtime below excepted. `pnpm test:docs` asserts all of it.
 
 `engines.node` is the development pin; the shipped runtime is `node24` (`action.yml` `runs.using`, and
-[`esbuild.config.ts`](./esbuild.config.ts) `target`). `@types/node` tracks the development version and esbuild's
+[`esbuild.config.mts`](./esbuild.config.mts) `target`). `@types/node` tracks the development version and esbuild's
 `target` lowers syntax without shimming runtime APIs, so a `node:*` API that landed after 24.x type-checks, bundles,
 passes `pnpm verify` and then throws `TypeError: … is not a function` on a GitHub runner, where nothing here runs the
 bundle first. Check a new `node:` API against Node 24, not against `engines.node`. The language's own built-ins are held
@@ -35,7 +35,7 @@ built-in Node 24 lacks, with the same outcome on a runner, so `lib` moves only w
 ## Commands
 
 ```bash
-pnpm build            # node esbuild.config.ts -> dist/index.js
+pnpm build            # node esbuild.config.mts -> dist/index.js
 pnpm lint             # biome lint, the root command the variants pass paths to
 pnpm lint:all         # lint .
 pnpm lint:all:fix     # lint:all --fix
@@ -85,7 +85,7 @@ the layer table in [ARCHITECTURE.md](./ARCHITECTURE.md), which `pnpm test:docs` 
 | `presentation/`   | `@presentation/*`   | Pure rendering: data in, markdown/HTML/SVG/CSV string out                                            |
 | `shared/`         | `@shared/*`         | Cross-cutting code owning no layer: `errorMessage`, the schema-issue wording, and the test factories |
 
-Aliases are declared **once**, in [`tsconfig.json`](./tsconfig.json) `compilerOptions.paths`. `esbuild.config.ts` derives its
+Aliases are declared **once**, in [`tsconfig.json`](./tsconfig.json) `compilerOptions.paths`. `esbuild.config.mts` derives its
 `alias` map from that object at build time and [`vitest.config.mts`](./vitest.config.mts) sets `resolve.tsconfigPaths: true`, so a
 new alias needs exactly one edit, in `tsconfig.json` rather than in the build or test config. `@i18n` is a
 **file** alias (`"@i18n": ["./src/i18n/index.ts"]`), not a glob: `@i18n/types` does not resolve, so

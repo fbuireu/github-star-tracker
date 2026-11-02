@@ -20,6 +20,6 @@
 			"@shared/*": ["./src/shared/*"]
 		}
 	},
-	"include": ["src/**/*", "docs/**/*.ts", "esbuild.config.ts", "vitest.config.mts", "commitlint.config.ts"],
+	"include": ["src/**/*", "docs/**/*.ts", "esbuild.config.mts", "vitest.config.mts", "commitlint.config.ts"],
 	"exclude": ["node_modules", "dist"]
 }
