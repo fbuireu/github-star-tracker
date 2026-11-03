@@ -1136,7 +1136,7 @@ describe("the layer table is the import contract", () => {
 	});
 });
 
-const VERSIONED_DEPENDENCIES: Record<string, string[]> = {
+const VERSIONED_DEPENDENCIES = {
 	astro: ["Astro"],
 	"@astrojs/starlight": ["Starlight"],
 	effect: ["Effect"],
@@ -1147,7 +1147,7 @@ const VERSIONED_DEPENDENCIES: Record<string, string[]> = {
 	typescript: ["TypeScript"],
 	wrangler: ["wrangler", "Wrangler"],
 	zod: ["Zod", "zod"],
-};
+} satisfies Record<string, string[]>;
 const statedVersionPattern = (names: string[]): RegExp =>
 	new RegExp(`\\b(?:${names.map(RegExp.escape).join("|")})\\s+(?:v|@)?\\d+(?:\\.\\d+)*\\b`, "g");
 interface PolicedNamesParams {
