@@ -157,6 +157,14 @@ No rule below restates these, and a diff that breaks one fails CI:
   reader learns what it hands back without reading its body and a wrong return fails in the function rather than at its
   callers; a component that returns JSX, a nested function and a callback infer theirs. Type every parameter but a
   callback's, which takes its type from where it is passed.
+- `M7` **hard**: Type a literal table by how it is read, because an annotation forgets the keys a literal spells and
+  lets a misspelled one through. One read by its own keys or walked whole takes `satisfies`, and `as const satisfies`
+  when its literal values are read as types, with a template literal type where a value has a format
+  (`` `/${string}` ``); one over a closed union is `satisfies Record<Union, …>`, or a `Record<Union, …>` annotation when
+  no literal types are needed, so a missing member fails as well (`CHART_RANGE_DAYS`, `TRANSLATIONS`); one that holds
+  some members of a union and is looked up by any of them is a `Partial<Record<Union, …>>` annotation, whose lookup
+  answers `… | undefined`; and a `Record<string, …>` annotation is for a map looked up by a key nothing fixes in
+  advance.
 
 ## Errors
 
