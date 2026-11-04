@@ -1,3 +1,10 @@
+## [1.28.10](https://github.com/fbuireu/github-star-tracker/compare/v1.28.9...v1.28.10) (2026-11-04)
+
+
+### Bug Fixes
+
+* **deps:** bump undici to 6.29.1 and 7.30.1, and fast-uri to 3.1.9 ([#212](https://github.com/fbuireu/github-star-tracker/issues/212)) ([c0d3f8b](https://github.com/fbuireu/github-star-tracker/commit/c0d3f8b235501d251d1d3e0a8b6df1ee77fa50a2))
+
 ## [1.28.9](https://github.com/fbuireu/github-star-tracker/compare/v1.28.8...v1.28.9) (2026-11-01)
 
 
