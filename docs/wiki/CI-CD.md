@@ -480,6 +480,12 @@ repository's settings enable. `dependabot-auto-merge.yml` reads each one's metad
   exist in the repository, or `gh pr edit --add-label` fails the job. It is not a required check, so a missing label
   shows as a red run, not a blocked merge.
 
+**A run Dependabot triggers gets no Actions secret**, only the ones stored as Dependabot secrets, and needs none but
+`PAT`, which `dependabot-auto-merge.yml` reads and so is stored in both stores. `Verify` holds no deploy secret to
+miss: it formats, typechecks, builds the bundle and tests, and its Codecov upload tolerates the missing
+`CODECOV_TOKEN` (`fail_ci_if_error: false`), so a Dependabot pull request is checked and built like any other, and a
+bump that breaks the build turns `Check` red before its auto-merge can land.
+
 ---
 
 ## Limits
