@@ -416,7 +416,7 @@ function renderSvg({
 					dataset.fill !== false && !dataset.dashed
 						? (() => {
 								const first = segment.points[0];
-								const last = segment.points.at(-1) as Point;
+								const last = segment.points.at(-1) ?? first;
 								return `<path d="${pathD} L${last.x},${bottomY} L${first.x},${bottomY} Z" fill="${dataset.color}" fill-opacity="${fillOpacity}" />`;
 							})()
 						: "";

@@ -23,13 +23,15 @@ export interface TrendFit {
 export function calendarDays(history: History): number[] {
 	const times = history.snapshots.map((snapshot) => toEpochMs(snapshot.timestamp));
 
-	if (times.some((timeMs) => timeMs === null)) {
+	const knownTimes = times.filter((timeMs) => timeMs !== null);
+
+	if (knownTimes.length < times.length) {
 		return history.snapshots.map((_, index) => index * DAYS_PER_WEEK);
 	}
 
-	const first = times[0] as number;
+	const [first = 0] = knownTimes;
 
-	return times.map((timeMs) => ((timeMs as number) - first) / MS_PER_DAY);
+	return knownTimes.map((timeMs) => (timeMs - first) / MS_PER_DAY);
 }
 
 export function latestRateInterval(points: SeriesPoint[]): RateInterval | null {

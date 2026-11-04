@@ -32,10 +32,13 @@ export function getBaselineSnapshot({
 
 	const window = COMPARE_WINDOW_DAYS[compareAgainst] * MS_PER_DAY;
 	const cutoff = now.getTime() - window + COMPARE_WINDOW_TOLERANCE_MS;
-	const datable = snapshots.filter((snapshot) => toEpochMs(snapshot.timestamp) !== null);
-	const olderThanCutoff = datable.filter((snapshot) => (toEpochMs(snapshot.timestamp) as number) <= cutoff);
+	const dated = snapshots.flatMap((snapshot) => {
+		const timeMs = toEpochMs(snapshot.timestamp);
+		return timeMs === null ? [] : [{ snapshot, timeMs }];
+	});
+	const olderThanCutoff = dated.filter(({ timeMs }) => timeMs <= cutoff);
 
-	return olderThanCutoff.at(-1) ?? datable[0] ?? null;
+	return olderThanCutoff.at(-1)?.snapshot ?? dated[0]?.snapshot ?? null;
 }
 
 interface RepoStarSeriesParams {

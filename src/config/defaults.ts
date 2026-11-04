@@ -1,5 +1,4 @@
 import { CompareAgainst, NotificationMode } from "@domain/types";
-import type { Locale } from "@i18n";
 import type { Config } from "./types";
 import { ChartAxisSide, ChartCurve, ChartRange, ChartTheme, Visibility } from "./types";
 
@@ -18,7 +17,7 @@ export const DEFAULTS: Config = {
 	readOnly: false,
 	sendOnNoChanges: false,
 	includeCharts: true,
-	locale: "en" as Locale,
+	locale: "en",
 	notificationThreshold: 0,
 	notificationMode: NotificationMode.NET,
 	trackStargazers: false,

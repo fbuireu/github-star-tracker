@@ -1,11 +1,13 @@
 import { ChartCurve, ChartTheme } from "@config/types";
 import type { ColorPalette } from "./types";
 
+const MILESTONE_DASH: [number, number] = [6, 6];
+
 export const CHART_CHROME = {
 	titleFontSize: 16,
 	milestoneFontSize: 10,
 	milestoneStrokeWidth: 1,
-	milestoneDash: [6, 6] as [number, number],
+	milestoneDash: MILESTONE_DASH,
 } as const;
 
 export const CHART_DEFAULTS = {

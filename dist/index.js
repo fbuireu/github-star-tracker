@@ -31788,11 +31788,12 @@ function toEpochMs(timestamp) {
 var MIN_POINTS_FOR_RATE = 2;
 function calendarDays(history) {
   const times = history.snapshots.map((snapshot) => toEpochMs(snapshot.timestamp));
-  if (times.some((timeMs) => timeMs === null)) {
+  const knownTimes = times.filter((timeMs) => timeMs !== null);
+  if (knownTimes.length < times.length) {
     return history.snapshots.map((_, index) => index * DAYS_PER_WEEK);
   }
-  const first = times[0];
-  return times.map((timeMs) => (timeMs - first) / MS_PER_DAY);
+  const [first = 0] = knownTimes;
+  return knownTimes.map((timeMs) => (timeMs - first) / MS_PER_DAY);
 }
 function latestRateInterval(points) {
   const to = points.at(-1);
@@ -31859,9 +31860,12 @@ function getBaselineSnapshot({
   if (compareAgainst === CompareAgainst.LAST_RUN) return getLastSnapshot(history);
   const window2 = COMPARE_WINDOW_DAYS[compareAgainst] * MS_PER_DAY;
   const cutoff = now.getTime() - window2 + COMPARE_WINDOW_TOLERANCE_MS;
-  const datable = snapshots.filter((snapshot) => toEpochMs(snapshot.timestamp) !== null);
-  const olderThanCutoff = datable.filter((snapshot) => toEpochMs(snapshot.timestamp) <= cutoff);
-  return olderThanCutoff.at(-1) ?? datable[0] ?? null;
+  const dated = snapshots.flatMap((snapshot) => {
+    const timeMs = toEpochMs(snapshot.timestamp);
+    return timeMs === null ? [] : [{ snapshot, timeMs }];
+  });
+  const olderThanCutoff = dated.filter(({ timeMs }) => timeMs <= cutoff);
+  return olderThanCutoff.at(-1)?.snapshot ?? dated[0]?.snapshot ?? null;
 }
 function repoStarSeries({ snapshots, repoFullName }) {
   return snapshots.map(
@@ -45888,11 +45892,12 @@ function buildStarHistory({ repoStargazers, repos, maxPoints, now }) {
 }
 
 // src/presentation/constants.ts
+var MILESTONE_DASH = [6, 6];
 var CHART_CHROME = {
   titleFontSize: 16,
   milestoneFontSize: 10,
   milestoneStrokeWidth: 1,
-  milestoneDash: [6, 6]
+  milestoneDash: MILESTONE_DASH
 };
 var CHART_DEFAULTS = {
   smoothing: true,
@@ -46732,7 +46737,7 @@ function renderSvg({
       );
       const fillArea = dataset.fill !== false && !dataset.dashed ? (() => {
         const first = segment.points[0];
-        const last = segment.points.at(-1);
+        const last = segment.points.at(-1) ?? first;
         return `<path d="${pathD} L${last.x},${bottomY} L${first.x},${bottomY} Z" fill="${dataset.color}" fill-opacity="${fillOpacity}" />`;
       })() : "";
       const dashAttr = dataset.dashed ? ` stroke-dasharray="${dash.line}"` : "";

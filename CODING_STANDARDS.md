@@ -165,6 +165,15 @@ No rule below restates these, and a diff that breaks one fails CI:
   some members of a union and is looked up by any of them is a `Partial<Record<Union, …>>` annotation, whose lookup
   answers `… | undefined`; and a `Record<string, …>` annotation is for a map looked up by a key nothing fixes in
   advance.
+- `M8` **hard**: Type a value by narrowing it, never by casting it, because a cast checks nothing at run time and a
+  wrong one compiles. A literal takes an annotation or `satisfies` (`M7`), never `as`: `DEFAULTS` gives `locale` its
+  type through its `Config` annotation, and `CHART_CHROME` names a typed `MILESTONE_DASH` rather than casting a tuple. A
+  value a check can prove is narrowed by the check (`typeof`, `in`, `instanceof`, `Object.hasOwn`, a `value is T`
+  guard, or a `filter` whose predicate TypeScript infers, as `growth.ts` drops the snapshots it cannot date), a value
+  read twice is computed once and carried with what it was read from (`snapshot.ts`'s dated snapshots), and
+  `as unknown as` is never written in `src`. A cast stays only where no check can follow the value: an object a loop
+  builds key by key (`resolveTabledFields`), a key list `Object.keys` widens (`LOCALES`), and a library's generic
+  types; widening to a supertype checks the value and is not a cast that lies.
 
 ## Errors
 
