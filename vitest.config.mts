@@ -35,6 +35,8 @@ export default defineConfig({
 		reporters: process.env.GITHUB_ACTIONS ? ["default", jobSummary(suitesRun)] : ["default"],
 		globals: true,
 		testTimeout: 20_000,
+		experimental: { traceTimeline: true },
+		fakeTimers: { fakeNodeBuiltins: true },
 		coverage: {
 			provider: "v8",
 			reporter: ["text", "lcov"],

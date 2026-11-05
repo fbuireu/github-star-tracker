@@ -57,6 +57,11 @@ pnpm verify:changed   # verify:static && test:ut:changed && test:docs; what pre-
 
 Run one layer with `pnpm vitest run src/domain`, one file with `pnpm vitest run src/domain/forecast.test.ts`.
 
+[`vitest.config.mts`](./vitest.config.mts) sets `experimental.traceTimeline`, so a failing test prints the timeline
+of the waits it ran (each `vi.waitFor`, `vi.waitUntil` and `expect.poll`, by its `message`, and how long it took),
+and `fakeTimers.fakeNodeBuiltins`, so `vi.useFakeTimers()` fakes the `node:timers` modules as well as the globals,
+which Vitest's next major does by default.
+
 `test:ut:changed` picks tests through the import graph, which no Markdown file is in, which is why `verify:changed`
 ends with `test:docs`.
 
