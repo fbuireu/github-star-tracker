@@ -1,4 +1,3 @@
-import { ChartCurve, ChartTheme } from "@config/types";
 import type { ColorPalette } from "./types";
 
 const MILESTONE_DASH: [number, number] = [6, 6];
@@ -8,14 +7,6 @@ export const CHART_CHROME = {
 	milestoneFontSize: 10,
 	milestoneStrokeWidth: 1,
 	milestoneDash: MILESTONE_DASH,
-} as const;
-
-export const CHART_DEFAULTS = {
-	smoothing: true,
-	curve: ChartCurve.MONOTONE,
-	showPoints: true,
-	beginAtZero: false,
-	theme: ChartTheme.AUTO,
 } as const;
 
 export const LIGHT_PALETTE: ColorPalette = {
@@ -104,7 +95,6 @@ export const BADGE = {
 export const SVG_CHART = {
 	margin: { top: 50, right: 30, bottom: 50, left: 60 },
 	pointRadius: 4,
-	lineWidth: 2.5,
 	gridOpacity: 0.3,
 	fillOpacity: 0.1,
 	axisStrokeWidth: 1,

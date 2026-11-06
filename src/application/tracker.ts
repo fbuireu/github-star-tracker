@@ -52,6 +52,8 @@ export async function trackStars(): Promise<void> {
 				summary: EMPTY_SUMMARY,
 				rendered: empty,
 				htmlReportPath: writeHtmlReport(empty.html),
+				shouldNotify: false,
+				notificationSent: false,
 				newStargazers: 0,
 			});
 			return;
@@ -201,8 +203,8 @@ interface SetOutputsParams {
 	summary: Summary;
 	rendered: RenderedRun;
 	htmlReportPath: string;
-	shouldNotify?: boolean;
-	notificationSent?: boolean;
+	shouldNotify: boolean;
+	notificationSent: boolean;
 	newStargazers: number;
 }
 
@@ -210,8 +212,8 @@ function setOutputs({
 	summary,
 	rendered,
 	htmlReportPath,
-	shouldNotify = false,
-	notificationSent = false,
+	shouldNotify,
+	notificationSent,
 	newStargazers,
 }: SetOutputsParams): void {
 	core.setOutput("report", rendered.markdown);

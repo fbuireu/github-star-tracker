@@ -11,15 +11,10 @@ interface ShouldNotifyParams {
 	totalStars: number;
 	starsAtLastNotification: number | undefined;
 	threshold: number | "auto";
-	mode?: NotificationMode;
+	mode: NotificationMode;
 }
 
-export function shouldNotify({
-	totalStars,
-	starsAtLastNotification,
-	threshold,
-	mode = NotificationMode.NET,
-}: ShouldNotifyParams): boolean {
+export function shouldNotify({ totalStars, starsAtLastNotification, threshold, mode }: ShouldNotifyParams): boolean {
 	if (threshold === 0) return true;
 
 	const effectiveThreshold = threshold === "auto" ? getAdaptiveThreshold(totalStars) : threshold;

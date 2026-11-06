@@ -32097,12 +32097,7 @@ function buildAxisLabels({ timestamps, locale }) {
 function getAdaptiveThreshold(totalStars) {
   return NOTIFICATION_THRESHOLDS.find((threshold) => totalStars <= threshold.limit)?.value ?? NOTIFICATION_THRESHOLD_MAX_PACE;
 }
-function shouldNotify({
-  totalStars,
-  starsAtLastNotification,
-  threshold,
-  mode = NotificationMode.NET
-}) {
+function shouldNotify({ totalStars, starsAtLastNotification, threshold, mode }) {
   if (threshold === 0) return true;
   const effectiveThreshold = threshold === "auto" ? getAdaptiveThreshold(totalStars) : threshold;
   const delta = totalStars - (starsAtLastNotification ?? 0);
@@ -45978,13 +45973,6 @@ var CHART_CHROME = {
   milestoneStrokeWidth: 1,
   milestoneDash: MILESTONE_DASH
 };
-var CHART_DEFAULTS = {
-  smoothing: true,
-  curve: ChartCurve.MONOTONE,
-  showPoints: true,
-  beginAtZero: false,
-  theme: ChartTheme.AUTO
-};
 var LIGHT_PALETTE = {
   accent: "#dfb317",
   positive: "#28a745",
@@ -46062,7 +46050,6 @@ var BADGE = {
 var SVG_CHART = {
   margin: { top: 50, right: 30, bottom: 50, left: 60 },
   pointRadius: 4,
-  lineWidth: 2.5,
   gridOpacity: 0.3,
   fillOpacity: 0.1,
   axisStrokeWidth: 1,
@@ -46120,7 +46107,7 @@ var CHART_RANGE_DAYS = {
 };
 function filterSnapshotsByRange({
   snapshots,
-  range = ChartRange.ALL
+  range
 }) {
   const days = CHART_RANGE_DAYS[range];
   const last = snapshots.at(-1);
@@ -46192,7 +46179,7 @@ function selectWindow({ history, locale, range, maxPoints, axisLabels }) {
   };
 }
 function resolveMilestones(customMilestones) {
-  return customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
+  return customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
 }
 function visibleMilestones({ series, milestones, locale }) {
   const values = series.flatMap((entry) => entry.data.filter((value) => value !== null));
@@ -46205,9 +46192,9 @@ function starHistorySpec({
   title,
   palette,
   lineColor,
-  milestones = true,
+  milestones,
   customMilestones,
-  trendLine = false,
+  trendLine,
   ...window2
 }) {
   const t = getTranslations(window2.locale);
@@ -46374,7 +46361,7 @@ function buildChartSpec({
     case ChartKind.STAR_HISTORY:
       return starHistorySpec({
         ...window2,
-        title: request2.title ?? t.report.starHistory,
+        title: t.report.starHistory,
         palette,
         lineColor: request2.lineColor,
         milestones: request2.milestones,
@@ -46385,7 +46372,7 @@ function buildChartSpec({
       return perRepoSpec({
         ...window2,
         repoFullName: request2.repoFullName,
-        title: request2.title ?? interpolate({ template: t.report.repoChartTitle, params: { name: request2.repoFullName } }),
+        title: interpolate({ template: t.report.repoChartTitle, params: { name: request2.repoFullName } }),
         palette,
         lineColor: request2.lineColor
       });
@@ -46393,13 +46380,13 @@ function buildChartSpec({
       return comparisonSpec({
         ...window2,
         repoNames: request2.repoNames,
-        title: request2.title ?? t.report.topRepositories
+        title: t.report.topRepositories
       });
     case ChartKind.FORECAST:
       return forecastSpec({
         ...window2,
         forecastData: request2.forecastData,
-        title: request2.title ?? t.forecast.sectionTitle,
+        title: t.forecast.sectionTitle,
         palette,
         lineColor: request2.lineColor
       });
@@ -46408,7 +46395,7 @@ function buildChartSpec({
         ...window2,
         forecastData: request2.forecastData,
         repoFullName: request2.repoFullName,
-        title: request2.title ?? interpolate({ template: t.forecast.repoChartTitle, params: { name: request2.repoFullName } }),
+        title: interpolate({ template: t.forecast.repoChartTitle, params: { name: request2.repoFullName } }),
         palette,
         lineColor: request2.lineColor
       });
@@ -46441,7 +46428,7 @@ function prepareReportData({
   results,
   baselineSnapshotTimestamp,
   locale,
-  now = /* @__PURE__ */ new Date()
+  now
 }) {
   const { repos } = results;
   const t = getTranslations(locale);
@@ -46670,13 +46657,7 @@ var CURVE_PATHS = {
   [ChartCurve.CUBIC_BEZIER]: ({ points }) => cubicBezierPath(points),
   [ChartCurve.ROUNDED_STEP]: ({ points }) => roundedStepPath({ points, radius: ROUNDED_STEP_RADIUS })
 };
-function generateCurvePath({
-  points,
-  smoothing,
-  curve,
-  clampMinY = Number.NEGATIVE_INFINITY,
-  clampMaxY = Number.POSITIVE_INFINITY
-}) {
+function generateCurvePath({ points, smoothing, curve, clampMinY, clampMaxY }) {
   if (points.length === 0) return "";
   if (points.length === 1) return `M${points[0].x},${points[0].y}`;
   if (!smoothing) return straightPath(points);
@@ -46716,14 +46697,14 @@ function renderSvg({
   showLegend,
   locale,
   milestones,
-  lineWidth: lineWidthParam,
-  yAxisSide = ChartAxisSide.LEFT,
-  smoothing = CHART_DEFAULTS.smoothing,
-  curve = CHART_DEFAULTS.curve,
-  showPoints = CHART_DEFAULTS.showPoints,
-  animate = true,
-  beginAtZero = CHART_DEFAULTS.beginAtZero,
-  theme = CHART_DEFAULTS.theme
+  lineWidth,
+  yAxisSide,
+  smoothing,
+  curve,
+  showPoints,
+  animate,
+  beginAtZero,
+  theme
 }) {
   const {
     margin,
@@ -46740,7 +46721,6 @@ function renderSvg({
     dash,
     legend: legendStyle
   } = SVG_CHART;
-  const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
   const chartWidth = CHART.width - margin.left - margin.right;
   const chartHeight = CHART.height - margin.top - margin.bottom;
   const isRightAxis = yAxisSide === ChartAxisSide.RIGHT;
@@ -46800,7 +46780,7 @@ function renderSvg({
     }
     return validSegments.map((segment) => {
       const bottomY = CHART.height - margin.bottom;
-      const startsFromBaseline = dataset.fill !== false && !dataset.dashed && segment.startIndex === 0;
+      const startsFromBaseline = dataset.fill && !dataset.dashed && segment.startIndex === 0;
       const firstPoint = segment.points[0];
       const smoothPath = generateCurvePath({
         points: segment.points,
@@ -46813,7 +46793,7 @@ function renderSvg({
       const pathLength = calculatePathLength(
         startsFromBaseline ? [{ x: firstPoint.x, y: bottomY }, ...segment.points] : segment.points
       );
-      const fillArea = dataset.fill !== false && !dataset.dashed ? (() => {
+      const fillArea = dataset.fill && !dataset.dashed ? (() => {
         const first = segment.points[0];
         const last = segment.points.at(-1) ?? first;
         return `<path d="${pathD} L${last.x},${bottomY} L${first.x},${bottomY} Z" fill="${dataset.color}" fill-opacity="${fillOpacity}" />`;
@@ -46917,7 +46897,7 @@ function renderSvgChart({ request: request2, locale, maxPoints, range, ...style 
   const spec = buildChartSpec({
     request: request2,
     locale,
-    palette: resolvePalette(style.theme ?? CHART_DEFAULTS.theme),
+    palette: resolvePalette(style.theme),
     axisLabels: AxisLabels.THINNED,
     range,
     maxPoints
@@ -47271,18 +47251,18 @@ function toDataset({ series, curveProps, showPoints, lineWidth }) {
     ...curveProps,
     pointRadius: series.weight === SeriesWeight.HIDDEN ? CHART_POINT.hidden : pointRadiusFor({ showPoints, radius: point.radius }),
     pointHoverRadius: point.hoverRadius,
-    ...dash ? { borderDash: dash } : {},
-    ...lineWidth ? { borderWidth: lineWidth } : {}
+    borderWidth: lineWidth,
+    ...dash ? { borderDash: dash } : {}
   };
 }
 function chartImageUrl({
   request: request2,
   locale,
-  smoothing = CHART_DEFAULTS.smoothing,
-  curve = CHART_DEFAULTS.curve,
-  showPoints = CHART_DEFAULTS.showPoints,
-  beginAtZero = CHART_DEFAULTS.beginAtZero,
-  theme = CHART_DEFAULTS.theme,
+  smoothing,
+  curve,
+  showPoints,
+  beginAtZero,
+  theme,
   range,
   lineWidth
 }) {
@@ -47374,7 +47354,7 @@ function toTopRepos({ repos, ranked, limit }) {
   return ranked.filter((repo) => top.has(repo.fullName)).map(({ fullName, current, delta }) => ({ fullName, current, delta }));
 }
 function toStargazerSection(params) {
-  const diff = params.stargazerDiff ?? null;
+  const diff = params.stargazerDiff;
   if (diff === null) return null;
   return {
     outcome: diff.totalNew > 0 ? StargazerOutcome.NEW : StargazerOutcome.NONE,
@@ -47396,14 +47376,13 @@ function buildReportModel(params) {
     config: config2,
     results,
     baselineSnapshotTimestamp,
-    history = null,
-    velocityHistory = null,
-    forecastData = null,
+    history,
+    velocityHistory,
+    forecastData,
     now,
-    chartHistories = null,
-    drawn = null
+    chartHistories,
+    drawn
   } = params;
-  const isDrawn = (filename) => drawn === null || drawn.has(filename);
   const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config2;
   const {
     sorted,
@@ -47419,15 +47398,15 @@ function buildReportModel(params) {
     locale,
     now
   });
-  const hasChartHistory = includeCharts && history !== null && isPlottable(history);
-  const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity(velocityHistory) : null;
+  const hasChartHistory = includeCharts && isPlottable(history);
+  const velocity = velocityMetrics ? computeVelocity(velocityHistory) : null;
   const topRepos = toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount });
   const chartHistory = hasChartHistory ? history : null;
-  const perRepoCharts = chartHistory !== null && chartHistories !== null ? topRepos.filter((repo) => isDrawn(perRepoChartFile(repo.fullName))).map((repo) => ({ ...repo, history: chartHistories.forRepo(repo.fullName) })) : [];
+  const perRepoCharts = chartHistory !== null ? topRepos.filter((repo) => drawn.has(perRepoChartFile(repo.fullName))).map((repo) => ({ ...repo, history: chartHistories.forRepo(repo.fullName) })) : [];
   const perRepoForecasts = forecastData === null ? [] : forecastData.repos.map(({ repoFullName, forecasts }) => ({
     repoFullName,
     forecasts,
-    chartHistory: chartHistory !== null && chartHistories !== null && isDrawn(perRepoForecastChartFile(repoFullName)) ? chartHistories.reconstructedForRepo(repoFullName) : null
+    chartHistory: chartHistory !== null && drawn.has(perRepoForecastChartFile(repoFullName)) ? chartHistories.reconstructedForRepo(repoFullName) : null
   }));
   return {
     summary: results.summary,
@@ -47945,16 +47924,6 @@ function renderRun({
   forecastData,
   now = /* @__PURE__ */ new Date()
 }) {
-  const reportParams = {
-    config: config2,
-    results,
-    baselineSnapshotTimestamp,
-    history: chartHistories.aggregate,
-    velocityHistory: storedHistory,
-    stargazerDiff,
-    forecastData,
-    now
-  };
   const charts = buildChartFiles({
     config: config2,
     chartHistories,
@@ -47962,7 +47931,14 @@ function renderRun({
     topRepoNames: topRepositories({ repos: results.repos, limit: config2.topRepos })
   });
   const model = buildReportModel({
-    ...reportParams,
+    config: config2,
+    results,
+    baselineSnapshotTimestamp,
+    history: chartHistories.aggregate,
+    velocityHistory: storedHistory,
+    stargazerDiff,
+    forecastData,
+    now,
     chartHistories,
     drawn: new Set(charts.map((file) => file.filename))
   });
@@ -48001,6 +47977,8 @@ async function trackStars() {
         summary: EMPTY_SUMMARY,
         rendered: empty,
         htmlReportPath: writeHtmlReport(empty.html),
+        shouldNotify: false,
+        notificationSent: false,
         newStargazers: 0
       });
       return;
@@ -48126,8 +48104,8 @@ function setOutputs({
   summary: summary2,
   rendered,
   htmlReportPath,
-  shouldNotify: shouldNotify2 = false,
-  notificationSent = false,
+  shouldNotify: shouldNotify2,
+  notificationSent,
   newStargazers
 }) {
   setOutput("report", rendered.markdown);

@@ -72,7 +72,7 @@ function toTopRepos({ repos, ranked, limit }: ToTopReposParams): TopRepo[] {
 }
 
 function toStargazerSection(params: ReportParams): StargazerSection | null {
-	const diff = params.stargazerDiff ?? null;
+	const diff = params.stargazerDiff;
 
 	if (diff === null) return null;
 
@@ -102,14 +102,13 @@ export function buildReportModel(params: ReportParams): ReportModel {
 		config,
 		results,
 		baselineSnapshotTimestamp,
-		history = null,
-		velocityHistory = null,
-		forecastData = null,
+		history,
+		velocityHistory,
+		forecastData,
 		now,
-		chartHistories = null,
-		drawn = null,
+		chartHistories,
+		drawn,
 	} = params;
-	const isDrawn = (filename: string): boolean => drawn === null || drawn.has(filename);
 	const { locale, includeCharts, topRepos: topReposCount, velocityMetrics } = config;
 
 	const {
@@ -126,15 +125,15 @@ export function buildReportModel(params: ReportParams): ReportModel {
 		locale,
 		now,
 	});
-	const hasChartHistory = includeCharts && history !== null && isPlottable(history);
-	const velocity = velocityMetrics && velocityHistory !== null ? computeVelocity(velocityHistory) : null;
+	const hasChartHistory = includeCharts && isPlottable(history);
+	const velocity = velocityMetrics ? computeVelocity(velocityHistory) : null;
 
 	const topRepos = toTopRepos({ repos: results.repos, ranked: sorted, limit: topReposCount });
 	const chartHistory = hasChartHistory ? history : null;
 	const perRepoCharts: PerRepoChart[] =
-		chartHistory !== null && chartHistories !== null
+		chartHistory !== null
 			? topRepos
-					.filter((repo) => isDrawn(perRepoChartFile(repo.fullName)))
+					.filter((repo) => drawn.has(perRepoChartFile(repo.fullName)))
 					.map((repo) => ({ ...repo, history: chartHistories.forRepo(repo.fullName) }))
 			: [];
 	const perRepoForecasts: PerRepoForecast[] =
@@ -144,7 +143,7 @@ export function buildReportModel(params: ReportParams): ReportModel {
 					repoFullName,
 					forecasts,
 					chartHistory:
-						chartHistory !== null && chartHistories !== null && isDrawn(perRepoForecastChartFile(repoFullName))
+						chartHistory !== null && drawn.has(perRepoForecastChartFile(repoFullName))
 							? chartHistories.reconstructedForRepo(repoFullName)
 							: null,
 				}));

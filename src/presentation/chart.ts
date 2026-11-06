@@ -3,7 +3,7 @@ import { intlCode } from "@domain/formatting";
 import type { Locale } from "@i18n";
 import type { ChartMilestone, ChartRequest, ChartSeries } from "./chart-spec";
 import { AxisLabels, buildChartSpec, SeriesDash, SeriesWeight } from "./chart-spec";
-import { CHART, CHART_CHROME, CHART_DEFAULTS, CHART_POINT, CHART_TENSION } from "./constants";
+import { CHART, CHART_CHROME, CHART_POINT, CHART_TENSION } from "./constants";
 import { resolvePalette } from "./shared";
 import type { ColorPalette } from "./types";
 
@@ -91,7 +91,7 @@ interface Dataset {
 	pointRadius: number;
 	pointHoverRadius: number;
 	borderDash?: number[];
-	borderWidth?: number;
+	borderWidth: number;
 }
 
 interface MilestoneAnnotation {
@@ -270,7 +270,7 @@ interface ToDatasetParams {
 	series: ChartSeries;
 	curveProps: CurveProps;
 	showPoints: boolean;
-	lineWidth?: number;
+	lineWidth: number;
 }
 
 function toDataset({ series, curveProps, showPoints, lineWidth }: ToDatasetParams): Dataset {
@@ -287,31 +287,31 @@ function toDataset({ series, curveProps, showPoints, lineWidth }: ToDatasetParam
 		pointRadius:
 			series.weight === SeriesWeight.HIDDEN ? CHART_POINT.hidden : pointRadiusFor({ showPoints, radius: point.radius }),
 		pointHoverRadius: point.hoverRadius,
+		borderWidth: lineWidth,
 		...(dash ? { borderDash: dash } : {}),
-		...(lineWidth ? { borderWidth: lineWidth } : {}),
 	};
 }
 
 interface ChartImageUrlParams {
 	request: ChartRequest;
 	locale: Locale;
-	smoothing?: boolean;
-	curve?: ChartCurve;
-	showPoints?: boolean;
-	beginAtZero?: boolean;
-	theme?: ChartTheme;
-	range?: ChartRange;
-	lineWidth?: number;
+	smoothing: boolean;
+	curve: ChartCurve;
+	showPoints: boolean;
+	beginAtZero: boolean;
+	theme: ChartTheme;
+	range: ChartRange;
+	lineWidth: number;
 }
 
 export function chartImageUrl({
 	request,
 	locale,
-	smoothing = CHART_DEFAULTS.smoothing,
-	curve = CHART_DEFAULTS.curve,
-	showPoints = CHART_DEFAULTS.showPoints,
-	beginAtZero = CHART_DEFAULTS.beginAtZero,
-	theme = CHART_DEFAULTS.theme,
+	smoothing,
+	curve,
+	showPoints,
+	beginAtZero,
+	theme,
 	range,
 	lineWidth,
 }: ChartImageUrlParams): string | null {

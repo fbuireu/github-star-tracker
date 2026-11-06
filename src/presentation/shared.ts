@@ -14,13 +14,13 @@ export interface ReportParams {
 	config: Config;
 	results: ComparisonResults;
 	baselineSnapshotTimestamp: string | null;
-	history?: History | null;
-	velocityHistory?: History | null;
-	stargazerDiff?: StargazerDiffResult | null;
-	forecastData?: ForecastData | null;
-	now?: Date;
-	chartHistories?: ChartHistories | null;
-	drawn?: ReadonlySet<string>;
+	history: History;
+	velocityHistory: History;
+	stargazerDiff: StargazerDiffResult | null;
+	forecastData: ForecastData | null;
+	now: Date;
+	chartHistories: ChartHistories;
+	drawn: ReadonlySet<string>;
 }
 
 export interface RenderReportParams {
@@ -76,14 +76,14 @@ interface PrepareReportDataParams {
 	results: ComparisonResults;
 	baselineSnapshotTimestamp: string | null;
 	locale: Locale;
-	now?: Date;
+	now: Date;
 }
 
 export function prepareReportData({
 	results,
 	baselineSnapshotTimestamp,
 	locale,
-	now = new Date(),
+	now,
 }: PrepareReportDataParams): ReportData {
 	const { repos } = results;
 	const t = getTranslations(locale);

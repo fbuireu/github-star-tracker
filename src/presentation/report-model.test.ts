@@ -3,11 +3,12 @@ import { FORECAST_WEEKS } from "@domain/constants";
 import type { ForecastData } from "@domain/forecast";
 import { ForecastMethod, ForecastSource } from "@domain/forecast";
 import type { StargazerDiffResult } from "@domain/stargazers";
+import type { History } from "@domain/types";
 import { getTranslations } from "@i18n";
 import { makeComparisonResults, makeConfig, makeHistory, makeRepoResult } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import { buildForecastTable, buildReportModel, type ReportModel, StargazerOutcome } from "./report-model";
-import type { ReportParams } from "./shared";
+import { perRepoChartFile, perRepoForecastChartFile, type ReportParams } from "./shared";
 
 const forecastData: ForecastData = {
 	aggregate: {
@@ -26,13 +27,41 @@ interface ModelOfParams extends Partial<Omit<ReportParams, "config">> {
 	config?: Partial<Config>;
 }
 
-function modelOf({ config, ...overrides }: ModelOfParams = {}): ReportModel {
-	return buildReportModel({
+const NOW = new Date("2026-03-04T12:00:00Z");
+const NO_HISTORY: History = { snapshots: [] };
+
+function drawnFor({ results, forecastData }: Pick<ReportParams, "results" | "forecastData">): Set<string> {
+	const names = [
+		...results.repos.map((repo) => repo.fullName),
+		...(forecastData?.repos ?? []).map((repo) => repo.repoFullName),
+	];
+
+	return new Set(names.flatMap((name) => [perRepoChartFile(name), perRepoForecastChartFile(name)]));
+}
+
+function reportParamsOf(params: ModelOfParams = {}): ReportParams {
+	const { config, ...overrides } = params;
+	const history = overrides.history ?? NO_HISTORY;
+	const results = overrides.results ?? makeComparisonResults();
+	const forecastData = overrides.forecastData ?? null;
+
+	return {
 		config: makeConfig(config),
-		results: makeComparisonResults(),
+		results,
 		baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
+		history,
+		velocityHistory: NO_HISTORY,
+		stargazerDiff: null,
+		forecastData,
+		now: NOW,
+		chartHistories: { aggregate: history, forRepo: () => history, reconstructedForRepo: () => history },
+		drawn: drawnFor({ results, forecastData }),
 		...overrides,
-	});
+	};
+}
+
+function modelOf(params: ModelOfParams = {}): ReportModel {
+	return buildReportModel(reportParamsOf(params));
 }
 
 describe("buildReportModel", () => {
@@ -108,12 +137,10 @@ describe("buildReportModel", () => {
 				modelOf({ history, config: { includeCharts: true } }),
 				modelOf({ history, config: { includeCharts: false } }),
 				modelOf({ history: makeHistory({ starCounts: [10] }), config: { includeCharts: true } }),
-				modelOf({ history: null, config: { includeCharts: true } }),
 			].map((model) => [model.chartHistory !== null, model.chartHistory]);
 
 			expect(outcomes).toEqual([
 				[true, history],
-				[false, null],
 				[false, null],
 				[false, null],
 			]);

@@ -15,6 +15,7 @@ describe("shouldNotify with an 'auto' threshold", () => {
 			totalStars,
 			starsAtLastNotification: totalStars - gained,
 			threshold: "auto",
+			mode: NotificationMode.NET,
 		});
 	}
 
@@ -36,38 +37,39 @@ describe("shouldNotify with an 'auto' threshold", () => {
 
 describe("shouldNotify", () => {
 	it("returns true when threshold is 0", () => {
-		expect(shouldNotify({ totalStars: 100, starsAtLastNotification: 100, threshold: 0 })).toBe(true);
+		expect(
+			shouldNotify({ totalStars: 100, starsAtLastNotification: 100, threshold: 0, mode: NotificationMode.NET }),
+		).toBe(true);
 	});
 
 	it("returns false when delta is below threshold", () => {
-		expect(shouldNotify({ totalStars: 103, starsAtLastNotification: 100, threshold: 5 })).toBe(false);
+		expect(
+			shouldNotify({ totalStars: 103, starsAtLastNotification: 100, threshold: 5, mode: NotificationMode.NET }),
+		).toBe(false);
 	});
 
 	it("returns true when delta equals threshold", () => {
-		expect(shouldNotify({ totalStars: 105, starsAtLastNotification: 100, threshold: 5 })).toBe(true);
+		expect(
+			shouldNotify({ totalStars: 105, starsAtLastNotification: 100, threshold: 5, mode: NotificationMode.NET }),
+		).toBe(true);
 	});
 
 	it("returns true when delta exceeds threshold", () => {
-		expect(shouldNotify({ totalStars: 107, starsAtLastNotification: 100, threshold: 5 })).toBe(true);
+		expect(
+			shouldNotify({ totalStars: 107, starsAtLastNotification: 100, threshold: 5, mode: NotificationMode.NET }),
+		).toBe(true);
 	});
 
 	it("treats starsAtLastNotification undefined as 0", () => {
-		expect(shouldNotify({ totalStars: 5, starsAtLastNotification: undefined, threshold: 5 })).toBe(true);
+		expect(
+			shouldNotify({ totalStars: 5, starsAtLastNotification: undefined, threshold: 5, mode: NotificationMode.NET }),
+		).toBe(true);
 	});
 
 	it("considers absolute delta (star loss)", () => {
-		expect(shouldNotify({ totalStars: 95, starsAtLastNotification: 100, threshold: 5 })).toBe(true);
-	});
-
-	it("defaults to net mode", () => {
-		expect(shouldNotify({ totalStars: 95, starsAtLastNotification: 100, threshold: 5 })).toBe(
-			shouldNotify({
-				totalStars: 95,
-				starsAtLastNotification: 100,
-				threshold: 5,
-				mode: NotificationMode.NET,
-			}),
-		);
+		expect(
+			shouldNotify({ totalStars: 95, starsAtLastNotification: 100, threshold: 5, mode: NotificationMode.NET }),
+		).toBe(true);
 	});
 
 	it("ignores star loss in gains mode", () => {

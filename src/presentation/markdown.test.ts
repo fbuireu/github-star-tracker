@@ -8,10 +8,47 @@ import { makeComparisonResults, makeConfig, makeHistory, makeMultiRepoHistory, m
 import { describe, expect, it } from "vitest";
 import { generateMarkdownReport } from "./markdown";
 import { buildReportModel } from "./report-model";
-import type { ReportParams } from "./shared";
+import { perRepoChartFile, perRepoForecastChartFile, type ReportParams } from "./shared";
 
 interface RenderMarkdownParams extends Partial<Omit<ReportParams, "config">> {
 	config?: Partial<Config>;
+}
+
+const NOW = new Date("2026-03-04T12:00:00Z");
+const NO_HISTORY: History = { snapshots: [] };
+
+function drawnFor({ results, forecastData }: Pick<ReportParams, "results" | "forecastData">): Set<string> {
+	const names = [
+		...results.repos.map((repo) => repo.fullName),
+		...(forecastData?.repos ?? []).map((repo) => repo.repoFullName),
+	];
+
+	return new Set(names.flatMap((name) => [perRepoChartFile(name), perRepoForecastChartFile(name)]));
+}
+
+interface ReportParamsOfParams {
+	config: Config;
+	overrides: Partial<Omit<ReportParams, "config">>;
+}
+
+function reportParamsOf({ config, overrides }: ReportParamsOfParams): ReportParams {
+	const history = overrides.history ?? NO_HISTORY;
+	const results = overrides.results ?? makeComparisonResults();
+	const forecastData = overrides.forecastData ?? null;
+
+	return {
+		config,
+		results,
+		baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
+		history,
+		velocityHistory: NO_HISTORY,
+		stargazerDiff: null,
+		forecastData,
+		now: NOW,
+		chartHistories: { aggregate: history, forRepo: () => history, reconstructedForRepo: () => history },
+		drawn: drawnFor({ results, forecastData }),
+		...overrides,
+	};
 }
 
 function renderMarkdown({ config, ...overrides }: RenderMarkdownParams = {}): string {
@@ -19,19 +56,7 @@ function renderMarkdown({ config, ...overrides }: RenderMarkdownParams = {}): st
 
 	return generateMarkdownReport({
 		config: resolved,
-		model: buildReportModel({
-			config: resolved,
-			results: makeComparisonResults(),
-			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
-			chartHistories: overrides.history
-				? {
-						aggregate: overrides.history,
-						forRepo: () => overrides.history as History,
-						reconstructedForRepo: () => overrides.history as History,
-					}
-				: null,
-			...overrides,
-		}),
+		model: buildReportModel(reportParamsOf({ config: resolved, overrides })),
 	});
 }
 

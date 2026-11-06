@@ -4,6 +4,8 @@ import { makeComparisonResults, makeRepoResult } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import { colorSchemeFor, prepareReportData } from "./shared";
 
+const NOW = new Date("2026-06-15T12:00:00Z");
+
 function makeResults(overrides: Partial<ComparisonResults> = {}): ComparisonResults {
 	return makeComparisonResults({
 		repos: [
@@ -41,6 +43,7 @@ describe("prepareReportData", () => {
 			results: makeResults(),
 			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			locale: "en",
+			now: NOW,
 		});
 
 		expect(newRepos).toHaveLength(1);
@@ -52,6 +55,7 @@ describe("prepareReportData", () => {
 			results: makeResults(),
 			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			locale: "en",
+			now: NOW,
 		});
 
 		expect(removedRepos).toHaveLength(1);
@@ -63,6 +67,7 @@ describe("prepareReportData", () => {
 			results: makeResults(),
 			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			locale: "en",
+			now: NOW,
 		});
 
 		expect(sorted.map((repo) => repo.current)).toEqual([15, 8, 5]);
@@ -85,6 +90,7 @@ describe("prepareReportData", () => {
 			results: makeResults(),
 			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			locale: "en",
+			now: NOW,
 		});
 
 		expect(baselineSnapshotDate).toBe("2026-01-01");
@@ -95,6 +101,7 @@ describe("prepareReportData", () => {
 			results: makeResults(),
 			baselineSnapshotTimestamp: null,
 			locale: "en",
+			now: NOW,
 		});
 
 		expect(baselineSnapshotDate).toBe("first run");
@@ -106,6 +113,7 @@ describe("prepareReportData", () => {
 			results: makeResults(),
 			baselineSnapshotTimestamp: null,
 			locale: "es",
+			now: NOW,
 		});
 
 		expect(baselineSnapshotDate).toBe("primera ejecución");

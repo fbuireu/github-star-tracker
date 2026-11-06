@@ -322,9 +322,8 @@ No rule below restates these, and a diff that breaks one fails CI:
   ([ADR 0010](./docs/adr/0010-quickchart-renders-the-email-charts.md)). The email chart honours the same options and
   shows the same content as the SVG, except where ADR 0010 lists; appearance may differ between the two
   ([ADR 0014](./docs/adr/0014-charts-are-built-as-a-spec-and-rendered-by-adapters.md)).
-- `U9` **hard**: The chrome both adapters draw identically lives in `CHART_CHROME`, the canvas they share in `CHART` and
-  the style defaults they share in `CHART_DEFAULTS` (`src/presentation/constants.ts`), so each value lives in one place;
-  `chartImageUrl` takes no fallback from `SVG_CHART`.
+- `U9` **hard**: The chrome both adapters draw identically lives in `CHART_CHROME`, the canvas they share in `CHART`
+  (`src/presentation/constants.ts`), so each value lives in one place; `chartImageUrl` takes no fallback from `SVG_CHART`.
 - `U10` **hard**: `renderRun` is the layer's entry point and reads the clock once; every date in a render comes off the
   model, so a Run crossing midnight dates the markdown and HTML Reports alike.
 - `U11` **hard**: `buildReportModel` decides which sections a Report has and what is in them; `markdown.ts` and

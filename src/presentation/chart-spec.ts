@@ -23,12 +23,12 @@ const CHART_RANGE_DAYS: Record<ChartRange, number> = {
 
 interface FilterSnapshotsByRangeParams<T> {
 	snapshots: T[];
-	range?: ChartRange;
+	range: ChartRange;
 }
 
 function filterSnapshotsByRange<T extends { timestamp: string }>({
 	snapshots,
-	range = ChartRange.ALL,
+	range,
 }: FilterSnapshotsByRangeParams<T>): T[] {
 	const days = CHART_RANGE_DAYS[range];
 	const last = snapshots.at(-1);
@@ -48,7 +48,7 @@ function filterSnapshotsByRange<T extends { timestamp: string }>({
 
 interface SelectChartSnapshotsParams<T> {
 	snapshots: T[];
-	range?: ChartRange;
+	range: ChartRange;
 	maxPoints?: number;
 }
 
@@ -161,7 +161,7 @@ export interface ChartSpec {
 interface SelectWindowParams {
 	history: History;
 	locale: Locale;
-	range?: ChartRange;
+	range: ChartRange;
 	maxPoints?: number;
 	axisLabels: AxisLabels;
 }
@@ -184,8 +184,8 @@ function selectWindow({ history, locale, range, maxPoints, axisLabels }: SelectW
 	};
 }
 
-function resolveMilestones(customMilestones?: readonly number[]): readonly number[] {
-	return customMilestones && customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
+function resolveMilestones(customMilestones: readonly number[]): readonly number[] {
+	return customMilestones.length > 0 ? customMilestones : STAR_MILESTONES;
 }
 
 interface VisibleMilestonesParams {
@@ -211,18 +211,18 @@ interface StarHistorySpecParams extends SelectWindowParams {
 	title: string;
 	palette: ColorPalette;
 	lineColor?: string;
-	milestones?: boolean;
-	customMilestones?: readonly number[];
-	trendLine?: boolean;
+	milestones: boolean;
+	customMilestones: readonly number[];
+	trendLine: boolean;
 }
 
 function starHistorySpec({
 	title,
 	palette,
 	lineColor,
-	milestones = true,
+	milestones,
 	customMilestones,
-	trendLine = false,
+	trendLine,
 	...window
 }: StarHistorySpecParams): ChartSpec {
 	const t = getTranslations(window.locale);
@@ -422,15 +422,14 @@ export type ChartKind = (typeof ChartKind)[keyof typeof ChartKind];
 
 interface ChartRequestBase {
 	history: History;
-	title?: string;
 }
 
 interface StarHistoryChartRequest extends ChartRequestBase {
 	kind: typeof ChartKind.STAR_HISTORY;
 	lineColor?: string;
-	milestones?: boolean;
-	customMilestones?: readonly number[];
-	trendLine?: boolean;
+	milestones: boolean;
+	customMilestones: readonly number[];
+	trendLine: boolean;
 }
 
 interface PerRepoChartRequest extends ChartRequestBase {
@@ -469,7 +468,7 @@ interface BuildChartSpecParams {
 	locale: Locale;
 	palette: ColorPalette;
 	axisLabels: AxisLabels;
-	range?: ChartRange;
+	range: ChartRange;
 	maxPoints?: number;
 }
 
@@ -490,7 +489,7 @@ export function buildChartSpec({
 		case ChartKind.STAR_HISTORY:
 			return starHistorySpec({
 				...window,
-				title: request.title ?? t.report.starHistory,
+				title: t.report.starHistory,
 				palette,
 				lineColor: request.lineColor,
 				milestones: request.milestones,
@@ -501,8 +500,7 @@ export function buildChartSpec({
 			return perRepoSpec({
 				...window,
 				repoFullName: request.repoFullName,
-				title:
-					request.title ?? interpolate({ template: t.report.repoChartTitle, params: { name: request.repoFullName } }),
+				title: interpolate({ template: t.report.repoChartTitle, params: { name: request.repoFullName } }),
 				palette,
 				lineColor: request.lineColor,
 			});
@@ -510,13 +508,13 @@ export function buildChartSpec({
 			return comparisonSpec({
 				...window,
 				repoNames: request.repoNames,
-				title: request.title ?? t.report.topRepositories,
+				title: t.report.topRepositories,
 			});
 		case ChartKind.FORECAST:
 			return forecastSpec({
 				...window,
 				forecastData: request.forecastData,
-				title: request.title ?? t.forecast.sectionTitle,
+				title: t.forecast.sectionTitle,
 				palette,
 				lineColor: request.lineColor,
 			});
@@ -525,8 +523,7 @@ export function buildChartSpec({
 				...window,
 				forecastData: request.forecastData,
 				repoFullName: request.repoFullName,
-				title:
-					request.title ?? interpolate({ template: t.forecast.repoChartTitle, params: { name: request.repoFullName } }),
+				title: interpolate({ template: t.forecast.repoChartTitle, params: { name: request.repoFullName } }),
 				palette,
 				lineColor: request.lineColor,
 			});

@@ -3,7 +3,7 @@ import { formatCount } from "@domain/formatting";
 import type { Locale } from "@i18n";
 import type { ChartMilestone, ChartRequest } from "./chart-spec";
 import { AxisLabels, buildChartSpec, SeriesDash } from "./chart-spec";
-import { CHART, CHART_DEFAULTS, CHART_TENSION, DARK_PALETTE, SVG_CHART } from "./constants";
+import { CHART, CHART_TENSION, DARK_PALETTE, SVG_CHART } from "./constants";
 import { EscapeDialect, escapeFor } from "./escaping";
 import { resolvePalette } from "./shared";
 
@@ -200,17 +200,11 @@ interface GenerateCurvePathParams {
 	points: Point[];
 	smoothing: boolean;
 	curve: ChartCurve;
-	clampMinY?: number;
-	clampMaxY?: number;
+	clampMinY: number;
+	clampMaxY: number;
 }
 
-function generateCurvePath({
-	points,
-	smoothing,
-	curve,
-	clampMinY = Number.NEGATIVE_INFINITY,
-	clampMaxY = Number.POSITIVE_INFINITY,
-}: GenerateCurvePathParams): string {
+function generateCurvePath({ points, smoothing, curve, clampMinY, clampMaxY }: GenerateCurvePathParams): string {
 	if (points.length === 0) return "";
 	if (points.length === 1) return `M${points[0].x},${points[0].y}`;
 	if (!smoothing) return straightPath(points);
@@ -266,19 +260,19 @@ interface SvgDataset {
 	label: string;
 	data: (number | null)[];
 	color: string;
-	dashed?: boolean;
-	fill?: boolean;
+	dashed: boolean;
+	fill: boolean;
 }
 
 interface SvgChartStyle {
-	lineWidth?: number;
-	yAxisSide?: ChartAxisSide;
-	smoothing?: boolean;
-	curve?: ChartCurve;
-	showPoints?: boolean;
-	animate?: boolean;
-	beginAtZero?: boolean;
-	theme?: ChartTheme;
+	lineWidth: number;
+	yAxisSide: ChartAxisSide;
+	smoothing: boolean;
+	curve: ChartCurve;
+	showPoints: boolean;
+	animate: boolean;
+	beginAtZero: boolean;
+	theme: ChartTheme;
 }
 
 interface RenderSvgParams extends SvgChartStyle {
@@ -297,14 +291,14 @@ function renderSvg({
 	showLegend,
 	locale,
 	milestones,
-	lineWidth: lineWidthParam,
-	yAxisSide = ChartAxisSide.LEFT,
-	smoothing = CHART_DEFAULTS.smoothing,
-	curve = CHART_DEFAULTS.curve,
-	showPoints = CHART_DEFAULTS.showPoints,
-	animate = true,
-	beginAtZero = CHART_DEFAULTS.beginAtZero,
-	theme = CHART_DEFAULTS.theme,
+	lineWidth,
+	yAxisSide,
+	smoothing,
+	curve,
+	showPoints,
+	animate,
+	beginAtZero,
+	theme,
 }: RenderSvgParams): string | null {
 	const {
 		margin,
@@ -321,7 +315,6 @@ function renderSvg({
 		dash,
 		legend: legendStyle,
 	} = SVG_CHART;
-	const lineWidth = lineWidthParam ?? SVG_CHART.lineWidth;
 	const chartWidth = CHART.width - margin.left - margin.right;
 	const chartHeight = CHART.height - margin.top - margin.bottom;
 	const isRightAxis = yAxisSide === ChartAxisSide.RIGHT;
@@ -396,7 +389,7 @@ function renderSvg({
 		return validSegments
 			.map((segment) => {
 				const bottomY = CHART.height - margin.bottom;
-				const startsFromBaseline = dataset.fill !== false && !dataset.dashed && segment.startIndex === 0;
+				const startsFromBaseline = dataset.fill && !dataset.dashed && segment.startIndex === 0;
 				const firstPoint = segment.points[0];
 				const smoothPath = generateCurvePath({
 					points: segment.points,
@@ -413,7 +406,7 @@ function renderSvg({
 				);
 
 				const fillArea =
-					dataset.fill !== false && !dataset.dashed
+					dataset.fill && !dataset.dashed
 						? (() => {
 								const first = segment.points[0];
 								const last = segment.points.at(-1) ?? first;
@@ -548,15 +541,15 @@ function renderSvg({
 interface RenderSvgChartParams extends SvgChartStyle {
 	request: ChartRequest;
 	locale: Locale;
-	maxPoints?: number;
-	range?: ChartRange;
+	maxPoints: number;
+	range: ChartRange;
 }
 
 export function renderSvgChart({ request, locale, maxPoints, range, ...style }: RenderSvgChartParams): string | null {
 	const spec = buildChartSpec({
 		request,
 		locale,
-		palette: resolvePalette(style.theme ?? CHART_DEFAULTS.theme),
+		palette: resolvePalette(style.theme),
 		axisLabels: AxisLabels.THINNED,
 		range,
 		maxPoints,

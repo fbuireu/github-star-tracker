@@ -12,7 +12,6 @@ import { generateCsvReport } from "./csv";
 import { generateHtmlReport } from "./html";
 import { generateMarkdownReport } from "./markdown";
 import { buildReportModel } from "./report-model";
-import type { ReportParams } from "./shared";
 
 export interface RenderedRun {
 	markdown: string;
@@ -61,7 +60,7 @@ interface RenderRunParams {
 	baselineSnapshotTimestamp: string | null;
 	chartHistories: ChartHistories;
 	storedHistory: History;
-	stargazerDiff?: StargazerDiffResult | null;
+	stargazerDiff: StargazerDiffResult | null;
 	forecastData: ForecastData | null;
 	now?: Date;
 }
@@ -76,7 +75,13 @@ export function renderRun({
 	forecastData,
 	now = new Date(),
 }: RenderRunParams): RenderedRun {
-	const reportParams: ReportParams = {
+	const charts = buildChartFiles({
+		config,
+		chartHistories,
+		forecastData,
+		topRepoNames: topRepositories({ repos: results.repos, limit: config.topRepos }),
+	});
+	const model = buildReportModel({
 		config,
 		results,
 		baselineSnapshotTimestamp,
@@ -85,16 +90,6 @@ export function renderRun({
 		stargazerDiff,
 		forecastData,
 		now,
-	};
-
-	const charts = buildChartFiles({
-		config,
-		chartHistories,
-		forecastData,
-		topRepoNames: topRepositories({ repos: results.repos, limit: config.topRepos }),
-	});
-	const model = buildReportModel({
-		...reportParams,
 		chartHistories,
 		drawn: new Set(charts.map((file) => file.filename)),
 	});

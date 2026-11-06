@@ -41,6 +41,7 @@ function render(config = makeConfig({ includeCharts: true, topRepos: 2 })): Rend
 		baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 		chartHistories: chartHistories(),
 		storedHistory: STORED,
+		stargazerDiff: null,
 		forecastData: null,
 		now: NOW,
 	});
@@ -80,6 +81,7 @@ describe("renderRun", () => {
 			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories(),
 			storedHistory: STORED,
+			stargazerDiff: null,
 			forecastData: null,
 			now,
 		});
@@ -99,6 +101,7 @@ describe("renderRun", () => {
 			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories(),
 			storedHistory: STORED,
+			stargazerDiff: null,
 			forecastData: null,
 			now: NOW,
 		});
@@ -125,6 +128,7 @@ describe("renderRun", () => {
 			results: makeComparisonResults(),
 			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			storedHistory: STORED,
+			stargazerDiff: null,
 			forecastData: null,
 			now: new Date("2026-03-04T12:00:00Z"),
 		};
@@ -152,6 +156,7 @@ describe("renderRun", () => {
 				reconstructedForRepo: () => null,
 			},
 			storedHistory: STORED,
+			stargazerDiff: null,
 			forecastData: null,
 		});
 		const drawn = rendered.charts.map((chart) => chart.filename);
@@ -185,6 +190,7 @@ describe("renderRun", () => {
 			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories(),
 			storedHistory: STORED,
+			stargazerDiff: null,
 			forecastData,
 		});
 		const drawn = rendered.charts.map((chart) => chart.filename).filter((filename) => filename.startsWith("forecast-"));
@@ -202,6 +208,7 @@ describe("renderRun", () => {
 			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories(),
 			storedHistory: STORED,
+			stargazerDiff: null,
 			forecastData: null,
 		});
 
@@ -281,7 +288,7 @@ describe("the two Report dialects stay in step", () => {
 				baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 				chartHistories: chartHistories(),
 				storedHistory: STORED,
-				stargazerDiff: diff,
+				stargazerDiff: diff ?? null,
 				forecastData: forecast ?? null,
 			});
 
@@ -345,6 +352,7 @@ describe("the two Report dialects stay in step", () => {
 				baselineSnapshotTimestamp: movement.baselineSnapshotTimestamp,
 				chartHistories: chartHistories(),
 				storedHistory: STORED,
+				stargazerDiff: null,
 				forecastData: null,
 			});
 
@@ -360,6 +368,7 @@ describe("the two Report dialects stay in step", () => {
 			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories({ snapshots: [] }),
 			storedHistory: { snapshots: [] },
+			stargazerDiff: null,
 			forecastData: null,
 		});
 
@@ -511,6 +520,7 @@ describe("the Notification subject", () => {
 			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories(),
 			storedHistory: STORED,
+			stargazerDiff: null,
 			forecastData: null,
 		});
 
@@ -537,6 +547,7 @@ describe("both chart systems honour the options they share", () => {
 			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
 			chartHistories: chartHistories(),
 			storedHistory: STORED,
+			stargazerDiff: null,
 			forecastData: null,
 		});
 

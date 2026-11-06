@@ -52,10 +52,29 @@ interface SpecOfParams {
 	locale?: Locale;
 }
 
+interface StarHistoryParams {
+	history: History;
+	milestones?: boolean;
+	customMilestones?: readonly number[];
+	trendLine?: boolean;
+	lineColor?: string;
+}
+
+function starHistory({ history, ...overrides }: StarHistoryParams): ChartRequest {
+	return {
+		kind: ChartKind.STAR_HISTORY,
+		history,
+		milestones: true,
+		customMilestones: [],
+		trendLine: false,
+		...overrides,
+	};
+}
+
 function specOf({
 	request,
 	axisLabels = AxisLabels.THINNED,
-	range,
+	range = ChartRange.ALL,
 	maxPoints,
 	locale = "en",
 }: SpecOfParams): ChartSpec {
@@ -104,7 +123,7 @@ describe("isPlottable", () => {
 describe("buildChartSpec", () => {
 	describe("too little history", () => {
 		const requests: ChartRequest[] = [
-			{ kind: ChartKind.STAR_HISTORY, history: singleSnapshot },
+			starHistory({ history: singleSnapshot }),
 			{ kind: ChartKind.PER_REPO, history: singleSnapshot, repoFullName: "user/repo-a" },
 			{ kind: ChartKind.COMPARISON, history: singleSnapshot, repoNames: ["user/repo-a"] },
 			{ kind: ChartKind.FORECAST, history: singleSnapshot, forecastData },
@@ -118,6 +137,7 @@ describe("buildChartSpec", () => {
 					locale: "en",
 					palette: LIGHT_PALETTE,
 					axisLabels: AxisLabels.THINNED,
+					range: ChartRange.ALL,
 				}),
 			);
 
@@ -130,6 +150,7 @@ describe("buildChartSpec", () => {
 				locale: "en",
 				palette: LIGHT_PALETTE,
 				axisLabels: AxisLabels.THINNED,
+				range: ChartRange.ALL,
 			});
 
 			expect(spec).toBeNull();
@@ -140,7 +161,7 @@ describe("buildChartSpec", () => {
 		it("names each kind from the locale bundle, or the repository itself", () => {
 			const history = makeHistory({ starCounts: [10, 20, 30] });
 			const titles = [
-				specOf({ request: { kind: ChartKind.STAR_HISTORY, history } }).title,
+				specOf({ request: starHistory({ history }) }).title,
 				specOf({
 					request: { kind: ChartKind.PER_REPO, history: multiRepo, repoFullName: "user/repo-a" },
 				}).title,
@@ -211,7 +232,7 @@ describe("buildChartSpec", () => {
 					},
 					locale,
 				});
-				const starHistorySpec = specOf({ request: { kind: ChartKind.STAR_HISTORY, history }, locale });
+				const starHistorySpec = specOf({ request: starHistory({ history }), locale });
 
 				expect(perRepoSpec.title).toBe(perRepo);
 				expect(perRepoForecastSpec.title).toBe(perRepoForecast);
@@ -223,31 +244,12 @@ describe("buildChartSpec", () => {
 		it("states the expected text for every locale the bundles ship", () => {
 			expect(LOCALIZED_TEXT.map(({ locale }) => locale)).toEqual(LOCALES);
 		});
-
-		it("lets an explicit title win, whatever the kind", () => {
-			const history = makeHistory({ starCounts: [10, 20, 30] });
-			const requests: ChartRequest[] = [
-				{ kind: ChartKind.STAR_HISTORY, history, title: "Mine" },
-				{ kind: ChartKind.PER_REPO, history: multiRepo, repoFullName: "user/repo-a", title: "Mine" },
-				{ kind: ChartKind.COMPARISON, history: multiRepo, repoNames: ["user/repo-a"], title: "Mine" },
-				{ kind: ChartKind.FORECAST, history, forecastData, title: "Mine" },
-				{
-					kind: ChartKind.PER_REPO_FORECAST,
-					history: multiRepo,
-					forecastData: ownForecast,
-					repoFullName: "user/repo-a",
-					title: "Mine",
-				},
-			];
-
-			expect(requests.map((request) => specOf({ request }).title)).toEqual(requests.map(() => "Mine"));
-		});
 	});
 
 	describe("star history", () => {
 		it("plots the total series, filled and unbroken", () => {
 			const spec = specOf({
-				request: { kind: ChartKind.STAR_HISTORY, history: makeHistory({ starCounts: [10, 20, 30] }) },
+				request: starHistory({ history: makeHistory({ starCounts: [10, 20, 30] }) }),
 			});
 
 			expect(spec.series).toHaveLength(1);
@@ -263,11 +265,7 @@ describe("buildChartSpec", () => {
 
 		it("honours an explicit line colour", () => {
 			const spec = specOf({
-				request: {
-					kind: ChartKind.STAR_HISTORY,
-					history: makeHistory({ starCounts: [10, 20] }),
-					lineColor: "#6f42c1",
-				},
+				request: starHistory({ history: makeHistory({ starCounts: [10, 20] }), lineColor: "#6f42c1" }),
 			});
 
 			expect(spec.series[0].color).toBe("#6f42c1");
@@ -275,7 +273,7 @@ describe("buildChartSpec", () => {
 
 		it("draws a Milestone past ten thousand Stars as readily as a small one", () => {
 			const spec = specOf({
-				request: { kind: ChartKind.STAR_HISTORY, history: makeHistory({ starCounts: [12_000, 60_000, 120_000] }) },
+				request: starHistory({ history: makeHistory({ starCounts: [12_000, 60_000, 120_000] }) }),
 			});
 
 			expect(spec.milestones).toEqual([
@@ -287,7 +285,7 @@ describe("buildChartSpec", () => {
 		it("adds a trailing-average trend series that carries no emphasis", () => {
 			const values = [10, 20, 30, 40];
 			const spec = specOf({
-				request: { kind: ChartKind.STAR_HISTORY, history: makeHistory({ starCounts: values }), trendLine: true },
+				request: starHistory({ history: makeHistory({ starCounts: values }), trendLine: true }),
 			});
 
 			expect(spec.series).toHaveLength(2);
@@ -304,17 +302,17 @@ describe("buildChartSpec", () => {
 		it("resolves milestones: custom beats built-in, empty falls back, off is none even beside a custom list", () => {
 			const history = makeHistory({ starCounts: [10, 600] });
 			const resolved = [
-				milestoneValues(specOf({ request: { kind: ChartKind.STAR_HISTORY, history } })),
+				milestoneValues(specOf({ request: starHistory({ history }) })),
 				milestoneValues(
 					specOf({
-						request: { kind: ChartKind.STAR_HISTORY, history, customMilestones: [90, 110] },
+						request: starHistory({ history, customMilestones: [90, 110] }),
 					}),
 				),
-				milestoneValues(specOf({ request: { kind: ChartKind.STAR_HISTORY, history, customMilestones: [] } })),
-				milestoneValues(specOf({ request: { kind: ChartKind.STAR_HISTORY, history, milestones: false } })),
+				milestoneValues(specOf({ request: starHistory({ history, customMilestones: [] }) })),
+				milestoneValues(specOf({ request: starHistory({ history, milestones: false }) })),
 				milestoneValues(
 					specOf({
-						request: { kind: ChartKind.STAR_HISTORY, history, milestones: false, customMilestones: [90, 110] },
+						request: starHistory({ history, milestones: false, customMilestones: [90, 110] }),
 					}),
 				),
 			];
@@ -324,11 +322,7 @@ describe("buildChartSpec", () => {
 		});
 
 		it("labels each milestone once, in the spec, using the requested locale", () => {
-			const request = {
-				kind: ChartKind.STAR_HISTORY,
-				history: makeHistory({ starCounts: [10, 6000] }),
-				customMilestones: [1000],
-			} as const;
+			const request = starHistory({ history: makeHistory({ starCounts: [10, 6000] }), customMilestones: [1000] });
 
 			expect(specOf({ request }).milestones).toEqual([{ value: 1000, label: "1K ★" }]);
 			expect(specOf({ request, locale: "es" }).milestones).toEqual([
@@ -338,11 +332,7 @@ describe("buildChartSpec", () => {
 
 		it("keeps only the milestones strictly inside the observed extremes", () => {
 			const spec = specOf({
-				request: {
-					kind: ChartKind.STAR_HISTORY,
-					history: makeHistory({ starCounts: [10, 100] }),
-					customMilestones: [10, 50, 100],
-				},
+				request: starHistory({ history: makeHistory({ starCounts: [10, 100] }), customMilestones: [10, 50, 100] }),
 			});
 
 			expect(milestoneValues(spec)).toEqual([50]);
@@ -535,6 +525,7 @@ describe("buildChartSpec", () => {
 				locale: "en",
 				palette: LIGHT_PALETTE,
 				axisLabels: AxisLabels.DATES,
+				range: ChartRange.ALL,
 			});
 
 			expect(spec).toBeNull();
@@ -544,6 +535,7 @@ describe("buildChartSpec", () => {
 			const thinned = specOf({
 				request: { kind: ChartKind.FORECAST, history, forecastData },
 				axisLabels: AxisLabels.THINNED,
+				range: ChartRange.ALL,
 			});
 			const dated = specOf({
 				request: { kind: ChartKind.FORECAST, history, forecastData },
@@ -562,11 +554,12 @@ describe("buildChartSpec", () => {
 		it("thins x-axis labels to years for a multi-year history, or dates them in full", () => {
 			const multiYear = makeHistory({ starCounts: [10, 20, 30], stepDays: 400 });
 			const thinned = specOf({
-				request: { kind: ChartKind.STAR_HISTORY, history: multiYear },
+				request: starHistory({ history: multiYear }),
 				axisLabels: AxisLabels.THINNED,
+				range: ChartRange.ALL,
 			});
 			const dated = specOf({
-				request: { kind: ChartKind.STAR_HISTORY, history: multiYear },
+				request: starHistory({ history: multiYear }),
 				axisLabels: AxisLabels.DATES,
 			});
 
@@ -576,7 +569,7 @@ describe("buildChartSpec", () => {
 
 		it("downsamples evenly, keeping the first and last snapshot", () => {
 			const spec = specOf({
-				request: { kind: ChartKind.STAR_HISTORY, history },
+				request: starHistory({ history }),
 				maxPoints: 3,
 			});
 
@@ -585,10 +578,9 @@ describe("buildChartSpec", () => {
 
 		it("filters by range before downsampling", () => {
 			const spec = specOf({
-				request: {
-					kind: ChartKind.STAR_HISTORY,
+				request: starHistory({
 					history: makeHistory({ starCounts: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100], stepDays: 10 }),
-				},
+				}),
 				range: ChartRange.D30,
 				maxPoints: 2,
 			});
@@ -598,10 +590,7 @@ describe("buildChartSpec", () => {
 
 		it("keeps every snapshot when the range is unbounded", () => {
 			const spec = specOf({
-				request: {
-					kind: ChartKind.STAR_HISTORY,
-					history: makeHistory({ starCounts: [10, 20, 30, 40, 50], stepDays: 10 }),
-				},
+				request: starHistory({ history: makeHistory({ starCounts: [10, 20, 30, 40, 50], stepDays: 10 }) }),
 				range: ChartRange.ALL,
 			});
 
@@ -610,7 +599,7 @@ describe("buildChartSpec", () => {
 
 		it("spans the whole window at evenly spaced points, keeping both endpoints", () => {
 			const dense = makeHistory({ starCounts: Array.from({ length: 100 }, (_, index) => index), stepDays: 1 });
-			const { data } = specOf({ request: { kind: ChartKind.STAR_HISTORY, history: dense }, maxPoints: 5 }).series[0];
+			const { data } = specOf({ request: starHistory({ history: dense }), maxPoints: 5 }).series[0];
 
 			expect(data).toHaveLength(5);
 			expect(data[0]).toBe(0);
@@ -620,14 +609,14 @@ describe("buildChartSpec", () => {
 		it("keeps chart-range meaningful once the window exceeds maxPoints", () => {
 			const dense = makeHistory({ starCounts: Array.from({ length: 400 }, (_, index) => index), stepDays: 1 });
 			const firstPlotted = (range: ChartRange): number | null =>
-				specOf({ request: { kind: ChartKind.STAR_HISTORY, history: dense }, range, maxPoints: 30 }).series[0].data[0];
+				specOf({ request: starHistory({ history: dense }), range, maxPoints: 30 }).series[0].data[0];
 
 			expect(firstPlotted(ChartRange.Y1)).not.toBe(firstPlotted(ChartRange.ALL));
 		});
 
 		it("plots at most CHART.maxDataPoints snapshots when no limit is given", () => {
 			const dense = makeHistory({ starCounts: Array.from({ length: CHART.maxDataPoints + 20 }, (_, index) => index) });
-			const { data } = specOf({ request: { kind: ChartKind.STAR_HISTORY, history: dense } }).series[0];
+			const { data } = specOf({ request: starHistory({ history: dense }) }).series[0];
 
 			expect(data).toHaveLength(CHART.maxDataPoints);
 			expect(data[0]).toBe(0);
@@ -641,7 +630,7 @@ describe("buildChartSpec", () => {
 					makeSnapshot({ timestamp: "2026-06-20T00:00:00Z", totalStars: 20 }),
 				],
 			};
-			const request = { kind: ChartKind.STAR_HISTORY, history } as const;
+			const request = starHistory({ history });
 
 			expect(specOf({ request, locale: "en" }).labels).toEqual(["Mar 15", "Jun 20"]);
 			expect(specOf({ request, locale: "es" }).labels).toEqual([
@@ -652,20 +641,20 @@ describe("buildChartSpec", () => {
 		});
 
 		it("plots only the newest snapshot when maxPoints is 1", () => {
-			const spec = specOf({ request: { kind: ChartKind.STAR_HISTORY, history }, maxPoints: 1 });
+			const spec = specOf({ request: starHistory({ history }), maxPoints: 1 });
 
 			expect(spec.series[0].data).toEqual([50]);
 		});
 
 		it("plots every snapshot when maxPoints is 0", () => {
-			const spec = specOf({ request: { kind: ChartKind.STAR_HISTORY, history }, maxPoints: 0 });
+			const spec = specOf({ request: starHistory({ history }), maxPoints: 0 });
 
 			expect(spec.series[0].data).toEqual([10, 20, 30, 40, 50]);
 		});
 
 		it("skips a snapshot whose timestamp cannot be parsed", () => {
 			const spec = specOf({
-				request: { kind: ChartKind.STAR_HISTORY, history: { snapshots: [unreadable, ...spread.snapshots] } },
+				request: starHistory({ history: { snapshots: [unreadable, ...spread.snapshots] } }),
 				range: ChartRange.D30,
 			});
 
@@ -674,7 +663,7 @@ describe("buildChartSpec", () => {
 
 		it("leaves the series unfiltered when the newest timestamp is unparseable", () => {
 			const spec = specOf({
-				request: { kind: ChartKind.STAR_HISTORY, history: { snapshots: [...spread.snapshots, unreadable] } },
+				request: starHistory({ history: { snapshots: [...spread.snapshots, unreadable] } }),
 				range: ChartRange.D30,
 			});
 

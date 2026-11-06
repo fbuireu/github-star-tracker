@@ -11,7 +11,7 @@ email path goes through QuickChart because mail clients will not display inline 
 ([ADR 0010](../../docs/adr/0010-quickchart-renders-the-email-charts.md)).
 - **[`chart-spec.ts`](./chart-spec.ts) decides what a Chart is**, and names which one is wanted. A `ChartRequest` is a
   discriminated union over the `ChartKind`s [GLOSSARY.md](../../GLOSSARY.md) lists (star history, per repo, comparison,
-  forecast, per-repo forecast), carrying the `history` to plot, an optional `title` and only that kind's own
+  forecast, per-repo forecast), carrying the `history` to plot and only that kind's own
   inputs (`repoFullName`, `repoNames`, `forecastData`, `lineColor`, the star-history Milestone and trend
   options). `buildChartSpec({ request, locale,
   palette, axisLabels, range, maxPoints })` maps one onto a `ChartSpec`: labels, an ordered list of series
@@ -83,10 +83,9 @@ and its dash pattern, which `SVG_CHART` and `chart.ts`'s `CHART_STYLE` both read
 into its `'6,6'` string. The **series** dash patterns are per adapter: the SVG uses one dash for every dashed series,
 Chart.js a pattern per series kind.
 
-`CHART_DEFAULTS` (`constants.ts`) holds the defaults of the style options both adapters share: `smoothing`,
-`curve`, `showPoints`, `beginAtZero` and `theme`. Each adapter writes its own `option = CHART_DEFAULTS.option`,
-because a destructured default cannot be spread. `yAxisSide` and `animate` are SVG
-only, two of the options [ADR 0010](../../docs/adr/0010-quickchart-renders-the-email-charts.md) lists as dropped by the email: a PNG cannot animate, and
+The style options both adapters share (`smoothing`, `curve`, `showPoints`, `beginAtZero`, `theme` and `lineWidth`)
+are required on both: `charts.ts` and `emailChartStyle` always pass every one from `Config`, so neither adapter holds a
+default. `yAxisSide` and `animate` are SVG only, two of the options [ADR 0010](../../docs/adr/0010-quickchart-renders-the-email-charts.md) lists as dropped by the email: a PNG cannot animate, and
 `chartImageUrl` takes no axis side, so the email's Y axis stays where Chart.js puts it. `range` is **not**
 email-only; `charts.ts` passes it too, and both adapters window on it.
 
@@ -206,8 +205,8 @@ no dialect adds one.
 - **`lineColor` and `lineWidth` reach the email charts too**, so the Notification and the Data Branch draw
   the same stroke. `lineColor` goes on the star-history, per-repo and forecast requests only, since the
   comparison chart has a per-series palette and takes none on both paths. `lineWidth` becomes Chart.js
-  `borderWidth`, emitted **only when supplied**, and `emailChartStyle` always supplies it because
-  `Config.chartLineWidth` always has a value. The optionality is there for direct callers of `chartImageUrl`.
+  `borderWidth` on every dataset, and is required on `chartImageUrl` because `emailChartStyle` always supplies it
+  (`Config.chartLineWidth` always has a value).
 
 ## Invariants & rules
 

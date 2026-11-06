@@ -1,4 +1,4 @@
-import { ChartCurve } from "@config/types";
+import { ChartCurve, ChartRange, ChartTheme } from "@config/types";
 import type { ForecastData } from "@domain/forecast";
 import { ForecastMethod } from "@domain/forecast";
 import type { History } from "@domain/types";
@@ -9,6 +9,42 @@ import { chartImageUrl } from "./chart";
 import type { ChartRequest } from "./chart-spec";
 import { AxisLabels, buildChartSpec, ChartKind } from "./chart-spec";
 import { CHART_TENSION, LIGHT_PALETTE } from "./constants";
+
+type ChartImageUrlParams = Parameters<typeof chartImageUrl>[0];
+type ChartUrlParams = Pick<ChartImageUrlParams, "request" | "locale"> &
+	Partial<Omit<ChartImageUrlParams, "request" | "locale">>;
+
+const CHART_STYLE = {
+	smoothing: true,
+	curve: ChartCurve.MONOTONE,
+	showPoints: true,
+	beginAtZero: false,
+	theme: ChartTheme.AUTO,
+	range: ChartRange.ALL,
+	lineWidth: 2.5,
+};
+
+function chartUrl(params: ChartUrlParams): string | null {
+	return chartImageUrl({ ...CHART_STYLE, ...params });
+}
+
+interface StarHistoryParams {
+	history: History;
+	milestones?: boolean;
+	trendLine?: boolean;
+	lineColor?: string;
+}
+
+function starHistory({ history, ...overrides }: StarHistoryParams): ChartRequest {
+	return {
+		kind: ChartKind.STAR_HISTORY,
+		history,
+		milestones: true,
+		customMilestones: [],
+		trendLine: false,
+		...overrides,
+	};
+}
 
 const CHART_CONFIG_PARAM = "&c=";
 const CHART_HEIGHT = "&h=";
@@ -51,8 +87,8 @@ const mockHistory: History = makeMultiRepoHistory({
 describe("chart", () => {
 	describe("chartImageUrl: star history", () => {
 		it("generates valid QuickChart URL with history data", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory, title: "Test Chart" },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 			});
 
@@ -63,8 +99,8 @@ describe("chart", () => {
 		});
 
 		it("asks QuickChart for Chart.js 4, the version its config is written for, since its default 2.9.4 reads neither plugins.title, plugins.legend nor scales.x", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory, title: "Test Chart" },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 			});
 
@@ -75,8 +111,8 @@ describe("chart", () => {
 			const singleSnapshot: History = {
 				snapshots: [mockHistory.snapshots[0]],
 			};
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: singleSnapshot },
+			const url = chartUrl({
+				request: starHistory({ history: singleSnapshot }),
 				locale: "en",
 			});
 
@@ -92,8 +128,8 @@ describe("chart", () => {
 				})),
 			};
 
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: largeHistory },
+			const url = chartUrl({
+				request: starHistory({ history: largeHistory }),
 				locale: "en",
 			});
 
@@ -110,7 +146,7 @@ describe("chart", () => {
 
 	describe("chartImageUrl: forecast", () => {
 		it("draws each forecast projection with the dash pattern of its method", () => {
-			const url = chartImageUrl({
+			const url = chartUrl({
 				request: { kind: ChartKind.FORECAST, history: mockHistory, forecastData },
 				locale: "en",
 			});
@@ -130,7 +166,7 @@ describe("chart", () => {
 
 	describe("the spec it draws", () => {
 		const REQUESTS: ChartRequest[] = [
-			{ kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			starHistory({ history: mockHistory }),
 			{ kind: ChartKind.COMPARISON, history: mockHistory, repoNames: ["user/repo-a", "user/repo-b"] },
 			{ kind: ChartKind.FORECAST, history: mockHistory, forecastData },
 		];
@@ -138,8 +174,14 @@ describe("chart", () => {
 		it.each(LOCALES.flatMap((locale) => REQUESTS.map((request) => ({ locale, request }))))(
 			"draws the labels, series, title and legend setting of the $request.kind spec in $locale",
 			({ locale, request }) => {
-				const spec = buildChartSpec({ request, locale, palette: LIGHT_PALETTE, axisLabels: AxisLabels.DATES });
-				const url = chartImageUrl({ request, locale });
+				const spec = buildChartSpec({
+					request,
+					locale,
+					palette: LIGHT_PALETTE,
+					axisLabels: AxisLabels.DATES,
+					range: ChartRange.ALL,
+				});
+				const url = chartUrl({ request, locale });
 
 				expect(spec).not.toBeNull();
 				expect(url).not.toBeNull();
@@ -165,17 +207,22 @@ describe("chart", () => {
 
 	describe("milestone annotations", () => {
 		it("draws one annotation per Milestone the spec carries, labelled as the spec labels it", () => {
-			const request: ChartRequest = {
-				kind: ChartKind.STAR_HISTORY,
+			const request = starHistory({
 				history: {
 					snapshots: [
 						{ timestamp: "2025-01-01T00:00:00.000Z", totalStars: 80, repos: [] },
 						{ timestamp: "2025-01-08T00:00:00.000Z", totalStars: 620, repos: [] },
 					],
 				},
-			};
-			const spec = buildChartSpec({ request, locale: "en", palette: LIGHT_PALETTE, axisLabels: AxisLabels.DATES });
-			const url = chartImageUrl({ request, locale: "en" });
+			});
+			const spec = buildChartSpec({
+				request,
+				locale: "en",
+				palette: LIGHT_PALETTE,
+				axisLabels: AxisLabels.DATES,
+				range: ChartRange.ALL,
+			});
+			const url = chartUrl({ request, locale: "en" });
 
 			expect(spec?.milestones.length).toBeGreaterThan(1);
 			expect(url).not.toBeNull();
@@ -205,8 +252,8 @@ describe("chart", () => {
 				],
 			};
 
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: largeHistory, milestones: false },
+			const url = chartUrl({
+				request: starHistory({ history: largeHistory, milestones: false }),
 				locale: "en",
 			});
 
@@ -226,8 +273,8 @@ describe("chart", () => {
 		};
 
 		it("curves the line with the smooth tension by default", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 			});
 
@@ -236,8 +283,8 @@ describe("chart", () => {
 		});
 
 		it("draws straight segments when smoothing is disabled", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 				smoothing: false,
 			});
@@ -247,7 +294,7 @@ describe("chart", () => {
 		});
 
 		it("applies the smoothing setting to comparison datasets", () => {
-			const url = chartImageUrl({
+			const url = chartUrl({
 				request: {
 					kind: ChartKind.COMPARISON,
 					history: mockHistory,
@@ -273,8 +320,8 @@ describe("chart", () => {
 		};
 
 		it("renders the monotone curve as a monotone cubic interpolation by default", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 			});
 
@@ -283,8 +330,8 @@ describe("chart", () => {
 		});
 
 		it("renders catmull-rom as a tensioned spline without monotone interpolation", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 				curve: ChartCurve.CATMULL_ROM,
 			});
@@ -297,8 +344,8 @@ describe("chart", () => {
 		});
 
 		it("falls back to monotone interpolation for the rounded-step curve", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 				curve: ChartCurve.ROUNDED_STEP,
 			});
@@ -308,8 +355,8 @@ describe("chart", () => {
 		});
 
 		it("renders cubic-bezier as a tensioned spline without monotone interpolation", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 				curve: ChartCurve.CUBIC_BEZIER,
 			});
@@ -324,8 +371,8 @@ describe("chart", () => {
 
 	describe("trendLine", () => {
 		it("draws the trend series with its own dash pattern", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory, trendLine: true },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory, trendLine: true }),
 				locale: "en",
 			});
 
@@ -340,8 +387,8 @@ describe("chart", () => {
 
 	describe("theme", () => {
 		it("uses a light background by default", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 			});
 
@@ -350,8 +397,8 @@ describe("chart", () => {
 		});
 
 		it("uses a dark background and palette for the dark theme", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 				theme: "dark",
 			});
@@ -367,8 +414,8 @@ describe("chart", () => {
 
 	describe("fill", () => {
 		const datasetFor = (lineColor: string): { borderColor: string; backgroundColor: string } => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory, lineColor },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory, lineColor }),
 				locale: "en",
 			});
 
@@ -392,8 +439,8 @@ describe("chart", () => {
 
 	describe("locale", () => {
 		it.each(LOCALES)("hands Chart.js the Intl code of the %s run, so the Y-axis ticks follow it", (locale) => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale,
 			});
 
@@ -411,8 +458,8 @@ describe("chart", () => {
 		};
 
 		it("does not begin the Y-axis at zero by default", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 			});
 
@@ -421,8 +468,8 @@ describe("chart", () => {
 		});
 
 		it("begins the Y-axis at zero when enabled", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 				beginAtZero: true,
 			});
@@ -439,8 +486,8 @@ describe("chart", () => {
 		};
 
 		it("draws point markers by default", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 			});
 
@@ -449,8 +496,8 @@ describe("chart", () => {
 		});
 
 		it("hides point markers when disabled", () => {
-			const url = chartImageUrl({
-				request: { kind: ChartKind.STAR_HISTORY, history: mockHistory },
+			const url = chartUrl({
+				request: starHistory({ history: mockHistory }),
 				locale: "en",
 				showPoints: false,
 			});
@@ -460,7 +507,7 @@ describe("chart", () => {
 		});
 
 		it("hides markers on every comparison dataset when disabled", () => {
-			const url = chartImageUrl({
+			const url = chartUrl({
 				request: {
 					kind: ChartKind.COMPARISON,
 					history: mockHistory,
