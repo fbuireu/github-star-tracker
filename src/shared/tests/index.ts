@@ -1,7 +1,7 @@
 import { DEFAULTS } from "@config/defaults";
 import type { Config } from "@config/types";
 import type { Stargazer } from "@domain/stargazers";
-import type { ComparisonResults, History, RepoInfo, RepoResult, Snapshot, SnapshotRepo } from "@domain/types";
+import type { ComparisonResults, History, RepoInfo, RepoResult, Snapshot } from "@domain/types";
 
 const MS_PER_DAY = 86_400_000;
 const DEFAULT_SERIES_START = Date.UTC(2026, 0, 1);
@@ -45,18 +45,16 @@ interface MakeStargazerSeriesParams {
 	count: number;
 	startMs?: number;
 	stepDays?: number;
-	prefix?: string;
 }
 
 export function makeStargazerSeries({
 	count,
 	startMs = DEFAULT_SERIES_START,
 	stepDays = 1,
-	prefix = "u",
 }: MakeStargazerSeriesParams): Stargazer[] {
 	return Array.from({ length: count }, (_, index) =>
 		makeStargazer({
-			login: `${prefix}${index}`,
+			login: `u${index}`,
 			starredAt: new Date(startMs + index * stepDays * MS_PER_DAY).toISOString(),
 		}),
 	);
@@ -65,27 +63,24 @@ export function makeStargazerSeries({
 interface MakeSnapshotParams {
 	timestamp: string;
 	totalStars: number;
-	repos?: SnapshotRepo[];
 }
 
-export function makeSnapshot({ timestamp, totalStars, repos = [] }: MakeSnapshotParams): Snapshot {
-	return { timestamp, totalStars, repos };
+export function makeSnapshot({ timestamp, totalStars }: MakeSnapshotParams): Snapshot {
+	return { timestamp, totalStars, repos: [] };
 }
 
 interface MakeHistoryParams {
 	starCounts: number[];
-	startMs?: number;
 	stepDays?: number;
 }
 
-export function makeHistory({
-	starCounts,
-	startMs = DEFAULT_SERIES_START,
-	stepDays = DEFAULT_HISTORY_STEP_DAYS,
-}: MakeHistoryParams): History {
+export function makeHistory({ starCounts, stepDays = DEFAULT_HISTORY_STEP_DAYS }: MakeHistoryParams): History {
 	return {
 		snapshots: starCounts.map((totalStars, index) =>
-			makeSnapshot({ timestamp: new Date(startMs + index * stepDays * MS_PER_DAY).toISOString(), totalStars }),
+			makeSnapshot({
+				timestamp: new Date(DEFAULT_SERIES_START + index * stepDays * MS_PER_DAY).toISOString(),
+				totalStars,
+			}),
 		),
 	};
 }
@@ -112,18 +107,19 @@ export function makeMultiRepoSnapshot({ timestamp, repoStars }: MakeMultiRepoSna
 
 interface MakeMultiRepoHistoryParams {
 	snapshots: Record<string, number>[];
-	startMs?: number;
 	stepDays?: number;
 }
 
 export function makeMultiRepoHistory({
 	snapshots,
-	startMs = DEFAULT_SERIES_START,
 	stepDays = DEFAULT_HISTORY_STEP_DAYS,
 }: MakeMultiRepoHistoryParams): History {
 	return {
 		snapshots: snapshots.map((repoStars, index) =>
-			makeMultiRepoSnapshot({ timestamp: new Date(startMs + index * stepDays * MS_PER_DAY).toISOString(), repoStars }),
+			makeMultiRepoSnapshot({
+				timestamp: new Date(DEFAULT_SERIES_START + index * stepDays * MS_PER_DAY).toISOString(),
+				repoStars,
+			}),
 		),
 	};
 }

@@ -54,7 +54,7 @@ need it.
 ## Gotchas
 
 - Every factory takes one argument: either a destructured `Make*Params` object, as in
-  `makeHistory({ starCounts, startMs, stepDays })` and `makeMultiRepoHistory({ snapshots, stepDays })`, or a
+  `makeHistory({ starCounts, stepDays })` and `makeMultiRepoHistory({ snapshots, stepDays })`, or a
   single `overrides` object (`makeConfig`, `makeStargazer`, `makeComparisonResults`).
 - Three test files define local factories under the shared names: `makeHistory` in
   [`velocity.test.ts`](../domain/velocity.test.ts) and [`growth.test.ts`](../domain/growth.test.ts), and `makeSnapshot`, `makeHistory`,
