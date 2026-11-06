@@ -3,7 +3,7 @@ import { calendarDays, fitTrend, type SeriesPoint, weightedDailyRate } from "./g
 import { repoStarSeries } from "./snapshot";
 import type { History } from "./types";
 
-export interface ForecastPoint {
+interface ForecastPoint {
 	weekOffset: number;
 	predicted: number;
 }
@@ -27,7 +27,7 @@ export const ForecastSource = {
 
 export type ForecastSource = (typeof ForecastSource)[keyof typeof ForecastSource];
 
-export interface RepoForecast {
+interface RepoForecast {
 	repoFullName: string;
 	source: ForecastSource;
 	forecasts: ForecastResult[];
