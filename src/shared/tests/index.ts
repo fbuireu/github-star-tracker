@@ -30,15 +30,13 @@ export function makeRepoInfo({ name, stars = 10, overrides = {} }: MakeRepoInfoP
 	};
 }
 
-export function makeStargazer(overrides: Partial<Stargazer> = {}): Stargazer {
-	const starredAt = overrides.starredAt ?? "2026-01-15T00:00:00Z";
+interface MakeStargazerParams {
+	starredAt: string;
+	login?: string;
+}
 
-	return {
-		login: overrides.login ?? `u-${starredAt}`,
-		avatarUrl: overrides.avatarUrl ?? "",
-		profileUrl: overrides.profileUrl ?? "",
-		starredAt,
-	};
+export function makeStargazer({ starredAt, login = `u-${starredAt}` }: MakeStargazerParams): Stargazer {
+	return { login, avatarUrl: "", profileUrl: "", starredAt };
 }
 
 interface MakeStargazerSeriesParams {
@@ -90,7 +88,7 @@ interface MakeMultiRepoSnapshotParams {
 	repoStars: Record<string, number>;
 }
 
-export function makeMultiRepoSnapshot({ timestamp, repoStars }: MakeMultiRepoSnapshotParams): Snapshot {
+function makeMultiRepoSnapshot({ timestamp, repoStars }: MakeMultiRepoSnapshotParams): Snapshot {
 	const repos = Object.entries(repoStars).map(([fullName, stars]) => ({
 		fullName,
 		name: fullName.split("/")[1],

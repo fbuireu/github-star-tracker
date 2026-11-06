@@ -29,8 +29,8 @@ without it `describeIssue` reads `found nothing` for every issue.
 ## tests/
 
 Pure factories, all exported from [`src/shared/tests/index.ts`](./tests/index.ts): `makeConfig`, `makeRepoInfo`,
-`makeStargazer`, `makeStargazerSeries`, `makeSnapshot`, `makeHistory`, `makeMultiRepoSnapshot`,
-`makeMultiRepoHistory`, `makeRepoResult` and `makeComparisonResults`. Each builds a value with sensible
+`makeStargazer`, `makeStargazerSeries`, `makeSnapshot`, `makeHistory`, `makeMultiRepoHistory`,
+`makeRepoResult` and `makeComparisonResults`. Each builds a value with sensible
 defaults so a test only spells out the fields it actually asserts on; mocking stays in the test files that
 need it.
 - **All timestamps are UTC ISO-8601 strings**, and `startMs` is epoch milliseconds (`Date.UTC(...)`). The
@@ -54,13 +54,12 @@ need it.
 ## Gotchas
 
 - Every factory takes one argument: either a destructured `Make*Params` object, as in
-  `makeHistory({ starCounts, stepDays })` and `makeMultiRepoHistory({ snapshots, stepDays })`, or a
-  single `overrides` object (`makeConfig`, `makeStargazer`, `makeComparisonResults`).
+  `makeHistory({ starCounts, stepDays })`, `makeMultiRepoHistory({ snapshots, stepDays })` and
+  `makeStargazer({ starredAt, login })`, or a single `overrides` object (`makeConfig`, `makeComparisonResults`).
 - Three test files define local factories under the shared names: `makeHistory` in
   [`velocity.test.ts`](../domain/velocity.test.ts) and [`growth.test.ts`](../domain/growth.test.ts), and `makeSnapshot`, `makeHistory`,
   `makeMultiRepoSnapshot` and `makeMultiRepoHistory` in [`svg-chart.test.ts`](../presentation/svg-chart.test.ts). None imports
-  `@shared/tests`, and all but that `makeMultiRepoSnapshot` differ from the shared factory in signature or
-  defaults, so do not assume the name means the shared factory.
+  `@shared/tests`, and all differ from the shared factory in signature or defaults, so do not assume the name means the shared factory.
 - `src/shared/tests/**` is excluded from coverage, so a broken factory shows up as failing assertions
   elsewhere, never as an uncovered-lines failure, and an unused one shows up nowhere. After changing a
   default, run the whole suite: the blast radius crosses layers.
