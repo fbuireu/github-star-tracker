@@ -17,7 +17,7 @@ describe("computeForecast", () => {
 			],
 		};
 
-		const result = computeForecast({ history, topRepoNames: [] });
+		const result = computeForecast({ history, topRepoNames: [], historyForRepo: () => null });
 
 		expect(result).toBeNull();
 	});
@@ -31,7 +31,7 @@ describe("computeForecast", () => {
 			],
 		};
 
-		const result = expectForecast(computeForecast({ history, topRepoNames: [] }));
+		const result = expectForecast(computeForecast({ history, topRepoNames: [], historyForRepo: () => null }));
 
 		expect(result.aggregate.forecasts).toHaveLength(2);
 
@@ -71,7 +71,9 @@ describe("computeForecast", () => {
 			],
 		};
 
-		const result = expectForecast(computeForecast({ history, topRepoNames: ["user/repo-a"] }));
+		const result = expectForecast(
+			computeForecast({ history, topRepoNames: ["user/repo-a"], historyForRepo: () => null }),
+		);
 
 		expect(result.repos).toHaveLength(1);
 		expect(result.repos[0].repoFullName).toBe("user/repo-a");
@@ -91,7 +93,9 @@ describe("computeForecast", () => {
 			],
 		};
 
-		const result = expectForecast(computeForecast({ history, topRepoNames: ["user/repo-a"] }));
+		const result = expectForecast(
+			computeForecast({ history, topRepoNames: ["user/repo-a"], historyForRepo: () => null }),
+		);
 
 		expect(result.repos[0].forecasts.map((forecast) => forecast.points[0].predicted)).toEqual([78, 78]);
 	});
@@ -109,7 +113,9 @@ describe("computeForecast", () => {
 			],
 		};
 
-		const result = expectForecast(computeForecast({ history, topRepoNames: ["user/late"] }));
+		const result = expectForecast(
+			computeForecast({ history, topRepoNames: ["user/late"], historyForRepo: () => null }),
+		);
 
 		expect(result.repos).toHaveLength(1);
 		for (const forecast of result.repos[0].forecasts) {
@@ -129,7 +135,9 @@ describe("computeForecast", () => {
 			})),
 		};
 
-		const result = expectForecast(computeForecast({ history, topRepoNames: ["user/young"] }));
+		const result = expectForecast(
+			computeForecast({ history, topRepoNames: ["user/young"], historyForRepo: () => null }),
+		);
 
 		expect(result.aggregate.forecasts).toHaveLength(2);
 		expect(result.repos).toEqual([]);
@@ -144,7 +152,7 @@ describe("computeForecast", () => {
 			],
 		};
 
-		const result = expectForecast(computeForecast({ history, topRepoNames: [] }));
+		const result = expectForecast(computeForecast({ history, topRepoNames: [], historyForRepo: () => null }));
 
 		for (const forecast of result.aggregate.forecasts) {
 			expect(forecast.points[0].predicted).toBe(730);
@@ -161,7 +169,7 @@ describe("computeForecast", () => {
 			],
 		};
 
-		const result = expectForecast(computeForecast({ history, topRepoNames: [] }));
+		const result = expectForecast(computeForecast({ history, topRepoNames: [], historyForRepo: () => null }));
 
 		for (const forecast of result.aggregate.forecasts) {
 			for (const point of forecast.points) {
@@ -189,7 +197,9 @@ describe("computeForecast", () => {
 			})),
 		};
 
-		const fromAggregate = expectForecast(computeForecast({ history: aggregate, topRepoNames: [young] }));
+		const fromAggregate = expectForecast(
+			computeForecast({ history: aggregate, topRepoNames: [young], historyForRepo: () => null }),
+		);
 		const fromOwn = expectForecast(
 			computeForecast({ history: aggregate, topRepoNames: [young], historyForRepo: () => own }),
 		);
@@ -218,9 +228,11 @@ describe("computeForecast", () => {
 		};
 
 		const withFallback = expectForecast(computeForecast({ history, topRepoNames: [repo], historyForRepo: () => thin }));
-		const withoutHook = expectForecast(computeForecast({ history, topRepoNames: [repo] }));
+		const withoutOwnHistory = expectForecast(
+			computeForecast({ history, topRepoNames: [repo], historyForRepo: () => null }),
+		);
 
-		expect(withFallback.repos[0]).toEqual(withoutHook.repos[0]);
+		expect(withFallback.repos[0]).toEqual(withoutOwnHistory.repos[0]);
 		expect(withFallback.repos[0].forecasts[0].points[0].predicted).toBe(40);
 	});
 

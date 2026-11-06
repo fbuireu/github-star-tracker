@@ -41,7 +41,7 @@ export interface ForecastData {
 interface ComputeForecastParams {
 	history: History;
 	topRepoNames: string[];
-	historyForRepo?: (repoFullName: string) => History | null;
+	historyForRepo: (repoFullName: string) => History | null;
 }
 
 interface ToSeriesParams {
@@ -104,8 +104,8 @@ export function computeForecast({ history, topRepoNames, historyForRepo }: Compu
 	const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
 	const aggregateForecasts = forecastFromSeries(toSeries({ values: totalValues, days: calendarDays(history) }));
 	const repos: RepoForecast[] = topRepoNames.flatMap((repoFullName) => {
-		const candidate = historyForRepo?.(repoFullName);
-		const ownHistory = candidate && holdsEnoughToForecast(candidate) ? candidate : null;
+		const candidate = historyForRepo(repoFullName);
+		const ownHistory = candidate !== null && holdsEnoughToForecast(candidate) ? candidate : null;
 		const fitted = snapshotsHolding({ history: ownHistory ?? history, repoFullName });
 
 		if (!holdsEnoughToForecast(fitted)) return [];

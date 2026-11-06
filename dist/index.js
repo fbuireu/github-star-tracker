@@ -32012,8 +32012,8 @@ function computeForecast({ history, topRepoNames, historyForRepo }) {
   const totalValues = history.snapshots.map((snapshot) => snapshot.totalStars);
   const aggregateForecasts = forecastFromSeries(toSeries({ values: totalValues, days: calendarDays(history) }));
   const repos = topRepoNames.flatMap((repoFullName) => {
-    const candidate = historyForRepo?.(repoFullName);
-    const ownHistory = candidate && holdsEnoughToForecast(candidate) ? candidate : null;
+    const candidate = historyForRepo(repoFullName);
+    const ownHistory = candidate !== null && holdsEnoughToForecast(candidate) ? candidate : null;
     const fitted = snapshotsHolding({ history: ownHistory ?? history, repoFullName });
     if (!holdsEnoughToForecast(fitted)) return [];
     const values = repoStarSeries({ snapshots: fitted.snapshots, repoFullName });

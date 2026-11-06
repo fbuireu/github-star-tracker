@@ -93,7 +93,7 @@ snapshot everything else is diffed against.
   `predicted = last.value + rate * weekOffset * 7`. Changing this changes every chart. Every prediction is
   clamped to a non-negative integer.
 - **Each Top Repository is fitted only to Snapshots that hold it: those of its own _reconstruction_, or else
-  those of the aggregate.** `historyForRepo` is the optional hook `@application` fills with
+  those of the aggregate.** `historyForRepo` is the required hook `@application` fills with
   `chartHistories.reconstructedForRepo`, which returns `null` rather than falling back. A repository that
   returns `null`, or whose own History is shorter than `MIN_SNAPSHOTS_FOR_FORECAST`, is fitted to the Snapshots
   of the aggregate, `chartHistories.aggregate`, that hold it (`snapshotsHolding`), so a Snapshot taken before it
