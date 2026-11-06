@@ -119,17 +119,6 @@ describe("sendEmail", () => {
 		from: "Star Tracker",
 	};
 
-	it("returns false when emailConfig is null", async () => {
-		const result = await sendEmail({
-			emailConfig: null,
-			subject: "Subject",
-			htmlBody: "<p>Body</p>",
-		});
-
-		expect(result).toBe(false);
-		expect(nodemailer.createTransport).not.toHaveBeenCalled();
-	});
-
 	it("returns false when email-to is empty", async () => {
 		const result = await sendEmail({
 			emailConfig: { ...emailConfig, to: "" },

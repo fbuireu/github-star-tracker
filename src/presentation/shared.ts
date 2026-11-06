@@ -63,7 +63,6 @@ export function colorSchemeFor(theme: ChartTheme): string {
 }
 
 export interface ReportData {
-	activeRepos: RepoResult[];
 	newRepos: RepoResult[];
 	removedRepos: RepoResult[];
 	sorted: RepoResult[];
@@ -91,7 +90,6 @@ export function prepareReportData({
 	const generatedAt = now.toISOString();
 
 	return {
-		activeRepos: repos.filter((repo) => !repo.isRemoved),
 		newRepos: repos.filter((repo) => repo.isNew),
 		removedRepos: repos.filter((repo) => repo.isRemoved),
 		sorted: rankByStars(repos),

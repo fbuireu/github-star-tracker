@@ -434,7 +434,8 @@ describe("commitAndPush", () => {
 	it("commits and pushes changes when there are staged changes", () => {
 		stageChanges();
 
-		expect(commitAndPush(push)).toBe(true);
+		commitAndPush(push);
+
 		expect(ranGit("add", "-A")).toBe(true);
 		expect(ranGit("commit", "-m", "Update data")).toBe(true);
 		expect(core.setSecret).toHaveBeenCalledWith(CREDENTIAL);
@@ -464,8 +465,9 @@ describe("commitAndPush", () => {
 		expect(() => commitAndPush(push)).toThrow(/Authentication failed/);
 	});
 
-	it("returns false when there are no changes to commit", () => {
-		expect(commitAndPush(push)).toBe(false);
+	it("commits nothing when there are no changes to commit", () => {
+		commitAndPush(push);
+
 		expect(ranGit("commit", "-m", "Update data")).toBe(false);
 	});
 });
@@ -483,9 +485,8 @@ describe("pruneCharts", () => {
 			"notes.txt",
 		] as unknown as ReturnType<typeof fs.readdirSync>);
 
-		const removed = pruneCharts({ dataDir: ".data", keep: ["star-history.svg"] });
+		pruneCharts({ dataDir: ".data", keep: ["star-history.svg"] });
 
-		expect(removed).toEqual(["user-gone.svg"]);
 		expect(fs.rmSync).toHaveBeenCalledWith(path.join(".data", "charts", "user-gone.svg"));
 		expect(fs.rmSync).toHaveBeenCalledTimes(1);
 	});
@@ -493,7 +494,8 @@ describe("pruneCharts", () => {
 	it("is a no-op when the charts directory does not exist", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(false);
 
-		expect(pruneCharts({ dataDir: ".data", keep: [] })).toEqual([]);
+		pruneCharts({ dataDir: ".data", keep: [] });
+
 		expect(fs.rmSync).not.toHaveBeenCalled();
 	});
 });

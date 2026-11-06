@@ -158,10 +158,10 @@ interface PruneChartsParams {
 	keep: string[];
 }
 
-export function pruneCharts({ dataDir, keep }: PruneChartsParams): string[] {
+export function pruneCharts({ dataDir, keep }: PruneChartsParams): void {
 	const chartsDir = path.join(dataDir, DATA_FILES.chartsDir);
 
-	if (!fs.existsSync(chartsDir)) return [];
+	if (!fs.existsSync(chartsDir)) return;
 
 	const kept = new Set(keep);
 	const removed = fs.readdirSync(chartsDir).filter((filename) => filename.endsWith(".svg") && !kept.has(filename));
@@ -173,8 +173,6 @@ export function pruneCharts({ dataDir, keep }: PruneChartsParams): string[] {
 	if (removed.length > 0) {
 		core.info(`Removed ${removed.length} chart(s) no longer produced: ${removed.join(", ")}`);
 	}
-
-	return removed;
 }
 
 const StargazerFileSchema = z.record(z.string(), z.unknown());
@@ -220,7 +218,7 @@ interface CommitAndPushParams {
 	token: string;
 }
 
-export function commitAndPush({ dataDir, dataBranch, message, token }: CommitAndPushParams): boolean {
+export function commitAndPush({ dataDir, dataBranch, message, token }: CommitAndPushParams): void {
 	const cwd = path.resolve(dataDir);
 
 	execute({ args: ["add", "-A"], options: { cwd } });
@@ -230,7 +228,7 @@ export function commitAndPush({ dataDir, dataBranch, message, token }: CommitAnd
 
 		core.info("No data changes to commit");
 
-		return false;
+		return;
 	} catch {
 		core.debug("Staged changes detected, proceeding with commit");
 	}
@@ -251,6 +249,4 @@ export function commitAndPush({ dataDir, dataBranch, message, token }: CommitAnd
 	}
 
 	core.info(`Data committed and pushed to ${dataBranch}`);
-
-	return true;
 }

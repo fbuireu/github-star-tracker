@@ -245,9 +245,9 @@ matched, and never lands in a commit. On a local run that fallback puts it in th
 - From-address resolution, in order: a `from` containing `@` is used verbatim; otherwise a `username`
   containing `@` becomes `` `${from} <${username}>` ``; otherwise the bare `from` as a display name.
 - Distinct "no email" outcomes, and the log level is the difference: not configured (no line: the caller
-  calls `sendEmail` only with a non-null `EmailConfig`, so the `info` in its `null` branch runs only under
-  `email.test.ts`), configured but nothing to say (`info`, in the caller), configured but empty `email-to`
-  (`warning`, here, because it is almost certainly a misconfiguration). Rejected recipients warn but still
+  calls `sendEmail` only with a non-null `EmailConfig`), configured but nothing to say (`info`, in the
+  caller), configured but empty `email-to` (`warning`, here, because it is almost certainly a
+  misconfiguration). Rejected recipients warn but still
   count as delivered. nodemailer reports a rejected recipient as a string or an `{ name, address }` object, and
   `RecipientListSchema` turns both into the address, so the warning never prints `[object Object]`.
 - `getEmailConfig` is the one infrastructure function that reads `@actions/core` inputs directly

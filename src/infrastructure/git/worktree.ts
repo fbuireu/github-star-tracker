@@ -20,11 +20,11 @@ function ensureGitRepository(): void {
 
 interface InitializeDataBranchParams {
 	dataBranch: string;
-	readOnly?: boolean;
-	token?: string;
+	readOnly: boolean;
+	token: string;
 }
 
-export function initializeDataBranch({ dataBranch, readOnly = false, token }: InitializeDataBranchParams): string {
+export function initializeDataBranch({ dataBranch, readOnly, token }: InitializeDataBranchParams): string {
 	const dataDir = `.${dataBranch}`;
 
 	ensureGitRepository();
@@ -32,7 +32,7 @@ export function initializeDataBranch({ dataBranch, readOnly = false, token }: In
 	execute({ args: ["config", "user.name", "github-actions[bot]"] });
 	execute({ args: ["config", "user.email", "github-actions[bot]@users.noreply.github.com"] });
 
-	const remoteArgs = (args: string[]): string[] => (token === undefined ? args : authenticatedArgs({ token, args }));
+	const remoteArgs = (args: string[]): string[] => authenticatedArgs({ token, args });
 
 	const branchExists = execute({ args: remoteArgs(["ls-remote", "--heads", "origin", dataBranch]) }).length > 0;
 

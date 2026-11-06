@@ -45494,10 +45494,6 @@ function getEmailConfig(locale) {
   };
 }
 async function sendEmail({ emailConfig, subject, htmlBody }) {
-  if (!emailConfig) {
-    info("No SMTP configuration provided, skipping email");
-    return false;
-  }
   if (!emailConfig.to) {
     warning("SMTP configured but no email-to address provided, skipping email");
     return false;
@@ -45566,12 +45562,12 @@ function ensureGitRepository() {
     );
   }
 }
-function initializeDataBranch({ dataBranch, readOnly = false, token }) {
+function initializeDataBranch({ dataBranch, readOnly, token }) {
   const dataDir = `.${dataBranch}`;
   ensureGitRepository();
   execute({ args: ["config", "user.name", "github-actions[bot]"] });
   execute({ args: ["config", "user.email", "github-actions[bot]@users.noreply.github.com"] });
-  const remoteArgs = (args) => token === void 0 ? args : authenticatedArgs({ token, args });
+  const remoteArgs = (args) => authenticatedArgs({ token, args });
   const branchExists = execute({ args: remoteArgs(["ls-remote", "--heads", "origin", dataBranch]) }).length > 0;
   if (!branchExists) {
     info(`Branch "${dataBranch}" does not exist on remote, will create it`);
@@ -45712,7 +45708,7 @@ function writeChart({ dataDir, filename, svg }) {
 }
 function pruneCharts({ dataDir, keep }) {
   const chartsDir = path5.join(dataDir, DATA_FILES.chartsDir);
-  if (!fs8.existsSync(chartsDir)) return [];
+  if (!fs8.existsSync(chartsDir)) return;
   const kept = new Set(keep);
   const removed = fs8.readdirSync(chartsDir).filter((filename) => filename.endsWith(".svg") && !kept.has(filename));
   for (const filename of removed) {
@@ -45721,7 +45717,6 @@ function pruneCharts({ dataDir, keep }) {
   if (removed.length > 0) {
     info(`Removed ${removed.length} chart(s) no longer produced: ${removed.join(", ")}`);
   }
-  return removed;
 }
 var StargazerFileSchema = record(string2(), unknown());
 var LoginListSchema = array(string2());
@@ -45751,7 +45746,7 @@ function commitAndPush({ dataDir, dataBranch, message, token }) {
   try {
     execute({ args: ["diff", "--cached", "--quiet"], options: { cwd } });
     info("No data changes to commit");
-    return false;
+    return;
   } catch {
     debug("Staged changes detected, proceeding with commit");
   }
@@ -45768,7 +45763,6 @@ function commitAndPush({ dataDir, dataBranch, message, token }) {
     );
   }
   info(`Data committed and pushed to ${dataBranch}`);
-  return true;
 }
 
 // src/infrastructure/persistence/data-branch.ts
@@ -46453,7 +46447,6 @@ function prepareReportData({
   const t = getTranslations(locale);
   const generatedAt = now.toISOString();
   return {
-    activeRepos: repos.filter((repo) => !repo.isRemoved),
     newRepos: repos.filter((repo) => repo.isNew),
     removedRepos: repos.filter((repo) => repo.isRemoved),
     sorted: rankByStars(repos),

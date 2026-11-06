@@ -56,7 +56,6 @@ const BASE = { dataBranch: "star-data", readOnly: false, token: "tok" };
 beforeEach(() => {
 	vi.resetAllMocks();
 	vi.mocked(initializeDataBranch).mockReturnValue(DATA_DIR);
-	vi.mocked(pruneCharts).mockReturnValue([]);
 });
 
 describe("withDataBranch", () => {

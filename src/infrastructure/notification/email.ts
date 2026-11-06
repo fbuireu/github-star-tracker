@@ -81,18 +81,12 @@ export function getEmailConfig(locale: Locale): EmailConfig | null {
 }
 
 interface SendEmailParams {
-	emailConfig: EmailConfig | null;
+	emailConfig: EmailConfig;
 	subject: string;
 	htmlBody: string;
 }
 
 export async function sendEmail({ emailConfig, subject, htmlBody }: SendEmailParams): Promise<boolean> {
-	if (!emailConfig) {
-		core.info("No SMTP configuration provided, skipping email");
-
-		return false;
-	}
-
 	if (!emailConfig.to) {
 		core.warning("SMTP configured but no email-to address provided, skipping email");
 

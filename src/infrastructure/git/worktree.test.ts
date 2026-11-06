@@ -18,6 +18,10 @@ vi.mock("@actions/core", () => ({
 
 const BRANCH = "star-tracker-data";
 const DATA_DIR = `.${BRANCH}`;
+const TOKEN = "secret-token";
+const CREDENTIAL = Buffer.from(`x-access-token:${TOKEN}`).toString("base64");
+const AUTH_ARGS = ["-c", `http.extraheader=AUTHORIZATION: basic ${CREDENTIAL}`];
+const OPTIONS = { dataBranch: BRANCH, readOnly: false, token: TOKEN };
 const CHECKOUT_INSTRUCTION =
 	'This action must run inside a checked-out repository. Add an "actions/checkout" step before this action in your workflow.';
 const NOT_A_REPOSITORY = "fatal: not a git repository (or any of the parent directories): .git";
@@ -58,11 +62,11 @@ describe("initializeDataBranch", () => {
 	});
 
 	it("derives the data directory from the branch name", () => {
-		expect(initializeDataBranch({ dataBranch: BRANCH })).toBe(DATA_DIR);
+		expect(initializeDataBranch(OPTIONS)).toBe(DATA_DIR);
 	});
 
 	it("guards the repository and sets the bot identity before touching the branch", () => {
-		initializeDataBranch({ dataBranch: BRANCH });
+		initializeDataBranch(OPTIONS);
 
 		const commands = vi.mocked(execute).mock.calls.map(([params]) => params.args.join(" "));
 
@@ -70,16 +74,16 @@ describe("initializeDataBranch", () => {
 			"rev-parse --is-inside-work-tree",
 			"config user.name github-actions[bot]",
 			"config user.email github-actions[bot]@users.noreply.github.com",
-			`ls-remote --heads origin ${BRANCH}`,
+			`${AUTH_ARGS.join(" ")} ls-remote --heads origin ${BRANCH}`,
 		]);
 	});
 
 	it("adds the worktree from the remote branch when it already exists", () => {
 		remoteHasBranch();
 
-		initializeDataBranch({ dataBranch: BRANCH });
+		initializeDataBranch(OPTIONS);
 
-		expect(ranGit("fetch", "origin", BRANCH)).toBe(true);
+		expect(ranGit(...AUTH_ARGS, "fetch", "origin", BRANCH)).toBe(true);
 		expect(ranGit("worktree", "add", DATA_DIR, `origin/${BRANCH}`)).toBe(true);
 		expect(ranGit("checkout", "--orphan", BRANCH)).toBe(false);
 	});
@@ -87,33 +91,31 @@ describe("initializeDataBranch", () => {
 	it("lets a failing remote probe through instead of reading it as an absent branch", () => {
 		failGitWhen({ matches: isRemoteProbe, error: new Error("fatal: could not read Username for https://github.com") });
 
-		expect(() => initializeDataBranch({ dataBranch: BRANCH })).toThrow(/could not read Username/);
+		expect(() => initializeDataBranch(OPTIONS)).toThrow(/could not read Username/);
 		expect(ranGit("checkout", "--orphan", BRANCH)).toBe(false);
 	});
 
-	it("authenticates the remote probe and the fetch when a token is supplied", () => {
+	it("authenticates the remote probe and the fetch", () => {
 		remoteHasBranch();
 
-		initializeDataBranch({ dataBranch: BRANCH, token: "secret-token" });
+		initializeDataBranch(OPTIONS);
 
 		const remoteCalls = vi
 			.mocked(execute)
 			.mock.calls.map(([params]) => params.args)
 			.filter((args) => args.includes("ls-remote") || args.includes("fetch"));
 
-		const credential = Buffer.from("x-access-token:secret-token").toString("base64");
-
 		expect(remoteCalls).toHaveLength(2);
 		for (const args of remoteCalls) {
-			expect(args.slice(0, 2)).toEqual(["-c", `http.extraheader=AUTHORIZATION: basic ${credential}`]);
+			expect(args.slice(0, 2)).toEqual(AUTH_ARGS);
 		}
-		expect(core.setSecret).toHaveBeenCalledWith(credential);
+		expect(core.setSecret).toHaveBeenCalledWith(CREDENTIAL);
 	});
 
 	it("adds exactly one header, so it cannot duplicate itself", () => {
 		remoteHasBranch();
 
-		initializeDataBranch({ dataBranch: BRANCH, token: "secret-token" });
+		initializeDataBranch(OPTIONS);
 
 		const probe = vi
 			.mocked(execute)
@@ -126,7 +128,7 @@ describe("initializeDataBranch", () => {
 	it("throws an actionable error when not inside a checked-out repository", () => {
 		failGitWhen({ matches: isRepositoryProbe, error: new Error(GIT_REPOSITORY_PROBE_FAILURE(NOT_A_REPOSITORY)) });
 
-		expect(() => initializeDataBranch({ dataBranch: BRANCH })).toThrow(CHECKOUT_INSTRUCTION);
+		expect(() => initializeDataBranch(OPTIONS)).toThrow(CHECKOUT_INSTRUCTION);
 		expect(ranGit("config", "user.name", "github-actions[bot]")).toBe(false);
 	});
 
@@ -139,15 +141,15 @@ describe("initializeDataBranch", () => {
 
 		failGitWhen({ matches: isRepositoryProbe, error: new Error(failure) });
 
-		expect(() => initializeDataBranch({ dataBranch: BRANCH })).toThrow(failure);
-		expect(() => initializeDataBranch({ dataBranch: BRANCH })).not.toThrow(CHECKOUT_INSTRUCTION);
+		expect(() => initializeDataBranch(OPTIONS)).toThrow(failure);
+		expect(() => initializeDataBranch(OPTIONS)).not.toThrow(CHECKOUT_INSTRUCTION);
 		expect(ranGit("config", "user.name", "github-actions[bot]")).toBe(false);
 	});
 
 	it("removes a stale worktree left on disk", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 
-		initializeDataBranch({ dataBranch: BRANCH });
+		initializeDataBranch(OPTIONS);
 
 		expect(ranGit("worktree", "remove", DATA_DIR, "--force")).toBe(true);
 	});
@@ -156,22 +158,22 @@ describe("initializeDataBranch", () => {
 		vi.mocked(fs.existsSync).mockReturnValue(true);
 		failGitWhen({ matches: isWorktreeRemove });
 
-		expect(() => initializeDataBranch({ dataBranch: BRANCH })).not.toThrow();
+		expect(() => initializeDataBranch(OPTIONS)).not.toThrow();
 		expect(core.debug).toHaveBeenCalledWith(`Could not remove existing worktree at ${DATA_DIR}, proceeding anyway`);
 	});
 
 	it("creates an orphan branch when the remote branch does not exist", () => {
-		initializeDataBranch({ dataBranch: BRANCH });
+		initializeDataBranch(OPTIONS);
 
 		expect(core.info).toHaveBeenCalledWith(`Branch "${BRANCH}" does not exist on remote, will create it`);
 		expect(ranGit("worktree", "add", "--detach", DATA_DIR)).toBe(true);
 		expect(ranGit("checkout", "--orphan", BRANCH)).toBe(true);
 		expect(ranGit("commit", "--allow-empty", "-m", "Initialize star tracker data")).toBe(true);
-		expect(ranGit("fetch", "origin", BRANCH)).toBe(false);
+		expect(ranGit(...AUTH_ARGS, "fetch", "origin", BRANCH)).toBe(false);
 	});
 
 	it("runs the orphan subcommands inside the worktree", () => {
-		initializeDataBranch({ dataBranch: BRANCH });
+		initializeDataBranch(OPTIONS);
 
 		const inWorktree = vi
 			.mocked(execute)
@@ -188,12 +190,12 @@ describe("initializeDataBranch", () => {
 	it("carries on when the new orphan branch has nothing to clear", () => {
 		failGitWhen({ matches: (args) => args.includes("rm") });
 
-		expect(() => initializeDataBranch({ dataBranch: BRANCH })).not.toThrow();
+		expect(() => initializeDataBranch(OPTIONS)).not.toThrow();
 		expect(core.debug).toHaveBeenCalledWith("Nothing to remove on the new orphan branch, proceeding anyway");
 	});
 
 	it("refuses to create the branch on a read-only run", () => {
-		expect(() => initializeDataBranch({ dataBranch: BRANCH, readOnly: true })).toThrow(
+		expect(() => initializeDataBranch({ ...OPTIONS, readOnly: true })).toThrow(
 			/does not exist on the remote and this is a read-only run/,
 		);
 		expect(ranGit("checkout", "--orphan", BRANCH)).toBe(false);

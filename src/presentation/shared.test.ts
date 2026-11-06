@@ -36,17 +36,6 @@ describe("colorSchemeFor", () => {
 });
 
 describe("prepareReportData", () => {
-	it("filters out removed repos from activeRepos", () => {
-		const { activeRepos } = prepareReportData({
-			results: makeResults(),
-			baselineSnapshotTimestamp: "2026-01-01T00:00:00Z",
-			locale: "en",
-		});
-
-		expect(activeRepos).toHaveLength(3);
-		expect(activeRepos.every((repo) => !repo.isRemoved)).toBe(true);
-	});
-
 	it("identifies new repos", () => {
 		const { newRepos } = prepareReportData({
 			results: makeResults(),
