@@ -18,6 +18,7 @@ Hand-written guards covered some of it, each where a bug had already been found:
 and the `snapshots` key of `stars-data.json`
 ([ADR 0021](./0021-an-unreadable-stored-history-fails-the-run.md)), the entries of `stargazers.json`, the
 config parsers. Below those guards nothing looked, and every gap had a concrete failure:
+
 - A Snapshot with no `repos` was read as a Baseline holding no Repositories. The Run reported every Star as
   new and pushed, which is the outcome ADR 0021 exists to prevent, one level further down than its guards
   reached. A star count written as a string was compared as a number and silently miscounted.
@@ -51,6 +52,7 @@ would ship unread.
 **Every value that crosses into the action from outside is checked by a `zod/mini` schema before it is
 trusted, and nothing imports `zod` itself.** The schemas live beside the code that reads the value, never in
 `@domain` (which may import `@i18n` only):
+
 - `@infrastructure/persistence/storage`: `StoredHistorySchema` for `stars-data.json`, fatal on any issue with
   one message per guard; `StargazerFileSchema` and `LoginListSchema` for `stargazers.json`, which repairs.
 - `@infrastructure/github`: `GitHubRepoSchema` and `GitHubStargazerRowSchema` in `types.ts`, from which

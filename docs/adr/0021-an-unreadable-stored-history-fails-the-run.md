@@ -37,6 +37,7 @@ to do about it. After the parse catch they are one schema, `StoredHistorySchema`
 `describeUnreadableHistory` turns its first issue into the message for the guard that issue belongs to
 ([ADR 0023](./0023-untrusted-input-is-validated-with-zod-mini.md) is why a schema rather than hand-written
 asserts):
+
 - **The parse catch in `readJsonFile`** fires when the bytes are not JSON. It names the file and the parser's
   own error, and says to fix or delete the file on that branch and re-run.
 - **The root of the schema** fires when the bytes are valid JSON but not an object: an array, `null`, or a bare

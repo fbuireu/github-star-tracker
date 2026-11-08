@@ -183,6 +183,7 @@ happens more often than it sounds:
 
 How the file is read decides which damage stops the run. It is the one file on the branch the action repairs rather
 than refuses:
+
 - **Bytes that are not JSON fail the run**, with the same `... is not valid JSON` message `stars-data.json` gets.
 - **JSON that is not an object is read as empty**, silently, so every repository falls into the first row above.
 - **An entry that is not a list of logins is dropped**, silently, and its siblings survive.
@@ -194,6 +195,7 @@ The file is only read and written with `track-stargazers` on.
 ## First Run Behavior
 
 On the first **writing** run:
+
 1. The action creates the data branch as an orphan branch
 2. An initial empty commit is made
 3. All repos are recorded as New Repositories with `delta: 0` (no previous data to compare against), which still
@@ -220,6 +222,7 @@ artefact above into that worktree, sends the email and sets every output. It the
 `Read-only run: leaving <branch> untouched` and throws the worktree away without committing.
 
 Things follow from that, and they surprise people:
+
 - The branch must already exist. A read-only run refuses to create one and fails outright, so the "First
   Run Behavior" above does not apply to it. Point `data-branch` at the branch your tracking workflow
   maintains, or drop `read-only` for one run so it can be created.

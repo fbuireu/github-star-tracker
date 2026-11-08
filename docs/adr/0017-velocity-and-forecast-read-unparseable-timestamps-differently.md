@@ -14,6 +14,7 @@ cross `@domain/growth` to do it. The **Rate Interval** rule, never measure a pai
 
 They _do_ disagree about what to do when a Snapshot's timestamp does not parse, and the disagreement is
 total:
+
 - `calendarDays`, which Forecast uses, checks every timestamp first. If **any one** of them fails to parse it
   abandons real spacing entirely and returns a synthetic weekly cadence, `index * 7`, for **all** points.
 - `computeVelocity` builds its own points instead, **dropping** the Snapshots that do not parse, and returns
@@ -24,6 +25,7 @@ unifying it in either direction produces a wrong number rather than a crash, whi
 codebase is least able to detect. That is precisely why it is being written down instead of tidied away.
 
 The two readings are not arbitrary, because the two figures need different things from the x-axis:
+
 - A **Forecast** fits a line through many points and extrapolates its _slope_. What it needs is a plausible
   relative spacing across the whole series; it does not care where the origin is, and a slope is unchanged by
   shifting it. Dropping the unparseable points would leave the surviving ones at their true offsets but

@@ -86,6 +86,7 @@ flowchart TD
 ```
 
 What each piece guarantees:
+
 - **The four checks run as one `parallel:` step.** `Format`, `Typecheck`, `Build` and `Unit tests` start together,
   each in its own log, and the `Verify` job fails if any of them fails. Locally, `pnpm verify` chains the same four
   scripts one after another.
@@ -146,6 +147,7 @@ sequenceDiagram
 ```
 
 In order:
+
 1. **Checkout with `PAT` and full history.** semantic-release needs every tag and commit since the last release, and
    the token is the one it pushes with. `persist-credentials: false` keeps it out of the checkout's git config.
 2. **Fast-forward or stand down.** The job releases from the head of `main`, not from the commit that queued it: a merge
@@ -248,6 +250,7 @@ git push origin v1 --force
 
 They are the last step's own commands, aimed at an older tag. The fetch needs `--force`, because a plain one keeps a
 stale local `v1`.
+
 - **Only an admin can do it.** The `release-tags` ruleset forbids force-pushing or deleting a `v*` tag, and the `tags`
   ruleset the same for any tag. The admin role bypasses the first and is exempt from the second, so an admin's own
   credentials push it, as `PAT` does in the job, and a maintainer's or a writer's push is rejected.
@@ -377,6 +380,7 @@ triggered it, so the wiki's history names whoever changed the page.
 No workflow reads a variable (`vars.*`).
 
 What `PAT` has to be:
+
 - **A classic token with the `repo` scope** (`public_repo` reaches this public repository too). No `workflow` scope:
   nothing it pushes touches `.github/workflows/`.
 - **Owned by an account with the admin role on this repository.** The rulesets grant their bypass to that role, and
@@ -385,6 +389,7 @@ What `PAT` has to be:
 - **An Actions secret only.** No run Dependabot triggers reads it, so it has no Dependabot copy.
 
 Where it is used, and why a token at all:
+
 1. **The `release` job's checkout and semantic-release.** It pushes the release commit and the tag past the `main`
    ruleset, creates the GitHub release and comments on what it closed.
 2. **The _Update major version tag_ step.** It force-pushes `vMAJOR` past `release-tags`.
@@ -407,6 +412,7 @@ Where it is used, and why a token at all:
 
 [`.github/actions/prepare-env`](https://github.com/fbuireu/github-star-tracker/blob/main/.github/actions/prepare-env/action.yml)
 is the one composite action. It takes no inputs and runs four steps:
+
 1. **Fail if `.nvmrc` is missing**, with an `::error::` annotation, because it is what every job installs Node from.
 2. **`pnpm/action-setup`**, which installs the pnpm `packageManager` in `package.json` names.
 3. **`actions/setup-node`** with `node-version-file: .nvmrc` and `cache: pnpm`. No workflow names a Node or pnpm
@@ -449,6 +455,7 @@ The two bots split the work rather than share it.
 
 **Renovate** ([`.github/renovate.json`](https://github.com/fbuireu/github-star-tracker/blob/main/.github/renovate.json))
 owns every update, the security ones included:
+
 - npm dependencies, pinned to exact versions (`rangeStrategy: pin`); every `uses:` pinned to a commit SHA with its
   version in a trailing comment (`pinDigests`); `node` grouped and held to even majors; `pnpm` grouped.
 - Lock file maintenance, on the same schedule.

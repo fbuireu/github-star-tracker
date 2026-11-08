@@ -26,6 +26,7 @@ account for, the figure [`star-history.ts`](./star-history.ts) reads to decide w
 ([ADR 0013](../../docs/adr/0013-a-run-is-measured-in-one-place.md)). It composes `getBaselineSnapshot`,
 `compareStars`, `createSnapshot`, `addSnapshot` and `shouldNotify` in the one order that is correct, and returns
 `baselineSnapshotTimestamp`, `results`, `summary`, `updatedHistory`, `droppedSnapshots` and `thresholdReached`.
+
 - `measureRun` never advances the Notification Baseline: it reports `thresholdReached` and stops there.
   `settleNotification` in [`notification.ts`](./notification.ts) is what turns that plus a `Delivery` into the History to persist,
   and it calls `recordNotification`, which returns a **new** History rather than mutating the one it was
@@ -70,6 +71,7 @@ account for, the figure [`star-history.ts`](./star-history.ts) reads to decide w
 
 `getBaselineSnapshot` resolves the **Comparison Window**, the `compare-against` input, to the single
 snapshot everything else is diffed against.
+
 - Every mode ignores snapshots whose timestamp does not parse, including `last-run`, which walks back to the
   newest one that does. Empty history yields `null`.
 - Windowed modes pick the **newest** snapshot at or before `now - windowDays + 6h`. That 6-hour slack exists
@@ -144,6 +146,7 @@ snapshot everything else is diffed against.
 
 Charts are rebuilt from raw stargazer timestamps rather than from stored snapshots on purpose
 ([ADR 0005](../../docs/adr/0005-charts-are-reconstructed-from-stargazer-timestamps.md)).
+
 - Returns `{ snapshots: [] }` when no repo has a single parseable `starred_at`.
 - Bucket count is `clamp(maxPoints, 2, 365)`; `maxPoints: 0` means full history at weekly cadence. The final
   edge is forced to exactly `end`, so the last snapshot is "now".

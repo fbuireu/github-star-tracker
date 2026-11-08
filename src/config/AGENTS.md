@@ -121,6 +121,7 @@ Real defaults therefore live in `defaults.ts` and are only _described_ in the `a
 overridable input does state its default in that prose today, so check `defaults.ts` before trusting a
 description rather than assuming one is missing. Some of those descriptions promise behaviour this folder does
 not implement:
+
 - `chart-max-points` says "capped at 365". That clamp is **not** applied here: `loadConfig` passes the raw
   integer through, and `MAX_HISTORY_BUCKETS` in `@domain/star-history` does the capping.
 - `chart-custom-milestones` says it "Requires chart-milestones to be enabled". Nothing enforces that; the two

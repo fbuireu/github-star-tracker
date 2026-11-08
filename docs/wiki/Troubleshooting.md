@@ -19,6 +19,7 @@ your github-token has the correct permissions.`
 **Cause:** Invalid or expired Personal Access Token.
 
 **Fix:**
+
 1. Generate a new token at **[GitHub Settings > Tokens](https://github.com/settings/tokens)**
 2. Ensure the token has `repo` scope (for private repos) or `public_repo` scope (public only)
 3. Update the secret in your repo: **Settings > Secrets and variables > Actions**
@@ -54,6 +55,7 @@ less often. [Known Limitations](Known-Limitations#stargazer-api-rate-limits) has
 **Cause:** The secret name in the workflow doesn't match the secret stored in the repo.
 
 **Fix:** Verify the secret name matches exactly:
+
 ```yaml
 # In workflow
 github-token: ${{ secrets.STAR_TRACKER_TOKEN }}
@@ -258,6 +260,7 @@ after each filtering stage, which localises it quickly.
 ### `new-stargazers` Is 0 Although Stars Clearly Moved
 
 **Cause:** the stargazer diff skips certain kinds of repository.
+
 - A **sampled** repository (one over `smart-sampling-threshold` while `smart-sampling` is on) is never
   diffed, because absence from a sample is not evidence that someone unstarred. These are named in a note in
   the report.
@@ -279,6 +282,7 @@ star count or turn `smart-sampling` off for it. For the incomplete case, check t
 ### Empty Report or Zero Stars
 
 **Possible causes:**
+
 - Token doesn't have access to the repos you expect
 - All repos are filtered out by `visibility`, `min-stars`, `exclude-repos`, or other filters
 - Only forks/archived repos exist and `include-forks`/`include-archived` are `false`
@@ -354,6 +358,7 @@ on whichever one should not be the writer.
 ### No Charts Generated
 
 **Possible causes:**
+
 - `include-charts: false`
 - The repo has no stargazers with valid `starred_at` dates
 - All repos filtered out
@@ -364,6 +369,7 @@ on whichever one should not be the writer.
 ### Chart Is a Flat or Straight Line
 
 **Cause:** The stargazers fetch for that repository came back empty or failed, so its history cannot be reconstructed. The run log includes a warning naming the affected repository and, for failures, the API error. Common reasons:
+
 - Transient GitHub-side failures. During the [2026 stargazers restriction](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/) rollout (~July 5–13, 2026) the endpoint intermittently returned `404`s, empty lists, or `5xx` errors with an empty/plain-text body **even to repository admins**, most commonly on deep pagination of very large (40,000+ star) repos. Since v1.22.3 the run log always includes the HTTP status (`Failed to fetch stargazers for <repo>: HTTP 5xx ...`), so you can tell a real restriction (`403`/`404`) apart from a transient server error at a glance, and `5xx`/network errors are retried automatically before being reported. Verify with `curl -i -H "Authorization: Bearer <token>" -H "Accept: application/vnd.github.star+json" "https://api.github.com/repos/<owner>/<repo>/stargazers?per_page=1"`. If it returns `200` with data, just re-run the workflow: charts are reconstructed from scratch on every run.
 - The token's user is not an admin or collaborator on the repository, per the same restriction: the list comes back `404` or empty (`200 []`) silently. Note this is about the user's _role_, not token scopes (implicit admin through org ownership works with a classic PAT). Typical setups: a fine-grained PAT without a grant on the repository's organization, or org repositories where you are a member with read access only. See [Known Limitations](Known-Limitations#stargazers-api-access-restriction-2026).
 - Rate limiting on large repositories. A repository above 40,000 stars costs 400 API requests per run without smart sampling; a handful of large repos can exhaust the 5,000 requests/hour REST quota mid-run.
@@ -381,6 +387,7 @@ Since v1.22.3, a single failing page no longer discards the rest of a repo's his
 ### Charts Not Updating
 
 **Possible causes:**
+
 - The run failed, or did not run at all. Every writing run commits, even when no star moved, because it appends a
   snapshot and rewrites the report, so a data branch without a fresh commit means no writing run finished
 - The workflow is a [`read-only`](Configuration#read-only) one, which never commits
@@ -412,6 +419,7 @@ Replace `star-tracker-data` with your `data-branch` value if customized.
 ### Email Not Received
 
 **Checklist:**
+
 1. Check your spam/junk folder
 2. Verify SMTP credentials are correct
 3. For Gmail: ensure you're using an **app password** (not your account password) - requires 2FA enabled
@@ -422,11 +430,13 @@ Replace `star-tracker-data` with your `data-branch` value if customized.
 ### "Invalid login" or SMTP Authentication Failed
 
 **Common causes:**
+
 - Gmail: using account password instead of app password
 - Incorrect username or password
 - 2FA not enabled (required for Gmail app passwords)
 
 **Fix for Gmail:**
+
 1. Enable 2-factor authentication
 2. Go to **[App Passwords](https://myaccount.google.com/apppasswords)**
 3. Generate a new app password for "Mail"
@@ -475,6 +485,7 @@ A weekly `cron` on its own does not widen the reporting period. The report is di
 ### Charts Missing in Email
 
 **Possible causes:**
+
 - `include-charts: false`
 - The charted series has fewer than 2 points. On a normal run that series is the history reconstructed from
   `starred_at` dates, not the stored snapshots, so this means no star had a readable date rather than "the
@@ -550,11 +561,13 @@ steps:
 ### Workflow Doesn't Run on Schedule
 
 **Possible causes:**
+
 - GitHub Actions disables scheduled workflows after 60 days of repo inactivity
 - Cron syntax error
 - Workflow file is not on the default branch
 
 **Fix:**
+
 - Push a commit or manually trigger the workflow to re-enable it
 - Validate cron syntax at [crontab.guru](https://crontab.guru)
 - Ensure the workflow file is in [`.github/workflows/`](https://github.com/fbuireu/github-star-tracker/blob/main/.github/workflows) on your default branch
@@ -562,6 +575,7 @@ steps:
 ### Workflow Runs but Nothing Happens
 
 **Possible causes:**
+
 - No star moved. The run still commits a new snapshot and rewritten report, so the data branch gains a commit, but
   `stars-changed` is `false` and no email is due
 - All repos filtered out. The run warns `No repositories matched the configured filters` and never opens the data
@@ -640,6 +654,7 @@ repository name (or the owner, for the org filters).
 ## Getting Help
 
 If your issue isn't covered here:
+
 1. Check the **[workflow run logs](https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/viewing-workflow-run-history)** for detailed error messages
 2. Open an issue at **[github-star-tracker/issues](https://github.com/fbuireu/github-star-tracker/issues)**
 3. Include: workflow file, error logs, and expected vs actual behavior

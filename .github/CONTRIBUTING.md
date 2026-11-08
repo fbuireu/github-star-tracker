@@ -14,6 +14,7 @@ holds a diff to, that is [CODING_STANDARDS.md](../CODING_STANDARDS.md). If you w
 ## Code of Conduct
 
 By participating you are expected to uphold the [Code of Conduct](./CODE_OF_CONDUCT.md). In short:
+
 - **Be respectful**: different viewpoints and experiences are valuable
 - **Be constructive**: focus on what is best for the project
 - **Be collaborative**: work together towards common goals
@@ -188,6 +189,7 @@ are the wiki's [CI/CD](../docs/wiki/CI-CD.md) guide.
 ## Use of AI
 
 If you use AI tools when contributing:
+
 - **Review everything it produces.** You are responsible for what you submit.
 - **Check its claims against the code.** A doc claim nobody verified is a doc claim that is wrong.
 - **Disclose significant use** in the pull request description.

@@ -34,6 +34,7 @@ deletions either: the YAML and the input object relocate from a mock call into a
 cases that set both they merge into one nested literal that is longer than the two lines it replaces.
 
 Two things then survive that the change is supposed to remove:
+
 - **The reporter.** `core.warning` fires from five sites _inside_ the resolution, and 18 sites in
   `loader.test.ts` assert its wording verbatim; the Oxford comma in the enum message is pinned deliberately.
   Parameterising the I/O leaves `vi.mock('@actions/core')` exactly where it was, so the file still has a mock
@@ -66,6 +67,7 @@ inputs" reading them ambiently is the truthful shape, not an accident.
 `@config` is the largest instance of that rule but not the only one, and the earlier framing of this ADR,
 that `@config` was the sole exception in an otherwise dependency-injected tree, was simply wrong about the
 code:
+
 - **`getEmailConfig` in [`src/infrastructure/notification/email.ts`](../../src/infrastructure/notification/email.ts) reads the ambient SMTP inputs**: `smtp-host`,
   `smtp-port`, `smtp-username`, `smtp-password`, `email-to` and `email-from`. It takes only a `Locale`, for
   the default `from` name. It owns the SMTP input group the way `loadConfig` owns the tracking one, and it

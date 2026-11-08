@@ -37,6 +37,7 @@ The narrowing rules live in `@domain/tracked-set` and read domain vocabulary (`r
 [`tracked-set.test.ts`](../domain/tracked-set.test.ts) asserts them. `resolveTrackedSet` returns `afterOnlyOrgs`,
 `afterOnlyRepos` and `invalidPatterns` as **numbers and strings**; `getRepos` turns them into `core.info` and
 `core.warning` lines.
+
 - **The `accept: application/vnd.github.star+json` header is what returns the dates**, and it is set per
   request, not on the client. Without it GitHub returns bare user objects, with no `user` wrapper and **no
   `starred_at`**, so every page fails `GitHubStargazerRowSchema`, every repository's fetch fails with a warning,
@@ -156,6 +157,7 @@ The one other export consumed from outside this folder is `writeHtmlReport`, whi
 **off** the Data Branch: it takes no `dataDir` and targets `RUNNER_TEMP`, falling back to `process.cwd()`
 when that is unset, so the report survives `cleanup`, exists on read-only runs and on runs where nothing
 matched, and never lands in a commit. On a local run that fallback puts it in the checkout root.
+
 - `initializeDataBranch` returns `dataDir`, `withDataBranch` closes over it and hands it back to `cleanup`, and
   every read and write derives its path from that closure.
 - `publish` is one call, and the order inside it matters: history, report, badge, CSV, the Stargazer map

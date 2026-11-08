@@ -142,6 +142,7 @@ Use the action's integrated email functionality by providing SMTP inputs.
 ### What the sender address ends up as
 
 `email-from` is not always the address the recipient sees. Resolution runs in this order:
+
 1. `email-from` contains an `@`, so it is used verbatim
 2. Otherwise, if `smtp-username` contains an `@`, the two are combined into `Display Name <user@host>`
 3. Otherwise the bare `email-from` is used as a display name with no address behind it
@@ -282,6 +283,7 @@ Both inputs drive the built-in email and the `should-notify` output, so the same
 ```
 
 Notes:
+
 - `notification-threshold: '0'` still means "notify on every run that has changes", in both modes. `should-notify` also requires that something actually changed.
 - Whether raising the threshold fires an email straight away depends on whether a notification has ever fired on the data branch. If none has, `starsAtLastNotification` is absent and treated as `0`, so the accumulated change is your whole total: the first run fires as soon as that total reaches the threshold, which on most accounts means immediately, and then settles into the threshold rhythm. If you have been running with the default `notification-threshold: '0'`, every changed run has already been notifying, so `starsAtLastNotification` is stored at your current total - raising the threshold does **not** fire immediately, and the next email waits for the full threshold to accumulate from that total.
 - In `net` mode a large **loss** of stars also reaches the threshold, because the absolute change is what is measured. Use `gains` if you only want to hear about growth.

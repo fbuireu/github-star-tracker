@@ -54,6 +54,7 @@ branch. That shapes what is interesting to report.
 
 Some behaviour that looks reportable is a documented, deliberate decision.
 Please check these before reporting:
+
 - The data branch is readable by anyone who can read the repository, and
   on a public repository that is public. A git branch is the only storage
   backend the action has, which is how a stateless Action remembers anything
@@ -100,6 +101,7 @@ Open an issue asking me to get in touch and **say nothing about the finding in
 it**: a public issue is not the place for the details.
 
 Whichever way it reaches me, include:
+
 - The type of issue (token exposure, code injection…)
 - The affected file or component, and the location of the relevant source
   code if you found it (tag, branch, commit or direct URL)

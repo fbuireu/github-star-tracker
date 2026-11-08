@@ -15,6 +15,7 @@ body in the commit that lands its check. The process around a change (commit typ
 ## Tooling already enforces
 
 No rule below restates these, and a diff that breaks one fails CI:
+
 - Biome ([`biome.json`](./biome.json)): formatting, import order and lint, `noConsole` included, every object shape
   declared an `interface`, never a `type` alias of an object literal (`useConsistentTypeDefinitions`), and every element
   read from an array's end through `.at()` (`useAtIndex`).

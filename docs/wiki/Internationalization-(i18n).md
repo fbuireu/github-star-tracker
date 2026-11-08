@@ -119,6 +119,7 @@ verbatim rather than becoming `undefined` or an empty string.
 English is fallen back to at more than one moment, and only the config-time one is ever visible.
 
 At config time, an invalid `locale` input is caught by the config loader:
+
 1. The action logs a warning: `Invalid locale "xx". Must be "en", "es", "ca", or "it". Falling back to "en"`
 2. English translations are used for the entire run
 3. The workflow does **not** fail
@@ -134,6 +135,7 @@ crashing.
 ## Adding a New Locale
 
 To contribute a new language:
+
 1. Copy [`src/i18n/en.json`](https://github.com/fbuireu/github-star-tracker/blob/main/src/i18n/en.json) to `src/i18n/{code}.json`
 2. Translate all values (keys stay in English)
 3. Keep `{placeholder}` tokens untranslated, spelled exactly as in `en.json`
@@ -150,6 +152,7 @@ excess-property check; `src/i18n/index.test.ts` fails on them instead, since it 
 keys of `en.json`.
 
 These documentation edits belong in the same commit, none of them derived from the code:
+
 - the `locale` input description in [`action.yml`](https://github.com/fbuireu/github-star-tracker/blob/main/action.yml), which hard-codes the locale names
 - the **Supported Locales** and **Localized Email Subjects** tables on this page
 - the `locale` section of [Configuration](Configuration#locale)

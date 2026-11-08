@@ -57,6 +57,7 @@ flowchart TD
 ```
 
 What that buys, and what it costs:
+
 - **A Chart's content is decided once.** Both adapters hand their `ChartRequest` to `buildChartSpec` and only draw the
   spec they get back, so a chart on the data branch and the same chart in the email cannot disagree about the window,
   the series or the Milestones; only their look differs
@@ -82,6 +83,7 @@ What that buys, and what it costs:
 **File:** `charts/star-history.svg`
 
 Shows the **total star count** across all tracked repositories over time.
+
 - Animated line with smooth monotone cubic curves (configurable via `chart-curve`), dropped to the chart floor at the first point so the shaded area closes cleanly rather than hanging mid-air. With the default `chart-begin-at-zero: false` that floor is the lowest plotted value, not zero; set `chart-begin-at-zero: true` to make it a true zero baseline
 - CSS draw-line animation + fade-in points
 - Milestone markers at 10, 50, 100, 500, 1K, 5K, 10K, 50K, 100K, 500K, 1M stars (when in range)
@@ -100,6 +102,7 @@ Individual star history for each of the top N repositories (configurable via `to
 Each per-repo chart uses that repository's **own** Reconstructed History, starting at its first star rather than at the earliest star across all your tracked repos, so a newer repo's chart begins when it actually started getting stars instead of showing a flat line back to your oldest repo.
 
 That holds whenever the repository's own reconstruction has at least 2 points. When it does not, because its stargazers could not be read, the chart falls back to the Stored History, which spans the tracker's runs rather than the repository's life. The chart is still drawn; it just no longer means what the paragraph above says.
+
 - Same style as the star history chart
 - One chart per top repo
 - Collapsible in the Markdown report via `<details>`
@@ -111,18 +114,19 @@ That holds whenever the repository's own reconstruction has at least 2 points. W
 **File:** `charts/comparison.svg`
 
 Top N repositories overlaid on a single chart for comparison.
+
 - Multi-line chart with distinct colors per repo
 - Legend showing repo names (short names when all repos share the same owner)
 - Up to 10 repos (limited by `CHART.maxComparison`)
 
 ![Comparison Chart](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/docs/examples/comparison.svg)
 
-
 ### 4. Forecast Chart
 
 **File:** `charts/forecast.svg`
 
 Observed history plus projected growth for the next 4 weeks.
+
 - Solid line for the observed history
 - Dashed green line for linear regression forecast
 - Dashed red line for weighted moving average forecast
@@ -136,6 +140,7 @@ Observed history plus projected growth for the next 4 weeks.
 
 The same series as the forecast chart above, for a single top repository: its own observed history plus
 the linear regression and weighted moving average fitted to it.
+
 - One chart per top repository, drawn under that repository's forecast table
 - Drawn **only** when the repository has enough star history of its own to fit: at least 3 reconstructed
   points. When it does not, the action fits the repository to the points of the tracked set's history that
@@ -183,6 +188,7 @@ with:
 ```
 
 **When to disable:**
+
 - You only need JSON data
 - Faster execution
 - Reducing data branch size
@@ -218,6 +224,7 @@ chart falls back to the Stored History, which does need two runs before it has t
 ### Colors
 
 **Star history / per-repo:**
+
 - Line: `#dfb317` (gold) by default, changed with `chart-line-color` (see [Chart customization](#chart-customization)). It sets the star-history series, the per-repo series and the forecast's historical series, and nothing else
 - Fill: the same colour at 10% opacity
 - Trend line (when `chart-trend-line` is enabled): the palette's neutral gray, dashed. `chart-line-color` does not reach it
@@ -240,6 +247,7 @@ chart falls back to the Stored History, which does need two runs before it has t
 This palette is fixed in both senses: `chart-line-color` does not reach it, and it does not change with `chart-theme`.
 
 **Forecast chart:**
+
 - Historical: the `chart-line-color` series, solid
 - Linear regression: the palette's positive green, dashed
 - Weighted moving average: the palette's negative red, dashed

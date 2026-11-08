@@ -1,4 +1,5 @@
 Complete reference for all inputs, outputs, and data formats. Every input links to its full description in **[Configuration](Configuration)**, which is the prose guide; this page is the index.
+
 - [Inputs](#inputs)
 - [Outputs](#outputs)
 - [Data Formats](#data-formats)
@@ -220,6 +221,7 @@ type StargazerMap = Record<string, string[]>;
 Machine-readable CSV with one row per tracked repository. Fields containing a comma, a double quote or a line break are quoted per RFC 4180, and a field starting with `=`, `+`, `-` or `@` is prefixed with `'` and quoted, so a spreadsheet does not run it as a formula.
 
 **Columns:** `repository`, `owner`, `name`, `stars`, `previous`, `delta`, `status`
+
 - `status` is `active`, `new` (absent from the Baseline Snapshot) or `removed` (in the Baseline Snapshot, absent now:
   deleted, renamed, transferred, or dropped by a filter)
 - A `new` row has an empty `previous` and a `delta` of `0`, because entering the Tracked Set is not growth

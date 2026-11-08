@@ -101,6 +101,7 @@ Once the data branch's worktree is open, it is removed in a `finally` whichever 
 fails the run. A failure while the branch is still being opened skips that removal ([Cleanup](#cleanup)).
 
 Two edges in the diagram are easy to miss, and they matter:
+
 - **No repositories matched.** When every filter combined leaves nothing, the run warns
   `No repositories matched the configured filters`, renders an empty report, writes the HTML report, sets every output
   to its zeroed value and returns. It never opens the data branch, so nothing is committed and no email is attempted.
@@ -116,6 +117,7 @@ Two edges in the diagram are easy to miss, and they matter:
 
 The first writing run on a fresh data branch takes the same path as every other, with nothing to compare against.
 Everything it reports is therefore "new", and it is worth knowing what that looks like before it lands in an inbox:
+
 - **The branch is created.** The probe finds nothing on the remote, so the run creates an orphan branch with an empty
   commit, and the run's own commit lands on top of it.
 - **Every repository is a New Repository with a delta of `0`.** There is no Baseline Snapshot, so `stars-changed` is
@@ -169,6 +171,7 @@ Action Inputs > Config File (YAML) > Built-in Defaults
 ```
 
 **Steps:**
+
 1. File discovery: reads YAML from `config-path` input (default: `star-tracker.yml`). A missing file is fine and only
    logged
 2. YAML parsing via `js-yaml`. An empty or whitespace-only file yields the defaults; a malformed one is logged as a
@@ -279,6 +282,7 @@ Transforms GitHub API objects into the domain `RepoInfo` schema, flattening `own
 **File:** [`src/domain/tracked-set.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/tracked-set.ts) > `resolveTrackedSet()`
 
 Client-side filtering pipeline, in this order:
+
 1. **Org whitelist** (`onlyOrgs`) - restricts to owners whose name matches a listed name or `/regex/`
 2. **Whitelist** (`onlyRepos`) - short-circuits everything below it, on the set step 1 already narrowed
 3. **Archived** - removes archived repos unless `includeArchived` is `true`
@@ -363,6 +367,7 @@ sequenceDiagram
 ```
 
 Step by step:
+
 1. Confirm the process is inside a checked-out repository (`git rev-parse --is-inside-work-tree`)
 2. Configure Git identity (`github-actions[bot]`)
 3. Check if the data branch exists on the remote (`git ls-remote --heads`), reading **empty output** as "absent". A
@@ -457,6 +462,7 @@ and silently compare against something older than you asked for.
 The current star counts are then diffed against that snapshot, so the baseline defines the `new-stars`, `lost-stars` and `stars-changed` outputs, the total delta, and the "Compared to snapshot from ..." line in the report.
 
 **Edge cases:**
+
 - **History shorter than the window:** falls back to the oldest snapshot available. The reported period is then _shorter_ than the one requested, and the report's "Compared to" date shows exactly how far back it really goes
 - **First run:** there is no history, therefore no baseline (see the `compareStars()` edge cases below)
 
@@ -481,12 +487,14 @@ it an average over a chart bucket whose width follows `chart-max-points`.
 **File:** [`src/domain/comparison.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/comparison.ts) > `compareStars()`
 
 Pure function computing the diff between current repos and the selected baseline snapshot:
+
 1. Index the baseline state into a hash map
 2. Compute per-repo deltas (current - baseline)
 3. Detect new repos (`isNew`) and removed repos (`isRemoved`)
 4. Aggregate summary: `totalStars`, `totalDelta`, `newStars`, `lostStars`, `changed`
 
 **Edge cases:**
+
 - First run: there is no baseline, so every repo is `isNew: true` with `previous: null` and `delta: 0`. New
   repos never inflate `newStars`, but they do make `summary.changed` true
 - Repo renamed or transferred: appears as removed + new, and its whole count is reported as lost
@@ -495,6 +503,7 @@ Pure function computing the diff between current repos and the selected baseline
 ### Snapshot Management
 
 **File:** `src/domain/snapshot.ts`
+
 - The `compare-against: last-run` baseline is the most recent snapshot that parses, resolved inside
   `getBaselineSnapshot` (the walk-back is module-private)
 - `addSnapshot({ history, snapshot, maxHistory })` returns a new `History` with the snapshot appended and old entries pruned beyond `maxHistory`
@@ -516,6 +525,7 @@ Both are pure functions returning new objects (no mutation). `addSnapshot()` run
 **Files:** [`src/infrastructure/github/stargazers.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/infrastructure/github/stargazers.ts), [`src/domain/stargazers.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/domain/stargazers.ts)
 
 Stargazers are fetched whenever charts are enabled (`include-charts: true`, the default) **OR** `track-stargazers: true`, because the Reconstructed History behind the charts needs each star's `starred_at` date. With both off, this phase is skipped entirely.
+
 1. **Fetch:** queries `GET /repos/{owner}/{repo}/stargazers` with the `star+json` media type to get `starred_at`
    timestamps. Paginated at 100 per page, one repository after another, never in parallel, because parallel requests
    trip GitHub's secondary rate limit. A full fetch stops at the first page that is not full, or at page 400, the
@@ -536,6 +546,7 @@ rather than overwritten.
 
 The diff compares against the logins stored under the repository's **full name**. A repository with no entry there
 has nothing to be compared with, so every one of its stargazers is reported as new:
+
 - **The first run with `track-stargazers` on**, whether the data branch is fresh or has run for months without it.
   Every stargazer of every repository is new at once.
 - **A repository that joins the Tracked Set**: created, unarchived, or let in by an edited filter.
@@ -597,6 +608,7 @@ The methods are computed in parallel:
 Both methods anchor their forecast on the latest observed total (they answer "starting from today's count, where does this trend land in N weeks?") and clamp predictions to `Math.max(0, Math.round(value))`.
 
 Forecasts are computed for:
+
 - **Aggregate** (total stars across all repos)
 - **Per top repo** (top N by star count, configurable via `top-repos`), fitted to that repo's own reconstructed history when it has at least 3 points, and otherwise to the points of the aggregate series that include the repo. A repo that fewer than 3 points include gets no forecast table of its own, rather than one fitted to zeros from before it was tracked.
 
@@ -647,6 +659,7 @@ Decides which sections a report has and what is in them: filters active/new/remo
 **File:** [`src/presentation/markdown.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/markdown.ts) > `generateMarkdownReport()`
 
 Produces GitHub Flavored Markdown with:
+
 1. Header (total stars, delta, date)
 2. Comparison note to the baseline snapshot ("Compared to snapshot from ...", dated per `compare-against`)
 3. Chart sections (SVG references: `./charts/star-history.svg`, etc.)
@@ -670,6 +683,7 @@ Self-contained HTML with inline CSS for email compatibility. Uses QuickChart.io 
 **File:** [`src/presentation/csv.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/presentation/csv.ts) > `generateCsvReport()`
 
 Machine-readable CSV with one row per tracked repository. Columns: `repository`, `owner`, `name`, `stars`, `previous`, `delta`, `status`. Fields containing a comma, a double quote or a line break are quoted per RFC 4180, and a field starting with `=`, `+`, `-` or `@` is prefixed with `'` and quoted, so a spreadsheet does not run it as a formula.
+
 - `status` is `active`, `new` (absent from the Baseline Snapshot), or `removed` (in it, absent now)
 - `previous` is empty and `delta` is `0` for new repos; a removed repo has `stars` of `0` and a `delta` of minus its `previous`
 
@@ -762,6 +776,7 @@ and then settles; raising the threshold on a branch that has been notifying fire
 ### Email
 
 **File:** [`src/infrastructure/notification/email.ts`](https://github.com/fbuireu/github-star-tracker/blob/main/src/infrastructure/notification/email.ts)
+
 - `getEmailConfig()` reads SMTP inputs; returns `null` if `smtp-host` is not set
 - The email is attempted when SMTP is configured and the Notification is due, or `send-on-no-changes` is on
 - `sendEmail()` uses `nodemailer` with auto-detected `secure` mode (port 465 = SSL, else STARTTLS)
@@ -821,6 +836,7 @@ On a read-only run this step is skipped entirely: everything above has already b
 worktree, the run logs `Read-only run: leaving <branch> untouched`, and the worktree is discarded unpushed.
 
 Otherwise:
+
 1. `git add -A`
 2. `git diff --cached --quiet` (skip if no changes)
 3. `git commit -m "Update star data: 1523 total (+15)"`
@@ -844,6 +860,7 @@ and the worktree is thrown away at the end. That is what lets another workflow (
 a data branch with the workflow that maintains it without the two racing to write.
 
 Consequences follow from nothing being written:
+
 - The branch must already exist. A read-only run refuses to create it (see Phase 3).
 - `starsAtLastNotification` never advances, so a `notification-threshold` other than `0` cannot work on a
   read-only run: it would either fire every time or never. `loadConfig` warns when both are set.

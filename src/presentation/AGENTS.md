@@ -9,6 +9,7 @@ There are separate chart modules rather than one library call for two reasons: t
 stays self-contained and theme-aware ([ADR 0006](../../docs/adr/0006-hand-rendered-svg-charts.md)), and the
 email path goes through QuickChart because mail clients will not display inline SVG
 ([ADR 0010](../../docs/adr/0010-quickchart-renders-the-email-charts.md)).
+
 - **[`chart-spec.ts`](./chart-spec.ts) decides what a Chart is**, and names which one is wanted. A `ChartRequest` is a
   discriminated union over the `ChartKind`s [GLOSSARY.md](../../GLOSSARY.md) lists (star history, per repo, comparison,
   forecast, per-repo forecast), carrying the `history` to plot and only that kind's own
@@ -110,6 +111,7 @@ type `Omit`s the field so the caller cannot believe otherwise. `maxPoints` is li
 
 `renderRun` ([`src/presentation/run.ts`](./run.ts)) is what `@application` calls: one function in, one `RenderedRun` out,
 carrying markdown, html, csv, badge and the chart files.
+
 - **It builds the `ReportModel` once and hands the same one to both dialects, and there is exactly one clock
   read per render.** `now` is injectable, defaults to `new Date()` here, reaches `prepareReportData`, and
   yields both `model.now` (the `YYYY-MM-DD` the header shows) and `model.generatedAt` (the ISO stamp both
@@ -161,6 +163,7 @@ are private to `chart-spec.ts`, their only consumer.
 [`report-model.test.ts`](./report-model.test.ts) is its spec. The repository table and the Summary are on every
 Report, a quiet Run and a Run with no active repository included, so the model carries them without a condition and
 no dialect adds one.
+
 - The model resolves `chartHistory` (the history _only_ when it is plottable, so the dialects narrow on
   `!== null`), `showComparisonChart`, `topRepos`, `isFirstRun`, the Velocity figures and the
   Stargazer outcome.

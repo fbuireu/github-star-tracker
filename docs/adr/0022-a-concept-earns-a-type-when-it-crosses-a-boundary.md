@@ -42,6 +42,7 @@ instead of being re-raised every six months.
 ## Decision
 
 **The questions, asked in order. A concept earns a type only when the answers carry it there.**
+
 1. **Is the illegal state reachable?** A shape the type permits but no code path produces is a guard, not a
    bug. Protect it the cheapest way that turns it into a compile error or a loud failure, and say in the
    commit message that it is a guard, so the next reader does not mistake the test for a reproduction.

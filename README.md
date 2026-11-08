@@ -45,6 +45,7 @@
 Every writing run commits these artefacts to a dedicated data branch, with a new snapshot appended even when no
 star moved. The runs that commit nothing are a `read-only` run, which renders and reports in full but never
 pushes, and a run whose filters matched no repository, which never opens the branch.
+
 - **Animated SVG charts:** star history, per-repo trends, top repos comparison, and growth forecasts, with automatic dark/light mode support:
 
   <img src="docs/examples/star-history.svg" alt="Star History" width="800">
@@ -428,6 +429,7 @@ If you find this project useful, consider supporting its development:
 ## Use of AI
 
 This project uses AI assistance primarily for documentation purposes. AI tools (GitHub Copilot, Claude) were used to:
+
 - Write and improve documentation (README, wiki pages)
 - Generate boilerplate code and configuration files
 - Assist with code reviews and suggestions
