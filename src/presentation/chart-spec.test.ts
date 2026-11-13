@@ -8,7 +8,15 @@ import { LOCALES, type Locale } from "@i18n";
 import { makeHistory, makeMultiRepoHistory, makeSnapshot } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import type { ChartRequest, ChartSpec } from "./chart-spec";
-import { AxisLabels, buildChartSpec, ChartKind, isPlottable, SeriesDash, SeriesWeight } from "./chart-spec";
+import {
+	AxisLabels,
+	buildChartSpec,
+	ChartKind,
+	describeChart,
+	isPlottable,
+	SeriesDash,
+	SeriesWeight,
+} from "./chart-spec";
 import { CHART, CHART_COMPARISON_COLORS, LIGHT_PALETTE, MIN_SNAPSHOTS_FOR_CHART, TREND_WINDOW } from "./constants";
 
 const forecastData: ForecastData = {
@@ -43,6 +51,11 @@ const ownForecast: ForecastData = {
 		},
 	],
 };
+
+interface DescriptionOfParams {
+	name: string;
+	locale?: Locale;
+}
 
 interface SpecOfParams {
 	request: ChartRequest;
@@ -415,6 +428,115 @@ describe("buildChartSpec", () => {
 			expect(spec.series.map((series) => series.color)).toEqual([...CHART_COMPARISON_COLORS]);
 			expect(spec.showLegend).toBe(true);
 			expect(spec.series.every((series) => series.fill === false)).toBe(true);
+		});
+
+		it("draws the first series solid and gives every later one a dash of its own, none of them a forecast or trend dash", () => {
+			const repoNames = Array.from({ length: 12 }, (_, index) => `user/repo-${index}`);
+			const dashes = specOf({
+				request: { kind: ChartKind.COMPARISON, history: multiRepo, repoNames },
+			}).series.map((series) => series.dash);
+
+			expect(dashes[0]).toBe(SeriesDash.NONE);
+			expect(new Set(dashes).size).toBe(CHART.maxComparison);
+			expect(dashes).not.toContain(SeriesDash.TREND);
+			expect(dashes).not.toContain(SeriesDash.LINEAR_REGRESSION);
+			expect(dashes).not.toContain(SeriesDash.WEIGHTED_MOVING_AVERAGE);
+		});
+	});
+
+	describe("description", () => {
+		const history = makeHistory({ starCounts: [100, 120, 150] });
+		const requests: Record<string, ChartRequest> = {
+			starHistory: starHistory({ history }),
+			perRepo: { kind: ChartKind.PER_REPO, history: multiRepo, repoFullName: "user/repo-a" },
+			comparison: { kind: ChartKind.COMPARISON, history: multiRepo, repoNames: ["user/repo-a", "user/repo-b"] },
+			forecast: { kind: ChartKind.FORECAST, history, forecastData },
+			perRepoForecast: {
+				kind: ChartKind.PER_REPO_FORECAST,
+				history: multiRepo,
+				forecastData: ownForecast,
+				repoFullName: "user/repo-a",
+			},
+		};
+		const descriptionOf = ({ name, locale = "en" }: DescriptionOfParams): string =>
+			specOf({ request: requests[name], locale }).description;
+
+		it("states the date range and the star count at its start and end for the star history", () => {
+			expect(descriptionOf({ name: "starHistory" })).toBe(
+				"Star history from 2026-01-01 to 2026-01-15: 100 to 150 stars",
+			);
+		});
+
+		it("states the same for one repository, naming it", () => {
+			expect(descriptionOf({ name: "perRepo" })).toBe(
+				"Star history of user/repo-a from 2026-01-01 to 2026-01-15: 50 to 90 stars",
+			);
+		});
+
+		it("lists every repository of the comparison with its current count, as the lines are drawn", () => {
+			expect(descriptionOf({ name: "comparison" })).toBe(
+				"Stars per repository on 2026-01-15: repo-a with 90 stars, repo-b with 40 stars",
+			);
+		});
+
+		it("states what the forecast projects for each method and the date it reaches", () => {
+			expect(descriptionOf({ name: "forecast" })).toBe(
+				"Growth forecast from 2026-01-15 to 2026-01-29: 150 stars on 2026-01-15, projected to reach 170 by Linear Regression, 158 by Weighted Moving Average",
+			);
+			expect(descriptionOf({ name: "perRepoForecast" })).toBe(
+				"Growth forecast of user/repo-a from 2026-01-15 to 2026-01-29: 90 stars on 2026-01-15, projected to reach 170 by Linear Regression, 158 by Weighted Moving Average",
+			);
+		});
+
+		it("describes the window the chart is drawn over, not the whole history", () => {
+			const spec = specOf({
+				request: starHistory({ history: makeHistory({ starCounts: [10, 20, 30, 40, 50], stepDays: 30 }) }),
+				range: ChartRange.D30,
+			});
+
+			expect(spec.description).toBe("Star history from 2026-04-01 to 2026-05-01: 40 to 50 stars");
+		});
+
+		it.each(LOCALES)("fills every placeholder of every kind in %s", (locale) => {
+			for (const name of Object.keys(requests)) {
+				const description = descriptionOf({ name, locale });
+
+				expect(description).not.toMatch(/\{\w+\}/);
+				expect(description).toContain("2026-01-15");
+			}
+		});
+
+		it("writes the star history of the Spanish locale in Spanish", () => {
+			expect(descriptionOf({ name: "starHistory", locale: "es" })).toBe(
+				"Historial de estrellas del 2026-01-01 al 2026-01-15: de 100 a 150 estrellas",
+			);
+		});
+
+		it("keeps the forecast date as written when the last snapshot has no readable time", () => {
+			const unreadable: History = {
+				snapshots: [
+					makeSnapshot({ timestamp: "2026-01-01T00:00:00Z", totalStars: 10 }),
+					makeSnapshot({ timestamp: "2026-01-xx", totalStars: 20 }),
+				],
+			};
+
+			expect(
+				specOf({ request: { kind: ChartKind.FORECAST, history: unreadable, forecastData } }).description,
+			).toContain("from 2026-01-xx to 2026-01-xx");
+		});
+
+		it("describes the chart through describeChart, or gives the fallback when there is nothing to draw", () => {
+			expect(
+				describeChart({ request: requests.starHistory, locale: "en", range: ChartRange.ALL, fallback: "Star History" }),
+			).toBe("Star history from 2026-01-01 to 2026-01-15: 100 to 150 stars");
+			expect(
+				describeChart({
+					request: starHistory({ history: singleSnapshot }),
+					locale: "en",
+					range: ChartRange.ALL,
+					fallback: "Star History",
+				}),
+			).toBe("Star History");
 		});
 	});
 

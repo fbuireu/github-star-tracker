@@ -213,14 +213,16 @@ describe("generateMarkdownReport", () => {
 		const report = renderMarkdown({ history, config: { includeCharts: true } });
 
 		expect(report).toContain("Star Trend");
-		expect(report).toContain("![Star History](./charts/star-history.svg)");
+		expect(report).toContain(
+			"![Star history from 2026-01-01 to 2026-01-02: 20 to 23 stars](./charts/star-history.svg)",
+		);
 	});
 
 	const STAR_HISTORY_CAPTIONS: { locale: Locale; caption: string }[] = [
-		{ locale: "en", caption: "Star History" },
-		{ locale: "es", caption: "Historial de estrellas" },
-		{ locale: "ca", caption: "Historial d'estrelles" },
-		{ locale: "it", caption: "Storico delle stelle" },
+		{ locale: "en", caption: "Star history from 2026-01-01 to 2026-01-02: 20 to 23 stars" },
+		{ locale: "es", caption: "Historial de estrellas del 2026-01-01 al 2026-01-02: de 20 a 23 estrellas" },
+		{ locale: "ca", caption: "Historial d'estrelles del 2026-01-01 al 2026-01-02: de 20 a 23 estrelles" },
+		{ locale: "it", caption: "Storico delle stelle dal 2026-01-01 al 2026-01-02: da 20 a 23 stelle" },
 	];
 
 	it.each(STAR_HISTORY_CAPTIONS)(
@@ -249,8 +251,10 @@ describe("generateMarkdownReport", () => {
 
 		const report = renderMarkdown({ history, config: { includeCharts: true } });
 
-		expect(report).toContain("Top Repositories");
-		expect(report).toContain("![Top Repositories](./charts/comparison.svg)");
+		expect(report).toContain("### By Repository");
+		expect(report).toContain(
+			"![Stars per repository on 2026-01-02: repo-a with 15 stars, repo-b with 10 stars](./charts/comparison.svg)",
+		);
 	});
 
 	it("includes individual repo charts in collapsible section", () => {
@@ -267,9 +271,13 @@ describe("generateMarkdownReport", () => {
 		expect(report).toContain("<details>");
 		expect(report).toContain("<summary>Individual Repository Charts</summary>");
 		expect(report).toContain("#### user/repo-a");
-		expect(report).toContain("![user/repo-a](./charts/user-repo-a.svg)");
+		expect(report).toContain(
+			"![Star history of user/repo-a from 2026-01-01 to 2026-01-02: 10 to 15 stars](./charts/user-repo-a.svg)",
+		);
 		expect(report).toContain("#### user/repo-b");
-		expect(report).toContain("![user/repo-b](./charts/user-repo-b.svg)");
+		expect(report).toContain(
+			"![Star history of user/repo-b from 2026-01-01 to 2026-01-02: 10 to 10 stars](./charts/user-repo-b.svg)",
+		);
 		expect(report).toContain("</details>");
 	});
 
@@ -313,6 +321,37 @@ describe("generateMarkdownReport", () => {
 		expect(report).toContain("user/repo-a");
 		expect(report).toContain("2026-01-15");
 		expect(report).toContain("<details>");
+	});
+
+	it("marks each stargazer avatar as decorative, since the login is printed beside it", () => {
+		const stargazerDiff: StargazerDiffResult = {
+			entries: [
+				{
+					repoFullName: "user/repo-a",
+					newStargazers: [
+						{
+							login: "alice",
+							avatarUrl: "https://avatars.githubusercontent.com/alice",
+							profileUrl: "https://github.com/alice",
+							starredAt: "2026-01-15T10:00:00Z",
+						},
+						{
+							login: "bob",
+							avatarUrl: "https://avatars.githubusercontent.com/bob",
+							profileUrl: "https://github.com/bob",
+							starredAt: "2026-01-16T10:00:00Z",
+						},
+					],
+				},
+			],
+			totalNew: 2,
+		};
+
+		const report = renderMarkdown({ stargazerDiff });
+		const avatars = report.match(/<img [^>]*>/g) ?? [];
+
+		expect(avatars).toHaveLength(2);
+		expect(avatars.every((avatar) => avatar.includes(' alt=""'))).toBe(true);
 	});
 
 	it("shows no-new-stargazers message when diff is empty", () => {
@@ -456,7 +495,12 @@ describe("generateMarkdownReport", () => {
 			drawn: new Set(),
 		});
 
-		expect(drawn).toContain("![user/repo-a](./charts/forecast-user-repo-a.svg)");
+		expect(drawn).toContain(
+			"![Growth forecast of user/repo-a from 2026-01-02 to 2026-01-09: 15 stars on 2026-01-02, projected to reach 17 by Linear Regression](./charts/forecast-user-repo-a.svg)",
+		);
+		expect(drawn).toContain(
+			"![Growth forecast from 2026-01-02 to 2026-01-09: 25 stars on 2026-01-02, projected to reach 25 by Linear Regression](./charts/forecast.svg)",
+		);
 		expect(undrawn).not.toContain("forecast-user-repo-a.svg");
 		expect(undrawn).toContain("By Repository");
 	});
@@ -491,6 +535,7 @@ describe("generateMarkdownReport", () => {
 		});
 
 		expect(report).toContain("user/repo&lt;b&gt;");
+		expect(report).toContain("![Star history of user/repo&lt;b&gt; from 2026-01-01 to 2026-01-02: 10 to 15 stars]");
 		expect(report).not.toContain("<b>");
 	});
 });

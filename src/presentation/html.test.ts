@@ -1,12 +1,12 @@
 import { DEFAULTS } from "@config/defaults";
 import type { Config } from "@config/types";
-import { ChartTheme } from "@config/types";
+import { ChartRange, ChartTheme } from "@config/types";
 import type { ForecastData } from "@domain/forecast";
 import { ForecastMethod, ForecastSource } from "@domain/forecast";
-import { trendIcon } from "@domain/formatting";
+import { intlCode, trendIcon } from "@domain/formatting";
 import type { StargazerDiffResult } from "@domain/stargazers";
 import type { History } from "@domain/types";
-import { LOCALES, type Locale } from "@i18n";
+import { getTranslations, LOCALES, type Locale } from "@i18n";
 import { makeComparisonResults, makeConfig, makeHistory, makeMultiRepoHistory, makeRepoResult } from "@shared/tests";
 import { describe, expect, it } from "vitest";
 import { COLORS, DARK_PALETTE, LIGHT_PALETTE } from "./constants";
@@ -154,6 +154,68 @@ describe("generateHtmlReport", () => {
 		expect(html).toContain("<table");
 	});
 
+	it.each([
+		{ locale: "en", lang: "en-US" },
+		{ locale: "es", lang: "es-ES" },
+		{ locale: "ca", lang: "ca-ES" },
+		{ locale: "it", lang: "it-IT" },
+	] as const)("declares the language of the $locale report and titles it with its heading", ({ locale, lang }) => {
+		const html = renderHtml({ config: { locale } });
+		const heading = getTranslations(locale).report.title;
+
+		expect(html).toContain(`<html lang="${lang}">`);
+		expect(html).toContain(`<title>${heading}</title>`);
+		expect(html).toContain(`<h1 style="margin:0;font-size:24px;">${heading}</h1>`);
+		expect(html.indexOf("<title>")).toBeLessThan(html.indexOf("</head>"));
+	});
+
+	it("declares a language for every locale the bundles ship", () => {
+		expect(LOCALES.map((locale) => intlCode(locale))).toEqual(["en-US", "es-ES", "ca-ES", "it-IT"]);
+	});
+
+	it("describes the star history, the forecast and the per-repo forecast charts instead of naming them", () => {
+		const history = makeMultiRepoHistory({
+			snapshots: [{ "user/repo-a": 20 }, { "user/repo-a": 23 }],
+			stepDays: 1,
+		});
+		const forecasts = [{ method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 2, predicted: 30 }] }];
+		const html = renderHtml({
+			history,
+			forecastData: {
+				aggregate: { forecasts },
+				repos: [{ repoFullName: "user/repo-a", source: ForecastSource.OWN, forecasts }],
+			},
+			config: { includeCharts: true },
+		});
+
+		expect(html).toContain('alt="Star history from 2026-01-01 to 2026-01-02: 20 to 23 stars"');
+		expect(html).toContain(
+			'alt="Growth forecast from 2026-01-02 to 2026-01-16: 23 stars on 2026-01-02, projected to reach 30 by Linear Regression"',
+		);
+		expect(html).toContain(
+			'alt="Growth forecast of user/repo-a from 2026-01-02 to 2026-01-16: 23 stars on 2026-01-02, projected to reach 30 by Linear Regression"',
+		);
+	});
+
+	it("describes each chart in the language of the run, with the quote of Catalan escaped for HTML", () => {
+		const history = makeMultiRepoHistory({
+			snapshots: [{ "user/repo-a": 20 }, { "user/repo-a": 23 }],
+			stepDays: 1,
+		});
+
+		const html = renderHtml({ history, config: { includeCharts: true, locale: "ca" } });
+
+		expect(html).toContain('alt="Historial d&#39;estrelles del 2026-01-01 al 2026-01-02: de 20 a 23 estrelles"');
+	});
+
+	it("describes the window the email chart is drawn over", () => {
+		const history = makeHistory({ starCounts: [10, 20, 30, 40, 50], stepDays: 30 });
+
+		const html = renderHtml({ history, config: { includeCharts: true, chartRange: ChartRange.D30 } });
+
+		expect(html).toContain('alt="Star history from 2026-04-01 to 2026-05-01: 40 to 50 stars"');
+	});
+
 	it("includes repo links", () => {
 		const html = renderHtml();
 
@@ -265,7 +327,7 @@ describe("generateHtmlReport", () => {
 		const html = renderHtml({ history, config: { includeCharts: true } });
 
 		expect(html).toContain("By Repository");
-		expect(html).toContain("Top Repositories");
+		expect(html).toContain('alt="Stars per repository on 2026-01-02: repo-a with 15 stars, repo-b with 10 stars"');
 	});
 
 	it("includes individual repo charts section", () => {
@@ -280,8 +342,8 @@ describe("generateHtmlReport", () => {
 		const html = renderHtml({ history, config: { includeCharts: true } });
 
 		expect(html).toContain("Individual Repository Charts");
-		expect(html).toContain('alt="user/repo-a"');
-		expect(html).toContain('alt="user/repo-b"');
+		expect(html).toContain('alt="Star history of user/repo-a from 2026-01-01 to 2026-01-02: 10 to 15 stars"');
+		expect(html).toContain('alt="Star history of user/repo-b from 2026-01-01 to 2026-01-02: 10 to 10 stars"');
 		expect(html).not.toContain("<details>");
 	});
 
@@ -371,6 +433,38 @@ describe("generateHtmlReport", () => {
 		expect(html).toContain('width="32" height="32"');
 		expect(html).toContain("border-radius:50%");
 		expect(html).toContain("2026-01-15");
+	});
+
+	it("marks each stargazer avatar as decorative, since the login is printed beside it", () => {
+		const stargazerDiff: StargazerDiffResult = {
+			entries: [
+				{
+					repoFullName: "user/repo-a",
+					newStargazers: [
+						{
+							login: "alice",
+							avatarUrl: "https://avatars.githubusercontent.com/alice",
+							profileUrl: "https://github.com/alice",
+							starredAt: "2026-01-15T10:00:00Z",
+						},
+						{
+							login: "bob",
+							avatarUrl: "https://avatars.githubusercontent.com/bob",
+							profileUrl: "https://github.com/bob",
+							starredAt: "2026-01-16T10:00:00Z",
+						},
+					],
+				},
+			],
+			totalNew: 2,
+		};
+
+		const avatars = (renderHtml({ stargazerDiff }).match(/<img [^>]*>/g) ?? []).filter((img) =>
+			img.includes("avatars.githubusercontent.com"),
+		);
+
+		expect(avatars).toHaveLength(2);
+		expect(avatars.every((avatar) => avatar.includes(' alt="" '))).toBe(true);
 	});
 
 	it("shows no-new-stargazers message when diff is empty", () => {
@@ -587,6 +681,7 @@ describe("generateHtmlReport", () => {
 		});
 
 		expect(html).toContain("user/repo&lt;b&gt;");
+		expect(html).toContain('alt="Star history of user/repo&lt;b&gt; from 2026-01-01 to 2026-01-02: 10 to 15 stars"');
 		expect(html).not.toContain("<b>");
 	});
 });

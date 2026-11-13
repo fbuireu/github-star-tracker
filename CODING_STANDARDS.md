@@ -307,7 +307,7 @@ No rule below restates these, and a diff that breaks one fails CI:
   and its link in a Report cannot disagree about whether there is a Chart.
 - `U4` **hard**: The spec speaks in emphasis (`SeriesDash`, `SeriesWeight`) and carries no SVG attribute, Chart.js
   option name, dash array or point radius, because the moment one leaks in the other adapter has to work around it.
-- `U5` **hard**: Text a reader reads is formatted in the spec, in the Run's Locale, so the Notification and the Data
+- `U5` **hard**: Text a reader reads, a chart's description included, is formatted in the spec, in the Run's Locale, so the Notification and the Data
   Branch show the same label; an adapter draws the string it is handed. A y-axis tick, whose values each adapter picks
   itself, is the one number the adapter formats, and it formats it in the Run's Locale: `svg-chart.ts` compacts it with
   `formatCount`, and `chart.ts` hands Chart.js the Locale's Intl code (`options.locale`).
@@ -356,7 +356,7 @@ No rule below restates these, and a diff that breaks one fails CI:
 | Markdown: every GitHub-sourced string outside raw HTML (link text and targets, headings, prose, bold titles) | `MARKDOWN`                                               |
 | A CSV field, formula prefixes included                                                                       | `CSV`                                                    |
 | The QuickChart config                                                                                        | none: `JSON.stringify` and `encodeURIComponent` cover it |
-- `U19` **hard**: `svg-chart.ts` escapes the title, the x-axis labels, the legend labels, the Milestone labels and any
+- `U19` **hard**: `svg-chart.ts` escapes the title, the description, the x-axis labels, the legend labels, the Milestone labels and any
   user text a new attribute interpolates, because each of those can carry a repository name.
 - `U20` **hard**: `badge.ts` measures the raw label and value and escapes at interpolation, because escaping first lets
   a single `&` widen the Badge by four characters.

@@ -1,13 +1,13 @@
 import { ChartRange } from "@config/types";
-import { MS_PER_DAY, STAR_MILESTONES } from "@domain/constants";
+import { DAYS_PER_WEEK, MS_PER_DAY, STAR_MILESTONES } from "@domain/constants";
 import { type ForecastData, ForecastMethod, type ForecastResult } from "@domain/forecast";
-import { buildAxisLabels, formatCount, formatDate } from "@domain/formatting";
+import { buildAxisLabels, formatCount, formatDate, isoDate } from "@domain/formatting";
 import { repoStarSeries } from "@domain/snapshot";
 import { toEpochMs } from "@domain/time";
 import type { History, Snapshot } from "@domain/types";
 import { getTranslations, interpolate, type Locale } from "@i18n";
-import { CHART, CHART_COMPARISON_COLORS, MIN_SNAPSHOTS_FOR_CHART, TREND_WINDOW } from "./constants";
-
+import { CHART, CHART_COMPARISON_COLORS, LIGHT_PALETTE, MIN_SNAPSHOTS_FOR_CHART, TREND_WINDOW } from "./constants";
+import { forecastMethodLabel } from "./shared";
 import type { ColorPalette } from "./types";
 
 export function isPlottable(history: History): boolean {
@@ -124,6 +124,15 @@ export const SeriesDash = {
 	TREND: "trend",
 	LINEAR_REGRESSION: "linear-regression",
 	WEIGHTED_MOVING_AVERAGE: "weighted-moving-average",
+	DOTTED: "dotted",
+	LONG_DASH: "long-dash",
+	DASH_DOT: "dash-dot",
+	LONG_DASH_DOT: "long-dash-dot",
+	SHORT_DASH: "short-dash",
+	FINE_DOTS: "fine-dots",
+	DASH_DOT_DOT: "dash-dot-dot",
+	EXTRA_LONG_DASH: "extra-long-dash",
+	SPARSE_DOTS: "sparse-dots",
 } as const;
 
 export type SeriesDash = (typeof SeriesDash)[keyof typeof SeriesDash];
@@ -135,6 +144,19 @@ export const SeriesWeight = {
 } as const;
 
 export type SeriesWeight = (typeof SeriesWeight)[keyof typeof SeriesWeight];
+
+const COMPARISON_DASHES: readonly SeriesDash[] = [
+	SeriesDash.NONE,
+	SeriesDash.DOTTED,
+	SeriesDash.LONG_DASH,
+	SeriesDash.DASH_DOT,
+	SeriesDash.LONG_DASH_DOT,
+	SeriesDash.SHORT_DASH,
+	SeriesDash.FINE_DOTS,
+	SeriesDash.DASH_DOT_DOT,
+	SeriesDash.EXTRA_LONG_DASH,
+	SeriesDash.SPARSE_DOTS,
+];
 
 export interface ChartSeries {
 	label: string;
@@ -154,6 +176,7 @@ export interface ChartSpec {
 	labels: string[];
 	series: ChartSeries[];
 	title: string;
+	description: string;
 	showLegend: boolean;
 	milestones: readonly ChartMilestone[];
 }
@@ -182,6 +205,49 @@ function selectWindow({ history, locale, range, maxPoints, axisLabels }: SelectW
 				? buildAxisLabels({ timestamps, locale })
 				: timestamps.map((timestamp) => formatDate({ timestamp, locale })),
 	};
+}
+
+interface SnapshotSpan {
+	start: string;
+	end: string;
+}
+
+function snapshotSpan(snapshots: Snapshot[]): SnapshotSpan {
+	return {
+		start: isoDate(snapshots.at(0)?.timestamp ?? ""),
+		end: isoDate(snapshots.at(-1)?.timestamp ?? ""),
+	};
+}
+
+function lastValue(data: (number | null)[]): number {
+	return data.findLast((value): value is number => value !== null) ?? 0;
+}
+
+interface DescribeStarRangeParams {
+	template: string;
+	name: string;
+	snapshots: Snapshot[];
+	data: (number | null)[];
+}
+
+function describeStarRange({ template, name, snapshots, data }: DescribeStarRangeParams): string {
+	return interpolate({
+		template,
+		params: { ...snapshotSpan(snapshots), name, from: data.at(0) ?? 0, to: lastValue(data) },
+	});
+}
+
+interface ProjectedDateParams {
+	timestamp: string;
+	weeks: number;
+}
+
+function projectedDate({ timestamp, weeks }: ProjectedDateParams): string {
+	const epochMs = toEpochMs(timestamp);
+
+	if (epochMs === null) return isoDate(timestamp);
+
+	return isoDate(new Date(epochMs + weeks * DAYS_PER_WEEK * MS_PER_DAY).toISOString());
 }
 
 function resolveMilestones(customMilestones: readonly number[]): readonly number[] {
@@ -254,6 +320,12 @@ function starHistorySpec({
 		labels,
 		series,
 		title,
+		description: describeStarRange({
+			template: t.chartAlt.starHistory,
+			name: "",
+			snapshots,
+			data,
+		}),
 		showLegend: false,
 		milestones: milestones
 			? visibleMilestones({
@@ -275,13 +347,14 @@ interface PerRepoSpecParams extends SelectWindowParams {
 function perRepoSpec({ repoFullName, title, palette, lineColor, ...window }: PerRepoSpecParams): ChartSpec {
 	const t = getTranslations(window.locale);
 	const { snapshots, labels } = selectWindow(window);
+	const data = repoStarSeries({ snapshots, repoFullName });
 
 	return {
 		labels,
 		series: [
 			{
 				label: t.report.stars,
-				data: repoStarSeries({ snapshots, repoFullName }),
+				data,
 				color: lineColor ?? palette.accent,
 				fill: true,
 				dash: SeriesDash.NONE,
@@ -289,6 +362,7 @@ function perRepoSpec({ repoFullName, title, palette, lineColor, ...window }: Per
 			},
 		],
 		title,
+		description: describeStarRange({ template: t.chartAlt.repoStarHistory, name: repoFullName, snapshots, data }),
 		showLegend: false,
 		milestones: [],
 	};
@@ -302,22 +376,38 @@ interface ComparisonSpecParams extends SelectWindowParams {
 function comparisonSpec({ repoNames, title, ...window }: ComparisonSpecParams): ChartSpec | null {
 	if (repoNames.length === 0) return null;
 
+	const t = getTranslations(window.locale);
 	const { snapshots, labels } = selectWindow(window);
 	const capped = repoNames.slice(0, CHART.maxComparison);
 	const owners = new Set(capped.map((name) => name.split("/")[0]));
 	const useShortLabels = owners.size === 1;
+	const series: ChartSeries[] = capped.map((repoName, index) => ({
+		label: useShortLabels ? repoName.split("/")[1] : repoName,
+		data: repoStarSeries({ snapshots, repoFullName: repoName }),
+		color: CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length],
+		fill: false,
+		dash: COMPARISON_DASHES[index % COMPARISON_DASHES.length],
+		weight: SeriesWeight.SECONDARY,
+	}));
 
 	return {
 		labels,
-		series: capped.map((repoName, index) => ({
-			label: useShortLabels ? repoName.split("/")[1] : repoName,
-			data: repoStarSeries({ snapshots, repoFullName: repoName }),
-			color: CHART_COMPARISON_COLORS[index % CHART_COMPARISON_COLORS.length],
-			fill: false,
-			dash: SeriesDash.NONE,
-			weight: SeriesWeight.SECONDARY,
-		})),
+		series,
 		title,
+		description: interpolate({
+			template: t.chartAlt.comparison,
+			params: {
+				date: snapshotSpan(snapshots).end,
+				repos: series
+					.map((entry) =>
+						interpolate({
+							template: t.chartAlt.comparisonItem,
+							params: { name: entry.label, count: lastValue(entry.data) },
+						}),
+					)
+					.join(", "),
+			},
+		}),
 		showLegend: true,
 		milestones: [],
 	};
@@ -327,11 +417,12 @@ interface ForecastChartSpecParams extends Omit<SelectWindowParams, "axisLabels">
 	forecasts: ForecastResult[];
 	observed: (snapshots: Snapshot[]) => number[];
 	title: string;
+	repoFullName: string | null;
 	palette: ColorPalette;
 	lineColor?: string;
 }
 
-interface ForecastSpecParams extends Omit<ForecastChartSpecParams, "forecasts" | "observed"> {
+interface ForecastSpecParams extends Omit<ForecastChartSpecParams, "forecasts" | "observed" | "repoFullName"> {
 	forecastData: ForecastData;
 }
 
@@ -342,6 +433,7 @@ interface PerRepoForecastSpecParams extends ForecastSpecParams {
 function forecastSpec({ forecastData, ...rest }: ForecastSpecParams): ChartSpec | null {
 	return forecastChartSpec({
 		...rest,
+		repoFullName: null,
 		forecasts: forecastData.aggregate.forecasts,
 		observed: (snapshots) => snapshots.map((snapshot) => snapshot.totalStars),
 	});
@@ -350,6 +442,7 @@ function forecastSpec({ forecastData, ...rest }: ForecastSpecParams): ChartSpec 
 function perRepoForecastSpec({ forecastData, repoFullName, ...rest }: PerRepoForecastSpecParams): ChartSpec | null {
 	return forecastChartSpec({
 		...rest,
+		repoFullName,
 		forecasts: forecastData.repos.find((repo) => repo.repoFullName === repoFullName)?.forecasts ?? [],
 		observed: (snapshots) => repoStarSeries({ snapshots, repoFullName }),
 	});
@@ -359,6 +452,7 @@ function forecastChartSpec({
 	forecasts,
 	observed,
 	title,
+	repoFullName,
 	palette,
 	lineColor,
 	...window
@@ -375,6 +469,25 @@ function forecastChartSpec({
 		interpolate({ template: t.forecast.week, params: { n: point.weekOffset } }),
 	);
 	const series = buildForecastChartSeries({ historicalData, forecasts });
+	const lastTimestamp = snapshots.at(-1)?.timestamp ?? "";
+	const projections = forecasts
+		.flatMap((forecast) => {
+			const last = forecast.points.at(-1);
+
+			return last === undefined
+				? []
+				: [
+						interpolate({
+							template: t.chartAlt.forecastItem,
+							params: { count: last.predicted, method: forecastMethodLabel({ method: forecast.method, t }) },
+						}),
+					];
+		})
+		.join(", ");
+	const horizonWeeks = Math.max(
+		0,
+		...forecasts.flatMap((forecast) => forecast.points.map((point) => point.weekOffset)),
+	);
 
 	return {
 		labels: [...historicalLabels, ...forecastLabels],
@@ -405,6 +518,16 @@ function forecastChartSpec({
 			},
 		],
 		title,
+		description: interpolate({
+			template: repoFullName === null ? t.chartAlt.forecast : t.chartAlt.repoForecast,
+			params: {
+				name: repoFullName ?? "",
+				start: isoDate(lastTimestamp),
+				end: projectedDate({ timestamp: lastTimestamp, weeks: horizonWeeks }),
+				current: historicalData.at(-1) ?? 0,
+				projections,
+			},
+		}),
 		showLegend: true,
 		milestones: [],
 	};
@@ -528,4 +651,23 @@ export function buildChartSpec({
 				lineColor: request.lineColor,
 			});
 	}
+}
+
+interface DescribeChartParams {
+	request: ChartRequest;
+	locale: Locale;
+	range: ChartRange;
+	fallback: string;
+}
+
+export function describeChart({ request, locale, range, fallback }: DescribeChartParams): string {
+	const spec = buildChartSpec({
+		request,
+		locale,
+		palette: LIGHT_PALETTE,
+		axisLabels: AxisLabels.DATES,
+		range,
+	});
+
+	return spec === null ? fallback : spec.description;
 }

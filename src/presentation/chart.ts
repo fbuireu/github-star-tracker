@@ -24,6 +24,17 @@ const CHART_STYLE = {
 	trendDash: [6, 4],
 	linearRegressionDash: [8, 4],
 	weightedMovingAverageDash: [4, 4],
+	comparisonDashes: {
+		dotted: [2, 3],
+		longDash: [16, 5],
+		dashDot: [6, 3, 2, 3],
+		longDashDot: [14, 4, 3, 4],
+		shortDash: [5, 2],
+		fineDots: [2, 2],
+		dashDotDot: [10, 3, 2, 3, 2, 3],
+		extraLongDash: [24, 6],
+		sparseDots: [2, 6],
+	},
 };
 
 function translucent(color: string): string {
@@ -247,11 +258,25 @@ function buildChartUrl({ config, palette }: BuildChartUrlParams): string {
 	return `https://quickchart.io/chart?v=${CHART.chartJsVersion}&w=${CHART.width}&h=${CHART.height}&backgroundColor=${backgroundColor}&c=${encodedConfig}`;
 }
 
-const DASH_PATTERNS: Record<SeriesDash, number[] | null> = {
-	[SeriesDash.NONE]: null,
-	[SeriesDash.TREND]: CHART_STYLE.trendDash,
-	[SeriesDash.LINEAR_REGRESSION]: CHART_STYLE.linearRegressionDash,
-	[SeriesDash.WEIGHTED_MOVING_AVERAGE]: CHART_STYLE.weightedMovingAverageDash,
+interface SeriesStroke {
+	pattern: number[] | null;
+	translucentPoints: boolean;
+}
+
+const SERIES_STROKES: Record<SeriesDash, SeriesStroke> = {
+	[SeriesDash.NONE]: { pattern: null, translucentPoints: true },
+	[SeriesDash.TREND]: { pattern: CHART_STYLE.trendDash, translucentPoints: false },
+	[SeriesDash.LINEAR_REGRESSION]: { pattern: CHART_STYLE.linearRegressionDash, translucentPoints: false },
+	[SeriesDash.WEIGHTED_MOVING_AVERAGE]: { pattern: CHART_STYLE.weightedMovingAverageDash, translucentPoints: false },
+	[SeriesDash.DOTTED]: { pattern: CHART_STYLE.comparisonDashes.dotted, translucentPoints: true },
+	[SeriesDash.LONG_DASH]: { pattern: CHART_STYLE.comparisonDashes.longDash, translucentPoints: true },
+	[SeriesDash.DASH_DOT]: { pattern: CHART_STYLE.comparisonDashes.dashDot, translucentPoints: true },
+	[SeriesDash.LONG_DASH_DOT]: { pattern: CHART_STYLE.comparisonDashes.longDashDot, translucentPoints: true },
+	[SeriesDash.SHORT_DASH]: { pattern: CHART_STYLE.comparisonDashes.shortDash, translucentPoints: true },
+	[SeriesDash.FINE_DOTS]: { pattern: CHART_STYLE.comparisonDashes.fineDots, translucentPoints: true },
+	[SeriesDash.DASH_DOT_DOT]: { pattern: CHART_STYLE.comparisonDashes.dashDotDot, translucentPoints: true },
+	[SeriesDash.EXTRA_LONG_DASH]: { pattern: CHART_STYLE.comparisonDashes.extraLongDash, translucentPoints: true },
+	[SeriesDash.SPARSE_DOTS]: { pattern: CHART_STYLE.comparisonDashes.sparseDots, translucentPoints: true },
 };
 
 const POINT_SIZES: Record<SeriesWeight, { radius: number; hoverRadius: number }> = {
@@ -274,21 +299,21 @@ interface ToDatasetParams {
 }
 
 function toDataset({ series, curveProps, showPoints, lineWidth }: ToDatasetParams): Dataset {
-	const dash = DASH_PATTERNS[series.dash];
+	const { pattern, translucentPoints } = SERIES_STROKES[series.dash];
 	const point = POINT_SIZES[series.weight];
 
 	return {
 		label: series.label,
 		data: series.data,
 		borderColor: series.color,
-		backgroundColor: series.dash === SeriesDash.NONE ? translucent(series.color) : "transparent",
+		backgroundColor: translucentPoints ? translucent(series.color) : "transparent",
 		fill: series.fill,
 		...curveProps,
 		pointRadius:
 			series.weight === SeriesWeight.HIDDEN ? CHART_POINT.hidden : pointRadiusFor({ showPoints, radius: point.radius }),
 		pointHoverRadius: point.hoverRadius,
 		borderWidth: lineWidth,
-		...(dash ? { borderDash: dash } : {}),
+		...(pattern ? { borderDash: pattern } : {}),
 	};
 }
 

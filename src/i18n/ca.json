@@ -65,5 +65,14 @@
 		"byRepository": "Per repositori",
 		"repoChartTitle": "Previsió de creixement de {name}",
 		"method": "Mètode"
+	},
+	"chartAlt": {
+		"starHistory": "Historial d'estrelles del {start} al {end}: de {from} a {to} estrelles",
+		"repoStarHistory": "Historial d'estrelles de {name} del {start} al {end}: de {from} a {to} estrelles",
+		"comparison": "Estrelles per repositori el {date}: {repos}",
+		"comparisonItem": "{name} amb {count} estrelles",
+		"forecast": "Previsió de creixement del {start} al {end}: {current} estrelles el {start}, amb una projecció de {projections}",
+		"repoForecast": "Previsió de creixement de {name} del {start} al {end}: {current} estrelles el {start}, amb una projecció de {projections}",
+		"forecastItem": "{count} segons {method}"
 	}
 }

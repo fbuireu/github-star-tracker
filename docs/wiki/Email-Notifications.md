@@ -11,7 +11,8 @@ GitHub Star Tracker can send HTML email reports with charts and star data. This 
 - Per-repo charts headed by that repo's star count and delta, so a curve never has to be read against the table
 - Stargazer section (if `track-stargazers` enabled)
 - Forecast tables (if enough history), aggregate first and then one per top repository with enough history of its own
-- Localized content based on `locale` setting
+- Localized content based on `locale` setting; the document declares that language (`<html lang="en-US">`) and carries the report heading as its `<title>`
+- Every chart image has alt text that states what it shows (date range and star counts, each repository's current count, or what the forecast projects), and stargazer avatars have an empty `alt`, since the login is printed beside each one
 - Responsive design for desktop and mobile
 
 ---
@@ -471,7 +472,7 @@ When `include-charts: true`, the HTML email includes chart images via QuickChart
 ### Chart Types in Email
 
 - Total stars chart - star trend over time
-- Comparison chart - top N repos overlaid
+- Comparison chart - top N repos overlaid, each with its own color and line pattern (`borderDash`), the first solid
 - Per-repo charts - individual repo trends
 - Forecast chart - projected growth
 

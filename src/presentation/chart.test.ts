@@ -164,6 +164,47 @@ describe("chart", () => {
 		});
 	});
 
+	describe("chartImageUrl: comparison dash patterns", () => {
+		const repoNames = Array.from({ length: 10 }, (_, index) => `user/repo-${index}`);
+		const history = makeMultiRepoHistory({
+			snapshots: [
+				Object.fromEntries(repoNames.map((name, index) => [name, 10 + index])),
+				Object.fromEntries(repoNames.map((name, index) => [name, 20 + index])),
+			],
+		});
+		const datasets = (): { borderDash?: number[]; backgroundColor: string; borderColor: string }[] => {
+			const url = chartUrl({ request: { kind: ChartKind.COMPARISON, history, repoNames }, locale: "en" });
+
+			expect(url).not.toBeNull();
+
+			return JSON.parse(decodeURIComponent(url ?? "").split(CHART_CONFIG_PARAM)[1]).data.datasets;
+		};
+
+		it("draws the first series solid and each later one with a borderDash of its own", () => {
+			const dashes = datasets().map((dataset) => dataset.borderDash);
+
+			expect(dashes[0]).toBeUndefined();
+			expect(dashes.slice(1).every((dash) => Array.isArray(dash) && dash.length >= 2)).toBe(true);
+			expect(new Set(dashes.map((dash) => JSON.stringify(dash))).size).toBe(repoNames.length);
+		});
+
+		it("keeps every comparison pattern apart from the trend, forecast and milestone dashes", () => {
+			const taken = [
+				[6, 4],
+				[8, 4],
+				[4, 4],
+				[6, 6],
+			].map((dash) => JSON.stringify(dash));
+			const used = datasets().map((dataset) => JSON.stringify(dataset.borderDash));
+
+			expect(used.filter((dash) => taken.includes(dash))).toEqual([]);
+		});
+
+		it("keeps the translucent point fill the solid comparison lines had, on every pattern", () => {
+			expect(datasets().every((dataset) => dataset.backgroundColor !== "transparent")).toBe(true);
+		});
+	});
+
 	describe("the spec it draws", () => {
 		const REQUESTS: ChartRequest[] = [
 			starHistory({ history: mockHistory }),

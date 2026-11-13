@@ -1,6 +1,7 @@
 import type { ForecastResult } from "@domain/forecast";
 import { deltaIndicator, formatSignedPercent, isoDate, trendIcon } from "@domain/formatting";
 import { getTranslations, interpolate, type Translations } from "@i18n";
+import { ChartKind, type ChartRequest, describeChart } from "./chart-spec";
 import { CHART_FILES, SECTION_ICON } from "./constants";
 import { EscapeDialect, escapeFor } from "./escaping";
 import { buildForecastTable, StargazerOutcome, type TopRepo } from "./report-model";
@@ -9,6 +10,11 @@ import { perRepoChartFile, perRepoForecastChartFile } from "./shared";
 
 const escapeMarkdown = escapeFor(EscapeDialect.MARKDOWN);
 const escapeMarkup = escapeFor(EscapeDialect.MARKUP);
+
+interface ChartAltParams {
+	request: ChartRequest;
+	fallback: string;
+}
 
 interface RepoChartHeadingParams {
 	repo: TopRepo;
@@ -51,11 +57,14 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 		: [`> ${interpolate({ template: t.report.comparedTo, params: { date: baselineSnapshotDate } })}`, ""];
 
 	const hasComparisonChart = model.showComparisonChart;
+	const { locale, chartRange: range } = config;
+	const chartAlt = ({ request, fallback }: ChartAltParams): string =>
+		escapeMarkdown(describeChart({ request, locale, range, fallback }));
 
 	const individualRepoCharts = model.perRepoCharts.flatMap((repo) => [
 		`#### ${repoChartHeading({ repo, t })}`,
 		"",
-		`![${escapeMarkdown(repo.fullName)}](./charts/${escapeMarkdown(perRepoChartFile(repo.fullName))})`,
+		`![${chartAlt({ request: { kind: ChartKind.PER_REPO, history: repo.history, repoFullName: repo.fullName }, fallback: repo.fullName })}](./charts/${escapeMarkdown(perRepoChartFile(repo.fullName))})`,
 		"",
 	]);
 
@@ -64,13 +73,29 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 			? [
 					`## ${SECTION_ICON.starTrend} ${t.report.starTrend}`,
 					"",
-					`![${t.report.starHistory}](./charts/${CHART_FILES.starHistory})`,
+					`![${chartAlt({
+						request: {
+							kind: ChartKind.STAR_HISTORY,
+							history: chartHistory,
+							milestones: config.chartMilestones,
+							customMilestones: config.chartCustomMilestones,
+							trendLine: config.chartTrendLine,
+						},
+						fallback: t.report.starHistory,
+					})}](./charts/${CHART_FILES.starHistory})`,
 					"",
 					...(hasComparisonChart
 						? [
 								`### ${t.report.byRepository}`,
 								"",
-								`![${t.report.topRepositories}](./charts/${CHART_FILES.comparison})`,
+								`![${chartAlt({
+									request: {
+										kind: ChartKind.COMPARISON,
+										history: chartHistory,
+										repoNames: model.topRepos.map((repo) => repo.fullName),
+									},
+									fallback: t.report.topRepositories,
+								})}](./charts/${CHART_FILES.comparison})`,
 								"",
 							]
 						: []),
@@ -165,7 +190,7 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 						"",
 						...entry.newStargazers.map(
 							(stargazer) =>
-								`- <img src="${escapeMarkup(stargazer.avatarUrl)}" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${escapeMarkdown(stargazer.login)}](${escapeMarkdown(stargazer.profileUrl)}): ${interpolate({ template: t.stargazers.starredOn, params: { date: escapeMarkdown(isoDate(stargazer.starredAt)) } })}`,
+								`- <img src="${escapeMarkup(stargazer.avatarUrl)}" alt="" width="20" height="20" style="border-radius:50%;vertical-align:middle;"> [${escapeMarkdown(stargazer.login)}](${escapeMarkdown(stargazer.profileUrl)}): ${interpolate({ template: t.stargazers.starredOn, params: { date: escapeMarkdown(isoDate(stargazer.starredAt)) } })}`,
 						),
 						"",
 						"</details>",
@@ -209,7 +234,13 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 					forecasts: forecastData.aggregate.forecasts,
 					t,
 				}),
-				...(chartHistory !== null ? ["", `![${t.forecast.sectionTitle}](./charts/${CHART_FILES.forecast})`, ""] : []),
+				...(chartHistory !== null
+					? [
+							"",
+							`![${chartAlt({ request: { kind: ChartKind.FORECAST, history: chartHistory, forecastData }, fallback: t.forecast.sectionTitle })}](./charts/${CHART_FILES.forecast})`,
+							"",
+						]
+					: []),
 				...(model.perRepoForecasts.length > 0
 					? [
 							`### ${t.forecast.byRepository}`,
@@ -226,7 +257,7 @@ export function generateMarkdownReport({ model, config }: RenderReportParams): s
 								"",
 								...(repo.chartHistory !== null
 									? [
-											`![${escapeMarkdown(repo.repoFullName)}](./charts/${escapeMarkdown(perRepoForecastChartFile(repo.repoFullName))})`,
+											`![${chartAlt({ request: { kind: ChartKind.PER_REPO_FORECAST, history: repo.chartHistory, forecastData, repoFullName: repo.repoFullName }, fallback: repo.repoFullName })}](./charts/${escapeMarkdown(perRepoForecastChartFile(repo.repoFullName))})`,
 											"",
 										]
 									: []),

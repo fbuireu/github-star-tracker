@@ -115,8 +115,9 @@ That holds whenever the repository's own reconstruction has at least 2 points. W
 
 Top N repositories overlaid on a single chart for comparison.
 
-- Multi-line chart with distinct colors per repo
-- Legend showing repo names (short names when all repos share the same owner)
+- Multi-line chart with a distinct color **and** a distinct line pattern per repo, so the lines can be told apart without telling colors apart: the first repo is a solid line, the next nine are dotted, dashed, dash-dot and so on, in the order of the legend. The SVG and the email chart use the same sequence
+- Legend showing repo names (short names when all repos share the same owner), each beside a short line drawn in that repo's color and pattern
+- The patterns never repeat one the forecast and trend lines use, so a dashed comparison line is not read as a projection
 - Up to 10 repos (limited by `CHART.maxComparison`)
 
 ![Comparison Chart](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/docs/examples/comparison.svg)
@@ -130,7 +131,7 @@ Observed history plus projected growth for the next 4 weeks.
 - Solid line for the observed history
 - Dashed green line for linear regression forecast
 - Dashed red line for weighted moving average forecast
-- Legend distinguishing methods
+- Legend distinguishing methods, each beside a short line drawn in the series' own color and dash
 
 ![Forecast Chart](https://raw.githubusercontent.com/fbuireu/github-star-tracker/main/docs/examples/forecast.svg)
 
@@ -296,9 +297,23 @@ accent-coloured value, legible on either background.
 
 ### Animations (SVG only)
 
-- **Line draw:** 2-second ease-out animation
+- **Line draw:** 2-second ease-out animation, on the solid line of each chart; the dashed and patterned lines appear at once, because the draw-on would replace their pattern
 - **Point markers:** fade in with a staggered delay
 - Animations play when the SVG is first loaded in the browser
+- **Reduced motion:** every animation rule, and the hidden starting state of the line and the points, sits inside `@media (prefers-reduced-motion: no-preference)`. A reader whose system asks for reduced motion gets the finished, static chart; with `chart-animation: false` the SVG carries no animation at all
+
+### Text equivalent
+
+Every chart has a one-sentence description built from the data it is drawn from, in the run's `locale`:
+
+| Chart                               | English description                                                                                                                                   |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Star history, overall               | `Star history from 2026-01-04 to 2026-11-13: 120 to 342 stars`                                                                                        |
+| Star history, one repository        | `Star history of octocat/hello-world from 2026-01-04 to 2026-11-13: 120 to 342 stars`                                                                 |
+| Comparison                          | `Stars per repository on 2026-11-13: alpha with 342 stars, beta with 120 stars`                                                                       |
+| Forecast, overall or one repository | `Growth forecast from 2026-11-13 to 2026-12-11: 342 stars on 2026-11-13, projected to reach 410 by Linear Regression, 395 by Weighted Moving Average` |
+
+The dates and counts are those of the window the chart plots (`chart-range`). The sentence is the alt text of the chart in the Markdown report and the HTML report, and the `<title>` of the SVG file, which also carries `role="img"`, so a chart opened on its own is described too. The email's QuickChart images carry it as their alt text only.
 
 ### Resolution Limits
 

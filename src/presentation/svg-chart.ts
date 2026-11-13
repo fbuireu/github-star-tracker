@@ -256,11 +256,34 @@ function niceAxisSteps({ min, max, count }: NiceAxisStepsParams): number[] {
 	return [...new Set(steps)];
 }
 
+interface SeriesStroke {
+	dashArray: string | null;
+	markers: boolean;
+}
+
+const FORECAST_STROKE: SeriesStroke = { dashArray: "8,4", markers: false };
+
+const SERIES_STROKES: Record<SeriesDash, SeriesStroke> = {
+	[SeriesDash.NONE]: { dashArray: null, markers: true },
+	[SeriesDash.TREND]: FORECAST_STROKE,
+	[SeriesDash.LINEAR_REGRESSION]: FORECAST_STROKE,
+	[SeriesDash.WEIGHTED_MOVING_AVERAGE]: FORECAST_STROKE,
+	[SeriesDash.DOTTED]: { dashArray: "2,3", markers: true },
+	[SeriesDash.LONG_DASH]: { dashArray: "16,5", markers: true },
+	[SeriesDash.DASH_DOT]: { dashArray: "6,3,2,3", markers: true },
+	[SeriesDash.LONG_DASH_DOT]: { dashArray: "14,4,3,4", markers: true },
+	[SeriesDash.SHORT_DASH]: { dashArray: "5,2", markers: true },
+	[SeriesDash.FINE_DOTS]: { dashArray: "2,2", markers: true },
+	[SeriesDash.DASH_DOT_DOT]: { dashArray: "10,3,2,3,2,3", markers: true },
+	[SeriesDash.EXTRA_LONG_DASH]: { dashArray: "24,6", markers: true },
+	[SeriesDash.SPARSE_DOTS]: { dashArray: "2,6", markers: true },
+};
+
 interface SvgDataset {
 	label: string;
 	data: (number | null)[];
 	color: string;
-	dashed: boolean;
+	dash: SeriesDash;
 	fill: boolean;
 }
 
@@ -282,6 +305,7 @@ interface RenderSvgParams extends SvgChartStyle {
 	showLegend: boolean;
 	locale: Locale;
 	milestones: readonly ChartMilestone[];
+	description: string;
 }
 
 function renderSvg({
@@ -291,6 +315,7 @@ function renderSvg({
 	showLegend,
 	locale,
 	milestones,
+	description,
 	lineWidth,
 	yAxisSide,
 	smoothing,
@@ -312,7 +337,6 @@ function renderSvg({
 		yAxis,
 		xAxis,
 		milestone: milestoneStyle,
-		dash,
 		legend: legendStyle,
 	} = SVG_CHART;
 	const chartWidth = CHART.width - margin.left - margin.right;
@@ -365,6 +389,7 @@ function renderSvg({
 		.join("\n    ");
 
 	const datasetSvg = datasets.map((dataset, datasetIndex) => {
+		const { dashArray, markers } = SERIES_STROKES[dataset.dash];
 		const validSegments: { points: Point[]; startIndex: number }[] = [];
 		let currentSegment: Point[] = [];
 		let segmentStart = -1;
@@ -389,7 +414,7 @@ function renderSvg({
 		return validSegments
 			.map((segment) => {
 				const bottomY = CHART.height - margin.bottom;
-				const startsFromBaseline = dataset.fill && !dataset.dashed && segment.startIndex === 0;
+				const startsFromBaseline = dataset.fill && dashArray === null && segment.startIndex === 0;
 				const firstPoint = segment.points[0];
 				const smoothPath = generateCurvePath({
 					points: segment.points,
@@ -406,7 +431,7 @@ function renderSvg({
 				);
 
 				const fillArea =
-					dataset.fill && !dataset.dashed
+					dataset.fill && dashArray === null
 						? (() => {
 								const first = segment.points[0];
 								const last = segment.points.at(-1) ?? first;
@@ -414,12 +439,12 @@ function renderSvg({
 							})()
 						: "";
 
-				const dashAttr = dataset.dashed ? ` stroke-dasharray="${dash.line}"` : "";
-				const lineClass = dataset.dashed ? "" : ` class="data-line-${datasetIndex}"`;
+				const dashAttr = dashArray === null ? "" : ` stroke-dasharray="${dashArray}"`;
+				const lineClass = dashArray === null ? ` class="data-line-${datasetIndex}"` : "";
 				const pathEl = `<path d="${pathD}" fill="none" stroke="${dataset.color}" stroke-width="${lineWidth}"${dashAttr}${lineClass} />`;
 
 				const circles =
-					dataset.dashed || !showPoints
+					!markers || !showPoints
 						? ""
 						: segment.points
 								.map(
@@ -429,14 +454,14 @@ function renderSvg({
 								.join("\n    ");
 
 				const animationStyle =
-					dataset.dashed || !animate
+					dashArray !== null || !animate
 						? ""
 						: `
-    .data-line-${datasetIndex} {
-      stroke-dasharray: ${pathLength};
-      stroke-dashoffset: ${pathLength};
-      animation: drawLine ${animation.lineDuration}s ease-out forwards;
-    }`;
+      .data-line-${datasetIndex} {
+        stroke-dasharray: ${pathLength};
+        stroke-dashoffset: ${pathLength};
+        animation: drawLine ${animation.lineDuration}s ease-out forwards;
+      }`;
 
 				return { fillArea, pathEl, circles, animationStyle };
 			})
@@ -468,10 +493,9 @@ function renderSvg({
 				return datasets
 					.map((dataset, datasetIndex) => {
 						const x = startX + datasetIndex * itemWidth;
-						const dashAttr = dataset.dashed ? ` stroke-dasharray="${dash.legend}"` : "";
-						const rectAttr = dataset.dashed ? ` rx="${legendStyle.rectBorderRadius}"` : "";
-						return `<rect x="${x}" y="${legendY - legendStyle.markerYOffset}" width="${legendStyle.markerWidth}" height="${legendStyle.markerHeight}" fill="${dataset.color}"${rectAttr} />
-    <line x1="${x}" y1="${legendY - legendStyle.lineYOffset}" x2="${x + legendStyle.markerWidth}" y2="${legendY - legendStyle.lineYOffset}" stroke="${dataset.color}" stroke-width="${legendStyle.lineStrokeWidth}"${dashAttr} />
+						const { dashArray } = SERIES_STROKES[dataset.dash];
+						const dashAttr = dashArray === null ? "" : ` stroke-dasharray="${dashArray}"`;
+						return `<line x1="${x}" y1="${legendY - legendStyle.lineYOffset}" x2="${x + legendStyle.markerWidth}" y2="${legendY - legendStyle.lineYOffset}" stroke="${dataset.color}" stroke-width="${legendStyle.lineStrokeWidth}"${dashAttr} />
     <text x="${x + legendStyle.labelGap}" y="${legendY}" class="chart-text" font-size="${fontSize.legend}" font-family="${font}">${escapeXml(dataset.label)}</text>`;
 					})
 					.join("\n    ");
@@ -481,16 +505,18 @@ function renderSvg({
 	const titleY = margin.top - SVG_CHART.header.titleOffset;
 
 	const animationDefs = animate
-		? `@keyframes drawLine {
-      to { stroke-dashoffset: 0; }
-    }
-    @keyframes fadeInPoint {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }${allAnimationStyles}
-    .data-point {
-      opacity: 0;
-      animation: fadeInPoint ${animation.pointDuration}s ease-out forwards;
+		? `@media (prefers-reduced-motion: no-preference) {
+      @keyframes drawLine {
+        to { stroke-dashoffset: 0; }
+      }
+      @keyframes fadeInPoint {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+      }${allAnimationStyles}
+      .data-point {
+        opacity: 0;
+        animation: fadeInPoint ${animation.pointDuration}s ease-out forwards;
+      }
     }
     `
 		: "";
@@ -508,7 +534,8 @@ function renderSvg({
     }`
 			: "";
 
-	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART.width} ${CHART.height}" width="${CHART.width}" height="${CHART.height}">
+	return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CHART.width} ${CHART.height}" width="${CHART.width}" height="${CHART.height}" role="img">
+  <title>${escapeXml(description)}</title>
   <style>
     ${animationDefs}.chart-bg { fill: ${basePalette.white}; }
     .chart-text { fill: ${basePalette.text}; }
@@ -565,11 +592,12 @@ export function renderSvgChart({ request, locale, maxPoints, range, ...style }: 
 			label: series.label,
 			data: series.data,
 			color: series.color,
-			dashed: series.dash !== SeriesDash.NONE,
+			dash: series.dash,
 			fill: series.fill,
 		})),
 		title: spec.title,
 		showLegend: spec.showLegend,
 		milestones: spec.milestones,
+		description: spec.description,
 	});
 }

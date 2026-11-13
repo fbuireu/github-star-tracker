@@ -16,8 +16,8 @@ email path goes through QuickChart because mail clients will not display inline 
   inputs (`repoFullName`, `repoNames`, `forecastData`, `lineColor`, the star-history Milestone and trend
   options). `buildChartSpec({ request, locale,
   palette, axisLabels, range, maxPoints })` maps one onto a `ChartSpec`: labels, an ordered list of series
-  with a resolved colour, the title, whether to show a legend, and **the Milestones to draw, already
-  resolved, already filtered to the visible ones and already labelled**. It returns `null` when `isPlottable`
+  with a resolved colour, the title, **the description**, whether to show a legend, and **the Milestones to draw,
+  already resolved, already filtered to the visible ones and already labelled**. It returns `null` when `isPlottable`
   says the History is too short to draw, the one answer to that question: [`charts.ts`](./charts.ts) and
   [`report-model.ts`](./report-model.ts) ask it too instead of counting Snapshots. The spec builders behind it are
   module-private
@@ -74,6 +74,18 @@ email path goes through QuickChart because mail clients will not display inline 
   URL names Chart.js 4 (`v=` from `CHART.chartJsVersion`), the version the config is written for: QuickChart's
   default, 2.9.4, ignores `plugins.title`, `plugins.legend` and `scales.x`.
 
+**The description is the chart's text equivalent, built in the spec from the series it draws.** It is one
+sentence in the Run's Locale, from the `chartAlt` bundle group: the star history and the per-repo chart name the
+first and last date of the window and the Star Count at each, the comparison chart names every repository with its
+current count, and the Forecast Charts name the date the Forecast starts from, the Star Count then, and each
+method's last projected value with the date it is reached (the last Snapshot plus the longest `weekOffset`). Dates
+are `isoDate` of the window's Snapshots, so `chart-range` narrows what is described exactly as it narrows what is
+drawn, and `maxPoints` never changes it, because downsampling keeps the first and last Snapshot. The spec holds the
+sentence raw: `svg-chart.ts` writes it as the SVG's `<title>` through `escapeXml`, and the dialects take it from
+`describeChart({ request, locale, range, fallback })`, the one entry point that rebuilds the spec for a request, and
+escape it for their own dialect (`escapeMarkdown`, `escapeHtml`). `fallback`, the chart's name, is what a request
+that draws nothing gets.
+
 Default titles come from `buildChartSpec`, each of them one bundle key: `report.starHistory`,
 `report.topRepositories` and `forecast.sectionTitle`, and for one repository `report.repoChartTitle` and
 `forecast.repoChartTitle`, whose `{name}` a translation puts where its language wants it. The star-history and
@@ -81,8 +93,17 @@ per-repo series are labelled `report.stars`.
 
 `CHART_CHROME` ([`constants.ts`](./constants.ts)) holds the title and milestone font sizes, the milestone stroke width
 and its dash pattern, which `SVG_CHART` and `chart.ts`'s `CHART_STYLE` both read; the SVG side turns the dash array
-into its `'6,6'` string. The **series** dash patterns are per adapter: the SVG uses one dash for every dashed series,
-Chart.js a pattern per series kind.
+into its `'6,6'` string. The **series** dash patterns are per adapter, each a `Record<SeriesDash, …>` table: the SVG
+uses one dash (`8,4`) for the trend and both forecast series and an array of its own for each comparison pattern,
+Chart.js a `borderDash` per series kind.
+
+**A comparison series is told apart by its dash as well as its colour.** `comparisonSpec` gives series `i` the
+`i`th of `COMPARISON_DASHES` (solid first, then dotted, long dash, dash-dot, long dash-dot, short dash, fine dots,
+dash-dot-dot, extra-long dash and sparse dots: one per colour, ten, the cap on the set). No comparison pattern equals
+the trend, linear-regression or weighted-moving-average pattern or the Milestone dash in either adapter, which the
+two chart test files pin, so a dashed comparison line is never read as a projection. The legend swatch of the SVG is
+a short line drawn with the series' own dash and colour, never a block; a patterned comparison line is drawn at once
+and keeps its markers, because the draw-on animation sets `stroke-dasharray` and would replace the pattern.
 
 The style options both adapters share (`smoothing`, `curve`, `showPoints`, `beginAtZero`, `theme` and `lineWidth`)
 are required on both: `charts.ts` and `emailChartStyle` always pass every one from `Config`, so neither adapter holds a
@@ -99,8 +120,8 @@ projections. Read the chart style case of
 [ADR 0022](../../docs/adr/0022-a-concept-earns-a-type-when-it-crosses-a-boundary.md) before merging the two.
 
 `SeriesDash` and `SeriesWeight` are emphasis, not pixels: `chart.ts` maps both through its own tables
-(`DASH_PATTERNS`, `POINT_SIZES`), and `svg-chart.ts` reads only `SeriesDash`, as a `dashed` boolean, drawing
-every undashed series with one point radius.
+(`SERIES_STROKES`, `POINT_SIZES`), and `svg-chart.ts` reads only `SeriesDash`, through its `SERIES_STROKES` table of
+a dash array and whether the series has markers, drawing every marked series with one point radius.
 
 **`AxisLabels` is an adapter constant, not a per-call choice**: `svg-chart.ts` always asks for `THINNED` and
 `chart.ts` always for `DATES`. The forecast spec overrides whatever it is given with `DATES`, and its params
@@ -196,7 +217,8 @@ no dialect adds one.
   `chartHistory`: `null` means "no Chart", not "no data".
 - Both dialects take `RenderReportParams` (`{ model, config }`) and read the options they honour off `config`
   ([ADR 0016](../../docs/adr/0016-the-report-renderers-read-config-themselves.md)). Markdown emits relative
-  `./charts/*.svg` links and reads no chart style at all; `html.ts` reads `config.emailTheme` and never
+  `./charts/*.svg` links and reads no chart style but `chart-range`, which `describeChart` needs to describe the
+  window the chart draws; `html.ts` reads `config.emailTheme` and never
   `chartTheme`, because a QuickChart PNG bakes its background in. A new report or chart option is an input, a
   `Config` field and one read in the renderer that wants it, plus, when both chart systems honour it, the two
   projections and the `run.test.ts` row described above.
@@ -236,8 +258,17 @@ no dialect adds one.
 - **Only `catmull-rom` is clamped** to the plot box, because it is the only overshooting curve; the others
   are non-overshooting by construction.
 - **`null` splits a series into segments**, each drawn as its own path/fill/circle group. Only a segment
-  starting at index 0 that is filled and not dashed is anchored to the baseline. Dashed datasets get no fill,
-  no circles and no draw animation.
+  starting at index 0 that is filled and not dashed is anchored to the baseline. The trend and forecast series
+  get no fill, no circles and no draw animation; a patterned comparison series gets no fill and no draw
+  animation, and keeps its circles.
+- **Every animation rule sits inside `@media (prefers-reduced-motion: no-preference)`**, the `@keyframes`, the
+  `.data-line-N` set-up (`stroke-dasharray` and `stroke-dashoffset` at the path length) and the `.data-point`
+  rule with its `opacity: 0`, so a reader who asks for less motion gets the finished chart, and nothing outside the
+  query hides a line or a point. With `animate` off the SVG carries no motion query at all. The keyframes use
+  `0%` and `100%`, not `from` and `to`, because the word `from` is English text the locale test in
+  [`run.test.ts`](./run.test.ts) looks for in a Spanish, Catalan or Italian run.
+- **Every SVG is `role="img"` and its first child is a `<title>` holding the description**, so a chart opened on its
+  own is described. The legend, grid and labels are not the description; they stay in the drawing.
 - **Theme rendering is asymmetric.** `auto` emits light values _plus_ a `prefers-color-scheme: dark` override
   block; `light` and `dark` emit exactly one palette and **no** media query.
 - **Empty x-axis labels are ticks that must not render.** `buildAxisLabels` returns `''` for suppressed
@@ -253,6 +284,12 @@ no dialect adds one.
 - **`markdown.ts` section order is fixed**: header, comparison note, charts, repo table, new, removed,
   summary, stargazers, forecast, velocity, footer. Velocity nests as an `h3` inside the forecast section when
   a forecast exists, otherwise it is a top-level `h2`; both levels are asserted.
+- **The HTML report declares its language and title.** `<html lang>` is the Locale's Intl code (`intlCode`,
+  `en-US`) and `<title>` is `report.title`, the text of the `<h1>`; both are pinned per locale in
+  [`html.test.ts`](./html.test.ts).
+- **Every image a Report prints has an `alt`.** A chart's is its description (a repository name or the chart's title
+  only when the spec draws nothing); a stargazer avatar's is empty, `alt=""`, in both dialects, because the login is
+  printed beside it.
 - **The HTML report must contain no `<details>`**, which email clients do not support. Pinned by
   [`html.test.ts`](./html.test.ts).
 - **Markdown chart links are relative** (`./charts/<file>`), matching the directory

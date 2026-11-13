@@ -1,9 +1,9 @@
 import type { ForecastResult } from "@domain/forecast";
-import { deltaIndicator, formatSignedPercent, isoDate, trendIcon } from "@domain/formatting";
+import { deltaIndicator, formatSignedPercent, intlCode, isoDate, trendIcon } from "@domain/formatting";
 import { getTranslations, interpolate, type Translations } from "@i18n";
 import { chartImageUrl } from "./chart";
 import type { ChartRequest } from "./chart-spec";
-import { ChartKind } from "./chart-spec";
+import { ChartKind, describeChart } from "./chart-spec";
 import { SECTION_ICON } from "./constants";
 import { EscapeDialect, escapeFor } from "./escaping";
 import { buildForecastTable, StargazerOutcome, type TopRepo } from "./report-model";
@@ -22,6 +22,16 @@ function deltaColor({ delta, palette }: DeltaColorParams): string {
 	if (delta > 0) return palette.positive;
 	if (delta < 0) return palette.negative;
 	return palette.neutral;
+}
+
+interface ChartAltParams {
+	request: ChartRequest;
+	fallback: string;
+}
+
+interface ChartSourceParams {
+	request: ChartRequest;
+	fallback: string;
 }
 
 interface RepoChartHeadingParams {
@@ -55,6 +65,10 @@ export function generateHtmlReport({ model, config }: RenderReportParams): strin
 	const t = getTranslations(locale);
 	const palette = resolvePalette(theme);
 	const chartUrl = (request: ChartRequest): string | null => chartImageUrl({ request, locale, theme, ...style });
+	const chartAlt = ({ request, fallback }: ChartAltParams): string =>
+		escapeHtml(describeChart({ request, locale, range: style.range, fallback }));
+	const chartSource = ({ request, fallback }: ChartSourceParams): string =>
+		`src="${chartUrl(request)}" alt="${chartAlt({ request, fallback })}"`;
 	const {
 		summary,
 		sorted,
@@ -109,28 +123,30 @@ export function generateHtmlReport({ model, config }: RenderReportParams): strin
 			: "";
 
 	const topRepos = model.topRepos;
-	const comparisonChartUrl =
+	const comparisonRequest: ChartRequest | null =
 		history !== null && model.showComparisonChart
-			? chartUrl({
+			? {
 					kind: ChartKind.COMPARISON,
 					history,
 					repoNames: topRepos.map((repo) => repo.fullName),
-				})
+				}
 			: null;
+	const comparisonChartUrl = comparisonRequest === null ? null : chartUrl(comparisonRequest);
 
 	const individualRepoChartsHtml = model.perRepoCharts
 		.map((repo) => {
-			const repoChartUrl = chartUrl({
+			const repoRequest: ChartRequest = {
 				kind: ChartKind.PER_REPO,
 				history: repo.history,
 				repoFullName: repo.fullName,
 				lineColor,
-			});
+			};
+			const repoChartUrl = chartUrl(repoRequest);
 			if (!repoChartUrl) return "";
 			return `
         <div style="margin-top:16px;">
           <h4 style="font-size:14px;margin-bottom:8px;">${repoChartHeading({ repo, palette, t })}</h4>
-          <img src="${repoChartUrl}" alt="${escapeHtml(repo.fullName)}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img src="${repoChartUrl}" alt="${chartAlt({ request: repoRequest, fallback: repo.fullName })}" style="max-width:100%;height:auto;border-radius:4px;">
         </div>`;
 		})
 		.filter(Boolean)
@@ -141,13 +157,13 @@ export function generateHtmlReport({ model, config }: RenderReportParams): strin
 			? `
       <div style="margin-top:24px;text-align:center;">
         <h2 style="font-size:18px;margin-bottom:12px;">${SECTION_ICON.starTrend} ${t.report.starTrend}</h2>
-        <img src="${chartUrl({ kind: ChartKind.STAR_HISTORY, history, milestones, customMilestones, trendLine, lineColor })}" alt="${t.report.starHistory}" style="max-width:100%;height:auto;border-radius:4px;">
+        <img ${chartSource({ request: { kind: ChartKind.STAR_HISTORY, history, milestones, customMilestones, trendLine, lineColor }, fallback: t.report.starHistory })} style="max-width:100%;height:auto;border-radius:4px;">
 
         ${
-					comparisonChartUrl
+					comparisonRequest && comparisonChartUrl
 						? `
         <h3 style="font-size:16px;margin:20px 0 12px;">${t.report.byRepository}</h3>
-        <img src="${comparisonChartUrl}" alt="${t.report.topRepositories}" style="max-width:100%;height:auto;border-radius:4px;">`
+        <img src="${comparisonChartUrl}" alt="${chartAlt({ request: comparisonRequest, fallback: t.report.topRepositories })}" style="max-width:100%;height:auto;border-radius:4px;">`
 						: ""
 				}
         ${
@@ -182,7 +198,7 @@ export function generateHtmlReport({ model, config }: RenderReportParams): strin
 						.map(
 							(stargazer) => `
           <div style="display:flex;align-items:center;margin:4px 0;">
-            <img src="${escapeHtml(stargazer.avatarUrl)}" width="32" height="32" style="border-radius:50%;margin-right:8px;">
+            <img src="${escapeHtml(stargazer.avatarUrl)}" alt="" width="32" height="32" style="border-radius:50%;margin-right:8px;">
             <a href="${escapeHtml(stargazer.profileUrl)}" style="color:${palette.link};text-decoration:none;font-weight:600;">${escapeHtml(stargazer.login)}</a>
             <span style="color:${palette.neutral};margin-left:8px;font-size:12px;">${interpolate({ template: t.stargazers.starredOn, params: { date: escapeHtml(isoDate(stargazer.starredAt)) } })}</span>
           </div>`,
@@ -235,7 +251,7 @@ export function generateHtmlReport({ model, config }: RenderReportParams): strin
         ${
 					history !== null
 						? `<div style="margin-top:16px;text-align:center;">
-          <img src="${chartUrl({ kind: ChartKind.FORECAST, history, forecastData, lineColor })}" alt="${t.forecast.sectionTitle}" style="max-width:100%;height:auto;border-radius:4px;">
+          <img ${chartSource({ request: { kind: ChartKind.FORECAST, history, forecastData, lineColor }, fallback: t.forecast.sectionTitle })} style="max-width:100%;height:auto;border-radius:4px;">
         </div>`
 						: ""
 				}
@@ -252,7 +268,7 @@ export function generateHtmlReport({ model, config }: RenderReportParams): strin
           ${
 						repo.chartHistory !== null
 							? `<div style="margin-top:12px;text-align:center;">
-            <img src="${chartUrl({ kind: ChartKind.PER_REPO_FORECAST, history: repo.chartHistory, forecastData, repoFullName: repo.repoFullName, lineColor })}" alt="${escapeHtml(repo.repoFullName)}" style="max-width:100%;height:auto;border-radius:4px;">
+            <img ${chartSource({ request: { kind: ChartKind.PER_REPO_FORECAST, history: repo.chartHistory, forecastData, repoFullName: repo.repoFullName, lineColor }, fallback: repo.repoFullName })} style="max-width:100%;height:auto;border-radius:4px;">
           </div>`
 							: ""
 					}
@@ -272,8 +288,8 @@ export function generateHtmlReport({ model, config }: RenderReportParams): strin
 			: "";
 
 	return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="color-scheme" content="${colorSchemeFor(theme)}"></head>
+<html lang="${intlCode(locale)}">
+<head><meta charset="utf-8"><meta name="color-scheme" content="${colorSchemeFor(theme)}"><title>${t.report.title}</title></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:${palette.text};background-color:${palette.white};">
   <div style="text-align:center;padding:20px 0;border-bottom:2px solid ${palette.accent};">
     <h1 style="margin:0;font-size:24px;">${t.report.title}</h1>

@@ -65,5 +65,14 @@
 		"byRepository": "By Repository",
 		"repoChartTitle": "{name} Growth Forecast",
 		"method": "Method"
+	},
+	"chartAlt": {
+		"starHistory": "Star history from {start} to {end}: {from} to {to} stars",
+		"repoStarHistory": "Star history of {name} from {start} to {end}: {from} to {to} stars",
+		"comparison": "Stars per repository on {date}: {repos}",
+		"comparisonItem": "{name} with {count} stars",
+		"forecast": "Growth forecast from {start} to {end}: {current} stars on {start}, projected to reach {projections}",
+		"repoForecast": "Growth forecast of {name} from {start} to {end}: {current} stars on {start}, projected to reach {projections}",
+		"forecastItem": "{count} by {method}"
 	}
 }

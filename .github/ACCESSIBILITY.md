@@ -14,8 +14,25 @@ request has to keep working.
   `-1` or `0`, so neither the arrow nor a colour carries the change alone.
 - **A badge with a name.** The star badge is an image named after its own text, such as "Total Stars: ★ 42", and
   carries the same text as its title. A test pins both.
-- **Charts with alt text.** Every chart image in a report has alt text: the chart's title, or the repository it
-  belongs to. The alt text names the chart; it does not describe the history the chart draws.
+- **Charts that say what they show.** Every chart image in the Markdown and HTML reports has alt text that states
+  its data in one sentence, in the report's language:
+  - A star history gives the date range and the star count at its start and end, such as "Star history from
+    2026-01-04 to 2026-11-13: 120 to 342 stars". A per-repository chart says the same for that repository.
+  - The comparison chart lists each repository with its current star count.
+  - A forecast chart gives the date the forecast starts from, the star count then, and the star count each method
+    projects by the last date it reaches.
+
+  The dates and counts are those of the window the chart plots, so `chart-range` narrows them too. The SVG files
+  carry `role="img"` and the same sentence as their `<title>`, so a chart opened on its own is described. The
+  sentence gives the figures at the ends of the line, not every point on it.
+- **Lines told apart by more than colour.** In the comparison chart, in the SVG and in the email image, each
+  repository has its own colour and its own line pattern: the first is solid, the next nine are dotted, dashed or
+  dash-dot variants. The legend draws a short line in each colour and pattern beside the name. With ten
+  repositories the nine patterns are close to one another and the legend order is the way to match them up.
+- **A language and a title on the HTML report.** The document declares the language of `locale` (`en-US`, `es-ES`,
+  `ca-ES` or `it-IT`) and its `<title>` is the report heading.
+- **Avatars that are not announced.** Stargazer avatars have an empty alt, because the login is printed beside each
+  one.
 - **Light and dark.** With `chart-theme: auto`, the SVG charts follow the reader's light or dark preference. The
   email's charts are images with their background drawn in, so they follow `email-theme` instead.
 - **The reader's language.** `locale` sets the wording and the number and date formats.
@@ -24,15 +41,21 @@ request has to keep working.
 
 ## Settings that help
 
-- `chart-animation: false` draws the charts without animation. The animation otherwise plays whatever the reader's
-  reduce-motion setting is.
+- The chart animation is off for a reader whose system asks for reduced motion: the SVG puts every animation rule
+  inside `@media (prefers-reduced-motion: no-preference)`, so that reader gets the finished chart. This relies on
+  the viewer reporting the setting; where one does not, the animation plays.
+- `chart-animation: false` draws the charts without animation for everyone, such as in a viewer that does not
+  report the reduce-motion setting.
 - `chart-theme` and `email-theme` set to `light` or `dark` fix the theme where `auto` does not reach, such as an
   email client that ignores the reader's preference.
 - `include-charts: false` leaves the charts out, for a report that is only text and tables.
 
 ## What is tested
 
-- Unit tests pin the badge's name and title, and the alt text of the per-repository charts in the HTML report.
+- Unit tests pin the badge's name and title; the alt text of every chart in both reports and the title and
+  `role="img"` of the SVGs; the empty alt of the avatars; the language and title of the HTML report; the dash
+  pattern of each comparison series in the SVG and the email chart; and that no animation or hidden starting state
+  of the SVG sits outside the reduced-motion query.
 - Nobody reads the reports with a screen reader on a schedule, and no output is run through an automated
   accessibility checker. Reports from people who use them are the main way barriers there come to light.
 - The outputs have not been audited against WCAG, so this page makes no conformance claim.
@@ -75,7 +98,8 @@ runner_.
 
 A change to what the action produces keeps the above working:
 
-- Give every image in an output alt text, and every table a header row.
+- Give every image in an output alt text that says what it shows, or an empty alt when the text beside it already
+  says it, and every table a header row.
 - Pair any colour or symbol that carries meaning with text.
 - Put new wording in all four locale bundles under `src/i18n`.
 - When a pull request changes what gets rendered, the template asks for before and after renders. Look at them at

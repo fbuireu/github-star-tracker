@@ -66,4 +66,13 @@ export interface Translations {
 		repoChartTitle: string;
 		method: string;
 	};
+	chartAlt: {
+		starHistory: string;
+		repoStarHistory: string;
+		comparison: string;
+		comparisonItem: string;
+		forecast: string;
+		repoForecast: string;
+		forecastItem: string;
+	};
 }

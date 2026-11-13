@@ -493,7 +493,7 @@ Whether the SVG charts animate when first rendered.
 | **Type** | `boolean` |
 | **Default** | `true` |
 
-`true` draws the line and fades in the points with CSS animations; `false` renders the charts static. Static is preferable for contexts that do not play CSS animations (most email clients, raster previews). Only affects the SVG charts; the QuickChart images embedded in the email are static regardless.
+`true` draws the line and fades in the points with CSS animations; `false` renders the charts static. The animation is skipped for a reader whose system asks for reduced motion (`prefers-reduced-motion: reduce`): they get the finished, static chart, whatever this input says. Static is preferable for contexts that do not play CSS animations (most email clients, raster previews). Only affects the SVG charts; the QuickChart images embedded in the email are static regardless.
 
 ---
 

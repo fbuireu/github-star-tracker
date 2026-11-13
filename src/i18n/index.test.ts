@@ -96,6 +96,21 @@ describe("LOCALES", () => {
 		expect(drift).toEqual([]);
 	});
 
+	it("keeps the placeholders of every chart description the same in every bundle", () => {
+		const placeholdersOf = (text: string): string[] => [...text.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
+		const english = getTranslations("en").chartAlt;
+		const drift = LOCALES.flatMap((locale) =>
+			Object.entries(english).flatMap(([key, template]) => {
+				const translated = getTranslations(locale).chartAlt[key as keyof typeof english];
+
+				return placeholdersOf(translated).join() === placeholdersOf(template).join() ? [] : [`${locale}: ${key}`];
+			}),
+		);
+
+		expect(Object.keys(english)).toHaveLength(7);
+		expect(drift).toEqual([]);
+	});
+
 	it("maps every locale to an Intl code", () => {
 		for (const locale of LOCALES) {
 			expect(LOCALE_MAP[locale]).toMatch(INTL_LOCALE_CODE_PATTERN);

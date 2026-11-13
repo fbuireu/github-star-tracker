@@ -727,3 +727,197 @@ describe("renderSvgChart: forecast", () => {
 		expect(result).not.toMatch(CONSECUTIVE_XML_ATTRIBUTES);
 	});
 });
+
+const REDUCED_MOTION_QUERY = "@media (prefers-reduced-motion: no-preference)";
+const STYLE_BLOCK = /<style>([\s\S]*?)<\/style>/;
+const LEGEND_BLOCK = /<g class="legend">([\s\S]*?)<\/g>/;
+const DASH_ARRAY = /stroke-dasharray="([^"]+)"/;
+const SVG_FORECAST_DASH = "8,4";
+
+function styleOf(svg: string): string {
+	return svg.match(STYLE_BLOCK)?.[1] ?? "";
+}
+
+interface WithoutMediaBlockParams {
+	style: string;
+	query: string;
+}
+
+function withoutMediaBlock({ style, query }: WithoutMediaBlockParams): string {
+	const start = style.indexOf(query);
+	if (start === -1) return style;
+
+	const open = style.indexOf("{", start);
+	let depth = 0;
+	for (let index = open; index < style.length; index++) {
+		if (style[index] === "{") depth++;
+		if (style[index] === "}") depth--;
+		if (depth === 0) return style.slice(0, start) + style.slice(index + 1);
+	}
+
+	return style;
+}
+
+function legendDashes(svg: string): (string | null)[] {
+	const legend = svg.match(LEGEND_BLOCK)?.[1] ?? "";
+
+	return [...legend.matchAll(/<line [^>]*\/>/g)].map((line) => line[0].match(DASH_ARRAY)?.[1] ?? null);
+}
+
+function lineDashes(svg: string): (string | null)[] {
+	return [...svg.matchAll(/<path d="[^"]+" fill="none"[^>]*\/>/g)].map(
+		(path) => path[0].match(DASH_ARRAY)?.[1] ?? null,
+	);
+}
+
+const COMPARISON_REPOS = Array.from({ length: 10 }, (_, index) => `user/repo-${index}`);
+
+function comparisonSvg(overrides: Partial<Parameters<typeof renderSvgChart>[0]> = {}): string {
+	const history = makeMultiRepoHistory([
+		{ repoStars: Object.fromEntries(COMPARISON_REPOS.map((name, index) => [name, 10 + index])) },
+		{ repoStars: Object.fromEntries(COMPARISON_REPOS.map((name, index) => [name, 20 + index * 2])) },
+	]);
+
+	return expectSvg(
+		renderChart({
+			request: { kind: ChartKind.COMPARISON, history, repoNames: COMPARISON_REPOS },
+			locale: "en",
+			...overrides,
+		}),
+	);
+}
+
+describe("renderSvgChart: reduced motion", () => {
+	it("puts every animation rule, the hidden start of the points and the draw-on set-up inside the no-preference query", () => {
+		const svg = expectSvg(renderChart({ request: starHistory(makeHistory([10, 20, 30])), locale: "en" }));
+		const style = styleOf(svg);
+		const inside = style.slice(style.indexOf(REDUCED_MOTION_QUERY));
+		const outside = withoutMediaBlock({ style, query: REDUCED_MOTION_QUERY });
+
+		expect(style.match(/@media \(prefers-reduced-motion/g)).toHaveLength(1);
+		expect(inside).toContain("@keyframes drawLine");
+		expect(inside).toContain("@keyframes fadeInPoint");
+		expect(inside).toContain(".data-point {");
+		expect(inside).toContain("opacity: 0;");
+		expect(inside).toContain("stroke-dasharray:");
+		expect(inside).toContain("stroke-dashoffset:");
+		expect(outside).not.toMatch(/animation|@keyframes|opacity|stroke-dash/);
+		expect(outside).toContain(".chart-bg");
+	});
+
+	it("leaves nothing that hides a point or a line outside the query in an auto-theme chart", () => {
+		const svg = expectSvg(renderChart({ request: starHistory(makeHistory([10, 20, 30])), locale: "en" }));
+		const outside = withoutMediaBlock({ style: styleOf(svg), query: REDUCED_MOTION_QUERY });
+
+		expect(outside).toContain("prefers-color-scheme: dark");
+		expect(outside).not.toMatch(/\.data-point|\.data-line|opacity|stroke-dash/);
+		expect(svg).not.toMatch(/<circle[^>]*opacity/);
+		expect(svg).not.toMatch(/<path[^>]*stroke-dashoffset/);
+	});
+
+	it("emits no motion query at all when the animation is off", () => {
+		const svg = expectSvg(
+			renderChart({ request: starHistory(makeHistory([10, 20, 30])), locale: "en", animate: false }),
+		);
+
+		expect(styleOf(svg)).not.toContain("prefers-reduced-motion");
+		expect(styleOf(svg)).not.toMatch(/animation|@keyframes|opacity|stroke-dash/);
+	});
+});
+
+describe("renderSvgChart: description", () => {
+	it("names the SVG as an image and gives it the description of the spec as its title", () => {
+		const request = starHistory(makeHistory([10, 20, 30]));
+		const spec = buildChartSpec({
+			request,
+			locale: "en",
+			palette: LIGHT_PALETTE,
+			axisLabels: AxisLabels.THINNED,
+			range: ChartRange.ALL,
+		});
+		const svg = expectSvg(renderChart({ request, locale: "en" }));
+
+		expect(spec?.description).toBe("Star history from 2026-01-01 to 2026-01-03: 10 to 30 stars");
+		expect(svg).toMatch(
+			/^<svg [^>]*role="img">\n {2}<title>Star history from 2026-01-01 to 2026-01-03: 10 to 30 stars<\/title>/,
+		);
+	});
+
+	it("describes the chart in the language of the run", () => {
+		const svg = expectSvg(renderChart({ request: starHistory(makeHistory([10, 20, 30])), locale: "es" }));
+
+		expect(svg).toContain("<title>Historial de estrellas del 2026-01-01 al 2026-01-03: de 10 a 30 estrellas</title>");
+	});
+
+	it("escapes a repository name in the title for XML", () => {
+		const history = makeMultiRepoHistory([{ repoStars: { 'o&<">/r': 1 } }, { repoStars: { 'o&<">/r': 4 } }]);
+		const svg = expectSvg(
+			renderChart({ request: { kind: ChartKind.PER_REPO, history, repoFullName: 'o&<">/r' }, locale: "en" }),
+		);
+
+		expect(svg).toContain(
+			"<title>Star history of o&amp;&lt;&quot;&gt;/r from 2026-01-01 to 2026-01-02: 1 to 4 stars</title>",
+		);
+		expect(svg).not.toContain('o&<">');
+	});
+});
+
+describe("renderSvgChart: comparison dash patterns", () => {
+	it("draws the first series solid and every later one with a dash pattern of its own", () => {
+		const dashes = lineDashes(comparisonSvg());
+
+		expect(dashes).toHaveLength(COMPARISON_REPOS.length);
+		expect(dashes[0]).toBeNull();
+		expect(dashes.slice(1).every((dash) => dash !== null)).toBe(true);
+		expect(new Set(dashes).size).toBe(COMPARISON_REPOS.length);
+	});
+
+	it("keeps every comparison pattern apart from the pattern the forecast and trend lines use", () => {
+		const forecastPattern = SVG_FORECAST_DASH;
+
+		expect(lineDashes(comparisonSvg())).not.toContain(forecastPattern);
+	});
+
+	it("draws each legend swatch as a line with the dash of its series, and no colour block", () => {
+		const svg = comparisonSvg();
+		const legend = svg.match(LEGEND_BLOCK)?.[1] ?? "";
+
+		expect(legend).not.toContain("<rect");
+		expect(legendDashes(svg)).toEqual(lineDashes(svg));
+	});
+
+	it("draws the line of a patterned series at once, with the pattern the legend shows", () => {
+		const svg = comparisonSvg();
+		const style = styleOf(svg);
+
+		expect(style).toContain(".data-line-0 {");
+		expect(style).not.toContain(".data-line-1 {");
+		expect(svg).toContain('class="data-line-0"');
+		expect(svg).not.toContain('class="data-line-1"');
+	});
+
+	it("still marks the points of a patterned series", () => {
+		expect([...comparisonSvg().matchAll(DATA_POINT_CIRCLE)]).toHaveLength(COMPARISON_REPOS.length * 2);
+	});
+
+	it("draws the forecast legend swatches as dashed lines of the forecast pattern", () => {
+		const forecastData: ForecastData = {
+			aggregate: {
+				forecasts: [
+					{ method: ForecastMethod.LINEAR_REGRESSION, points: [{ weekOffset: 1, predicted: 35 }] },
+					{ method: ForecastMethod.WEIGHTED_MOVING_AVERAGE, points: [{ weekOffset: 1, predicted: 33 }] },
+				],
+			},
+			repos: [],
+		};
+		const svg = expectSvg(
+			renderChart({
+				request: { kind: ChartKind.FORECAST, history: makeHistory([10, 20, 30]), forecastData },
+				locale: "en",
+			}),
+		);
+
+		expect(legendDashes(svg)).toEqual([null, SVG_FORECAST_DASH, SVG_FORECAST_DASH]);
+		expect(svg.match(LEGEND_BLOCK)?.[1]).not.toContain("<rect");
+	});
+});
