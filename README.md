@@ -412,6 +412,7 @@ or hosting a modified version.
 - [Request features](../../issues/new?template=feature_request.yml)
 - [Contributing guidelines](.github/CONTRIBUTING.md)
 - [Security policy](../../security/policy)
+- [Accessibility](.github/ACCESSIBILITY.md)
 
 If you find this project useful, consider supporting its development:
 

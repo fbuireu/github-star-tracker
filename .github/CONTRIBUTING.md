@@ -33,7 +33,9 @@ lives in the locale bundles under `src/i18n` and the wiki under `docs/wiki`, so 
 either; if you would rather not open one, use the
 [content issue template](ISSUE_TEMPLATE/content_issue.yml) and say which language it is in.
 
-Security issues go through the [Security Policy](./SECURITY.md), never a public issue.
+Security issues go through the [Security Policy](./SECURITY.md), never a public issue. A report, chart or
+badge that someone using a screen reader, zoom or reduced motion cannot read is a bug like any other;
+[ACCESSIBILITY.md](./ACCESSIBILITY.md) lists what helps in the report.
 
 ### Suggesting features
 
