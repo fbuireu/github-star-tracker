@@ -1,3 +1,10 @@
+## [1.28.11](https://github.com/fbuireu/github-star-tracker/compare/v1.28.10...v1.28.11) (2026-11-13)
+
+
+### Bug Fixes
+
+* make the reports and charts readable without sight, colour or motion ([61646ed](https://github.com/fbuireu/github-star-tracker/commit/61646ed91beefd3a1882759b05acaff385afff11)), closes [#214](https://github.com/fbuireu/github-star-tracker/issues/214) [#215](https://github.com/fbuireu/github-star-tracker/issues/215) [#216](https://github.com/fbuireu/github-star-tracker/issues/216) [#217](https://github.com/fbuireu/github-star-tracker/issues/217) [#218](https://github.com/fbuireu/github-star-tracker/issues/218)
+
 ## [1.28.10](https://github.com/fbuireu/github-star-tracker/compare/v1.28.9...v1.28.10) (2026-11-04)
 
 
