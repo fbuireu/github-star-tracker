@@ -188,8 +188,8 @@ importers:
         specifier: 5.5.0
         version: 5.5.0
       nodemailer:
-        specifier: 10.3.1
-        version: 10.3.1
+        specifier: 10.5.0
+        version: 10.5.0
       zod:
         specifier: 4.6.7
         version: 4.6.7
@@ -1750,8 +1750,8 @@ packages:
     resolution: {integrity: sha512-Z3lTE9pLaJF47NyMhd4ww1yFTAP8YhYI8SleJiHzM46Fgpm5cnNzSl9XfzFNqbaz+VlJrIj3fXQ4DeN1Rjm6cw==}
     engines: {node: '>=18'}
 
-  nodemailer@10.3.1:
-    resolution: {integrity: sha512-uF0AFsJC07Y1vdW7p580DKAnh7rAO+4UPSSB3mDCPNDufoiaOebV6JmrzpxB14OjEEEiBsNdYoM2Y+fN8M7BBA==}
+  nodemailer@10.5.0:
+    resolution: {integrity: sha512-L/w/HH5MqpzMDuZD7fQdt/+KqymuvrpaApaIjAH2XA3ILePwlcvXCVVvP75xVrXCEt2ggK2marrrHHFB5Qu0kA==}
     engines: {node: '>=20.0.0'}
 
   normalize-package-data@6.0.2:
@@ -3770,7 +3770,7 @@ snapshots:
       emojilib: 2.4.0
       skin-tone: 2.0.0
 
-  nodemailer@10.3.1: {}
+  nodemailer@10.5.0: {}
 
   normalize-package-data@6.0.2:
     dependencies:
